@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Robot Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="left-tools">
+      <button id="btn-prev-level" class="tool-btn">◀</button>
+      <button id="btn-reset-level" class="tool-btn">↺</button>
+      <button id="btn-run" class="tool-btn run">▶</button>
+      <button id="btn-stop" class="tool-btn stop">■</button>
+      <div class="level-info">
+        <div id="level-id" class="level-id">1-1</div>
+        <div id="level-title" class="level-title">Kolay - 1</div>
+      </div>
+    </aside>
+
+    <main class="board-wrap">
+      <canvas id="game-canvas" width="920" height="520"></canvas>
+      <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <section class="program-wrap">
+      <div class="program-tabs">
+        <button class="tab-btn active" data-track="main">MAIN</button>
+        <button class="tab-btn" data-track="proc1">PROC1</button>
+        <button class="tab-btn" data-track="proc2">PROC2</button>
+      </div>
+      <div id="program-track-main" class="program-track"></div>
+      <div id="program-track-proc1" class="program-track hidden"></div>
+      <div id="program-track-proc2" class="program-track hidden"></div>
+    </section>
+  </div>
+
+  <footer class="command-bar" id="command-bar"></footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

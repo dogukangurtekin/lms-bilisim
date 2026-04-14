@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Sessiz Ogretmen</title>
+  <style>
+    :root {
+      --bg: #0f4a63;
+      --card: #eef0f2;
+      --text: #0f172a;
+      --muted: #475569;
+      --opt: #f88772;
+      --opt-hover: #f5755c;
+      --warn: #f4cc43;
+      --ok: #22c55e;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Trebuchet MS", "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+    .shell { min-height: 100%; display: grid; grid-template-columns: 300px 1fr; gap: 20px; padding: 22px; }
+    .left {
+      background: rgba(15, 23, 42, 0.18);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .brand {
+      font-size: 32px;
+      line-height: 0.95;
+      font-weight: 900;
+      color: #e2e8f0;
+      letter-spacing: 0.8px;
+    }
+    .desc { color: #cbd5e1; font-size: 0.95rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.35);
+      color: #e2e8f0;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    .section-list { display: grid; gap: 8px; margin-top: 6px; }
+    .section-btn {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .section-btn.active { background: rgba(56, 189, 248, 0.2); border-color: #7dd3fc; }
+    .section-btn.locked { opacity: 0.5; cursor: not-allowed; }
+    .close-btn {
+      margin-top: auto;
+      border: none;
+      border-radius: 10px;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .right { display: grid; grid-template-rows: auto 1fr auto; gap: 12px; min-width: 0; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #e2e8f0;
+    }
+    .topbar .title { font-size: 1.15rem; font-weight: 800; }
+    .topbar .progress { font-size: 0.95rem; color: #bae6fd; }
+    .panel {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 14px 34px rgba(2, 6, 23, 0.2);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+    }
+    .lesson {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.93rem;
+    }
+    pre.code {
+      margin: 0;
+      background: #ffffff;
+      border: 1px solid #d8dee7;
+      border-radius: 10px;
+      padding: 12px;
+      overflow: auto;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 1.75rem;
+      line-height: 1.35;
+      color: #0f172a;
+      min-height: 130px;
+    }
+    .kw { color: #0369a1; font-weight: 700; }
+    .num { color: #be185d; }
+    .question { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+    .opt {
+      border: none;
+      border-radius: 999px;
+      background: var(--opt);
+      color: #fff;
+      font-size: 1.35rem;
+      min-height: 56px;
+      font-family: "Consolas", "Courier New", monospace;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+      padding: 6px 12px;
+    }
+    .opt:hover { filter: brightness(1.03); transform: translateY(-1px); }
+    .opt.trap { background: var(--warn); color: #6b4d00; }
+    .opt.correct { background: var(--ok); }
+    .opt.wrong { background: var(--err); }
+    .opt.wrong-anim { animation: wrongShake 0.35s ease; }
+    @keyframes wrongShake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      40% { transform: translateX(5px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+      100% { transform: translateX(0); }
+    }
+    .bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .feedback { min-height: 24px; color: #334155; font-size: 0.95rem; }
+    .next-btn {
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: #fff;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 130px;
+    }
+    .next-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .footer { color: #cbd5e1; font-size: 0.85rem; text-align: right; }
+    @media (max-width: 1000px) {
+      .shell { grid-template-columns: 1fr; }
+      .options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      pre.code { font-size: 1.2rem; min-height: 110px; }
+    }
+    @media (max-width: 640px) {
+      .options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="left">
+      <div class="brand">PYTHON<br>QUIZ LAB</div>
+      <div class="desc">Kolay, orta ve zor seviyede coklu bolumler. Her bolumde mini konu anlatimi ve kod sorulari.</div>
+      <div class="chips">
+        <span class="chip">Temel degiskenler</span>
+        <span class="chip">Kosul</span>
+        <span class="chip">Karsilastirma</span>
+      </div>
+      <div id="section-list" class="section-list"></div>
+      <button id="btn-close" class="close-btn">Kapat</button>
+    </aside>
+    <main class="right">
+      <div class="topbar">
+        <div id="section-title" class="title">Bolum 1</div>
+        <div id="section-progress" class="progress">Soru 1/1</div>
+      </div>
+      <section class="panel">
+        <div id="lesson" class="lesson"></div>
+        <pre id="code" class="code"></pre>
+        <div id="question" class="question"></div>
+        <div id="options" class="options"></div>
+        <div class="bottom">
+          <div id="feedback" class="feedback"></div>
+          <button id="btn-next" class="next-btn" disabled>Sonraki</button>
+        </div>
+      </section>
+      <div id="footer" class="footer"></div>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

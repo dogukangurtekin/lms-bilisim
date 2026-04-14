@@ -1,0 +1,576 @@
+﻿/* ================= DEĞİŞKENLER VE TEMEL AYARLAR ================= */
+:root {
+    --primary: #4a90e2;
+    --secondary: #2ecc71;
+    --danger: #e74c3c;
+    --dark: #2c3e50;
+    --light: #f4f7f6;
+    --sidebar-bg: #1a1a1a;
+    --shadow: 0 4px 15px rgba(0,0,0,0.1);
+    --transition: 0.3s ease;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin: 0;
+    min-height: 100vh;
+    color: var(--dark);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.container {
+    background: white;
+    width: 95%;
+    max-width: 550px;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 50px;
+}
+
+/* ================= MENÜ (SIDEBAR) TASARIMI ================= */
+.menu-trigger {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: var(--dark);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: var(--transition);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.menu-trigger:hover { 
+    background: var(--primary); 
+    transform: scale(1.05);
+}
+
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1002;
+    top: 0;
+    left: 0;
+    background-color: var(--sidebar-bg);
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+}
+
+.sidebar button {
+    padding: 15px 25px;
+    font-size: 18px;
+    color: #ccc;
+    display: block;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.sidebar button:hover {
+    background: #333;
+    color: white;
+    padding-left: 35px;
+}
+
+/* ================= KART TASARIMI ================= */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    border: none;
+}
+
+/* ================= HEADER VE STATÜ ALANI ================= */
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#student-stats-bar {
+    display: flex;
+    justify-content: space-around;
+    background: var(--light);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #e1e8ed;
+}
+
+/* ================= LİSTELER (ÖDEV & LİDERLİK) ================= */
+#list, #leaderboard-list {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.list-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    border-left: 6px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+
+.list-item:hover {
+    transform: translateX(8px);
+    background: #f0f7ff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+#leaderboard-list li {
+    background: white;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #eee;
+    align-items: center;
+    transition: var(--transition);
+}
+
+#leaderboard-list li:nth-child(1) {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #fffdf0 0%, #fff9e6 100%);
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+#leaderboard-list li:nth-child(2) {
+    border-color: #c0c0c0;
+    background: #fafafa;
+}
+
+#leaderboard-list li:nth-child(3) {
+    border-color: #cd7f32;
+    background: #fffaf5;
+}
+
+/* ================= FORM ELEMANLARI ================= */
+.form-control {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+select.form-control {
+    cursor: pointer;
+}
+
+/* ================= BUTONLAR ================= */
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: var(--transition);
+    font-size: 1rem;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary { 
+    background: var(--primary); 
+    color: white; 
+}
+
+.btn-primary:hover {
+    background: #357abd;
+}
+
+.btn-success { 
+    background: var(--secondary); 
+    color: white; 
+}
+
+.btn-success:hover {
+    background: #27ae60;
+}
+
+.btn-danger { 
+    background: var(--danger); 
+    color: white; 
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ================= SORU ÖNİZLEME ================= */
+.preview-item {
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #eee;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.preview-item:hover {
+    background: #f0f0f0;
+}
+
+.preview-item button {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.preview-item button:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+/* ================= MODAL (POP-UP) ================= */
+.modal-overlay {
+    position: fixed;
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 12000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 450px;
+    animation: modalPop 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes modalPop {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* ================= OYUN ALANI STİLLERİ ================= */
+.game-question {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary);
+}
+
+.game-question h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.game-question p {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.game-option {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 2px solid #e1e8ed;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1rem;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.game-option:hover {
+    border-color: var(--primary);
+    background: #f0f7ff;
+    transform: translateX(5px);
+}
+
+.game-option.selected {
+    border-color: var(--primary);
+    background: #e3f2fd;
+}
+
+.game-option.correct {
+    border-color: var(--secondary);
+    background: #d4edda;
+    color: #155724;
+    font-weight: bold;
+}
+
+.game-option.wrong {
+    border-color: var(--danger);
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.game-option:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+/* Progress Bar */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e1e8ed;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #6ab0f3);
+    transition: width 0.4s ease;
+    border-radius: 4px;
+}
+
+/* Oyun Sonuçları */
+#game-results {
+    text-align: center;
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+    border-radius: 15px;
+    border: 2px solid var(--secondary);
+}
+
+#game-results h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.5rem;
+}
+
+#result-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin: 0;
+}
+
+#result-text p {
+    margin: 8px 0;
+}
+
+/* ================= BİLDİRİM STİLLERİ ================= */
+.notice {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+    max-width: 350px;
+    word-wrap: break-word;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ================= RESPONSIVE TASARIM ================= */
+@media (max-width: 600px) {
+    body {
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+    
+    .container {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+    }
+    
+    .sidebar {
+        padding-top: 15px;
+    }
+    
+    .modal-content {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .game-option {
+        padding: 12px;
+    }
+}
+
+/* ================= EK YARDIMCI SINIFLAR ================= */
+.text-center { text-align: center; }
+.text-primary { color: var(--primary); }
+.text-success { color: var(--secondary); }
+.text-danger { color: var(--danger); }
+
+.mt-1 { margin-top: 10px; }
+.mt-2 { margin-top: 20px; }
+.mb-1 { margin-bottom: 10px; }
+.mb-2 { margin-bottom: 20px; }
+
+.hidden { display: none !important; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 10px; }
+.gap-2 { gap: 20px; }
+
+/* Öğretmen paneli özel alanları */
+.teacher-tools {
+    background: #f0f4f8;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #d1d9e6;
+    margin-bottom: 20px;
+}
+
+/* Input grid düzeni */
+.input-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 480px) {
+    .input-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Options grid */
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.options-grid input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+@media (max-width: 480px) {
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Scrollbar stilleri */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+

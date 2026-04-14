@@ -1,0 +1,619 @@
+HTTP/1.1 200 OK
+Date: Tue, 14 Apr 2026 12:25:12 GMT
+Server: Apache/2.4.58 (Win64) OpenSSL/3.5.4 PHP/8.5.1
+X-Powered-By: PHP/8.5.1
+Cache-Control: no-cache, private
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+X-Permitted-Cross-Domain-Policies: none
+Set-Cookie: XSRF-TOKEN=eyJpdiI6ImkyU0NWKytuc0F1aG1zQ3doblhXT3c9PSIsInZhbHVlIjoicVNyaHF0aVBueUs5OEdqdUhPN1hnbE1tUmoyZ2lNbGZ3ZGp2TVVPb1JrK0VuZ2IwN1ZmOFZkOFR5SHNQd2l2TzB2Mi90cjNzNlR2V09Lc056VVdacUErZXRjdkFrZmpIZlNoc0ZyUjNnenZqZTlNN0psZjRGam5DcnZSaHk4T2siLCJtYWMiOiJhMmNmZWJiNzJkY2FjYTE3Yjk5NjdmZmUzYWRiNDllNDg0MWY4YzU5OWQ1MjNhZjk3NWNhYzUzZTk1NThmMTZmIiwidGFnIjoiIn0%3D; expires=Tue, 14 Apr 2026 14:25:12 GMT; Max-Age=7200; path=/; samesite=lax
+Set-Cookie: okul_laravel_yeni_session=eyJpdiI6IkFyY1dsdFMwWjI4TURXVE51QUNMTWc9PSIsInZhbHVlIjoiL2VNZDJ0TFU5ZGE1eTZ2cFdScWVIUW8yNDRsWVVRczEvakxBMXhJcHZNTTAyMHU5cHZybTRqSGdnOWpaODB4OHR4UVJNM21kcUJ2RWNTNmVsNlBpYmN2VDR2WHdNMldNZ1ZqTnYvb2hHMm1jTnQ4dWNEN28rUEYyeHM5OStDbVEiLCJtYWMiOiJlZTc4NzU0MzJjMWY3MGY2Nzk2N2I2NjdmZTgxZTM3MmRlNDA2OTZiYTkzZTE1MTRmY2RiZTZmNGEzOWYzZWI2IiwidGFnIjoiIn0%3D; expires=Tue, 14 Apr 2026 14:25:12 GMT; Max-Age=7200; path=/; httponly; samesite=lax
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=utf-8
+
+﻿<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Giris</title>
+    <link rel="stylesheet" href="http://localhost/okul-laravel-yeni/school-management-system/public/css/admin.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap');
+        body{margin:0;font-family:'Manrope',Segoe UI,Arial,sans-serif;background:#eef2f9;color:#0f172a}
+        .login-shell{min-height:100vh;display:grid;grid-template-columns:1.08fr .92fr;background:linear-gradient(130deg,#f2f7ff 0%,#ebf2ff 45%,#f8fbff 100%)}
+        .brand-side{position:relative;display:grid;place-items:center;padding:44px;background:radial-gradient(circle at 25% 20%,#bfdbfe 0,#93c5fd 45%,#60a5fa 100%);overflow:hidden}
+        .brand-side::before,.brand-side::after{content:"";position:absolute;border-radius:999px;background:rgba(255,255,255,.28)}
+        .brand-side::before{width:340px;height:340px;left:-110px;bottom:-90px}
+        .brand-side::after{width:250px;height:250px;right:-80px;top:-70px}
+
+        .space-layer{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+        .star{position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.85);animation:twinkle 2.2s ease-in-out infinite}
+        .star.s1{left:12%;top:18%;animation-delay:.2s}
+        .star.s2{left:30%;top:66%;animation-delay:1.1s}
+        .star.s3{left:58%;top:24%;animation-delay:.8s}
+        .star.s4{left:74%;top:70%;animation-delay:1.6s}
+        .star.s5{left:86%;top:38%;animation-delay:.5s}
+        .star.s6{left:6%;top:8%;animation-delay:.9s}
+        .star.s7{left:94%;top:10%;animation-delay:1.9s}
+        .star.s8{left:5%;top:88%;animation-delay:1.3s}
+        .star.s9{left:90%;top:86%;animation-delay:.4s}
+        .star.s10{left:48%;top:10%;animation-delay:2.1s}
+
+        .orbit{position:absolute;border:1px dashed rgba(255,255,255,.35);border-radius:999px;animation:spin 26s linear infinite}
+        .orbit.o1{width:340px;height:340px;left:-40px;top:40px}
+        .orbit.o2{width:280px;height:280px;right:-30px;bottom:30px;animation-direction:reverse;animation-duration:32s}
+        .orbit.o3{width:460px;height:460px;left:18%;top:8%;animation-duration:40s;opacity:.5}
+
+        .float-item{position:absolute;color:rgba(15,23,42,.55);font-weight:800;letter-spacing:.6px;animation:drift 6.4s ease-in-out infinite}
+        .svg-item{position:absolute;animation:drift 3.8s ease-in-out infinite;opacity:.78}
+        .svg-item svg{display:block}
+        .svg-item.robot{left:10%;top:24%;animation-delay:.4s}
+        .svg-item.ship{left:76%;top:14%;animation-delay:1.1s}
+        .svg-item.sat{left:6%;top:66%;animation-delay:1.8s}
+        .svg-item.bot2{left:82%;top:72%;animation-delay:2.3s}
+        .svg-item.ship2{left:52%;top:34%;animation-delay:.9s}
+        .svg-item.robot3{left:36%;top:78%;animation-delay:1.6s}
+        .streak{position:absolute;width:128px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95));opacity:.88;animation:streak .72s linear infinite}
+        .streak.sr1{left:70%;top:12%;transform:rotate(-12deg)}
+        .streak.sr2{left:12%;top:22%;transform:rotate(-16deg);animation-delay:.35s}
+        .streak.sr3{left:44%;top:30%;transform:rotate(-10deg);animation-delay:.2s}
+        .streak.sr4{left:8%;top:62%;transform:rotate(-14deg);animation-delay:.62s}
+        .streak.sr5{left:74%;top:70%;transform:rotate(-8deg);animation-delay:.48s}
+        .streak.sr6{left:58%;top:44%;transform:rotate(-9deg);animation-delay:.14s}
+        .streak.sr7{left:28%;top:80%;transform:rotate(-13deg);animation-delay:.28s}
+        .streak.sr8{left:86%;top:48%;transform:rotate(-11deg);animation-delay:.44s}
+        .streak.sr9{left:36%;top:12%;transform:rotate(-7deg);animation-delay:.56s}
+
+        .float-item.code1{font-size:13px;left:72%;top:8%;font-family:Consolas,monospace}
+        .float-item.code2{font-size:13px;left:3%;top:20%;font-family:Consolas,monospace;animation-delay:2s}
+        .float-item.code3{font-size:12px;left:80%;top:90%;font-family:Consolas,monospace;animation-delay:3s}
+        .float-item.code4{font-size:12px;left:2%;top:78%;font-family:Consolas,monospace;animation-delay:1.2s}
+        .float-item.code5{font-size:12px;left:40%;top:4%;font-family:Consolas,monospace;animation-delay:2.6s}
+        .float-item.code6{font-size:12px;left:88%;top:40%;font-family:Consolas,monospace;animation-delay:3.2s}
+
+        .shape{position:absolute;border:1px solid rgba(255,255,255,.35);animation:drift 7.5s ease-in-out infinite}
+        .shape.sq1{width:22px;height:22px;left:10%;top:56%;transform:rotate(18deg)}
+        .shape.sq2{width:16px;height:16px;left:90%;top:74%;transform:rotate(30deg);animation-delay:1.4s}
+        .shape.tr1{width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid rgba(255,255,255,.26);left:14%;top:10%;border-top:none;border-radius:0;animation-delay:2.1s}
+        .shape.tr2{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid rgba(255,255,255,.26);left:86%;top:18%;border-top:none;border-radius:0;animation-delay:1.1s}
+
+        .brand-content{position:relative;z-index:2;display:grid;gap:18px;justify-items:center;text-align:center;color:#0f172a}
+        .brand-content img{width:min(420px,70%);max-width:420px;height:auto;filter:drop-shadow(0 14px 32px rgba(2,6,23,.35))}
+        .brand-content h1{margin:0;font-size:42px;line-height:1.1;font-weight:800;letter-spacing:.2px}
+        .brand-content p{margin:0;max-width:620px;font-size:18px;color:#1e3a8a}
+
+        .form-side{display:grid;place-items:center;padding:34px}
+        .login-form{width:min(620px,96%);background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #d7e4f7;border-radius:22px;padding:34px 30px;box-shadow:0 25px 50px rgba(15,23,42,.14),0 2px 8px rgba(15,23,42,.05)}
+        .login-form h2{margin:0 0 6px;font-size:34px;line-height:1.1;font-weight:800;color:#0f172a}
+        .login-form p{margin:0 0 18px;color:#64748b;font-size:15px}
+        .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px}
+        .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
+        .login-form input:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
+        .login-form .btn{width:100%;margin-top:14px;padding:13px 16px;border-radius:12px;font-weight:800;font-size:15px;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
+        .login-actions{display:flex;gap:10px;margin-top:14px}
+        .login-actions .btn{margin-top:0;width:auto}
+        .btn-compact{padding:11px 14px;min-width:120px}
+        .btn-game{flex:1;background:linear-gradient(180deg,#f59e0b,#ea580c) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+        .btn-game svg{width:16px;height:16px;fill:currentColor}
+        .game-login-help{margin-top:10px;font-size:12px;color:#475569;line-height:1.45}
+        .error-box{background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;color:#be123c;padding:10px 12px;margin-bottom:10px}
+        .mini-game-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:1200}
+        .mini-game-modal.open{display:flex}
+        .mini-game-card{width:min(760px,94vw);background:#fff;border-radius:16px;border:1px solid #dbeafe;box-shadow:0 20px 55px rgba(15,23,42,.35);padding:14px}
+        .mini-game-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+        .mini-game-head h3{margin:0;font-size:20px}
+        .mini-game-head p{margin:3px 0 0;color:#64748b;font-size:13px}
+        .mini-game-close{background:#e2e8f0;color:#0f172a;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700}
+        #loginGameCanvas{width:100%;height:430px;background:linear-gradient(180deg,#e0f2fe,#dbeafe 48%,#bbf7d0);border-radius:12px;border:1px solid #bfdbfe;display:block;touch-action:none}
+        .mini-game-foot{margin-top:8px;color:#334155;font-size:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+        .mini-game-win{color:#065f46;font-weight:800}
+        .mini-game-stars{color:#f59e0b;font-weight:800}
+        .win-toast{
+            position:absolute;
+            left:50%;
+            top:50%;
+            transform:translate(-50%,-50%) scale(.9);
+            padding:14px 18px;
+            border-radius:14px;
+            background:linear-gradient(135deg,#22c55e,#16a34a);
+            color:#fff;
+            font-weight:800;
+            font-size:18px;
+            box-shadow:0 16px 40px rgba(22,163,74,.35);
+            opacity:0;
+            pointer-events:none;
+            transition:all .28s ease;
+            z-index:20;
+            text-align:center;
+            min-width:300px;
+        }
+        .win-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+        @keyframes twinkle{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1.4)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes drift{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(10px)}}
+        @keyframes streak{0%{transform:translateX(16px) scaleX(.55)}100%{transform:translateX(-44px) scaleX(1)}}
+
+        @media (max-width:1100px){
+            .login-shell{grid-template-columns:1fr}
+            .brand-side{min-height:310px;padding:24px}
+            .brand-content img{width:min(320px,78%)}
+            .brand-content h1{font-size:32px}
+            .brand-content p{font-size:15px}
+            .form-side{padding:16px}
+            .login-form{width:min(680px,100%);padding:22px}
+            .login-form h2{font-size:28px}
+        }
+    </style>
+</head>
+<body>
+<div class="login-shell">
+    <section class="brand-side">
+        <div class="space-layer">
+            <span class="star s1"></span>
+            <span class="star s2"></span>
+            <span class="star s3"></span>
+            <span class="star s4"></span>
+            <span class="star s5"></span>
+            <span class="star s6"></span>
+            <span class="star s7"></span>
+            <span class="star s8"></span>
+            <span class="star s9"></span>
+            <span class="star s10"></span>
+            <span class="streak sr1"></span>
+            <span class="streak sr2"></span>
+            <span class="streak sr3"></span>
+            <span class="streak sr4"></span>
+            <span class="streak sr5"></span>
+            <span class="streak sr6"></span>
+            <span class="streak sr7"></span>
+            <span class="streak sr8"></span>
+            <span class="streak sr9"></span>
+
+            <div class="orbit o1"></div>
+            <div class="orbit o2"></div>
+            <div class="orbit o3"></div>
+
+            <div class="svg-item robot">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="7" y="10" width="26" height="22" rx="6" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+                    <circle cx="15" cy="20" r="3" fill="#0ea5e9"/>
+                    <circle cx="25" cy="20" r="3" fill="#0ea5e9"/>
+                    <rect x="16" y="25" width="8" height="2" rx="1" fill="#334155"/>
+                    <rect x="19" y="4" width="2" height="6" rx="1" fill="#475569"/>
+                    <circle cx="20" cy="3.5" r="2" fill="#22d3ee"/>
+                </svg>
+            </div>
+            <div class="svg-item ship">
+                <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 4L30 22L22 40L14 22L22 4Z" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
+                    <circle cx="22" cy="22" r="4.5" fill="#38bdf8"/>
+                    <path d="M14 22H6L11 27" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M30 22H38L33 17" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="svg-item sat">
+                <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="15" y="14" width="8" height="10" rx="2" fill="#e2e8f0" stroke="#475569" stroke-width="1.4"/>
+                    <rect x="4" y="15" width="9" height="8" rx="1.5" fill="#bfdbfe" stroke="#64748b" stroke-width="1.2"/>
+                    <rect x="25" y="15" width="9" height="8" rx="1.5" fill="#bfdbfe" stroke="#64748b" stroke-width="1.2"/>
+                    <path d="M19 11V8M19 30V27" stroke="#475569" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="svg-item bot2">
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="8" width="22" height="18" rx="5" fill="#dbeafe" stroke="#475569" stroke-width="1.4"/>
+                    <circle cx="13" cy="17" r="2.2" fill="#0284c7"/>
+                    <circle cx="21" cy="17" r="2.2" fill="#0284c7"/>
+                    <path d="M12 22H22" stroke="#334155" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="svg-item ship2">
+                <svg width="42" height="42" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 5L29 22L22 39L15 22L22 5Z" fill="#dbeafe" stroke="#334155" stroke-width="1.5"/>
+                    <circle cx="22" cy="22" r="4" fill="#22d3ee"/>
+                    <path d="M15 22H7" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="svg-item robot3">
+                <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="8" y="11" width="24" height="20" rx="6" fill="#e2e8f0" stroke="#475569" stroke-width="1.4"/>
+                    <circle cx="16" cy="21" r="2.6" fill="#0ea5e9"/>
+                    <circle cx="24" cy="21" r="2.6" fill="#0ea5e9"/>
+                    <rect x="17" y="26" width="6" height="2" rx="1" fill="#334155"/>
+                </svg>
+            </div>
+
+            <div class="float-item code1">&lt;/&gt; while(code){learn();}</div>
+            <div class="float-item code2">if(future) return you;</div>
+            <div class="float-item code3">const xp = progress + effort;</div>
+            <div class="float-item code4">for(;;){ build(); }</div>
+            <div class="float-item code5">class FutureEngineer {}</div>
+            <div class="float-item code6">deploy("dreams")</div>
+
+            <div class="shape sq1"></div>
+            <div class="shape sq2"></div>
+            <div class="shape tr1"></div>
+            <div class="shape tr2"></div>
+        </div>
+        <div class="brand-content">
+            <img src="http://localhost/okul-laravel-yeni/school-management-system/public/logo.png" alt="Logo">
+            <h1>Dijital Bilişim Eğitim Platformu</h1>
+            <p>Özelsin Çünkü Gelecek Sensin</p>
+        </div>
+    </section>
+
+    <section class="form-side">
+        <div class="login-form">
+            <h2>Hesabina Giris Yap</h2>
+            <p>Kullanici adi veya e-posta ile devam et.</p>
+                        <form method="POST" action="http://localhost/okul-laravel-yeni/school-management-system/public/login">
+                <input type="hidden" name="_token" value="OVaa0s8jPzx8tSOT3GT2kkqtGN69qiLVnhN2ILb2" autocomplete="off">                <label>Kullanici Adi veya E-posta</label>
+                <input type="text" id="login-email" name="email" value="" placeholder="ornek: pipek.5a" required>
+
+                <label>Sifre</label>
+                <input type="password" name="password" required>
+
+                <div class="login-actions">
+                    <button class="btn btn-compact" type="submit">Giris Yap</button>
+                    <button class="btn btn-game" type="button" id="openGameLoginBtn">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.5l-2.2 2.2a1 1 0 01-1.6-.3L10.4 18H7a3 3 0 01-3-3V9a3 3 0 013-3zm1 3v2h2v2h2v-2h2V9h-2V7h-2v2H8zm8 0h2v2h-2V9z"/></svg>
+                        Oyun ile Giris Yap
+                    </button>
+                </div>
+                <div class="game-login-help">
+                    Oyun ile giris icin kullanici adi girmeniz yeterlidir. Oyunu gecince otomatik giris yapilir.
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+<div id="miniGameModal" class="mini-game-modal">
+    <div class="mini-game-card">
+        <div class="mini-game-head">
+            <div>
+                <h3>Kanatli Kahraman Oyunu</h3>
+                <p>Bilgi: Ok tuslari veya mobilde kaydirma ile oynanir. Zirveye cikip kazaninca giris yapilir.</p>
+            </div>
+            <button type="button" class="mini-game-close" id="closeGameModalBtn">Kapat</button>
+        </div>
+        <canvas id="loginGameCanvas" width="700" height="430"></canvas>
+        <div id="miniGameWinToast" class="win-toast">🎉 Tebrikler, giriş yapıyorsunuz...</div>
+        <div class="mini-game-foot">
+            <span>Kontroller: Sol/Sag ok = hareket, Yukari ok = ziplama | Mobil: Saga/sola/yukari kaydir</span>
+            <span id="miniGameStatus">Hazir misin?</span>
+        </div>
+    </div>
+</div>
+<script>
+(() => {
+    const openBtn = document.getElementById('openGameLoginBtn');
+    const closeBtn = document.getElementById('closeGameModalBtn');
+    const modal = document.getElementById('miniGameModal');
+    const canvas = document.getElementById('loginGameCanvas');
+    const winToast = document.getElementById('miniGameWinToast');
+    const statusEl = document.getElementById('miniGameStatus');
+    const usernameInput = document.getElementById('login-email');
+    if (!openBtn || !canvas || !modal) return;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchActive = false;
+
+    const ctx = canvas.getContext('2d');
+    const keys = { left: false, right: false };
+    const gravity = 0.5;
+    const jumpPower = -11.2;
+    let failCount = 0;
+    const state = {
+        running: false,
+        won: false,
+        player: { x: 28, y: 290, w: 28, h: 28, vx: 0, vy: 0, onGround: false, facing: 1, flap: 0 },
+        platforms: [
+            { x: 0, y: 405, w: 700, h: 25 },
+            { x: 46, y: 368, w: 130, h: 12 },
+            { x: 162, y: 334, w: 122, h: 12 },
+            { x: 274, y: 304, w: 126, h: 12 },
+            { x: 392, y: 276, w: 120, h: 12 },
+            { x: 506, y: 248, w: 118, h: 12 },
+            { x: 430, y: 218, w: 108, h: 12 },
+            { x: 320, y: 190, w: 104, h: 12 },
+            { x: 220, y: 162, w: 96, h: 12 },
+            { x: 140, y: 136, w: 90, h: 10 }
+        ],
+        monsters: [
+            { x: 72, y: 350, w: 20, h: 18, minX: 56, maxX: 160, dir: 1, speed: 1.05 },
+            { x: 196, y: 316, w: 20, h: 18, minX: 170, maxX: 276, dir: -1, speed: 1.15 },
+            { x: 316, y: 286, w: 20, h: 18, minX: 286, maxX: 396, dir: 1, speed: 1.2 },
+            { x: 438, y: 258, w: 20, h: 18, minX: 404, maxX: 504, dir: -1, speed: 1.25 },
+            { x: 548, y: 230, w: 20, h: 18, minX: 516, maxX: 616, dir: 1, speed: 1.3 },
+            { x: 352, y: 172, w: 20, h: 18, minX: 326, maxX: 414, dir: -1, speed: 1.35 }
+        ],
+        goal: { x: 154, y: 88, w: 44, h: 24 },
+        stars: [
+            { x: 165, y: 282, taken: false },
+            { x: 364, y: 222, taken: false },
+            { x: 553, y: 170, taken: false }
+        ],
+        easyMode: false
+    };
+
+    function setEasyModeIfNeeded() {
+        state.easyMode = failCount >= 3;
+        if (state.easyMode) {
+            state.monsters.forEach((m) => m.speed = Math.max(0.45, m.speed * 0.55));
+            if (!state.platforms.find((p) => p.x === 112 && p.y === 232)) {
+                state.platforms.push({ x: 112, y: 232, w: 110, h: 12 });
+                state.platforms.push({ x: 156, y: 178, w: 100, h: 12 });
+            }
+        }
+    }
+
+    function playJumpSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(240, audioCtx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.14);
+        } catch (_) {}
+    }
+
+    function resetGame() {
+        state.won = false;
+        state.player.x = 28; state.player.y = 360; state.player.vx = 0; state.player.vy = 0; state.player.flap = 0;
+        if (winToast) winToast.classList.remove('show');
+        state.stars.forEach((s) => s.taken = false);
+        setEasyModeIfNeeded();
+        statusEl.innerHTML = 'Canavarlardan kac ve zirveye cik! <span class="mini-game-stars">Deneme: ' + (failCount + 1) + (state.easyMode ? ' · Kolay Mod Aktif ⭐' : '') + '</span>';
+        state.running = true;
+    }
+
+    function intersects(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function update() {
+        const p = state.player;
+        p.vx = 0;
+        if (keys.left) { p.vx = -3.8; p.facing = -1; }
+        if (keys.right) { p.vx = 3.8; p.facing = 1; }
+        p.x += p.vx;
+        p.x = Math.max(0, Math.min(canvas.width - p.w, p.x));
+        p.vy += gravity;
+        p.y += p.vy;
+        p.onGround = false;
+        p.flap += 0.24;
+
+        for (const plat of state.platforms) {
+            if (p.vy >= 0 && p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h >= plat.y && p.y + p.h <= plat.y + 16) {
+                p.y = plat.y - p.h;
+                p.vy = 0;
+                p.onGround = true;
+            }
+        }
+
+        if (p.y > canvas.height + 40) {
+            failCount++;
+            resetGame();
+        }
+
+        for (const m of state.monsters) {
+            m.x += m.speed * m.dir;
+            if (m.x <= m.minX || m.x + m.w >= m.maxX) m.dir *= -1;
+            if (intersects(p, m)) {
+                failCount++;
+                statusEl.textContent = 'Canavara yakalandin. Tekrar dene!';
+                resetGame();
+                return;
+            }
+        }
+
+        for (const s of state.stars) {
+            if (s.taken) continue;
+            if (intersects(p, { x: s.x - 8, y: s.y - 8, w: 16, h: 16 })) {
+                s.taken = true;
+            }
+        }
+
+        if (intersects(p, state.goal)) {
+            state.won = true;
+            state.running = false;
+            statusEl.innerHTML = '<span class=\"mini-game-win\">Tebrikler! Giris hazirlaniyor...</span>';
+            if (winToast) winToast.classList.add('show');
+            doGameLogin();
+        }
+    }
+
+    function drawWingedPlayer(p) {
+        ctx.save();
+        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+        if (p.facing < 0) ctx.scale(-1, 1);
+        const flap = Math.sin(p.flap) * 2.2;
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath(); ctx.arc(3, -2, 2.1, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.moveTo(10, 1); ctx.lineTo(16, 4); ctx.lineTo(10, 6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#a78bfa';
+        ctx.beginPath(); ctx.ellipse(-10, -2 + flap, 7, 4, -0.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(-10, 4 - flap, 8, 4, 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffffcc';
+        for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.arc(70 + i * 118, 42 + (i % 2) * 8, 18, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = '#8b5cf6';
+        for (const plat of state.platforms) {
+            ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
+            ctx.fillStyle = '#c4b5fd';
+            ctx.fillRect(plat.x, plat.y + plat.h - 3, plat.w, 3);
+            ctx.fillStyle = '#8b5cf6';
+        }
+        ctx.fillStyle = '#16a34a';
+        ctx.fillRect(state.goal.x, state.goal.y, state.goal.w, state.goal.h);
+        ctx.fillStyle = '#052e16';
+        ctx.fillText('HEDEF', state.goal.x + 4, state.goal.y + 17);
+
+        for (const m of state.monsters) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(m.x, m.y, m.w, m.h);
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(m.x + 4, m.y + 6, 4, 4);
+            ctx.fillRect(m.x + 14, m.y + 6, 4, 4);
+        }
+
+        for (const s of state.stars) {
+            if (s.taken) continue;
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y - 8);
+            ctx.lineTo(s.x + 3, s.y - 2);
+            ctx.lineTo(s.x + 9, s.y - 2);
+            ctx.lineTo(s.x + 4, s.y + 2);
+            ctx.lineTo(s.x + 6, s.y + 8);
+            ctx.lineTo(s.x, s.y + 4);
+            ctx.lineTo(s.x - 6, s.y + 8);
+            ctx.lineTo(s.x - 4, s.y + 2);
+            ctx.lineTo(s.x - 9, s.y - 2);
+            ctx.lineTo(s.x - 3, s.y - 2);
+            ctx.closePath();
+            ctx.fill();
+        }
+        drawWingedPlayer(state.player);
+
+        const collected = state.stars.filter((s) => s.taken).length;
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 13px Manrope, sans-serif';
+        ctx.fillText('Yildiz: ' + collected + '/' + state.stars.length, 12, 22);
+    }
+
+    function loop() {
+        if (state.running) update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    async function doGameLogin() {
+        const emailVal = (usernameInput?.value || '').trim();
+        if (!emailVal) {
+            statusEl.textContent = 'Lutfen once kullanici adini gir.';
+            state.running = true;
+            state.won = false;
+            return;
+        }
+        try {
+            const resp = await fetch('http://localhost/okul-laravel-yeni/school-management-system/public/login/game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content') || 'OVaa0s8jPzx8tSOT3GT2kkqtGN69qiLVnhN2ILb2',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email: emailVal, game_won: true })
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.message || 'Giris basarisiz');
+            setTimeout(() => window.location.href = data.redirect || 'http://localhost/okul-laravel-yeni/school-management-system/public/dashboard', 1700);
+        } catch (e) {
+            statusEl.textContent = e.message || 'Giris sirasinda hata olustu.';
+            if (winToast) winToast.classList.remove('show');
+            state.running = true;
+            state.won = false;
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'ArrowLeft') keys.left = true;
+        if (e.key === 'ArrowRight') keys.right = true;
+        if (e.key === 'ArrowUp' && state.player.onGround && state.running) {
+            state.player.vy = jumpPower;
+            playJumpSound();
+        }
+    });
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowLeft') keys.left = false;
+        if (e.key === 'ArrowRight') keys.right = false;
+    });
+
+    openBtn.addEventListener('click', () => {
+        const emailVal = (usernameInput?.value || '').trim();
+        if (!emailVal) {
+            statusEl.textContent = 'Oyunla giris icin once kullanici adini gir.';
+            return;
+        }
+        modal.classList.add('open');
+        resetGame();
+    });
+    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('open');
+    });
+    modal.addEventListener('transitionend', () => {
+        if (!modal.classList.contains('open') && winToast) winToast.classList.remove('show');
+    });
+    modal.addEventListener('touchmove', (e) => {
+        if (modal.classList.contains('open')) e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', (e) => {
+        if (!modal.classList.contains('open')) return;
+        const t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchActive = true;
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (!touchActive || !modal.classList.contains('open')) return;
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        keys.left = false;
+        keys.right = false;
+        if (Math.abs(dx) > 22) {
+            if (dx > 0) keys.right = true;
+            if (dx < 0) keys.left = true;
+        }
+        if (dy < -24 && state.player.onGround && state.running) {
+            state.player.vy = jumpPower;
+            playJumpSound();
+            touchStartY = t.clientY;
+        }
+        e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+        touchActive = false;
+        keys.left = false;
+        keys.right = false;
+    });
+
+    ctx.font = '13px Manrope, sans-serif';
+    resetGame();
+    state.running = false;
+    draw();
+    loop();
+})();
+</script>
+</body>
+</html>

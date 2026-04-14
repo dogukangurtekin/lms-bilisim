@@ -1,0 +1,55 @@
+<?php
+
+return [
+    'accepted' => ':attribute kabul edilmelidir.',
+    'active_url' => ':attribute gecerli bir URL olmali.',
+    'after' => ':attribute, :date tarihinden sonra olmali.',
+    'alpha' => ':attribute sadece harflerden olusmali.',
+    'alpha_num' => ':attribute sadece harf ve rakamlardan olusmali.',
+    'array' => ':attribute bir dizi olmali.',
+    'before' => ':attribute, :date tarihinden once olmali.',
+    'between' => [
+        'numeric' => ':attribute :min ile :max arasinda olmali.',
+        'file' => ':attribute :min ile :max KB arasinda olmali.',
+        'string' => ':attribute :min ile :max karakter arasinda olmali.',
+        'array' => ':attribute :min ile :max oge arasinda olmali.',
+    ],
+    'boolean' => ':attribute alani dogru veya yanlis olmali.',
+    'confirmed' => ':attribute dogrulamasi eslesmiyor.',
+    'date' => ':attribute gecerli bir tarih olmali.',
+    'email' => ':attribute gecerli bir e-posta adresi olmali.',
+    'exists' => 'Secilen :attribute gecersiz.',
+    'filled' => ':attribute alani doldurulmali.',
+    'integer' => ':attribute bir tam sayi olmali.',
+    'max' => [
+        'numeric' => ':attribute en fazla :max olmali.',
+        'file' => ':attribute en fazla :max KB olmali.',
+        'string' => ':attribute en fazla :max karakter olmali.',
+        'array' => ':attribute en fazla :max oge icermeli.',
+    ],
+    'min' => [
+        'numeric' => ':attribute en az :min olmali.',
+        'file' => ':attribute en az :min KB olmali.',
+        'string' => ':attribute en az :min karakter olmali.',
+        'array' => ':attribute en az :min oge icermeli.',
+    ],
+    'numeric' => ':attribute bir sayi olmali.',
+    'required' => ':attribute alani zorunlu.',
+    'required_if' => ':attribute alani zorunlu.',
+    'same' => ':attribute ve :other ayni olmali.',
+    'string' => ':attribute metin olmalidir.',
+    'unique' => ':attribute daha once kullanilmis.',
+    'url' => ':attribute gecerli bir URL olmali.',
+
+    'attributes' => [
+        'name' => 'ad',
+        'code' => 'ders kodu',
+        'teacher_id' => 'ogretmen',
+        'school_class_id' => 'sinif',
+        'weekly_hours' => 'haftalik ders saati',
+        'lesson_payload' => 'ders icerigi',
+        'email' => 'e-posta',
+        'password' => 'sifre',
+    ],
+];
+

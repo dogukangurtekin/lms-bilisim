@@ -1,0 +1,230 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Block Coding - Grid Runner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <button id="menuToggle" class="menu-toggle" aria-label="Menu">☰</button>
+      <h1>Özelsin Blok Kodlama Uygulaması</h1>
+    </div>
+    <div class="header-center">
+      <div class="level-nav-wrap">
+        <button id="levelMoveUpBtn" class="level-shift-btn" title="Seviyeyi yukarı taşı" aria-label="Seviyeyi yukarı taşı">↑ Yukarı</button>
+        <div class="level-select-wrap">
+          <select id="levelSelect" aria-label="Seviye seçin"></select>
+          <div class="level-progress" aria-hidden="true"></div>
+        </div>
+        <button id="levelMoveDownBtn" class="level-shift-btn" title="Seviyeyi aşağı taşı" aria-label="Seviyeyi aşağı taşı">↓ Aşağı</button>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="darkToggle" class="dark-toggle" aria-label="Tema değiştir">🌙</button>
+    </div>
+  </header>
+
+  <!-- Side menu (slides from left) -->
+  <nav id="sideMenu" class="side-menu hidden" aria-hidden="true">
+    <div class="side-menu-inner">
+      <div class="side-header">
+        <div class="brand-sm">Ö</div>
+        <div class="side-title">Menü</div>
+      </div>
+      <button id="sideClose" class="side-close" aria-label="Kapat">✕</button>
+      <div class="menu-list buttons">
+        <button id="addLevelBtn" class="menu-btn">Seviye Ekle</button>
+        <button id="deleteLevelBtn" class="menu-btn danger">Seviye Sil</button>
+        <div class="small-desc">Yeni seviye tasarla veya var olanı kopyala.</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Level Designer Popup -->
+  <div id="levelDesignerModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content designer">
+      <div class="modal-header">
+        <h3>Seviye Tasarla</h3>
+      </div>
+      <div class="designer-body">
+        <div class="designer-layout-grid">
+          <aside class="designer-sidebar">
+            <label for="designerLevelName">Seviye Adı</label>
+            <input id="designerLevelName" type="text" placeholder="Örn. Özel Seviye 1" />
+            <label for="designerGroup">Başlık / Kategori</label>
+            <input id="designerGroup" type="text" placeholder="Örn. Kolay, Orta, Zor, Özel" />
+            <label for="designerLevelOrder">Seviye Sırası</label>
+            <input id="designerLevelOrder" type="number" min="1" step="1" placeholder="Örn. 1" />
+            <label for="designerLevelXp">Seviye XP</label>
+            <input id="designerLevelXp" type="number" min="1" max="500" step="1" placeholder="Örn. 100" />
+            <label>Grid Boyutu</label>
+            <div class="designer-grid-size">
+              <select id="designerGridWidth">
+                <option value="6">6</option>
+                <option value="8" selected>8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+              </select>
+              <select id="designerGridHeight">
+                <option value="6">6</option>
+                <option value="8" selected>8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+              </select>
+            </div>
+            <label>Nesneler (Sürükle-Bırak)</label>
+            <div id="designerPalette" class="designer-palette">
+              <button class="palette-tile active" data-item="start" draggable="true" title="Başlangıç" aria-label="Başlangıç">
+                <span class="palette-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M6 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 5h9l-2.4 3 2.4 3H8V5z" fill="currentColor"/>
+                  </svg>
+                </span>
+              </button>
+              <button class="palette-tile" data-item="star" draggable="true" title="Hedef" aria-label="Hedef">
+                <span class="palette-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3.4l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.2l-5.4 2.9 1-6.1L3.2 9.8l6.1-.9L12 3.4z" fill="currentColor"/>
+                  </svg>
+                </span>
+              </button>
+              <button class="palette-tile" data-item="obstacle" draggable="true" title="Engel" aria-label="Engel">
+                <span class="palette-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="6" width="18" height="12" rx="2" fill="currentColor"/>
+                    <path d="M3 10h18M9 6v4M15 10v4M9 14v4" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </button>
+              <button class="palette-tile" data-item="erase" draggable="true" title="Sil" aria-label="Sil">
+                <span class="palette-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M14.8 4.8l4.4 4.4a2.6 2.6 0 010 3.6l-5.7 5.7a2.6 2.6 0 01-1.8.8H7.2a2.2 2.2 0 01-2.2-2.2v-2.8c0-.7.3-1.4.8-1.9l6.4-6.4a2.6 2.6 0 013.6 0z" fill="currentColor"/>
+                    <path d="M7.5 18.8h8.6" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </button>
+            </div>
+            <div class="designer-actions">
+              <button id="designerSaveBtn">Kaydet</button>
+              <button id="designerResetBtn" class="ghost">Sıfırla</button>
+              <button id="designerCancelBtn" class="ghost">İptal</button>
+            </div>
+          </aside>
+          <section class="designer-board-wrap">
+            <div class="designer-board-help">Soldan nesneyi secip karelerin ustune surukle veya tiklayarak yerlestir.</div>
+            <div id="designerBoard" class="designer-board"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Level Delete Confirm Modal -->
+  <div id="levelDeleteModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content confirm-like">
+      <div class="confirm-head">
+        <div class="confirm-icon">!</div>
+        <div>
+          <h3>Onay Gerekli</h3>
+          <p id="deleteLevelMessage">Bu seviyeyi silmek istiyor musunuz?</p>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button id="confirmDeleteLevelBtn" class="danger-btn">Evet, Sil</button>
+        <button id="cancelDeleteLevelBtn" class="ghost-btn">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <aside class="left">
+      <canvas id="gridCanvas" width="480" height="480"></canvas>
+      <div class="canvas-controls controls">
+        <!-- levelSelect moved to header -->
+        <button id="resetBtn" class="reset-btn" title="Sıfırla">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-3.2 6.4L21 12z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="btn-label">Sıfırla</span>
+        </button>
+        <button id="runBtn" class="run-btn" title="Çalıştır">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3v18l15-9L5 3z" fill="#fff"/></svg>
+          <span class="btn-label">Çalıştır</span>
+        </button>
+        <button id="stepBtn" class="step-btn" title="Adım">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="btn-label">Adım</span>
+        </button>
+        <span id="status"></span>
+      </div>
+      <div class="legend">X: <span id="posX">-</span> Y: <span id="posY">-</span></div>
+    </aside>
+
+    <section class="center">
+      <div class="blockly-note">
+        <h4>Açıklama</h4>
+        <p>Blokları sola sürükleyip birleştirerek karakteri yıldız'a ulaştır.</p>
+      </div>
+      <div id="blocklyDiv"></div>
+    </section>
+
+    <!-- right panel removed (generated code) -->
+  </main>
+
+  <script>
+    (function () {
+      var sources = [
+        "https://unpkg.com/blockly/blockly.min.js",
+        "https://cdn.jsdelivr.net/npm/blockly/blockly.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.3/blockly.min.js"
+      ];
+      function loadAt(index) {
+        if (index >= sources.length) return;
+        var s = document.createElement("script");
+        s.src = sources[index];
+        s.async = false;
+        s.onload = function () { /* loaded */ };
+        s.onerror = function () { loadAt(index + 1); };
+        document.body.appendChild(s);
+      }
+      loadAt(0);
+    })();
+  </script>
+  
+  <!-- Level-complete modal -->
+  <div id="levelModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-icon">🎉</div>
+        <div>
+          <h3 id="modalTitle">Harika! Seviye Tamamlandı</h3>
+          <p id="modalSubtitle">Aferin — harika bir iş çıkardın. Aşağıda bloklardan üretilen JavaScript görünüyor.</p>
+        </div>
+      </div>
+      <canvas id="confettiCanvas" class="confetti-canvas" width="800" height="300"></canvas>
+      <pre id="modalCodePre">// Kod burada görüntülenecek</pre>
+      <div class="modal-actions">
+        <button id="modalNextBtn" class="icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12l7 7 13-13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Sonraki Bölüm</span>
+        </button>
+        <button id="modalRetryBtn" class="icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-3.2 6.4L21 12z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Tekrar Dene</span>
+        </button>
+        <button id="modalCloseBtn" class="icon-btn ghost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="#0f1724" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Kapat</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+@extends('layout.app')
+@section('title','Arkadaslarim')
+@section('content')
+<div class="top"><h1>Arkadaslarim</h1></div>
+
+<style>
+    .friends-grid{
+        display:grid;
+        grid-template-columns:repeat(6,minmax(0,1fr));
+        gap:12px;
+    }
+    .friend-card{
+        aspect-ratio:1/1;
+        border:1px solid #dbe5f2;
+        border-radius:12px;
+        padding:12px;
+        background:#fff;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:8px;
+    }
+    @media (max-width: 1200px){
+        .friends-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+    }
+    @media (max-width: 960px){
+        .friends-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+    @media (max-width: 520px){
+        .friends-grid{grid-template-columns:1fr;}
+    }
+</style>
+
+<div class="card">
+    @if($friends->isEmpty())
+        <p>Sinifinda henuz baska ogrenci bulunmuyor.</p>
+    @else
+        <div class="friends-grid">
+            @foreach($friends as $friend)
+                <article class="friend-card">
+                    <img
+                        src="{{ $friend['avatar_path'] ? asset($friend['avatar_path']) : asset('logo192.png') }}"
+                        alt="{{ $friend['first_name'] }} {{ $friend['last_name'] }}"
+                        style="width:78px;height:78px;border-radius:12px;object-fit:cover;background:#f8fafc"
+                    >
+                    <div style="font-weight:700;line-height:1.2">{{ $friend['first_name'] }}</div>
+                    <div style="color:#475569;line-height:1.2">{{ $friend['last_name'] }}</div>
+                    <div style="font-weight:800;color:#0f766e">{{ $friend['xp'] }} XP</div>
+                </article>
+            @endforeach
+        </div>
+    @endif
+</div>
+@endsection

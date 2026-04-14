@@ -1,0 +1,249 @@
+:root {
+  --bg: #08132f;
+  --panel: #1e2b45;
+  --panel-border: #334867;
+  --text: #e5edf8;
+  --muted: #8ea2bf;
+  --ok: #2dd4bf;
+  --bad: #ef4444;
+  --warn: #f59e0b;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: var(--text);
+  background: radial-gradient(1200px 800px at 50% -200px, #123060 0%, var(--bg) 58%);
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.shell {
+  width: min(860px, 94vw);
+  display: grid;
+  gap: 8px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+}
+
+.title {
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-btn {
+  border: 1px solid #36507a;
+  background: #1a2946;
+  color: #dbe9ff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.top-btn.danger {
+  border-color: #7f1d1d;
+  background: #7f1d1d;
+  color: #fff;
+}
+
+.top-btn.exit {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid #7f1d1d;
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(127, 29, 29, 0.35);
+}
+
+.top-btn.exit:hover {
+  background: linear-gradient(180deg, #f87171, #ef4444);
+}
+
+.top-btn.exit:active {
+  transform: translateY(1px);
+}
+
+.timer {
+  font-weight: 700;
+  color: #f3f7ff;
+  min-width: 62px;
+  text-align: right;
+}
+
+.level-select {
+  background: rgba(19, 33, 58, 0.8);
+  border: 2px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 10px;
+}
+
+.level-select-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.level-select h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 8px;
+}
+
+.level-card {
+  border: 1px solid #36507a;
+  background: #182740;
+  color: #d8e5fb;
+  border-radius: 12px;
+  min-height: 92px;
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  cursor: pointer;
+  text-align: left;
+}
+
+.level-card .name { font-weight: 800; font-size: 14px; }
+.level-card .meta { color: #9bb2d3; font-size: 12px; display: flex; gap: 8px; }
+
+.level-card.locked {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.level-card.done {
+  border-color: #18a389;
+  background: linear-gradient(180deg, #17334f, #152b43);
+}
+
+.board-wrap {
+  background: rgba(19, 33, 58, 0.8);
+  border: 3px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 12px;
+}
+
+.board {
+  position: relative;
+  width: 100%;
+  height: min(46vh, 330px);
+  background: var(--panel);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+#bg-canvas, #draw-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#draw-canvas {
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.hud {
+  display: grid;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  background: #1a2946;
+  border: 1px solid #36507a;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #c8d8ee;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: #1b2a44;
+  border: 1px solid #2d4368;
+  overflow: hidden;
+}
+
+#accuracy-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #22d3ee, #22c55e);
+  transition: width 0.25s ease;
+}
+
+.status {
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#btn-retry {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+#btn-next {
+  background: #3b82f6;
+  color: #fff;
+}
+
+#btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

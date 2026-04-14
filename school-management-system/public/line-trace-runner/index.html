@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cizgi Oyunu</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="title">Cizgi Oyunu</div>
+      <div class="top-actions">
+        <button id="btn-open-levels" class="top-btn">Bolumler</button>
+        <button id="btn-reset-all" class="top-btn danger">Tum Verileri Sifirla</button>
+        <div class="timer" id="timer">0.0 sn</div>
+      </div>
+    </header>
+    <section class="level-select" id="level-select">
+      <div class="level-select-head">
+        <h2>Bolum Secimi</h2>
+        <div class="chip" id="levels-xp-label">Toplam XP: 0</div>
+      </div>
+      <div class="level-grid" id="level-grid"></div>
+    </section>
+    <section class="board-wrap">
+      <div class="board" id="board">
+        <canvas id="bg-canvas"></canvas>
+        <canvas id="draw-canvas"></canvas>
+      </div>
+    </section>
+    <section class="hud">
+      <div class="row">
+        <div class="chip" id="level-label">Seviye 1</div>
+        <div class="chip" id="difficulty-label">Zorluk: Kolay</div>
+        <div class="chip" id="current-label">Anlik: %0</div>
+        <div class="chip" id="assist-label">Yardim: x1.00</div>
+        <div class="chip" id="best-label">En iyi: %0</div>
+        <div class="chip" id="xp-label">Toplam XP: 0</div>
+        <div class="chip" id="reward-label">Son Odul: +0 XP</div>
+      </div>
+      <div class="progress">
+        <div id="accuracy-bar"></div>
+      </div>
+      <div class="status" id="status">Baslamak icin yesil noktadan ciz.</div>
+      <div class="actions">
+        <button id="btn-retry">Tekrar</button>
+        <button id="btn-next">Sonraki</button>
+      </div>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>

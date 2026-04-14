@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compute It - Benzer Uygulama</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="board-wrap">
+      <div class="top-row">
+        <div class="level-pill">Seviye: <span id="level-no">1</span></div>
+        <div class="progress-pill">Tamamlanan: <span id="done-no">0</span>/<span id="total-no">0</span></div>
+      </div>
+      <div class="board-stage">
+        <div class="counter-col">
+          <div class="counter-bubble">
+            <div class="counter-label">Top A</div>
+            <div id="count-a" class="counter-value">0</div>
+          </div>
+          <div class="counter-bubble">
+            <div class="counter-label">Top B</div>
+            <div id="count-b" class="counter-value">0</div>
+          </div>
+          <div class="counter-bubble">
+            <div class="counter-label">Top C</div>
+            <div id="count-c" class="counter-value">0</div>
+          </div>
+          <div class="counter-bubble">
+            <div class="counter-label">XP</div>
+            <div id="count-xp" class="counter-value">0</div>
+          </div>
+        </div>
+        <div id="board" class="board"></div>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <h2>Komutlar</h2>
+      <div id="cmd-list" class="cmd-list">
+        <div>sağ()</div>
+        <div>aşağı()</div>
+        <div>sol()</div>
+        <div>yukarı()</div>
+      </div>
+      <div id="vars-box" class="vars-box">A = <span id="var-a">0</span></div>
+      <div class="help">
+        <div id="level-tip" style="display:none;"></div>
+      </div>
+      <div class="actions">
+        <button id="btn-reset">Sıfırla</button>
+        <button id="btn-next" disabled>Sonraki Seviye</button>
+      </div>
+    </div>
+  </div>
+  <div id="designer-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3 id="designer-title">Seviye Ekle</h3>
+      <div class="form-grid">
+        <input id="lv-name" placeholder="Seviye adı" />
+        <input id="lv-size" type="number" min="2" max="8" placeholder="Grid boyutu (örn: 3)" />
+        <input id="lv-start" placeholder="Başlangıç x,y (örn: 1,1)" />
+        <input id="lv-goal" placeholder="Hedef x,y (örn: 2,1)" />
+        <input id="lv-walls" placeholder="Duvarlar x,y;x,y (opsiyonel)" />
+        <input id="lv-xp" type="number" min="1" max="200" placeholder="XP" />
+      </div>
+      <div class="modal-actions">
+        <button id="btn-save-level">Kaydet</button>
+        <button id="btn-cancel-level" class="ghost">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="delete-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>Seviye Sil</h3>
+      <p id="delete-text">Bu seviyeyi silmek istiyor musunuz?</p>
+      <div class="modal-actions">
+        <button id="btn-confirm-del" class="danger">Evet, Sil</button>
+        <button id="btn-cancel-del" class="ghost">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

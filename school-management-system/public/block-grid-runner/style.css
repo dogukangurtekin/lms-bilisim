@@ -1,0 +1,449 @@
+:root{
+  --bg:#f6f8fa; --accent:#2b6fdb; --muted:#6b7280;
+  --panel:#ffffff; --text:#0f1724; --muted-2:#475569;
+  --run:#f59e0b; --reset:#2b6fdb; --step:#ef4444;
+}
+body{font-family:Segoe UI, Roboto, Helvetica, Arial; margin:0; background:linear-gradient(180deg,#f4f7fb 0%, #eef3fb 100%); color:#0f1724}
+header{display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:linear-gradient(90deg,#ffffffcc,#f8fbffcc); border-bottom:1px solid #e6e9ef; box-shadow:0 2px 8px rgba(14,30,60,0.04)}
+header h1{font-size:18px; margin:0; font-weight:600}
+.controls{display:flex; gap:8px; align-items:center}
+.brand{display:flex; align-items:center; gap:12px}
+.logo{width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#2b6fdb,#6ea8fe); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:18px}
+.main{ }
+.main{ }
+#main{ }
+/* Layout: left-aligned main (no centering) */
+main{display:flex; gap:18px; padding:20px; align-items:stretch; width:100%;}
+#left-panel{ }
+.left{width:520px; background:var(--panel); border-radius:12px; border:1px solid #e6e9ef; padding:12px; box-shadow:0 6px 20px rgba(12,36,80,0.06); margin-left:18px}
+#blocklyDiv{height:560px; width:100%; min-width:320px; border-radius:8px; overflow:hidden}
+.center{flex:1; display:flex; flex-direction:column; justify-content:flex-start; align-items:stretch; gap:8px}
+#gridCanvas{background:#fff; border:1px solid #e1e8f5; border-radius:10px}
+.legend{font-size:12px; color:var(--muted)}
+.center{flex:1; display:flex; justify-content:center; align-items:flex-end; gap:8px}
+.right{width:340px; background:transparent; border-radius:12px; padding:16px; display:flex; flex-direction:column; align-items:flex-end}
+/* code pane: lighter background, right-aligned inside its panel */
+pre{background:linear-gradient(180deg,#ffffff,#fbfdff); color:#07203a; padding:12px; height:220px; overflow:auto; border-radius:8px; font-family:Consolas,monaco,monospace; width:100%; border:1px solid #e6eef7}
+.right .panel{width:100%; max-width:420px}
+button{background:var(--accent); color:#fff; border:none; padding:6px 10px; border-radius:4px; cursor:pointer}
+button[disabled]{opacity:0.5; cursor:default}
+select{padding:6px}
+
+@media(max-width:900px){
+  main{flex-direction:column}
+  .left,.right{width:100%}
+}
+
+.editor{margin-top:10px; border-top:1px dashed #e6e9ef; padding-top:10px}
+.editor .tools{display:flex; flex-direction:column; gap:6px; margin:8px 0}
+.editor .editor-actions{display:flex; gap:8px; margin-bottom:6px}
+.editor small{color:var(--muted)}
+
+.canvas-controls{display:flex; gap:8px; align-items:center; margin-top:8px}
+.canvas-controls select{min-width:160px}
+.controls button{padding:6px 10px}
+
+/* icon buttons for controls */
+.reset-btn{background:var(--reset); color:#fff; border-radius:10px; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-size:14px}
+.run-btn{background:var(--run); color:#fff; border-radius:10px; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-size:14px}
+.step-btn{background:var(--step); color:#fff; border-radius:10px; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-size:14px}
+.reset-btn svg, .run-btn svg, .step-btn svg{display:block}
+.btn-label{font-weight:600; line-height:1}
+
+/* blockly note above workspace */
+.blockly-note{background:var(--panel); padding:12px 14px; color:var(--muted-2); border:1px solid #e6eef7; border-radius:8px; box-shadow:0 6px 18px rgba(12,36,80,0.04); align-self:flex-start; max-width:none; width:100%; margin-left:0; box-sizing:border-box; text-align:left}
+.blockly-note h4{margin:0 0 6px 0}
+
+/* Sidebar menu hover: make full-cover with accent and white text */
+.side-menu .menu-list.buttons .menu-btn:hover{background:linear-gradient(90deg,var(--reset),#5aa0ff); color:#fff}
+.side-menu .menu-list.buttons .menu-btn{transition:background .16s,color .12s}
+
+/* header actions */
+.header-actions{display:flex; align-items:center; gap:8px}
+.dark-toggle{background:transparent; border:1px solid rgba(15,23,36,0.06); padding:8px; border-radius:8px; cursor:pointer}
+
+/* center area in header for level selector */
+.header-center{flex:1; display:flex; justify-content:center; align-items:center; padding:6px 12px}
+.level-nav-wrap{display:flex; align-items:center; gap:8px; width:min(760px,72%); max-width:90%;}
+.level-select-wrap{position:relative; width:min(640px,60%); max-width:80%;}
+.level-select-wrap select{appearance:none; -webkit-appearance:none; -moz-appearance:none; width:100%; padding:10px 16px; border-radius:999px; background:transparent; border:1px solid rgba(15,23,36,0.06); font-weight:600; color:var(--text); position:relative; z-index:2}
+.level-select-wrap .level-progress{position:absolute; left:6px; right:6px; top:6px; bottom:6px; border-radius:999px; background:linear-gradient(90deg,var(--accent),#5aa0ff); opacity:0.08; z-index:1; pointer-events:none}
+.level-select-wrap select:focus{outline:none; box-shadow:0 6px 20px rgba(43,111,219,0.12)}
+.level-select-wrap::after{content:""; position:absolute; right:18px; top:50%; transform:translateY(-50%); width:8px; height:8px; border-radius:2px; background:rgba(0,0,0,0.06); z-index:3; pointer-events:none}
+.level-nav-wrap .level-select-wrap{width:100%; max-width:none;}
+.level-shift-btn{border:1px solid rgba(15,23,36,0.12); background:#fff; color:#334155; min-width:84px; height:34px; padding:0 12px; border-radius:999px; cursor:pointer; font-size:13px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(15,23,36,0.08)}
+.level-shift-btn:hover{background:#f8fafc}
+
+/* style adjustments for dark mode */
+body.dark .level-select-wrap select{border-color:rgba(255,255,255,0.06); color:#e6eef8}
+body.dark .level-select-wrap .level-progress{opacity:0.06; background:linear-gradient(90deg,#2563eb,#60a5fa)}
+body.dark .level-shift-btn{background:#0b1a30; border-color:rgba(255,255,255,0.14); color:#cbd5e1}
+body.dark .level-shift-btn:hover{background:#10223d}
+
+
+/* dark mode overrides */
+body.dark{background:linear-gradient(180deg,#071226 0%, #061223 100%); color:#e6eef8}
+body.dark .left{background:#071226; border-color:rgba(255,255,255,0.04)}
+body.dark .side-menu{background:#061223}
+body.dark .blockly-note{color:#cbd5e1; background:#071226; border-color:rgba(255,255,255,0.04); box-shadow:none}
+body.dark .modal-content{background:#071226; color:#e6eef8}
+body.dark .menu-btn{color:#fff}
+body.dark .menu-list .small-desc{color:#94a3b8}
+body.dark .reset-btn{background:#2563eb}
+body.dark .run-btn{background:#b45309}
+body.dark .step-btn{background:#b91c1c}
+/* reduce harsh hover contrasts in dark mode */
+body.dark .side-menu .menu-list.buttons .menu-btn:hover{background:rgba(255,255,255,0.03); box-shadow:none}
+
+/* Modal for level complete */
+.modal.hidden{display:none}
+.modal{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center}
+.modal-backdrop{position:absolute; inset:0; background:linear-gradient(0deg, rgba(3,7,18,0.55), rgba(3,7,18,0.55))}
+.modal-content{position:relative; background:linear-gradient(180deg,#ffffff,#fbfdff); padding:18px; border-radius:12px; width:min(920px,94%); max-height:80vh; overflow:auto; box-shadow:0 20px 60px rgba(6,24,60,0.2)}
+.modal-header{display:flex; gap:12px; align-items:center}
+.modal-icon{font-size:36px}
+#modalCodePre{background:linear-gradient(180deg,#f8fafc,#ffffff); color:#07203a; padding:14px; border-radius:8px; overflow:auto; max-height:48vh; font-family:Consolas,monaco,monospace; border:1px solid #e6eef7}
+.modal-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:14px}
+.modal-actions .icon-btn{background:linear-gradient(90deg,#2b6fdb,#5aa0ff); color:#fff; border:none; padding:10px 14px; border-radius:8px; display:inline-flex; gap:8px; align-items:center}
+.modal-actions .icon-btn.ghost{background:transparent; color:#0f1724; border:1px solid rgba(15,23,36,0.06)}
+.icon-btn svg{display:block}
+.confetti-canvas{position:relative; display:block; pointer-events:none; height:120px; margin:-6px -6px 8px -6px}
+
+/* Side menu styles */
+.menu-toggle{width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#2b6fdb,#6ea8fe); color:#fff; border:none; font-size:18px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 6px 18px rgba(43,111,219,0.18)}
+.side-menu{position:fixed; top:0; left:0; height:100vh; width:280px; max-width:92%; background:linear-gradient(180deg,#ffffff,#f6fbff); box-shadow:8px 0 30px rgba(8,20,50,0.18); z-index:120; transform:translateX(-110%); transition:transform .28s cubic-bezier(.2,.9,.2,1); display:flex; border-right:1px solid rgba(15,23,36,0.04);}
+.side-menu .side-menu-inner{padding:18px; width:100%; box-sizing:border-box}
+.side-menu .side-menu-inner{padding:18px; width:100%; box-sizing:border-box; display:flex; flex-direction:column}
+.side-menu .side-header{display:flex; align-items:center; gap:12px; padding-bottom:10px; border-bottom:1px solid rgba(15,23,36,0.04); margin-bottom:12px}
+.side-menu .side-header .brand-sm{width:40px; height:40px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#2b6fdb,#6ea8fe); font-weight:700}
+.side-menu .side-title{font-weight:700; font-size:16px; color:#0f1724}
+.side-menu .menu-list{list-style:none; padding:0; margin:8px 0; display:flex; flex-direction:column; gap:10px}
+.side-menu .menu-list{list-style:none; padding:8px 0; margin:0; display:flex; flex-direction:column; gap:6px}
+.side-menu .menu-list.buttons{padding-top:8px}
+.side-menu .menu-list.buttons .menu-btn{display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 12px; border-radius:8px; border:none; background:transparent; color:#0f1724; font-weight:600}
+.side-menu .menu-list.buttons .menu-btn:hover{background:linear-gradient(90deg,#eef6ff,#f8fbff); box-shadow:inset 0 -1px 0 rgba(15,23,36,0.02)}
+.side-menu .menu-list .small-desc{font-size:13px; color:var(--muted); padding:8px 12px}
+.side-close{background:transparent; border:none; font-size:18px; position:absolute; right:12px; top:12px; cursor:pointer; color:#0f1724}
+.side-menu:not(.hidden){transform:translateX(0)}
+.side-menu .menu-list{list-style:none; padding:0; margin:8px 0}
+.side-menu .menu-list.buttons{display:flex; flex-direction:column; gap:10px}
+.side-menu .menu-list.buttons .menu-btn{display:block; width:100%; text-align:left; padding:12px 14px; border-radius:8px; border:none; background:linear-gradient(90deg,#2b6fdb,#5aa0ff); color:#fff; font-weight:600}
+.side-menu .menu-list.buttons .menu-btn.danger{background:linear-gradient(90deg,#dc2626,#ef4444)}
+.side-menu .menu-list input[type="text"]{padding:8px; border:1px solid #e6eef7; border-radius:6px}
+.side-menu .menu-list button{padding:10px; border-radius:8px; border:none; background:linear-gradient(90deg,#2b6fdb,#5aa0ff); color:#fff}
+.side-menu.hidden{transform:translateX(-100%)}
+.side-menu:not(.hidden){transform:translateX(0)}
+.side-close{background:transparent; border:none; font-size:18px; position:absolute; right:10px; top:10px; cursor:pointer}
+
+/* Level designer modal styles */
+#levelDesignerModal .modal-content.designer{width:min(720px,96%); max-height:80vh; overflow:auto; padding:18px}
+#levelDesignerModal .designer-body{display:flex; flex-direction:column; gap:10px}
+#levelDesignerModal .designer-body{display:flex; flex-direction:column; gap:10px}
+#levelDesignerModal .designer-layout{display:flex; gap:18px; align-items:flex-start; box-sizing:border-box}
+#levelDesignerModal .designer-preview{width:320px; flex:0 0 320px; display:flex; flex-direction:column; gap:8px}
+#levelDesignerModal .designer-preview{width:320px; flex:0 0 320px; display:flex; flex-direction:column; gap:8px; overflow:hidden}
+#levelDesignerModal .designer-preview label{font-weight:600}
+#levelDesignerModal .designer-preview .preview-legend{font-size:13px; color:var(--muted); margin-top:6px}
+#levelDesignerModal .designer-form{flex:1; display:flex; flex-direction:column; gap:8px}
+#levelDesignerModal textarea{min-height:84px}
+#levelDesignerModal canvas{width:100%; height:auto; max-height:460px; display:block}
+#levelDesignerModal .designer-preview{max-height:72vh}
+#levelDesignerModal .designer-actions{margin-top:12px}
+#levelDesignerModal .designer-actions button{min-width:110px}
+#levelDesignerModal .designer-actions .ghost{background:transparent; border:1px solid rgba(15,23,36,0.06); color:#0f1724}
+
+/* Make the designer modal larger */
+#levelDesignerModal .modal-content.designer{width:min(1000px,96%); max-height:90vh; box-sizing:border-box}
+
+/* Responsive: stack preview above form on narrow screens so modal fits */
+@media (max-width: 1000px){
+  #levelDesignerModal .designer-layout{flex-direction:column}
+  #levelDesignerModal .designer-preview{width:100%; flex:0 0 auto}
+  #levelDesignerModal .designer-form{width:100%}
+  #levelDesignerModal canvas{max-height:360px}
+  #levelDesignerModal .modal-content.designer{width:94%; padding:14px}
+}
+#levelDesignerModal input[type="text"], #levelDesignerModal input[type="number"], #levelDesignerModal select, #levelDesignerModal textarea{padding:8px; border:1px solid #e6eef7; border-radius:6px; box-sizing:border-box}
+#levelDesignerModal .row{display:flex; gap:12px}
+#levelDesignerModal .designer-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:8px}
+#levelDesignerModal .designer-actions .ghost{background:transparent; border:1px solid rgba(15,23,36,0.06); color:#0f1724}
+
+/* subtle legend style */
+.legend{font-size:13px; color:#475569}
+
+/* responsive */
+@media(max-width:900px){
+  main{flex-direction:column; padding:12px}
+  .left,.right{width:100%}
+  #blocklyDiv{height:420px}
+  .center{align-items:flex-start}
+  .blockly-note{width:100%; margin-left:0; max-width:100%}
+}
+
+/* Prevent generated code / modal / canvas from overflowing any viewport */
+/* Allow flex children to shrink properly */
+main { min-width: 0; box-sizing: border-box; }
+.center { min-width: 0; }
+.left, .right { box-sizing: border-box; }
+
+/* Make preformatted code wrap instead of forcing horizontal scroll/overflow */
+pre, #commandsPre, #modalCodePre { white-space: pre-wrap; word-break: break-word; overflow:auto; max-width:100%; }
+
+/* Confetti and other canvases should scale to container width */
+.confetti-canvas, #confettiCanvas { max-width:100%; width:100%; height:auto; }
+
+/* Prevent global horizontal scroll caused by inner elements */
+html, body { overflow-x: hidden; }
+
+/* Modal for level complete */
+.modal.hidden{display:none}
+.modal{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center}
+.modal-backdrop{position:absolute; inset:0; background:rgba(0,0,0,0.45)}
+.modal-content{position:relative; background:#fff; padding:18px; border-radius:8px; width:min(880px,92%); max-height:80vh; overflow:auto; box-shadow:0 10px 30px rgba(2,6,23,0.2)}
+.modal-content h3{margin-top:0}
+#modalCodePre{background:#0b1020; color:#e6eef8; padding:12px; border-radius:6px; overflow:auto; max-height:50vh}
+.modal-actions{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
+.modal-actions button{background:var(--accent); color:#fff; border:none; padding:8px 12px; border-radius:6px}
+
+/* Confirm modal style aligned with main app style */
+#levelDesignerModal { z-index: 120; }
+#levelModal { z-index: 140; }
+#levelDeleteModal { z-index: 200; }
+#levelDeleteModal .modal-backdrop { z-index: 0; }
+#levelDeleteModal .modal-content.confirm-like { z-index: 1; }
+
+#levelDeleteModal .modal-content.confirm-like{
+  width:min(430px,92%);
+  max-width:430px;
+  border-radius:14px;
+  border:1px solid #e5e7eb;
+  background:#ffffff;
+  box-shadow:0 20px 48px rgba(0,0,0,0.2);
+}
+#levelDeleteModal .confirm-head{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+#levelDeleteModal .confirm-icon{
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  background:#fee2e2;
+  color:#dc2626;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+}
+#levelDeleteModal .confirm-head h3{
+  margin:0 0 4px 0;
+}
+#levelDeleteModal .confirm-head p{
+  margin:0;
+  color:#374151;
+  font-size:14px;
+}
+#levelDeleteModal .confirm-actions{
+  display:flex;
+  gap:8px;
+}
+#levelDeleteModal .confirm-actions button{
+  flex:1;
+  border:none;
+  border-radius:10px;
+  padding:10px 12px;
+  font-weight:600;
+}
+#levelDeleteModal .danger-btn{
+  background:#dc2626;
+  color:#fff;
+}
+#levelDeleteModal .ghost-btn{
+  background:#f3f4f6;
+  color:#111827;
+}
+
+/* New drag-drop designer (grid based) */
+#levelDesignerModal .modal-content.designer{width:min(1160px,96%); max-height:92vh; padding:14px}
+#levelDesignerModal .designer-layout-grid{display:grid; grid-template-columns:320px 1fr; gap:14px; min-height:0}
+#levelDesignerModal .designer-sidebar{
+  background:linear-gradient(180deg,#f8fbff,#eef4ff);
+  border:1px solid #dbe7fb;
+  border-radius:12px;
+  padding:12px;
+  display:grid;
+  grid-template-rows:auto auto auto auto auto 1fr auto;
+  gap:8px;
+  min-height:0
+}
+#levelDesignerModal .designer-grid-size{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+#levelDesignerModal .designer-grid-size select{width:100%}
+#levelDesignerModal .designer-palette{display:grid; grid-template-columns:1fr 1fr; gap:8px; align-content:start}
+#levelDesignerModal .palette-tile{
+  width:100%;
+  min-height:56px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  background:#fff;
+  color:#0f172a;
+  font-weight:800;
+  font-size:20px;
+  cursor:grab;
+  display:grid;
+  place-items:center
+}
+#levelDesignerModal .palette-tile.active{
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+  background:#eff6ff
+}
+#levelDesignerModal .designer-board-wrap{
+  background:linear-gradient(180deg,#f0f9ff,#e0f2fe);
+  border:1px solid #c7e8fb;
+  border-radius:12px;
+  padding:12px;
+  min-height:0;
+  display:grid;
+  grid-template-rows:auto 1fr;
+  gap:10px
+}
+#levelDesignerModal .designer-board-help{font-size:13px; color:#334155}
+#levelDesignerModal .designer-board{
+  display:grid;
+  gap:4px;
+  align-content:start;
+  justify-content:start;
+  padding:8px;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #dbe7fb;
+  overflow:auto;
+  min-height:360px
+}
+#levelDesignerModal .designer-cell{
+  width:36px; height:36px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  background:linear-gradient(180deg,#d9f99d,#84cc16);
+  display:grid; place-items:center;
+  font-size:15px; font-weight:800; color:#0f172a;
+  cursor:pointer; user-select:none
+}
+#levelDesignerModal .designer-cell.start{box-shadow:inset 0 0 0 2px #0ea5e9}
+#levelDesignerModal .designer-cell.star{background:linear-gradient(180deg,#fed7aa,#fb923c)}
+#levelDesignerModal .designer-cell.obstacle{background:linear-gradient(180deg,#cbd5e1,#94a3b8)}
+#levelDesignerModal .designer-cell.drag-over{outline:3px solid #60a5fa}
+@media (max-width: 1000px){
+  #levelDesignerModal .designer-layout-grid{grid-template-columns:1fr}
+}
+
+/* Designer panel polish and overflow fixes */
+#levelDesignerModal .designer-sidebar{
+  box-sizing:border-box;
+  width:100%;
+  overflow:hidden;
+}
+#levelDesignerModal .designer-sidebar label{
+  display:block;
+  font-weight:700;
+  color:#1e293b;
+  font-size:13px;
+  margin-top:2px;
+}
+#levelDesignerModal .designer-sidebar input,
+#levelDesignerModal .designer-sidebar select{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  background:#fff;
+  color:#0f172a;
+  height:40px;
+  padding:0 10px;
+}
+#levelDesignerModal .designer-grid-size{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+#levelDesignerModal .designer-palette{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+#levelDesignerModal .palette-tile{
+  min-width:0;
+  min-height:64px;
+  border-radius:12px;
+  border:1px solid #bfdbfe;
+  background:linear-gradient(180deg,#ffffff,#eef6ff);
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+#levelDesignerModal .palette-tile:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 16px rgba(30,64,175,0.12);
+}
+#levelDesignerModal .palette-icon{
+  width:28px;
+  height:28px;
+  line-height:1;
+  display:inline-grid;
+  place-items:center;
+}
+#levelDesignerModal .palette-icon svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+#levelDesignerModal .palette-tile[data-item="start"]{color:#0284c7}
+#levelDesignerModal .palette-tile[data-item="star"]{color:#d97706}
+#levelDesignerModal .palette-tile[data-item="obstacle"]{color:#475569}
+#levelDesignerModal .palette-tile[data-item="erase"]{color:#be123c}
+#levelDesignerModal .palette-tile.active[data-item="start"]{
+  background:linear-gradient(180deg,#f0f9ff,#e0f2fe);
+}
+#levelDesignerModal .palette-tile.active[data-item="star"]{
+  background:linear-gradient(180deg,#fffbeb,#fef3c7);
+}
+#levelDesignerModal .palette-tile.active[data-item="obstacle"]{
+  background:linear-gradient(180deg,#f8fafc,#e2e8f0);
+}
+#levelDesignerModal .palette-tile.active[data-item="erase"]{
+  background:linear-gradient(180deg,#fff1f2,#ffe4e6);
+}
+#levelDesignerModal .designer-actions{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:8px;
+  width:100%;
+}
+#levelDesignerModal .designer-actions button{
+  width:100%;
+  min-width:0;
+  height:40px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:13px;
+  padding:0 8px;
+  white-space:nowrap;
+}
+#levelDesignerModal #designerSaveBtn{
+  background:linear-gradient(90deg,#1d4ed8,#3b82f6);
+  color:#fff;
+}
+#levelDesignerModal #designerResetBtn{
+  background:#fff7ed;
+  color:#9a3412;
+  border:1px solid #fdba74;
+}
+#levelDesignerModal #designerCancelBtn{
+  background:#f8fafc;
+  color:#334155;
+  border:1px solid #cbd5e1;
+}
+@media (max-width: 1200px){
+  #levelDesignerModal .designer-actions{
+    grid-template-columns:1fr;
+  }
+}
+

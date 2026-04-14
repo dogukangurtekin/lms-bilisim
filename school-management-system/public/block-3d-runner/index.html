@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Blok Kodlama</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <style>
+    :root {
+      --bg: #d8fdf3;
+      --panel: #d1d5db;
+      --ink: #0f172a;
+      --muted: #475569;
+      --accent: #06b6d4;
+      --ok: #16a34a;
+      --warn: #ea580c;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: Segoe UI, Arial, sans-serif; color: var(--ink); background: var(--bg); overflow: hidden; }
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-columns: 525px 1fr;
+      gap: 0;
+      padding: 0;
+    }
+    .panel {
+      background: linear-gradient(180deg, #d7dbe2, #cfd5dd);
+      border-right: 2px solid rgba(15, 23, 42, 0.2);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 12px;
+      border-bottom: 1px solid #8b98ab;
+      display: grid;
+      gap: 10px;
+    }
+    .btn-close {
+      border: 1px solid #fca5a5;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-weight: 800;
+      box-shadow: 0 6px 14px rgba(220, 38, 38, 0.26);
+    }
+    .btn-close:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tools-full { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    button, select {
+      border: 1px solid #94a3b8;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    select {
+      background: linear-gradient(135deg, #ffffff, #f8fafc);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    select:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.24);
+    }
+    .btn-run {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      color: #fff;
+      border: none;
+      box-shadow: 0 8px 16px rgba(21, 128, 61, 0.28);
+    }
+    .btn-run:hover { transform: translateY(-1px); filter: brightness(1.04); }
+    .btn-reset {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1d4ed8;
+      border-color: #93c5fd;
+      box-shadow: 0 8px 16px rgba(30, 64, 175, 0.12);
+    }
+    .btn-reset:hover { transform: translateY(-1px); filter: brightness(1.03); }
+    .status {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      border: 1px solid #94a3b8;
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 38px;
+    }
+    #blockly { flex: 1; min-height: 260px; }
+    .stage {
+      background: radial-gradient(1200px 600px at 70% -10%, #b2f7ef, #67e8f9 42%, #22d3ee 72%, #0ea5e9);
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .stage-top-actions {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .session-timer {
+      border: 1px solid #93c5fd;
+      background: rgba(255,255,255,0.92);
+      color: #1e3a8a;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 16px rgba(30, 64, 175, 0.18);
+      min-width: 110px;
+      text-align: center;
+    }
+    .session-xp {
+      border: 1px solid #fcd34d;
+      background: rgba(255,255,255,0.95);
+      color: #92400e;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 900;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 16px rgba(180, 83, 9, 0.18);
+      min-width: 120px;
+      text-align: center;
+    }
+    .btn-stage {
+      border: 1px solid #93c5fd;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 800;
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.28);
+    }
+    .btn-stage.warn {
+      border-color: #fcd34d;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 8px 16px rgba(217, 119, 6, 0.28);
+    }
+    .btn-stage.danger {
+      border-color: #fca5a5;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 8px 16px rgba(220, 38, 38, 0.28);
+    }
+    .btn-stage.exit {
+      border-color: #fca5a5;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 8px 16px rgba(220, 38, 38, 0.28);
+    }
+    .btn-stage:hover { filter: brightness(1.05); transform: translateY(-1px); }
+    .designer-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      display: none;
+      align-items: stretch;
+      justify-content: stretch;
+      background: rgba(2, 6, 23, 0.36);
+      backdrop-filter: blur(2px);
+    }
+    .designer-shell {
+      margin: 16px;
+      width: calc(100% - 32px);
+      height: calc(100% - 32px);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: #e2e8f0;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 0;
+    }
+    .designer-left {
+      background: linear-gradient(180deg, #dbe3ee, #cfd8e3);
+      border-right: 1px solid rgba(148, 163, 184, 0.65);
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      gap: 10px;
+      min-height: 0;
+    }
+    .designer-title { font-weight: 900; color: #0f172a; font-size: 1rem; }
+    .designer-grid-size { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .designer-grid-size select { width: 100%; }
+    .designer-order {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+    .designer-order label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .designer-order input {
+      width: 120px;
+      max-width: 100%;
+      border: 1px solid #94a3b8;
+      border-radius: 10px;
+      background: #fff;
+      padding: 8px 10px;
+      font-weight: 800;
+    }
+    .designer-palette {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      align-content: start;
+      overflow: auto;
+      min-height: 0;
+    }
+    .palette-item {
+      user-select: none;
+      border: 1px solid #94a3b8;
+      border-radius: 10px;
+      background: #fff;
+      width: 78px;
+      height: 78px;
+      padding: 0;
+      font-size: 28px;
+      text-align: center;
+      cursor: grab;
+      display: grid;
+      place-items: center;
+      justify-self: center;
+    }
+    .palette-item.active {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+    .designer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .designer-right {
+      background: linear-gradient(180deg, #c4f4f8, #9ae7f2);
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+      min-height: 0;
+    }
+    .designer-help {
+      font-size: 0.82rem;
+      color: #0f172a;
+      font-weight: 700;
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .designer-board-wrap {
+      min-height: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+      background: rgba(255,255,255,0.5);
+      padding: 12px;
+      overflow: auto;
+      display: grid;
+      place-items: center;
+    }
+    .designer-board {
+      display: grid;
+      gap: 4px;
+      align-content: start;
+      justify-content: start;
+      background: rgba(2, 132, 199, 0.12);
+      border: 1px solid rgba(14, 116, 144, 0.35);
+      padding: 8px;
+      border-radius: 10px;
+    }
+    .designer-cell {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+      border-radius: 6px;
+      background: linear-gradient(180deg, #bef264, #84cc16);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .designer-cell.goal { background: linear-gradient(180deg, #fdba74, #f97316); }
+    .designer-cell.start { box-shadow: inset 0 0 0 2px #0ea5e9; }
+    .designer-cell.obstacle { background: linear-gradient(180deg, #a16207, #713f12); color: #fff; }
+    .designer-cell.tree { background: linear-gradient(180deg, #4d7c0f, #3f6212); color: #fff; }
+    .designer-cell.drag-over { outline: 3px solid #38bdf8; }
+    canvas { width: 100%; height: 100%; display: block; }
+    .legend {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      background: rgba(255,255,255,0.84);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(148,163,184,0.5);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #0f172a;
+      line-height: 1.4;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+    }
+    .notify-popup {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 8;
+      min-width: 260px;
+      max-width: 72%;
+      background: rgba(15, 23, 42, 0.94);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
+      font-size: 0.88rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      text-align: center;
+    }
+    .notify-popup.show { opacity: 1; }
+    .notify-popup.success { background: rgba(22, 101, 52, 0.95); border-color: rgba(134, 239, 172, 0.6); }
+    .notify-popup.error { background: rgba(127, 29, 29, 0.95); border-color: rgba(252, 165, 165, 0.6); }
+    .confirm-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 9;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.48);
+      backdrop-filter: blur(2px);
+    }
+    .confirm-card {
+      width: min(420px, 92%);
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      box-shadow: 0 18px 36px rgba(2, 6, 23, 0.35);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .confirm-title {
+      margin: 0;
+      font-size: 1.02rem;
+      color: #0f172a;
+      font-weight: 900;
+    }
+    .confirm-text {
+      margin: 0;
+      color: #334155;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    .confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .confirm-actions button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      cursor: pointer;
+    }
+    .confirm-actions .yes {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-color: #fca5a5;
+      color: #fff;
+    }
+    .confirm-actions .no {
+      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+      color: #0f172a;
+    }
+    .win-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.5);
+      backdrop-filter: blur(2px);
+    }
+    .win-card {
+      width: min(440px, 92%);
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 16px;
+      box-shadow: 0 22px 44px rgba(2, 6, 23, 0.34);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      text-align: center;
+    }
+    .win-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .win-stars {
+      font-size: 28px;
+      letter-spacing: 4px;
+      color: #f59e0b;
+      line-height: 1;
+    }
+    .win-text {
+      margin: 0;
+      color: #334155;
+      font-size: 0.92rem;
+    }
+    .win-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .win-actions button {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      background: #f8fafc;
+    }
+    .win-actions .continue {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      border-color: #86efac;
+      color: #fff;
+    }
+    .win-actions .retry {
+      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+      color: #0f172a;
+    }
+    @media (max-width: 1024px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: 48vh 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="tools-full">
+          <select id="level-select"></select>
+        </div>
+        <div class="tools">
+          <button id="btn-run" class="btn-run">Calistir</button>
+          <button id="btn-reset" class="btn-reset">Sifirla</button>
+        </div>
+        <div id="status" class="status">Karakteri hedef kareye gotur.</div>
+      </div>
+      <div id="blockly"></div>
+    </div>
+    <div class="stage">
+      <div class="stage-top-actions">
+        <button id="btn-add-level" class="btn-stage">Seviye Ekle</button>
+        <button id="btn-edit-level" class="btn-stage warn">Duzenle</button>
+        <button id="btn-assign-homework" class="btn-stage">Odev Ver</button>
+        <button id="btn-delete-level" class="btn-stage danger">Sil</button>
+        <button id="btn-close" class="btn-stage exit">Cik</button>
+        <div id="session-timer" class="session-timer" style="display:none;">00:00</div>
+        <div id="session-xp" class="session-xp" style="display:none;">XP: 0</div>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div class="legend">
+        <div><strong>Hedef:</strong> Turuncu kareye ulas</div>
+        <div><strong>Engel:</strong> Koyu kutulara carpma</div>
+        <div><strong>Karakter:</strong> Robotu yonlendir</div>
+      </div>
+      <div id="designer-modal" class="designer-modal">
+        <div class="designer-shell">
+          <div class="designer-left">
+            <div class="designer-title">3D Seviye Tasarimi</div>
+            <div class="designer-grid-size">
+              <select id="designer-width">
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10" selected>10</option>
+                <option value="12">12</option>
+                <option value="14">14</option>
+              </select>
+              <select id="designer-height">
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="10" selected>10</option>
+                <option value="12">12</option>
+                <option value="14">14</option>
+              </select>
+            </div>
+            <div class="designer-order">
+              <label for="designer-order">Seviye No</label>
+              <input id="designer-order" type="number" min="1" step="1" value="1" />
+              <label for="designer-xp">Seviye XP</label>
+              <input id="designer-xp" type="number" min="1" max="500" step="1" value="100" />
+            </div>
+            <div class="designer-palette" id="designer-palette">
+              <div class="palette-item active" draggable="true" data-item="start" title="Baslangic">🤖</div>
+              <div class="palette-item" draggable="true" data-item="goal" title="Hedef">⭐</div>
+              <div class="palette-item" draggable="true" data-item="obstacle" title="Engel">🪵</div>
+              <div class="palette-item" draggable="true" data-item="tree" title="Agac">🌳</div>
+              <div class="palette-item" draggable="true" data-item="erase" title="Silgi">🧽</div>
+            </div>
+            <div class="designer-actions">
+              <button id="designer-save" class="btn-stage">Kaydet</button>
+              <button id="designer-cancel" class="btn-close">Kapat</button>
+            </div>
+          </div>
+          <div class="designer-right">
+            <div class="designer-help">Soldan nesneyi surukle, sagdaki kareye birak. Baslangic ve hedef tek adet olur.</div>
+            <div class="designer-board-wrap">
+              <div id="designer-board" class="designer-board"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="notify-popup" class="notify-popup"></div>
+      <div id="confirm-overlay" class="confirm-overlay">
+        <div class="confirm-card">
+          <h3 class="confirm-title">Onay</h3>
+          <p id="confirm-text" class="confirm-text">Bu islemi onayliyor musun?</p>
+          <div class="confirm-actions">
+            <button id="confirm-no" class="no">Hayir</button>
+            <button id="confirm-yes" class="yes">Evet</button>
+          </div>
+        </div>
+      </div>
+      <div id="win-overlay" class="win-overlay">
+        <div class="win-card">
+          <h3 id="win-title" class="win-title">Tebrikler!</h3>
+          <div id="win-stars" class="win-stars">*</div>
+          <p id="win-text" class="win-text">Hedefe ulastin. Sonraki seviyeye gecmek ister misin?</p>
+          <div class="win-actions">
+            <button id="win-retry" class="retry">Tekrar Dene</button>
+            <button id="win-continue" class="continue">Devam Et</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
+
+
