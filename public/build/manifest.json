@@ -1,0 +1,53 @@
+{
+  "__plugin-vue_export-helper-DAYclUAt.js": {
+    "file": "assets/_plugin-vue_export-helper-DAYclUAt.js",
+    "name": "_plugin-vue_export-helper"
+  },
+  "_index-BOeqtr82.js": {
+    "file": "assets/index-BOeqtr82.js",
+    "name": "index"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-B3d-PH0x.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-g9c-gDrE.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_index-BOeqtr82.js"
+    ]
+  },
+  "resources/js/block-builder-page.js": {
+    "file": "assets/block-builder-page-BEk-__qd.js",
+    "name": "block-builder-page",
+    "src": "resources/js/block-builder-page.js",
+    "isEntry": true,
+    "imports": [
+      "__plugin-vue_export-helper-DAYclUAt.js"
+    ],
+    "css": [
+      "assets/block-builder-page-DacVcVWY.css"
+    ]
+  },
+  "resources/js/flowchart-editor-entry.js": {
+    "file": "assets/flowchart-editor-entry-DpzxQwtw.js",
+    "name": "flowchart-editor-entry",
+    "src": "resources/js/flowchart-editor-entry.js",
+    "isEntry": true,
+    "imports": [
+      "__plugin-vue_export-helper-DAYclUAt.js",
+      "_index-BOeqtr82.js"
+    ],
+    "css": [
+      "assets/flowchart-editor-entry-DLVMmrCw.css"
+    ]
+  }
+}
