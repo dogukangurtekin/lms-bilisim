@@ -69,6 +69,7 @@
                     $thumb = preg_replace('#^https?://[^/]+/public/storage/#i', '', $thumb);
                     $thumb = preg_replace('#^https?://[^/]+/storage/#i', '', $thumb);
                     $thumb = preg_replace('#^/?storage/#i', '', $thumb);
+                    $thumb = preg_replace('#^/?course-covers/#i', '', $thumb);
                     if (!preg_match('#^https?://#i', $thumb)) {
                         $thumb = route('courses.cover', ['path' => ltrim($thumb, '/')]);
                     }

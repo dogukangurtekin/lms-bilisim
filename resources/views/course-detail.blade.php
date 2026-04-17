@@ -1,24 +1,9 @@
-@extends('layout.app')
+﻿@extends('layout.app')
 @section('title', $title)
 @section('content')
 <section class="space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-900">{{ $title }}</h1>
-        <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-700 shadow">
-                <span>💎</span><span>1250</span>
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-700 shadow">
-                <span>🪙</span><span>840</span>
-            </span>
-            <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-700 shadow">
-                <span>🚀</span><span>72</span>
-            </span>
-            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-600 shadow hover:bg-gray-100">
-                🔔
-            </button>
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-gray-700 shadow">U</span>
-        </div>
     </div>
 
     <article class="w-full rounded-2xl bg-white p-6 shadow-lg">

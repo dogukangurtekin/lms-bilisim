@@ -6,11 +6,13 @@ use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Models\ContentProgress;
 use App\Models\Course;
+use App\Models\CourseHomework;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Services\Domain\CourseService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -149,7 +151,32 @@ class CourseController extends Controller
             ? response()->json($course->refresh())
             : redirect()->route('courses.index')->with('ok', 'Ders guncellendi');
     }
-    public function destroy(Course $course) { $this->service->delete($course); return request()->expectsJson() ? response()->json([], 204) : redirect()->route('courses.index')->with('ok', 'Ders silindi'); }
+    public function destroy(Course $course)
+    {
+        try {
+            DB::transaction(function () use ($course) {
+                // Bazi ortamlarda course_homeworks FK silmeyi engelleyebildigi icin once baglantiyi bosalt.
+                CourseHomework::query()
+                    ->where('course_id', $course->id)
+                    ->update(['course_id' => null]);
+
+                $this->service->delete($course);
+            });
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()
+                ->route('courses.index')
+                ->with('ok', 'Ders silinemedi. Iliskili kayitlar kontrol edilmeli.');
+        }
+
+        return request()->expectsJson()
+            ? response()->json([], 204)
+            : redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+    public function destroyPost(Course $course)
+    {
+        return $this->destroy($course);
+    }
 
     private function attachCoverImageToPayload(Request $request, array $data): array
     {

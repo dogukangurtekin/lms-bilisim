@@ -1,238 +1,4 @@
-﻿@php
-    $isEdit = isset($course);
-    $initialPayload = old('lesson_payload');
-    if ($initialPayload === null) {
-        $initialPayload = $isEdit ? json_encode($course->lesson_payload ?? ['slides' => []], JSON_UNESCAPED_UNICODE) : json_encode(['slides' => []], JSON_UNESCAPED_UNICODE);
-    }
-    $selectedClass = old('school_class_id', $isEdit ? $course->school_class_id : '__ALL__');
-    $defaultTeacherId = old('teacher_id', $isEdit ? $course->teacher_id : ($teachers->first()->id ?? null));
-    $defaultWeeklyHours = old('weekly_hours', $isEdit ? $course->weekly_hours : 2);
-    $defaultCode = old('code', $isEdit ? $course->code : '');
-@endphp
-
-<style>
-.sq-answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sq-answer-card{display:grid;grid-template-columns:34px 1fr 28px;gap:8px;align-items:center;background:#fff;border:1px solid #dbe3ef;border-radius:10px;padding:8px}
-.sq-shape{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:#fff;font-weight:800}
-.sq-red{background:#ef4444}.sq-blue{background:#3b82f6}.sq-yellow{background:#eab308}.sq-green{background:#22c55e}
-.sq-answer-card input[type="text"]{margin:0}
-@media (max-width:980px){.sq-answers{grid-template-columns:1fr}}
-</style>
-
-<div class="lesson-builder">
-    <div class="lesson-builder-top">
-        <div style="display:grid;grid-template-columns:1fr 300px;gap:10px;width:100%">
-            <input type="text" id="lesson_title" placeholder="Ders basligi" value="{{ old('name', $isEdit ? $course->name : '') }}">
-            <select id="top_class_select">
-                <option value="__ALL__" @selected($selectedClass === '__ALL__')>Tum Siniflar</option>
-                @foreach($classes as $class)
-                    <option value="{{ $class->id }}" @selected((string)$selectedClass === (string)$class->id)>
-                        {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="actions">
-            <a class="btn" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
-            <button class="btn" type="button" id="builder_preview_btn">Önizleme</button>
-            <button class="btn" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
-            <button class="btn btn-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
-        </div>
-    </div>
-
-    <div class="lesson-builder-grid">
-        <aside class="builder-left">
-            <h4>Ders Sayfalari</h4>
-            <button class="btn" type="button" id="add_slide_btn">+ Sayfa Ekle</button>
-            <div id="slide_list"></div>
-        </aside>
-
-        <section class="builder-center">
-            <div class="builder-tabs">
-                <button type="button" class="tab-btn" data-tab="text">Yazi Ekle</button>
-                <button type="button" class="tab-btn" data-tab="media">Gorsel/Video</button>
-                <button type="button" class="tab-btn active" data-tab="code">Kod Ekle</button>
-                <button type="button" class="tab-btn" data-tab="question">Soru Ekle</button>
-            </div>
-
-            <div class="builder-panel" data-panel="text" style="display:none">
-                <label>Slide Basligi</label>
-                <input type="text" id="slide_title">
-                <label>Sayfa XP</label>
-                <input type="number" id="slide_xp" min="0" max="500" value="0">
-                <label>Konu Anlatimi / Aciklama</label>
-                <textarea id="slide_content" rows="6"></textarea>
-                <label>Ogrenci Yonlendirme Notu</label>
-                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada ogrenci ne yapmali?"></textarea>
-            </div>
-
-            <div class="builder-panel" data-panel="media" style="display:none">
-                <label>Gorsel URL</label>
-                <input type="text" id="slide_image_url" placeholder="https://...">
-                <label>Video URL</label>
-                <input type="text" id="slide_video_url" placeholder="https://youtube.com/...">
-                <label>Ek Kaynak URL</label>
-                <input type="text" id="slide_file_url" placeholder="https://.../pdf">
-            </div>
-
-            <div class="builder-panel" data-panel="code">
-                <label>HTML/CSS/JS Kodu</label>
-                <textarea id="slide_code" rows="9" placeholder="<div>...</div> <style>...</style> <script>...</script>"></textarea>
-            </div>
-
-            <div class="builder-panel" data-panel="question" style="display:none">
-                <label>Icerik Tipi</label>
-                <select id="slide_kind">
-                    <option value="topic">Konu Anlatimi</option>
-                    <option value="question">Soru Sayfasi</option>
-                    <option value="task">Gorev Sayfasi</option>
-                    <option value="summary">Ozet Sayfasi</option>
-                </select>
-                <label>Etkilesim Tipi</label>
-                <select id="slide_interaction_type">
-                    <option value="none">Yok</option>
-                    <option value="multiple_choice">Coktan Secmeli</option>
-                    <option value="true_false">Dogru Yanlis</option>
-                    <option value="matching">Eslestirme</option>
-                    <option value="drag_drop">Surukle Birak</option>
-                    <option value="short_answer">Kisa Cevap</option>
-                    <option value="checklist">Kontrol Listesi</option>
-                </select>
-                <label>Soru Metni</label>
-                <textarea id="slide_question_prompt" rows="2"></textarea>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-                    <div>
-                        <label>Puan</label>
-                        <select id="slide_points">
-                            @for($p=5;$p<=20;$p++)
-                                <option value="{{ $p }}">{{ $p }} Puan</option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div>
-                        <label>Sure</label>
-                        <select id="slide_time_limit">
-                            @for($s=10;$s<=60;$s+=5)
-                                <option value="{{ $s }}">{{ $s }} sn</option>
-                            @endfor
-                        </select>
-                    </div>
-                    <div style="display:flex;align-items:end;padding-bottom:8px">
-                        <label style="display:flex;align-items:center;gap:6px;margin:0">
-                            <input type="checkbox" id="slide_double_points" style="width:auto;margin:0">
-                            2 Kat Puan
-                        </label>
-                    </div>
-                </div>
-                <div id="question_editor"></div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;margin-top:10px">
-                <div id="current_slide_xp_badge" class="badge">Slide XP: 0</div>
-            </div>
-        </section>
-
-        <aside class="builder-right">
-            <h4>Ders Ayarlari</h4>
-            <label>Ders Kategorisi</label>
-            <select id="lesson_category">
-                <option value="Kodlama">Kodlama</option>
-                <option value="Tasarim">Tasarim</option>
-                <option value="Elektrik">Elektrik</option>
-                <option value="Robotik">Robotik</option>
-                <option value="Teorik">Teorik</option>
-                <option value="Oyun">Oyun</option>
-                <option value="Yapay Zeka">Yapay Zeka</option>
-            </select>
-            <label>Ders Zorlugu</label>
-            <select id="lesson_difficulty">
-                <option value="Kolay">Kolay</option>
-                <option value="Orta">Orta</option>
-                <option value="Zor">Zor</option>
-            </select>
-            <label>Ders Aciklamasi</label>
-            <textarea id="lesson_description" rows="3" placeholder="Ders basligi altinda gosterilecek aciklama"></textarea>
-            <label>Kapak Gorseli Yukle</label>
-            <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
-            <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
-            <img id="cover_image_preview" alt="Kapak onizleme" style="display:none;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9">
-            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
-            <hr style="margin:12px 0;border:none;border-top:1px solid #e2e8f0">
-            <label>Global Tema CSS</label>
-            <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
-
-            <hr style="margin:12px 0;border:none;border-top:1px solid #e2e8f0">
-            <h4>Mufredat Bilgileri</h4>
-            <label>Mufredat Basligi</label>
-            <input type="text" id="curriculum_title" placeholder="Mobil Dunyaya Ilk Adim: Arayuzu Kesfediyorum">
-            <label>Ders No</label>
-            <input type="number" id="curriculum_lesson_number" min="1" value="1">
-            <label>Konu</label>
-            <textarea id="curriculum_topic" rows="3" placeholder="Bu derste..."></textarea>
-            <label>Kazanimlar (Her satir bir madde)</label>
-            <textarea id="curriculum_outcomes" rows="4" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-            <label>Etkinlikler (Her satir bir madde)</label>
-            <textarea id="curriculum_activities" rows="4" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
-            <label>Ilerleme (0-100)</label>
-            <input type="number" id="curriculum_progress" min="0" max="100" value="0">
-        </aside>
-    </div>
-</div>
-
-<input type="hidden" id="lesson_payload" name="lesson_payload" value='{{ $initialPayload }}'>
-<input type="hidden" id="course_name_hidden" name="name" value="{{ old('name', $isEdit ? $course->name : '') }}">
-<input type="hidden" id="course_code_hidden" name="code" value="{{ $defaultCode }}">
-<input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
-<input type="hidden" id="school_class_id_hidden" name="school_class_id" value="{{ old('school_class_id', $isEdit ? $course->school_class_id : '') }}">
-<input type="hidden" id="weekly_hours_hidden" name="weekly_hours" value="{{ $defaultWeeklyHours }}">
-
-<div id="builder-preview-modal" class="modal">
-    <div class="modal-card" style="width:min(96vw,1500px);max-width:96vw;max-height:92vh;display:flex;flex-direction:column">
-        <div class="modal-head">
-            <strong>Ders Onizleme</strong>
-            <button class="btn" type="button" data-close-modal>Kapat</button>
-        </div>
-        <div id="preview_slide_stage" class="card" style="min-height:70vh;max-height:74vh;overflow:hidden;margin:0 0 10px"></div>
-        <div class="actions" style="justify-content:space-between">
-            <button class="btn" type="button" id="preview_prev_btn">Geri</button>
-            <span id="preview_slide_counter" class="badge">1 / 1</span>
-            <button class="btn" type="button" id="preview_next_btn">Ileri</button>
-        </div>
-    </div>
-</div>
-
-<div id="cover-crop-modal" class="modal">
-    <div class="modal-card" style="width:min(92vw,980px);max-width:980px">
-        <div class="modal-head">
-            <strong>Kapak Gorseli Kirp (16:9)</strong>
-            <button class="btn" type="button" id="cover-crop-cancel">Iptal</button>
-        </div>
-        <div style="display:grid;gap:10px">
-            <div id="cover-crop-viewport" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #cbd5e1;background:#0f172a">
-                <img id="cover-crop-image" alt="Kirpma" style="position:absolute;left:0;top:0;user-select:none;max-width:none;">
-                <div id="cover-crop-selection" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.35);cursor:move;">
-                    <span data-handle="nw" style="position:absolute;left:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
-                    <span data-handle="ne" style="position:absolute;right:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
-                    <span data-handle="sw" style="position:absolute;left:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
-                    <span data-handle="se" style="position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
-                </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">
-                <label style="display:grid;gap:6px;margin:0">
-                    <span style="font-size:12px;color:#64748b">Zoom</span>
-                    <input id="cover-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
-                </label>
-                <button class="btn" type="button" id="cover-crop-apply">Kirpmayi Uygula</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@if($errors->any())
-    <div style="color:#b91c1c;margin:8px 0">{{ $errors->first() }}</div>
-@endif
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     const builderForm = document.querySelector('.lesson-builder')?.closest('form');
     const payloadInput = document.getElementById('lesson_payload');
     const list = document.getElementById('slide_list');
@@ -297,8 +63,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let state;
     try { state = JSON.parse(payloadInput.value || '{"slides":[]}'); } catch (e) { state = {slides: []}; }
-    const draftKey = 'lesson_builder_draft_{{ $isEdit ? 'edit_' . $course->id : 'create' }}';
-    const shouldPersistDraft = {{ $isEdit ? 'true' : 'false' }};
+    const draftKey = 'lesson_builder_draft_0';
+    const shouldPersistDraft = 0;
     if ((!state.slides || state.slides.length === 0) && shouldPersistDraft) {
         try {
             const draft = localStorage.getItem(draftKey);
@@ -393,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
             questionEditor.innerHTML = box(`<div class="sq-answers">${options.map((opt, i) => `
                 <div data-q-row="mc" class="sq-answer-card">
                     <span class="sq-shape ${colors[i]}">${shapes[i]}</span>
-                    <input data-role="text" type="text" placeholder="Seçenek ${i + 1}" value="${escapeHtml(opt.text || '')}">
+                    <input data-role="text" type="text" placeholder="SeÃ§enek ${i + 1}" value="${escapeHtml(opt.text || '')}">
                     <input type="radio" name="q_mc_correct" ${opt.correct ? 'checked' : ''} style="width:18px;height:18px">
                 </div>
             `).join('')}</div>`);
@@ -405,12 +171,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="sq-answers">
                     <label class="sq-answer-card" style="cursor:pointer">
                         <span class="sq-shape sq-blue">â—†</span>
-                        <span>Doğru</span>
+                        <span>DoÄŸru</span>
                         <input type="radio" name="q_tf_correct" value="true" ${correctTrue ? 'checked' : ''} style="width:18px;height:18px">
                     </label>
                     <label class="sq-answer-card" style="cursor:pointer">
                         <span class="sq-shape sq-red">â–²</span>
-                        <span>Yanlış</span>
+                        <span>YanlÄ±ÅŸ</span>
                         <input type="radio" name="q_tf_correct" value="false" ${!correctTrue ? 'checked' : ''} style="width:18px;height:18px">
                     </label>
                 </div>
@@ -468,8 +234,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function syncHiddenInputs() {
         hName.value = lessonTitle.value || '';
-        if (!hTeacher.value) hTeacher.value = '{{ $defaultTeacherId }}';
-        if (!hWeekly.value) hWeekly.value = '{{ $defaultWeeklyHours }}';
+        if (!hTeacher.value) hTeacher.value = '0';
+        if (!hWeekly.value) hWeekly.value = '0';
         ensureCourseCode();
         if (topClassSelect.value === '__ALL__') {
             const first = Array.from(topClassSelect.options).find(o => o.value !== '__ALL__');
@@ -542,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function () {
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
         if (lessonDescription) lessonDescription.value = state.lesson_description || '';
-        const url = normalizeCoverUrl(state.cover_image || '');
+        const url = state.cover_image || '';
         if (coverImagePreview) {
             coverImagePreview.src = url;
             coverImagePreview.style.display = url ? 'block' : 'none';
@@ -560,14 +326,6 @@ document.addEventListener('DOMContentLoaded', function () {
         curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
         curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + Number(s.xp || 0);
-    }
-    function normalizeCoverUrl(url) {
-        const raw = String(url || '').trim();
-        if (!raw) return '';
-        if (/^https?:\/\//i.test(raw)) return raw;
-        if (raw.startsWith('/course-covers/')) return raw;
-        if (raw.startsWith('course-covers/')) return '/' + raw;
-        return raw;
     }
     function renderList() {
         list.innerHTML = '';
@@ -899,14 +657,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    try {
-        ensureSlide();
-        loadCurrent();
-        renderList();
-        saveCurrent();
-    } catch (e) {
-        console.error('Builder init failed:', e);
-    }
+    ensureSlide();
+    loadCurrent();
+    renderList();
+    saveCurrent();
 
     if (!shouldPersistDraft) {
         try { localStorage.removeItem(draftKey); } catch (_) {}
@@ -925,8 +679,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
-</script>
-
-
-
 
