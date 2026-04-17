@@ -54,9 +54,6 @@
         <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panel
         </a>
-        <a class="{{ request()->routeIs('students.*') ? 'active' : '' }}" href="{{ route('students.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 1114 0H5z"/></svg></span>Öğrenciler
-        </a>
         <a class="{{ request()->routeIs('classes.*') ? 'active' : '' }}" href="{{ route('classes.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v10l-9 5-9-5V9zm9-2.7L6 9.1l6 3.3 6-3.3-6-2.8z"/></svg></span>Sınıflar
         </a>

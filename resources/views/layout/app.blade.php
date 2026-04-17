@@ -5,7 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Okul yonetim sistemi admin paneli">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Egitim">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('logo192.png') }}">
     <title>@yield('title', 'School Management')</title>
+    @vite('resources/css/app.css')
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     @if(auth()->user()?->hasRole('student'))
     <link rel="stylesheet" href="{{ asset('css/student.css') }}">
@@ -138,5 +146,6 @@
 </script>
 @endif
 @stack('scripts')
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>

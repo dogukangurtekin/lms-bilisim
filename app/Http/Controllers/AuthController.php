@@ -42,14 +42,20 @@ class AuthController extends Controller
         $user = Auth::user();
         if ($user?->hasRole('student')) {
             $student = Student::where('user_id', $user->id)->first();
-            if ($student) {
-                $stat = StudentTimeStat::firstOrCreate(
-                    ['student_id' => $student->id],
-                    ['total_seconds' => 0, 'last_seen_at' => now()]
-                );
-                $stat->last_seen_at = now();
-                $stat->save();
+            if (! $student) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors(['email' => 'Bu ogrenci hesabi icin ogrenci kaydi bulunamadi.'])->onlyInput('email');
             }
+
+            $stat = StudentTimeStat::firstOrCreate(
+                ['student_id' => $student->id],
+                ['total_seconds' => 0, 'last_seen_at' => now()]
+            );
+            $stat->last_seen_at = now();
+            $stat->save();
         }
 
         return redirect()->route('dashboard');
@@ -96,14 +102,20 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         $student = Student::where('user_id', $user->id)->first();
-        if ($student) {
-            $stat = StudentTimeStat::firstOrCreate(
-                ['student_id' => $student->id],
-                ['total_seconds' => 0, 'last_seen_at' => now()]
-            );
-            $stat->last_seen_at = now();
-            $stat->save();
+        if (! $student) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json(['message' => 'Bu ogrenci hesabi icin ogrenci kaydi bulunamadi.'], 422);
         }
+
+        $stat = StudentTimeStat::firstOrCreate(
+            ['student_id' => $student->id],
+            ['total_seconds' => 0, 'last_seen_at' => now()]
+        );
+        $stat->last_seen_at = now();
+        $stat->save();
 
         return response()->json([
             'ok' => true,

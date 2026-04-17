@@ -59,14 +59,47 @@
                     return sum + Math.max(0, Number(node?.dataset?.slideXp || 0));
                 }, 0);
 
+                function fitIframeToHolder(iframe, holder) {
+                    if (!iframe || !holder) return;
+                    iframe.style.width = '100%';
+                    iframe.style.height = Math.max(620, holder.clientHeight - 8) + 'px';
+                    iframe.style.minHeight = '0';
+
+                    const applyScale = () => {
+                        try {
+                            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                            if (!doc || !doc.documentElement || !doc.body) return;
+                            const root = doc.documentElement;
+                            const body = doc.body;
+                            root.style.transform = '';
+                            root.style.transformOrigin = 'top left';
+                            root.style.width = '';
+                            body.style.margin = body.style.margin || '0';
+                            const frameW = Math.max(1, iframe.clientWidth);
+                            const frameH = Math.max(1, iframe.clientHeight);
+                            const contentW = Math.max(root.scrollWidth, body.scrollWidth, root.clientWidth, 1);
+                            const contentH = Math.max(root.scrollHeight, body.scrollHeight, root.clientHeight, 1);
+                            let scale = Math.min(frameW / contentW, frameH / contentH);
+                            if (contentW < frameW * 0.72) scale = Math.min(1.45, frameW / contentW);
+                            if (!Number.isFinite(scale) || scale <= 0) scale = 1;
+                            if (Math.abs(scale - 1) > 0.02) {
+                                root.style.transform = 'scale(' + scale + ')';
+                                root.style.width = (100 / scale) + '%';
+                            }
+                        } catch (_) {}
+                    };
+
+                    iframe.onload = applyScale;
+                    setTimeout(applyScale, 80);
+                    setTimeout(applyScale, 260);
+                }
+
                 function fitStage() {
                     const holder = stage.querySelector('#student-course-fit');
                     if (!holder) return;
                     const iframe = holder.querySelector('iframe');
                     if (iframe) {
-                        iframe.style.width = '100%';
-                        iframe.style.height = Math.max(620, holder.clientHeight - 8) + 'px';
-                        iframe.style.minHeight = '0';
+                        fitIframeToHolder(iframe, holder);
                     }
                 }
 
@@ -83,6 +116,46 @@
                     prevBtn.disabled = idx <= 0;
                     const isLast = idx >= slides.length - 1;
                     if (nextLabel) nextLabel.textContent = isLast ? 'Dersi Bitir' : 'Ileri';
+                    bindQuestionInteractions();
+                }
+
+                function bindQuestionInteractions() {
+                    const qRoot = stage.querySelector('[data-sqz-question]');
+                    if (!qRoot) return;
+                    const optionLabels = qRoot.querySelectorAll('[data-sqz-option]');
+                    optionLabels.forEach((label) => {
+                        const input = label.querySelector('input[type="radio"], input[type="checkbox"]');
+                        if (!input) return;
+                        const sync = () => {
+                            if (input.type === 'radio') {
+                                optionLabels.forEach((x) => x.classList.remove('selected'));
+                                if (input.checked) label.classList.add('selected');
+                            } else {
+                                label.classList.toggle('selected', input.checked);
+                            }
+                        };
+                        input.addEventListener('change', sync);
+                        sync();
+                    });
+                }
+
+                function isCurrentQuestionAnswered() {
+                    const qRoot = stage.querySelector('[data-sqz-question]');
+                    if (!qRoot) return true;
+                    const type = String(qRoot.getAttribute('data-sqz-type') || 'none');
+                    const inputs = Array.from(qRoot.querySelectorAll('[data-sqz-input]'));
+                    if (!inputs.length) return false;
+                    if (type === 'multiple_choice' || type === 'true_false') {
+                        return !!qRoot.querySelector('input[type=\"radio\"][data-sqz-input]:checked');
+                    }
+                    if (type === 'checklist') {
+                        return !!qRoot.querySelector('input[type=\"checkbox\"][data-sqz-input]:checked');
+                    }
+                    return inputs.every((el) => {
+                        if (el.tagName === 'SELECT') return String(el.value || '').trim() !== '';
+                        if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+                        return String(el.value || '').trim() !== '';
+                    });
                 }
 
                 prevBtn.addEventListener('click', function () {
@@ -91,6 +164,10 @@
                     render();
                 });
                 nextBtn.addEventListener('click', function () {
+                    if (!isCurrentQuestionAnswered()) {
+                        window.alert('Bu soruyu cevaplamadan ilerleyemezsin.');
+                        return;
+                    }
                     const isLast = idx >= slides.length - 1;
                     if (isLast) {
                         if (!completeForm) return;

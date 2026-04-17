@@ -1,11 +1,12 @@
 <template>
   <div :class="['node-shell', `node-${data.type}`, { active: data.active }]">
-    <Handle type="target" :position="Position.Top" class="flow-handle" />
+    <Handle type="target" :position="Position.Top" class="flow-handle" :connectable="true" />
     <Handle
       v-if="data.type === 'decision'"
       id="yes"
       type="source"
       :position="Position.Right"
+      :connectable="true"
       class="flow-handle flow-handle-yes"
     />
     <Handle
@@ -13,12 +14,14 @@
       id="no"
       type="source"
       :position="Position.Bottom"
+      :connectable="true"
       class="flow-handle flow-handle-no"
     />
     <Handle
       v-if="data.type !== 'end' && data.type !== 'decision'"
       type="source"
       :position="Position.Bottom"
+      :connectable="true"
       class="flow-handle"
     />
     <div class="node-title">{{ title }}</div>
@@ -61,7 +64,7 @@ const placeholder = computed(() => {
 .node-decision { transform:rotate(45deg); width:150px; height:150px; display:grid; place-items:center; padding:0; }
 .node-decision .node-title,.node-decision .node-text { transform:rotate(-45deg); text-align:center; max-width:110px; }
 .active { border-color:#14b8a6; box-shadow:0 0 0 4px rgba(20,184,166,.2); }
-.flow-handle { width:10px; height:10px; border:2px solid #0f172a; background:#fff; }
+.flow-handle { width:14px; height:14px; border:2px solid #0f172a; background:#fff; }
 .flow-handle-yes { background:#86efac; border-color:#15803d; }
 .flow-handle-no { background:#fecaca; border-color:#b91c1c; }
 </style>

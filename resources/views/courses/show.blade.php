@@ -47,14 +47,47 @@
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
                 let idx = 0;
 
+                function fitIframeToHolder(iframe, holder) {
+                    if (!iframe || !holder) return;
+                    iframe.style.width = '100%';
+                    iframe.style.height = Math.max(620, holder.clientHeight - 8) + 'px';
+                    iframe.style.minHeight = '0';
+
+                    const applyScale = () => {
+                        try {
+                            const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                            if (!doc || !doc.documentElement || !doc.body) return;
+                            const root = doc.documentElement;
+                            const body = doc.body;
+                            root.style.transform = '';
+                            root.style.transformOrigin = 'top left';
+                            root.style.width = '';
+                            body.style.margin = body.style.margin || '0';
+                            const frameW = Math.max(1, iframe.clientWidth);
+                            const frameH = Math.max(1, iframe.clientHeight);
+                            const contentW = Math.max(root.scrollWidth, body.scrollWidth, root.clientWidth, 1);
+                            const contentH = Math.max(root.scrollHeight, body.scrollHeight, root.clientHeight, 1);
+                            let scale = Math.min(frameW / contentW, frameH / contentH);
+                            if (contentW < frameW * 0.72) scale = Math.min(1.45, frameW / contentW);
+                            if (!Number.isFinite(scale) || scale <= 0) scale = 1;
+                            if (Math.abs(scale - 1) > 0.02) {
+                                root.style.transform = 'scale(' + scale + ')';
+                                root.style.width = (100 / scale) + '%';
+                            }
+                        } catch (_) {}
+                    };
+
+                    iframe.onload = applyScale;
+                    setTimeout(applyScale, 80);
+                    setTimeout(applyScale, 260);
+                }
+
                 function fitStage() {
                     const holder = stage.querySelector('#course-show-fit');
                     if (!holder) return;
                     const iframe = holder.querySelector('iframe');
                     if (iframe) {
-                        iframe.style.width = '100%';
-                        iframe.style.height = Math.max(620, holder.clientHeight - 8) + 'px';
-                        iframe.style.minHeight = '0';
+                        fitIframeToHolder(iframe, holder);
                     }
                 }
 

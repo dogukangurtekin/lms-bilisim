@@ -105,7 +105,22 @@
     return standaloneMedia || iosStandalone;
   }
 
+  function setPwaContextClass() {
+    if (!supportsPwaContext()) return;
+    if (document.documentElement) {
+      document.documentElement.classList.add("pwa-standalone");
+    }
+    if (document.body) {
+      document.body.classList.add("pwa-standalone");
+    }
+  }
+
   registerServiceWorker();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setPwaContextClass);
+  } else {
+    setPwaContextClass();
+  }
 
   if (!supportsPwaContext()) {
     if (document.readyState === "loading") {

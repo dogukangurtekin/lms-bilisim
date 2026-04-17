@@ -48,6 +48,8 @@ Route::middleware('auth')->group(function () {
     Route::view('/keyboard-race', 'keyboard-race.index')->name('keyboard-race.index');
     Route::view('/block-builder-studio', 'block-builder.index')->name('block-builder.index');
     Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
+    Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
+    Route::get('/course-covers/{path}', [CourseController::class, 'cover'])->where('path', '.*')->name('courses.cover');
 
     Route::middleware('role:admin,teacher')->group(function () {
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
@@ -94,6 +96,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/students/all', [StudentController::class, 'destroyAll'])->name('students.destroyAll');
         Route::resource('students', StudentController::class);
         Route::resource('classes', SchoolClassController::class);
+        Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
         Route::resource('courses', CourseController::class);
 
     });

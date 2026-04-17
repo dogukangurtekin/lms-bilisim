@@ -22,6 +22,7 @@ class StoreCourseRequest extends FormRequest
             'school_class_id' => ['required','integer','exists:school_classes,id'],
             'weekly_hours' => ['required','integer','between:1,20'],
             'lesson_payload' => ['nullable', 'json'],
+            'cover_image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
     }
 

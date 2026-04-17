@@ -12,9 +12,10 @@
 
 <div class="card">
     <form method="GET" class="actions" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
-        <div style="min-width:230px">
-            <label>Ad Soyad</label>
-            <input name="name" value="{{ $name ?? request('name') }}" placeholder="Ogrenci adi soyadi">
+        <input type="hidden" name="list" value="1">
+        <div style="min-width:260px">
+            <label>Arama</label>
+            <input name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanici adi, e-posta, sinif">
         </div>
         <div style="min-width:170px">
             <label>Sinif</label>
@@ -41,12 +42,13 @@
     <table>
         <thead>
         <tr>
-            <th>Ogrenci</th><th>Sinif</th><th>XP</th><th>Avatar</th><th>Rozet</th><th>Islem</th>
+            <th>Sira</th><th>Ogrenci</th><th>Sinif</th><th>XP</th><th>Avatar</th><th>Rozet</th><th>Islem</th>
         </tr>
         </thead>
         <tbody>
-        @foreach($students as $student)
+        @forelse($students as $student)
             <tr>
+                <td>{{ $loop->iteration }}</td>
                 <td>{{ $student->user?->name }}</td>
                 <td>{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</td>
                 <td>{{ $stats[$student->id]['xp'] ?? 0 }}</td>
@@ -58,15 +60,109 @@
                         -
                     @endif
                 </td>
-                <td>{{ $student->badges->pluck('name')->implode(', ') ?: '-' }}</td>
+                <td>{{ (int) ($stats[$student->id]['badges'] ?? 0) }}</td>
                 <td class="actions">
                     <a class="btn" target="_blank" href="{{ route('student-data.certificate', $student) }}">Sertifika</a>
+                    <button
+                        class="btn student-login-info-btn"
+                        type="button"
+                        data-update-url="{{ route('students.update', $student) }}"
+                        data-delete-url="{{ route('students.destroy', $student) }}"
+                        data-name="{{ $student->user?->name }}"
+                        data-first-name="{{ \Illuminate\Support\Str::before($student->user?->name ?? '', ' ') }}"
+                        data-last-name="{{ \Illuminate\Support\Str::after($student->user?->name ?? '', ' ') }}"
+                        data-student-no="{{ $student->student_no }}"
+                        data-username="{{ $student->credential?->username ?: \Illuminate\Support\Str::before((string) ($student->user?->email ?? ''), '@') }}"
+                        data-password="{{ $student->credential?->plain_password }}"
+                        data-class-id="{{ $student->school_class_id }}"
+                    >
+                        Giris Bilgileri
+                    </button>
                     <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelisim Karnesi</a>
                 </td>
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="7" style="text-align:center;color:#64748b">
+                    @if(request('list') !== '1' && empty(($q ?? request('q'))) && empty(($className ?? request('class_name'))) && empty(($section ?? request('section'))))
+                        Listeleme icin arama veya filtre giriniz.
+                    @else
+                        Arama kriterine uygun ogrenci bulunamadi.
+                    @endif
+                </td>
+            </tr>
+        @endforelse
         </tbody>
     </table>
+</div>
+
+@if($students instanceof \Illuminate\Contracts\Pagination\Paginator)
+    <div style="margin-top:12px">
+        {{ $students->links() }}
+    </div>
+@endif
+
+<div id="student-login-modal" style="position:fixed;inset:0;background:rgba(2,6,23,.65);display:none;align-items:center;justify-content:center;z-index:1600;padding:16px">
+    <div style="width:min(560px,100%);background:#fff;border-radius:12px;padding:16px;box-shadow:0 24px 48px rgba(2,6,23,.35)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
+            <strong id="student-login-modal-title">Giris Bilgileri</strong>
+            <button class="btn" type="button" id="student-login-modal-close">Kapat</button>
+        </div>
+
+        <form id="student-login-update-form" method="POST">
+            @csrf
+            @method('PUT')
+            <input type="hidden" name="student_no" id="student-login-student-no">
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div>
+                    <label>Ad</label>
+                    <input id="student-login-first-name" name="first_name" required>
+                </div>
+                <div>
+                    <label>Soyad</label>
+                    <input id="student-login-last-name" name="last_name" required>
+                </div>
+            </div>
+
+            <div style="margin-top:8px">
+                <label>Kullanici Adi</label>
+                <input id="student-login-username" readonly>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+                <div>
+                    <label>Sifre (Yeni ya da mevcut)</label>
+                    <input id="student-login-password" name="password" minlength="6" maxlength="72" placeholder="Sifre girin">
+                </div>
+                <div>
+                    <label>Sifre Tekrar</label>
+                    <input id="student-login-password-confirmation" name="password_confirmation" minlength="6" maxlength="72" placeholder="Sifreyi tekrar girin">
+                </div>
+            </div>
+
+            <div style="margin-top:8px">
+                <label>Sinif</label>
+                <select id="student-login-class-id" name="school_class_id" required>
+                    @foreach(($schoolClasses ?? collect()) as $class)
+                        <option value="{{ $class->id }}">{{ $class->name }}/{{ $class->section }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="actions" style="margin-top:14px;justify-content:flex-end">
+                <button class="btn" type="submit">Guncelle</button>
+            </div>
+        </form>
+
+        <form id="student-login-delete-form" method="POST" style="margin-top:8px">
+            @csrf
+            @method('DELETE')
+            <div class="actions" style="justify-content:flex-end">
+                <button class="btn btn-danger" type="submit">Sil</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div id="bulk-report-progress" style="position:fixed;right:20px;bottom:20px;z-index:1500;display:none;min-width:320px;max-width:380px;background:#0f172a;color:#fff;border-radius:12px;padding:12px;box-shadow:0 20px 40px rgba(15,23,42,.35)">
@@ -157,6 +253,66 @@
 
     previewBtn?.addEventListener('click', () => start('preview'));
     downloadBtn?.addEventListener('click', () => start('download'));
+})();
+
+(() => {
+    const modal = document.getElementById('student-login-modal');
+    const closeBtn = document.getElementById('student-login-modal-close');
+    const updateForm = document.getElementById('student-login-update-form');
+    const deleteForm = document.getElementById('student-login-delete-form');
+    const titleEl = document.getElementById('student-login-modal-title');
+    const firstNameEl = document.getElementById('student-login-first-name');
+    const lastNameEl = document.getElementById('student-login-last-name');
+    const usernameEl = document.getElementById('student-login-username');
+    const passwordEl = document.getElementById('student-login-password');
+    const passwordConfirmEl = document.getElementById('student-login-password-confirmation');
+    const studentNoEl = document.getElementById('student-login-student-no');
+    const classIdEl = document.getElementById('student-login-class-id');
+
+    function openModal(data) {
+        updateForm.action = data.updateUrl;
+        deleteForm.action = data.deleteUrl;
+        titleEl.textContent = `Giris Bilgileri - ${data.name || ''}`.trim();
+        firstNameEl.value = data.firstName || '';
+        lastNameEl.value = data.lastName || '';
+        usernameEl.value = data.username || '';
+        passwordEl.value = data.password || '';
+        passwordConfirmEl.value = data.password || '';
+        studentNoEl.value = data.studentNo || '';
+        classIdEl.value = data.classId || '';
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    document.querySelectorAll('.student-login-info-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            openModal({
+                updateUrl: btn.dataset.updateUrl || '',
+                deleteUrl: btn.dataset.deleteUrl || '',
+                name: btn.dataset.name || '',
+                firstName: btn.dataset.firstName || '',
+                lastName: btn.dataset.lastName || '',
+                username: btn.dataset.username || '',
+                password: btn.dataset.password || '',
+                studentNo: btn.dataset.studentNo || '',
+                classId: btn.dataset.classId || '',
+            });
+        });
+    });
+
+    closeBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    deleteForm?.addEventListener('submit', (e) => {
+        const ok = window.AppDialog?.confirm
+            ? window.AppDialog.confirm('Bu ogrenciyi silmek istediginize emin misiniz?')
+            : window.confirm('Bu ogrenciyi silmek istediginize emin misiniz?');
+        if (!ok) e.preventDefault();
+    });
 })();
 </script>
 @endpush

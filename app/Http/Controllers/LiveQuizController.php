@@ -317,7 +317,9 @@ class LiveQuizController extends Controller
 
     public function studentActiveSession()
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        if (! auth()->user()?->hasRole('student')) {
+            return response()->json(['active' => false]);
+        }
 
         $session = LiveQuizSession::query()
             ->with('quiz')

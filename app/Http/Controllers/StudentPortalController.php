@@ -273,16 +273,22 @@ class StudentPortalController extends Controller
         return redirect()->route('student.portal.avatars')->with('ok', 'Avatar aktif edildi.');
     }
 
-    public function courses()
+    public function courses(Request $request)
     {
         $student = $this->getStudent();
-        $courses = $this->studentCourses($student)->paginate(20);
+        $q = trim($request->string('q')->toString());
+        $category = trim($request->string('category')->toString());
+        $courses = $this->studentCourses($student)
+            ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
+            ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
+            ->paginate(20)
+            ->withQueryString();
         $courseProgress = ContentProgress::where('user_id', $student->user_id)
             ->where('content_id', 'like', 'course-%')
             ->get()
             ->keyBy('content_id');
 
-        return view('student-portal.courses', compact('student', 'courses', 'courseProgress'));
+        return view('student-portal.courses', compact('student', 'courses', 'courseProgress', 'q', 'category'));
     }
 
     public function courseShow(Course $course)
@@ -465,9 +471,13 @@ class StudentPortalController extends Controller
 
     private function getStudent(): Student
     {
-        return Student::with(['user', 'schoolClass', 'currentAvatar', 'badges'])
+        $student = Student::with(['user', 'schoolClass', 'currentAvatar', 'badges'])
             ->where('user_id', auth()->id())
-            ->firstOrFail();
+            ->first();
+
+        abort_if(! $student, 403, 'Bu hesap icin ogrenci kaydi bulunamadi.');
+
+        return $student;
     }
 
     private function studentCourses(Student $student)
@@ -987,7 +997,10 @@ class StudentPortalController extends Controller
 
     public function pingTime(Request $request)
     {
-        $student = $this->getStudent();
+        $student = Student::query()->where('user_id', auth()->id())->first();
+        if (! $student) {
+            return response()->json(['ok' => false, 'total_seconds' => 0]);
+        }
         $totalSeconds = DB::transaction(function () use ($student) {
             $stat = StudentTimeStat::where('student_id', $student->id)->lockForUpdate()->first();
             if (! $stat) {

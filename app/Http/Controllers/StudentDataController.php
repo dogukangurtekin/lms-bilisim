@@ -29,32 +29,52 @@ class StudentDataController extends Controller
 
     public function index(Request $request)
     {
+        $q = trim($request->string('q')->toString());
         $name = trim($request->string('name')->toString());
         $className = trim($request->string('class_name')->toString());
         $section = trim($request->string('section')->toString());
+        $search = $q !== '' ? $q : $name;
+        $listRequested = (string) $request->input('list', '') === '1';
+        $hasFilter = $listRequested || $search !== '' || $className !== '' || $section !== '';
 
-        $students = Student::with(['user', 'schoolClass', 'currentAvatar', 'badges'])
-            ->when($name !== '', fn ($query) => $query->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$name}%")))
+        $studentsQuery = Student::with(['user', 'schoolClass', 'currentAvatar', 'credential'])
+            ->withCount('badges')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($sub) use ($search) {
+                    $sub->whereHas('user', fn ($u) => $u
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                    )
+                    ->orWhereHas('credential', fn ($c) => $c->where('username', 'like', "%{$search}%"))
+                    ->orWhere('student_no', 'like', "%{$search}%")
+                    ->orWhereHas('schoolClass', fn ($c) => $c
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('section', 'like', "%{$search}%")
+                    );
+                });
+            })
             ->when($className !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('name', $className)))
             ->when($section !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('section', $section)))
-            ->orderByDesc('id')
-            ->get();
+            ->orderByDesc('id');
+
+        $students = $hasFilter ? $studentsQuery->simplePaginate(50)->withQueryString() : collect();
+        $studentItems = method_exists($students, 'getCollection') ? $students->getCollection() : $students;
+        $studentIds = $studentItems->pluck('id')->all();
+        $userIds = $studentItems->pluck('user_id')->all();
+
         $gradeXpByStudent = Grade::query()
             ->selectRaw('student_id, ROUND(SUM(score)) as xp')
+            ->when(!empty($studentIds), fn ($q) => $q->whereIn('student_id', $studentIds))
             ->groupBy('student_id')
             ->pluck('xp', 'student_id');
 
         $contentXpByUser = ContentProgress::query()
             ->selectRaw('user_id, SUM(xp_awarded) as xp')
+            ->when(!empty($userIds), fn ($q) => $q->whereIn('user_id', $userIds))
             ->groupBy('user_id')
             ->pluck('xp', 'user_id');
 
-        $badgeCounts = DB::table('student_badge')
-            ->selectRaw('student_id, COUNT(*) as total')
-            ->groupBy('student_id')
-            ->pluck('total', 'student_id');
-
-        $stats = $students->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $badgeCounts) {
+        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser) {
             $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
             $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
             $xp = max(0, $gradeXp + $contentXp);
@@ -62,7 +82,7 @@ class StudentDataController extends Controller
             return [
                 $student->id => [
                     'xp' => $xp,
-                    'badges' => (int) ($badgeCounts[$student->id] ?? 0),
+                    'badges' => (int) ($student->badges_count ?? 0),
                 ],
             ];
         })->all();
@@ -75,7 +95,13 @@ class StudentDataController extends Controller
         $classNames = $classes->pluck('name')->unique()->values();
         $sections = $classes->pluck('section')->unique()->values();
 
-        return view('student-data.index', compact('students', 'stats', 'name', 'className', 'section', 'classNames', 'sections'));
+        $schoolClasses = SchoolClass::query()
+            ->select('id', 'name', 'section')
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
+
+        return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses'));
     }
 
     public function loginCards()

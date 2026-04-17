@@ -28,10 +28,22 @@ class Course extends Model
         // Gecmiste cift encode edilen kayitlari da okuyabilmek icin.
         if (is_string($decoded)) {
             $decodedAgain = json_decode($decoded, true);
-            return is_array($decodedAgain) ? $decodedAgain : [];
+            $decoded = is_array($decodedAgain) ? $decodedAgain : [];
         }
 
-        return is_array($decoded) ? $decoded : [];
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        if (!empty($decoded['cover_image']) && is_string($decoded['cover_image'])) {
+            $cover = $decoded['cover_image'];
+            $cover = preg_replace('#^https?://[^/]+/[^/]+/public/storage/#i', 'storage/', $cover);
+            $cover = preg_replace('#^https?://[^/]+/public/storage/#i', 'storage/', $cover);
+            $cover = preg_replace('#^/storage/#i', 'storage/', $cover);
+            $decoded['cover_image'] = $cover;
+        }
+
+        return $decoded;
     }
 
     public function setLessonPayloadAttribute($value): void

@@ -1,18 +1,19 @@
-const SW_VERSION = "v1.1.0";
+const SW_VERSION = "v1.2.1";
 const RUNTIME_CACHE = `runtime-${SW_VERSION}`;
 const SHELL_CACHE = `shell-${SW_VERSION}`;
-const OFFLINE_URL = "/offline.html";
+const OFFLINE_URL = "offline.html";
 
 const SHELL_ASSETS = [
-  "/",
+  "./",
   OFFLINE_URL,
-  "/manifest.json",
-  "/pwa-init.js",
-  "/logo192.png",
-  "/logo512.png",
-  "/logo.png",
-  "/script.js",
-  "/style.css"
+  "manifest.webmanifest",
+  "manifest.json",
+  "pwa-init.js",
+  "logo192.png",
+  "logo512.png",
+  "logo.png",
+  "script.js",
+  "style.css"
 ];
 
 self.addEventListener("install", (event) => {

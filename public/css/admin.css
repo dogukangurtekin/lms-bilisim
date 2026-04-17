@@ -1,6 +1,9 @@
 :root { --bg:#f3f4f6; --card:#fff; --text:#111827; --accent:#2563eb; --muted:#6b7280; }
 *{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
+img,video,canvas,svg,iframe{max-width:100%;height:auto}
+.main,.card,.navbar,.top,.actions,.grid,table,.teacher-panel,.teacher-main-body,.v2-hero,.v2-rates,.student-hero-layout,.student-hero-kpis,.student-assignment-alert,.student-action-grid,.student-trend-grid,.lesson-builder-grid,.lesson-builder-top,.parent-wa-links,.parent-wa-actions{min-width:0}
 .layout{min-height:100vh}
 .sidebar{
   background:#64748b;
@@ -122,6 +125,49 @@ body.play-compact .footer{display:none}
   body.mobile-sidebar-open .mobile-sidebar-backdrop{display:block}
   .grid{grid-template-columns:repeat(2,1fr)}
 }
+@media (max-width: 768px){
+  .main{padding:12px 10px}
+  .navbar,.top,.actions,.v2-hero,.v2-rates,.lesson-builder-top,.parent-wa-actions{
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .navbar-user{flex-wrap:wrap}
+  .grid,
+  .summary-stats,
+  .signal-grid,
+  .weekly-grid,
+  .v2-metrics,
+  .v2-grid,
+  .weekly-v2,
+  .teacher-bottom-grid,
+  .parent-wa-links,
+  .activity-grid,
+  .lesson-builder-grid,
+  .builder-tabs,
+  .student-hero-layout,
+  .student-hero-kpis,
+  .student-action-grid,
+  .student-trend-grid,
+  .heatmap-grid,
+  .student-flow-card .signal-list{
+    grid-template-columns:1fr !important;
+  }
+  .student-assignment-alert{
+    grid-template-columns:1fr;
+    text-align:left;
+  }
+  .student-assignment-alert-action{justify-content:stretch}
+  .student-assignment-alert-action .btn{width:100%}
+  .table-responsive,table{
+    display:block;
+    width:100%;
+  }
+  th,td{
+    word-break:break-word;
+    overflow-wrap:anywhere;
+  }
+}
+.pwa-standalone .navbar{padding-top:max(12px, env(safe-area-inset-top))}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:1000}
 .modal.open{display:flex}
 .modal-card{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%}

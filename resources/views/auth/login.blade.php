@@ -3,6 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Egitim">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="apple-touch-icon" href="{{ asset('logo192.png') }}">
     <title>Giris</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     <style>
@@ -66,8 +73,8 @@
         .shape.tr2{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid rgba(255,255,255,.26);left:86%;top:18%;border-top:none;border-radius:0;animation-delay:1.1s}
 
         .brand-content{position:relative;z-index:2;display:grid;gap:18px;justify-items:center;text-align:center;color:#0f172a}
-        .brand-content img{width:min(420px,70%);max-width:420px;height:auto;filter:drop-shadow(0 14px 32px rgba(2,6,23,.35))}
-        .brand-content h1{margin:0;font-size:42px;line-height:1.1;font-weight:800;letter-spacing:.2px}
+        .brand-content img{width:min(315px,70%);max-width:315px;height:auto;filter:drop-shadow(0 14px 32px rgba(2,6,23,.35))}
+        .brand-content h1{margin:0;font-size:37.8px;line-height:1.1;font-weight:800;letter-spacing:.2px}
         .brand-content p{margin:0;max-width:620px;font-size:18px;color:#1e3a8a}
 
         .form-side{display:grid;place-items:center;padding:34px}
@@ -125,8 +132,8 @@
         @media (max-width:1100px){
             .login-shell{grid-template-columns:1fr}
             .brand-side{min-height:310px;padding:24px}
-            .brand-content img{width:min(320px,78%)}
-            .brand-content h1{font-size:32px}
+            .brand-content img{width:min(240px,78%)}
+            .brand-content h1{font-size:28.8px}
             .brand-content p{font-size:15px}
             .form-side{padding:16px}
             .login-form{width:min(680px,100%);padding:22px}
@@ -604,5 +611,6 @@
     loop();
 })();
 </script>
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>

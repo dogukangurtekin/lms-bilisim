@@ -5,6 +5,8 @@
       v-model:nodes="localNodes"
       v-model:edges="localEdges"
       class="canvas"
+      :connection-mode="VFConnectionMode.Loose"
+      :connect-on-click="false"
       :snap-to-grid="true"
       :snap-grid="[20, 20]"
       :min-zoom="0.4"
@@ -26,7 +28,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { MarkerType, VueFlow, useVueFlow } from '@vue-flow/core';
+import { ConnectionMode as VFConnectionMode, MarkerType, VueFlow, useVueFlow } from '@vue-flow/core';
 import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';
 import { MiniMap } from '@vue-flow/minimap';

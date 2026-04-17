@@ -1,12 +1,12 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "Egitim Portali",
   "short_name": "Egitim",
   "description": "Kodlama, yazilim ve robotik odakli egitim portali.",
   "lang": "tr",
   "dir": "ltr",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "launch_handler": {
     "client_mode": "focus-existing"
   },
@@ -20,19 +20,19 @@
   "background_color": "#f8fafc",
   "icons": [
     {
-      "src": "/logo192.png",
+      "src": "logo192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo512.png",
+      "src": "logo512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.ico",
+      "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     }
@@ -45,10 +45,10 @@
     {
       "name": "Ana Sayfa",
       "short_name": "Ana Sayfa",
-      "url": "/",
+      "url": "./",
       "icons": [
         {
-          "src": "/logo192.png",
+          "src": "logo192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
