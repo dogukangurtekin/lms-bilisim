@@ -90,7 +90,7 @@
                 :difficulty="$difficulty"
                 :content-url="route('course.detail', ['id' => $item->id])"
                 :primary-url="route('courses.edit', $item)"
-                delete-url="{{ route('courses.destroy', $item) }}"
+                delete-url="{{ url('/courses/delete/' . $item->id) }}"
                 primary-label="Düzenle"
             />
         @empty
@@ -104,5 +104,52 @@
         {{ $items->links() }}
     </div>
 </section>
+<div id="course-delete-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:3000;">
+    <div style="width:min(92vw,420px);background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);">
+        <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#111827;">Dersi Sil</h3>
+        <p style="margin:0 0 14px;color:#334155;">Bu dersi silmek istediginize emin misiniz?</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" id="course-delete-cancel" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
+            <button type="button" id="course-delete-confirm" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">Evet, Sil</button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('course-delete-modal');
+    const cancelBtn = document.getElementById('course-delete-cancel');
+    const confirmBtn = document.getElementById('course-delete-confirm');
+    let pendingUrl = '';
+
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest('.course-delete-link');
+        if (!link) return;
+        e.preventDefault();
+        pendingUrl = link.dataset.deleteUrl || link.getAttribute('href') || '';
+        if (!pendingUrl || !modal) return;
+        modal.style.display = 'flex';
+    });
+
+    cancelBtn?.addEventListener('click', function () {
+        pendingUrl = '';
+        if (modal) modal.style.display = 'none';
+    });
+
+    confirmBtn?.addEventListener('click', function () {
+        if (!pendingUrl) return;
+        const url = pendingUrl;
+        pendingUrl = '';
+        if (modal) modal.style.display = 'none';
+        window.location.assign(url);
+    });
+
+    modal?.addEventListener('click', function (e) {
+        if (e.target === modal) {
+            pendingUrl = '';
+            modal.style.display = 'none';
+        }
+    });
+});
+</script>
 @endsection
 

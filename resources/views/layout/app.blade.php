@@ -145,6 +145,133 @@
 })();
 </script>
 @endif
+@if(auth()->check())
+<script>
+(() => {
+    const feedUrl = @json(route('notifications.feed'));
+    const storageKey = `notif:last:id:${@json((int) auth()->id())}`;
+    const canUseStorage = typeof window.localStorage !== 'undefined';
+    let lastId = canUseStorage ? Number(localStorage.getItem(storageKey) || 0) : 0;
+    let bootstrapped = false;
+    let busy = false;
+
+    function saveLastId() {
+        if (!canUseStorage) return;
+        localStorage.setItem(storageKey, String(lastId));
+    }
+
+    function ensureToastWrap() {
+        let wrap = document.getElementById('system-notification-toast-wrap');
+        if (wrap) return wrap;
+        wrap = document.createElement('div');
+        wrap.id = 'system-notification-toast-wrap';
+        wrap.style.position = 'fixed';
+        wrap.style.right = '16px';
+        wrap.style.bottom = '16px';
+        wrap.style.zIndex = '100000';
+        wrap.style.display = 'grid';
+        wrap.style.gap = '8px';
+        document.body.appendChild(wrap);
+        return wrap;
+    }
+
+    function showToast(title, content) {
+        const wrap = ensureToastWrap();
+        const item = document.createElement('article');
+        item.style.background = '#0f172a';
+        item.style.color = '#fff';
+        item.style.padding = '12px 14px';
+        item.style.borderRadius = '12px';
+        item.style.width = 'min(360px, calc(100vw - 32px))';
+        item.style.boxShadow = '0 16px 30px rgba(2,6,23,.35)';
+        item.style.border = '1px solid rgba(148,163,184,.35)';
+        item.innerHTML = `<strong style="display:block;font-size:14px;margin-bottom:4px;">${title}</strong><p style="margin:0;font-size:13px;line-height:1.4;">${content}</p>`;
+        wrap.appendChild(item);
+        setTimeout(() => item.remove(), 6500);
+    }
+
+    async function showDeviceNotification(title, content) {
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'default') {
+            try { await Notification.requestPermission(); } catch (_) {}
+        }
+        if (Notification.permission !== 'granted') return;
+
+        try {
+            if ('serviceWorker' in navigator) {
+                const reg = await navigator.serviceWorker.ready;
+                if (reg?.showNotification) {
+                    await reg.showNotification(title, {
+                        body: content,
+                        icon: '{{ asset('logo192.png') }}',
+                        badge: '{{ asset('logo192.png') }}',
+                        tag: `app-notif-${Date.now()}`,
+                    });
+                    return;
+                }
+            }
+        } catch (_) {}
+
+        try { new Notification(title, { body: content }); } catch (_) {}
+    }
+
+    async function bootstrapLatestId() {
+        try {
+            const res = await fetch(`${feedUrl}?latest_id_only=1`, {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const latest = Number(data.latest_id || 0);
+            if (latest > lastId) {
+                lastId = latest;
+                saveLastId();
+            }
+        } catch (_) {}
+    }
+
+    async function pollFeed() {
+        if (busy || !bootstrapped) return;
+        busy = true;
+        try {
+            const res = await fetch(`${feedUrl}?after_id=${lastId}`, {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+            if (!items.length) return;
+
+            for (const item of items) {
+                const itemId = Number(item.id || 0);
+                if (itemId > lastId) {
+                    lastId = itemId;
+                }
+                const title = String(item.title || 'Yeni Bildirim');
+                const content = String(item.content || '');
+                showToast(title, content);
+                showDeviceNotification(title, content);
+            }
+            saveLastId();
+        } catch (_) {
+        } finally {
+            busy = false;
+        }
+    }
+
+    (async () => {
+        await bootstrapLatestId();
+        bootstrapped = true;
+        setInterval(pollFeed, 7000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') pollFeed();
+        });
+    })();
+})();
+</script>
+@endif
 @stack('scripts')
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>

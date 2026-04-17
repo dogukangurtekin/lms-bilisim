@@ -33,6 +33,10 @@ class StudentDataController extends Controller
         $name = trim($request->string('name')->toString());
         $className = trim($request->string('class_name')->toString());
         $section = trim($request->string('section')->toString());
+        $perPage = (int) $request->input('per_page', 50);
+        if (!in_array($perPage, [20, 50, 100, 200], true)) {
+            $perPage = 50;
+        }
         $search = $q !== '' ? $q : $name;
         $listRequested = (string) $request->input('list', '') === '1';
         $hasFilter = $listRequested || $search !== '' || $className !== '' || $section !== '';
@@ -57,7 +61,7 @@ class StudentDataController extends Controller
             ->when($section !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('section', $section)))
             ->orderByDesc('id');
 
-        $students = $hasFilter ? $studentsQuery->simplePaginate(50)->withQueryString() : collect();
+        $students = $hasFilter ? $studentsQuery->simplePaginate($perPage)->withQueryString() : collect();
         $studentItems = method_exists($students, 'getCollection') ? $students->getCollection() : $students;
         $studentIds = $studentItems->pluck('id')->all();
         $userIds = $studentItems->pluck('user_id')->all();
@@ -101,7 +105,7 @@ class StudentDataController extends Controller
             ->orderBy('section')
             ->get();
 
-        return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses'));
+        return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses', 'perPage'));
     }
 
     public function loginCards()

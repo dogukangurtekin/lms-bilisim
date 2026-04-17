@@ -52,13 +52,16 @@
             </a>
 
             @if(!empty($deleteUrl))
-                <form method="POST" action="{{ $deleteUrl }}" style="display:block;width:100%;" onsubmit="return confirm('Bu dersi silmek istediginize emin misiniz?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" style="display:inline-flex;width:100%;height:48px;align-items:center;justify-content:center;border:0;border-radius:12px;background:#dc2626;color:#fff;font-size:16px;font-weight:700;cursor:pointer;">
-                        Dersi Sil
-                    </button>
-                </form>
+                <a
+                    href="{{ $deleteUrl }}"
+                    class="course-delete-link"
+                    data-delete-url="{{ $deleteUrl }}"
+                    onmouseenter="this.style.backgroundColor='#b91c1c'"
+                    onmouseleave="this.style.backgroundColor='#dc2626'"
+                    style="display:inline-flex;width:100%;height:48px;align-items:center;justify-content:center;border:0;border-radius:12px;background:#dc2626;color:#fff;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;transition:background-color .15s ease;"
+                >
+                    Dersi Sil
+                </a>
             @endif
         </div>
     </div>

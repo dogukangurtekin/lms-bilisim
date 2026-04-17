@@ -3,23 +3,17 @@
 @section('content')
 <div class="top">
     <h1>Siniflar</h1>
-    <div class="actions">
-        <a class="btn" href="{{ route('classes.create') }}">Yeni Sayfa</a>
-        <button class="btn" data-open-modal="quick-create-modal">Hizli Ekle (AJAX)</button>
-    </div>
 </div>
 <div class="card">
-    <form method="GET" class="actions" style="margin-bottom:10px">
-        <input name="q" value="{{ $q ?? request('q') }}" placeholder="Ara...">
-        <select name="sort">
-            <option value="id">id</option>
-            <option value="created_at">created_at</option>
-        </select>
-        <select name="dir">
-            <option value="desc">desc</option>
-            <option value="asc">asc</option>
-        </select>
-        <button class="btn" type="submit">Filtrele</button>
+    <form id="classes-filter-form" method="GET" class="actions" style="margin-bottom:10px;align-items:end;flex-wrap:wrap">
+        <div style="min-width:220px">
+            <label>Sinif</label>
+            <input id="classes-class-name" name="class_name" value="{{ $className ?? request('class_name') }}" placeholder="Sinif adi...">
+        </div>
+        <div style="min-width:180px">
+            <label>Sube</label>
+            <input id="classes-section" name="section" value="{{ $section ?? request('section') }}" placeholder="Sube...">
+        </div>
     </form>
 
     <table>
@@ -40,16 +34,20 @@
     </table>
     {{ $items->links() }}
 </div>
-
-<div id="quick-create-modal" class="modal">
-    <div class="modal-card">
-        <div class="modal-head"><strong>Hizli Ekle</strong><button class="btn" type="button" data-close-modal>Kapat</button></div>
-        <form method="POST" action="{{ route('classes.store') }}" data-ajax="true">
-            @csrf
-            <label>Ad</label><input name='name'><label>Sube</label><input name='section'><label>Grade Level</label><input name='grade_level'><label>Academic Year</label><input name='academic_year'>
-            <button class="btn" type="submit">Kaydet</button>
-        </form>
-    </div>
-</div>
+<script>
+(() => {
+    const form = document.getElementById('classes-filter-form');
+    const className = document.getElementById('classes-class-name');
+    const section = document.getElementById('classes-section');
+    if (!form) return;
+    let timer = null;
+    const submitLater = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => form.submit(), 300);
+    };
+    className?.addEventListener('input', submitLater);
+    section?.addEventListener('input', submitLater);
+})();
+</script>
 @endsection
 

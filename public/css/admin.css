@@ -401,3 +401,17 @@ body.play-compact .footer{display:none}
 .builder-panel input,.builder-panel textarea,.builder-panel select,.builder-right input,.builder-right textarea,.builder-right select{margin-bottom:8px}
 .builder-preview{border:1px dashed #cbd5e1;padding:8px;border-radius:8px;background:#f8fafc}
 @media (max-width:1300px){.lesson-builder-grid{grid-template-columns:1fr}}
+
+.notification-tabs-card{padding:10px 12px}
+.notification-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.notification-tab-btn{border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;transition:.2s}
+.notification-tab-btn:hover{background:#f8fafc}
+.notification-tab-btn.is-active{background:#4c1d95;color:#fff;border-color:#4c1d95}
+.notification-recent{margin-top:14px}
+.notification-recent h3{margin:0 0 8px;font-size:15px;color:#111827}
+.notification-recent-list{display:grid;gap:8px}
+.notification-recent-item{border:1px solid #e2e8f0;background:#fff;border-radius:10px;padding:10px}
+.notification-recent-item header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.notification-recent-item header strong{font-size:14px;color:#111827}
+.notification-recent-item header span{font-size:11px;color:#475569;background:#f1f5f9;border-radius:999px;padding:2px 8px;font-weight:700}
+.notification-recent-item p{margin:0;font-size:13px;color:#334155;line-height:1.45;white-space:pre-line}

@@ -13,6 +13,7 @@ use App\Services\Domain\CourseService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -153,21 +154,7 @@ class CourseController extends Controller
     }
     public function destroy(Course $course)
     {
-        try {
-            DB::transaction(function () use ($course) {
-                // Bazi ortamlarda course_homeworks FK silmeyi engelleyebildigi icin once baglantiyi bosalt.
-                CourseHomework::query()
-                    ->where('course_id', $course->id)
-                    ->update(['course_id' => null]);
-
-                $this->service->delete($course);
-            });
-        } catch (\Throwable $e) {
-            report($e);
-            return redirect()
-                ->route('courses.index')
-                ->with('ok', 'Ders silinemedi. Iliskili kayitlar kontrol edilmeli.');
-        }
+        $this->performDestroyById((int) $course->id);
 
         return request()->expectsJson()
             ? response()->json([], 204)
@@ -175,7 +162,31 @@ class CourseController extends Controller
     }
     public function destroyPost(Course $course)
     {
-        return $this->destroy($course);
+        $this->performDestroyById((int) $course->id);
+        return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+    public function destroyNow(Course $course)
+    {
+        $this->performDestroyById((int) $course->id);
+        return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+    public function destroyById(int $id)
+    {
+        $this->performDestroyById($id);
+        return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+
+    private function performDestroyById(int $courseId): void
+    {
+        Log::info('Course delete requested', ['course_id' => $courseId, 'user_id' => auth()->id()]);
+
+        DB::transaction(function () use ($courseId) {
+            CourseHomework::query()->where('course_id', $courseId)->delete();
+            $deleted = Course::query()->whereKey($courseId)->delete();
+            if ($deleted !== 1) {
+                throw new \RuntimeException('Ders kaydi bulunamadi veya silinemedi.');
+            }
+        });
     }
 
     private function attachCoverImageToPayload(Request $request, array $data): array

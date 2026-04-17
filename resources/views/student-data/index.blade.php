@@ -11,15 +11,15 @@
 </div>
 
 <div class="card">
-    <form method="GET" class="actions" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
+    <form id="student-data-filter-form" method="GET" class="actions" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
         <input type="hidden" name="list" value="1">
         <div style="min-width:260px">
             <label>Arama</label>
-            <input name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanici adi, e-posta, sinif">
+            <input id="student-data-q" name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanici adi, e-posta, sinif">
         </div>
         <div style="min-width:170px">
             <label>Sinif</label>
-            <select name="class_name">
+            <select id="student-data-class-name" name="class_name">
                 <option value="">Tum siniflar</option>
                 @foreach(($classNames ?? collect()) as $cn)
                     <option value="{{ $cn }}" @selected(($className ?? request('class_name')) === $cn)>{{ $cn }}</option>
@@ -28,15 +28,21 @@
         </div>
         <div style="min-width:140px">
             <label>Sube</label>
-            <select name="section">
+            <select id="student-data-section" name="section">
                 <option value="">Tum subeler</option>
                 @foreach(($sections ?? collect()) as $sec)
                     <option value="{{ $sec }}" @selected(($section ?? request('section')) === $sec)>{{ $sec }}</option>
                 @endforeach
             </select>
         </div>
-        <button class="btn" type="submit">Filtrele</button>
-        <a class="btn" href="{{ route('student-data.index') }}">Temizle</a>
+        <div style="min-width:150px">
+            <label>Sayfa Basina</label>
+            <select id="student-data-per-page" name="per_page">
+                @foreach([20, 50, 100, 200] as $size)
+                    <option value="{{ $size }}" @selected((int) (($perPage ?? request('per_page', 50))) === $size)>{{ $size }}</option>
+                @endforeach
+            </select>
+        </div>
     </form>
 
     <table>
@@ -175,6 +181,27 @@
 
 @push('scripts')
 <script>
+(() => {
+    const form = document.getElementById('student-data-filter-form');
+    if (form) {
+        const q = document.getElementById('student-data-q');
+        const className = document.getElementById('student-data-class-name');
+        const section = document.getElementById('student-data-section');
+        const perPage = document.getElementById('student-data-per-page');
+        let timer = null;
+
+        const submitLater = () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => form.submit(), 300);
+        };
+
+        q?.addEventListener('input', submitLater);
+        className?.addEventListener('change', () => form.submit());
+        section?.addEventListener('change', () => form.submit());
+        perPage?.addEventListener('change', () => form.submit());
+    }
+})();
+
 (() => {
     const previewBtn = document.getElementById('bulk-report-preview-btn');
     const downloadBtn = document.getElementById('bulk-report-download-btn');

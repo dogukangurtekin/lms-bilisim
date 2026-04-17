@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FlowchartPageController;
 use App\Http\Controllers\GameAssignmentController;
 use App\Http\Controllers\LiveQuizController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ParentWhatsappController;
 use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\StudentDataController;
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/course-covers/{path}', [CourseController::class, 'cover'])->where('path', '.*')->name('courses.cover');
 
     Route::middleware('role:admin,teacher')->group(function () {
+        Route::get('/bildirimler', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/bildirimler/mesajlar', [NotificationController::class, 'storeMessage'])->name('notifications.messages.store');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');
@@ -98,6 +101,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('classes', SchoolClassController::class);
         Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
+        Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
+        Route::get('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id');
         Route::resource('courses', CourseController::class);
 
     });
@@ -131,4 +136,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/gelisim-karnem', [StudentPortalController::class, 'progress'])->name('student.portal.progress');
         Route::get('/ogrenci/gelisim-raporum', [StudentPortalController::class, 'progressReport'])->name('student.portal.progress-report');
     });
+
+    Route::get('/bildirimler/akis', [NotificationController::class, 'feed'])->name('notifications.feed');
 });

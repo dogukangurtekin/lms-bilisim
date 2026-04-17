@@ -16,17 +16,18 @@ class SchoolClassController extends Controller
 
     public function index(Request $request)
     {
-        $q = $request->string('q')->toString();
-        $sort = in_array($request->string('sort')->toString(), ['id', 'name', 'grade_level', 'created_at'], true) ? $request->string('sort')->toString() : 'id';
-        $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
+        $className = trim($request->string('class_name')->toString());
+        $section = trim($request->string('section')->toString());
 
         $items = SchoolClass::with('teacher.user')
-            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('section', 'like', "%{$q}%"))
-            ->orderBy($sort, $dir)
-            ->paginate(20)
+            ->when($className !== '', fn ($query) => $query->where('name', 'like', "%{$className}%"))
+            ->when($section !== '', fn ($query) => $query->where('section', 'like', "%{$section}%"))
+            ->orderBy('name')
+            ->orderBy('section')
+            ->paginate(50)
             ->withQueryString();
 
-        return view('school-classes.index', compact('items', 'q', 'sort', 'dir'));
+        return view('school-classes.index', compact('items', 'className', 'section'));
     }
 
     public function create() { return view('school-classes.create'); }
