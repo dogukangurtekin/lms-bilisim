@@ -57,6 +57,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/app-notifications/send', [NotificationController::class, 'sendMessage'])->name('notifications.send');
         Route::post('/app-notifications/{log}/resend', [NotificationController::class, 'resend'])->name('notifications.resend');
         Route::delete('/app-notifications/{log}', [NotificationController::class, 'destroyLog'])->name('notifications.logs.destroy');
+        Route::delete('/app-notifications', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');

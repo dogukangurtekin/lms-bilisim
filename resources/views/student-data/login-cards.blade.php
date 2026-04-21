@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.pwa-head')
     <title>Öğrenci Giriş Kartları</title>
     <style>
         body{font-family:"Segoe UI",Arial,sans-serif;background:#e5e7eb;margin:0;color:#111}
@@ -222,5 +222,6 @@
     });
 })();
 </script>
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>

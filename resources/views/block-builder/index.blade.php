@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @include('partials.pwa-head')
     <meta name="app-base-url" content="{{ rtrim(request()->getBaseUrl(), '/') }}">
     <title>3D Grid Tasarim Studyosu</title>
     @php
@@ -21,5 +21,6 @@
             Block Builder kaynaklari bulunamadi. Sunucuda <code>npm run build</code> calistirip tekrar deneyin.
         </div>
     @endif
+    <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>

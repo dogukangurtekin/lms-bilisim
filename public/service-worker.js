@@ -104,7 +104,8 @@ self.addEventListener("push", (event) => {
     badge: "/logo192.png",
     data: {
       url: payload.url || "/bildirimler",
-      id: payload.id || null,
+      log_id: payload.log_id || null,
+      type: payload.type || "system_message",
     },
   };
 
@@ -113,7 +114,16 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = (event.notification?.data && event.notification.data.url) || "/bildirimler";
+  const data = (event.notification && event.notification.data) || {};
+  const rawTarget = data.url || "/bildirimler";
+  const target = new URL(rawTarget, self.location.origin);
+  if (data.log_id) {
+    target.searchParams.set("notif_log", String(data.log_id));
+  }
+  if ((data.type || "system_message") === "system_message") {
+    target.searchParams.set("notif_mark_read", "1");
+  }
+  const targetUrl = target.toString();
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.pwa-head')
     <title>Gelişim Raporları</title>
     <style>
         @page { size: A4; margin: 10mm; }
@@ -250,5 +250,6 @@
     @include('reports.partials.student-progress-pages', ['student' => $item['student'], 'report' => $item['report']])
 @endforeach
 
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>

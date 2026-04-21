@@ -3,6 +3,7 @@
   const IOS_HINT_ID = "pwa-ios-hint";
   const HINT_DISMISS_KEY = "pwa-ios-hint-dismissed";
   let deferredPrompt = null;
+  window.__pwaPromptInstall = null;
 
   function createInstallButton() {
     let button = document.getElementById(INSTALL_BUTTON_ID);
@@ -44,23 +45,49 @@
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
+
+    const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute("href") || "";
+    const swUrl = manifestHref
+      ? new URL("service-worker.js", new URL(manifestHref, window.location.href)).toString()
+      : new URL("service-worker.js", window.location.href).toString();
+
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+      navigator.serviceWorker.register(swUrl).catch((error) => {
+        console.error("[PWA] Service worker kayit hatasi:", error);
+      });
     });
   }
 
   function setupInstallPrompt() {
     const button = createInstallButton();
     window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
       deferredPrompt = event;
+      window.__pwaPromptInstall = async function () {
+        if (!deferredPrompt) return false;
+        deferredPrompt.prompt();
+        let accepted = false;
+        try {
+          const choice = await deferredPrompt.userChoice;
+          accepted = !!choice && choice.outcome === "accepted";
+        } finally {
+          deferredPrompt = null;
+          window.__pwaPromptInstall = null;
+          button.style.display = "none";
+        }
+        return accepted;
+      };
       button.style.display = "inline-flex";
       button.style.alignItems = "center";
       button.style.gap = "8px";
+      window.dispatchEvent(new CustomEvent("pwa-install-available"));
     });
 
     window.addEventListener("appinstalled", () => {
       deferredPrompt = null;
+      window.__pwaPromptInstall = null;
       button.style.display = "none";
+      window.dispatchEvent(new CustomEvent("pwa-installed"));
     });
   }
 
@@ -115,11 +142,69 @@
     }
   }
 
+  function lockZoomGestures() {
+    let lastTouchEnd = 0;
+
+    document.addEventListener(
+      "touchstart",
+      function (event) {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "touchmove",
+      function (event) {
+        if (event.touches && event.touches.length > 1) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "touchend",
+      function (event) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "wheel",
+      function (event) {
+        if (event.ctrlKey) {
+          event.preventDefault();
+        }
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "dblclick",
+      function (event) {
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+  }
+
   registerServiceWorker();
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setPwaContextClass);
+    document.addEventListener("DOMContentLoaded", function () {
+      setPwaContextClass();
+      lockZoomGestures();
+    });
   } else {
     setPwaContextClass();
+    lockZoomGestures();
   }
 
   if (!supportsPwaContext()) {

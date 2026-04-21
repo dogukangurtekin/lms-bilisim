@@ -2,16 +2,9 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.pwa-head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Okul yonetim sistemi admin paneli">
-    <meta name="theme-color" content="#2563eb">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Egitim">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-    <link rel="apple-touch-icon" href="{{ asset('logo192.png') }}">
     <title>@yield('title', 'School Management')</title>
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
@@ -152,7 +145,12 @@
     const subscribeUrl = @json(route('notifications.subscribe'));
     const unsubscribeUrl = @json(route('notifications.unsubscribe'));
     const deviceStatusUrl = @json(route('notifications.device-status'));
+    const serviceWorkerUrl = @json(asset('service-worker.js'));
+    const notificationsBaseUrl = @json(url('/app-notifications'));
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const pwaOnboardDismissKey = 'pwa_onboard_dismissed_v1';
+    let onboardEl = null;
+    let pushBusy = false;
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -194,33 +192,52 @@
     async function syncDeviceStatus(endpoint = '') {
         const platform = navigator.platform || navigator.userAgent || '';
         const isPwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-        await fetch(deviceStatusUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                endpoint,
-                permission: (window.Notification && Notification.permission) ? Notification.permission : 'default',
-                platform,
-                is_pwa: !!isPwa,
-            }),
-        });
+        try {
+            await fetch(deviceStatusUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    endpoint,
+                    permission: (window.Notification && Notification.permission) ? Notification.permission : 'default',
+                    platform,
+                    is_pwa: !!isPwa,
+                }),
+            });
+        } catch (_) {}
     }
 
     async function registerWebPush() {
+        if (pushBusy) return;
+        pushBusy = true;
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            console.warn('[WebPush] Tarayici push API desteklemiyor.');
+            pushBusy = false;
+            return;
+        }
+
+        if (!window.isSecureContext) {
+            // Web Push sadece HTTPS veya localhost secure context'te calisir.
+            console.warn('[WebPush] Guvenli baglam yok. HTTPS uzerinden acin.');
+            pushBusy = false;
             return;
         }
 
         try {
             const keyRes = await fetch(publicKeyUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+            if (!keyRes.ok) {
+                throw new Error('Public key alinamadi: HTTP ' + keyRes.status);
+            }
             const keyJson = await keyRes.json().catch(() => ({}));
             const vapidPublicKey = String(keyJson.public_key || '');
-            const reg = await navigator.serviceWorker.ready;
+            if (!vapidPublicKey) {
+                throw new Error('WEBPUSH_VAPID_PUBLIC_KEY bos.');
+            }
+            const reg = await navigator.serviceWorker.register(serviceWorkerUrl);
             let sub = await reg.pushManager.getSubscription();
 
             if (Notification.permission === 'denied') {
@@ -232,7 +249,10 @@
 
             if (Notification.permission === 'default') {
                 const permission = await Notification.requestPermission();
-                if (permission !== 'granted') return;
+                if (permission !== 'granted') {
+                    await syncDeviceStatus(sub?.endpoint || '');
+                    return;
+                }
             }
 
             if (!sub && vapidPublicKey) {
@@ -248,14 +268,164 @@
             } else {
                 await syncDeviceStatus('');
             }
-        } catch (_) {
+        } catch (error) {
+            console.error('[WebPush] Kayit/abonelik hatasi:', error);
+        } finally {
+            pushBusy = false;
+        }
+    }
+
+    async function markReadFromQueryIfNeeded() {
+        try {
+            const url = new URL(window.location.href);
+            const logId = String(url.searchParams.get('notif_log') || '').trim();
+            const shouldMarkRead = String(url.searchParams.get('notif_mark_read') || '') === '1';
+            if (!logId || !shouldMarkRead) return;
+
+            await fetch(`${notificationsBaseUrl}/${encodeURIComponent(logId)}/read`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+            });
+
+            url.searchParams.delete('notif_log');
+            url.searchParams.delete('notif_mark_read');
+            window.history.replaceState({}, '', url.toString());
+        } catch (_) {}
+    }
+
+    function isPwaInstalled() {
+        const standaloneMedia = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+        const iosStandalone = window.navigator.standalone === true;
+        return !!(standaloneMedia || iosStandalone);
+    }
+
+    function ensureOnboardUi() {
+        if (onboardEl) return onboardEl;
+        const div = document.createElement('section');
+        div.id = 'pwa-onboard-card';
+        div.style.position = 'fixed';
+        div.style.top = '14px';
+        div.style.right = '14px';
+        div.style.zIndex = '1000000';
+        div.style.maxWidth = '360px';
+        div.style.width = 'calc(100vw - 28px)';
+        div.style.background = '#0f172a';
+        div.style.color = '#fff';
+        div.style.borderRadius = '14px';
+        div.style.padding = '14px';
+        div.style.boxShadow = '0 14px 36px rgba(2,6,23,.45)';
+        div.innerHTML = `
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+                <strong style="font-size:15px;line-height:1.2;">Bildirim Kurulumu</strong>
+                <button type="button" id="pwa-onboard-dismiss" style="border:0;background:#1e293b;color:#cbd5e1;border-radius:8px;padding:4px 8px;cursor:pointer;">Kapat</button>
+            </div>
+            <p id="pwa-onboard-text" style="margin:8px 0 12px;font-size:13px;line-height:1.4;color:#cbd5e1;"></p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" id="pwa-onboard-install" style="border:0;background:#16a34a;color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;">Uygulamayi Yukle</button>
+                <button type="button" id="pwa-onboard-notify" style="border:0;background:#2563eb;color:#fff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;">Bildirim Izni Ver</button>
+            </div>
+        `;
+        document.body.appendChild(div);
+        onboardEl = div;
+
+        const dismissBtn = div.querySelector('#pwa-onboard-dismiss');
+        dismissBtn?.addEventListener('click', () => {
+            localStorage.setItem(pwaOnboardDismissKey, '1');
+            div.remove();
+            onboardEl = null;
+        });
+
+        const installBtn = div.querySelector('#pwa-onboard-install');
+        installBtn?.addEventListener('click', async () => {
+            const fn = window.__pwaPromptInstall;
+            if (typeof fn === 'function') {
+                await fn();
+            } else {
+                alert('Tarayiciniz su an dogrudan yukleme penceresi vermiyor. Tarayici menusunden "Uygulamayi Yuke" secenegini kullanin.');
+            }
+            updateOnboardUi();
+        });
+
+        const notifyBtn = div.querySelector('#pwa-onboard-notify');
+        notifyBtn?.addEventListener('click', async () => {
+            if (!('Notification' in window)) {
+                alert('Bu tarayici bildirim izinlerini desteklemiyor.');
+                return;
+            }
+            if (Notification.permission === 'denied') {
+                alert('Bildirim izni tarayici tarafinda engellenmis. Adres cubugundaki kilit simgesinden veya tarayici ayarlarindan bu site icin bildirimi tekrar "izin ver" yapin.');
+                return;
+            }
+            notifyBtn.disabled = true;
+            notifyBtn.style.opacity = '.7';
+            await registerWebPush();
+            notifyBtn.disabled = false;
+            notifyBtn.style.opacity = '1';
+            updateOnboardUi();
+        });
+
+        return div;
+    }
+
+    function updateOnboardUi() {
+        if (localStorage.getItem(pwaOnboardDismissKey) === '1') return;
+        if (!('Notification' in window)) return;
+        const permission = Notification.permission;
+        const installed = isPwaInstalled();
+
+        if (installed && permission === 'granted') {
+            if (onboardEl) {
+                onboardEl.remove();
+                onboardEl = null;
+            }
+            return;
+        }
+
+        const div = ensureOnboardUi();
+        const textEl = div.querySelector('#pwa-onboard-text');
+        const installBtn = div.querySelector('#pwa-onboard-install');
+        const notifyBtn = div.querySelector('#pwa-onboard-notify');
+        const hasDirectInstallPrompt = typeof window.__pwaPromptInstall === 'function';
+
+        if (!installed && permission !== 'granted') {
+            textEl.textContent = 'Gercek sistem bildirimi icin once uygulamayi yukleyin, sonra bildirim izni verin.';
+        } else if (permission === 'denied') {
+            textEl.textContent = 'Bildirim izni engellenmis. Tarayici ayarlarindan bu site icin izni tekrar acin.';
+        } else if (!installed) {
+            textEl.textContent = 'Bildirim acik. Daha stabil deneyim icin uygulamayi cihaza yukleyin.';
+        } else {
+            textEl.textContent = 'Uygulama yuklu. Simdi bildirim iznini acin.';
+        }
+
+        if (installBtn) {
+            installBtn.style.display = installed ? 'none' : 'inline-block';
+            installBtn.disabled = !hasDirectInstallPrompt;
+            installBtn.style.opacity = hasDirectInstallPrompt ? '1' : '.7';
+        }
+        if (notifyBtn) {
+            notifyBtn.style.display = permission === 'granted' ? 'none' : 'inline-block';
+            notifyBtn.textContent = permission === 'denied' ? 'Izin Engellendi' : 'Bildirim Izni Ver';
         }
     }
 
     (async () => {
         await registerWebPush();
+        await markReadFromQueryIfNeeded();
+        updateOnboardUi();
+
+        window.addEventListener('pwa-install-available', updateOnboardUi);
+        window.addEventListener('pwa-installed', updateOnboardUi);
+        window.addEventListener('focus', updateOnboardUi);
+
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') registerWebPush();
+            if (document.visibilityState === 'visible') {
+                registerWebPush();
+                updateOnboardUi();
+            }
         });
     })();
 })();
@@ -265,3 +435,4 @@
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>
+

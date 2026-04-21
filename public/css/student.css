@@ -75,6 +75,28 @@ body.role-student .navbar{
   border:1px solid #dbeafe;
   background:linear-gradient(180deg,#ffffff,#f8fbff);
 }
+body.role-student .navbar-actions{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-left:auto;
+}
+body.role-student .navbar-actions form{
+  margin:0;
+  display:flex;
+}
+body.role-student .notif-bell{
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+}
+body.role-student .btn-logout{
+  background:linear-gradient(180deg,#f97316,#ea580c);
+  border:1px solid #c2410c;
+  color:#fff;
+}
+body.role-student .btn-logout:hover{
+  background:linear-gradient(180deg,#ea580c,#c2410c);
+}
 body.role-student .badge{
   background:#d1fae5;
   color:#065f46;
@@ -131,6 +153,18 @@ body.role-student input,body.role-student select,body.role-student textarea{
   body.role-student .main{margin-left:0}
   body.role-student.mobile-sidebar-open .sidebar{transform:translateX(0)}
   body.role-student .main{padding:12px}
+  body.role-student .navbar{
+    gap:8px;
+  }
+  body.role-student .navbar-user strong{
+    max-width:44vw;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  body.role-student .navbar-actions{
+    flex-wrap:nowrap;
+  }
 }
 
 body.role-student .lesson-card-grid{

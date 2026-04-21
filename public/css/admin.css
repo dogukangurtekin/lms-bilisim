@@ -36,8 +36,26 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   font-weight:700;
 }
 .main{padding:20px;margin-left:240px}
-.navbar{display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:12px 16px;border-radius:12px;margin-bottom:16px}
+.navbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;background:var(--card);padding:12px 16px;border-radius:12px;margin-bottom:16px}
 .navbar-user{display:flex;align-items:center;gap:10px;min-height:36px}
+.navbar-actions{display:inline-flex;align-items:center;gap:10px;margin-left:auto;flex:0 0 auto}
+.navbar-actions form{margin:0;display:flex;align-items:center}
+.notif-menu{position:relative}
+.notif-bell{list-style:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px;border:1px solid #dbe3ef;background:#fff;position:relative;text-decoration:none}
+.notif-bell::-webkit-details-marker{display:none}
+.notif-bell-icon{font-size:18px;line-height:1}
+.notif-bell-count{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.notif-panel{position:absolute;right:0;top:calc(100% + 8px);width:min(360px,88vw);background:#fff;border:1px solid #dbe3ef;border-radius:10px;box-shadow:0 14px 30px rgba(2,6,23,.16);padding:10px;z-index:130}
+.notif-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #eef2f7}
+.notif-panel-head strong{font-size:14px;color:#111827}
+.notif-panel-head a{font-size:12px;color:#2563eb;text-decoration:none}
+.notif-list{display:grid;gap:6px;max-height:340px;overflow:auto;padding-top:8px}
+.notif-item{display:grid;gap:2px;text-decoration:none;padding:8px;border-radius:8px;border:1px solid #e5e7eb;background:#fff}
+.notif-item strong{font-size:13px;color:#111827;line-height:1.3}
+.notif-item span{font-size:12px;color:#475569;line-height:1.35}
+.notif-item.is-unread{background:#eff6ff;border-color:#bfdbfe}
+.notif-item:hover{background:#f8fafc}
+.notif-empty{font-size:12px;color:#64748b;padding:8px}
 .user-menu{position:relative}
 .user-menu summary{list-style:none}
 .user-menu summary::-webkit-details-marker{display:none}
@@ -56,12 +74,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 .btn-logout{
   display:inline-flex;
   align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  height:40px;
   gap:6px;
   border-radius:10px;
   padding:9px 14px;
   font-weight:700;
-  background:linear-gradient(180deg,#3b82f6,#2563eb);
-  border:1px solid #1d4ed8;
+  background:linear-gradient(180deg,#ef4444,#dc2626);
+  border:1px solid #b91c1c;
+}
+.btn-logout:hover{
+  background:linear-gradient(180deg,#dc2626,#b91c1c);
 }
 .logout-icon{font-size:14px;line-height:1}
 .global-menu-toggle{
@@ -127,11 +151,52 @@ body.play-compact .footer{display:none}
 }
 @media (max-width: 768px){
   .main{padding:12px 10px}
-  .navbar,.top,.actions,.v2-hero,.v2-rates,.lesson-builder-top,.parent-wa-actions{
+  .top,.actions,.v2-hero,.v2-rates,.lesson-builder-top,.parent-wa-actions{
     flex-direction:column;
     align-items:stretch;
   }
-  .navbar-user{flex-wrap:wrap}
+  .navbar{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .navbar-user{
+    flex-wrap:nowrap;
+    min-width:0;
+    gap:8px;
+  }
+  .navbar-user strong{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:46vw;
+  }
+  .navbar-actions{
+    display:inline-flex;
+    flex-wrap:nowrap;
+    gap:6px;
+    margin-left:auto;
+  }
+  .navbar-actions form{flex:0 0 auto}
+  .btn-logout{
+    white-space:nowrap;
+    padding:9px 10px;
+    height:38px;
+  }
+  .notif-menu{
+    position:static;
+  }
+  .notif-panel{
+    position:fixed;
+    left:50%;
+    right:auto;
+    top:84px;
+    transform:translateX(-50%);
+    width:min(360px, calc(100vw - 24px));
+    max-height:70vh;
+    z-index:1500;
+  }
   .grid,
   .summary-stats,
   .signal-grid,

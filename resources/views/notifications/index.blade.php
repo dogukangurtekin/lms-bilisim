@@ -29,6 +29,33 @@
                             <option value="all">Tum Kullanicilar</option>
                             <option value="students">Sadece Ogrenciler</option>
                             <option value="teachers">Sadece Ogretmenler</option>
+                            <option value="class">Sinif Bazli (Sinifin Tamami)</option>
+                            <option value="class_student">Sinif Ici Ogrenci Bazli</option>
+                            <option value="teacher">Ogretmen Bazli (Tek Ogretmen)</option>
+                        </select>
+                    </div>
+                    <div class="parent-wa-row" id="notifClassRow" style="display:none;">
+                        <label>Sinif</label>
+                        <select id="notifClassId" class="form-control">
+                            <option value="">Sinif secin</option>
+                            @foreach($schoolClasses as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }} {{ $class->section ? ('-'.$class->section) : '' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="parent-wa-row" id="notifStudentRow" style="display:none;">
+                        <label>Ogrenci</label>
+                        <select id="notifStudentId" class="form-control">
+                            <option value="">Ogrenci secin</option>
+                        </select>
+                    </div>
+                    <div class="parent-wa-row" id="notifTeacherRow" style="display:none;">
+                        <label>Ogretmen</label>
+                        <select id="notifTeacherId" class="form-control">
+                            <option value="">Ogretmen secin</option>
+                            @foreach($teachers as $teacher)
+                                <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Ogretmen #'.$teacher->id) }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="parent-wa-row">
@@ -69,6 +96,10 @@
 
             <section class="card soft-surface soft-surface-peach">
                 <h2>Son Gonderim Loglari</h2>
+                <div class="parent-wa-actions" style="margin-bottom:10px;">
+                    <button type="button" class="btn btn-danger" id="notifDeleteAllBtn">Tumunu Sil</button>
+                </div>
+                <div id="notifLogStatus" class="pdf-status">Hazir</div>
                 <div class="notification-recent-list">
                     @forelse($recentLogs as $log)
                         <article class="notification-recent-item" data-log-id="{{ $log->id }}">
@@ -101,6 +132,16 @@
     const sendStatus = document.getElementById('notifSendStatus');
     const prefForm = document.getElementById('notifPrefForm');
     const prefStatus = document.getElementById('notifPrefStatus');
+    const targetEl = document.getElementById('notifTarget');
+    const classRowEl = document.getElementById('notifClassRow');
+    const studentRowEl = document.getElementById('notifStudentRow');
+    const teacherRowEl = document.getElementById('notifTeacherRow');
+    const classEl = document.getElementById('notifClassId');
+    const studentEl = document.getElementById('notifStudentId');
+    const teacherEl = document.getElementById('notifTeacherId');
+    const logStatus = document.getElementById('notifLogStatus');
+    const deleteAllBtn = document.getElementById('notifDeleteAllBtn');
+    const classStudentMap = @json($classStudentMap);
 
     const setStatus = (el, text, ok = true) => {
         if (!el) return;
@@ -111,6 +152,37 @@
         el.style.borderColor = ok ? '#10b981' : '#ef4444';
     };
 
+    const updateTargetFields = () => {
+        const target = targetEl?.value || 'all';
+        if (classRowEl) classRowEl.style.display = (target === 'class' || target === 'class_student') ? '' : 'none';
+        if (studentRowEl) studentRowEl.style.display = (target === 'class_student') ? '' : 'none';
+        if (teacherRowEl) teacherRowEl.style.display = (target === 'teacher') ? '' : 'none';
+    };
+
+    const rebuildStudentOptions = () => {
+        if (!studentEl || !classEl) return;
+        const classId = classEl.value || '';
+        const students = classStudentMap[classId] || [];
+        studentEl.innerHTML = '<option value="">Ogrenci secin</option>';
+        students.forEach((s) => {
+            const opt = document.createElement('option');
+            opt.value = String(s.id);
+            opt.textContent = s.name || ('Ogrenci #' + s.id);
+            studentEl.appendChild(opt);
+        });
+    };
+
+    targetEl?.addEventListener('change', () => {
+        updateTargetFields();
+        if ((targetEl?.value || '') !== 'class_student' && studentEl) {
+            studentEl.value = '';
+        }
+    });
+    classEl?.addEventListener('change', rebuildStudentOptions);
+
+    updateTargetFields();
+    rebuildStudentOptions();
+
     sendForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const payload = {
@@ -119,9 +191,24 @@
             title: document.getElementById('notifTitle')?.value?.trim() || '',
             body: document.getElementById('notifBody')?.value?.trim() || '',
             url: document.getElementById('notifUrl')?.value?.trim() || '',
+            class_id: classEl?.value || '',
+            student_id: studentEl?.value || '',
+            teacher_id: teacherEl?.value || '',
         };
         if (!payload.title || !payload.body) {
             setStatus(sendStatus, 'Baslik ve mesaj zorunlu.', false);
+            return;
+        }
+        if ((payload.target === 'class' || payload.target === 'class_student') && !payload.class_id) {
+            setStatus(sendStatus, 'Sinif secimi zorunlu.', false);
+            return;
+        }
+        if (payload.target === 'class_student' && !payload.student_id) {
+            setStatus(sendStatus, 'Ogrenci secimi zorunlu.', false);
+            return;
+        }
+        if (payload.target === 'teacher' && !payload.teacher_id) {
+            setStatus(sendStatus, 'Ogretmen secimi zorunlu.', false);
             return;
         }
         try {
@@ -136,11 +223,11 @@
                 body: JSON.stringify(payload),
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok || !data.ok) throw new Error();
+            if (!res.ok || !data.ok) throw new Error(data.message || 'Gonderim hatasi');
             setStatus(sendStatus, `Gonderildi. Sent:${data.result?.sent ?? 0} Failed:${data.result?.failed ?? 0} NoTarget:${data.result?.no_target ?? 0}`, true);
             window.setTimeout(() => window.location.reload(), 700);
-        } catch (_) {
-            setStatus(sendStatus, 'Gonderim hatasi.', false);
+        } catch (err) {
+            setStatus(sendStatus, err?.message || 'Gonderim hatasi.', false);
         }
     });
 
@@ -183,9 +270,12 @@
                     },
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.ok) throw new Error();
+                if (!res.ok || !data.ok) throw new Error(data.message || 'Tekrar gonderim basarisiz.');
+                setStatus(logStatus, 'Bildirim tekrar gonderildi.', true);
                 window.location.reload();
-            } catch (_) {}
+            } catch (err) {
+                setStatus(logStatus, err?.message || 'Tekrar gonderim basarisiz.', false);
+            }
         });
     });
 
@@ -204,12 +294,34 @@
                     },
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.ok) throw new Error();
+                if (!res.ok || !data.ok) throw new Error(data.message || 'Log silinemedi.');
+                setStatus(logStatus, 'Log silindi.', true);
                 window.location.reload();
-            } catch (_) {}
+            } catch (err) {
+                setStatus(logStatus, err?.message || 'Log silinemedi.', false);
+            }
         });
+    });
+
+    deleteAllBtn?.addEventListener('click', async () => {
+        if (!window.confirm('Tum bildirim loglari silinsin mi?')) return;
+        try {
+            const res = await fetch(`{{ route('notifications.logs.destroy-all') }}`, {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.ok) throw new Error(data.message || 'Tum loglar silinemedi.');
+            setStatus(logStatus, 'Tum loglar silindi.', true);
+            window.location.reload();
+        } catch (err) {
+            setStatus(logStatus, err?.message || 'Tum loglar silinemedi.', false);
+        }
     });
 })();
 </script>
 @endpush
-

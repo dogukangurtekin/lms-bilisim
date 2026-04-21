@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.pwa-head')
     <title>Gelisim Karnesi</title>
     <style>
         body{margin:0;background:#f1f5f9;font-family:Segoe UI,Arial,sans-serif}
@@ -85,6 +85,6 @@
         <p>{{ $student->badges->pluck('name')->implode(', ') ?: 'Henuz rozet yok.' }}</p>
     </div>
 </div>
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>
-

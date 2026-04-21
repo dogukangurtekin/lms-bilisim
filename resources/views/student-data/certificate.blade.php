@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.pwa-head')
     <title>Sertifika</title>
     <style>
         body{margin:0;background:#eef2f7;font-family:Georgia,serif}
@@ -29,6 +29,6 @@
         <div class="sign"><div class="line">{{ $principalName }}</div>Okul Muduru</div>
     </div>
 </div>
+<script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>
-

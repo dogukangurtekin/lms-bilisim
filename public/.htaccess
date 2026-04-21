@@ -1,3 +1,8 @@
+<IfModule mod_env.c>
+    SetEnv OPENSSL_CONF "C:/xampp/php/extras/ssl/openssl.cnf"
+    SetEnv SSL_CERT_FILE "C:/xampp/apache/bin/curl-ca-bundle.crt"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
