@@ -89,8 +89,19 @@ class NotificationController extends Controller
 
     public function publicKey(): JsonResponse
     {
+        $publicKey = trim((string) config('webpush.vapid.public_key', ''));
+
+        if ($publicKey === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'WEBPUSH_VAPID_PUBLIC_KEY missing',
+                'public_key' => '',
+            ], 503);
+        }
+
         return response()->json([
-            'public_key' => (string) config('webpush.vapid.public_key', ''),
+            'ok' => true,
+            'public_key' => $publicKey,
         ]);
     }
 

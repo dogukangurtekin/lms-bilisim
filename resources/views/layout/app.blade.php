@@ -151,6 +151,7 @@
     const pwaOnboardDismissKey = 'pwa_onboard_dismissed_v1';
     let onboardEl = null;
     let pushBusy = false;
+    let pushConfigMissing = false;
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -212,6 +213,7 @@
     }
 
     async function registerWebPush() {
+        if (pushConfigMissing) return;
         if (pushBusy) return;
         pushBusy = true;
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
@@ -235,7 +237,8 @@
             const keyJson = await keyRes.json().catch(() => ({}));
             const vapidPublicKey = String(keyJson.public_key || '');
             if (!vapidPublicKey) {
-                throw new Error('WEBPUSH_VAPID_PUBLIC_KEY bos.');
+                pushConfigMissing = true;
+                throw new Error('WEBPUSH_VAPID_PUBLIC_KEY bos veya sunucuda tanimsiz.');
             }
             const reg = await navigator.serviceWorker.register(serviceWorkerUrl);
             let sub = await reg.pushManager.getSubscription();
@@ -270,6 +273,9 @@
             }
         } catch (error) {
             console.error('[WebPush] Kayit/abonelik hatasi:', error);
+            if (String(error?.message || '').includes('WEBPUSH_VAPID_PUBLIC_KEY')) {
+                pushConfigMissing = true;
+            }
         } finally {
             pushBusy = false;
         }
