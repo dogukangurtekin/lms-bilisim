@@ -79,14 +79,30 @@ function createAppDialog() {
   };
 
   return {
-    alert: (message, title = 'Bilgilendirme') => enqueue({ type: 'alert', message, title, okText: 'Tamam' }),
+    alert: (message, title = 'Bilgilendirme') => {
+      const text = String(message ?? '').trim();
+      if (!text) return Promise.resolve();
+      if (typeof window.appToast === 'function') {
+        window.appToast('warning', text);
+        return Promise.resolve();
+      }
+      return enqueue({ type: 'alert', message: text, title, okText: 'Tamam' });
+    },
     confirm: (message, title = 'Onay') => enqueue({ type: 'confirm', message, title, okText: 'Evet', cancelText: 'Vazgec' }),
     prompt: (message, defaultValue = '', title = 'Girdi') => enqueue({ type: 'prompt', message, defaultValue, title, okText: 'Kaydet', cancelText: 'Vazgec' }),
   };
 }
 
 window.AppDialog = window.AppDialog || createAppDialog();
-window.alert = (message) => window.AppDialog.alert(String(message ?? ''));
+window.alert = (message) => {
+  const text = String(message ?? '').trim();
+  if (!text) return;
+  if (typeof window.appToast === 'function') {
+    window.appToast('warning', text);
+    return;
+  }
+  window.AppDialog.alert(text);
+};
 window.confirm = () => false;
 window.prompt = () => null;
 

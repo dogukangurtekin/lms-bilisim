@@ -4,11 +4,16 @@
   const STORAGE_KEY = "line_trace_progress_v2";
   const query = new URLSearchParams(window.location.search);
   const runnerRole = (query.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
+  const assignmentId = String(query.get("assignmentId") || "").trim();
   const rangeStartRaw = Math.max(1, Number(query.get("levelStart") || query.get("from") || 0));
   const rangeEndRaw = Math.max(rangeStartRaw, Number(query.get("levelEnd") || query.get("to") || rangeStartRaw));
+  const hasRange = Number.isFinite(rangeStartRaw) && rangeStartRaw > 0;
+  const enforceGrant = query.get("grant") === "1" || query.get("enforceGrant") === "1";
+  const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasRange || enforceGrant);
   let assignmentRange = (runnerRole !== "teacher" && Number.isFinite(rangeStartRaw) && rangeStartRaw > 0)
     ? { start: rangeStartRaw - 1, end: rangeEndRaw - 1 }
     : null;
+  let grantDenied = false;
   let assignmentRangeCompletedSent = false;
 
   const bgCanvas = document.getElementById("bg-canvas");
@@ -79,19 +84,28 @@
   }
 
   async function resolveAssignmentRangeFromGrant() {
+    if (!needsGrantCheck) return;
     if (runnerRole === "teacher") return;
     try {
       const res = await fetch("/runner-grant/line-trace-runner", {
         credentials: "same-origin",
         headers: { Accept: "application/json" }
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        grantDenied = true;
+        return;
+      }
       const grant = await res.json();
-      if (!grant || !grant.ok || grant.role !== "student") return;
+      if (!grant || !grant.ok || grant.role !== "student") {
+        grantDenied = true;
+        return;
+      }
       const from = Math.max(1, Number(grant.from || 1));
       const to = Math.max(from, Number(grant.to || from));
       assignmentRange = { start: from - 1, end: to - 1 };
-    } catch (e) {}
+    } catch (e) {
+      grantDenied = true;
+    }
   }
 
   function getRangeEndIndex() {
@@ -416,6 +430,10 @@
   }
 
   function startLevel(levelIndex) {
+    if (grantDenied) {
+      setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "#ef4444");
+      return;
+    }
     if (!isLevelInAllowedRange(levelIndex)) {
       setStatus("Bu seviyeye erisim yok. Sadece atanan odev araligini oynayabilirsiniz.", "#ef4444");
       return;
@@ -560,6 +578,16 @@
   });
 
   resolveAssignmentRangeFromGrant().finally(() => {
+  if (grantDenied) {
+    setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "#ef4444");
+    retryBtn.disabled = true;
+    nextBtn.disabled = true;
+    openLevelsBtn.disabled = true;
+    resetAllBtn.disabled = true;
+    levelGridEl.innerHTML = "";
+    showLevelSelect(true);
+    return;
+  }
   loadProgress();
   if (assignmentRange) {
     const startIdx = getRangeStartIndex();

@@ -49,7 +49,7 @@
                 <div class="activity-body">
                     <h3>{{ $game['name'] }}</h3>
                     <div class="actions">
-                        @if(auth()->user()?->hasRole('student') && !in_array($slug, ['keyboard-race', 'block-builder-studio'], true))
+                        @if(auth()->user()?->hasRole('student') && !in_array($slug, ['keyboard-race', 'block-builder-studio', 'flamestone-game'], true))
                             <a class="btn" href="{{ route('runner.open', ['slug' => $slug, 'from' => 1, 'to' => 2]) }}">Oyunu Ac (L1-L2)</a>
                         @else
                             <a class="btn" href="{{ url($game['url']) }}" target="_blank">Oyunu Ac</a>

@@ -17,11 +17,15 @@
   const tabBtns = Array.from(document.querySelectorAll(".tab-btn"));
 
   const params = new URLSearchParams(window.location.search);
+  const runnerRole = (params.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
   const assignmentId = String(params.get("assignmentId") || "").trim();
   const assignmentTitle = String(params.get("assignmentTitle") || "Code Robot Lab Odevi").trim();
   const rangeFrom = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
   const rangeTo = Math.max(rangeFrom, Number(params.get("levelEnd") || params.get("to") || rangeFrom));
   const hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
+  const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
+  const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasRange || enforceGrant);
+  let grantDenied = false;
   let levelStart = hasRange ? rangeFrom : 1;
   let levelEndParam = hasRange ? rangeTo : levelStart;
   let isAssignmentMode = !!assignmentId || hasRange;
@@ -234,22 +238,33 @@
   }
 
   async function resolveAssignmentRange() {
+    if (!needsGrantCheck) return;
     try {
       const res = await fetch("/runner-grant/lightbot-runner", {
         credentials: "same-origin",
         headers: { Accept: "application/json" }
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        grantDenied = true;
+        return;
+      }
       const grant = await res.json();
-      if (!grant || !grant.ok) return;
+      if (!grant || !grant.ok) {
+        grantDenied = true;
+        return;
+      }
       if (grant.role === "student") {
         const from = Math.max(1, Number(grant.from || 1));
         const to = Math.max(from, Number(grant.to || from));
         levelStart = from;
         levelEndParam = to;
         isAssignmentMode = true;
+      } else if (runnerRole === "student") {
+        grantDenied = true;
       }
-    } catch (e) {}
+    } catch (e) {
+      grantDenied = true;
+    }
   }
 
   function getLevel() {
@@ -706,6 +721,14 @@
 
   async function init() {
     await resolveAssignmentRange();
+    if (grantDenied) {
+      showToast("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", 2600);
+      btnRun.disabled = true;
+      btnStop.disabled = true;
+      btnReset.disabled = true;
+      btnPrev.disabled = true;
+      return;
+    }
     const baseLevels = buildLevels();
     levels = applyAssignmentRange(baseLevels);
     if (!levels.length) levels = baseLevels.slice(0, 1);

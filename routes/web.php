@@ -7,11 +7,14 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseHomeworkController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FlowchartPageController;
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\GameAssignmentController;
+use App\Http\Controllers\LevelController;
 use App\Http\Controllers\LiveQuizController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ParentWhatsappController;
 use App\Http\Controllers\SchoolClassController;
+use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\StudentDataController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\StudentController;
@@ -44,6 +47,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/lightbot-runner', [ActivityRunnerController::class, 'lightbot']);
     Route::get('/line-trace-runner', [ActivityRunnerController::class, 'lineTrace']);
     Route::get('/silent-teacher-runner', [ActivityRunnerController::class, 'silentTeacher']);
+    Route::get('/flamestone-game', [GameController::class, 'game'])->name('flamestone.game');
+    Route::get('/oyunlar', [GameController::class, 'game'])->name('flamestone.game.alias');
+    Route::get('/editor', [GameController::class, 'editor'])->name('flamestone.editor');
+    Route::get('/skorlar', [GameController::class, 'leaderboard'])->name('flamestone.leaderboard');
     Route::get('/runner-open/{slug}', [ActivityRunnerController::class, 'open'])->name('runner.open');
     Route::get('/runner-grant/{slug}', [ActivityRunnerController::class, 'grant'])->name('runner.grant');
     Route::view('/keyboard-race', 'keyboard-race.index')->name('keyboard-race.index');
@@ -58,6 +65,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/app-notifications/{log}/resend', [NotificationController::class, 'resend'])->name('notifications.resend');
         Route::delete('/app-notifications/{log}', [NotificationController::class, 'destroyLog'])->name('notifications.logs.destroy');
         Route::delete('/app-notifications', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all');
+        Route::post('/app-notifications/{log}/delete', [NotificationController::class, 'destroyLog'])->name('notifications.logs.destroy.post');
+        Route::post('/app-notifications/delete-all', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all.post');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');
@@ -146,4 +155,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/webpush/device-status', [NotificationController::class, 'syncDeviceStatus'])->name('notifications.device-status');
     Route::post('/app-notifications/preferences', [NotificationController::class, 'updatePreferences'])->name('notifications.preferences.update');
     Route::post('/app-notifications/{log}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::get('/app-notifications/mine', [NotificationController::class, 'myLogs'])->name('notifications.mine');
+    Route::delete('/app-notifications/mine/{log}', [NotificationController::class, 'destroyMyLog'])->name('notifications.mine.destroy');
+    Route::delete('/app-notifications/mine', [NotificationController::class, 'destroyAllMyLogs'])->name('notifications.mine.destroy-all');
+
+    Route::prefix('/api/flamestone')->group(function () {
+        Route::get('/levels', [LevelController::class, 'index'])->name('flamestone.levels.index');
+        Route::post('/levels', [LevelController::class, 'store'])->name('flamestone.levels.store');
+        Route::get('/scores', [ScoreController::class, 'index'])->name('flamestone.scores.index');
+        Route::post('/scores', [ScoreController::class, 'store'])->name('flamestone.scores.store');
+    });
 });

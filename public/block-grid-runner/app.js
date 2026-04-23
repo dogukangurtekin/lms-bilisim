@@ -167,6 +167,7 @@ let state = {
 let sessionStart = null;
 let levelRange = null; // {startIdx,endIdx} 0-based
 let assignmentRangeLocked = false;
+let grantDenied = false;
 let assignmentCompletedLevelIds = null; // Set<number> for active assignment
 let levelAttemptStart = null;
 const runnerRole = (() => {
@@ -178,6 +179,24 @@ const runnerRole = (() => {
     return "student";
   }
 })();
+const hasQueryAssignmentRange = !!getQueryAssignmentRange();
+const assignmentId = (() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return String(params.get("assignmentId") || "").trim();
+  } catch (e) {
+    return "";
+  }
+})();
+const enforceGrant = (() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("grant") === "1" || params.get("enforceGrant") === "1";
+  } catch (e) {
+    return false;
+  }
+})();
+const needsGrantCheck = runnerRole === "student" && (hasQueryAssignmentRange || !!assignmentId || enforceGrant);
 
 function getQueryAssignmentRange(){
   try{
@@ -205,15 +224,24 @@ function getQueryAssignmentRange(){
 })();
 
 async function resolveAssignmentRangeFromGrant(){
+  if(!needsGrantCheck) return;
   if(runnerRole === 'teacher') return;
   try{
     const res = await fetch('/runner-grant/block-grid-runner', {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     });
-    if(!res.ok) return;
+    if(!res.ok){
+      grantDenied = true;
+      setStatus('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
+      return;
+    }
     const grant = await res.json();
-    if(!grant || !grant.ok || grant.role !== 'student') return;
+    if(!grant || !grant.ok || grant.role !== 'student'){
+      grantDenied = true;
+      setStatus('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
+      return;
+    }
     const start = Math.max(1, Number(grant.from || 1));
     const end = Math.max(start, Number(grant.to || start));
     assignmentRangeLocked = false;
@@ -224,7 +252,10 @@ async function resolveAssignmentRangeFromGrant(){
       loadLevel(target);
       setStatus('Seviye araligi: ' + start + '-' + end);
     }catch(e){}
-  }catch(e){}
+  }catch(e){
+    grantDenied = true;
+    setStatus('Erisim dogrulanamadi. Sayfayi yenileyip tekrar deneyin.');
+  }
 }
 
 let designerEditMode = false;
@@ -542,6 +573,10 @@ function generateCommands(){
 }
 
 function loadLevel(idx){
+  if(runnerRole !== 'teacher' && grantDenied){
+    warnLockedLevel('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
+    return;
+  }
   if(runnerRole !== 'teacher' && assignmentRangeLocked){
     warnLockedLevel('Ödev aralığı tamamlandı. Uygulama kapanıyor.');
     return;

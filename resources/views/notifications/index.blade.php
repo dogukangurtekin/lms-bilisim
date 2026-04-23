@@ -97,7 +97,10 @@
             <section class="card soft-surface soft-surface-peach">
                 <h2>Son Gonderim Loglari</h2>
                 <div class="parent-wa-actions" style="margin-bottom:10px;">
-                    <button type="button" class="btn btn-danger" id="notifDeleteAllBtn">Tumunu Sil</button>
+                    <form method="POST" action="{{ route('notifications.logs.destroy-all.post') }}" data-confirm="Tum bildirim loglari silinsin mi?">
+                        @csrf
+                        <button type="submit" class="btn btn-danger">Tumunu Sil</button>
+                    </form>
                 </div>
                 <div id="notifLogStatus" class="pdf-status">Hazir</div>
                 <div class="notification-recent-list">
@@ -111,7 +114,10 @@
                             <p><small>Tip: {{ $log->type }} | Hedef: {{ $log->user?->name ?? 'N/A' }} | Teslim: {{ $log->delivered_count }} | Hata: {{ $log->failed_count }}</small></p>
                             <div class="actions" style="margin-top:6px;">
                                 <button type="button" class="btn btn-secondary js-resend" data-id="{{ $log->id }}">Tekrar Gonder</button>
-                                <button type="button" class="btn btn-danger js-delete-log" data-id="{{ $log->id }}">Sil</button>
+                                <form method="POST" action="{{ route('notifications.logs.destroy.post', ['log' => $log->id]) }}" style="display:inline;" data-confirm="Log silinsin mi?">
+                                    @csrf
+                                    <button type="submit" class="btn btn-danger">Sil</button>
+                                </form>
                             </div>
                         </article>
                     @empty
@@ -140,7 +146,6 @@
     const studentEl = document.getElementById('notifStudentId');
     const teacherEl = document.getElementById('notifTeacherId');
     const logStatus = document.getElementById('notifLogStatus');
-    const deleteAllBtn = document.getElementById('notifDeleteAllBtn');
     const classStudentMap = @json($classStudentMap);
 
     const setStatus = (el, text, ok = true) => {
@@ -279,49 +284,6 @@
         });
     });
 
-    document.querySelectorAll('.js-delete-log').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-            const id = btn.getAttribute('data-id');
-            if (!id) return;
-            if (!window.confirm('Log silinsin mi?')) return;
-            try {
-                const res = await fetch(`{{ url('/app-notifications') }}/${id}`, {
-                    method: 'DELETE',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRF-TOKEN': csrf,
-                        'Accept': 'application/json',
-                    },
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || !data.ok) throw new Error(data.message || 'Log silinemedi.');
-                setStatus(logStatus, 'Log silindi.', true);
-                window.location.reload();
-            } catch (err) {
-                setStatus(logStatus, err?.message || 'Log silinemedi.', false);
-            }
-        });
-    });
-
-    deleteAllBtn?.addEventListener('click', async () => {
-        if (!window.confirm('Tum bildirim loglari silinsin mi?')) return;
-        try {
-            const res = await fetch(`{{ route('notifications.logs.destroy-all') }}`, {
-                method: 'DELETE',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json',
-                },
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok || !data.ok) throw new Error(data.message || 'Tum loglar silinemedi.');
-            setStatus(logStatus, 'Tum loglar silindi.', true);
-            window.location.reload();
-        } catch (err) {
-            setStatus(logStatus, err?.message || 'Tum loglar silinemedi.', false);
-        }
-    });
 })();
 </script>
 @endpush

@@ -50,6 +50,11 @@ const DIRS = [
 ];
 const query = new URLSearchParams(window.location.search);
 const runnerRole = query.get("role") === "teacher" ? "teacher" : "student";
+const assignmentId = String(query.get("assignmentId") || "");
+const hasQueryRange = Number.isFinite(Number(query.get("levelStart") || query.get("from") || 0))
+  && Number(query.get("levelStart") || query.get("from") || 0) > 0;
+const enforceGrant = query.get("grant") === "1" || query.get("enforceGrant") === "1";
+const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasQueryRange || enforceGrant);
 let assignmentRange = (() => {
   const s = Number(query.get("levelStart") || 0);
   const e = Number(query.get("levelEnd") || 0);
@@ -58,8 +63,8 @@ let assignmentRange = (() => {
   const end = Math.max(start, Math.floor(Number.isFinite(e) && e > 0 ? e : start));
   return { start, end };
 })();
-const assignmentId = String(query.get("assignmentId") || "");
 const assignmentTitle = String(query.get("assignmentTitle") || "3D Blok Kodlama Odevi");
+let grantDenied = false;
 let sessionBaseSeconds = 0;
 let sessionStartedAt = null;
 let sessionTickTimer = null;
@@ -1413,23 +1418,38 @@ function bindUI() {
 }
 
 async function resolveAssignmentRangeFromGrant() {
+  if (!needsGrantCheck) return;
   if (runnerRole !== "student") return;
   try {
     const res = await fetch("/runner-grant/block-3d-runner", {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      grantDenied = true;
+      return;
+    }
     const grant = await res.json();
-    if (!grant || !grant.ok || grant.role !== "student") return;
+    if (!grant || !grant.ok || grant.role !== "student") {
+      grantDenied = true;
+      return;
+    }
     const start = Math.max(1, Number(grant.from || 1));
     const end = Math.max(start, Number(grant.to || start));
     assignmentRange = { start, end };
-  } catch (e) {}
+  } catch (e) {
+    grantDenied = true;
+  }
 }
 
 async function init() {
   await resolveAssignmentRangeFromGrant();
+  if (grantDenied) {
+    setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "error");
+    levelSelect.disabled = true;
+    runBtn.disabled = true;
+    return;
+  }
   rebuildLevelSelect(0);
   try {
     initBlockly();

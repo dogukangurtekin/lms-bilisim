@@ -13,8 +13,9 @@ class ActivityController extends Controller
             'lightbot-runner' => ['name' => 'Lightbot Runner', 'image' => 'code-robot.png', 'url' => '/lightbot-runner'],
             'line-trace-runner' => ['name' => 'Line Trace Runner', 'image' => 'cizgi-oyunu.png', 'url' => '/line-trace-runner'],
             'silent-teacher-runner' => ['name' => 'Silent Teacher Python', 'image' => 'python.png', 'url' => '/silent-teacher-runner'],
-            'keyboard-race' => ['name' => 'Klavye Yarışması', 'image' => 'keyboard-runner.png', 'url' => '/keyboard-race'],
-            'block-builder-studio' => ['name' => '3D Grid Tasarım', 'image' => '3d-blok-grid-runner.png', 'url' => '/block-builder-studio'],
+            'flamestone-game' => ['name' => 'Flamestone Puzzle', 'image' => 'flamestone-puzzle.png', 'url' => '/flamestone-game'],
+            'keyboard-race' => ['name' => 'Klavye Yarismasi', 'image' => 'keyboard-runner.png', 'url' => '/keyboard-race'],
+            'block-builder-studio' => ['name' => '3D Grid Tasarim', 'image' => '3d-blok-grid-runner.png', 'url' => '/block-builder-studio'],
         ];
     }
 

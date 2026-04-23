@@ -5,6 +5,8 @@
   const initialRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
   const initialRangeEndRaw = Math.max(initialRangeStart, Number(params.get("levelEnd") || params.get("to") || initialRangeStart));
   const hasInitialRange = Number.isFinite(initialRangeStart) && initialRangeStart > 0;
+  const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
+  const needsGrantCheck = role === "student" && (hasInitialRange || enforceGrant);
 
   const boardEl = document.getElementById("board");
   const cmdListEl = document.getElementById("cmd-list");
@@ -1311,7 +1313,7 @@
   }
 
   async function applySessionGrant() {
-    if (role === "teacher") {
+    if (!needsGrantCheck || role === "teacher") {
       grantReady = true;
       return;
     }

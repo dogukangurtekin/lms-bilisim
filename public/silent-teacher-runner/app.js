@@ -119,12 +119,19 @@ const sessionStartedAt = Date.now();
 let rangeCompleteFired = false;
 
 const params = new URLSearchParams(window.location.search);
+const runnerRole = (params.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
 const assignmentId = String(params.get("assignmentId") || "").trim();
 const assignmentTitle = String(params.get("assignmentTitle") || "Python Quiz Lab Odevi").trim();
-let levelStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 1));
-let levelEndRaw = Math.max(levelStart, Number(params.get("levelEnd") || params.get("to") || levelStart));
+const queryRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
+const queryRangeEnd = Math.max(queryRangeStart, Number(params.get("levelEnd") || params.get("to") || queryRangeStart));
+const hasQueryRange = Number.isFinite(queryRangeStart) && queryRangeStart > 0;
+const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
+let levelStart = hasQueryRange ? queryRangeStart : 1;
+let levelEndRaw = hasQueryRange ? queryRangeEnd : levelStart;
 let levelEnd = Math.min(sections.length, levelEndRaw);
-let isAssignmentMode = !!assignmentId;
+let isAssignmentMode = !!assignmentId || hasQueryRange;
+const needsGrantCheck = runnerRole === "student" && (isAssignmentMode || enforceGrant);
+let grantDenied = false;
 
 let allowedStartIdx = isAssignmentMode ? (levelStart - 1) : 0;
 let allowedEndIdx = isAssignmentMode ? (levelEnd - 1) : (sections.length - 1);
@@ -193,7 +200,7 @@ function buildSectionButtons() {
   sections.forEach((s, idx) => {
     const btn = document.createElement("button");
     const outOfRange = !inAllowedRange(idx);
-    const locked = outOfRange || idx > unlockedSectionIndex;
+    const locked = grantDenied || outOfRange || idx > unlockedSectionIndex;
     btn.className = "section-btn";
     if (idx === sectionIndex) btn.classList.add("active");
     if (locked) btn.classList.add("locked");
@@ -229,7 +236,7 @@ function renderOptions() {
     btn.className = "opt";
     btn.textContent = opt;
     if (opt === "?!?") btn.classList.add("trap");
-    btn.disabled = answered;
+    btn.disabled = answered || grantDenied;
     btn.addEventListener("click", () => onAnswer(opt, btn));
     optionsEl.appendChild(btn);
   });
@@ -346,7 +353,7 @@ function emitRangeCompletedIfNeeded() {
 }
 
 function onAnswer(selected, btnEl) {
-  if (answered) return;
+  if (answered || grantDenied) return;
   const q = getCurrentQuestion();
   const ok = String(selected) === String(q.answer);
   if (!ok) {
@@ -394,6 +401,7 @@ function completeSection() {
 }
 
 function onNext() {
+  if (grantDenied) return;
   if (!Number.isInteger(pendingSectionIndex)) return;
   sectionIndex = pendingSectionIndex;
   pendingSectionIndex = null;
@@ -410,15 +418,31 @@ document.getElementById("btn-close")?.addEventListener("click", () => {
 });
 
 nextBtn.addEventListener("click", onNext);
+function denyRunnerAccess(message) {
+  grantDenied = true;
+  pendingSectionIndex = null;
+  nextBtn.style.display = "inline-block";
+  nextBtn.disabled = true;
+  nextBtn.textContent = "Erisim Engellendi";
+  setFeedback(message || "Bu odev araligina erisim izniniz yok.", false);
+}
+
 async function resolveAssignmentRangeFromGrant() {
+  if (!needsGrantCheck) return;
   try {
     const res = await fetch("/runner-grant/silent-teacher-runner", {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      denyRunnerAccess("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.");
+      return;
+    }
     const grant = await res.json();
-    if (!grant || !grant.ok || grant.role !== "student") return;
+    if (!grant || !grant.ok || grant.role !== "student") {
+      denyRunnerAccess("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.");
+      return;
+    }
     levelStart = Math.max(1, Number(grant.from || 1));
     levelEnd = Math.min(sections.length, Math.max(levelStart, Number(grant.to || levelStart)));
     isAssignmentMode = true;
@@ -428,7 +452,9 @@ async function resolveAssignmentRangeFromGrant() {
     sectionIndex = allowedStartIdx;
     questionIndex = 0;
     answered = false;
-  } catch (e) {}
+  } catch (e) {
+    denyRunnerAccess("Erisim dogrulanamadi. Sayfayi yenileyip tekrar deneyin.");
+  }
 }
 
 resolveAssignmentRangeFromGrant().finally(() => {

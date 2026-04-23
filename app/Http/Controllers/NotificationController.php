@@ -217,6 +217,105 @@ class NotificationController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function myLogs(Request $request): JsonResponse
+    {
+        $userId = (int) auth()->id();
+        if ($userId <= 0) {
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 401);
+        }
+
+        $limit = max(1, min(50, (int) $request->query('limit', 20)));
+        $logs = NotificationLog::query()
+            ->where('user_id', $userId)
+            ->latest('id')
+            ->limit($limit)
+            ->get(['id', 'type', 'title', 'body', 'url', 'status', 'created_at']);
+
+        $readIds = NotificationLogRead::query()
+            ->where('user_id', $userId)
+            ->whereIn('notification_log_id', $logs->pluck('id')->all())
+            ->pluck('notification_log_id')
+            ->map(fn ($x) => (int) $x)
+            ->all();
+        $readSet = array_flip($readIds);
+
+        return response()->json([
+            'ok' => true,
+            'items' => $logs->map(fn (NotificationLog $log) => [
+                'id' => (int) $log->id,
+                'type' => (string) $log->type,
+                'title' => (string) $log->title,
+                'body' => (string) $log->body,
+                'url' => (string) ($log->url ?? ''),
+                'status' => (string) ($log->status ?? ''),
+                'created_at' => optional($log->created_at)?->toIso8601String(),
+                'read' => isset($readSet[(int) $log->id]),
+            ])->values()->all(),
+        ]);
+    }
+
+    public function destroyMyLog(NotificationLog $log): JsonResponse
+    {
+        $userId = (int) auth()->id();
+        if ($userId <= 0 || (int) $log->user_id !== $userId) {
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 403);
+        }
+
+        try {
+            DB::transaction(function () use ($log, $userId): void {
+                NotificationLogRead::query()
+                    ->where('user_id', $userId)
+                    ->where('notification_log_id', $log->id)
+                    ->delete();
+                $log->delete();
+            });
+
+            return response()->json(['ok' => true]);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Bildirim silinemedi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function destroyAllMyLogs(): JsonResponse
+    {
+        $userId = (int) auth()->id();
+        if ($userId <= 0) {
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 401);
+        }
+
+        try {
+            DB::transaction(function () use ($userId): void {
+                $myLogIds = NotificationLog::query()
+                    ->where('user_id', $userId)
+                    ->pluck('id')
+                    ->all();
+
+                if ($myLogIds !== []) {
+                    NotificationLogRead::query()
+                        ->where('user_id', $userId)
+                        ->whereIn('notification_log_id', $myLogIds)
+                        ->delete();
+                }
+
+                NotificationLog::query()
+                    ->where('user_id', $userId)
+                    ->delete();
+            });
+
+            return response()->json(['ok' => true]);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Bildirimler silinemedi: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function sendMessage(Request $request): JsonResponse
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
@@ -303,7 +402,7 @@ class NotificationController extends Controller
         }
     }
 
-    public function destroyLog(NotificationLog $log): JsonResponse
+    public function destroyLog(Request $request, NotificationLog $log)
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
         try {
@@ -313,17 +412,23 @@ class NotificationController extends Controller
                     ->delete();
                 $log->delete();
             });
-            return response()->json(['ok' => true]);
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => true]);
+            }
+            return redirect()->route('notifications.index')->with('ok', 'Log silindi.');
         } catch (Throwable $e) {
             report($e);
-            return response()->json([
-                'ok' => false,
-                'message' => 'Log silinemedi: ' . $e->getMessage(),
-            ], 500);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Log silinemedi: ' . $e->getMessage(),
+                ], 500);
+            }
+            return redirect()->route('notifications.index')->withErrors(['log' => 'Log silinemedi: ' . $e->getMessage()]);
         }
     }
 
-    public function destroyAllLogs(): JsonResponse
+    public function destroyAllLogs(Request $request)
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
         try {
@@ -331,13 +436,19 @@ class NotificationController extends Controller
                 NotificationLogRead::query()->delete();
                 NotificationLog::query()->delete();
             });
-            return response()->json(['ok' => true]);
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => true]);
+            }
+            return redirect()->route('notifications.index')->with('ok', 'Tum loglar silindi.');
         } catch (Throwable $e) {
             report($e);
-            return response()->json([
-                'ok' => false,
-                'message' => 'Tum loglar silinemedi: ' . $e->getMessage(),
-            ], 500);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Tum loglar silinemedi: ' . $e->getMessage(),
+                ], 500);
+            }
+            return redirect()->route('notifications.index')->withErrors(['log' => 'Tum loglar silinemedi: ' . $e->getMessage()]);
         }
     }
 

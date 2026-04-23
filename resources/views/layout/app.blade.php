@@ -66,11 +66,11 @@
     <div id="mobile-sidebar-backdrop" class="mobile-sidebar-backdrop"></div>
     <main class="main">
         @include('partials.navbar')
-        @if(session('ok'))<div class="card">{{ session('ok') }}</div>@endif
         @yield('content')
         @include('partials.footer')
     </main>
 </div>
+@include('partials.toast')
 @if(auth()->user()?->hasRole('student'))
 <div id="liveQuizOverlay" class="live-quiz-overlay" role="dialog" aria-modal="true" aria-label="Canli quiz bildirimi">
     <div class="live-quiz-overlay-card">
@@ -94,8 +94,19 @@
 
     let lastSessionId = null;
     let busy = false;
+    let pollingStopped = false;
+    let pollTimer = null;
+
+    const stopQuizPolling = () => {
+        pollingStopped = true;
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    };
 
     async function checkActiveQuiz() {
+        if (pollingStopped) return;
         if (busy) return;
         busy = true;
         try {
@@ -104,6 +115,11 @@
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
+            if (response.status === 401 || response.status === 419) {
+                stopQuizPolling();
+                overlay.classList.remove('show');
+                return;
+            }
             if (!response.ok) {
                 overlay.classList.remove('show');
                 return;
@@ -131,9 +147,9 @@
     }
 
     checkActiveQuiz();
-    setInterval(checkActiveQuiz, 4000);
+    pollTimer = setInterval(checkActiveQuiz, 4000);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') checkActiveQuiz();
+        if (document.visibilityState === 'visible' && !pollingStopped) checkActiveQuiz();
     });
 })();
 </script>
@@ -152,6 +168,7 @@
     let onboardEl = null;
     let pushBusy = false;
     let pushConfigMissing = false;
+    let pushAuthFailed = false;
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -214,6 +231,7 @@
 
     async function registerWebPush() {
         if (pushConfigMissing) return;
+        if (pushAuthFailed) return;
         if (pushBusy) return;
         pushBusy = true;
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
@@ -231,6 +249,10 @@
 
         try {
             const keyRes = await fetch(publicKeyUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+            if (keyRes.status === 401 || keyRes.status === 419) {
+                pushAuthFailed = true;
+                return;
+            }
             if (!keyRes.ok) {
                 throw new Error('Public key alinamadi: HTTP ' + keyRes.status);
             }

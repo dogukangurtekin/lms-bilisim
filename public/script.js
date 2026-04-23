@@ -1975,44 +1975,44 @@ function setupIframeFallback(iframe, link, options = {}) {
 
 /* ================= BİLDİRİM SİSTEMİ ================= */
 function showNotice(msg, color = "#4a90e2") {
+  const text = String(msg || "").trim();
+  if (!text) return;
+  const c = String(color || "").toLowerCase();
+  let type = "success";
+  if (c.includes("e74c3c") || c.includes("dc2626") || c.includes("ef4444") || c.includes("ff") && c.includes("0000")) {
+    type = "error";
+  } else if (c.includes("f39c12") || c.includes("f59e0b") || c.includes("f1c40f") || c.includes("amber") || c.includes("yellow")) {
+    type = "warning";
+  }
+  if (typeof window.appToast === "function") {
+    window.appToast(type, text);
+    return;
+  }
   const n = document.createElement("div");
-  n.innerText = msg;
-  n.style.cssText = `
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:${color};
-    color:white;
-    padding:12px 25px;
-    border-radius:10px;
-    z-index:50050;
-    font-weight:bold;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  `;
+  n.innerText = text;
+  n.style.cssText = "position:fixed;top:16px;right:16px;background:#334155;color:#fff;padding:10px 14px;border-radius:10px;z-index:50050;";
   document.body.appendChild(n);
-  setTimeout(() => n.remove(), 3000);
+  setTimeout(() => n.remove(), 3200);
 }
 
 let loadingNoticeEl = null;
 function showLoadingNotice(msg = "Rapor hazırlanıyor...", color = "#1d4ed8") {
-  if (loadingNoticeEl) {
-    try { loadingNoticeEl.remove(); } catch (e) {}
+  const text = String(msg || "").trim() || "Rapor hazırlanıyor...";
+  if (loadingNoticeEl && typeof window.appToastDismiss === "function") {
+    window.appToastDismiss(loadingNoticeEl);
     loadingNoticeEl = null;
   }
+  if (typeof window.appToast === "function") {
+    loadingNoticeEl = window.appToast("warning", text, { sticky: true });
+    return () => {
+      if (!loadingNoticeEl) return;
+      if (typeof window.appToastDismiss === "function") window.appToastDismiss(loadingNoticeEl);
+      loadingNoticeEl = null;
+    };
+  }
   const n = document.createElement("div");
-  n.innerText = msg;
-  n.style.cssText = `
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:${color};
-    color:white;
-    padding:12px 25px;
-    border-radius:10px;
-    z-index:50060;
-    font-weight:bold;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  `;
+  n.innerText = text;
+  n.style.cssText = "position:fixed;top:16px;right:16px;background:#1d4ed8;color:#fff;padding:10px 14px;border-radius:10px;z-index:50060;";
   document.body.appendChild(n);
   loadingNoticeEl = n;
   return () => {
