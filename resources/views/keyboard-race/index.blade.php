@@ -217,7 +217,6 @@
     const API_BASE_CANDIDATES = [
         '{{ url('api/race') }}',
         '{{ url('index.php/api/race') }}',
-        '{{ url('public/api/race') }}',
     ];
     let activeApiBase = API_BASE_CANDIDATES[0];
     const SOCKET_URL = '{{ env('SOCKET_SERVER_URL', 'http://localhost:3001') }}';

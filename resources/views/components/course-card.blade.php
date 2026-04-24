@@ -17,8 +17,8 @@
         @if(!empty($image))
             <img src="{{ $image }}" alt="{{ $title }}" class="h-56 w-full bg-gray-100 object-contain">
             <div style="position:absolute;left:0;top:0;bottom:0;width:120px;background:#4c1d95;z-index:10;clip-path:polygon(0 0,100% 0,58% 100%,0 100%);"></div>
-            <div style="position:absolute;left:24px;top:24px;z-index:20;" class="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-md">
-                <img src="{{ $logo }}" alt="logo" class="h-10 w-10 rounded-full object-contain">
+            <div style="position:absolute;left:24px;top:24px;z-index:20;width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.16);overflow:hidden;">
+                <img src="{{ $logo }}" alt="logo" class="h-10 w-10 rounded-full object-contain" style="width:40px;height:40px;max-width:40px;max-height:40px;object-fit:contain;display:block;">
             </div>
         @else
             <div class="flex h-56 w-full items-center justify-center bg-gray-100 text-sm font-semibold text-gray-400">
