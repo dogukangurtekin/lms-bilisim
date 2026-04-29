@@ -9,6 +9,10 @@
     'primaryUrl' => '#',
     'primaryLabel' => 'Derse Basla',
     'deleteUrl' => null,
+    'assignEnabled' => false,
+    'assignCourseId' => null,
+    'assignCourseName' => '',
+    'assignCurrentTeacher' => 0,
     'isFavorite' => false,
 ])
 
@@ -42,7 +46,11 @@
             {{ $normalizedDescription }}
         </p>
 
-        <div class="mt-auto pt-4" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">
+        @php
+            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCols = max(2, min(4, $btnCount));
+        @endphp
+        <div class="mt-auto pt-4" style="display:grid;grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));gap:12px;">
             <a href="{{ $contentUrl }}" class="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-[#4c1d95] bg-white px-4 text-base font-semibold text-[#4c1d95] transition hover:bg-violet-50">
                 Icerik
             </a>
@@ -62,6 +70,18 @@
                 >
                     Dersi Sil
                 </a>
+            @endif
+
+            @if($assignEnabled && !empty($assignCourseId))
+                <button
+                    type="button"
+                    style="display:inline-flex !important;visibility:visible !important;opacity:1 !important;height:48px;min-height:48px;width:100%;align-items:center;justify-content:center;border:0;border-radius:12px;background:#f97316;color:#fff;font-size:16px;font-weight:700;cursor:pointer;"
+                    data-assign-course-id="{{ $assignCourseId }}"
+                    data-assign-course-name="{{ $assignCourseName }}"
+                    data-assign-current-teacher="{{ (int) $assignCurrentTeacher }}"
+                >
+                    Dersi Ata
+                </button>
             @endif
         </div>
     </div>

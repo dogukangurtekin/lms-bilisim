@@ -83,6 +83,8 @@
         .btn-compact{padding:11px 14px;min-width:120px}
         .btn-game{flex:1;background:linear-gradient(180deg,#f59e0b,#ea580c) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
         .btn-game svg{width:16px;height:16px;fill:currentColor}
+        .btn-qr{flex:1;background:linear-gradient(180deg,#0ea5e9,#0369a1) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+        .btn-qr svg{width:16px;height:16px;fill:currentColor}
         .game-login-help{margin-top:10px;font-size:12px;color:#475569;line-height:1.45}
         .error-box{background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;color:#be123c;padding:10px 12px;margin-bottom:10px}
         .mini-game-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:1200}
@@ -252,6 +254,10 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.5l-2.2 2.2a1 1 0 01-1.6-.3L10.4 18H7a3 3 0 01-3-3V9a3 3 0 013-3zm1 3v2h2v2h2v-2h2V9h-2V7h-2v2H8zm8 0h2v2h-2V9z"/></svg>
                         Oyun ile Giris Yap
                     </button>
+                    <button class="btn btn-qr" type="button" id="openQrLoginBtn">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg>
+                        QR ile Giris
+                    </button>
                 </div>
                 <div class="game-login-help">
                     Oyun ile giris icin kullanici adi girmeniz yeterlidir. Oyunu gecince otomatik giris yapilir.
@@ -274,6 +280,18 @@
         <div class="mini-game-foot">
             <span>Kontroller: Sol/Sag ok = hareket, Yukari ok = ziplama | Mobil: Saga/sola/yukari kaydir</span>
             <span id="miniGameStatus">Hazir misin?</span>
+        </div>
+    </div>
+</div>
+<div id="qrLoginModal" class="mini-game-modal">
+    <div class="mini-game-card" style="max-width:420px">
+        <div class="mini-game-head">
+            <div><h3>QR ile Giris</h3><p>Bu kodu ogretmen/admin panelinden okutun.</p></div>
+            <button type="button" class="mini-game-close" id="closeQrModalBtn">Kapat</button>
+        </div>
+        <div style="display:grid;justify-items:center;gap:10px">
+            <img id="qrLoginImage" alt="QR" style="width:260px;max-width:100%;border:1px solid #dbeafe;border-radius:12px;padding:10px;background:#fff;display:none">
+            <p id="qrLoginStatus" style="margin:0;font-size:13px;color:#334155">Hazirlaniyor...</p>
         </div>
     </div>
 </div>
@@ -602,6 +620,49 @@
     state.running = false;
     draw();
     loop();
+})();
+</script>
+<script>
+(() => {
+    const openBtn = document.getElementById('openQrLoginBtn');
+    const closeBtn = document.getElementById('closeQrModalBtn');
+    const modal = document.getElementById('qrLoginModal');
+    const img = document.getElementById('qrLoginImage');
+    const statusEl = document.getElementById('qrLoginStatus');
+    if (!openBtn || !closeBtn || !modal) return;
+    let token = '';
+    let poll = null;
+    async function generate() {
+        const res = await fetch('{{ route('qr.guest.generate') }}', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}', 'Accept': 'application/json' },
+            credentials: 'same-origin',
+        });
+        const data = await res.json();
+        token = String(data.token || '');
+        if (!token) throw new Error('Token olusmadi');
+        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(token);
+        img.style.display = 'block';
+        statusEl.textContent = 'Onay bekleniyor...';
+    }
+    async function check() {
+        if (!token) return;
+        const res = await fetch('{{ url('/qr/guest/status') }}/' + encodeURIComponent(token), { credentials: 'same-origin' });
+        const data = await res.json().catch(() => ({}));
+        if (data.approved && data.redirect) {
+            statusEl.textContent = 'Onaylandi. Ogrenci paneline giris yapiliyor...';
+            window.location.href = data.redirect;
+        }
+    }
+    openBtn.addEventListener('click', async () => {
+        modal.classList.add('open');
+        try { await generate(); } catch (_) { statusEl.textContent = 'QR olusturulamadi'; return; }
+        if (poll) clearInterval(poll);
+        poll = setInterval(check, 1200);
+    });
+    const close = () => { modal.classList.remove('open'); if (poll) { clearInterval(poll); poll = null; } };
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 })();
 </script>
 <script src="{{ asset('pwa-init.js') }}" defer></script>

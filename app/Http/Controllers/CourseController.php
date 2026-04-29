@@ -39,7 +39,8 @@ class CourseController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir'));
+        $teachers = Teacher::with('user')->orderByDesc('id')->get();
+        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers'));
     }
 
     public function create()
@@ -48,6 +49,15 @@ class CourseController extends Controller
         $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
 
         return view('courses.create', compact('teachers', 'classes'));
+    }
+    public function assignTeacher(Request $request, Course $course)
+    {
+        $data = $request->validate([
+            'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
+        ]);
+        $course->teacher_id = $data['teacher_id'] ?? null;
+        $course->save();
+        return redirect()->route('courses.index')->with('ok', 'Ders ogretmene atandi.');
     }
     public function uploadCover(Request $request)
     {

@@ -19,6 +19,9 @@ use App\Http\Controllers\StudentDataController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherAssignmentController;
+use App\Http\Controllers\QrLoginController;
+use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\TeacherClassAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,7 +34,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
     Route::post('/login/game', [AuthController::class, 'gameLogin'])->name('login.game');
+    Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->name('qr.guest.generate');
+    Route::get('/qr/guest/status/{token}', [QrLoginController::class, 'status'])->name('qr.guest.status');
 });
+Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])->name('qr.login.consume');
 
 Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'parentProgressReport'])
     ->middleware('signed')
@@ -42,6 +48,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
+    Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
+    Route::get('/qr-okut/{student}', [QrLoginController::class, 'scannerPage'])->middleware('role:admin,teacher')->name('qr.login.scanner');
+    Route::post('/qr/verify', [QrLoginController::class, 'verify'])->middleware('role:admin,teacher')->name('qr.verify');
 
     Route::get('/block-3d-runner', [ActivityRunnerController::class, 'block3d']);
     Route::get('/block-grid-runner', [ActivityRunnerController::class, 'blockGrid']);
@@ -62,6 +71,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/course-covers/{path}', [CourseController::class, 'cover'])->where('path', '.*')->name('courses.cover');
 
     Route::middleware('role:admin,teacher')->group(function () {
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');
+            Route::post('/kullanici-yonetimi', [UserManagementController::class, 'store'])->name('users.store');
+            Route::delete('/kullanici-yonetimi/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+            Route::get('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata', [TeacherClassAssignmentController::class, 'edit'])->name('users.teachers.classes.edit');
+            Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevel'])->name('users.teachers.classes.assign-level');
+            Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClasses'])->name('users.teachers.classes.assign-classes');
+        });
         Route::get('/bildirimler', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('/app-notifications/send', [NotificationController::class, 'sendMessage'])->name('notifications.send');
         Route::post('/app-notifications/{log}/resend', [NotificationController::class, 'resend'])->name('notifications.resend');
@@ -114,6 +131,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('students', StudentController::class);
         Route::resource('classes', SchoolClassController::class);
         Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
+        Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
         Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
         Route::get('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id');

@@ -57,6 +57,14 @@
         <a class="{{ request()->routeIs('classes.*') ? 'active' : '' }}" href="{{ route('classes.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v10l-9 5-9-5V9zm9-2.7L6 9.1l6 3.3 6-3.3-6-2.8z"/></svg></span>Sınıflar
         </a>
+        @if(auth()->user()?->hasRole('admin'))
+        <a class="{{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 100-8 4 4 0 000 8zM8 12a4 4 0 100-8 4 4 0 000 8zm8 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5zM8 14c-3.314 0-6 2.239-6 5v1h6v-1c0-1.908.81-3.648 2.121-5A7.8 7.8 0 008 14z"/></svg></span>Kullanici Yonetimi
+        </a>
+        @endif
+        <a class="{{ request()->routeIs('qr.login.*') ? 'active' : '' }}" href="{{ route('qr.login.menu') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg></span>QR Giris
+        </a>
         <a class="{{ request()->routeIs('courses.*') ? 'active' : '' }}" href="{{ route('courses.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9a3 3 0 013 3v11H7a3 3 0 00-3 3V5zm16 0h-4a3 3 0 00-3 3v11h7V5z"/></svg></span>Dersler
         </a>

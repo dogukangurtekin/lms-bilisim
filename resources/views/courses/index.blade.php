@@ -90,8 +90,12 @@
                 :difficulty="$difficulty"
                 :content-url="route('course.detail', ['id' => $item->id])"
                 :primary-url="route('courses.edit', $item)"
-                delete-url="{{ url('/courses/delete/' . $item->id) }}"
+                :delete-url="auth()->user()?->hasRole('student') ? null : url('/courses/delete/' . $item->id)"
                 primary-label="Düzenle"
+                :assign-enabled="auth()->user()?->hasRole('admin','teacher')"
+                :assign-course-id="$item->id"
+                :assign-course-name="$item->name"
+                :assign-current-teacher="(int) ($item->teacher_id ?? 0)"
             />
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
@@ -112,6 +116,26 @@
             <button type="button" id="course-delete-cancel" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
             <button type="button" id="course-delete-confirm" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">Evet, Sil</button>
         </div>
+    </div>
+</div>
+<div id="course-assign-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:3000;">
+    <div style="width:min(92vw,460px);background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);">
+        <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#111827;">Dersi Ogretmene Ata</h3>
+        <p id="course-assign-title" style="margin:0 0 14px;color:#334155;"></p>
+        <form id="course-assign-form" method="POST">
+            @csrf
+            <label for="course-assign-teacher" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Ogretmen</label>
+            <select id="course-assign-teacher" name="teacher_id" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
+                <option value="">Ogretmen Seciniz</option>
+                @foreach(($teachers ?? collect()) as $teacher)
+                    <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Ogretmen #'.$teacher->id) }}</option>
+                @endforeach
+            </select>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+                <button type="button" id="course-assign-cancel" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
+                <button type="submit" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Ata</button>
+            </div>
+        </form>
     </div>
 </div>
 <script>
@@ -149,7 +173,33 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.style.display = 'none';
         }
     });
+
+    const assignModal = document.getElementById('course-assign-modal');
+    const assignTitle = document.getElementById('course-assign-title');
+    const assignForm = document.getElementById('course-assign-form');
+    const assignTeacher = document.getElementById('course-assign-teacher');
+    const assignCancel = document.getElementById('course-assign-cancel');
+    const assignRouteTemplate = @json(route('courses.assign-teacher', ['course' => '__COURSE_ID__']));
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-assign-course-id]');
+        if (!btn) return;
+        const courseId = btn.getAttribute('data-assign-course-id');
+        const courseName = btn.getAttribute('data-assign-course-name') || '';
+        const currentTeacher = btn.getAttribute('data-assign-current-teacher') || '';
+        if (!courseId || !assignForm || !assignModal) return;
+        assignForm.action = String(assignRouteTemplate).replace('__COURSE_ID__', String(courseId));
+        if (assignTitle) assignTitle.textContent = `Ders: ${courseName}`;
+        if (assignTeacher) assignTeacher.value = String(currentTeacher) === '0' ? '' : String(currentTeacher);
+        assignModal.style.display = 'flex';
+    });
+
+    assignCancel?.addEventListener('click', function () {
+        if (assignModal) assignModal.style.display = 'none';
+    });
+    assignModal?.addEventListener('click', function (e) {
+        if (e.target === assignModal) assignModal.style.display = 'none';
+    });
 });
 </script>
 @endsection
-
