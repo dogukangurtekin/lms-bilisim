@@ -1,1 +1,1 @@
-<div class='footer'>School Management System - Laravel 12</div>
+<div class='footer'>Özelsin Koleji Bilişim Yönetim Sistemleri</div>

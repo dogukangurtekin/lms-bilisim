@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSchoolClassRequest;
 use App\Http\Requests\UpdateSchoolClassRequest;
 use App\Models\SchoolClass;
+use App\Models\Teacher;
 use App\Services\Domain\SchoolClassService;
 use Illuminate\Http\Request;
 
@@ -16,10 +17,21 @@ class SchoolClassController extends Controller
 
     public function index(Request $request)
     {
+        $user = $request->user();
+        $isAdmin = $user?->role?->slug === 'admin';
+        $teacherClassIds = [];
+        if (! $isAdmin && $user) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
+
         $className = trim($request->string('class_name')->toString());
         $section = trim($request->string('section')->toString());
 
         $items = SchoolClass::with('teacher.user')
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('id', $teacherClassIds))
             ->when($className !== '', fn ($query) => $query->where('name', 'like', "%{$className}%"))
             ->when($section !== '', fn ($query) => $query->where('section', 'like', "%{$section}%"))
             ->orderBy('name')

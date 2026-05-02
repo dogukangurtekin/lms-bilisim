@@ -1,42 +1,54 @@
 @extends('layout.app')
-@section('title', 'Ogrenci Verileri')
+@section('title', 'Öğrenci Verileri')
 @section('content')
+<style>
+    .student-filter .field-wrap{min-width:140px}
+    .student-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    @media (max-width:768px){
+        .student-top-actions{display:grid;grid-template-columns:1fr;gap:10px}
+        .student-top-actions .btn{width:100%}
+        .student-filter{display:grid !important;grid-template-columns:1fr;gap:10px;align-items:stretch !important}
+        .student-filter .field-wrap{min-width:0;width:100%}
+        .student-filter input,.student-filter select{width:100%}
+        .student-table-wrap table{min-width:760px}
+    }
+</style>
 <div class="top">
-    <h1>Ogrenci Verileri</h1>
-    <div class="actions">
-        <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">Giris Kartlari (A4)</a>
-        <button class="btn" type="button" id="bulk-report-preview-btn">Gelisim Raporlari Onizle</button>
-        <button class="btn" type="button" id="bulk-report-download-btn">Gelisim Raporlari Indir</button>
+    <h1>Öğrenci Verileri</h1>
+    <div class="actions student-top-actions">
+        <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">Giriş Kartları (A4)</a>
+        <button class="btn" type="button" id="bulk-report-preview-btn">Gelişim Raporları Önizle</button>
+        <button class="btn" type="button" id="bulk-report-download-btn">Gelişim Raporları İndir</button>
     </div>
 </div>
 
 <div class="card">
-    <form id="student-data-filter-form" method="GET" class="actions" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
+    <form id="student-data-filter-form" method="GET" class="actions student-filter" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
         <input type="hidden" name="list" value="1">
-        <div style="min-width:260px">
+        <div class="field-wrap" style="min-width:260px">
             <label>Arama</label>
-            <input id="student-data-q" name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanici adi, e-posta, sinif">
+            <input id="student-data-q" name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanıcı adı, e-posta, sınıf">
         </div>
-        <div style="min-width:170px">
-            <label>Sinif</label>
+        <div class="field-wrap" style="min-width:170px">
+            <label>Sınıf</label>
             <select id="student-data-class-name" name="class_name">
-                <option value="">Tum siniflar</option>
+                <option value="">Tüm sınıflar</option>
                 @foreach(($classNames ?? collect()) as $cn)
                     <option value="{{ $cn }}" @selected(($className ?? request('class_name')) === $cn)>{{ $cn }}</option>
                 @endforeach
             </select>
         </div>
-        <div style="min-width:140px">
-            <label>Sube</label>
+        <div class="field-wrap" style="min-width:140px">
+            <label>Şube</label>
             <select id="student-data-section" name="section">
-                <option value="">Tum subeler</option>
+                <option value="">Tüm şubeler</option>
                 @foreach(($sections ?? collect()) as $sec)
                     <option value="{{ $sec }}" @selected(($section ?? request('section')) === $sec)>{{ $sec }}</option>
                 @endforeach
             </select>
         </div>
-        <div style="min-width:150px">
-            <label>Sayfa Basina</label>
+        <div class="field-wrap" style="min-width:150px">
+            <label>Sayfa Başına</label>
             <select id="student-data-per-page" name="per_page">
                 @foreach([20, 50, 100, 200] as $size)
                     <option value="{{ $size }}" @selected((int) (($perPage ?? request('per_page', 50))) === $size)>{{ $size }}</option>
@@ -45,10 +57,10 @@
         </div>
     </form>
 
-    <table>
+    <div class="student-table-wrap"><table>
         <thead>
         <tr>
-            <th>Sira</th><th>Ogrenci</th><th>Sinif</th><th>XP</th><th>Avatar</th><th>Rozet</th><th>Islem</th>
+            <th>Sıra</th><th>Öğrenci</th><th>Sınıf</th><th>XP</th><th>Avatar</th><th>Rozet</th><th>İşlem</th>
         </tr>
         </thead>
         <tbody>
@@ -82,24 +94,24 @@
                         data-password="{{ $student->credential?->plain_password }}"
                         data-class-id="{{ $student->school_class_id }}"
                     >
-                        Giris Bilgileri
+                        Giriş Bilgileri
                     </button>
-                    <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelisim Karnesi</a>
+                    <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelişim Karnesi</a>
                 </td>
             </tr>
         @empty
             <tr>
                 <td colspan="7" style="text-align:center;color:#64748b">
                     @if(request('list') !== '1' && empty(($q ?? request('q'))) && empty(($className ?? request('class_name'))) && empty(($section ?? request('section'))))
-                        Listeleme icin arama veya filtre giriniz.
+                        Listeleme için arama veya filtre giriniz.
                     @else
-                        Arama kriterine uygun ogrenci bulunamadi.
+                        Arama kriterine uygun öğrenci bulunamadı.
                     @endif
                 </td>
             </tr>
         @endforelse
         </tbody>
-    </table>
+    </table></div>
 </div>
 
 @if($students instanceof \Illuminate\Contracts\Pagination\Paginator)

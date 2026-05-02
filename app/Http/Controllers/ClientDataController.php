@@ -178,7 +178,8 @@ class ClientDataController extends Controller
         if ($parent === null && $collection === 'users') {
             $q = User::query()
                 ->leftJoin('user_profiles', 'users.id', '=', 'user_profiles.user_id')
-                ->select(['users.*', 'user_profiles.role', 'user_profiles.xp', 'user_profiles.meta', 'user_profiles.total_time_seconds', 'user_profiles.class_name', 'user_profiles.section', 'user_profiles.selected_avatar_id']);
+                ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+                ->select(['users.*', 'roles.slug', 'user_profiles.role', 'user_profiles.xp', 'user_profiles.meta', 'user_profiles.total_time_seconds', 'user_profiles.class_name', 'user_profiles.section', 'user_profiles.selected_avatar_id']);
             $this->applyNativeUserConstraints($q, $constraints);
             $rows = $q->get();
             $docs = $rows->map(function ($r) {
@@ -189,7 +190,7 @@ class ClientDataController extends Controller
                     if (is_array($decoded)) $meta = $decoded;
                 }
                 $data = array_merge($meta, [
-                    'username' => $r->name, 'email' => $r->email, 'role' => $r->role ?: 'student', 'xp' => (int) ($r->xp ?? 0),
+                    'username' => $r->name, 'email' => $r->email, 'role' => ($r->slug ?? $r->role ?: 'student'), 'xp' => (int) ($r->xp ?? 0),
                     'totalTimeSeconds' => (int) ($r->total_time_seconds ?? 0), 'class' => $r->class_name, 'section' => $r->section, 'selectedAvatarId' => $r->selected_avatar_id,
                     'createdAt' => optional($r->created_at)?->toIso8601String(), 'updatedAt' => optional($r->updated_at)?->toIso8601String(),
                 ]);
@@ -698,10 +699,12 @@ class ClientDataController extends Controller
 
     private function nativeUserData(User $user, UserProfile $profile): array
     {
+        $dbRoleSlug = (string) (optional($user->role)->slug ?? '');
+        $resolvedRole = $dbRoleSlug !== '' ? $dbRoleSlug : (string) ($profile->role ?: 'student');
         return array_merge((array) ($profile->meta ?? []), [
             'username' => (string) ($profile->username ?: $user->name),
             'email' => (string) $user->email,
-            'role' => (string) ($profile->role ?: 'student'),
+            'role' => $resolvedRole,
             'xp' => (int) ($profile->xp ?? 0),
             'totalTimeSeconds' => (int) ($profile->total_time_seconds ?? 0),
             'class' => $profile->class_name,

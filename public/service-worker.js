@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.3.0";
+const SW_VERSION = "v1.3.1";
 const RUNTIME_CACHE = `runtime-${SW_VERSION}`;
 const SHELL_CACHE = `shell-${SW_VERSION}`;
 const OFFLINE_URL = "offline.html";
@@ -52,14 +52,13 @@ self.addEventListener("fetch", (event) => {
         try {
           const preload = await event.preloadResponse;
           if (preload) return preload;
-
-          const response = await fetch(request);
-          const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
-          return response;
+          return await fetch(request);
         } catch (_error) {
-          const cached = await caches.match(request);
-          if (cached) return cached;
+          // Never serve cached HTML for auth-related pages to avoid stale CSRF/session.
+          const path = url.pathname.toLowerCase();
+          if (path.includes("/login") || path.includes("/logout") || path.includes("/admin")) {
+            return new Response("Offline", { status: 503, statusText: "Offline" });
+          }
           return caches.match(OFFLINE_URL);
         }
       })()

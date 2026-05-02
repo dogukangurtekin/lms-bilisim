@@ -37,6 +37,9 @@
             <a class="{{ request()->routeIs('student.portal.badges') ? 'active' : '' }}" href="{{ route('student.portal.badges') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 4.9L20 8l-4 3.9.9 5.6L12 15l-4.9 2.5.9-5.6L4 8l5.6-.8L12 2z"/></svg></span>Rozetlerim
             </a>
+            <a class="{{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg></span>Profilim
+            </a>
         </nav>
         <div class="student-sidebar-time" id="student-sidebar-time" data-initial-seconds="{{ $initialSeconds }}" data-ping-url="{{ route('student.portal.time.ping') }}">
             <span>Sistemde Geçen Süre</span>
@@ -79,6 +82,9 @@
         </a>
         <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
+        </a>
+        <a class="{{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg></span>Profilim
         </a>
     @endif
 </aside>

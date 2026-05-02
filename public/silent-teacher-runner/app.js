@@ -119,7 +119,8 @@ const sessionStartedAt = Date.now();
 let rangeCompleteFired = false;
 
 const params = new URLSearchParams(window.location.search);
-const runnerRole = (params.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
+const roleParam = (params.get("role") || "").toLowerCase();
+const runnerRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";
 const assignmentId = String(params.get("assignmentId") || "").trim();
 const assignmentTitle = String(params.get("assignmentTitle") || "Python Quiz Lab Odevi").trim();
 const queryRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
@@ -130,11 +131,24 @@ let levelStart = hasQueryRange ? queryRangeStart : 1;
 let levelEndRaw = hasQueryRange ? queryRangeEnd : levelStart;
 let levelEnd = Math.min(sections.length, levelEndRaw);
 let isAssignmentMode = !!assignmentId || hasQueryRange;
+if (runnerRole === "student" && !isAssignmentMode) {
+  isAssignmentMode = true;
+  levelStart = 1;
+  levelEnd = Math.min(sections.length, 2);
+}
 const needsGrantCheck = runnerRole === "student" && (isAssignmentMode || enforceGrant);
 let grantDenied = false;
 
 let allowedStartIdx = isAssignmentMode ? (levelStart - 1) : 0;
 let allowedEndIdx = isAssignmentMode ? (levelEnd - 1) : (sections.length - 1);
+
+if (runnerRole === "teacher" || runnerRole === "admin") {
+  isAssignmentMode = false;
+  levelStart = 1;
+  levelEnd = sections.length;
+  allowedStartIdx = 0;
+  allowedEndIdx = sections.length - 1;
+}
 
 let unlockedSectionIndex = allowedStartIdx;
 let sectionIndex = allowedStartIdx;
@@ -428,17 +442,62 @@ function denyRunnerAccess(message) {
 }
 
 async function resolveAssignmentRangeFromGrant() {
-  if (!needsGrantCheck) return;
+  const grantUrl = new URL("../runner-grant/silent-teacher-runner", window.location.href).toString();
+  if (runnerRole === "teacher" || runnerRole === "admin") return;
+  if (!needsGrantCheck) {
+    try {
+      const probe = await fetch(grantUrl, {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      if (probe.ok) {
+        const probeGrant = await probe.json();
+        if (probeGrant && probeGrant.ok && probeGrant.role === "staff") {
+          isAssignmentMode = false;
+          levelStart = 1;
+          levelEnd = sections.length;
+          allowedStartIdx = 0;
+          allowedEndIdx = sections.length - 1;
+          unlockedSectionIndex = Math.max(unlockedSectionIndex, allowedEndIdx);
+        }
+      }
+    } catch (e) {}
+    return;
+  }
   try {
-    const res = await fetch("/runner-grant/silent-teacher-runner", {
+    const res = await fetch(grantUrl, {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
     });
     if (!res.ok) {
+      if (hasQueryRange) {
+        isAssignmentMode = true;
+        levelStart = queryRangeStart;
+        levelEnd = Math.min(sections.length, queryRangeEnd);
+        allowedStartIdx = Math.max(0, levelStart - 1);
+        allowedEndIdx = Math.max(allowedStartIdx, levelEnd - 1);
+        unlockedSectionIndex = allowedStartIdx;
+        sectionIndex = allowedStartIdx;
+        questionIndex = 0;
+        answered = false;
+        return;
+      }
       denyRunnerAccess("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.");
       return;
     }
     const grant = await res.json();
+    if (grant && grant.ok && grant.role === "staff") {
+      isAssignmentMode = false;
+      levelStart = 1;
+      levelEnd = sections.length;
+      allowedStartIdx = 0;
+      allowedEndIdx = sections.length - 1;
+      unlockedSectionIndex = Math.max(unlockedSectionIndex, allowedEndIdx);
+      sectionIndex = 0;
+      questionIndex = 0;
+      answered = false;
+      return;
+    }
     if (!grant || !grant.ok || grant.role !== "student") {
       denyRunnerAccess("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.");
       return;

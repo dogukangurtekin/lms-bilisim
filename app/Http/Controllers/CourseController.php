@@ -31,8 +31,11 @@ class CourseController extends Controller
         $category = trim($request->string('category')->toString());
         $sort = in_array($request->string('sort')->toString(), ['id', 'name', 'code', 'created_at'], true) ? $request->string('sort')->toString() : 'id';
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
+        $user = $request->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
 
         $items = Course::with(['teacher.user', 'schoolClass'])
+            ->when($user?->hasRole('teacher'), fn ($query) => $query->where('teacher_id', $teacherId))
             ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
             ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
             ->orderBy($sort, $dir)
@@ -53,11 +56,52 @@ class CourseController extends Controller
     public function assignTeacher(Request $request, Course $course)
     {
         $data = $request->validate([
-            'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
         ]);
-        $course->teacher_id = $data['teacher_id'] ?? null;
+        $course->teacher_id = (int) $data['teacher_id'];
         $course->save();
         return redirect()->route('courses.index')->with('ok', 'Ders ogretmene atandi.');
+    }
+    public function assignClasses(Request $request, Course $course)
+    {
+        $data = $request->validate([
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+        $classIds = collect($data['class_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        foreach ($classIds as $classId) {
+            CourseHomework::query()->firstOrCreate([
+                'course_id' => $course->id,
+                'school_class_id' => $classId,
+                'assignment_type' => 'lesson',
+                'title' => $course->name,
+            ], [
+                'details' => null,
+                'due_date' => null,
+                'created_by' => auth()->id(),
+            ]);
+        }
+        return redirect()->route('courses.index')->with('ok', 'Ders secilen siniflara atandi.');
+    }
+    public function assignByLevel(Request $request, Course $course)
+    {
+        $data = $request->validate([
+            'grade_level' => ['required', 'integer', 'between:1,12'],
+        ]);
+        $classIds = SchoolClass::query()->where('grade_level', (int) $data['grade_level'])->pluck('id')->map(fn ($v) => (int) $v)->all();
+        foreach ($classIds as $classId) {
+            CourseHomework::query()->firstOrCreate([
+                'course_id' => $course->id,
+                'school_class_id' => $classId,
+                'assignment_type' => 'lesson',
+                'title' => $course->name,
+            ], [
+                'details' => null,
+                'due_date' => null,
+                'created_by' => auth()->id(),
+            ]);
+        }
+        return redirect()->route('courses.index')->with('ok', 'Ders kademe bazli atandi.');
     }
     public function uploadCover(Request $request)
     {
@@ -90,6 +134,7 @@ class CourseController extends Controller
     {
         $data = $request->validated();
         $data = $this->attachCoverImageToPayload($request, $data);
+        $data['created_by'] = auth()->id();
         $model = $this->service->create($data);
 
         return $request->expectsJson()
@@ -188,7 +233,46 @@ class CourseController extends Controller
 
     private function performDestroyById(int $courseId): void
     {
-        Log::info('Course delete requested', ['course_id' => $courseId, 'user_id' => auth()->id()]);
+        $user = auth()->user();
+        Log::info('Course delete requested', ['course_id' => $courseId, 'user_id' => auth()->id(), 'role' => $user?->role?->slug]);
+
+        if ($user?->hasRole('teacher')) {
+            $teacherId = (int) (optional($user->teacher)->id ?? 0);
+            if ($teacherId <= 0) {
+                throw new \RuntimeException('Ogretmen kaydi bulunamadi.');
+            }
+            $course = Course::query()
+                ->whereKey($courseId)
+                ->where('teacher_id', $teacherId)
+                ->first();
+            if (! $course) {
+                throw new \RuntimeException('Ders bu ogretmene atali degil veya bulunamadi.');
+            }
+
+            // Ogretmen kendi olusturdugu dersi tamamen silebilir.
+            if ((int) ($course->created_by ?? 0) === (int) auth()->id()) {
+                Course::query()
+                    ->whereKey($courseId)
+                    ->where('teacher_id', $teacherId)
+                    ->delete();
+                return;
+            }
+
+            // Adminin olusturdugu/atadigi derste sadece atama ogretmenden kaldirilir.
+            $adminTeacherId = $this->resolveAdminTeacherId($teacherId);
+            if ($adminTeacherId <= 0) {
+                throw new \RuntimeException('Admin ogretmen kaydi bulunamadigi icin ders atamasi kaldirilamadi.');
+            }
+
+            $updated = Course::query()
+                ->whereKey($courseId)
+                ->where('teacher_id', $teacherId)
+                ->update(['teacher_id' => $adminTeacherId]);
+            if ($updated !== 1) {
+                throw new \RuntimeException('Ders atamasi kaldirilamadi.');
+            }
+            return;
+        }
 
         DB::transaction(function () use ($courseId) {
             CourseHomework::query()->where('course_id', $courseId)->delete();
@@ -197,6 +281,25 @@ class CourseController extends Controller
                 throw new \RuntimeException('Ders kaydi bulunamadi veya silinemedi.');
             }
         });
+    }
+
+    private function resolveAdminTeacherId(int $currentTeacherId): int
+    {
+        $adminUserIds = \App\Models\User::query()
+            ->whereHas('role', fn ($q) => $q->where('slug', 'admin'))
+            ->pluck('id')
+            ->all();
+
+        if ($adminUserIds === []) {
+            return 0;
+        }
+
+        $adminTeacherId = Teacher::query()
+            ->whereIn('user_id', $adminUserIds)
+            ->where('id', '!=', $currentTeacherId)
+            ->value('id');
+
+        return (int) ($adminTeacherId ?? 0);
     }
 
     private function attachCoverImageToPayload(Request $request, array $data): array

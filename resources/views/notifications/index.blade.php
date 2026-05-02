@@ -26,12 +26,18 @@
                     <div class="parent-wa-row">
                         <label>Hedef</label>
                         <select id="notifTarget" class="form-control" required>
-                            <option value="all">Tum Kullanicilar</option>
-                            <option value="students">Sadece Ogrenciler</option>
-                            <option value="teachers">Sadece Ogretmenler</option>
-                            <option value="class">Sinif Bazli (Sinifin Tamami)</option>
-                            <option value="class_student">Sinif Ici Ogrenci Bazli</option>
-                            <option value="teacher">Ogretmen Bazli (Tek Ogretmen)</option>
+                            @if($isAdmin)
+                                <option value="all">Tum Kullanicilar</option>
+                                <option value="students">Sadece Ogrenciler</option>
+                                <option value="teachers">Sadece Ogretmenler</option>
+                                <option value="class">Sinif Bazli (Sinifin Tamami)</option>
+                                <option value="class_student">Sinif Ici Ogrenci Bazli</option>
+                                <option value="teacher">Ogretmen Bazli (Tek Ogretmen)</option>
+                            @else
+                                <option value="students">Sadece Ogrenciler</option>
+                                <option value="class">Sinif Bazli (Sinifin Tamami)</option>
+                                <option value="class_student">Sinif Ici Ogrenci Bazli</option>
+                            @endif
                         </select>
                     </div>
                     <div class="parent-wa-row" id="notifClassRow" style="display:none;">

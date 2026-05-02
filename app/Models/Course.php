@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Course extends Model
 {
-    protected $fillable = ['name', 'code', 'teacher_id', 'school_class_id', 'weekly_hours', 'lesson_payload'];
+    protected $fillable = ['name', 'code', 'teacher_id', 'created_by', 'school_class_id', 'weekly_hours', 'lesson_payload'];
 
     public function getLessonPayloadAttribute($value): array
     {
@@ -70,6 +70,11 @@ class Course extends Model
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function grades(): HasMany

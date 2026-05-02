@@ -174,7 +174,7 @@ const runnerRole = (() => {
   try {
     const params = new URLSearchParams(window.location.search);
     const role = (params.get("role") || "").toLowerCase();
-    return role === "teacher" ? "teacher" : "student";
+    return (role === "teacher" || role === "admin") ? role : "student";
   } catch (e) {
     return "student";
   }
@@ -197,6 +197,8 @@ const enforceGrant = (() => {
   }
 })();
 const needsGrantCheck = runnerRole === "student" && (hasQueryAssignmentRange || !!assignmentId || enforceGrant);
+const isStaffMode = () => runnerRole === "teacher" || runnerRole === "admin" || window.__runnerStaffMode === true;
+const isAdminMode = () => runnerRole === "admin" || window.__runnerAdminMode === true;
 
 function getQueryAssignmentRange(){
   try{
@@ -214,7 +216,7 @@ function getQueryAssignmentRange(){
     const params = new URLSearchParams(window.location.search);
     const start = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
     const end = Math.max(start, Number(params.get("levelEnd") || params.get("to") || start));
-    if (runnerRole !== "teacher" && Number.isFinite(start) && start > 0) {
+    if (!isStaffMode() && Number.isFinite(start) && start > 0) {
       levelRange = { startIdx: start - 1, endIdx: end - 1 };
       assignmentRangeLocked = false;
     }
@@ -225,9 +227,9 @@ function getQueryAssignmentRange(){
 
 async function resolveAssignmentRangeFromGrant(){
   if(!needsGrantCheck) return;
-  if(runnerRole === 'teacher') return;
+  if(isStaffMode()) return;
   try{
-    const res = await fetch('/runner-grant/block-grid-runner', {
+    const res = await fetch(new URL('../runner-grant/block-grid-runner', window.location.href).toString(), {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     });
@@ -237,6 +239,13 @@ async function resolveAssignmentRangeFromGrant(){
       return;
     }
     const grant = await res.json();
+    if(grant && grant.ok && grant.role === 'staff'){
+      window.__runnerStaffMode = true;
+      grantDenied = false;
+      levelRange = null;
+      assignmentRangeLocked = false;
+      return;
+    }
     if(!grant || !grant.ok || grant.role !== 'student'){
       grantDenied = true;
       setStatus('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
@@ -377,7 +386,7 @@ function renderDesignerBoard(){
 function initBlockly(){
   if(!window.Blockly || typeof Blockly.inject !== 'function'){
     const statusEl = document.getElementById('status');
-    if(statusEl) statusEl.textContent = 'Blok editörü yükleniyor...';
+    if(statusEl) statusEl.textContent = 'Blok editoru yukleniyor...';
     return false;
   }
   Blockly.defineBlocksWithJsonArray([
@@ -573,15 +582,15 @@ function generateCommands(){
 }
 
 function loadLevel(idx){
-  if(runnerRole !== 'teacher' && grantDenied){
+  if(!isStaffMode() && grantDenied){
     warnLockedLevel('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
     return;
   }
-  if(runnerRole !== 'teacher' && assignmentRangeLocked){
+  if(!isStaffMode() && assignmentRangeLocked){
     warnLockedLevel('Ödev aralığı tamamlandı. Uygulama kapanıyor.');
     return;
   }
-  if(runnerRole !== 'teacher' && levelRange){
+  if(!isStaffMode() && levelRange){
     const startIdx = Math.max(0, Number(levelRange.startIdx || 0));
     const endIdx = Math.min(levels.length - 1, Math.max(startIdx, Number(levelRange.endIdx ?? (levels.length - 1))));
     if(idx < startIdx || idx > endIdx){
@@ -804,7 +813,7 @@ function checkStar(){
     populateLevels();
     unlockNext();
     const isAssignmentRangeEnd = (() => {
-      if (runnerRole === "teacher") return false;
+      if (isStaffMode()) return false;
       const activeRange = levelRange || getQueryAssignmentRange();
       if(!activeRange) return false;
       const endIdx = Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1))));
@@ -815,7 +824,7 @@ function checkStar(){
       postAssignmentCompleted();
       return;
     }
-    if (runnerRole !== 'teacher') {
+    if (!isAdminMode()) {
       if (levelRange || getQueryAssignmentRange()) {
         goToNextLevel();
         return;
@@ -855,12 +864,12 @@ function showLevelModal(){
   const activeRange = levelRange || getQueryAssignmentRange();
   const rangeStartIdx = activeRange ? Math.max(0, Number(activeRange.startIdx || 0)) : 0;
   const rangeEndIdx = activeRange ? Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1)))) : (levels.length - 1);
-  const isRangeEnd = (!!activeRange && state.levelIndex >= rangeEndIdx) || (runnerRole !== 'teacher' && assignmentRangeLocked);
+  const isRangeEnd = (!!activeRange && state.levelIndex >= rangeEndIdx) || (!isStaffMode() && assignmentRangeLocked);
   const currentLevelXp = normalizeLevelXp(levels[state.levelIndex]?.xp);
   const xpTotal = levels
     .slice(rangeStartIdx, rangeEndIdx + 1)
     .reduce((sum, lv) => sum + (lv?.completed ? normalizeLevelXp(lv?.xp) : 0), 0);
-  title.textContent = 'Harika! Seviye Tamamlandı 🎉';
+  title.textContent = 'Harika! Seviye Tamamlandı ??';
   sub.textContent = isRangeEnd
     ? `Toplam adım: ${cmdCount}. Toplam +${xpTotal} XP ile ödevdeki tüm seviyeler tamamlandı.`
     : `Toplam adım: ${cmdCount}. Bu seviyede +${currentLevelXp} XP kazandın, bir sonraki seviyeye hazırsın.`;
@@ -947,7 +956,7 @@ function getNormalizedUnlocked(){
 }
 
 function unlockNext(){
-  if (levelRange && runnerRole !== 'teacher') {
+  if (levelRange && !isStaffMode()) {
     const endIdx = Math.min(levels.length - 1, Math.max(0, Number(levelRange.endIdx || (levels.length - 1))));
     if (state.levelIndex >= endIdx) return;
   }
@@ -960,7 +969,7 @@ function unlockNext(){
 }
 
 function isCurrentLevelUnlocked(){
-  if(runnerRole === 'teacher') return true;
+  if(isStaffMode()) return true;
   if(levelRange){
     const i = Number(state.levelIndex || 0);
     const s = Number(levelRange.startIdx || 0);
@@ -1043,7 +1052,7 @@ function moveCurrentLevelDown(){ moveCurrentLevel('down'); }
 
 function goToNextLevel(){
   const activeRange = levelRange || getQueryAssignmentRange();
-  if (runnerRole !== 'teacher' && assignmentRangeLocked) {
+  if (!isStaffMode() && assignmentRangeLocked) {
     postAssignmentCompleted();
     setStatus('Ödev aralığı tamamlandı');
     return;
@@ -1170,13 +1179,13 @@ function populateLevels(){
       // use index within flat levels array as value
       const idx = levels.indexOf(l);
       const inRange = !levelRange || (idx >= Number(levelRange.startIdx || 0) && idx <= Number(levelRange.endIdx || 0));
-      if (runnerRole !== 'teacher' && levelRange && !inRange) continue;
-      const firstIncomplete = (runnerRole !== 'teacher' && levelRange) ? getFirstIncompleteRangeIndex() : null;
-      const lockedBySequence = (runnerRole !== 'teacher') && levelRange && typeof firstIncomplete === 'number' ? idx > firstIncomplete : false;
+      if (!isStaffMode() && levelRange && !inRange) continue;
+      const firstIncomplete = (!isStaffMode() && levelRange) ? getFirstIncompleteRangeIndex() : null;
+      const lockedBySequence = (!isStaffMode()) && levelRange && typeof firstIncomplete === 'number' ? idx > firstIncomplete : false;
       opt.value = idx;
       if(isLevelCompletedForAssignment(l)){ opt.textContent = '[Tamam] ' + l.name; opt.style.color = '#16a34a'; }
-      else opt.textContent = (runnerRole !== 'teacher' && (lockedBySequence || (!unlocked.includes(idx) && !levelRange)) ? '[Kilitli] ' : '') + l.name;
-      if(runnerRole !== 'teacher'){
+      else opt.textContent = (!isStaffMode() && (lockedBySequence || (!unlocked.includes(idx) && !levelRange)) ? '[Kilitli] ' : '') + l.name;
+      if(!isStaffMode()){
         if(!inRange) opt.disabled = true;
         else if(!unlocked.includes(idx) && !levelRange) opt.disabled = true;
       }
@@ -1194,8 +1203,8 @@ function initUI(){
   document.getElementById('levelSelect').addEventListener('change', (e)=>{ loadLevel(parseInt(e.target.value)); });
   const levelMoveUpBtn = document.getElementById('levelMoveUpBtn');
   const levelMoveDownBtn = document.getElementById('levelMoveDownBtn');
-  if(levelMoveUpBtn) levelMoveUpBtn.addEventListener('click', ()=>{ if(runnerRole === 'teacher') moveCurrentLevelUp(); });
-  if(levelMoveDownBtn) levelMoveDownBtn.addEventListener('click', ()=>{ if(runnerRole === 'teacher') moveCurrentLevelDown(); });
+  if(levelMoveUpBtn) levelMoveUpBtn.addEventListener('click', ()=>{ if(isAdminMode()) moveCurrentLevelUp(); });
+  if(levelMoveDownBtn) levelMoveDownBtn.addEventListener('click', ()=>{ if(isAdminMode()) moveCurrentLevelDown(); });
 
   // Side menu toggle and Add Level
   const menuToggle = document.getElementById('menuToggle');
@@ -1204,9 +1213,10 @@ function initUI(){
   const addLevelBtn = document.getElementById('addLevelBtn');
   const deleteLevelBtn = document.getElementById('deleteLevelBtn');
   // Side drawer is deprecated. Keep closed and hidden.
-  if(menuToggle) menuToggle.style.display = "none";
+  if(menuToggle) menuToggle.style.display = isAdminMode() ? "inline-flex" : "none";
   if(sideMenu){ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); }
-  if(sideClose){ sideClose.addEventListener('click', ()=>{ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); }); }
+  if(menuToggle){ menuToggle.addEventListener('click', ()=>{ if(!isAdminMode()) return; if(!sideMenu) return; const hidden = sideMenu.classList.contains('hidden'); if(hidden){ sideMenu.classList.remove('hidden'); sideMenu.setAttribute('aria-hidden','false'); sideMenu.style.display = 'flex'; sideMenu.style.visibility = 'visible'; sideMenu.style.transform = 'translateX(0)'; sideMenu.style.pointerEvents = 'auto'; sideMenu.style.zIndex = '9999'; } else { sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); sideMenu.style.transform = 'translateX(-110%)'; } }); }
+  if(sideClose){ sideClose.addEventListener('click', ()=>{ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); sideMenu.style.transform = 'translateX(-110%)'; }); }
   if(addLevelBtn){ addLevelBtn.addEventListener('click', ()=>{ openLevelDesigner(); const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }); }
   if(deleteLevelBtn){ deleteLevelBtn.addEventListener('click', ()=>{ openDeleteLevelModal(); const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }); }
   // Close side menu when any menu button is clicked
@@ -1218,7 +1228,7 @@ function initUI(){
   }catch(e){/* ignore if sideMenu missing */}
 
   // Student mode cannot access "Seviye Ekle" menu actions.
-  if (runnerRole !== "teacher") {
+  if (!isAdminMode()) {
     try {
       if (menuToggle) menuToggle.style.display = "none";
       if (sideMenu) {
@@ -1293,9 +1303,9 @@ function initUI(){
     const darkToggle = document.getElementById('darkToggle');
     function applyTheme(t){ if(t==='dark') document.body.classList.add('dark'); else document.body.classList.remove('dark'); }
     const stored = localStorage.getItem('theme'); if(stored) applyTheme(stored);
-    if(darkToggle){ darkToggle.addEventListener('click', ()=>{ const isDark = document.body.classList.toggle('dark'); localStorage.setItem('theme', isDark? 'dark':'light'); darkToggle.textContent = isDark? '☀️' : '🌙'; });
+    if(darkToggle){ darkToggle.addEventListener('click', ()=>{ const isDark = document.body.classList.toggle('dark'); localStorage.setItem('theme', isDark? 'dark':'light'); darkToggle.textContent = isDark? '??' : '??'; });
       // set initial icon
-      darkToggle.textContent = document.body.classList.contains('dark')? '☀️' : '🌙';
+      darkToggle.textContent = document.body.classList.contains('dark')? '??' : '??';
     }
   }catch(e){/* ignore */}
 }
@@ -1388,7 +1398,7 @@ function closeDeleteLevelModal(){
 }
 
 function deleteCurrentLevel(){
-  if(runnerRole !== 'teacher') return;
+  if(!isAdminMode()) return;
   if(!Array.isArray(levels) || levels.length <= 1){
     setStatus('Son seviye silinemez');
     closeDeleteLevelModal();
@@ -1692,22 +1702,22 @@ function saveLevelsToStorage(){
         try{ const mt = document.getElementById('menuToggle'); if(mt) mt.style.display = 'none'; const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }catch(e){}
       }
       else if(data.type === 'ENABLE_MENU'){
-        try{ const mt = document.getElementById('menuToggle'); if(mt) mt.style.display = 'none'; }catch(e){}
+        try{ const mt = document.getElementById('menuToggle'); if(mt) mt.style.display = isAdminMode() ? 'inline-flex' : 'none'; }catch(e){}
       }
       else if(data.type === 'OPEN_DESIGNER'){
-        try{ if(runnerRole === 'teacher') openLevelDesigner(false); }catch(e){}
+        try{ if(isAdminMode()) openLevelDesigner(false); }catch(e){}
       }
       else if(data.type === 'OPEN_EDIT_LEVEL'){
-        try{ if(runnerRole === 'teacher') openLevelDesigner(true); }catch(e){}
+        try{ if(isAdminMode()) openLevelDesigner(true); }catch(e){}
       }
       else if(data.type === 'OPEN_DELETE_LEVEL'){
-        try{ if(runnerRole === 'teacher') openDeleteLevelModal(); }catch(e){}
+        try{ if(isAdminMode()) openDeleteLevelModal(); }catch(e){}
       }
       else if(data.type === 'MOVE_LEVEL_UP'){
-        try{ if(runnerRole === 'teacher') moveCurrentLevelUp(); }catch(e){}
+        try{ if(isAdminMode()) moveCurrentLevelUp(); }catch(e){}
       }
       else if(data.type === 'MOVE_LEVEL_DOWN'){
-        try{ if(runnerRole === 'teacher') moveCurrentLevelDown(); }catch(e){}
+        try{ if(isAdminMode()) moveCurrentLevelDown(); }catch(e){}
       }
     }, false);
   }catch(e){/* ignore */}
@@ -1740,3 +1750,13 @@ function bootBlocklyWithRetry(attempt = 0){
 
 bootBlocklyWithRetry(0);
 resolveAssignmentRangeFromGrant();
+
+
+
+
+
+
+
+
+
+

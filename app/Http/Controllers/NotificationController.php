@@ -25,7 +25,16 @@ class NotificationController extends Controller
 
     public function index()
     {
-        abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
+        $user = auth()->user();
+        abort_unless($user?->hasRole('admin', 'teacher'), 403);
+        $isAdmin = $user?->hasRole('admin') === true;
+        $teacherClassIds = [];
+        if (! $isAdmin && $user) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
 
         $types = (array) config('notification-preferences.types', []);
         $prefs = NotificationPreference::query()
@@ -45,6 +54,7 @@ class NotificationController extends Controller
 
         $recentLogs = NotificationLog::query()
             ->with('user:id,name')
+            ->when(! $isAdmin, fn ($q) => $q->where('user_id', (int) $user->id))
             ->latest('id')
             ->limit(30)
             ->get();
@@ -54,6 +64,7 @@ class NotificationController extends Controller
                 'teacher.user:id,name',
                 'students.user:id,name',
             ])
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('id', $teacherClassIds))
             ->orderBy('name')
             ->orderBy('section')
             ->get(['id', 'name', 'section', 'teacher_id']);
@@ -84,6 +95,7 @@ class NotificationController extends Controller
                 ->whereNotNull('user_id')
                 ->orderBy('id')
                 ->get(['id', 'user_id']),
+            'isAdmin' => $isAdmin,
         ]);
     }
 
@@ -318,14 +330,16 @@ class NotificationController extends Controller
 
     public function sendMessage(Request $request): JsonResponse
     {
-        abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
+        $user = auth()->user();
+        abort_unless($user?->hasRole('admin', 'teacher'), 403);
+        $isAdmin = $user?->hasRole('admin') === true;
 
         $data = $request->validate([
             'type' => ['required', 'string', 'max:80'],
             'title' => ['required', 'string', 'max:190'],
             'body' => ['required', 'string', 'max:4000'],
             'url' => ['nullable', 'string', 'max:500'],
-            'target' => ['required', 'in:all,students,teachers,class,class_student,teacher'],
+            'target' => ['required', $isAdmin ? 'in:all,students,teachers,class,class_student,teacher' : 'in:students,class,class_student'],
             'class_id' => ['nullable', 'integer', 'exists:school_classes,id'],
             'student_id' => ['nullable', 'integer', 'exists:students,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
@@ -339,6 +353,10 @@ class NotificationController extends Controller
                     'by' => auth()->id(),
                 ]);
             } else {
+                if (! $isAdmin && in_array($target, ['class', 'class_student'], true) && ! $this->teacherHasClassAccess((int) ($data['class_id'] ?? 0), (int) $user->id)) {
+                    return response()->json(['ok' => false, 'message' => 'Bu sinif icin yetkiniz yok.'], 403);
+                }
+
                 $userIds = match ($target) {
                     'students' => Student::query()
                         ->whereNotNull('user_id')
@@ -383,6 +401,9 @@ class NotificationController extends Controller
     public function resend(NotificationLog $log): JsonResponse
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
+        if (auth()->user()?->hasRole('admin') !== true && (int) $log->user_id !== (int) auth()->id()) {
+            return response()->json(['ok' => false, 'message' => 'Bu log icin yetkiniz yok.'], 403);
+        }
         if (!$log->user_id) {
             return response()->json(['ok' => false, 'message' => 'Kullanici hedefi yok.'], 422);
         }
@@ -405,6 +426,9 @@ class NotificationController extends Controller
     public function destroyLog(Request $request, NotificationLog $log)
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
+        if (auth()->user()?->hasRole('admin') !== true && (int) $log->user_id !== (int) auth()->id()) {
+            abort(403);
+        }
         try {
             DB::transaction(function () use ($log): void {
                 NotificationLogRead::query()
@@ -432,9 +456,20 @@ class NotificationController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
         try {
-            DB::transaction(function (): void {
-                NotificationLogRead::query()->delete();
-                NotificationLog::query()->delete();
+            $isAdmin = auth()->user()?->hasRole('admin') === true;
+            $userId = (int) auth()->id();
+            DB::transaction(function () use ($isAdmin, $userId): void {
+                if ($isAdmin) {
+                    NotificationLogRead::query()->delete();
+                    NotificationLog::query()->delete();
+                    return;
+                }
+
+                $myLogIds = NotificationLog::query()->where('user_id', $userId)->pluck('id')->all();
+                if ($myLogIds !== []) {
+                    NotificationLogRead::query()->whereIn('notification_log_id', $myLogIds)->delete();
+                    NotificationLog::query()->whereIn('id', $myLogIds)->delete();
+                }
             });
             if ($request->expectsJson()) {
                 return response()->json(['ok' => true]);
@@ -501,5 +536,17 @@ class NotificationController extends Controller
         }
         $userId = Teacher::query()->whereKey($teacherId)->value('user_id');
         return $userId ? [(int) $userId] : [];
+    }
+
+    private function teacherHasClassAccess(int $classId, int $userId): bool
+    {
+        if ($classId <= 0 || $userId <= 0) {
+            return false;
+        }
+
+        return Teacher::query()
+            ->where('user_id', $userId)
+            ->whereHas('classes', fn ($q) => $q->whereKey($classId))
+            ->exists();
     }
 }

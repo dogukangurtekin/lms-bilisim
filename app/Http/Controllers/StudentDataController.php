@@ -9,6 +9,7 @@ use App\Models\Grade;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentCredential;
+use App\Models\Teacher;
 use App\Services\StudentProgressReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,16 @@ class StudentDataController extends Controller
 
     public function index(Request $request)
     {
+        $user = $request->user();
+        $isAdmin = $user?->role?->slug === 'admin';
+        $teacherClassIds = [];
+        if (! $isAdmin && $user) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
+
         $q = trim($request->string('q')->toString());
         $name = trim($request->string('name')->toString());
         $className = trim($request->string('class_name')->toString());
@@ -43,6 +54,7 @@ class StudentDataController extends Controller
 
         $studentsQuery = Student::with(['user', 'schoolClass', 'currentAvatar', 'credential'])
             ->withCount('badges')
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('school_class_id', $teacherClassIds))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($sub) use ($search) {
                     $sub->whereHas('user', fn ($u) => $u
@@ -93,6 +105,7 @@ class StudentDataController extends Controller
 
         $classes = SchoolClass::query()
             ->select('name', 'section')
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('id', $teacherClassIds))
             ->orderBy('name')
             ->orderBy('section')
             ->get();
@@ -101,6 +114,7 @@ class StudentDataController extends Controller
 
         $schoolClasses = SchoolClass::query()
             ->select('id', 'name', 'section')
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('id', $teacherClassIds))
             ->orderBy('name')
             ->orderBy('section')
             ->get();

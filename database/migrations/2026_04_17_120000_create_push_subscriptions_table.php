@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('push_subscriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->text('endpoint')->unique();
+            $table->string('endpoint', 512)->unique();
             $table->string('content_encoding', 32)->nullable();
             $table->text('public_key');
             $table->text('auth_token');
@@ -26,4 +26,5 @@ return new class extends Migration
         Schema::dropIfExists('push_subscriptions');
     }
 };
+
 

@@ -17,7 +17,8 @@
   const tabBtns = Array.from(document.querySelectorAll(".tab-btn"));
 
   const params = new URLSearchParams(window.location.search);
-  const runnerRole = (params.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
+  const roleParam = (params.get("role") || "").toLowerCase();
+  const runnerRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";
   const assignmentId = String(params.get("assignmentId") || "").trim();
   const assignmentTitle = String(params.get("assignmentTitle") || "Code Robot Lab Odevi").trim();
   const rangeFrom = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
@@ -25,10 +26,22 @@
   const hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
   const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
   const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasRange || enforceGrant);
+  const isStaff = runnerRole === "teacher" || runnerRole === "admin";
   let grantDenied = false;
   let levelStart = hasRange ? rangeFrom : 1;
   let levelEndParam = hasRange ? rangeTo : levelStart;
   let isAssignmentMode = !!assignmentId || hasRange;
+  if (!isStaff && !isAssignmentMode) {
+    isAssignmentMode = true;
+    levelStart = 1;
+    levelEndParam = 2;
+  }
+  if (isStaff) {
+    isAssignmentMode = false;
+    levelStart = 1;
+    levelEndParam = 9999;
+    grantDenied = false;
+  }
   const sessionStartedAt = Date.now();
   let rangeCompleteFired = false;
 
@@ -231,6 +244,7 @@
   }
 
   function applyAssignmentRange(fullLevels) {
+    if (runnerRole === "teacher" || runnerRole === "admin") return fullLevels.slice();
     if (!isAssignmentMode) return fullLevels.slice();
     const start = Math.max(1, levelStart);
     const end = Math.max(start, Math.min(levelEndParam, fullLevels.length));
@@ -238,9 +252,11 @@
   }
 
   async function resolveAssignmentRange() {
+    if (isStaff) return;
     if (!needsGrantCheck) return;
     try {
-      const res = await fetch("/runner-grant/lightbot-runner", {
+      const grantUrl = new URL("../runner-grant/lightbot-runner", window.location.href).toString();
+      const res = await fetch(grantUrl, {
         credentials: "same-origin",
         headers: { Accept: "application/json" }
       });
@@ -730,7 +746,7 @@
       return;
     }
     const baseLevels = buildLevels();
-    levels = applyAssignmentRange(baseLevels);
+    levels = isStaff ? baseLevels.slice() : applyAssignmentRange(baseLevels);
     if (!levels.length) levels = baseLevels.slice(0, 1);
     bindEvents();
     setActiveTrack("main");
@@ -741,3 +757,4 @@
 
   init();
 })();
+

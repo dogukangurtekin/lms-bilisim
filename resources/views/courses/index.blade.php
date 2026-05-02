@@ -122,7 +122,12 @@
     <div style="width:min(92vw,460px);background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);">
         <h3 style="margin:0 0 8px;font-size:20px;font-weight:800;color:#111827;">Dersi Ogretmene Ata</h3>
         <p id="course-assign-title" style="margin:0 0 14px;color:#334155;"></p>
-        <form id="course-assign-form" method="POST">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button type="button" class="btn" data-assign-tab="teacher">Ogretmene Ata</button>
+            <button type="button" class="btn" data-assign-tab="class">Sinif Bazli Ata</button>
+            <button type="button" class="btn" data-assign-tab="level">Kademe Bazli Ata</button>
+        </div>
+        <form id="course-assign-form-teacher" method="POST" data-assign-panel="teacher">
             @csrf
             <label for="course-assign-teacher" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Ogretmen</label>
             <select id="course-assign-teacher" name="teacher_id" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
@@ -133,6 +138,37 @@
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
                 <button type="button" id="course-assign-cancel" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
+                <button type="submit" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Ata</button>
+            </div>
+        </form>
+        <form id="course-assign-form-class" method="POST" data-assign-panel="class" style="display:none">
+            @csrf
+            <label style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Siniflar</label>
+            <div style="max-height:220px;overflow:auto;border:1px solid #cbd5e1;border-radius:10px;padding:8px;">
+                @foreach(($teachers ?? collect()) as $noop)@endforeach
+                @php $allClasses = \App\Models\SchoolClass::orderBy('grade_level')->orderBy('name')->orderBy('section')->get(); @endphp
+                @foreach($allClasses as $class)
+                    <label style="display:flex;gap:8px;align-items:center;margin:4px 0">
+                        <input type="checkbox" name="class_ids[]" value="{{ $class->id }}">
+                        <span>{{ $class->name }}/{{ $class->section }}</span>
+                    </label>
+                @endforeach
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+                <button type="button" class="course-assign-cancel-x" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
+                <button type="submit" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Ata</button>
+            </div>
+        </form>
+        <form id="course-assign-form-level" method="POST" data-assign-panel="level" style="display:none">
+            @csrf
+            <label style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Kademe</label>
+            <select name="grade_level" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
+                @for($lvl=1;$lvl<=12;$lvl++)
+                    <option value="{{ $lvl }}">{{ $lvl }}. Sinif</option>
+                @endfor
+            </select>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+                <button type="button" class="course-assign-cancel-x" style="height:42px;padding:0 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Iptal</button>
                 <button type="submit" style="height:42px;padding:0 14px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Ata</button>
             </div>
         </form>
@@ -176,10 +212,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const assignModal = document.getElementById('course-assign-modal');
     const assignTitle = document.getElementById('course-assign-title');
-    const assignForm = document.getElementById('course-assign-form');
+    const assignForm = document.getElementById('course-assign-form-teacher');
+    const assignFormClass = document.getElementById('course-assign-form-class');
+    const assignFormLevel = document.getElementById('course-assign-form-level');
     const assignTeacher = document.getElementById('course-assign-teacher');
     const assignCancel = document.getElementById('course-assign-cancel');
     const assignRouteTemplate = @json(route('courses.assign-teacher', ['course' => '__COURSE_ID__']));
+    const assignClassRouteTemplate = @json(route('courses.assign-classes', ['course' => '__COURSE_ID__']));
+    const assignLevelRouteTemplate = @json(route('courses.assign-level', ['course' => '__COURSE_ID__']));
 
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-assign-course-id]');
@@ -189,6 +229,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const currentTeacher = btn.getAttribute('data-assign-current-teacher') || '';
         if (!courseId || !assignForm || !assignModal) return;
         assignForm.action = String(assignRouteTemplate).replace('__COURSE_ID__', String(courseId));
+        assignFormClass.action = String(assignClassRouteTemplate).replace('__COURSE_ID__', String(courseId));
+        assignFormLevel.action = String(assignLevelRouteTemplate).replace('__COURSE_ID__', String(courseId));
         if (assignTitle) assignTitle.textContent = `Ders: ${courseName}`;
         if (assignTeacher) assignTeacher.value = String(currentTeacher) === '0' ? '' : String(currentTeacher);
         assignModal.style.display = 'flex';
@@ -197,6 +239,13 @@ document.addEventListener('DOMContentLoaded', function () {
     assignCancel?.addEventListener('click', function () {
         if (assignModal) assignModal.style.display = 'none';
     });
+    document.querySelectorAll('.course-assign-cancel-x').forEach((btn) => btn.addEventListener('click', () => {
+        if (assignModal) assignModal.style.display = 'none';
+    }));
+    document.querySelectorAll('[data-assign-tab]').forEach((btn) => btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-assign-tab');
+        document.querySelectorAll('[data-assign-panel]').forEach((p) => p.style.display = (p.getAttribute('data-assign-panel') === tab ? '' : 'none'));
+    }));
     assignModal?.addEventListener('click', function (e) {
         if (e.target === assignModal) assignModal.style.display = 'none';
     });

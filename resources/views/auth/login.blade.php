@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     @include('partials.pwa-head')
-    <title>Giris</title>
+    <title>Giriş</title>
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap');
@@ -77,14 +77,14 @@
         .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px}
         .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
         .login-form input:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
-        .login-form .btn{width:100%;margin-top:14px;padding:13px 16px;border-radius:12px;font-weight:800;font-size:15px;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
-        .login-actions{display:flex;gap:10px;margin-top:14px}
-        .login-actions .btn{margin-top:0;width:auto}
-        .btn-compact{padding:11px 14px;min-width:120px}
+        .login-form .btn{width:100%;margin-top:14px;padding:11px 14px;border-radius:12px;font-weight:500;font-size:14px;line-height:1.2;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
+        .login-actions{display:flex;gap:10px;margin-top:14px;align-items:stretch}
+        .login-actions .btn{margin-top:0;width:auto;min-height:48px}
+        .btn-compact{padding:10px 12px;min-width:120px}
         .btn-game{flex:1;background:linear-gradient(180deg,#f59e0b,#ea580c) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-        .btn-game svg{width:16px;height:16px;fill:currentColor}
+        .btn-game svg{width:20px;height:20px;fill:currentColor}
         .btn-qr{flex:1;background:linear-gradient(180deg,#0ea5e9,#0369a1) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-        .btn-qr svg{width:16px;height:16px;fill:currentColor}
+        .btn-qr svg{width:20px;height:20px;fill:currentColor}
         .game-login-help{margin-top:10px;font-size:12px;color:#475569;line-height:1.45}
         .error-box{background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;color:#be123c;padding:10px 12px;margin-bottom:10px}
         .mini-game-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:1200}
@@ -133,6 +133,19 @@
             .form-side{padding:16px}
             .login-form{width:min(680px,100%);padding:22px}
             .login-form h2{font-size:28px}
+            .login-actions{gap:8px}
+            .login-actions .btn{
+                flex:1 1 0;
+                min-width:0;
+                min-height:44px;
+                padding:9px 8px;
+                font-size:13px;
+                white-space:normal;
+                overflow-wrap:anywhere;
+                word-break:break-word;
+            }
+            .btn-game,.btn-qr{gap:6px}
+            .btn-game svg,.btn-qr svg{width:22px;height:22px}
         }
     </style>
 </head>
@@ -235,32 +248,32 @@
 
     <section class="form-side">
         <div class="login-form">
-            <h2>Hesabina Giris Yap</h2>
-            <p>Kullanici adi veya e-posta ile devam et.</p>
+            <h2>Hesabına Giriş Yap</h2>
+            <p>Kullanıcı adı veya e-posta ile devam et.</p>
             @if($errors->any())
                 <div class="error-box">{{ $errors->first() }}</div>
             @endif
             <form method="POST" action="{{ route('login.attempt') }}">
                 @csrf
-                <label>Kullanici Adi veya E-posta</label>
+                <label>Kullanıcı Adı veya E-posta</label>
                 <input type="text" id="login-email" name="email" value="{{ old('email') }}" placeholder="ornek: pipek.5a" required>
 
-                <label>Sifre</label>
+                <label>Şifre</label>
                 <input type="password" name="password" required>
 
                 <div class="login-actions">
-                    <button class="btn btn-compact" type="submit">Giris Yap</button>
+                    <button class="btn btn-compact" type="submit">Giriş Yap</button>
                     <button class="btn btn-game" type="button" id="openGameLoginBtn">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.5l-2.2 2.2a1 1 0 01-1.6-.3L10.4 18H7a3 3 0 01-3-3V9a3 3 0 013-3zm1 3v2h2v2h2v-2h2V9h-2V7h-2v2H8zm8 0h2v2h-2V9z"/></svg>
-                        Oyun ile Giris Yap
+                        Oyun ile Giriş Yap
                     </button>
                     <button class="btn btn-qr" type="button" id="openQrLoginBtn">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg>
-                        QR ile Giris
+                        QR ile Giriş
                     </button>
                 </div>
                 <div class="game-login-help">
-                    Oyun ile giris icin kullanici adi girmeniz yeterlidir. Oyunu gecince otomatik giris yapilir.
+                    Oyun ile giriş için kullanıcı adı girmeniz yeterlidir. Oyunu geçince otomatik giriş yapılır.
                 </div>
             </form>
         </div>
@@ -271,27 +284,27 @@
         <div class="mini-game-head">
             <div>
                 <h3>Kanatli Kahraman Oyunu</h3>
-                <p>Bilgi: Ok tuslari veya mobilde kaydirma ile oynanir. Zirveye cikip kazaninca giris yapilir.</p>
+                <p>Bilgi: Ok tuşları veya mobilde kaydırma ile oynanır. Zirveye çıkıp kazanınca giriş yapılır.</p>
             </div>
             <button type="button" class="mini-game-close" id="closeGameModalBtn">Kapat</button>
         </div>
         <canvas id="loginGameCanvas" width="700" height="430"></canvas>
         <div id="miniGameWinToast" class="win-toast">🎉 Tebrikler, giriş yapıyorsunuz...</div>
         <div class="mini-game-foot">
-            <span>Kontroller: Sol/Sag ok = hareket, Yukari ok = ziplama | Mobil: Saga/sola/yukari kaydir</span>
-            <span id="miniGameStatus">Hazir misin?</span>
+            <span>Kontroller: Sol/Sağ ok = hareket, Yukarı ok = zıplama | Mobil: Sağa/sola/yukarı kaydır</span>
+            <span id="miniGameStatus">Hazır mısın?</span>
         </div>
     </div>
 </div>
 <div id="qrLoginModal" class="mini-game-modal">
     <div class="mini-game-card" style="max-width:420px">
         <div class="mini-game-head">
-            <div><h3>QR ile Giris</h3><p>Bu kodu ogretmen/admin panelinden okutun.</p></div>
+            <div><h3>QR ile Giriş</h3><p>Bu kodu öğretmen/admin panelinden okutun.</p></div>
             <button type="button" class="mini-game-close" id="closeQrModalBtn">Kapat</button>
         </div>
         <div style="display:grid;justify-items:center;gap:10px">
             <img id="qrLoginImage" alt="QR" style="width:260px;max-width:100%;border:1px solid #dbeafe;border-radius:12px;padding:10px;background:#fff;display:none">
-            <p id="qrLoginStatus" style="margin:0;font-size:13px;color:#334155">Hazirlaniyor...</p>
+            <p id="qrLoginStatus" style="margin:0;font-size:13px;color:#334155">Hazırlanıyor...</p>
         </div>
     </div>
 </div>
@@ -435,7 +448,7 @@
         if (intersects(p, state.goal)) {
             state.won = true;
             state.running = false;
-            statusEl.innerHTML = '<span class=\"mini-game-win\">Tebrikler! Giris hazirlaniyor...</span>';
+            statusEl.innerHTML = '<span class=\"mini-game-win\">Tebrikler! Giriş hazırlanıyor...</span>';
             if (winToast) winToast.classList.add('show');
             doGameLogin();
         }
@@ -537,10 +550,10 @@
                 body: JSON.stringify({ email: emailVal, game_won: true })
             });
             const data = await resp.json();
-            if (!resp.ok) throw new Error(data.message || 'Giris basarisiz');
+            if (!resp.ok) throw new Error(data.message || 'Giriş başarısız');
             setTimeout(() => window.location.href = data.redirect || '{{ route('dashboard') }}', 1700);
         } catch (e) {
-            statusEl.textContent = e.message || 'Giris sirasinda hata olustu.';
+            statusEl.textContent = e.message || 'Giriş sırasında hata oluştu.';
             if (winToast) winToast.classList.remove('show');
             state.running = true;
             state.won = false;
@@ -564,7 +577,7 @@
     openBtn.addEventListener('click', () => {
         const emailVal = (usernameInput?.value || '').trim();
         if (!emailVal) {
-            statusEl.textContent = 'Oyunla giris icin once kullanici adini gir.';
+            statusEl.textContent = 'Oyunla giriş için önce kullanıcı adını gir.';
             return;
         }
         modal.classList.add('open');
@@ -650,7 +663,7 @@
         const res = await fetch('{{ url('/qr/guest/status') }}/' + encodeURIComponent(token), { credentials: 'same-origin' });
         const data = await res.json().catch(() => ({}));
         if (data.approved && data.redirect) {
-            statusEl.textContent = 'Onaylandi. Ogrenci paneline giris yapiliyor...';
+            statusEl.textContent = 'Onaylandı. Öğrenci paneline giriş yapılıyor...';
             window.location.href = data.redirect;
         }
     }

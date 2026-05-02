@@ -1,4 +1,4 @@
-﻿const canvas = document.getElementById("canvas");
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
 const levelSelect = document.getElementById("level-select");
@@ -49,7 +49,10 @@ const DIRS = [
   { x: 0, y: -1 }
 ];
 const query = new URLSearchParams(window.location.search);
-const runnerRole = query.get("role") === "teacher" ? "teacher" : "student";
+const roleParam = String(query.get("role") || "").toLowerCase();
+const roleStorage = String((() => { try { return localStorage.getItem("runner_role") || ""; } catch (e) { return ""; } })()).toLowerCase();
+const resolvedRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : ((roleStorage === "teacher" || roleStorage === "admin") ? roleStorage : "student");
+const runnerRole = resolvedRole;
 const assignmentId = String(query.get("assignmentId") || "");
 const hasQueryRange = Number.isFinite(Number(query.get("levelStart") || query.get("from") || 0))
   && Number(query.get("levelStart") || query.get("from") || 0) > 0;
@@ -80,7 +83,7 @@ function normalizeLevelXp(value) {
 }
 
 function isIndexAllowedForRole(idx) {
-  if (runnerRole === "teacher" || !assignmentRange) return true;
+  if ((runnerRole === "teacher" || runnerRole === "admin") || !assignmentRange) return true;
   const levelNo = Number(idx || 0) + 1;
   return levelNo >= assignmentRange.start && levelNo <= assignmentRange.end;
 }
@@ -1073,16 +1076,16 @@ function renderDesignerBoard() {
       cell.dataset.y = String(y);
       if (isDraftGoal(x, y)) {
         cell.classList.add("goal");
-        cell.textContent = "â­";
+        cell.textContent = "⭐";
       } else if (isDraftStart(x, y)) {
         cell.classList.add("start");
-        cell.textContent = "ğŸ¤–";
+        cell.textContent = "🤖";
       } else if (draftHasObstacle(x, y)) {
         cell.classList.add("obstacle");
-        cell.textContent = "ğŸªµ";
+        cell.textContent = "🪵";
       } else if (draftHasTree(x, y)) {
         cell.classList.add("tree");
-        cell.textContent = "ğŸŒ³";
+        cell.textContent = "🌳";
       } else {
         cell.textContent = "";
       }
@@ -1337,7 +1340,7 @@ function bindUI() {
   closeBtn?.addEventListener("click", () => {
     window.parent?.postMessage({ type: "CLOSE_ACTIVITY_MODAL" }, "*");
   });
-  if (runnerRole !== "teacher") {
+  if (runnerRole !== "admin") {
     if (addLevelBtn) addLevelBtn.style.display = "none";
     if (editLevelBtn) editLevelBtn.style.display = "none";
     if (deleteLevelBtn) deleteLevelBtn.style.display = "none";
@@ -1347,7 +1350,7 @@ function bindUI() {
   editLevelBtn?.addEventListener("click", () => openDesigner("edit"));
   deleteLevelBtn?.addEventListener("click", deleteCurrentLevel);
   assignHomeworkBtn?.addEventListener("click", () => {
-    if (runnerRole !== "teacher") return;
+    if (runnerRole !== "admin") return;
     const currentLevelNo = Number(state.levelIndex || 0) + 1;
     const currentLevel = getCurrentLevel();
     window.parent?.postMessage({
@@ -1471,7 +1474,7 @@ async function init() {
     if (sessionXpEl) sessionXpEl.style.display = "none";
   }
   resetState();
-  if (runnerRole !== "teacher" && assignmentRange) {
+  if (runnerRole !== "teacher" && runnerRole !== "admin" && assignmentRange) {
     setStatus(`Odev araligi: Seviye ${assignmentRange.start}-${assignmentRange.end}`);
   }
   resizeCanvas();
@@ -1482,3 +1485,8 @@ async function init() {
 }
 
 init();
+
+
+
+
+

@@ -65,13 +65,22 @@ class ActivityRunnerController extends Controller
 
     public function grant(string $slug): JsonResponse
     {
+        $slug = trim($slug, "/ \t\n\r\0\x0B");
         $user = auth()->user();
         if (! $user) {
             return response()->json(['ok' => false], 401);
         }
 
         if (! $user->hasRole('student')) {
-            return response()->json(['ok' => true, 'role' => 'staff']);
+            return response()->json([
+                'ok' => true,
+                'role' => 'staff',
+                'slug' => $slug,
+                'from' => 1,
+                'to' => 999,
+                'homework_id' => '',
+                'expires_at' => now()->addDays(3650)->timestamp,
+            ]);
         }
 
         $grant = session('runner_grant');
@@ -80,7 +89,15 @@ class ActivityRunnerController extends Controller
             && (($grant['expires_at'] ?? 0) >= time());
 
         if (! $valid) {
-            return response()->json(['ok' => false, 'message' => 'No active assignment grant for this runner.'], 403);
+            return response()->json([
+                'ok' => true,
+                'role' => 'student',
+                'slug' => $slug,
+                'from' => 1,
+                'to' => 2,
+                'homework_id' => '',
+                'expires_at' => now()->addHours(3)->timestamp,
+            ]);
         }
 
         return response()->json([
@@ -97,6 +114,21 @@ class ActivityRunnerController extends Controller
     private function serveRunner(string $slug)
     {
         $user = auth()->user();
+        if ($user && ! $user->hasRole('student')) {
+            $role = (string) request()->query('role', '');
+            $targetRole = $user->hasRole('admin') ? 'admin' : 'teacher';
+            $hasRangeParams = request()->query('from') !== null
+                || request()->query('to') !== null
+                || request()->query('levelStart') !== null
+                || request()->query('levelEnd') !== null
+                || request()->query('assignmentId') !== null
+                || request()->query('grant') !== null
+                || request()->query('enforceGrant') !== null;
+            if ($role !== $targetRole || $hasRangeParams) {
+                return redirect()->to(url("/{$slug}") . '?role=' . $targetRole);
+            }
+        }
+
         if ($user?->hasRole('student')) {
             $grant = session('runner_grant');
             $from = (int) request('from', 0);
@@ -108,7 +140,14 @@ class ActivityRunnerController extends Controller
                 && (($grant['expires_at'] ?? 0) >= time());
 
             if (! $valid) {
-                abort(403, 'Bu icerige sadece atanmis odev level araliginda erisebilirsiniz.');
+                request()->session()->put('runner_grant', [
+                    'slug' => $slug,
+                    'from' => 1,
+                    'to' => 2,
+                    'homework_id' => null,
+                    'expires_at' => now()->addHours(3)->timestamp,
+                ]);
+                return redirect()->to(url("/{$slug}?from=1&to=2"));
             }
         }
 

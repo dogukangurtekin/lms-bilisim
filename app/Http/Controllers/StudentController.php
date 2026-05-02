@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\User;
 use App\Services\Domain\StudentService;
 use Illuminate\Http\RedirectResponse;
@@ -20,10 +21,21 @@ class StudentController extends Controller
 {
     public function __construct(private StudentService $service)
     {
+        $this->authorizeResource(Student::class, 'student');
     }
 
     public function index(Request $request)
     {
+        $user = $request->user();
+        $isAdmin = $user?->role?->slug === 'admin';
+        $teacherClassIds = [];
+        if (! $isAdmin && $user) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
+
         $name = trim($request->string('name')->toString());
         $className = trim($request->string('class_name')->toString());
         $section = trim($request->string('section')->toString());
@@ -32,6 +44,7 @@ class StudentController extends Controller
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
 
         $items = Student::with(['user', 'schoolClass', 'credential'])
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('school_class_id', $teacherClassIds))
             ->when($name !== '', fn ($query) => $query->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$name}%")))
             ->when($className !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('name', $className)))
             ->when($section !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('section', $section)))
@@ -42,6 +55,7 @@ class StudentController extends Controller
 
         $classes = SchoolClass::query()
             ->select('name', 'section')
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('id', $teacherClassIds))
             ->orderBy('name')
             ->orderBy('section')
             ->get();

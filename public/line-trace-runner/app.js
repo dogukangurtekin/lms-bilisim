@@ -3,18 +3,20 @@
 
   const STORAGE_KEY = "line_trace_progress_v2";
   const query = new URLSearchParams(window.location.search);
-  const runnerRole = (query.get("role") || "").toLowerCase() === "teacher" ? "teacher" : "student";
+  const roleParam = (query.get("role") || "").toLowerCase();
+  const runnerRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";
   const assignmentId = String(query.get("assignmentId") || "").trim();
   const rangeStartRaw = Math.max(1, Number(query.get("levelStart") || query.get("from") || 0));
   const rangeEndRaw = Math.max(rangeStartRaw, Number(query.get("levelEnd") || query.get("to") || rangeStartRaw));
   const hasRange = Number.isFinite(rangeStartRaw) && rangeStartRaw > 0;
   const enforceGrant = query.get("grant") === "1" || query.get("enforceGrant") === "1";
   const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasRange || enforceGrant);
-  let assignmentRange = (runnerRole !== "teacher" && Number.isFinite(rangeStartRaw) && rangeStartRaw > 0)
+  let assignmentRange = ((runnerRole !== "teacher" && runnerRole !== "admin") && Number.isFinite(rangeStartRaw) && rangeStartRaw > 0)
     ? { start: rangeStartRaw - 1, end: rangeEndRaw - 1 }
-    : null;
+    : { start: 0, end: 1 };
   let grantDenied = false;
   let assignmentRangeCompletedSent = false;
+  const isStaff = runnerRole === "teacher" || runnerRole === "admin";
 
   const bgCanvas = document.getElementById("bg-canvas");
   const drawCanvas = document.getElementById("draw-canvas");
@@ -85,9 +87,10 @@
 
   async function resolveAssignmentRangeFromGrant() {
     if (!needsGrantCheck) return;
-    if (runnerRole === "teacher") return;
+    if (runnerRole === "teacher" || runnerRole === "admin") return;
     try {
-      const res = await fetch("/runner-grant/line-trace-runner", {
+      const grantUrl = new URL("../runner-grant/line-trace-runner", window.location.href).toString();
+      const res = await fetch(grantUrl, {
         credentials: "same-origin",
         headers: { Accept: "application/json" }
       });
@@ -374,6 +377,7 @@
       const data = raw ? JSON.parse(raw) : null;
       if (!data || typeof data !== "object") return;
       state.unlockedLevel = clamp(Number(data.unlockedLevel || 0), 0, levels.length - 1);
+      if (!isStaff) state.unlockedLevel = Math.max(state.unlockedLevel, 1);
       state.completed = data.completed && typeof data.completed === "object" ? data.completed : {};
       state.assist = clamp(Number(data.assist || 1), 1, 1.45);
     } catch (e) {}
@@ -407,7 +411,7 @@
     levelGridEl.innerHTML = "";
     levels.forEach((level, idx) => {
       if (!isLevelInAllowedRange(idx)) return;
-      const unlocked = idx <= state.unlockedLevel;
+      const unlocked = (runnerRole === "teacher" || runnerRole === "admin") ? true : (idx <= state.unlockedLevel);
       const done = !!state.completed[`${idx}_pass`];
       const card = document.createElement("button");
       card.type = "button";
@@ -560,7 +564,7 @@
     if (
       state.canAdvance &&
       state.level < levels.length - 1 &&
-      state.level + 1 <= state.unlockedLevel &&
+      ((runnerRole === "teacher" || runnerRole === "admin") || state.level + 1 <= state.unlockedLevel) &&
       isLevelInAllowedRange(state.level + 1)
     ) {
       startLevel(state.level + 1);
@@ -589,6 +593,11 @@
     return;
   }
   loadProgress();
+  if (isStaff) {
+    assignmentRange = null;
+    grantDenied = false;
+    state.unlockedLevel = levels.length - 1;
+  }
   if (assignmentRange) {
     const startIdx = getRangeStartIndex();
     const endIdx = getRangeEndIndex();

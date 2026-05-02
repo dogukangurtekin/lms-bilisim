@@ -13,6 +13,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\LiveQuizController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ParentWhatsappController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\StudentDataController;
@@ -44,6 +45,8 @@ Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'par
     ->name('parent.progress-report');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -64,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/skorlar', [GameController::class, 'leaderboard'])->name('flamestone.leaderboard');
     Route::get('/runner-open/{slug}', [ActivityRunnerController::class, 'open'])->name('runner.open');
     Route::get('/runner-grant/{slug}', [ActivityRunnerController::class, 'grant'])->name('runner.grant');
+    Route::get('/runner-grant/{slug}/', [ActivityRunnerController::class, 'grant']);
     Route::view('/keyboard-race', 'keyboard-race.index')->name('keyboard-race.index');
     Route::view('/block-builder-studio', 'block-builder.index')->name('block-builder.index');
     Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
@@ -132,6 +136,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('classes', SchoolClassController::class);
         Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
+        Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
+        Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
         Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
         Route::get('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id');
@@ -162,7 +168,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/odevlerim/{homework}/ac', [StudentPortalController::class, 'openHomework'])->name('student.portal.homework.open');
         Route::post('/ogrenci/odevlerim/{homework}/tamamla', [StudentPortalController::class, 'completeHomework'])->name('student.portal.homework.complete');
         Route::get('/ogrenci/odevlerim/{homework}/basarili', [StudentPortalController::class, 'homeworkSuccess'])->name('student.portal.homework.success');
-        Route::get('/ogrenci/etkinlik-odevleri/{assignment}/ac', [StudentPortalController::class, 'openGameAssignment'])->name('student.portal.game-assignment.open');
+        Route::get('/ogrenci/etkinlik-odevleri/{assignment}/ac', [StudentPortalController::class, 'openGameAssignment'])
+            ->name('student.portal.game-assignment.open')
+            ->missing(fn () => redirect()->route('student.portal.assignments'));
         Route::post('/ogrenci/etkinlik-odevleri/{assignment}/tamamla', [StudentPortalController::class, 'completeGameAssignment'])->name('student.portal.game-assignment.complete');
         Route::post('/ogrenci/sure/ping', [StudentPortalController::class, 'pingTime'])->name('student.portal.time.ping');
         Route::get('/ogrenci/gelisim-karnem', [StudentPortalController::class, 'progress'])->name('student.portal.progress');

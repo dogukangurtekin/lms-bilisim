@@ -345,6 +345,7 @@ class StudentPortalController extends Controller
     public function assignments()
     {
         $student = $this->getStudent();
+        $this->purgeStaleUnfinishedAssignments($student);
         $assignments = $this->studentAssignments($student)->paginate(20, ['*'], 'game_page');
         $courseHomeworks = $this->studentCourseHomeworks($student)->paginate(20, ['*'], 'course_page');
         $progress = StudentHomeworkProgress::where('student_id', $student->id)->get()->keyBy('course_homework_id');
@@ -483,26 +484,19 @@ class StudentPortalController extends Controller
     private function studentCourses(Student $student)
     {
         return Course::with(['teacher.user', 'schoolClass'])
-            ->where(function ($q) use ($student) {
-                $q->where('school_class_id', $student->school_class_id)
-                    ->orWhereExists(function ($sq) use ($student) {
-                        $sq->select(DB::raw(1))
-                            ->from('course_homeworks')
-                            ->whereColumn('course_homeworks.course_id', 'courses.id')
-                            ->where('course_homeworks.school_class_id', $student->school_class_id)
-                            ->where('course_homeworks.assignment_type', 'lesson')
-                            ->whereNull('course_homeworks.deleted_at');
-                    });
+            ->whereExists(function ($sq) use ($student) {
+                $sq->select(DB::raw(1))
+                    ->from('course_homeworks')
+                    ->whereColumn('course_homeworks.course_id', 'courses.id')
+                    ->where('course_homeworks.school_class_id', $student->school_class_id)
+                    ->where('course_homeworks.assignment_type', 'lesson')
+                    ->whereNull('course_homeworks.deleted_at');
             })
             ->orderBy('name');
     }
 
     private function canStudentAccessCourse(Student $student, Course $course): bool
     {
-        if ((int) $course->school_class_id === (int) $student->school_class_id) {
-            return true;
-        }
-
         return CourseHomework::query()
             ->where('course_id', $course->id)
             ->where('school_class_id', $student->school_class_id)
@@ -522,7 +516,10 @@ class StudentPortalController extends Controller
         return GameAssignment::withTrashed()
             ->with('levels')
             ->where(function ($q) use ($student, $completedIds) {
-                $q->whereHas('classes', fn ($c) => $c->where('school_classes.id', $student->school_class_id));
+                $q->where(function ($active) use ($student) {
+                    $active->whereNull('game_assignments.deleted_at')
+                        ->whereHas('classes', fn ($c) => $c->where('school_classes.id', $student->school_class_id));
+                });
                 if (!empty($completedIds)) {
                     $q->orWhereIn('id', $completedIds);
                 }
@@ -686,12 +683,39 @@ class StudentPortalController extends Controller
         return CourseHomework::withTrashed()
             ->with(['course', 'schoolClass'])
             ->where(function ($q) use ($student, $completedIds) {
-                $q->where('school_class_id', $student->school_class_id);
+                $q->where(function ($active) use ($student) {
+                    $active->where('school_class_id', $student->school_class_id)
+                        ->whereNull('deleted_at');
+                });
                 if (!empty($completedIds)) {
                     $q->orWhereIn('id', $completedIds);
                 }
             })
             ->latest();
+    }
+
+    private function purgeStaleUnfinishedAssignments(Student $student): void
+    {
+        $activeHomeworkIds = CourseHomework::query()
+            ->where('school_class_id', $student->school_class_id)
+            ->pluck('id');
+
+        StudentHomeworkProgress::query()
+            ->where('student_id', $student->id)
+            ->whereNull('completed_at')
+            ->whereNotIn('course_homework_id', $activeHomeworkIds)
+            ->delete();
+
+        $activeGameAssignmentIds = GameAssignment::query()
+            ->whereNull('deleted_at')
+            ->whereHas('classes', fn ($c) => $c->where('school_classes.id', $student->school_class_id))
+            ->pluck('id');
+
+        StudentGameAssignmentProgress::query()
+            ->where('student_id', $student->id)
+            ->whereNull('completed_at')
+            ->whereNotIn('game_assignment_id', $activeGameAssignmentIds)
+            ->delete();
     }
 
     private function resolveContentLabels(array $contentIds): array
@@ -1031,4 +1055,3 @@ class StudentPortalController extends Controller
         return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
     }
 }
-

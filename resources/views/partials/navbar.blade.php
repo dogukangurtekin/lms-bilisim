@@ -46,7 +46,7 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button class="btn btn-logout" type="submit">
-                <span class="logout-icon">&#x23FB;</span> Cikis Yap
+                <span class="logout-icon">&#x23FB;</span> Çıkış Yap
             </button>
         </form>
     </div>
