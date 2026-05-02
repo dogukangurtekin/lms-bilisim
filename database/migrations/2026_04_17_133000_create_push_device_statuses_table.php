@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('push_device_statuses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->text('endpoint')->nullable();
+            $table->string('endpoint', 512)->nullable();
             $table->string('permission', 20)->default('default')->index();
             $table->string('platform', 80)->nullable();
             $table->boolean('is_pwa')->default(false);
@@ -27,4 +27,5 @@ return new class extends Migration
         Schema::dropIfExists('push_device_statuses');
     }
 };
+
 
