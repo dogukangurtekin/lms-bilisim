@@ -157,6 +157,7 @@
 @if(auth()->check())
 <script>
 (() => {
+    window.WEBPUSH_ENABLED = false;
     const publicKeyUrl = @json(route('notifications.public-key'));
     const subscribeUrl = @json(route('notifications.subscribe'));
     const unsubscribeUrl = @json(route('notifications.unsubscribe'));
@@ -230,6 +231,7 @@
     }
 
     async function registerWebPush() {
+        if (!window.WEBPUSH_ENABLED) return;
         if (pushConfigMissing) return;
         if (pushAuthFailed) return;
         if (pushBusy) return;
@@ -463,4 +465,3 @@
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>
-

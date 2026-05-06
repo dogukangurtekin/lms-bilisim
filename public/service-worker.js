@@ -3,22 +3,22 @@ const RUNTIME_CACHE = `runtime-${SW_VERSION}`;
 const SHELL_CACHE = `shell-${SW_VERSION}`;
 const OFFLINE_URL = "offline.html";
 
-const SHELL_ASSETS = [
-  "./",
-  OFFLINE_URL,
-  "manifest.webmanifest",
-  "manifest.json",
-  "pwa-init.js",
-  "logo192.png",
-  "logo512.png",
-  "logo.png",
-  "script.js",
-  "style.css"
-];
+const SHELL_ASSETS = ["./"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)).then(() => self.skipWaiting())
+    caches
+      .open(SHELL_CACHE)
+      .then(async (cache) => {
+        for (const asset of SHELL_ASSETS) {
+          try {
+            await cache.add(asset);
+          } catch (_) {
+            // Skip missing assets so install does not fail.
+          }
+        }
+      })
+      .then(() => self.skipWaiting())
   );
 });
 
