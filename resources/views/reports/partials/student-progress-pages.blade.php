@@ -162,7 +162,35 @@
         <h3>Rozetler</h3>
         <div class="badge-wrap">
             @forelse($student->badges as $badge)
-                <span class="badge-item">{{ $badge->icon ?? '🏅' }} {{ $badge->name }}</span>
+                @php
+                    $name = (string) ($badge->name ?? 'Rozet');
+                    $safeIconMap = [
+                        'Ilk Adim' => '🚀',
+                        'Odev Ustasi' => '📘',
+                        'Oyun Avcisi' => '🎮',
+                        'Ders Kesifi' => '📚',
+                        'XP 100' => '⭐',
+                        'XP 300' => '💎',
+                        'Maratoncu' => '⏱️',
+                        'Sinif Birincisi' => '🥇',
+                        'Okul Birincisi' => '🏆',
+                        'Efsane Tamamlayici' => '👑',
+                        'Gorev Serisi 10' => '🔥',
+                        'Gorev Serisi 25' => '🏅',
+                        'Ders Ustasi' => '🧠',
+                        'Ders Efsanesi' => '🎓',
+                        'Oyun Uzmani' => '🕹️',
+                        'Oyun Sampiyonu' => '🎯',
+                        'XP 500' => '🌟',
+                        'XP 1000' => '🚀',
+                        'Disiplinli Calisma' => '🗂️',
+                        'Panel Ustasi' => '📈',
+                        'Istikrar Madalyasi' => '🥈',
+                        'Tamamlama Zirvesi' => '🏔️',
+                    ];
+                    $safeIcon = $safeIconMap[$name] ?? '🏅';
+                @endphp
+                <span class="badge-item">{{ $safeIcon }} {{ $name }}</span>
             @empty
                 <span class="badge-item">Henüz rozet kazanılmadı</span>
             @endforelse

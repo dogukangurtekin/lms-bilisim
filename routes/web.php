@@ -26,10 +26,12 @@ use App\Http\Controllers\TeacherClassAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
-Route::redirect('/public', '/');
-Route::redirect('/public/', '/');
+Route::any('/public', fn () => redirect('/'));
+Route::any('/public/', fn () => redirect('/'));
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -78,6 +80,10 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');
             Route::post('/kullanici-yonetimi', [UserManagementController::class, 'store'])->name('users.store');
+            Route::get('/kullanici-yonetimi/toplu/ogrenci-sablon', [UserManagementController::class, 'downloadStudentBulkTemplate'])->name('users.bulk.students.template');
+            Route::post('/kullanici-yonetimi/toplu/ogrenci-yukle', [UserManagementController::class, 'bulkStoreStudents'])->name('users.bulk.students.store');
+            Route::get('/kullanici-yonetimi/toplu/ogretmen-sablon', [UserManagementController::class, 'downloadTeacherBulkTemplate'])->name('users.bulk.teachers.template');
+            Route::post('/kullanici-yonetimi/toplu/ogretmen-yukle', [UserManagementController::class, 'bulkStoreTeachers'])->name('users.bulk.teachers.store');
             Route::delete('/kullanici-yonetimi/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
             Route::get('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata', [TeacherClassAssignmentController::class, 'edit'])->name('users.teachers.classes.edit');
             Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevel'])->name('users.teachers.classes.assign-level');

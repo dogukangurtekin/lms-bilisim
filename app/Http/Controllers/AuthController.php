@@ -41,14 +41,10 @@ class AuthController extends Controller
 
         $user = Auth::user();
         if ($user?->hasRole('student')) {
-            $student = Student::where('user_id', $user->id)->first();
-            if (! $student) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()->withErrors(['email' => 'Bu ogrenci hesabi icin ogrenci kaydi bulunamadi.'])->onlyInput('email');
-            }
+            $student = Student::query()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['student_no' => $this->generateStudentNo()]
+            );
 
             $stat = StudentTimeStat::firstOrCreate(
                 ['student_id' => $student->id],
@@ -71,12 +67,23 @@ class AuthController extends Controller
         }
 
         if (hash_equals((string) $user->password, $plainPassword)) {
-            $user->password = Hash::make($plainPassword);
+            // User model already has `password => hashed` cast.
+            // Assign plain text to avoid accidental double-hashing.
+            $user->password = $plainPassword;
             $user->save();
             return true;
         }
 
         return false;
+    }
+
+    private function generateStudentNo(): string
+    {
+        do {
+            $value = 'ST' . now()->format('ymd') . random_int(1000, 9999);
+        } while (Student::query()->where('student_no', $value)->exists());
+
+        return $value;
     }
 
     public function gameLogin(Request $request)

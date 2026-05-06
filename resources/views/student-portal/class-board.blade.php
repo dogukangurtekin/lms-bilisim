@@ -1,7 +1,7 @@
 @extends('layout.app')
-@section('title','Sinif Panosu')
+@section('title','Sınıf Panosu')
 @section('content')
-<div class="top"><h1>Sinif Panosu</h1></div>
+<div class="top"><h1>Sınıf Panosu</h1></div>
 
 <style>
     .board-message-form{
@@ -71,24 +71,24 @@
 @endif
 
 <div class="card">
-    <h3 style="margin-top:0">Hazir Mesajlar (15)</h3>
-    <p style="margin-top:0;color:#475569">Acilir listeden bir mesaj secip sinif panosunda paylasabilirsin.</p>
+    <h3 style="margin-top:0">Hazır Mesajlar (15)</h3>
+    <p style="margin-top:0;color:#475569">Açılır listeden bir mesaj seçip sınıf panosunda paylaşabilirsin.</p>
     <form method="POST" action="{{ route('student.portal.class-board.store') }}" class="board-message-form">
         @csrf
         <select class="board-message-select" name="message_key" required>
-            <option value="">Mesaj secin...</option>
+            <option value="">Mesaj seçin...</option>
             @foreach($messages as $key => $text)
                 <option value="{{ $key }}">{{ $text }}</option>
             @endforeach
         </select>
-        <button class="btn" type="submit">Paylas</button>
+        <button class="btn" type="submit">Paylaş</button>
     </form>
 </div>
 
 <div class="card">
-    <h3 style="margin-top:0">Sinif Paylasimlari</h3>
+    <h3 style="margin-top:0">Sınıf Paylaşımları</h3>
     @if($posts->isEmpty())
-        <p>Sinif panosunda henuz mesaj yok. Ilk mesaji sen paylas.</p>
+        <p>Sınıf panosunda henüz mesaj yok. İlk mesajı sen paylaş.</p>
     @else
         <div class="board-posts">
             @foreach($posts as $post)

@@ -10,10 +10,39 @@
 
 <div class="card">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
-        @foreach($items as $item)
+        @foreach($items as $i => $item)
+            @php
+                $emojiMap = [
+                    'Ilk Adim' => '🚀',
+                    'Odev Ustasi' => '📘',
+                    'Oyun Avcisi' => '🎮',
+                    'Ders Kesifi' => '📚',
+                    'XP 100' => '⭐',
+                    'XP 300' => '💎',
+                    'Maratoncu' => '⏱️',
+                    'Sinif Birincisi' => '🥇',
+                    'Okul Birincisi' => '🏆',
+                    'Efsane Tamamlayici' => '👑',
+                    'Gorev Serisi 10' => '🔥',
+                    'Gorev Serisi 25' => '🏅',
+                    'Ders Ustasi' => '🧠',
+                    'Ders Efsanesi' => '🎓',
+                    'Oyun Uzmani' => '🕹️',
+                    'Oyun Sampiyonu' => '🎯',
+                    'XP 500' => '🌟',
+                    'XP 1000' => '🚀',
+                    'Disiplinli Calisma' => '🗂️',
+                    'Panel Ustasi' => '📈',
+                    'Istikrar Madalyasi' => '🥈',
+                    'Tamamlama Zirvesi' => '🏔️',
+                ];
+                $displayEmoji = $emojiMap[$item['name']] ?? '🏅';
+            @endphp
             <div style="border:1px solid #dbe5f2;border-radius:14px;padding:12px;background:{{ $item['earned'] ? '#ecfdf5' : '#ffffff' }}">
                 <div style="display:flex;align-items:center;justify-content:space-between">
-                    <div style="font-size:26px;line-height:1">{{ $item['icon'] }}</div>
+                    <div style="font-size:28px;line-height:1">
+                        {{ $displayEmoji }}
+                    </div>
                     <span class="badge">{{ $item['current'] }}/{{ $item['target'] }}</span>
                 </div>
                 <h3 style="margin:8px 0 6px;font-size:18px">{{ $item['name'] }}</h3>
@@ -33,4 +62,3 @@
     </div>
 </div>
 @endsection
-

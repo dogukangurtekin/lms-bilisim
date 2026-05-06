@@ -101,7 +101,7 @@
         </section>
 
         <section class="card student-next-card student-heatmap-card">
-            <h3>Son 7 Gün Isı Haritası</h3>
+            <h3>Son 6 Gün Isı Haritası</h3>
             <div class="heatmap-grid">
                 @foreach($heatmapDays as $day)
                     <div class="heatmap-cell level-{{ $day['level'] }}" title="{{ $day['label'] }} • {{ $day['completed'] }} görev • {{ $day['xp'] }} XP">

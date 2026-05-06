@@ -8,11 +8,11 @@
 </div>
 
 <div class="card">
-    <p>Asagidaki oyunlar seviye tabanli ilerleme ve odevleme icin hazirdir.</p>
+    <p>Aşağıdaki oyunlar seviye tabanlı ilerleme ve ödevleme için hazırdır.</p>
     @if(auth()->user()?->hasRole('student'))
         <p style="margin-top:8px;color:#475569">
-            Ogrenci modu: Oyunlar varsayilan olarak sadece <b>1-2 level</b> aciktir.
-            Ust level'ler ogretmen odev atadiginda gorunur.
+            Öğrenci modu: Oyunlarda varsayılan olarak sadece <b>1-2. seviyeler</b> açıktır.
+            Üst seviyeler, öğretmen ödev atadığında görünür.
         </p>
     @endif
     <div class="activity-grid">
@@ -22,9 +22,9 @@
                 <h3>Canli Quiz</h3>
                 <div class="actions">
                     @if(auth()->user()?->hasRole('student'))
-                        <a class="btn" href="{{ route('student.live-quiz.join.form') }}">Oyunu Ac</a>
+                        <a class="btn" href="{{ route('student.live-quiz.join.form') }}">Oyunu Aç</a>
                     @else
-                        <a class="btn" href="{{ route('live-quiz.index') }}">Oyunu Ac</a>
+                        <a class="btn" href="{{ route('live-quiz.index') }}">Oyunu Aç</a>
                     @endif
                 </div>
             </div>
@@ -35,9 +35,9 @@
             <div class="activity-body">
                 <h3>Flowchart Programming</h3>
                 <div class="actions">
-                    <a class="btn" href="{{ route('flowchart.editor') }}">Uygulamayi Ac</a>
+                    <a class="btn" href="{{ route('flowchart.editor') }}">Uygulamayı Aç</a>
                     @if(auth()->user()?->hasRole('admin', 'teacher'))
-                        <a class="btn" href="{{ route('flowchart.editor') }}">Odevi Hazirla</a>
+                        <a class="btn" href="{{ route('flowchart.editor') }}">Ödevi Hazırla</a>
                     @endif
                 </div>
             </div>
@@ -50,18 +50,18 @@
                     <h3>{{ $game['name'] }}</h3>
                     <div class="actions">
                         @if(auth()->user()?->hasRole('student') && !in_array($slug, ['keyboard-race', 'block-builder-studio', 'flamestone-game'], true))
-                            <a class="btn" href="{{ route('runner.open', ['slug' => $slug, 'from' => 1, 'to' => 2]) }}">Oyunu Ac (L1-L2)</a>
+                            <a class="btn" href="{{ route('runner.open', ['slug' => $slug, 'from' => 1, 'to' => 2]) }}">Oyunu Aç (L1-L2)</a>
                         @else
                             @php
                                 $gameUrl = auth()->user()?->hasRole('admin', 'teacher')
                                     ? url($game['url'] . '?role=' . (auth()->user()?->hasRole('admin') ? 'admin' : 'teacher'))
                                     : url($game['url']);
                             @endphp
-                            <a class="btn" href="{{ $gameUrl }}" target="_blank">Oyunu Ac</a>
+                            <a class="btn" href="{{ $gameUrl }}" target="_blank">Oyunu Aç</a>
                         @endif
 
                         @if(auth()->user()?->hasRole('admin', 'teacher'))
-                            <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Odevi Olustur</a>
+                            <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Ödevi Oluştur</a>
                         @endif
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 @extends('layout.app')
-@section('title','Avatarlarim')
+@section('title','Avatarlarım')
 @section('content')
-<div class="top"><h1>Avatar Magazasi</h1></div>
+<div class="top"><h1>Avatar Mağazası</h1></div>
 
 <div class="v2-metrics">
     <article class="card"><span>Toplam XP</span><strong>{{ $xp }}</strong></article>
@@ -26,7 +26,7 @@
                 <h4 style="margin:8px 0 4px">{{ $avatar->name }}</h4>
                 <div style="font-size:13px;color:#475569;margin-bottom:8px">Fiyat: {{ $cost }} XP</div>
                 @if($isCurrent)
-                    <span class="badge">Kullaniliyor</span>
+                    <span class="badge">Kullanılıyor</span>
                 @elseif($isOwned)
                     <form method="POST" action="{{ route('student.portal.avatars.equip', $avatar) }}">
                         @csrf
@@ -35,7 +35,7 @@
                 @else
                     <form method="POST" action="{{ route('student.portal.avatars.buy', $avatar) }}">
                         @csrf
-                        <button class="btn" type="submit" @disabled($availableXp < $cost)>Satin Al</button>
+                        <button class="btn" type="submit" @disabled($availableXp < $cost)>Satın Al</button>
                     </form>
                 @endif
             </div>
@@ -43,4 +43,3 @@
     </div>
 </div>
 @endsection
-

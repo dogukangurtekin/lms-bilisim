@@ -1,7 +1,7 @@
 @extends('layout.app')
-@section('title','Arkadaslarim')
+@section('title','Arkadaşlarım')
 @section('content')
-<div class="top"><h1>Arkadaslarim</h1></div>
+<div class="top"><h1>Arkadaşlarım</h1></div>
 
 <style>
     .friends-grid{
@@ -31,7 +31,7 @@
 
 <div class="card">
     @if($friends->isEmpty())
-        <p>Sinifinda henuz baska ogrenci bulunmuyor.</p>
+        <p>Sınıfında henüz başka öğrenci bulunmuyor.</p>
     @else
         <div class="friends-grid">
             @foreach($friends as $friend)

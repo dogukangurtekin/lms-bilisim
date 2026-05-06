@@ -445,7 +445,7 @@ body.role-student .detail-grid p{margin:0 0 8px}
 .next-list span{display:block;margin-top:2px;font-size:12px;color:#64748b}
 .next-list em{font-style:normal;font-weight:800;font-size:13px;color:#047857;background:#d1fae5;border:1px solid #a7f3d0;border-radius:999px;padding:5px 8px;white-space:nowrap}
 .next-empty{font-size:13px;color:#475569;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px}
-.heatmap-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .heatmap-cell{border:1px solid #dbeafe;border-radius:10px;padding:8px 6px;text-align:center}
 .heatmap-cell span{display:block;font-size:11px;color:#64748b}
 .heatmap-cell strong{display:block;margin-top:3px;font-size:16px;line-height:1;color:#0f172a}
@@ -490,10 +490,13 @@ body.role-student .detail-grid p{margin:0 0 8px}
   .leader-user span{font-size:13px}
   .xp-pill{font-size:13px}
   .student-flow-card .signal-list{grid-template-columns:1fr}
-  .heatmap-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .heatmap-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .student-trend-grid{grid-template-columns:1fr}
 }
 @media (max-width:768px){
+  body.role-student .student-heatmap-card .heatmap-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
   body.role-student .student-hero-kpis{
     grid-template-columns:repeat(2,minmax(0,1fr)) !important;
   }

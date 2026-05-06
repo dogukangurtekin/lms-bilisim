@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Observers\UserObserver;
 use App\Policies\AnnouncementPolicy;
 use App\Policies\AttendancePolicy;
 use App\Policies\CoursePolicy;
@@ -38,5 +39,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Announcement::class, AnnouncementPolicy::class);
+        User::observe(UserObserver::class);
     }
 }
