@@ -89,7 +89,7 @@
     if (!needsGrantCheck) return;
     if (runnerRole === "teacher" || runnerRole === "admin") return;
     try {
-      const grantUrl = new URL("../runner-grant/line-trace-runner", window.location.href).toString();
+      const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/line-trace-runner";
       const res = await fetch(grantUrl, {
         credentials: "same-origin",
         headers: { Accept: "application/json" }

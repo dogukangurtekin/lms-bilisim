@@ -17,6 +17,7 @@
     <p><b>Öğretmen Önizleme:</b> Öğrencideki gibi oyunu/uygulamayı burada oynayabilirsiniz.</p>
     <iframe
         id="teacher-assignment-runner"
+        allow="camera *; microphone *; fullscreen *"
         src="{{ $gameUrl }}"
         data-slug="{{ $assignment->game_slug }}"
         data-level-start="{{ (int) ($assignment->level_from ?? 1) }}"

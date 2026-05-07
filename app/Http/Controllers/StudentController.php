@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Support\BulkTemplateWorkbook;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Services\Domain\StudentService;
@@ -129,12 +130,9 @@ class StudentController extends Controller
         $sample = ['Ali', 'Yilmaz', 'ali.yilmaz', '123456', '6', 'A'];
 
         return response()->streamDownload(function () use ($headers, $sample) {
-            $out = fopen('php://output', 'wb');
-            fwrite($out, implode("\t", $headers) . PHP_EOL);
-            fwrite($out, implode("\t", $sample) . PHP_EOL);
-            fclose($out);
-        }, 'ogrenci-toplu-kayit-sablonu.xls', [
-            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            echo BulkTemplateWorkbook::build($headers, $sample, 'Sablon');
+        }, 'ogrenci-toplu-kayit-sablonu.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
@@ -210,10 +208,7 @@ class StudentController extends Controller
 
             try {
                 DB::transaction(function () use ($name, $email, $password, $studentRole, $className, $section, $gradeLevel, $academicYear) {
-                    $schoolClass = SchoolClass::firstOrCreate(
-                        ['name' => $className, 'section' => $section, 'academic_year' => $academicYear],
-                        ['grade_level' => $gradeLevel]
-                    );
+                    $schoolClass = $this->resolveSchoolClass($className, $section, $academicYear, $gradeLevel);
 
                     $user = User::create([
                         'role_id' => $studentRole->id,
@@ -223,11 +218,13 @@ class StudentController extends Controller
                         'is_active' => true,
                     ]);
 
-                    Student::create([
-                        'user_id' => $user->id,
-                        'student_no' => $this->generateStudentNo(),
-                        'school_class_id' => $schoolClass->id,
-                    ]);
+                    Student::updateOrCreate(
+                        ['user_id' => $user->id],
+                        [
+                            'student_no' => Student::where('user_id', $user->id)->value('student_no') ?: $this->generateStudentNo(),
+                            'school_class_id' => $schoolClass->id,
+                        ]
+                    );
                 });
                 $created++;
             } catch (\Throwable $e) {
@@ -260,6 +257,27 @@ class StudentController extends Controller
         } while (Student::where('student_no', $value)->exists());
 
         return $value;
+    }
+
+    private function resolveSchoolClass(string $className, string $section, string $academicYear, int $gradeLevel): SchoolClass
+    {
+        $existing = SchoolClass::query()
+            ->where('name', $className)
+            ->where('section', $section)
+            ->orderByDesc('academic_year')
+            ->orderBy('id')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return SchoolClass::query()->create([
+            'name' => $className,
+            'section' => $section,
+            'academic_year' => $academicYear,
+            'grade_level' => $gradeLevel,
+        ]);
     }
 
     private function extractRowsFromUpload(string $filePath, string $extension): ?array

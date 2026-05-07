@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\File;
 
 class ActivityRunnerController extends Controller
 {
@@ -113,17 +114,31 @@ class ActivityRunnerController extends Controller
 
     private function serveRunner(string $slug)
     {
+        $request = request();
+        $requestUri = $request->getRequestUri();
+
+        if (str_contains($requestUri, '/public/index.php/') || str_contains($requestUri, '/index.php/')) {
+            $query = $request->getQueryString();
+            $target = rtrim(config('app.url'), '/') . '/' . $slug;
+
+            if ($query) {
+                $target .= '?' . $query;
+            }
+
+            return redirect()->to($target, 302);
+        }
+
         $user = auth()->user();
         if ($user && ! $user->hasRole('student')) {
-            $role = (string) request()->query('role', '');
+            $role = (string) $request->query('role', '');
             $targetRole = $user->hasRole('admin') ? 'admin' : 'teacher';
-            $hasRangeParams = request()->query('from') !== null
-                || request()->query('to') !== null
-                || request()->query('levelStart') !== null
-                || request()->query('levelEnd') !== null
-                || request()->query('assignmentId') !== null
-                || request()->query('grant') !== null
-                || request()->query('enforceGrant') !== null;
+            $hasRangeParams = $request->query('from') !== null
+                || $request->query('to') !== null
+                || $request->query('levelStart') !== null
+                || $request->query('levelEnd') !== null
+                || $request->query('assignmentId') !== null
+                || $request->query('grant') !== null
+                || $request->query('enforceGrant') !== null;
             if ($role !== $targetRole || $hasRangeParams) {
                 return redirect()->to(url("/{$slug}") . '?role=' . $targetRole);
             }
@@ -151,6 +166,21 @@ class ActivityRunnerController extends Controller
             }
         }
 
-        return response()->file(public_path($slug . '/index.html'));
+        $runnerAssetPath = public_path('runner-assets/' . $slug . '/index.html');
+        $html = File::get($runnerAssetPath);
+        $appBase = rtrim(config('app.url'), '/');
+        $runnerBase = $appBase . '/runner-assets/' . $slug . '/';
+        $inject = '<base href="' . e($runnerBase) . '">' .
+            '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';</script>';
+        $html = preg_replace('/<head>/i', '<head>' . $inject, $html, 1) ?? $html;
+        $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
+        $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo192.png') . '"', $html);
+        $html = str_replace('src="../pwa-init.js"', 'src="' . e($appBase . '/pwa-init.js') . '"', $html);
+        $html = str_replace('src="./app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);
+        $html = str_replace('src="app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);
+        $html = str_replace('href="./style.css"', 'href="' . e($runnerBase . 'style.css') . '"', $html);
+        $html = str_replace('href="style.css"', 'href="' . e($runnerBase . 'style.css') . '"', $html);
+
+        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 }

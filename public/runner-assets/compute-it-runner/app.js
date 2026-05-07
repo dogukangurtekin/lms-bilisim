@@ -1320,7 +1320,7 @@
       return;
     }
     try {
-      const grantUrl = new URL("../runner-grant/compute-it-runner", window.location.href).toString();
+      const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/compute-it-runner";
       const res = await fetch(grantUrl, {
         method: "GET",
         credentials: "same-origin",
@@ -1350,5 +1350,6 @@
     loadLevel(initialIndex);
   })();
 })();
+
 
 

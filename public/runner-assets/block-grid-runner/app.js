@@ -229,7 +229,8 @@ async function resolveAssignmentRangeFromGrant(){
   if(!needsGrantCheck) return;
   if(isStaffMode()) return;
   try{
-    const res = await fetch(new URL('../runner-grant/block-grid-runner', window.location.href).toString(), {
+    const base = (window.RUNNER_APP_BASE || '').replace(/\/$/, '');
+    const res = await fetch(base + '/runner-grant/block-grid-runner', {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' }
     });

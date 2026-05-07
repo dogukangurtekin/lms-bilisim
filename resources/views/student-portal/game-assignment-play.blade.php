@@ -7,6 +7,7 @@
         <p><b>{{ $assignment->title }}</b> | <b>Kurallar:</b> Sadece verilen level araliginda ({{ $assignment->level_from }}-{{ $assignment->level_to }}) ilerleyin.</p>
         <iframe
             id="assignment-runner"
+            allow="camera *; microphone *; fullscreen *"
             src="{{ $gameUrl }}"
             data-slug="{{ $assignment->game_slug }}"
             data-level-start="{{ (int) ($assignment->level_from ?? 1) }}"

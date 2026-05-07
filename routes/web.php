@@ -23,6 +23,7 @@ use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\TeacherClassAssignmentController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +33,61 @@ Route::get('/', function () {
 });
 Route::any('/public', fn () => redirect('/'));
 Route::any('/public/', fn () => redirect('/'));
+Route::get('/public/index.php/{asset}', function (Request $request, string $asset) {
+    $runnerSlugs = [
+        'block-3d-runner',
+        'block-grid-runner',
+        'compute-it-runner',
+        'lightbot-runner',
+        'line-trace-runner',
+        'silent-teacher-runner',
+    ];
+
+    $asset = ltrim($asset, '/');
+    if (!in_array($asset, ['app.js', 'style.css'], true)) {
+        abort(404);
+    }
+
+    if ($asset === 'style.css') {
+        $css = implode("\n", array_map(
+            fn (string $slug) => '@import url("/runner-assets/' . $slug . '/style.css");',
+            $runnerSlugs
+        ));
+
+        return response($css, 200, ['Content-Type' => 'text/css; charset=UTF-8']);
+    }
+
+    $js = <<<'JS'
+const runnerSlugs = [
+  "block-3d-runner",
+  "block-grid-runner",
+  "compute-it-runner",
+  "lightbot-runner",
+  "line-trace-runner",
+  "silent-teacher-runner"
+];
+
+const path = window.location.pathname || "";
+const slug = runnerSlugs.find((item) => path.includes("/" + item));
+
+if (slug) {
+  const script = document.createElement("script");
+  script.src = "/runner-assets/" + slug + "/app.js";
+  if (slug === "block-3d-runner") {
+    script.type = "module";
+  }
+  document.head.appendChild(script);
+}
+JS;
+
+    return response($js, 200, ['Content-Type' => 'application/javascript; charset=UTF-8']);
+})->where('asset', 'app\.js|style\.css');
+Route::any('/index.php/{path}', fn (string $path) => redirect('/' . ltrim($path, '/')))
+    ->where('path', '.*');
+Route::any('/public/index.php/{path}', fn (string $path) => redirect('/' . ltrim($path, '/')))
+    ->where('path', '.*');
+Route::any('/public/{path}', fn (string $path) => redirect('/' . ltrim($path, '/')))
+    ->where('path', '.*');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

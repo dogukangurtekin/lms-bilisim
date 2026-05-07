@@ -255,7 +255,7 @@
     if (isStaff) return;
     if (!needsGrantCheck) return;
     try {
-      const grantUrl = new URL("../runner-grant/lightbot-runner", window.location.href).toString();
+      const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/lightbot-runner";
       const res = await fetch(grantUrl, {
         credentials: "same-origin",
         headers: { Accept: "application/json" }

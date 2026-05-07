@@ -45,6 +45,9 @@
 
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return;
+    const host = String(window.location.hostname || "").toLowerCase();
+    const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "::1";
+    if (isLocalHost) return;
 
     const manifestHref = document.querySelector('link[rel="manifest"]')?.getAttribute("href") || "";
     const swUrl = manifestHref

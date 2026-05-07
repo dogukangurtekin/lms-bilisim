@@ -21,6 +21,32 @@
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
+    function cameraErrorMessage(error) {
+        const name = String(error?.name || '');
+        if (!window.isSecureContext) {
+            return 'Kamera icin guvenli baglanti gerekli (HTTPS).';
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return 'Bu tarayici kamera API desteklemiyor.';
+        }
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+            return 'Kamera izni reddedildi. Tarayici ayarindan izin verin.';
+        }
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+            return 'Kamera bulunamadi.';
+        }
+        if (name === 'NotReadableError' || name === 'TrackStartError') {
+            return 'Kamera baska bir uygulama tarafindan kullaniliyor.';
+        }
+        if (name === 'OverconstrainedError' || name === 'ConstraintNotSatisfiedError') {
+            return 'Kamera ayarlari cihazla uyumlu degil.';
+        }
+        if (name === 'SecurityError') {
+            return 'Guvenlik politikasi kamerayi engelliyor.';
+        }
+        return 'Kamera acilamadi. Lutfen izinleri ve baglantiyi kontrol edin.';
+    }
+
     async function verifyToken(token) {
         const res = await fetch('{{ route('qr.verify') }}', {
             method: 'POST',
@@ -38,6 +64,14 @@
 
     startCamBtn?.addEventListener('click', async () => {
         try {
+            if (!window.isSecureContext) {
+                statusEl.textContent = 'Kamera icin HTTPS gerekli.';
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusEl.textContent = 'Tarayici kamera API desteklemiyor.';
+                return;
+            }
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
             video.srcObject = stream;
             statusEl.textContent = 'Kamera acildi, QR bekleniyor...';
@@ -54,15 +88,18 @@
                     if (!val) return;
                     const ok = await verifyToken(val);
                     if (ok && scanTimer) {
-                        statusEl.textContent = 'Giris paneline yonlendiriliyorsunuz...';
+                        statusEl.textContent = 'Onaylandi. Sinif listesine donuluyor...';
                         clearInterval(scanTimer);
                         scanTimer = null;
                         if (stream) stream.getTracks().forEach((t) => t.stop());
+                        setTimeout(() => {
+                            window.location.href = @json(route('qr.login.menu', ['class_id' => (int) $student->school_class_id]));
+                        }, 500);
                     }
                 } catch (_) {}
             }, 450);
         } catch (e) {
-            statusEl.textContent = 'Kamera acilamadi.';
+            statusEl.textContent = cameraErrorMessage(e);
         }
     });
 })();

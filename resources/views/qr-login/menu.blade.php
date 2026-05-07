@@ -2,15 +2,27 @@
 @section('title','QR Giris')
 @section('content')
 <div class="top"><h1>QR Giris</h1></div>
-<div class="card">
-    <h2>Siniflar</h2>
-    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
-        @foreach($classes as $class)
-            <a class="btn" href="{{ route('qr.login.menu', ['class_id' => $class->id]) }}" style="display:block;text-align:left;padding:10px">
-                <b>{{ $class->name }}/{{ $class->section }}</b><br>
-                <small>{{ (int) $class->students_count }} ogrenci</small>
-            </a>
-        @endforeach
+<div class="card" style="position:sticky;top:70px;z-index:50">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0">Siniflar</h2>
+        @if($selectedClass)
+            <a class="btn" href="{{ route('qr.login.menu') }}">Siniflara Geri Don</a>
+        @endif
+    </div>
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px">
+        <select class="form-control" onchange="if(this.value){window.location.href=this.value}">
+            <option value="{{ route('qr.login.menu') }}" {{ $selectedClass ? '' : 'selected' }}>Sinif secin...</option>
+            @foreach($classes as $class)
+                <option value="{{ route('qr.login.menu', ['class_id' => $class->id]) }}" {{ (int) $selectedClassId === (int) $class->id ? 'selected' : '' }}>
+                    {{ $class->name }}/{{ $class->section }} ({{ (int) $class->students_count }} ogrenci)
+                </option>
+            @endforeach
+        </select>
+        @if($selectedClass)
+            <div style="font-size:13px;color:#334155">
+                Secili sinif: <b>{{ $selectedClass->name }}/{{ $selectedClass->section }}</b>
+            </div>
+        @endif
     </div>
 </div>
 <div class="card">
@@ -29,4 +41,3 @@
     @endif
 </div>
 @endsection
-

@@ -23,14 +23,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $login = strtolower(trim($credentials['email']));
-        $email = str_contains($login, '@') ? $login : ($login . '@school.local');
-
-        $user = User::query()
-            ->with('role')
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->orWhereRaw("LOWER(SUBSTRING_INDEX(email, '@', 1)) = ?", [$login])
-            ->first();
+        $user = $this->resolveLoginUser((string) $credentials['email']);
 
         if (! $user || ! $this->matchesPassword($user, (string) $credentials['password'])) {
             return back()->withErrors(['email' => 'Giris bilgileri hatali'])->onlyInput('email');
@@ -86,6 +79,18 @@ class AuthController extends Controller
         return $value;
     }
 
+    private function resolveLoginUser(string $rawLogin): ?User
+    {
+        $login = strtolower(trim($rawLogin));
+        $email = str_contains($login, '@') ? $login : ($login . '@school.local');
+
+        return User::query()
+            ->with('role')
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->orWhereRaw("LOWER(SUBSTRING_INDEX(email, '@', 1)) = ?", [$login])
+            ->first();
+    }
+
     public function gameLogin(Request $request)
     {
         $validated = $request->validate([
@@ -94,28 +99,21 @@ class AuthController extends Controller
         ]);
 
         if (! (bool) $validated['game_won']) {
-            return response()->json(['message' => 'Oyun kazanılmadan giriş yapılamaz.'], 422);
+            return response()->json(['message' => 'Oyun kazanilmadan giris yapilamaz.'], 422);
         }
 
-        $login = strtolower(trim($validated['email']));
-        $email = str_contains($login, '@') ? $login : $login . '@school.local';
-
-        $user = User::with('role')->where('email', $email)->first();
+        $user = $this->resolveLoginUser((string) $validated['email']);
         if (! $user || ! $user->hasRole('student')) {
-            return response()->json(['message' => 'Bu yöntem yalnızca öğrenci hesapları için kullanılabilir.'], 422);
+            return response()->json(['message' => 'Bu yontem yalnizca ogrenci hesaplari icin kullanilabilir.'], 422);
         }
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        $student = Student::where('user_id', $user->id)->first();
-        if (! $student) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return response()->json(['message' => 'Bu ogrenci hesabi icin ogrenci kaydi bulunamadi.'], 422);
-        }
+        $student = Student::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            ['student_no' => $this->generateStudentNo()]
+        );
 
         $stat = StudentTimeStat::firstOrCreate(
             ['student_id' => $student->id],
@@ -126,7 +124,7 @@ class AuthController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => 'Tebrikler, giriş yapıyorsunuz.',
+            'message' => 'Tebrikler, giris yapiliyor.',
             'redirect' => route('dashboard'),
         ]);
     }

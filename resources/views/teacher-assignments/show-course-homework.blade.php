@@ -68,6 +68,7 @@
         <p><b>Ogretmen Onizleme:</b> Oyunu/uygulamayi ogrencideki gibi burada test edebilirsiniz.</p>
         <iframe
             id="teacher-homework-runner"
+            allow="camera *; microphone *; fullscreen *"
             src="{{ $gameUrl }}"
             data-slug="{{ $gameSlug ?? '' }}"
             data-level-start="{{ (int) ($homework->level_from ?? 1) }}"

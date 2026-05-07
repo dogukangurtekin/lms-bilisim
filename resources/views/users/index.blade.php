@@ -50,14 +50,14 @@
 <div class="card">
 <div class="bulk-tools">
     <div class="bulk-row">
-        <a class="btn template-btn" href="{{ route('users.bulk.students.template') }}">Ogrenci Sablonu (.xls)</a>
+        <a class="btn template-btn" href="{{ route('users.bulk.students.template') }}">Ogrenci Sablonu (.xlsx)</a>
         <form method="POST" action="{{ route('users.bulk.students.store') }}" enctype="multipart/form-data" class="bulk-upload-form">@csrf
             <input type="file" name="file" accept=".xls,.xlsx,.csv,.txt" required>
             <button class="btn" type="submit">Toplu Ogrenci Yukle</button>
         </form>
     </div>
     <div class="bulk-row">
-        <a class="btn template-btn" href="{{ route('users.bulk.teachers.template') }}">Ogretmen Sablonu (.xls)</a>
+        <a class="btn template-btn" href="{{ route('users.bulk.teachers.template') }}">Ogretmen Sablonu (.xlsx)</a>
         <form method="POST" action="{{ route('users.bulk.teachers.store') }}" enctype="multipart/form-data" class="bulk-upload-form">@csrf
             <input type="file" name="file" accept=".xls,.xlsx,.csv,.txt" required>
             <button class="btn" type="submit">Toplu Ogretmen Yukle</button>

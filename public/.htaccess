@@ -9,6 +9,7 @@
     </IfModule>
 
     RewriteEngine On
+    RewriteBase /okul-laravel-yeni/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

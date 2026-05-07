@@ -13,7 +13,7 @@
 <div class="top">
     <h1>Ogrenciler</h1>
     <div class="actions">
-        <a class="btn" href="{{ route('students.bulk.template') }}">Toplu Kayit Sablonu (.xls)</a>
+        <a class="btn" href="{{ route('students.bulk.template') }}">Toplu Kayit Sablonu (.xlsx)</a>
         <button class="btn" type="button" id="students-reset-passwords-btn">Tum Sifreleri 123456 Yap</button>
         <form id="delete-all-students-form" method="POST" action="{{ route('students.destroyAll') }}" style="display:none">
             @csrf

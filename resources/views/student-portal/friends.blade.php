@@ -37,7 +37,7 @@
             @foreach($friends as $friend)
                 <article class="friend-card">
                     <img
-                        src="{{ $friend['avatar_path'] ? asset($friend['avatar_path']) : asset('logo192.png') }}"
+                        src="{{ asset($friend['avatar_path']) }}"
                         alt="{{ $friend['first_name'] }} {{ $friend['last_name'] }}"
                         style="width:78px;height:78px;border-radius:12px;object-fit:cover;background:#f8fafc"
                     >

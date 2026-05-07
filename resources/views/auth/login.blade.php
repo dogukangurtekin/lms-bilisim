@@ -321,6 +321,7 @@
     let touchStartX = 0;
     let touchStartY = 0;
     let touchActive = false;
+    let gameLoginPending = false;
 
     const ctx = canvas.getContext('2d');
     const keys = { left: false, right: false };
@@ -446,6 +447,7 @@
         }
 
         if (intersects(p, state.goal)) {
+            if (gameLoginPending) return;
             state.won = true;
             state.running = false;
             statusEl.innerHTML = '<span class=\"mini-game-win\">Tebrikler! Giriş hazırlanıyor...</span>';
@@ -532,6 +534,7 @@
     }
 
     async function doGameLogin() {
+        if (gameLoginPending) return;
         const emailVal = (usernameInput?.value || '').trim();
         if (!emailVal) {
             statusEl.textContent = 'Lutfen once kullanici adini gir.';
@@ -539,6 +542,7 @@
             state.won = false;
             return;
         }
+        gameLoginPending = true;
         try {
             const resp = await fetch('{{ route('login.game') }}', {
                 method: 'POST',
@@ -555,8 +559,12 @@
         } catch (e) {
             statusEl.textContent = e.message || 'Giriş sırasında hata oluştu.';
             if (winToast) winToast.classList.remove('show');
-            state.running = true;
+            state.running = false;
             state.won = false;
+            state.player.vx = 0;
+            state.player.vy = 0;
+        } finally {
+            gameLoginPending = false;
         }
     }
 
@@ -581,6 +589,7 @@
             return;
         }
         modal.classList.add('open');
+        gameLoginPending = false;
         resetGame();
     });
     closeBtn.addEventListener('click', () => modal.classList.remove('open'));
@@ -662,8 +671,14 @@
         if (!token) return;
         const res = await fetch('{{ url('/qr/guest/status') }}/' + encodeURIComponent(token), { credentials: 'same-origin' });
         const data = await res.json().catch(() => ({}));
+        if (data.expired) {
+            statusEl.textContent = data.message || 'QR suresi doldu. Lutfen tekrar olusturun.';
+            if (poll) { clearInterval(poll); poll = null; }
+            return;
+        }
         if (data.approved && data.redirect) {
             statusEl.textContent = 'Onaylandı. Öğrenci paneline giriş yapılıyor...';
+            if (poll) { clearInterval(poll); poll = null; }
             window.location.href = data.redirect;
         }
     }

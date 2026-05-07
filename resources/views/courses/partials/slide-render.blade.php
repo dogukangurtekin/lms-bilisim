@@ -82,7 +82,7 @@ HTML;
         <p><a href="{{ $slide['file_url'] }}" target="_blank">Ek Kaynak</a></p>
     @endif
     @if($codeSrcdoc !== '')
-        <iframe style="width:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:8px;margin-top:8px" srcdoc="{{ $codeSrcdoc }}"></iframe>
+        <iframe allow="camera *; microphone *; fullscreen *" style="width:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:8px;margin-top:8px" srcdoc="{{ $codeSrcdoc }}"></iframe>
     @endif
 
     @if(!empty($slide['question_prompt']))

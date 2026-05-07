@@ -12,6 +12,7 @@
             <p><b>Kurallar:</b> Sadece verilen level araliginda ({{ $homework->level_from }}-{{ $homework->level_to }}) ilerleyin.</p>
             <iframe
                 id="homework-runner"
+                allow="camera *; microphone *; fullscreen *"
                 src="{{ $gameUrl }}"
                 data-slug="{{ $gameSlug ?? '' }}"
                 data-level-start="{{ (int) ($homework->level_from ?? 1) }}"

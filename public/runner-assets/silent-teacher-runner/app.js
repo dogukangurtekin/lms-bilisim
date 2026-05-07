@@ -442,7 +442,7 @@ function denyRunnerAccess(message) {
 }
 
 async function resolveAssignmentRangeFromGrant() {
-  const grantUrl = new URL("../runner-grant/silent-teacher-runner", window.location.href).toString();
+  const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/silent-teacher-runner";
   if (runnerRole === "teacher" || runnerRole === "admin") return;
   if (!needsGrantCheck) {
     try {

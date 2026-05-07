@@ -10,9 +10,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 
 class QrLoginController extends Controller
 {
+    private function qrCache(): CacheRepository
+    {
+        // Keep QR login tokens in file cache to survive between HTTP requests.
+        return Cache::store('file');
+    }
+
     public function menuPage(Request $request)
     {
         $user = $request->user();
@@ -28,9 +35,12 @@ class QrLoginController extends Controller
         $classes = SchoolClass::query()
             ->withCount('students')
             ->when(! $isAdmin, fn ($q) => $q->whereIn('id', $teacherClassIds))
+            ->orderByDesc('academic_year')
             ->orderBy('name')
             ->orderBy('section')
-            ->get();
+            ->get()
+            ->unique(fn ($class) => $class->name . '|' . $class->section)
+            ->values();
         $selectedClassId = (int) $request->query('class_id', 0);
         $selectedClass = $classes->firstWhere('id', $selectedClassId);
         $students = $selectedClass
@@ -48,13 +58,22 @@ class QrLoginController extends Controller
     public function scannerPage(Student $student)
     {
         $this->authorizeStudentForTeacher(auth()->user(), $student);
+
+        $host = strtolower((string) request()->getHost());
+        $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+
+        if (!$isLocalHost && !request()->isSecure()) {
+            $requestUri = (string) request()->server('REQUEST_URI', '/');
+            return redirect()->away('https://' . request()->getHttpHost() . $requestUri);
+        }
+
         return view('qr-login.scanner', compact('student'));
     }
 
     public function generateGuest(Request $request)
     {
         $token = Str::uuid()->toString();
-        Cache::put("qr-login:{$token}", ['approved' => false, 'user_id' => null], now()->addMinutes(2));
+        $this->qrCache()->put("qr-login:{$token}", ['approved' => false, 'user_id' => null], now()->addMinutes(2));
         return response()->json(['ok' => true, 'token' => $token]);
     }
 
@@ -70,7 +89,7 @@ class QrLoginController extends Controller
         if ($userId <= 0) {
             return response()->json(['ok' => false, 'message' => 'Ogrenci kullanicisi bulunamadi.'], 422);
         }
-        Cache::put("qr-login:{$data['token']}", ['approved' => true, 'user_id' => $userId], now()->addMinutes(2));
+        $this->qrCache()->put("qr-login:{$data['token']}", ['approved' => true, 'user_id' => $userId], now()->addMinutes(2));
         return response()->json(['ok' => true]);
     }
 
@@ -97,9 +116,9 @@ class QrLoginController extends Controller
 
     public function status(string $token)
     {
-        $payload = Cache::get("qr-login:{$token}");
+        $payload = $this->qrCache()->get("qr-login:{$token}");
         if (!is_array($payload)) {
-            return response()->json(['approved' => false], 404);
+            return response()->json(['approved' => false, 'expired' => true, 'message' => 'QR token suresi dolmus.'], 200);
         }
         if (!($payload['approved'] ?? false)) {
             return response()->json(['approved' => false]);
@@ -109,7 +128,7 @@ class QrLoginController extends Controller
 
     public function consume(Request $request, string $token)
     {
-        $payload = Cache::pull("qr-login:{$token}");
+        $payload = $this->qrCache()->pull("qr-login:{$token}");
         if (!is_array($payload) || !($payload['approved'] ?? false)) {
             return redirect()->route('login')->withErrors(['email' => 'QR token gecersiz ya da suresi dolmus.']);
         }

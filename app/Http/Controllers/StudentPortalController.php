@@ -357,6 +357,10 @@ class StudentPortalController extends Controller
     public function friends()
     {
         $student = $this->getStudent();
+        $defaultAvatarPath = Avatar::query()
+            ->where('is_active', true)
+            ->orderBy('required_xp')
+            ->value('image_path');
 
         $classmates = Student::with(['user', 'currentAvatar'])
             ->where('school_class_id', $student->school_class_id)
@@ -376,7 +380,7 @@ class StudentPortalController extends Controller
             ->pluck('total_xp', 'user_id');
 
         $friends = $classmates
-            ->map(function (Student $classmate) use ($gradeXpByStudentId, $contentXpByUserId) {
+            ->map(function (Student $classmate) use ($gradeXpByStudentId, $contentXpByUserId, $defaultAvatarPath) {
                 $fullName = trim((string) ($classmate->user?->name ?? ''));
                 $nameParts = preg_split('/\s+/', $fullName, 2) ?: [];
                 $firstName = trim((string) ($nameParts[0] ?? ''));
@@ -385,7 +389,7 @@ class StudentPortalController extends Controller
                 return [
                     'first_name' => $firstName !== '' ? $firstName : '-',
                     'last_name' => $lastName !== '' ? $lastName : '-',
-                    'avatar_path' => $classmate->currentAvatar?->image_path,
+                    'avatar_path' => $classmate->currentAvatar?->image_path ?: $defaultAvatarPath,
                     'xp' => max(
                         0,
                         (int) ($gradeXpByStudentId[$classmate->id] ?? 0)

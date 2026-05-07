@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (s.code) {
             const mergedCode = (themeCss ? ('<style>' + themeCss + '</style>') : '') + String(s.code || '');
-            html += '<iframe id="preview_code_iframe" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:8px;margin-top:6px" srcdoc="' + escapeHtml(mergedCode) + '"></iframe>';
+            html += '<iframe id="preview_code_iframe" allow="camera *; microphone *; fullscreen *" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:8px;margin-top:6px" srcdoc="' + escapeHtml(mergedCode) + '"></iframe>';
         }
         if (themeCss) {
             html += '</div>';
@@ -926,7 +926,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
-
 
 
 
