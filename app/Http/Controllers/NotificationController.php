@@ -339,7 +339,7 @@ class NotificationController extends Controller
             'title' => ['required', 'string', 'max:190'],
             'body' => ['required', 'string', 'max:4000'],
             'url' => ['nullable', 'string', 'max:500'],
-            'target' => ['required', $isAdmin ? 'in:all,students,teachers,class,class_student,teacher' : 'in:students,class,class_student'],
+            'target' => ['required', $isAdmin ? 'in:all,self,admins,students,teachers,class,class_student,teacher' : 'in:self,students,class,class_student'],
             'class_id' => ['nullable', 'integer', 'exists:school_classes,id'],
             'student_id' => ['nullable', 'integer', 'exists:students,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
@@ -358,6 +358,12 @@ class NotificationController extends Controller
                 }
 
                 $userIds = match ($target) {
+                    'self' => [(int) $user->id],
+                    'admins' => User::query()
+                        ->whereHas('role', fn ($q) => $q->where('slug', 'admin'))
+                        ->pluck('id')
+                        ->map(fn ($x) => (int) $x)
+                        ->all(),
                     'students' => Student::query()
                         ->whereNotNull('user_id')
                         ->pluck('user_id')

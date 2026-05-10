@@ -33,6 +33,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
                     <strong style="font-size:14px;color:#0f172a;">Bildirimler</strong>
                     <div style="display:flex;gap:6px;">
+                        <button type="button" id="studentNotifEnableBtn" class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">Bildirim Iznini Ac</button>
                         <button type="button" id="studentNotifDeleteAll" class="btn btn-danger" style="padding:6px 10px;font-size:12px;">Tumunu Sil</button>
                         <button type="button" id="studentNotifClose" class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">Kapat</button>
                     </div>
@@ -60,6 +61,7 @@
     const listEl = document.getElementById('studentNotifList');
     const closeBtn = document.getElementById('studentNotifClose');
     const deleteAllBtn = document.getElementById('studentNotifDeleteAll');
+    const enableBtn = document.getElementById('studentNotifEnableBtn');
     const countEl = document.getElementById('studentNotifCount');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     if (!bell || !popup || !listEl) return;
@@ -79,6 +81,29 @@
     const closePopup = () => {
         popup.style.display = 'none';
         bell.setAttribute('aria-expanded', 'false');
+    };
+
+    const refreshPermissionButton = () => {
+        if (!enableBtn) return;
+        const permission = (typeof window.getWebPushPermission === 'function')
+            ? window.getWebPushPermission()
+            : ((window.Notification && Notification.permission) ? Notification.permission : 'default');
+        if (permission === 'granted') {
+            enableBtn.textContent = 'Bildirim Acik';
+            enableBtn.disabled = true;
+            enableBtn.style.opacity = '.55';
+            enableBtn.style.cursor = 'not-allowed';
+        } else if (permission === 'denied') {
+            enableBtn.textContent = 'Izin Engellendi';
+            enableBtn.disabled = true;
+            enableBtn.style.opacity = '.55';
+            enableBtn.style.cursor = 'not-allowed';
+        } else {
+            enableBtn.textContent = 'Bildirim Iznini Ac';
+            enableBtn.disabled = false;
+            enableBtn.style.opacity = '1';
+            enableBtn.style.cursor = 'pointer';
+        }
     };
 
     const renderItems = (items) => {
@@ -129,7 +154,18 @@
         }
         popup.style.display = 'block';
         bell.setAttribute('aria-expanded', 'true');
+        refreshPermissionButton();
         await loadNotifications();
+    });
+
+    enableBtn?.addEventListener('click', async () => {
+        if (typeof window.requestWebPushPermission !== 'function') return;
+        enableBtn.disabled = true;
+        try {
+            await window.requestWebPushPermission();
+        } finally {
+            refreshPermissionButton();
+        }
     });
 
     closeBtn?.addEventListener('click', closePopup);

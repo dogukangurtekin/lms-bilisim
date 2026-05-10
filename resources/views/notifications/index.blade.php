@@ -28,12 +28,15 @@
                         <select id="notifTarget" class="form-control" required>
                             @if($isAdmin)
                                 <option value="all">Tum Kullanicilar</option>
+                                <option value="self">Sadece Kendim</option>
+                                <option value="admins">Sadece Adminler</option>
                                 <option value="students">Sadece Ogrenciler</option>
                                 <option value="teachers">Sadece Ogretmenler</option>
                                 <option value="class">Sinif Bazli (Sinifin Tamami)</option>
                                 <option value="class_student">Sinif Ici Ogrenci Bazli</option>
                                 <option value="teacher">Ogretmen Bazli (Tek Ogretmen)</option>
                             @else
+                                <option value="self">Sadece Kendim</option>
                                 <option value="students">Sadece Ogrenciler</option>
                                 <option value="class">Sinif Bazli (Sinifin Tamami)</option>
                                 <option value="class_student">Sinif Ici Ogrenci Bazli</option>
@@ -85,6 +88,10 @@
 
             <section class="card soft-surface soft-surface-lilac">
                 <h2>Kullanici Tercihleri (Benim)</h2>
+                <div class="parent-wa-actions" style="margin-bottom:10px;gap:8px;align-items:center;">
+                    <button type="button" id="notifPermissionToggleBtn" class="btn btn-secondary">Bildirim Iznini Ac</button>
+                    <span id="notifPermissionState" class="pdf-status" style="margin:0;">Durum: kontrol ediliyor...</span>
+                </div>
                 <form id="notifPrefForm" class="parent-wa-form">
                     @csrf
                     @foreach($preferences as $pref)
@@ -153,6 +160,8 @@
     const teacherEl = document.getElementById('notifTeacherId');
     const logStatus = document.getElementById('notifLogStatus');
     const classStudentMap = @json($classStudentMap);
+    const permissionBtn = document.getElementById('notifPermissionToggleBtn');
+    const permissionState = document.getElementById('notifPermissionState');
 
     const setStatus = (el, text, ok = true) => {
         if (!el) return;
@@ -161,6 +170,24 @@
         el.style.background = ok ? '#ecfdf5' : '#fef2f2';
         el.style.color = ok ? '#065f46' : '#991b1b';
         el.style.borderColor = ok ? '#10b981' : '#ef4444';
+    };
+
+    const refreshPermissionUi = () => {
+        const permission = (typeof window.getWebPushPermission === 'function')
+            ? window.getWebPushPermission()
+            : ((window.Notification && Notification.permission) ? Notification.permission : 'default');
+        if (permissionState) permissionState.textContent = `Durum: ${permission}`;
+        if (!permissionBtn) return;
+        if (permission === 'granted') {
+            permissionBtn.textContent = 'Bildirim Iznini Kapat';
+            permissionBtn.disabled = false;
+        } else if (permission === 'denied') {
+            permissionBtn.textContent = 'Izin Engellendi (Tarayici Ayari Gerekli)';
+            permissionBtn.disabled = true;
+        } else {
+            permissionBtn.textContent = 'Bildirim Iznini Ac';
+            permissionBtn.disabled = false;
+        }
     };
 
     const updateTargetFields = () => {
@@ -193,6 +220,28 @@
 
     updateTargetFields();
     rebuildStudentOptions();
+    refreshPermissionUi();
+
+    permissionBtn?.addEventListener('click', async () => {
+        const permission = (typeof window.getWebPushPermission === 'function')
+            ? window.getWebPushPermission()
+            : ((window.Notification && Notification.permission) ? Notification.permission : 'default');
+        permissionBtn.disabled = true;
+        try {
+            if (permission === 'granted') {
+                if (typeof window.disableWebPushSubscription === 'function') {
+                    await window.disableWebPushSubscription();
+                }
+            } else {
+                if (typeof window.requestWebPushPermission === 'function') {
+                    await window.requestWebPushPermission();
+                }
+            }
+        } finally {
+            permissionBtn.disabled = false;
+            refreshPermissionUi();
+        }
+    });
 
     sendForm?.addEventListener('submit', async (e) => {
         e.preventDefault();

@@ -140,6 +140,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/kullanici-yonetimi/toplu/ogrenci-yukle', [UserManagementController::class, 'bulkStoreStudents'])->name('users.bulk.students.store');
             Route::get('/kullanici-yonetimi/toplu/ogretmen-sablon', [UserManagementController::class, 'downloadTeacherBulkTemplate'])->name('users.bulk.teachers.template');
             Route::post('/kullanici-yonetimi/toplu/ogretmen-yukle', [UserManagementController::class, 'bulkStoreTeachers'])->name('users.bulk.teachers.store');
+            Route::delete('/kullanici-yonetimi/ogrenciler/secili', [UserManagementController::class, 'destroySelectedStudents'])->name('users.students.destroy-selected');
+            Route::delete('/kullanici-yonetimi/ogrenciler/tumu', [UserManagementController::class, 'destroyAllStudents'])->name('users.students.destroy-all');
             Route::delete('/kullanici-yonetimi/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
             Route::get('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata', [TeacherClassAssignmentController::class, 'edit'])->name('users.teachers.classes.edit');
             Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevel'])->name('users.teachers.classes.assign-level');
@@ -152,6 +154,10 @@ Route::middleware('auth')->group(function () {
         Route::delete('/app-notifications', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all');
         Route::post('/app-notifications/{log}/delete', [NotificationController::class, 'destroyLog'])->name('notifications.logs.destroy.post');
         Route::post('/app-notifications/delete-all', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all.post');
+        Route::post('/classes/secili', [SchoolClassController::class, 'destroySelected'])->name('classes.destroy-selected');
+        Route::post('/classes/tumu', [SchoolClassController::class, 'destroyAll'])->name('classes.destroy-all');
+        Route::get('/classes/secili-sil', [SchoolClassController::class, 'destroySelectedGet'])->name('classes.destroy-selected.get');
+        Route::get('/classes/tumu-sil', [SchoolClassController::class, 'destroyAllGet'])->name('classes.destroy-all.get');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');

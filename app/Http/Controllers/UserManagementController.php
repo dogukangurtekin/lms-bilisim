@@ -72,6 +72,30 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')->with('ok', 'Kullanici silindi.');
     }
 
+    public function destroySelectedStudents(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['integer'],
+        ]);
+
+        $deleted = User::query()
+            ->whereIn('id', $data['user_ids'])
+            ->whereHas('role', fn ($q) => $q->where('slug', 'student'))
+            ->delete();
+
+        return redirect()->route('users.index')->with('ok', "Secili ogrenciler silindi. Silinen: {$deleted}");
+    }
+
+    public function destroyAllStudents(): RedirectResponse
+    {
+        $deleted = User::query()
+            ->whereHas('role', fn ($q) => $q->where('slug', 'student'))
+            ->delete();
+
+        return redirect()->route('users.index')->with('ok', "Tum ogrenciler silindi. Silinen: {$deleted}");
+    }
+
     public function downloadStudentBulkTemplate(): StreamedResponse
     {
         $headers = ['Ad', 'Soyad', 'Kullanici Adi', 'Sifre', 'Sinif', 'Sube'];

@@ -157,7 +157,7 @@
 @if(auth()->check())
 <script>
 (() => {
-    window.WEBPUSH_ENABLED = false;
+    window.WEBPUSH_ENABLED = true;
     const publicKeyUrl = @json(route('notifications.public-key'));
     const subscribeUrl = @json(route('notifications.subscribe'));
     const unsubscribeUrl = @json(route('notifications.unsubscribe'));
@@ -305,6 +305,24 @@
         }
     }
 
+    async function disableWebPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+        try {
+            const reg = await navigator.serviceWorker.getRegistration();
+            if (!reg) return;
+            const sub = await reg.pushManager.getSubscription();
+            if (sub?.endpoint) {
+                await removeSubscriptionFromServer(sub.endpoint);
+            }
+            if (sub) {
+                await sub.unsubscribe();
+            }
+            await syncDeviceStatus('');
+        } catch (error) {
+            console.error('[WebPush] Abonelik kapatma hatasi:', error);
+        }
+    }
+
     async function markReadFromQueryIfNeeded() {
         try {
             const url = new URL(window.location.href);
@@ -443,6 +461,16 @@
     }
 
     (async () => {
+        window.requestWebPushPermission = async () => {
+            await registerWebPush();
+            return (window.Notification && Notification.permission) ? Notification.permission : 'default';
+        };
+        window.disableWebPushSubscription = async () => {
+            await disableWebPush();
+            return true;
+        };
+        window.getWebPushPermission = () => (window.Notification && Notification.permission) ? Notification.permission : 'default';
+
         await registerWebPush();
         await markReadFromQueryIfNeeded();
         updateOnboardUi();
