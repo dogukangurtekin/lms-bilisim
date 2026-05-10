@@ -203,6 +203,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('students', StudentController::class);
         Route::resource('classes', SchoolClassController::class);
         Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
+        Route::get('/courses/{course}/indir', [CourseController::class, 'export'])->name('courses.export');
+        Route::get('/courses/indir/tumu', [CourseController::class, 'exportAll'])->name('courses.export-all');
+        Route::post('/courses/yukle', [CourseController::class, 'import'])->name('courses.import');
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
         Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');

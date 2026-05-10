@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Process\Process;
 
 class CourseController extends Controller
@@ -229,6 +230,117 @@ class CourseController extends Controller
     {
         $this->performDestroyById($id);
         return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+
+    public function export(Course $course): StreamedResponse
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('teacher') && (int) $course->teacher_id !== (int) (optional($user->teacher)->id ?? 0)) {
+            abort(403);
+        }
+
+        $payload = [
+            'exported_at' => now()->toIso8601String(),
+            'course' => [
+                'name' => (string) $course->name,
+                'code' => (string) $course->code,
+                'weekly_hours' => (int) $course->weekly_hours,
+                'lesson_payload' => (array) ($course->lesson_payload ?? []),
+            ],
+        ];
+
+        $filename = 'ders-' . Str::slug((string) $course->name ?: 'course') . '-' . $course->id . '.json';
+        return response()->streamDownload(function () use ($payload) {
+            echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+    }
+
+    public function exportAll(): StreamedResponse
+    {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+
+        $courses = Course::query()
+            ->when($user?->hasRole('teacher'), fn ($q) => $q->where('teacher_id', $teacherId))
+            ->orderBy('id')
+            ->get(['id', 'name', 'code', 'weekly_hours', 'lesson_payload']);
+
+        $payload = [
+            'exported_at' => now()->toIso8601String(),
+            'count' => $courses->count(),
+            'courses' => $courses->map(fn (Course $c) => [
+                'name' => (string) $c->name,
+                'code' => (string) $c->code,
+                'weekly_hours' => (int) $c->weekly_hours,
+                'lesson_payload' => (array) ($c->lesson_payload ?? []),
+            ])->values()->all(),
+        ];
+
+        $filename = 'tum-dersler-' . now()->format('Ymd-His') . '.json';
+        return response()->streamDownload(function () use ($payload) {
+            echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+    }
+
+    public function import(Request $request)
+    {
+        $data = $request->validate([
+            'course_json' => ['required'],
+            'course_json.*' => ['file', 'mimes:json,txt', 'max:5120'],
+        ]);
+
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($teacherId <= 0) {
+            $teacherId = (int) Teacher::query()->value('id');
+        }
+        if ($teacherId <= 0) {
+            return redirect()->route('courses.index')->with('error', 'Ogretmen kaydi bulunamadi.');
+        }
+
+        $files = $request->file('course_json');
+        if (!$files) {
+            return redirect()->route('courses.index')->with('error', 'Lutfen en az bir dosya secin.');
+        }
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        $created = [];
+        foreach ($files as $file) {
+            $raw = file_get_contents($file->getRealPath());
+            $decoded = json_decode((string) $raw, true);
+            if (!is_array($decoded)) continue;
+
+            $rows = [];
+            if (isset($decoded['course']) && is_array($decoded['course'])) {
+                $rows[] = $decoded['course'];
+            } elseif (isset($decoded['courses']) && is_array($decoded['courses'])) {
+                $rows = array_values(array_filter($decoded['courses'], fn ($x) => is_array($x)));
+            }
+
+            foreach ($rows as $c) {
+                $name = trim((string) ($c['name'] ?? ''));
+                if ($name === '') continue;
+                $rawCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($c['code'] ?? 'CRS')));
+                $baseCode = substr($rawCode !== '' ? $rawCode : 'CRS', 0, 20);
+                $finalCode = $baseCode . '-' . strtoupper(Str::random(6)); // max 27 char
+                $created[] = Course::query()->create([
+                    'name' => $name,
+                    'code' => $finalCode,
+                    'teacher_id' => $teacherId,
+                    'school_class_id' => null,
+                    'weekly_hours' => max(1, min(20, (int) ($c['weekly_hours'] ?? 2))),
+                    'lesson_payload' => (array) ($c['lesson_payload'] ?? []),
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        if (count($created) < 1) {
+            return redirect()->route('courses.index')->with('error', 'Yuklenen dosyalarda gecerli ders bulunamadi.');
+        }
+        return redirect()->route('courses.index')->with('ok', count($created) . ' ders yuklendi.');
     }
 
     private function performDestroyById(int $courseId): void

@@ -36,7 +36,6 @@ class StudentPortalController extends Controller
             $slides = (array) data_get($course->lesson_payload, 'slides', []);
             return count($slides) > 0;
         });
-        $totalAssignments = $gameAssignments->count() + $courseHomeworks->count() + $courseSlideAssignments->count();
         $completedCourseHomeworkCount = StudentHomeworkProgress::where('student_id', $student->id)
             ->whereIn('course_homework_id', $courseHomeworks->pluck('id'))
             ->whereNotNull('completed_at')
@@ -49,10 +48,6 @@ class StudentPortalController extends Controller
             ->where('completed', true)
             ->whereIn('content_id', $courseSlideAssignments->map(fn ($c) => 'course-' . $c->id)->values())
             ->count();
-
-        $completedAssignments = $completedCourseHomeworkCount + $completedGameAssignmentCount + $completedCourseSlideCount;
-        $pendingAssignments = max($totalAssignments - $completedAssignments, 0);
-        $overallProgress = $totalAssignments > 0 ? (int) round(($completedAssignments / $totalAssignments) * 100) : 0;
 
         $gameHomeworkCount = $courseHomeworks
             ->filter(fn ($h) => in_array((string) $h->assignment_type, ['game', 'application'], true))
@@ -81,8 +76,35 @@ class StudentPortalController extends Controller
             )
             ->whereNotNull('completed_at')
             ->count();
-        $pendingCourseSlides = max($courseSlideAssignments->count() - $completedCourseSlideCount, 0);
-        $pendingCourses = max($lessonHomeworkCount - $completedLessonHomeworkCount, 0) + $pendingCourseSlides;
+        $slideCourseIds = $courseSlideAssignments->pluck('id')->map(fn ($v) => (int) $v)->unique()->values();
+        $lessonHomeworkCourseIds = $courseHomeworks
+            ->filter(fn ($h) => (string) $h->assignment_type === 'lesson')
+            ->pluck('course_id')
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($v) => $v > 0)
+            ->unique()
+            ->values();
+        $allCourseAssignmentIds = $slideCourseIds->merge($lessonHomeworkCourseIds)->unique()->values();
+        $completedCourseIds = ContentProgress::where('user_id', $student->user_id)
+            ->where('completed', true)
+            ->whereIn('content_id', $allCourseAssignmentIds->map(fn ($id) => 'course-' . $id)->values())
+            ->pluck('content_id')
+            ->map(function ($cid) {
+                if (preg_match('/^course-(\d+)$/', (string) $cid, $m)) return (int) $m[1];
+                return 0;
+            })
+            ->filter(fn ($v) => $v > 0)
+            ->unique()
+            ->values();
+
+        $totalCourseAssignments = $allCourseAssignmentIds->count();
+        $completedCourseAssignments = $completedCourseIds->count();
+        $pendingCourses = max($totalCourseAssignments - $completedCourseAssignments, 0);
+
+        $totalAssignments = $gameAssignments->count() + $gameHomeworkCount + $totalCourseAssignments;
+        $completedAssignments = $completedGameApps + $completedCourseAssignments;
+        $pendingAssignments = max($totalAssignments - $completedAssignments, 0);
+        $overallProgress = $totalAssignments > 0 ? (int) round(($completedAssignments / $totalAssignments) * 100) : 0;
 
         $xp = $this->xp($student);
         $this->syncStudentBadges($student, $xp);

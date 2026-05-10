@@ -14,10 +14,17 @@
     'assignCourseName' => '',
     'assignCurrentTeacher' => 0,
     'isFavorite' => false,
+    'downloadUrl' => null,
 ])
 
 <article class="group flex h-full w-full max-w-none flex-col rounded-2xl bg-white p-4 shadow-lg transition duration-300 hover:scale-[1.015] hover:shadow-2xl">
     <div class="relative overflow-hidden rounded-xl">
+        @if(!empty($downloadUrl))
+            <a href="{{ $downloadUrl }}" title="Dersi indir" aria-label="Dersi indir"
+               style="position:absolute;right:10px;top:10px;z-index:30;width:38px;height:38px;border-radius:9999px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 8px 18px rgba(2,6,23,.28);">
+                <span style="font-size:18px;line-height:1;">&#8681;</span>
+            </a>
+        @endif
         @if(!empty($image))
             <img src="{{ $image }}" alt="{{ $title }}" class="h-56 w-full bg-gray-100 object-contain">
             <div style="position:absolute;left:0;top:0;bottom:0;width:120px;background:#4c1d95;z-index:10;clip-path:polygon(0 0,100% 0,58% 100%,0 100%);"></div>

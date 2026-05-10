@@ -5,6 +5,10 @@ const OFFLINE_URL = "offline.html";
 
 const SHELL_ASSETS = ["./"];
 
+function offlineResponse() {
+  return new Response("Offline", { status: 503, statusText: "Offline" });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -57,9 +61,10 @@ self.addEventListener("fetch", (event) => {
           // Never serve cached HTML for auth-related pages to avoid stale CSRF/session.
           const path = url.pathname.toLowerCase();
           if (path.includes("/login") || path.includes("/logout") || path.includes("/admin")) {
-            return new Response("Offline", { status: 503, statusText: "Offline" });
+            return offlineResponse();
           }
-          return caches.match(OFFLINE_URL);
+          const fallback = await caches.match(OFFLINE_URL);
+          return fallback || offlineResponse();
         }
       })()
     );
@@ -78,7 +83,7 @@ self.addEventListener("fetch", (event) => {
             return response;
           })
           .catch(async () => {
-            return cached;
+            return cached || offlineResponse();
           });
         return cached || networkFetch;
       })

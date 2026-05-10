@@ -58,6 +58,12 @@
         >
         <a href="{{ route('courses.create') }}" class="inline-flex h-14 items-center justify-center rounded-xl bg-[#4c1d95] px-6 text-lg font-semibold text-white hover:bg-[#3b0764]">Ders Oluştur</a>
     </form>
+    <form id="course-import-form" method="POST" action="{{ route('courses.import') }}" enctype="multipart/form-data" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        @csrf
+        <input id="course-import-file" type="file" name="course_json[]" accept=".json,application/json,text/plain" multiple style="display:none;">
+        <button id="course-import-open" type="button" class="inline-flex h-14 items-center justify-center rounded-xl px-6 text-lg font-semibold" style="white-space:nowrap;background:#0f766e;color:#fff;border:0;">Ders Yukle</button>
+        <a href="{{ route('courses.export-all') }}" class="inline-flex h-14 items-center justify-center rounded-xl px-6 text-lg font-semibold" style="white-space:nowrap;background:#1d4ed8;color:#fff;border:0;text-decoration:none;">Tum Dersleri Indir</a>
+    </form>
 
     <div class="course-cards-grid">
         @forelse($items as $item)
@@ -96,6 +102,7 @@
                 :assign-course-id="$item->id"
                 :assign-course-name="$item->name"
                 :assign-current-teacher="(int) ($item->teacher_id ?? 0)"
+                :download-url="route('courses.export', $item)"
             />
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
@@ -176,6 +183,15 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const importForm = document.getElementById('course-import-form');
+    const importFile = document.getElementById('course-import-file');
+    const importOpen = document.getElementById('course-import-open');
+    importOpen?.addEventListener('click', () => importFile?.click());
+    importFile?.addEventListener('change', () => {
+        if (!importFile.files || importFile.files.length < 1) return;
+        importForm?.submit();
+    });
+
     const modal = document.getElementById('course-delete-modal');
     const cancelBtn = document.getElementById('course-delete-cancel');
     const confirmBtn = document.getElementById('course-delete-confirm');
