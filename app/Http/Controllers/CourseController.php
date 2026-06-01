@@ -325,13 +325,25 @@ class CourseController extends Controller
                 $rawCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($c['code'] ?? 'CRS')));
                 $baseCode = substr($rawCode !== '' ? $rawCode : 'CRS', 0, 20);
                 $finalCode = $baseCode . '-' . strtoupper(Str::random(6)); // max 27 char
+                $lessonPayload = (array) ($c['lesson_payload'] ?? []);
+                $cover = trim((string) ($lessonPayload['cover_image'] ?? ''));
+                if ($cover !== '') {
+                    $cover = ltrim(str_replace('\\', '/', $cover), '/');
+                    $cover = preg_replace('#^storage/#i', '', $cover);
+                    $cover = preg_replace('#^course-covers/#i', 'course-covers/', $cover);
+                    if (!Storage::disk('public')->exists($cover)) {
+                        unset($lessonPayload['cover_image']);
+                    } else {
+                        $lessonPayload['cover_image'] = $cover;
+                    }
+                }
                 $created[] = Course::query()->create([
                     'name' => $name,
                     'code' => $finalCode,
                     'teacher_id' => $teacherId,
                     'school_class_id' => null,
                     'weekly_hours' => max(1, min(20, (int) ($c['weekly_hours'] ?? 2))),
-                    'lesson_payload' => (array) ($c['lesson_payload'] ?? []),
+                    'lesson_payload' => $lessonPayload,
                     'created_by' => auth()->id(),
                 ]);
             }
