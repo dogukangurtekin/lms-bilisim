@@ -210,7 +210,7 @@
             <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
-            <div id="cover_image_preview_box" style="display:none;width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;background-size:cover;background-position:center center;background-repeat:no-repeat;overflow:hidden">
+            <div id="cover_image_preview_box" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9{{ $existingCoverUrl ? ';background-image:url(\'' . e($existingCoverUrl) . '\');background-size:cover;background-position:center center;background-repeat:no-repeat' : '' }};overflow:hidden">
                 <img id="cover_image_preview" alt="Kapak onizleme" style="width:100%;height:100%;object-fit:cover;display:block;opacity:.01">
             </div>
             <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
