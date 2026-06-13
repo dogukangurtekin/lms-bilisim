@@ -2,8 +2,13 @@
     $isEdit = isset($course);
     $initialPayload = old('lesson_payload');
     if ($initialPayload === null) {
-        $initialPayload = $isEdit ? json_encode($course->lesson_payload ?? ['slides' => []], JSON_UNESCAPED_UNICODE) : json_encode(['slides' => []], JSON_UNESCAPED_UNICODE);
+        $payloadSeed = $isEdit ? (array) ($course->lesson_payload ?? ['slides' => []]) : ['slides' => []];
+        if ($isEdit && empty($payloadSeed['cover_image'])) {
+            $payloadSeed['cover_image'] = $course->coverImageUrl() ?: '';
+        }
+        $initialPayload = json_encode($payloadSeed, JSON_UNESCAPED_UNICODE);
     }
+    $existingCoverUrl = $isEdit ? ($course->coverImageUrl() ?: '') : '';
     $selectedClass = old('school_class_id', $isEdit ? $course->school_class_id : '__ALL__');
     $defaultTeacherId = old('teacher_id', $isEdit ? $course->teacher_id : ($teachers->first()->id ?? null));
     $defaultWeeklyHours = old('weekly_hours', $isEdit ? $course->weekly_hours : 2);
@@ -78,6 +83,56 @@
             <div class="builder-panel" data-panel="code">
                 <label>HTML/CSS/JS Kodu</label>
                 <textarea id="slide_code" rows="9" placeholder="<div>...</div> <style>...</style> <script>...</script>"></textarea>
+
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
+                    <h4 style="margin:0 0 10px">Tema Şablonları</h4>
+                    <label>Global Tema Şablonu</label>
+                    <select id="theme_template_select">
+                        <option value="none">Temasız / Serbest CSS</option>
+                        <option value="aurora">Aurora Class</option>
+                        <option value="paper">Paper Notebook</option>
+                        <option value="midnight">Midnight Lab</option>
+                        <option value="playful">Playful Blocks</option>
+                        <option value="academy">Academy Board</option>
+                    </select>
+                    <small style="display:block;margin-top:6px;color:#64748b">
+                        Bu şablon; yazı tipi, başlık, paragraf, kart, kod ve tablo görünümünü ders boyunca sabitler.
+                    </small>
+                    <label style="margin-top:10px;display:block">Global Tema CSS</label>
+                    <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
+                </div>
+
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
+                    <h4 style="margin:0 0 10px">Müfredat Bilgileri</h4>
+                    <div style="display:grid;gap:10px">
+                        <div>
+                            <label>Müfredat Başlığı</label>
+                            <input type="text" id="curriculum_title" placeholder="Mobil Dunyaya Ilk Adim: Arayuzu Kesfediyorum">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                            <div>
+                                <label>Ders No</label>
+                                <input type="number" id="curriculum_lesson_number" min="1" value="1">
+                            </div>
+                            <div>
+                                <label>İlerleme (0-100)</label>
+                                <input type="number" id="curriculum_progress" min="0" max="100" value="0">
+                            </div>
+                        </div>
+                        <div>
+                            <label>Konu</label>
+                            <textarea id="curriculum_topic" rows="3" placeholder="Bu derste..."></textarea>
+                        </div>
+                        <div>
+                            <label>Kazanımlar (Her satır bir madde)</label>
+                            <textarea id="curriculum_outcomes" rows="4" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
+                        </div>
+                        <div>
+                            <label>Etkinlikler (Her satır bir madde)</label>
+                            <textarea id="curriculum_activities" rows="4" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
@@ -156,24 +211,6 @@
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <img id="cover_image_preview" alt="Kapak onizleme" style="display:none;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9">
             <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
-            <hr style="margin:12px 0;border:none;border-top:1px solid #e2e8f0">
-            <label>Global Tema CSS</label>
-            <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
-
-            <hr style="margin:12px 0;border:none;border-top:1px solid #e2e8f0">
-            <h4>Mufredat Bilgileri</h4>
-            <label>Mufredat Basligi</label>
-            <input type="text" id="curriculum_title" placeholder="Mobil Dunyaya Ilk Adim: Arayuzu Kesfediyorum">
-            <label>Ders No</label>
-            <input type="number" id="curriculum_lesson_number" min="1" value="1">
-            <label>Konu</label>
-            <textarea id="curriculum_topic" rows="3" placeholder="Bu derste..."></textarea>
-            <label>Kazanimlar (Her satir bir madde)</label>
-            <textarea id="curriculum_outcomes" rows="4" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-            <label>Etkinlikler (Her satir bir madde)</label>
-            <textarea id="curriculum_activities" rows="4" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
-            <label>Ilerleme (0-100)</label>
-            <input type="number" id="curriculum_progress" min="0" max="100" value="0">
         </aside>
     </div>
 </div>
@@ -248,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const lessonTitle = document.getElementById('lesson_title');
     const topClassSelect = document.getElementById('top_class_select');
     const globalThemeCss = document.getElementById('global_theme_css');
+    const themeTemplateSelect = document.getElementById('theme_template_select');
     const lessonCategory = document.getElementById('lesson_category');
     const lessonDifficulty = document.getElementById('lesson_difficulty');
     const lessonDescription = document.getElementById('lesson_description');
@@ -295,8 +333,133 @@ document.addEventListener('DOMContentLoaded', function () {
     const questionEditor = document.getElementById('question_editor');
     const currentSlideXpBadge = document.getElementById('current_slide_xp_badge');
 
+    const themeTemplates = {
+        default: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#f8fafc 0%,#eef6ff 100%);color:#0f172a;--theme-accent:#0f766e;--theme-accent-2:#2563eb;--theme-bg:#f8fbff;--theme-panel:#ffffff;--theme-border:#bfdbfe}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.025em;line-height:1.12;font-weight:900;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}
+.slide-theme :where(strong,b){color:#0f172a;font-weight:800}
+.slide-theme :where(a){color:#0f766e;text-decoration:none;border-bottom:1px solid rgba(15,118,110,.2)}
+.slide-theme :where(code,pre,kbd,samp){background:#dbeafe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #0f766e;background:#ecfeff;padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+.slide-theme :where(th){background:#dbeafe;color:#0f172a;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid #bfdbfe;padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#475569;text-align:center}
+.slide-theme :where(section,article,aside,main,header,footer,nav,div){border-radius:16px}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(14,116,144,.08);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.9))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:#dbeafe;color:#0f172a;border-radius:999px;padding:.15rem .55rem;font-weight:800}
+`,
+        none: '',
+        aurora: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#f0f9ff 0%,#eef2ff 48%,#f5f3ff 100%);color:#1e293b;--theme-accent:#2563eb;--theme-accent-2:#7c3aed;--theme-bg:rgba(255,255,255,.58);--theme-panel:#ffffff;--theme-border:rgba(37,99,235,.16)}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.02em;line-height:1.15;font-weight:800;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.8;color:#334155}
+.slide-theme :where(strong,b){color:#111827;font-weight:800}
+.slide-theme :where(a){color:#1d4ed8;text-decoration:none;border-bottom:1px solid rgba(29,78,216,.25)}
+.slide-theme :where(code,pre,kbd,samp){background:#e0f2fe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #3b82f6;background:#eff6ff;padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(15,23,42,.08)}
+.slide-theme :where(th){background:#dbeafe;color:#0f172a;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid #bfdbfe;padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#64748b;text-align:center}
+.slide-theme :where(section,article,aside,main,header,footer,nav,div){border-radius:16px}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(37,99,235,.08);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.72))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:#dbeafe;color:#1e3a8a;border-radius:999px;padding:.15rem .55rem;font-weight:700}
+`,
+        paper: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:"Georgia",serif;background:linear-gradient(180deg,#fffdf8 0%,#fbf7ef 100%);color:#2f2a23;--theme-accent:#7c2d12;--theme-accent-2:#b45309;--theme-bg:#fffaf0;--theme-panel:#fffef8;--theme-border:#e7c89b}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){font-family:"Trebuchet MS",system-ui,sans-serif;color:#3b2f2a;letter-spacing:0;line-height:1.12;font-weight:800;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:19px;line-height:1.85;color:#40352e}
+.slide-theme :where(a){color:#92400e;text-decoration:underline}
+.slide-theme :where(code,pre,kbd,samp){background:#f5e7d6;color:#4b2e1a;border-radius:10px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #b45309;background:#fff4e6;padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fffdf9;border-radius:14px;overflow:hidden}
+.slide-theme :where(th){background:#f7d9b5;color:#4b2e1a;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid #e7c89b;padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#8a5a2b;text-align:center}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(180,83,9,.08);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.82))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:#f5e7d6;color:#7c2d12;border-radius:999px;padding:.15rem .55rem;font-weight:700}
+`,
+        midnight: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at top,#1f2937 0,#0f172a 55%,#020617 100%);color:#e5e7eb;--theme-accent:#38bdf8;--theme-accent-2:#a78bfa;--theme-bg:rgba(15,23,42,.8);--theme-panel:rgba(15,23,42,.92);--theme-border:rgba(125,211,252,.22)}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#f8fafc;letter-spacing:-.03em;line-height:1.1;font-weight:900;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.85;color:#cbd5e1}
+.slide-theme :where(a){color:#7dd3fc;text-decoration:none;border-bottom:1px solid rgba(125,211,252,.3)}
+.slide-theme :where(code,pre,kbd,samp){background:#111827;color:#f8fafc;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #38bdf8;background:rgba(56,189,248,.1);padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:rgba(15,23,42,.85);border-radius:14px;overflow:hidden}
+.slide-theme :where(th){background:#1e293b;color:#f8fafc;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid rgba(148,163,184,.2);padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#94a3b8;text-align:center}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(0,0,0,.18);background:linear-gradient(180deg,var(--theme-panel),rgba(15,23,42,.74))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:rgba(56,189,248,.14);color:#e0f2fe;border-radius:999px;padding:.15rem .55rem;font-weight:700}
+`,
+        playful: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:"Trebuchet MS",system-ui,sans-serif;background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 35%,#ecfeff 100%);color:#1f2937;--theme-accent:#f97316;--theme-accent-2:#06b6d4;--theme-bg:#fff8ed;--theme-panel:#ffffff;--theme-border:#fdba74}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.02em;line-height:1.14;font-weight:900;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.8;color:#334155}
+.slide-theme :where(a){color:#ea580c;text-decoration:none;border-bottom:1px dashed rgba(234,88,12,.35)}
+.slide-theme :where(code,pre,kbd,samp){background:#ffedd5;color:#7c2d12;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #f97316;background:#fff7ed;padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+.slide-theme :where(th){background:#fed7aa;color:#7c2d12;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid #fdba74;padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#c2410c;text-align:center}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:20px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(249,115,22,.09);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.82))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:#ffedd5;color:#9a3412;border-radius:999px;padding:.15rem .55rem;font-weight:800}
+`,
+        academy: `
+.slide-theme, .slide-theme *{box-sizing:border-box}
+.slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#f8fafc 0%,#eef6ff 100%);color:#0f172a;--theme-accent:#0f766e;--theme-accent-2:#2563eb;--theme-bg:#f8fbff;--theme-panel:#ffffff;--theme-border:#bfdbfe}
+.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.025em;line-height:1.12;font-weight:900;margin:0 0 .75rem}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}
+.slide-theme :where(a){color:#0f766e;text-decoration:none;border-bottom:1px solid rgba(15,118,110,.2)}
+.slide-theme :where(code,pre,kbd,samp){background:#dbeafe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.slide-theme pre{padding:14px 16px;overflow:auto}
+.slide-theme :where(blockquote){border-left:6px solid #0f766e;background:#ecfeff;padding:14px 16px;border-radius:0 16px 16px 0}
+.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+.slide-theme :where(th){background:#dbeafe;color:#0f172a;font-weight:800;text-align:left}
+.slide-theme :where(td,th){border:1px solid #bfdbfe;padding:10px 12px;vertical-align:top}
+.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}
+.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}
+.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#475569;text-align:center}
+.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(14,116,144,.08);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.9))}
+.slide-theme :where(.highlight,.badge,.pill,.callout){background:#dbeafe;color:#0f172a;border-radius:999px;padding:.15rem .55rem;font-weight:800}
+`,
+    };
+
+    function applyThemePreset(preset) {
+        const key = String(preset || 'default');
+        const css = themeTemplates[key] ?? '';
+        if (globalThemeCss) globalThemeCss.value = css.trim();
+        if (themeTemplateSelect) themeTemplateSelect.value = key in themeTemplates ? key : 'none';
+        state.theme_template = key in themeTemplates ? key : 'default';
+    }
+
     let state;
     try { state = JSON.parse(payloadInput.value || '{"slides":[]}'); } catch (e) { state = {slides: []}; }
+    const existingCoverUrl = @json($existingCoverUrl);
     const draftKey = 'lesson_builder_draft_{{ $isEdit ? 'edit_' . $course->id : 'create' }}';
     const shouldPersistDraft = {{ $isEdit ? 'true' : 'false' }};
     if ((!state.slides || state.slides.length === 0) && shouldPersistDraft) {
@@ -309,6 +472,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_) {}
     }
     if (!Array.isArray(state.slides)) state.slides = [];
+    if (!state.theme_template) state.theme_template = 'default';
+    if (!state.cover_image && existingCoverUrl) state.cover_image = existingCoverUrl;
     let active = 0;
     let previewIndex = 0;
     const coverCropState = {
@@ -505,6 +670,7 @@ document.addEventListener('DOMContentLoaded', function () {
         state.lesson_description = lessonDescription?.value || '';
         state.cover_image = state.cover_image || '';
         state.global_theme_css = globalThemeCss.value || '';
+        state.theme_template = themeTemplateSelect?.value || state.theme_template || 'default';
         state.curriculum = {
             title: curriculum.title.value || '',
             lesson_number: Math.max(1, parseInt(curriculum.lessonNumber.value || '1', 10) || 1),
@@ -542,15 +708,27 @@ document.addEventListener('DOMContentLoaded', function () {
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
         if (lessonDescription) lessonDescription.value = state.lesson_description || '';
+        if (themeTemplateSelect) {
+            const templateKey = state.theme_template || 'default';
+            themeTemplateSelect.value = templateKey;
+        }
         const url = normalizeCoverUrl(state.cover_image || '');
         if (coverImagePreview) {
             coverImagePreview.src = url;
             coverImagePreview.style.display = url ? 'block' : 'none';
+            coverImagePreview.alt = url ? 'Kapak önizleme' : 'Kapak önizleme yok';
+            coverImagePreview.onerror = () => {
+                coverImagePreview.style.display = 'none';
+            };
         }
         if (coverImageRemove) {
             coverImageRemove.style.display = url ? 'inline-flex' : 'none';
         }
         globalThemeCss.value = state.global_theme_css || '';
+        if (themeTemplateSelect) {
+            const templateKey = state.theme_template || 'default';
+            themeTemplateSelect.value = templateKey;
+        }
         const c = state.curriculum || {};
         curriculum.title.value = c.title || '';
         curriculum.lessonNumber.value = Number.isFinite(Number(c.lesson_number)) ? Number(c.lesson_number) : 1;
@@ -564,9 +742,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function normalizeCoverUrl(url) {
         const raw = String(url || '').trim();
         if (!raw) return '';
+        if (raw.startsWith('blob:')) return raw;
         if (/^https?:\/\//i.test(raw)) return raw;
         if (raw.startsWith('/course-covers/')) return raw;
         if (raw.startsWith('course-covers/')) return '/' + raw;
+        if (raw.startsWith('/storage/course-covers/')) return raw.replace('/storage/', '/');
+        if (raw.startsWith('storage/course-covers/')) return '/' + raw.replace(/^storage\//, '');
+        if (raw.startsWith('storage/')) return '/' + raw;
         return raw;
     }
     function renderList() {
@@ -752,9 +934,33 @@ document.addEventListener('DOMContentLoaded', function () {
         coverImageFile.files = dt.files;
 
         const previewUrl = URL.createObjectURL(blob);
+
+        try {
+            const formData = new FormData();
+            formData.append('cover_image', croppedFile);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+            const response = await fetch('{{ route('courses.upload-cover') }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData,
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const serverUrl = String(data.url || '').trim();
+                const serverPath = String(data.path || '').trim();
+                state.cover_image = serverUrl || (serverPath ? ('/storage/' + serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'course-covers/')) : '');
+            }
+        } catch (_) {}
+
+        if (!state.cover_image) state.cover_image = previewUrl;
         if (coverImagePreview) {
             coverImagePreview.src = previewUrl;
             coverImagePreview.style.display = 'block';
+            coverImagePreview.onerror = () => {
+                coverImagePreview.style.display = 'none';
+            };
         }
         if (coverImageRemove) {
             coverImageRemove.style.display = 'inline-flex';
@@ -859,6 +1065,11 @@ document.addEventListener('DOMContentLoaded', function () {
     lessonDifficulty?.addEventListener('change', saveCurrent);
     lessonDescription?.addEventListener('input', saveCurrent);
     globalThemeCss.addEventListener('input', saveCurrent);
+    themeTemplateSelect?.addEventListener('change', () => {
+        applyThemePreset(themeTemplateSelect.value);
+        saveCurrent();
+        renderList();
+    });
     if (coverImageFile) {
         coverImageFile.addEventListener('change', (e) => {
             const file = e.target.files && e.target.files[0];
@@ -903,6 +1114,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ensureSlide();
         loadCurrent();
         renderList();
+        if (themeTemplateSelect) applyThemePreset(state.theme_template || 'default');
         saveCurrent();
     } catch (e) {
         console.error('Builder init failed:', e);
@@ -926,6 +1138,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
-
-
-
