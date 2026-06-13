@@ -960,9 +960,9 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.fillRect(0, 0, outW, outH);
         ctx.drawImage(coverCropImage, sx, sy, sw, sh, 0, 0, outW, outH);
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.9));
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
         if (!blob) return;
-        const croppedFile = new File([blob], `cover-${Date.now()}.webp`, { type: 'image/webp' });
+        const croppedFile = new File([blob], `cover-${Date.now()}.png`, { type: 'image/png' });
         const dt = new DataTransfer();
         dt.items.add(croppedFile);
         coverImageFile.files = dt.files;
