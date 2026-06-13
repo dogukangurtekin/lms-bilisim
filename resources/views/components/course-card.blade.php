@@ -18,7 +18,7 @@
 ])
 
 <article class="group flex h-full w-full max-w-none flex-col rounded-2xl bg-white p-4 shadow-lg transition duration-300 hover:scale-[1.015] hover:shadow-2xl">
-    <div class="relative overflow-hidden rounded-xl" style="height:14rem;background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%);">
+    <div class="relative overflow-hidden rounded-xl" style="height:14rem;background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%);{{ !empty($image) ? 'background-image:linear-gradient(180deg,rgba(248,250,252,.18) 0%,rgba(248,250,252,.06) 36%,rgba(255,255,255,0) 100%),url('.e($image).');background-size:cover,cover;background-position:center top,center top;background-repeat:no-repeat,no-repeat;' : '' }}">
         @if(!empty($downloadUrl))
             <a href="{{ $downloadUrl }}" title="Dersi indir" aria-label="Dersi indir"
                style="position:absolute;right:10px;top:10px;z-index:30;width:38px;height:38px;border-radius:9999px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 8px 18px rgba(2,6,23,.28);">
@@ -31,8 +31,8 @@
                 alt="{{ $title }}"
                 loading="eager"
                 decoding="async"
-                onerror="this.style.display='none';"
-                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:1;"
+                onerror="this.style.opacity='0';this.style.visibility='hidden';"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:1;opacity:.01;"
             >
             <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(15,23,42,.12) 0%,rgba(15,23,42,.02) 24%,rgba(255,255,255,0) 48%);z-index:2;pointer-events:none;"></div>
             <div style="position:absolute;left:18px;top:18px;z-index:20;width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.16);overflow:hidden;">
