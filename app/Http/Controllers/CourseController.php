@@ -477,37 +477,14 @@ class CourseController extends Controller
 
     private function storeCoverAsWebp(UploadedFile $file): string
     {
-        $relative = 'course-covers/' . Str::uuid() . '.webp';
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'webp';
+        $relative = 'course-covers/' . Str::uuid() . '.' . $extension;
+        $file->storePubliclyAs('course-covers', basename($relative), 'public');
+
         $outputPath = Storage::disk('public')->path($relative);
-        $outputDir = dirname($outputPath);
-        if (!is_dir($outputDir)) {
-            mkdir($outputDir, 0775, true);
-        }
-
-        $magick = $this->resolveMagickBinary();
-        if ($magick !== null) {
-            $process = new Process([
-                $magick,
-                $file->getRealPath(),
-                '-auto-orient',
-                '-resize', '1600x900^',
-                '-gravity', 'center',
-                '-extent', '1600x900',
-                '-strip',
-                '-quality', '78',
-                '-define', 'webp:method=6',
-                $outputPath,
-            ]);
-            $process->setTimeout(20);
-            $process->run();
-        }
-
-        if (!is_file($outputPath)) {
-            $this->storeCoverWithGd($file->getRealPath(), $outputPath);
-        }
-
-        if (!is_file($outputPath)) {
-            throw new \RuntimeException('Kapak gorseli islenemedi. Sunucuda webp donusumu desteklenmiyor olabilir.');
+        if (!is_file($outputPath) || filesize($outputPath) <= 0) {
+            throw new \RuntimeException('Kapak gorseli kaydedilemedi.');
         }
 
         return $relative;
