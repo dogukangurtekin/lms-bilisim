@@ -40,11 +40,14 @@ class Course extends Model
             $cover = str_replace('\\', '/', $cover);
 
             if (preg_match('#^https?://#i', $cover)) {
-                $cover = preg_replace('#^https?://[^/]+/?#i', '', $cover);
+                $parts = parse_url($cover);
+                $cover = (string) ($parts['path'] ?? '');
             }
 
             $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
             $cover = preg_replace('#^/?course-covers/#i', 'course-covers/', $cover);
+            $cover = preg_replace('#^/?courses/cover/#i', 'course-covers/', $cover);
+            $cover = preg_replace('#^/?courses/.*?/course-covers/#i', 'course-covers/', $cover);
 
             $decoded['cover_image'] = $cover;
         }
@@ -60,9 +63,13 @@ class Course extends Model
         }
 
         $cover = str_replace('\\', '/', $cover);
-        $cover = preg_replace('#^https?://[^/]+/?#i', '', $cover);
+        if (preg_match('#^https?://#i', $cover)) {
+            $parts = parse_url($cover);
+            $cover = (string) ($parts['path'] ?? '');
+        }
         $cover = preg_replace('#^/?storage/#i', '', $cover);
         $cover = preg_replace('#^/?course-covers/#i', '', $cover);
+        $cover = preg_replace('#^/?courses/cover/#i', '', $cover);
 
         if ($cover === '') {
             return '';

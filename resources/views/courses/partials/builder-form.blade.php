@@ -668,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
         state.category = lessonCategory.value || 'Kodlama';
         state.difficulty = lessonDifficulty.value || 'Kolay';
         state.lesson_description = lessonDescription?.value || '';
-        state.cover_image = state.cover_image || '';
+        state.cover_image = normalizeCoverStoragePath(state.cover_image || '');
         state.global_theme_css = globalThemeCss.value || '';
         state.theme_template = themeTemplateSelect?.value || state.theme_template || 'default';
         state.curriculum = {
@@ -750,6 +750,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (raw.startsWith('storage/course-covers/')) return '/' + raw.replace(/^storage\//, '');
         if (raw.startsWith('storage/')) return '/' + raw;
         return raw;
+    }
+    function normalizeCoverStoragePath(url) {
+        const raw = String(url || '').trim();
+        if (!raw) return '';
+        if (raw.startsWith('blob:')) return raw;
+        let value = raw;
+        if (/^https?:\/\//i.test(value)) {
+            try {
+                const parsed = new URL(value);
+                value = parsed.pathname || '';
+            } catch (_) {}
+        }
+        value = value.replace(/^\/+/g, '');
+        value = value.replace(/^storage\//i, '');
+        const match = value.match(/(?:^|\/)course-covers\/([^/?#]+)/i);
+        if (match) return 'course-covers/' + match[1];
+        if (value.startsWith('course-covers/')) return value;
+        return value;
     }
     function renderList() {
         list.innerHTML = '';
@@ -948,9 +966,13 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             if (response.ok) {
                 const data = await response.json();
-                const serverUrl = String(data.url || '').trim();
                 const serverPath = String(data.path || '').trim();
-                state.cover_image = serverUrl || (serverPath ? ('/storage/' + serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'course-covers/')) : '');
+                const serverUrl = String(data.url || '').trim();
+                state.cover_image = serverPath ? serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'course-covers/') : '';
+                if (!state.cover_image && serverUrl) {
+                    const match = serverUrl.match(/\/course-covers\/([^/?#]+)/i);
+                    state.cover_image = match ? ('course-covers/' + match[1]) : '';
+                }
             }
         } catch (_) {}
 
