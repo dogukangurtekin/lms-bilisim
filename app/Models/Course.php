@@ -40,8 +40,8 @@ class Course extends Model
             $cover = str_replace('\\', '/', $cover);
 
             if (preg_match('#^https?://#i', $cover)) {
-                $parts = parse_url($cover);
-                $cover = (string) ($parts['path'] ?? '');
+                $decoded['cover_image'] = $cover;
+                return $decoded;
             }
 
             $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
@@ -64,8 +64,7 @@ class Course extends Model
 
         $cover = str_replace('\\', '/', $cover);
         if (preg_match('#^https?://#i', $cover)) {
-            $parts = parse_url($cover);
-            $cover = (string) ($parts['path'] ?? '');
+            return $cover;
         }
         $cover = preg_replace('#^/?storage/#i', '', $cover);
         $cover = preg_replace('#^/?course-covers/#i', '', $cover);
