@@ -210,8 +210,8 @@
             <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
-            <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9{{ $existingCoverUrl ? ';background-image:url(\'' . $existingCoverUrl . '\');background-size:cover;background-position:center center;background-repeat:no-repeat' : '' }};overflow:hidden">
-                <img id="cover_image_preview" alt="Kapak onizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;opacity:.01">
+            <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
+                <img id="cover_image_preview" alt="Kapak onizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
             </div>
             <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
         </aside>
@@ -721,14 +721,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = normalizeCoverUrl(state.cover_image || '');
         if (coverImagePreviewBox) {
             coverImagePreviewBox.style.display = url ? 'block' : 'none';
-            coverImagePreviewBox.style.backgroundImage = url ? ('url("' + url.replace(/"/g, '\\"') + '")') : 'none';
+            coverImagePreviewBox.style.backgroundImage = 'none';
         }
         if (coverImagePreview) {
             coverImagePreview.src = url;
+            coverImagePreview.style.display = url ? 'block' : 'none';
             coverImagePreview.alt = url ? 'Kapak önizleme' : 'Kapak önizleme yok';
             coverImagePreview.onerror = () => {
                 if (coverImagePreviewBox) {
-                    coverImagePreviewBox.style.backgroundImage = 'none';
+                    coverImagePreviewBox.style.display = 'none';
                 }
             };
         }
@@ -994,14 +995,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!state.cover_image) state.cover_image = previewUrl;
         if (coverImagePreviewBox) {
             coverImagePreviewBox.style.display = 'block';
-            coverImagePreviewBox.style.backgroundImage = 'url("' + previewUrl.replace(/"/g, '\\"') + '")';
+            coverImagePreviewBox.style.backgroundImage = 'none';
         }
         if (coverImagePreview) {
             coverImagePreview.src = previewUrl;
             coverImagePreview.style.display = 'block';
             coverImagePreview.onerror = () => {
                 if (coverImagePreviewBox) {
-                    coverImagePreviewBox.style.backgroundImage = 'none';
+                    coverImagePreviewBox.style.display = 'none';
                 }
             };
         }
@@ -1132,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', function () {
             coverImageFile.value = '';
         }
         state.cover_image = '';
-            if (coverImagePreview) {
+        if (coverImagePreview) {
             coverImagePreview.src = '';
         }
         if (coverImagePreviewBox) {
