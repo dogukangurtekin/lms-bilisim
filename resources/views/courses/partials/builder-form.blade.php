@@ -462,6 +462,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let state;
     try { state = JSON.parse(payloadInput.value || '{"slides":[]}'); } catch (e) { state = {slides: []}; }
     const existingCoverUrl = @json($existingCoverUrl);
+    const appBaseUrl = @json(url('/'));
     const draftKey = 'lesson_builder_draft_{{ $isEdit ? 'edit_' . $course->id : 'create' }}';
     const shouldPersistDraft = {{ $isEdit ? 'true' : 'false' }};
     if ((!state.slides || state.slides.length === 0) && shouldPersistDraft) {
@@ -749,11 +750,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!raw) return '';
         if (raw.startsWith('blob:')) return raw;
         if (/^https?:\/\//i.test(raw)) return raw;
-        if (raw.startsWith('/course-covers/')) return raw;
-        if (raw.startsWith('course-covers/')) return '/' + raw;
+        const base = String(appBaseUrl || '').replace(/\/+$/, '');
+        if (raw.startsWith('/course-covers/')) return base + raw;
+        if (raw.startsWith('course-covers/')) return base + '/' + raw;
         if (raw.startsWith('/storage/course-covers/')) return raw.replace('/storage/', '/');
-        if (raw.startsWith('storage/course-covers/')) return '/' + raw.replace(/^storage\//, '');
-        if (raw.startsWith('storage/')) return '/' + raw;
+        if (raw.startsWith('storage/course-covers/')) return base + '/' + raw.replace(/^storage\//, '');
+        if (raw.startsWith('storage/')) return base + '/' + raw;
         return raw;
     }
     function normalizeCoverStoragePath(url) {
