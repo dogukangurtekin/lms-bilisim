@@ -210,7 +210,9 @@
             <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
-            <img id="cover_image_preview" alt="Kapak onizleme" style="display:none;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9">
+            <div id="cover_image_preview_box" style="display:none;width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;background-size:cover;background-position:center center;background-repeat:no-repeat;overflow:hidden">
+                <img id="cover_image_preview" alt="Kapak onizleme" style="width:100%;height:100%;object-fit:cover;display:block;opacity:.01">
+            </div>
             <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
         </aside>
     </div>
@@ -292,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const lessonDescription = document.getElementById('lesson_description');
     const coverImageFile = document.getElementById('cover_image_file');
     const coverImagePreview = document.getElementById('cover_image_preview');
+    const coverImagePreviewBox = document.getElementById('cover_image_preview_box');
     const coverImageRemove = document.getElementById('cover_image_remove');
     const coverImagePathLabel = document.getElementById('cover_image_path_label');
     const coverCropModal = document.getElementById('cover-crop-modal');
@@ -716,12 +719,17 @@ document.addEventListener('DOMContentLoaded', function () {
             themeTemplateSelect.value = templateKey;
         }
         const url = normalizeCoverUrl(state.cover_image || '');
+        if (coverImagePreviewBox) {
+            coverImagePreviewBox.style.display = url ? 'block' : 'none';
+            coverImagePreviewBox.style.backgroundImage = url ? ('url("' + url.replace(/"/g, '\\"') + '")') : 'none';
+        }
         if (coverImagePreview) {
             coverImagePreview.src = url;
-            coverImagePreview.style.display = url ? 'block' : 'none';
             coverImagePreview.alt = url ? 'Kapak önizleme' : 'Kapak önizleme yok';
             coverImagePreview.onerror = () => {
-                coverImagePreview.style.display = 'none';
+                if (coverImagePreviewBox) {
+                    coverImagePreviewBox.style.backgroundImage = 'none';
+                }
             };
         }
         if (coverImagePathLabel) {
@@ -984,11 +992,17 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_) {}
 
         if (!state.cover_image) state.cover_image = previewUrl;
+        if (coverImagePreviewBox) {
+            coverImagePreviewBox.style.display = 'block';
+            coverImagePreviewBox.style.backgroundImage = 'url("' + previewUrl.replace(/"/g, '\\"') + '")';
+        }
         if (coverImagePreview) {
             coverImagePreview.src = previewUrl;
             coverImagePreview.style.display = 'block';
             coverImagePreview.onerror = () => {
-                coverImagePreview.style.display = 'none';
+                if (coverImagePreviewBox) {
+                    coverImagePreviewBox.style.backgroundImage = 'none';
+                }
             };
         }
         if (coverImagePathLabel) {
@@ -1118,9 +1132,12 @@ document.addEventListener('DOMContentLoaded', function () {
             coverImageFile.value = '';
         }
         state.cover_image = '';
-        if (coverImagePreview) {
+            if (coverImagePreview) {
             coverImagePreview.src = '';
-            coverImagePreview.style.display = 'none';
+        }
+        if (coverImagePreviewBox) {
+            coverImagePreviewBox.style.display = 'none';
+            coverImagePreviewBox.style.backgroundImage = 'none';
         }
         coverImageRemove.style.display = 'none';
         saveCurrent();
