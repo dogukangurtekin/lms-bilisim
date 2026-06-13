@@ -209,13 +209,14 @@
             <label>Kapak Gorseli Yukle</label>
             <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
+            <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
             <img id="cover_image_preview" alt="Kapak onizleme" style="display:none;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9">
             <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
         </aside>
     </div>
 </div>
 
-<input type="hidden" id="lesson_payload" name="lesson_payload" value='{{ $initialPayload }}'>
+<input type="hidden" id="lesson_payload" name="lesson_payload" value="{{ e($initialPayload) }}">
 <input type="hidden" id="course_name_hidden" name="name" value="{{ old('name', $isEdit ? $course->name : '') }}">
 <input type="hidden" id="course_code_hidden" name="code" value="{{ $defaultCode }}">
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
@@ -292,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const coverImageFile = document.getElementById('cover_image_file');
     const coverImagePreview = document.getElementById('cover_image_preview');
     const coverImageRemove = document.getElementById('cover_image_remove');
+    const coverImagePathLabel = document.getElementById('cover_image_path_label');
     const coverCropModal = document.getElementById('cover-crop-modal');
     const coverCropImage = document.getElementById('cover-crop-image');
     const coverCropViewport = document.getElementById('cover-crop-viewport');
@@ -721,6 +723,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 coverImagePreview.style.display = 'none';
             };
         }
+        if (coverImagePathLabel) {
+            coverImagePathLabel.textContent = url ? ('Kapak yolu: ' + String(state.cover_image || url)) : 'Kapak yolu henüz yok.';
+        }
         if (coverImageRemove) {
             coverImageRemove.style.display = url ? 'inline-flex' : 'none';
         }
@@ -983,6 +988,9 @@ document.addEventListener('DOMContentLoaded', function () {
             coverImagePreview.onerror = () => {
                 coverImagePreview.style.display = 'none';
             };
+        }
+        if (coverImagePathLabel) {
+            coverImagePathLabel.textContent = 'Kapak yolu: ' + String(state.cover_image || serverPath || previewUrl);
         }
         if (coverImageRemove) {
             coverImageRemove.style.display = 'inline-flex';
