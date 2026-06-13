@@ -223,6 +223,7 @@ class StudentController extends Controller
                         [
                             'student_no' => Student::where('user_id', $user->id)->value('student_no') ?: $this->generateStudentNo(),
                             'school_class_id' => $schoolClass->id,
+                            'parent_phone' => '+901111111111',
                         ]
                     );
                 });

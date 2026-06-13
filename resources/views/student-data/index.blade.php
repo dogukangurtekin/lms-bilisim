@@ -19,6 +19,8 @@
         <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">Giriş Kartları (A4)</a>
         <button class="btn" type="button" id="bulk-report-preview-btn">Gelişim Raporları Önizle</button>
         <button class="btn" type="button" id="bulk-report-download-btn">Gelişim Raporları İndir</button>
+        <a class="btn" href="{{ route('parent-whatsapp.report-list', ['format' => 'xlsx']) }}" target="_blank" id="parent-sms-list-btn">Veli SMS Excel Listesi</a>
+        <button class="btn btn-success" type="button" id="parent-sms-send-btn">Toplu SMS Gönder</button>
     </div>
 </div>
 
@@ -217,6 +219,9 @@
 (() => {
     const previewBtn = document.getElementById('bulk-report-preview-btn');
     const downloadBtn = document.getElementById('bulk-report-download-btn');
+    const smsListBtn = document.getElementById('parent-sms-list-btn');
+    const smsSendBtn = document.getElementById('parent-sms-send-btn');
+    const filterForm = document.getElementById('student-data-filter-form');
     const box = document.getElementById('bulk-report-progress');
     const title = document.getElementById('bulk-report-title');
     const text = document.getElementById('bulk-report-text');
@@ -290,8 +295,54 @@
         }
     }
 
+    async function startParentSms() {
+        let stepTimer = null;
+        try {
+            if (smsSendBtn) smsSendBtn.disabled = true;
+            title.textContent = 'Veli SMS gönderimi hazırlanıyor...';
+            setUi(0, 0, 1);
+
+            const className = document.getElementById('student-data-class-name')?.value || '';
+            const section = document.getElementById('student-data-section')?.value || '';
+            const payload = {};
+            if (className !== '') payload.class_name = className;
+            if (section !== '') payload.section = section;
+
+            const startData = await postJson('{{ route('parent-whatsapp.report-send') }}', payload);
+            let done = false;
+            while (!done) {
+                const step = await postJson('{{ url('/veli-bildirim/whatsapp/adim') }}/' + startData.task_id, {});
+                setUi(step.percent || 0, step.processed || 0, step.total || 0);
+                done = !!step.completed;
+                if (!done) await new Promise(r => setTimeout(r, 220));
+                if (done) {
+                    title.textContent = 'Veli SMS gönderimi tamamlandı';
+                    text.textContent = `Başarılı: ${step.success || 0}, Hatalı: ${step.failed || 0}`;
+                    setTimeout(() => { box.style.display = 'none'; }, 2500);
+                }
+            }
+        } catch (err) {
+            title.textContent = 'SMS gönderim hatası';
+            text.textContent = err.message || 'Beklenmeyen hata';
+        } finally {
+            if (smsSendBtn) smsSendBtn.disabled = false;
+        }
+    }
+
     previewBtn?.addEventListener('click', () => start('preview'));
     downloadBtn?.addEventListener('click', () => start('download'));
+    smsSendBtn?.addEventListener('click', () => startParentSms());
+    if (smsListBtn && filterForm) {
+        smsListBtn.addEventListener('click', (event) => {
+            const url = new URL(smsListBtn.href);
+            const className = document.getElementById('student-data-class-name')?.value || '';
+            const section = document.getElementById('student-data-section')?.value || '';
+            if (className !== '') url.searchParams.set('class_name', className);
+            if (section !== '') url.searchParams.set('section', section);
+            event.preventDefault();
+            window.location.href = url.toString();
+        });
+    }
 })();
 
 (() => {

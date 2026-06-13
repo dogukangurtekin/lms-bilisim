@@ -32,6 +32,14 @@
             </section>
 
             <section class="v2-metrics">
+                <a class="card soft-surface soft-surface-sky qr-mobile-widget" href="{{ route('qr.login.menu') }}">
+                    <div class="qr-mobile-widget-text">
+                        <span>QR Giri&#351; Yap</span>
+                        <strong>Hemen okut</strong>
+                        <small>Mobil cihazda a&#231;.</small>
+                    </div>
+                    <img class="qr-mobile-widget-img" src="{{ asset('qr-mini.svg') }}" alt="QR">
+                </a>
                 <article class="card soft-surface soft-surface-mint"><span>Toplam Öğrenci</span><strong>{{ $dashboard['summary']['total_students'] }}</strong></article>
                 <article class="card soft-surface soft-surface-peach"><span>Aktif Öğrenci</span><strong>{{ $dashboard['summary']['active_students'] }}</strong></article>
                 <article class="card soft-surface soft-surface-lilac"><span>Sınıf Sayısı</span><strong>{{ $dashboard['summary']['total_classes'] }}</strong></article>
@@ -88,4 +96,61 @@
         </div>
     </div>
 </div>
+<style>
+.qr-mobile-widget {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-decoration: none;
+    border: 1px solid #60a5fa;
+    background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+    padding: 16px 18px;
+    border-radius: 18px;
+}
+.qr-mobile-widget-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: center;
+    text-align: center;
+}
+.qr-mobile-widget span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2563eb;
+    letter-spacing: .02em;
+}
+.qr-mobile-widget strong {
+    font-size: 22px;
+    line-height: 1.1;
+    color: #0f172a;
+}
+.qr-mobile-widget small {
+    font-size: 12px;
+    color: #475569;
+}
+.qr-mobile-widget-img {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    object-fit: contain;
+}
+@media (max-width: 767px) {
+    .qr-mobile-widget {
+        display: flex;
+        margin-bottom: 12px;
+    }
+    .qr-mobile-widget-text {
+        align-items: center;
+    }
+}
+@media (min-width: 768px) {
+    .qr-mobile-widget {
+        display: none !important;
+    }
+}
+</style>
 @endsection

@@ -32,21 +32,21 @@
 <style>
     .app-toast-root {
         position: fixed;
-        top: 16px;
-        right: 16px;
+        top: 20px;
+        right: 20px;
         z-index: 1000002;
-        width: min(92vw, 28rem);
+        width: min(92vw, 33.6rem);
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         pointer-events: none;
     }
     .app-toast {
         position: relative;
         overflow: hidden;
-        border-radius: 14px;
+        border-radius: 17px;
         border: 1px solid transparent;
-        padding: 12px 42px 12px 14px;
+        padding: 14px 50px 14px 18px;
         color: #1f2937;
         backdrop-filter: blur(8px);
         pointer-events: auto;
@@ -91,7 +91,7 @@
     .app-toast.warning::before { background: #f59e0b; }
     .app-toast-message {
         margin: 0;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 400;
         line-height: 1.35;
         letter-spacing: .01em;
@@ -99,20 +99,20 @@
     }
     .app-toast-repeat {
         margin-top: 4px;
-        font-size: 12px;
+        font-size: 13px;
         color: #6b7280;
     }
     .app-toast-close {
         position: absolute;
-        right: 8px;
-        top: 8px;
-        height: 28px;
-        width: 28px;
+        right: 10px;
+        top: 10px;
+        height: 34px;
+        width: 34px;
         border: 1px solid #d1d5db;
         border-radius: 9999px;
         background: #ffffff;
         color: #374151;
-        font-size: 18px;
+        font-size: 20px;
         line-height: 1;
         cursor: pointer;
     }

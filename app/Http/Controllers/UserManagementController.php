@@ -201,6 +201,7 @@ class UserManagementController extends Controller
                                 'student_no' => Student::query()
                                     ->where('user_id', $user->id)
                                     ->value('student_no') ?: 'ST' . now()->format('ymd') . random_int(1000, 9999),
+                                'parent_phone' => '+901111111111',
                             ]
                         );
                     } else {

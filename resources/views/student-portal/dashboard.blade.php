@@ -26,7 +26,7 @@
                 </section>
             @endif
 
-            <div class="student-hero-pill">SEVIYE HARITAN HAZIR</div>
+            <div class="student-hero-pill">SEVİYE HARİTAN HAZIR</div>
             <h1>{{ $student->user?->name ?? 'Öğrenci' }}, bugün yeni bir adım atmaya hazır mısın?</h1>
             <p class="student-hero-sub">Görevlerini tamamlamaya devam et, istatistiklerini takip et ve liderlikte yerini koru.</p>
 
@@ -114,4 +114,22 @@
         </section>
     </div>
 </div>
+
+@if($hasDailyAssignment)
+<a href="{{ route('student.coding.index') }}"
+   aria-label="Günlük Çalışma"
+   class="daily-fab"
+   style="position:fixed;right:14px;bottom:14px;z-index:70;display:block;width:148px;height:148px;border:0;background:transparent;box-shadow:none;padding:0;animation:none;outline:none;">
+    <img src="{{ asset('daily.png') }}" alt="Günlük Çalışma" class="daily-fab-img" style="width:100%;height:100%;object-fit:contain;display:block;animation:dailyFabPulse 1.8s ease-in-out infinite;transform-origin:center;" onerror="this.src='{{ asset('quiz.png') }}';this.onerror=null;">
+</a>
+<style>
+@keyframes dailyFabPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+@media (min-width: 1024px) {
+  .daily-fab { width: 184px !important; height: 184px !important; right: 16px !important; bottom: 16px !important; }
+}
+</style>
+@endif
 @endsection

@@ -61,19 +61,7 @@
                 $desc = trim((string) data_get($c->lesson_payload, 'lesson_description', ''));
                 if ($desc === '') $desc = trim((string) data_get($firstSlide, 'description', ''));
                 if ($desc === '') $desc = $c->name . ' dersi icin hazirlanan konu anlatimi ve etkinlik icerikleri.';
-                $thumb = data_get($c->lesson_payload, 'cover_image')
-                    ?: data_get($firstSlide, 'image_url')
-                    ?: '';
-                if ($thumb !== '') {
-                    $thumb = preg_replace('#^https?://[^/]+/[^/]+/public/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^https?://[^/]+/public/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^https?://[^/]+/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^/?storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^/?course-covers/#i', '', $thumb);
-                    if (!preg_match('#^https?://#i', $thumb)) {
-                        $thumb = route('courses.cover', ['path' => ltrim($thumb, '/')]);
-                    }
-                }
+                $thumb = (string) ($c->coverImageUrl() ?: data_get($firstSlide, 'image_url') ?: '');
                 $difficulty = (string) (data_get($c->lesson_payload, 'difficulty') ?: (((int) ($c->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($c->schoolClass?->name ?? 5) + 5) . '+';
             @endphp

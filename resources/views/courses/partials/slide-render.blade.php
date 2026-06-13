@@ -57,6 +57,9 @@ HTML;
 .sqz-shape{font-size:28px;text-align:center}
 .sqz-red{background:#ef4444}.sqz-blue{background:#2563eb}.sqz-yellow{background:#eab308}.sqz-green{background:#16a34a}
 .sqz-opt.selected{outline:4px solid #fff}
+.sqz-feedback{margin-top:12px;padding:12px 14px;border-radius:12px;font-weight:800;font-size:16px;display:none}
+.sqz-feedback.is-correct{display:block;background:#dcfce7;border:1px solid #22c55e;color:#166534}
+.sqz-feedback.is-wrong{display:block;background:#fee2e2;border:1px solid #ef4444;color:#991b1b}
 .sqz-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sqz-stack{display:grid;gap:8px}
 .sqz-row .form-control,.sqz-row select,.sqz-row input{margin:0;border-radius:10px}
@@ -96,11 +99,22 @@ HTML;
             $rawOpts = (array) ($question['options'] ?? []);
             $opts = [];
             foreach ($rawOpts as $opt) {
-                $opts[] = is_array($opt) ? (string) ($opt['text'] ?? '') : (string) $opt;
+                $opts[] = is_array($opt) ? [
+                    'text' => (string) ($opt['text'] ?? ''),
+                    'correct' => (bool) ($opt['correct'] ?? false),
+                ] : [
+                    'text' => (string) $opt,
+                    'correct' => false,
+                ];
             }
-            $opts = array_values(array_filter($opts, fn ($v) => trim($v) !== ''));
+            $opts = array_values(array_filter($opts, fn ($v) => trim((string) ($v['text'] ?? '')) !== ''));
             if ($interactionType === 'multiple_choice' && $opts === []) {
-                $opts = ['Secenek 1', 'Secenek 2', 'Secenek 3', 'Secenek 4'];
+                $opts = [
+                    ['text' => 'Seçenek 1', 'correct' => false],
+                    ['text' => 'Seçenek 2', 'correct' => false],
+                    ['text' => 'Seçenek 3', 'correct' => false],
+                    ['text' => 'Seçenek 4', 'correct' => false],
+                ];
             }
             $pairs = (array) ($question['pairs'] ?? []);
             $items = (array) ($question['items'] ?? []);
@@ -124,24 +138,28 @@ HTML;
                 <div class="sqz-grid">
                     @foreach($opts as $i => $optText)
                         @php $style = $palette[$i % 4]; @endphp
-                        <label class="sqz-opt {{ $style['cls'] }}" data-sqz-option>
+                        <label class="sqz-opt {{ $style['cls'] }}" data-sqz-option data-sqz-correct="{{ !empty($optText['correct']) ? '1' : '0' }}">
                             <input type="radio" name="{{ $inputName }}" value="{{ $i }}" data-sqz-input>
                             <span class="sqz-shape">{{ $style['shape'] }}</span>
-                            <span>{{ $optText }}</span>
+                            <span>{{ $optText['text'] }}</span>
                         </label>
                     @endforeach
                 </div>
             @elseif($interactionType === 'true_false')
                 <div class="sqz-grid">
-                    <label class="sqz-opt sqz-blue" data-sqz-option>
+                    @php
+                        $trueOption = collect($question['options'] ?? [])->firstWhere('text', 'Dogru');
+                        $trueCorrect = is_array($trueOption) ? (bool) ($trueOption['correct'] ?? true) : true;
+                    @endphp
+                    <label class="sqz-opt sqz-blue" data-sqz-option data-sqz-correct="{{ $trueCorrect ? '1' : '0' }}">
                         <input type="radio" name="{{ $inputName }}" value="A" data-sqz-input>
                         <span class="sqz-shape">A</span>
-                        <span>Dogru</span>
+                        <span>Doğru</span>
                     </label>
-                    <label class="sqz-opt sqz-red" data-sqz-option>
+                    <label class="sqz-opt sqz-red" data-sqz-option data-sqz-correct="{{ $trueCorrect ? '0' : '1' }}">
                         <input type="radio" name="{{ $inputName }}" value="B" data-sqz-input>
                         <span class="sqz-shape">B</span>
-                        <span>Yanlis</span>
+                        <span>Yanlış</span>
                     </label>
                 </div>
             @elseif($interactionType === 'drag_drop')
@@ -187,6 +205,7 @@ HTML;
                     @endforeach
                 </div>
             @endif
+            <div class="sqz-feedback" data-sqz-feedback aria-live="polite"></div>
         </div>
     @endif
 </div>

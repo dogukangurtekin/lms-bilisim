@@ -41,10 +41,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 .navbar-actions{display:inline-flex;align-items:center;gap:10px;margin-left:auto;flex:0 0 auto}
 .navbar-actions form{margin:0;display:flex;align-items:center}
 .notif-menu{position:relative}
-.notif-bell{list-style:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;border-radius:10px;border:1px solid #dbe3ef;background:#fff;position:relative;text-decoration:none}
+.notif-bell{list-style:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 48px;width:48px;height:48px;border-radius:12px;border:1px solid #dbe3ef;background:#fff;position:relative;text-decoration:none}
 .notif-bell::-webkit-details-marker{display:none}
-.notif-bell-icon{font-size:18px;line-height:1}
-.notif-bell-count{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.notif-bell-icon{font-size:22px;line-height:1}
+.notif-bell-count{position:absolute;top:-7px;right:-7px;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:#dc2626;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .notif-panel{position:absolute;right:0;top:calc(100% + 8px);width:min(360px,88vw);background:#fff;border:1px solid #dbe3ef;border-radius:10px;box-shadow:0 14px 30px rgba(2,6,23,.16);padding:10px;z-index:130}
 .notif-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #eef2f7}
 .notif-panel-head strong{font-size:14px;color:#111827}
@@ -222,7 +222,7 @@ body.play-compact .footer{display:none}
     text-align:left;
   }
   .student-assignment-alert-action{justify-content:stretch}
-  .student-assignment-alert-action .btn{width:100%}
+  .student-assignment-alert-action .btn{width:100%;min-height:48px;font-size:1.05rem;padding:0.9rem 1.1rem}
   .table-responsive,table{
     display:block;
     width:100%;

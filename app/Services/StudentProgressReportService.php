@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
 use App\Models\Grade;
+use App\Models\ActivityAttempt;
 use App\Models\LiveQuizAnswer;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
@@ -85,6 +86,30 @@ class StudentProgressReportService
             ->where('student_user_id', $student->user_id)
             ->distinct('live_quiz_session_id')
             ->count('live_quiz_session_id');
+
+        $dailyAttemptRows = ActivityAttempt::query()
+            ->with(['answers.activityQuestion'])
+            ->where('user_id', $student->user_id)
+            ->whereHas('activity', fn ($q) => $q->where('type', 'daily_task'))
+            ->latest('submitted_at')
+            ->limit(60)
+            ->get();
+        $dailyAttemptCount = $dailyAttemptRows->count();
+        $dailyCorrectCount = 0;
+        $dailyWrongCount = 0;
+        $dailyFullCorrectCount = 0;
+        foreach ($dailyAttemptRows as $attemptRow) {
+            $questionsCount = (int) $attemptRow->answers->count();
+            $correctCount = (int) $attemptRow->answers->filter(fn ($answer) => (float) $answer->awarded_points > 0)->count();
+            $wrongCount = max(0, $questionsCount - $correctCount);
+            $dailyCorrectCount += $correctCount;
+            $dailyWrongCount += $wrongCount;
+            if ($questionsCount > 0 && $correctCount === $questionsCount) {
+                $dailyFullCorrectCount++;
+            }
+        }
+        $dailySuccessRate = $dailyAttemptCount > 0 ? (int) round(($dailyFullCorrectCount / $dailyAttemptCount) * 100) : 0;
+
         $totalXp = max(0, $gradeXp + $contentXp);
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
@@ -212,6 +237,7 @@ class StudentProgressReportService
             ['label' => '3D Blok', 'value' => $pct($block3dCompleted, $block3dTotal), 'color' => '#8b5cf6'],
             ['label' => 'Compute', 'value' => $pct($computeCompleted, $computeTotal), 'color' => '#7c3aed'],
             ['label' => 'Derslerim', 'value' => $pct($completedSlides, $courseSlideCount), 'color' => '#10b981'],
+            ['label' => 'Günlük Egzersiz', 'value' => $dailySuccessRate, 'color' => '#f59e0b'],
         ];
 
         $analysis = [];
@@ -286,6 +312,11 @@ class StudentProgressReportService
                 'grade_avg' => $avgGrade,
                 'quiz_joined_count' => $quizJoinedCount,
                 'quiz_total_xp' => $quizXp,
+                'daily_attempt_count' => $dailyAttemptCount,
+                'daily_correct_count' => $dailyCorrectCount,
+                'daily_wrong_count' => $dailyWrongCount,
+                'daily_full_correct_count' => $dailyFullCorrectCount,
+                'daily_success_rate' => $dailySuccessRate,
                 'completed_total' => $completedTotal,
                 'total_assignments' => $totalAssignments,
                 'overall_progress' => $overallProgress,

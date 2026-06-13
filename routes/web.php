@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityRunnerController;
@@ -18,6 +18,8 @@ use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\StudentDataController;
 use App\Http\Controllers\StudentPortalController;
+use App\Http\Controllers\StudentCodingActivityController;
+use App\Http\Controllers\CodingActivityManagementController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
@@ -102,6 +104,10 @@ Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'par
     ->middleware('signed')
     ->name('parent.progress-report');
 
+Route::get('/course-covers/{path}', [CourseController::class, 'cover'])
+    ->where('path', '.*')
+    ->name('courses.cover');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
@@ -130,8 +136,6 @@ Route::middleware('auth')->group(function () {
     Route::view('/block-builder-studio', 'block-builder.index')->name('block-builder.index');
     Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
-    Route::get('/course-covers/{path}', [CourseController::class, 'cover'])->where('path', '.*')->name('courses.cover');
-
     Route::middleware('role:admin,teacher')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');
@@ -161,8 +165,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');
+        Route::get('/veli-bildirim/gelisim-raporu-sms-listesi', [ParentWhatsappController::class, 'exportProgressReportList'])->name('parent-whatsapp.report-list');
+        Route::post('/veli-bildirim/gelisim-raporu-sms-gonder', [ParentWhatsappController::class, 'sendProgressReportSms'])->name('parent-whatsapp.report-send');
 
         Route::get('/canli-quiz', [LiveQuizController::class, 'index'])->name('live-quiz.index');
+        Route::get('/kodlama-etkinlikleri/yonetim', [CodingActivityManagementController::class, 'index'])->name('coding.activities.manage');
+        Route::post('/kodlama-etkinlikleri', [CodingActivityManagementController::class, 'store'])->name('coding.activities.store');
+        Route::put('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'update'])->name('coding.activities.update');
+        Route::delete('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'destroy'])->name('coding.activities.destroy');
+        Route::post('/kodlama-etkinlikleri/{activity}/bugune-ata', [CodingActivityManagementController::class, 'assignToday'])->name('coding.activities.assign.today');
         Route::post('/canli-quiz', [LiveQuizController::class, 'store'])->name('live-quiz.store');
         Route::post('/canli-quiz/{quiz}/baslat', [LiveQuizController::class, 'start'])->name('live-quiz.start');
         Route::get('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'showSession'])->name('live-quiz.session.show');
@@ -209,6 +220,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
         Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');
+        Route::delete('/courses/delete-all', [CourseController::class, 'destroyAll'])->name('courses.destroy-all');
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
         Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
         Route::get('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id');
@@ -244,6 +256,9 @@ Route::middleware('auth')->group(function () {
             ->missing(fn () => redirect()->route('student.portal.assignments'));
         Route::post('/ogrenci/etkinlik-odevleri/{assignment}/tamamla', [StudentPortalController::class, 'completeGameAssignment'])->name('student.portal.game-assignment.complete');
         Route::post('/ogrenci/sure/ping', [StudentPortalController::class, 'pingTime'])->name('student.portal.time.ping');
+        
+        Route::get('/ogrenci/gunluk-calisma', [StudentCodingActivityController::class, 'index'])->name('student.coding.index');
+        Route::post('/ogrenci/gunluk-calisma/{activity}/submit', [StudentCodingActivityController::class, 'submit'])->name('student.coding.submit');
         Route::get('/ogrenci/gelisim-karnem', [StudentPortalController::class, 'progress'])->name('student.portal.progress');
         Route::get('/ogrenci/gelisim-raporum', [StudentPortalController::class, 'progressReport'])->name('student.portal.progress-report');
     });
@@ -265,3 +280,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/scores', [ScoreController::class, 'store'])->name('flamestone.scores.store');
     });
 });
+
+
+
+
+
+

@@ -6,6 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStudentRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('parent_phone')) {
+            $this->merge([
+                'parent_phone' => '+901111111111',
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;

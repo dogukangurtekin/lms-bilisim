@@ -33,13 +33,13 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
                     <strong style="font-size:14px;color:#0f172a;">Bildirimler</strong>
                     <div style="display:flex;gap:6px;">
-                        <button type="button" id="studentNotifEnableBtn" class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">Bildirim Iznini Ac</button>
-                        <button type="button" id="studentNotifDeleteAll" class="btn btn-danger" style="padding:6px 10px;font-size:12px;">Tumunu Sil</button>
+                        <button type="button" id="studentNotifEnableBtn" class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">Bildirim İznini Aç</button>
+                        <button type="button" id="studentNotifDeleteAll" class="btn btn-danger" style="padding:6px 10px;font-size:12px;">Tümünü Sil</button>
                         <button type="button" id="studentNotifClose" class="btn btn-secondary" style="padding:6px 10px;font-size:12px;">Kapat</button>
                     </div>
                 </div>
                 <div id="studentNotifList" style="display:grid;gap:8px;">
-                    <p style="margin:0;color:#64748b;font-size:13px;">Yukleniyor...</p>
+                    <p style="margin:0;color:#64748b;font-size:13px;">Y?kleniyor...</p>
                 </div>
             </div>
         @endif
@@ -89,17 +89,17 @@
             ? window.getWebPushPermission()
             : ((window.Notification && Notification.permission) ? Notification.permission : 'default');
         if (permission === 'granted') {
-            enableBtn.textContent = 'Bildirim Acik';
+            enableBtn.textContent = 'Bildirim Açık';
             enableBtn.disabled = true;
             enableBtn.style.opacity = '.55';
             enableBtn.style.cursor = 'not-allowed';
         } else if (permission === 'denied') {
-            enableBtn.textContent = 'Izin Engellendi';
+            enableBtn.textContent = 'İzin Engellendi';
             enableBtn.disabled = true;
             enableBtn.style.opacity = '.55';
             enableBtn.style.cursor = 'not-allowed';
         } else {
-            enableBtn.textContent = 'Bildirim Iznini Ac';
+            enableBtn.textContent = 'Bildirim İznini Aç';
             enableBtn.disabled = false;
             enableBtn.style.opacity = '1';
             enableBtn.style.cursor = 'pointer';
@@ -131,18 +131,18 @@
     };
 
     const loadNotifications = async () => {
-        listEl.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Yukleniyor...</p>';
+        listEl.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Y?kleniyor...</p>';
         try {
             const res = await fetch('{{ route('notifications.mine') }}', {
                 credentials: 'same-origin',
                 headers: { Accept: 'application/json' },
             });
-            if (!res.ok) throw new Error('Bildirimler yuklenemedi.');
+            if (!res.ok) throw new Error('Bildirimler y?klenemedi.');
             const data = await res.json().catch(() => ({}));
-            if (!data?.ok) throw new Error(data?.message || 'Bildirimler yuklenemedi.');
+            if (!data?.ok) throw new Error(data?.message || 'Bildirimler y?klenemedi.');
             renderItems(data.items || []);
         } catch (e) {
-            listEl.innerHTML = '<p style="margin:0;color:#b91c1c;font-size:13px;">Bildirimler yuklenemedi.</p>';
+            listEl.innerHTML = '<p style="margin:0;color:#b91c1c;font-size:13px;">Bildirimler y?klenemedi.</p>';
         }
     };
 
@@ -171,7 +171,7 @@
     closeBtn?.addEventListener('click', closePopup);
 
     deleteAllBtn?.addEventListener('click', async () => {
-        if (!window.confirm('Tum bildirimler silinsin mi?')) return;
+        if (!window.confirm('Tüm bildirimler silinsin mi?')) return;
         try {
             const res = await fetch('{{ route('notifications.mine.destroy-all') }}', {
                 method: 'DELETE',
@@ -183,10 +183,10 @@
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data?.ok) throw new Error();
-            if (window.appToast) window.appToast('success', 'Tum bildirimler silindi.');
+            if (window.appToast) window.appToast('success', 'Tüm bildirimler silindi.');
             await loadNotifications();
         } catch (_) {
-            if (window.appToast) window.appToast('error', 'Tum bildirimler silinemedi.');
+            if (window.appToast) window.appToast('error', 'Tüm bildirimler silinemedi.');
         }
     });
 

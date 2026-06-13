@@ -12,6 +12,8 @@ use App\Models\Teacher;
 use App\Models\User;
 use App\Observers\UserObserver;
 use App\Policies\AnnouncementPolicy;
+use App\Models\CodingActivity;
+use App\Policies\CodingActivityPolicy;
 use App\Policies\AttendancePolicy;
 use App\Policies\CoursePolicy;
 use App\Policies\GradePolicy;
@@ -39,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Attendance::class, AttendancePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Announcement::class, AnnouncementPolicy::class);
+        Gate::policy(CodingActivity::class, CodingActivityPolicy::class);
         User::observe(UserObserver::class);
     }
 }
+

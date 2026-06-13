@@ -13,7 +13,13 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login');
+        request()->session()->regenerateToken();
+
+        return response()
+            ->view('auth.login')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     public function login(Request $request)

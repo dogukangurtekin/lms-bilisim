@@ -8,6 +8,11 @@ class BulkTemplateWorkbook
 {
     public static function build(array $headers, array $sample, string $sheetName = 'Sheet1'): string
     {
+        return self::buildFromRows($headers, [$sample], $sheetName);
+    }
+
+    public static function buildFromRows(array $headers, array $rows, string $sheetName = 'Sheet1'): string
+    {
         $tmpFile = tempnam(sys_get_temp_dir(), 'bulk-template-');
         if ($tmpFile === false) {
             throw new \RuntimeException('Gecici dosya olusturulamadi.');
@@ -19,10 +24,10 @@ class BulkTemplateWorkbook
             throw new \RuntimeException('XLSX arsivi olusturulamadi.');
         }
 
-        $sheetRows = [
-            self::buildRowXml(1, $headers),
-            self::buildRowXml(2, $sample),
-        ];
+        $sheetRows = [self::buildRowXml(1, $headers)];
+        foreach (array_values($rows) as $index => $row) {
+            $sheetRows[] = self::buildRowXml($index + 2, $row);
+        }
 
         $sheetName = self::escape($sheetName);
 
@@ -122,7 +127,19 @@ XML;
 
     private static function worksheetXml(array $rows): string
     {
-        $dimension = 'A1:' . self::columnLetter(5) . '2';
+        $lastColumnIndex = 0;
+        foreach ($rows as $rowXml) {
+            if (preg_match_all('/r="([A-Z]+)\d+"/', $rowXml, $matches) === 1 && !empty($matches[1])) {
+                foreach ($matches[1] as $column) {
+                    $index = 0;
+                    foreach (str_split($column) as $letter) {
+                        $index = ($index * 26) + (ord($letter) - 64);
+                    }
+                    $lastColumnIndex = max($lastColumnIndex, $index - 1);
+                }
+            }
+        }
+        $dimension = 'A1:' . self::columnLetter($lastColumnIndex) . max(2, count($rows));
         $sheetData = implode('', $rows);
 
         return <<<XML

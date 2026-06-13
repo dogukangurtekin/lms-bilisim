@@ -5,11 +5,12 @@
     <a class="btn" href="{{ route('courses.index') }}">Derslerime Geri Don</a>
 </div>
 <div class="card">
-    @php $slides = $course->lesson_payload['slides'] ?? []; @endphp
-    @php $globalThemeCss = $course->lesson_payload['global_theme_css'] ?? ''; @endphp
-    @if($globalThemeCss)
-        <style>{{ $globalThemeCss }}</style>
-    @endif
+    @php
+        $slides = $course->lesson_payload['slides'] ?? [];
+        $globalThemeCss = $course->lesson_payload['global_theme_css'] ?? '';
+        $themeTemplate = $course->lesson_payload['theme_template'] ?? 'default';
+    @endphp
+    @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
     @if(empty($slides))
         <p>Bu ders icin henuz slide icerigi olusturulmamis.</p>
     @else

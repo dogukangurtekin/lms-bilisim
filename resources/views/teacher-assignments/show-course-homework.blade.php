@@ -10,6 +10,7 @@
     $isLessonPreview = (string) ($homework->assignment_type ?? 'lesson') === 'lesson' && !empty($homework->course?->lesson_payload['slides']);
     $slides = $isLessonPreview ? ($homework->course->lesson_payload['slides'] ?? []) : [];
     $globalThemeCss = $isLessonPreview ? ($homework->course->lesson_payload['global_theme_css'] ?? '') : '';
+    $themeTemplate = $isLessonPreview ? ($homework->course->lesson_payload['theme_template'] ?? 'default') : 'default';
 @endphp
 
 @if($isLessonPreview)
@@ -33,9 +34,7 @@
             </div>
         </div>
 
-        @if($globalThemeCss)
-            <style>{{ $globalThemeCss }}</style>
-        @endif
+        @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
 
         <div id="teacher-lesson-slide-stage" class="card slide-theme" style="min-height:80vh;overflow:hidden;margin:0 0 10px"></div>
 

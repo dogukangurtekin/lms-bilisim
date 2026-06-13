@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Support\BulkTemplateWorkbook;
 use App\Services\StudentProgressReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ParentWhatsappController extends Controller
 {
@@ -182,16 +184,176 @@ class ParentWhatsappController extends Controller
         return response()->json(['classes' => $classes]);
     }
 
+    public function exportProgressReportList(Request $request): StreamedResponse
+    {
+        $data = $request->validate([
+            'school_class_id' => ['nullable', 'integer', 'exists:school_classes,id'],
+            'class_name' => ['nullable', 'string', 'max:190'],
+            'section' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $classId = !empty($data['school_class_id']) ? (int) $data['school_class_id'] : null;
+        $className = trim((string) ($data['class_name'] ?? ''));
+        $section = trim((string) ($data['section'] ?? ''));
+        $students = Student::query()
+            ->with(['user', 'schoolClass'])
+            ->when($classId !== null, fn ($q) => $q->where('school_class_id', $classId))
+            ->when($classId === null && $className !== '', fn ($q) => $q->whereHas('schoolClass', fn ($sq) => $sq->where('name', $className)))
+            ->when($classId === null && $section !== '', fn ($q) => $q->whereHas('schoolClass', fn ($sq) => $sq->where('section', $section)))
+            ->orderBy('id')
+            ->get();
+
+        $rows = [];
+        foreach ($students as $student) {
+            $reportLink = URL::temporarySignedRoute(
+                'parent.progress-report',
+                now()->addDays(7),
+                ['student' => $student->id]
+            );
+            $message = $this->buildParentSmsTemplate($student, $reportLink);
+            $phone = $this->normalizePhone((string) ($student->parent_phone ?: '+901111111111'));
+            $phone = $phone !== '' ? ('+' . ltrim($phone, '+')) : '+901111111111';
+            $status = $phone !== '+901111111111' ? 'Hazir' : 'Varsayilan';
+
+            $rows[] = [
+                $student->id,
+                (string) ($student->student_no ?? ''),
+                (string) ($student->user?->name ?? ''),
+                (string) ($student->schoolClass ? ($student->schoolClass->name . '/' . $student->schoolClass->section) : '-'),
+                $phone,
+                $reportLink,
+                $status,
+                $message,
+            ];
+        }
+
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+        if ($format === 'csv') {
+            $filename = 'veli-gelisim-raporu-sms-listesi-' . now()->format('Ymd-His') . '.csv';
+
+            return response()->streamDownload(function () use ($rows) {
+                $out = fopen('php://output', 'wb');
+                if ($out === false) {
+                    return;
+                }
+
+                fwrite($out, "\xEF\xBB\xBF");
+                fputcsv($out, ['ogrenci_id', 'ogrenci_no', 'ogrenci_adi', 'sinif', 'veli_tel', 'rapor_linki', 'durum', 'sms_mesaji'], ';');
+                foreach ($rows as $row) {
+                    fputcsv($out, $row, ';');
+                }
+                fclose($out);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]);
+        }
+
+        $binary = BulkTemplateWorkbook::buildFromRows(
+            ['ogrenci_id', 'ogrenci_no', 'ogrenci_adi', 'sinif', 'veli_tel', 'rapor_linki', 'durum', 'sms_mesaji'],
+            $rows,
+            'Veli SMS'
+        );
+
+        $filename = 'veli-gelisim-raporu-sms-listesi-' . now()->format('Ymd-His') . '.xlsx';
+        return response()->streamDownload(function () use ($binary) {
+            echo $binary;
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
+    }
+
+    public function sendProgressReportSms(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'school_class_id' => ['nullable', 'integer', 'exists:school_classes,id'],
+            'class_name' => ['nullable', 'string', 'max:190'],
+            'section' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $classId = !empty($data['school_class_id']) ? (int) $data['school_class_id'] : null;
+        $className = trim((string) ($data['class_name'] ?? ''));
+        $section = trim((string) ($data['section'] ?? ''));
+
+        $students = Student::query()
+            ->with(['user', 'schoolClass'])
+            ->when($classId !== null, fn ($q) => $q->where('school_class_id', $classId))
+            ->when($classId === null && $className !== '', fn ($q) => $q->whereHas('schoolClass', fn ($sq) => $sq->where('name', $className)))
+            ->when($classId === null && $section !== '', fn ($q) => $q->whereHas('schoolClass', fn ($sq) => $sq->where('section', $section)))
+            ->orderBy('id')
+            ->get();
+
+        if ($students->isEmpty()) {
+            return response()->json(['message' => 'Gonderim icin ogrenci bulunamadi.'], 422);
+        }
+
+        $targets = [];
+        foreach ($students as $student) {
+            $phone = $this->normalizePhone((string) ($student->parent_phone ?: '+901111111111'));
+            if ($phone === '') {
+                $phone = '901111111111';
+            }
+            if (!str_starts_with($phone, '90')) {
+                $phone = '90' . ltrim($phone, '+');
+            }
+
+            $reportLink = URL::temporarySignedRoute(
+                'parent.progress-report',
+                now()->addDays(7),
+                ['student' => $student->id]
+            );
+
+            $targets[] = [
+                'phone' => $phone,
+                'student_id' => $student->id,
+                'student_name' => (string) ($student->user?->name ?? ('Ogrenci #' . $student->id)),
+                'class_name' => (string) ($student->schoolClass ? ($student->schoolClass->name . '/' . $student->schoolClass->section) : '-'),
+                'report_link' => $reportLink,
+            ];
+        }
+
+        $task = [
+            'id' => (string) Str::uuid(),
+            'total' => count($targets),
+            'processed' => 0,
+            'success' => 0,
+            'failed' => 0,
+            'created_at' => now()->toIso8601String(),
+            'completed_at' => null,
+            'message_template' => "Merhaba {ogrenci} velisi,\nÖğrencinizin gelişim raporu hazır. Sınıf: {sinif}.\nRapor bağlantısı: {rapor_linki}\nVeli tel: {veli_tel}",
+            'send_mode' => 'text',
+            'template_name' => '',
+            'template_language' => 'tr',
+            'include_pdf_attachment' => false,
+            'document_caption' => '',
+            'send_phone_number_id' => (string) config('services.whatsapp.phone_number_id'),
+            'send_phone_display' => '',
+            'targets' => $targets,
+            'log' => [],
+            'manual_links' => [],
+            'provider' => $this->providerName(),
+        ];
+        $this->writeTask($task['id'], $task);
+
+        return response()->json([
+            'task_id' => $task['id'],
+            'total' => $task['total'],
+            'provider' => $task['provider'],
+        ]);
+    }
+
     private function buildMessage(array $task, array $target): string
     {
         $message = (string) ($task['message_template'] ?? '');
         $studentName = (string) ($target['student_name'] ?? '');
         $className = (string) ($target['class_name'] ?? '');
         $reportLink = (string) ($target['report_link'] ?? '');
+        $phone = (string) ($target['phone'] ?? '');
 
         $message = str_replace(
-            ['{ogrenci}', '{sinif}', '{rapor_linki}'],
-            [$studentName !== '' ? $studentName : 'Ogrenci', $className !== '' ? $className : '-', $reportLink],
+            ['{ogrenci}', '{sinif}', '{rapor_linki}', '{veli_tel}'],
+            [$studentName !== '' ? $studentName : 'Ogrenci', $className !== '' ? $className : '-', $reportLink, $phone !== '' ? ('+' . ltrim($phone, '+')) : '+901111111111'],
             $message
         );
 
@@ -200,6 +362,20 @@ class ParentWhatsappController extends Controller
         }
 
         return trim($message);
+    }
+
+    private function buildParentSmsTemplate(Student $student, string $reportLink): string
+    {
+        $studentName = (string) ($student->user?->name ?? 'Ogrenci');
+        $className = (string) ($student->schoolClass ? ($student->schoolClass->name . '/' . $student->schoolClass->section) : '-');
+        $phone = $this->normalizePhone((string) ($student->parent_phone ?: '+901111111111'));
+
+        return trim(
+            "Merhaba {$studentName} velisi,\n" .
+            "Öğrencinizin gelişim raporu hazır. Sınıf: {$className}.\n" .
+            "Rapor bağlantısı: {$reportLink}\n" .
+            "Veli tel: " . ($phone !== '' ? ('+' . ltrim($phone, '+')) : '+901111111111')
+        );
     }
 
     private function sendWhatsappMessage(array $target, string $message, array $task): array

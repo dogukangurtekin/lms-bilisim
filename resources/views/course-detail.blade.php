@@ -26,28 +26,34 @@
         </div>
 
         <div class="mt-6 space-y-6 text-gray-700">
-            <section>
-                <h3 class="text-lg font-bold text-gray-900">Konu:</h3>
-                <p class="mt-2 text-base leading-relaxed">{{ $konu }}</p>
-            </section>
+            @if(trim((string) $konu) !== '')
+                <section>
+                    <h3 class="text-lg font-bold text-gray-900">Konu:</h3>
+                    <p class="mt-2 text-base leading-relaxed">{{ $konu }}</p>
+                </section>
+            @endif
 
-            <section>
-                <h3 class="text-lg font-bold text-gray-900">Kazanimlar:</h3>
-                <ul class="mt-2 list-disc space-y-1 pl-6 text-base">
-                    @foreach($kazanimlar as $item)
-                        <li>{{ $item }}</li>
-                    @endforeach
-                </ul>
-            </section>
+            @if(!empty($kazanimlar))
+                <section>
+                    <h3 class="text-lg font-bold text-gray-900">Kazanimlar:</h3>
+                    <ul class="mt-2 list-disc space-y-1 pl-6 text-base">
+                        @foreach($kazanimlar as $item)
+                            <li>{{ $item }}</li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
 
-            <section>
-                <h3 class="text-lg font-bold text-gray-900">Etkinlikler:</h3>
-                <ul class="mt-2 list-disc space-y-1 pl-6 text-base">
-                    @foreach($etkinlikler as $item)
-                        <li>{{ $item }}</li>
-                    @endforeach
-                </ul>
-            </section>
+            @if(!empty($etkinlikler))
+                <section>
+                    <h3 class="text-lg font-bold text-gray-900">Etkinlikler:</h3>
+                    <ul class="mt-2 list-disc space-y-1 pl-6 text-base">
+                        @foreach($etkinlikler as $item)
+                            <li>{{ $item }}</li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
         </div>
     </article>
 </section>

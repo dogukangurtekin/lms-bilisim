@@ -14,8 +14,11 @@ use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
+use App\Models\DailyActivityAssignment;
 use App\Services\StudentProgressReportService;
 use Carbon\Carbon;
+use App\Models\UserStreak;
+use App\Models\UserXpLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -29,6 +32,23 @@ class StudentPortalController extends Controller
     public function dashboard()
     {
         $student = $this->getStudent();
+        $today = Carbon::today('Europe/Istanbul')->toDateString();
+        $todayDailyAssignment = DailyActivityAssignment::query()
+            ->with('activity')
+            ->whereDate('assignment_date', $today)
+            ->where('target_role', 'student')
+            ->whereHas('activity', fn ($q) => $q->where('is_active', true))
+            ->first();
+        $hasDailyAssignment = (bool) $todayDailyAssignment;
+        $completedTodayDaily = false;
+        if ($todayDailyAssignment?->coding_activity_id) {
+            $completedTodayDaily = UserXpLog::query()
+                ->where('user_id', $student->user_id)
+                ->where('coding_activity_id', $todayDailyAssignment->coding_activity_id)
+                ->whereDate('awarded_on', $today)
+                ->exists();
+        }
+        $showDailyAssignment = $hasDailyAssignment && ! $completedTodayDaily;
         $courses = $this->studentCourses($student)->get();
         $gameAssignments = $this->studentAssignments($student)->get();
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
@@ -227,6 +247,7 @@ class StudentPortalController extends Controller
             'heatmapDays' => $heatmapDays,
             'systemSeconds' => $systemSeconds,
             'currentAvatarPath' => $student->currentAvatar?->image_path,
+            'hasDailyAssignment' => $showDailyAssignment,
         ]);
     }
 
@@ -470,7 +491,7 @@ class StudentPortalController extends Controller
             'message' => $messages[$messageKey],
         ]);
 
-        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sınıf panosunda paylaşıldı.');
+        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±nÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±f panosunda paylaÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±ldÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±.');
     }
 
     public function progress()
@@ -559,56 +580,38 @@ class StudentPortalController extends Controller
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
 
         return max(0, $gradeXp + $contentXp);
-    }
-
-    private function classBoardMessages(): array
+    }    private function classBoardMessages(): array
     {
         return [
-            'm01' => 'Bugun kod yazmaya hazirim, hedefim bir adim daha ileri gitmek.',
+            'm01' => 'Bugün kod yazmaya hazırım, hedefim bir adım daha ileri gitmek.',
             'm02' => 'Robotik projede sabırlı olursam mutlaka sonuca ulaşırım.',
-            'm03' => 'Kucuk hatalar beni durdurmaz, her biri bana yeni bir sey ogretir.',
-            'm04' => 'Takim olarak calisinca kodlar daha guclu olur.',
-            'm05' => 'Her gun biraz pratik, yazilimda buyuk fark yaratir.',
-            'm06' => 'Algoritma dusunmeyi gelistirdikce problemler kolaylasir.',
-            'm07' => 'Denemekten korkmadan yeni cozumler bulabilirim.',
-            'm08' => 'Bugun bir arkadasima kodda yardim edecegim.',
-            'm09' => 'Hedefim temiz kod yazmak ve duzenli ilerlemek.',
-            'm10' => 'Robotumu daha akıllı hâle getirmek için çalışıyorum.',
-            'm11' => 'Yazilim ogrenmek sabir ister, ben hazirim.',
-            'm12' => 'Basari, vazgecmeden tekrar denemekle gelir.',
-            'm13' => 'sınıf olarak birbirimizi motive ederek daha hizli gelisiriz.',
-            'm14' => 'Bugun ogrendigim her satir kod gelecegime yatirimdir.',
-            'm15' => 'Kodlama ve robotikte her gun yeni bir kesif var.',
+            'm03' => 'Küçük hatalar beni durdurmaz, her biri bana yeni bir şey öğretir.',
+            'm04' => 'Takım olarak çalışınca kodlar daha güçlü olur.',
+            'm05' => 'Her gün biraz pratik, yazılımda büyük fark yaratır.',
+            'm06' => 'Algoritma düşünmeyi geliştirdikçe problemler kolaylaşır.',
+            'm07' => 'Denemekten korkmadan yeni çözümler bulabilirim.',
+            'm08' => 'Bugün bir arkadaşıma kodda yardım edeceğim.',
+            'm09' => 'Hedefim temiz kod yazmak ve düzenli ilerlemek.',
+            'm10' => 'Robotumu daha akıllı hale getirmek için çalışıyorum.',
+            'm11' => 'Yazılım öğrenmek sabır ister, ben hazırım.',
+            'm12' => 'Başarı, vazgeçmeden tekrar denemekle gelir.',
+            'm13' => 'Sınıf olarak birbirimizi motive ederek daha hızlı gelişiriz.',
+            'm14' => 'Bugün öğrendiğim her satır kod geleceğime yatırımdır.',
+            'm15' => 'Kodlama ve robotikte her gün yeni bir keşif var.',
         ];
     }
 
-        private function badgeDefinitions(): array
+    private function badgeDefinitions(): array
     {
         return [
-            ['name' => 'İlk Adim', 'icon' => 'ğŸš€', 'description' => 'En az 1 görevi tamamla.', 'metric' => 'completed_total', 'target' => 1],
-            ['name' => 'Ödev Ustası', 'icon' => 'ğŸ“˜', 'description' => 'Toplam 5 ödev tamamla.', 'metric' => 'completed_total', 'target' => 5],
-            ['name' => 'Oyun Avcısı', 'icon' => 'ğŸ®', 'description' => '5 oyun/uygulama ödevi tamamla.', 'metric' => 'completed_games', 'target' => 5],
-            ['name' => 'Ders Kâşifi', 'icon' => 'ğŸ“š', 'description' => '3 ders/slayt içeriği bitir.', 'metric' => 'completed_slides', 'target' => 3],
-            ['name' => 'XP 100', 'icon' => 'â­', 'description' => '100 XP seviyesine ulas.', 'metric' => 'xp', 'target' => 100],
-            ['name' => 'XP 300', 'icon' => 'ğŸ’', 'description' => '300 XP seviyesine ulas.', 'metric' => 'xp', 'target' => 300],
-            ['name' => 'Maratoncu', 'icon' => 'â±ï¸', 'description' => 'Sistemde 120 dakika gecir.', 'metric' => 'minutes', 'target' => 120],
-            ['name' => 'sınıf Birincisi', 'icon' => 'ğŸ¥‡', 'description' => 'sınıfinda XP siralamasinda 1. ol.', 'metric' => 'class_rank', 'target' => 1],
-            ['name' => 'Okul Birincisi', 'icon' => 'ğŸ†', 'description' => 'Okul genelinde XP siralamasinda 1. ol.', 'metric' => 'school_rank', 'target' => 1],
-            ['name' => 'Efsane Tamamlayıcı', 'icon' => 'ğŸ‘‘', 'description' => 'Toplam 15 görev tamamla.', 'metric' => 'completed_total', 'target' => 15],
-            ['name' => 'Görev Serisi 10', 'icon' => 'ğŸ”¥', 'description' => 'Toplam 10 görev tamamla.', 'metric' => 'completed_total', 'target' => 10],
-            ['name' => 'Görev Serisi 25', 'icon' => 'ğŸ…', 'description' => 'Toplam 25 görev tamamla.', 'metric' => 'completed_total', 'target' => 25],
-            ['name' => 'Ders Ustası', 'icon' => 'ğŸ§ ', 'description' => '10 ders/slayt içeriği bitir.', 'metric' => 'completed_slides', 'target' => 10],
-            ['name' => 'Ders Efsanesi', 'icon' => 'ğŸ“', 'description' => '20 ders/slayt icerigi bitir.', 'metric' => 'completed_slides', 'target' => 20],
-            ['name' => 'Oyun Uzmanı', 'icon' => 'ğŸ•¹ï¸', 'description' => '10 oyun/uygulama ödevi tamamla.', 'metric' => 'completed_games', 'target' => 10],
-            ['name' => 'Oyun Şampiyonu', 'icon' => 'ğŸ¯', 'description' => '20 oyun/uygulama ödevi tamamla.', 'metric' => 'completed_games', 'target' => 20],
-            ['name' => 'XP 500', 'icon' => 'ğŸŒŸ', 'description' => '500 XP seviyesine ulas.', 'metric' => 'xp', 'target' => 500],
-            ['name' => 'XP 1000', 'icon' => 'ğŸš€', 'description' => '1000 XP seviyesine ulas.', 'metric' => 'xp', 'target' => 1000],
-            ['name' => 'Disiplinli Çalışma', 'icon' => 'ğŸ—‚ï¸', 'description' => 'Sistemde 300 dakika geçir.', 'metric' => 'minutes', 'target' => 300],
-            ['name' => 'Panel Ustası', 'icon' => 'ğŸ“ˆ', 'description' => 'Sistemde 600 dakika geçir.', 'metric' => 'minutes', 'target' => 600],
-            ['name' => 'İstikrar Madalyası', 'icon' => 'ğŸ¥ˆ', 'description' => 'Toplam 40 görev tamamla.', 'metric' => 'completed_total', 'target' => 40],
-            ['name' => 'Tamamlama Zirvesi', 'icon' => 'ğŸ”ï¸', 'description' => 'Toplam 60 görev tamamla.', 'metric' => 'completed_total', 'target' => 60],
+            ['name' => 'İlk Adım', 'icon' => '🚀', 'description' => 'En az 1 görevi tamamla.', 'metric' => 'completed_total', 'target' => 1],
+            ['name' => 'Ödev Ustası', 'icon' => '📝', 'description' => 'Toplam 5 ödev tamamla.', 'metric' => 'completed_total', 'target' => 5],
+            ['name' => 'Oyun Avcısı', 'icon' => '🎮', 'description' => '5 oyun/uygulama ödevi tamamla.', 'metric' => 'completed_games', 'target' => 5],
+            ['name' => 'Ders Kâşifi', 'icon' => '📚', 'description' => '3 ders/slayt içeriği bitir.', 'metric' => 'completed_slides', 'target' => 3],
+            ['name' => 'XP 100', 'icon' => '⭐', 'description' => '100 XP seviyesine ulaş.', 'metric' => 'xp', 'target' => 100],
         ];
     }
+
     private function syncStudentBadges(Student $student, int $xp): array
     {
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
@@ -774,7 +777,7 @@ class StudentPortalController extends Controller
             }
             if (preg_match('/^homework-(\d+)$/', $cid, $m)) {
                 $item = $homeworks->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Ders Ãƒâ€“devi: ' . $item->title) : $cid;
+                $labels[$cid] = $item ? ('Ders Ödevi: ' . $item->title) : $cid;
                 continue;
             }
             if (preg_match('/^game-assignment-(\d+)$/', $cid, $m)) {
@@ -1081,4 +1084,5 @@ class StudentPortalController extends Controller
         return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
     }
 }
+
 

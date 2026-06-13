@@ -29,35 +29,37 @@
     display: flex;
 }
 .live-quiz-overlay-card {
-    width: min(640px, 100%);
+    width: min(768px, 100%);
     background: #ffffff;
-    border-radius: 20px;
+    border-radius: 24px;
     border: 2px solid #5b21b6;
     box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28);
-    padding: 24px;
+    padding: 30px;
     text-align: center;
 }
 .live-quiz-overlay-title {
     margin: 0 0 8px;
     color: #312e81;
-    font-size: 28px;
+    font-size: 33px;
     font-weight: 900;
 }
 .live-quiz-overlay-text {
     margin: 0 0 16px;
     color: #334155;
-    font-size: 16px;
+    font-size: 19px;
 }
 .live-quiz-overlay-quiz {
     margin: 0 0 18px;
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 800;
     color: #111827;
 }
 .live-quiz-overlay-actions .btn {
-    min-width: 260px;
-    font-size: 17px;
+    min-width: 312px;
+    font-size: 19px;
     font-weight: 800;
+    min-height: 52px;
+    padding: 14px 18px;
 }
 </style>
 @endif
@@ -74,11 +76,11 @@
 @if(auth()->user()?->hasRole('student'))
 <div id="liveQuizOverlay" class="live-quiz-overlay" role="dialog" aria-modal="true" aria-label="Canli quiz bildirimi">
     <div class="live-quiz-overlay-card">
-        <h2 class="live-quiz-overlay-title">Canli Quiz Basladi</h2>
-        <p class="live-quiz-overlay-text">Ogretmenin canli quiz baslatti. Devam etmek icin quize katilman gerekli.</p>
-        <p id="liveQuizOverlayTitle" class="live-quiz-overlay-quiz">Canli Quiz</p>
+        <h2 class="live-quiz-overlay-title">Canlı Quiz Başladı</h2>
+        <p class="live-quiz-overlay-text">Öğretmenin canlı quiz başlattı. Devam etmek için quize katılman gerekli.</p>
+        <p id="liveQuizOverlayTitle" class="live-quiz-overlay-quiz">Canlı Quiz</p>
         <div class="live-quiz-overlay-actions">
-            <a id="liveQuizOverlayJoinBtn" href="#" class="btn">Canli Quize Katil</a>
+            <a id="liveQuizOverlayJoinBtn" href="#" class="btn">Canlı Quize Katıl</a>
         </div>
     </div>
 </div>
@@ -128,7 +130,7 @@
             const shouldShow = !!(data && data.active && !data.joined && data.join_url);
 
             if (shouldShow) {
-                const title = data.quiz_title || 'Canli Quiz';
+                const title = data.quiz_title || 'Canlı Quiz';
                 titleEl.textContent = title;
                 joinBtn.href = data.join_url;
                 overlay.classList.add('show');

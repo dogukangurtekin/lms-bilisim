@@ -399,7 +399,7 @@ class NotificationController extends Controller
             report($e);
             return response()->json([
                 'ok' => false,
-                'message' => 'Bildirim gonderimi basarisiz: ' . $e->getMessage(),
+                'message' => 'Bildirim gönderimi başarısız: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -480,16 +480,16 @@ class NotificationController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['ok' => true]);
             }
-            return redirect()->route('notifications.index')->with('ok', 'Tum loglar silindi.');
+            return redirect()->route('notifications.index')->with('ok', 'Tüm loglar silindi.');
         } catch (Throwable $e) {
             report($e);
             if ($request->expectsJson()) {
                 return response()->json([
                     'ok' => false,
-                    'message' => 'Tum loglar silinemedi: ' . $e->getMessage(),
+                    'message' => 'Tüm loglar silinemedi: ' . $e->getMessage(),
                 ], 500);
             }
-            return redirect()->route('notifications.index')->withErrors(['log' => 'Tum loglar silinemedi: ' . $e->getMessage()]);
+            return redirect()->route('notifications.index')->withErrors(['log' => 'Tüm loglar silinemedi: ' . $e->getMessage()]);
         }
     }
 

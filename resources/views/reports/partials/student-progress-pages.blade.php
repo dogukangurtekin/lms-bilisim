@@ -91,7 +91,7 @@
                         <div class="category-bar-wrap">
                             <span class="category-bar" style="height: {{ max(2, (int) ($item['value'] ?? 0)) }}%; background: {{ $item['color'] ?? '#3b82f6' }};"></span>
                         </div>
-                        <small>{{ $item['label'] ?? '-' }}</small>
+                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;word-break:break-word;">{{ $item['label'] ?? '-' }}</small>
                     </div>
                 @endforeach
             </div>
@@ -204,6 +204,46 @@
                 <li>{{ $item }}</li>
             @endforeach
         </ul>
+    </article>
+
+    <article class="panel">
+        <h3>Günlük Egzersiz Özeti</h3>
+        @php
+            $dailyAttemptCount = (int) ($report['kpi']['daily_attempt_count'] ?? 0);
+            $dailyCorrectCount = (int) ($report['kpi']['daily_correct_count'] ?? 0);
+            $dailyWrongCount = (int) ($report['kpi']['daily_wrong_count'] ?? 0);
+            $dailyFullCorrectCount = (int) ($report['kpi']['daily_full_correct_count'] ?? 0);
+            $dailySuccessRate = (int) ($report['kpi']['daily_success_rate'] ?? 0);
+            $dailyQuestionTotal = max(1, $dailyCorrectCount + $dailyWrongCount);
+        @endphp
+        <div class="kpi-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0;">
+            <article class="kpi-card">
+                <span>Yapılan Toplam Günlük Egzersiz</span>
+                <strong>{{ $dailyAttemptCount }}</strong>
+            </article>
+            <article class="kpi-card">
+                <span>Tam Doğru Tamamlanan Egzersiz</span>
+                <strong>{{ $dailyFullCorrectCount }}</strong>
+            </article>
+            <article class="kpi-card">
+                <span>Doğru Cevaplanan Soru</span>
+                <strong>{{ $dailyCorrectCount }}</strong>
+            </article>
+            <article class="kpi-card">
+                <span>Yanlış Cevaplanan Soru</span>
+                <strong>{{ $dailyWrongCount }}</strong>
+            </article>
+        </div>
+        <div style="margin-top:10px;background:#f8fbff;border:1px solid #dbeafe;border-radius:14px;padding:12px;">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;">
+                <strong>Başarı Oranı</strong>
+                <span style="font-weight:800;color:#1d4ed8">%{{ $dailySuccessRate }}</span>
+            </div>
+            <div style="height:12px;border-radius:9999px;background:#e2e8f0;overflow:hidden;">
+                <div style="width:{{ $dailySuccessRate }}%;height:100%;background:linear-gradient(90deg,#22c55e,#2563eb);"></div>
+            </div>
+            <p class="chart-note" style="margin-top:8px;">Başarı oranı, tam doğru tamamlanan günlük egzersizlerin toplam günlük egzersiz sayısına oranıdır.</p>
+        </div>
     </article>
 
     <div class="page-no">Sayfa 2 / 2</div>

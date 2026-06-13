@@ -6,10 +6,12 @@
 </div>
 <div class="card">
     @php $slides = $course->lesson_payload['slides'] ?? []; @endphp
-    @php $globalThemeCss = $course->lesson_payload['global_theme_css'] ?? ''; @endphp
-    @if($globalThemeCss)
-        <style>{{ $globalThemeCss }}</style>
-    @endif
+    @php
+        $payload = $course->lesson_payload ?? [];
+        $globalThemeCss = $payload['global_theme_css'] ?? '';
+        $themeTemplate = $payload['theme_template'] ?? 'default';
+    @endphp
+    @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
     @if(empty($slides))
         <p>Ogretmen henuz bu ders icin slide paylasmadi.</p>
     @else
@@ -122,7 +124,19 @@
                 function bindQuestionInteractions() {
                     const qRoot = stage.querySelector('[data-sqz-question]');
                     if (!qRoot) return;
+                    const feedbackEl = qRoot.querySelector('[data-sqz-feedback]');
                     const optionLabels = qRoot.querySelectorAll('[data-sqz-option]');
+                    const showFeedback = (isCorrect, message) => {
+                        if (!feedbackEl) return;
+                        feedbackEl.classList.remove('is-correct', 'is-wrong');
+                        feedbackEl.textContent = message || '';
+                        if (!message) {
+                            feedbackEl.style.display = 'none';
+                            return;
+                        }
+                        feedbackEl.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+                        feedbackEl.style.display = 'block';
+                    };
                     optionLabels.forEach((label) => {
                         const input = label.querySelector('input[type="radio"], input[type="checkbox"]');
                         if (!input) return;
@@ -132,6 +146,22 @@
                                 if (input.checked) label.classList.add('selected');
                             } else {
                                 label.classList.toggle('selected', input.checked);
+                            }
+                            const type = String(qRoot.getAttribute('data-sqz-type') || 'none');
+                            if (type === 'multiple_choice' || type === 'true_false') {
+                                const selected = Array.from(optionLabels).find((x) => {
+                                    const i = x.querySelector('input[type="radio"], input[type="checkbox"]');
+                                    return i && i.checked;
+                                });
+                                if (!selected) {
+                                    showFeedback(null, '');
+                                    return;
+                                }
+                                const isCorrect = String(selected.getAttribute('data-sqz-correct') || '0') === '1';
+                                showFeedback(
+                                    isCorrect,
+                                    isCorrect ? 'Doğru cevap.' : 'Yanlış cevap.'
+                                );
                             }
                         };
                         input.addEventListener('change', sync);

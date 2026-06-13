@@ -123,7 +123,9 @@ class CourseController extends Controller
         if ($safePath === '' || str_contains($safePath, '..')) {
             abort(404);
         }
-        $fullPath = 'course-covers/' . ltrim(preg_replace('#^course-covers/#i', '', $safePath), '/');
+        $normalized = preg_replace('#^/?storage/#i', '', $safePath);
+        $normalized = preg_replace('#^/?course-covers/#i', '', (string) $normalized);
+        $fullPath = 'course-covers/' . ltrim((string) $normalized, '/');
         if (!Storage::disk('public')->exists($fullPath)) {
             abort(404);
         }
@@ -149,22 +151,17 @@ class CourseController extends Controller
         $payload = (array) ($course?->lesson_payload ?? []);
         $curriculum = (array) ($payload['curriculum'] ?? []);
 
-        $title = (string) ($course?->name ?? 'APP Inventor ile Mobil Kodlama');
+        $title = (string) ($course?->name ?? '');
         $lessonNumber = max(1, (int) ($curriculum['lesson_number'] ?? 1));
-        $detailTitle = (string) ($curriculum['title'] ?? 'Mobil Dunyaya Ilk Adim: Arayuzu Kesfediyorum');
-        $konu = (string) ($curriculum['konu'] ?? 'Bu derste APP Inventor arayuzunu taniyarak temel bilesenleri nasil kullandigimizi ogreniyoruz.');
-        $kazanimlar = (array) ($curriculum['kazanımlar'] ?? [
-            'APP Inventor ekraninda ana panelleri tanir.',
-            'Bilesen ekleme ve duzenleme mantigini kavrar.',
-            'Basit bir mobil arayuz tasarimini olusturur.',
-            'Proje dosyasini kaydetme ve tekrar acma adimlarini uygular.',
-        ]);
-        $etkinlikler = (array) ($curriculum['etkinlikler'] ?? [
-            'Bilesenlerle mini arayuz olusturma etkinligi',
-            'Renk ve tipografi secimi alistirmasi',
-            'Kisa sureli eslestirme ve dogru-yanlis etkinligi',
-            'Mini proje: butonla ekran gecisi uygulamasi',
-        ]);
+        $detailTitle = (string) ($curriculum['title'] ?? '');
+        $konu = (string) ($curriculum['konu'] ?? '');
+        $kazanimlar = array_values(array_filter((array) (
+            $curriculum['kazanımlar']
+            ?? $curriculum['kazanÄ±mlar']
+            ?? $curriculum['kazanimlar']
+            ?? []
+        ), fn ($item) => trim((string) $item) !== ''));
+        $etkinlikler = array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== ''));
         $progress = max(0, min(100, (int) ($curriculum['progress'] ?? 0)));
         $isCompleted = false;
         $startUrl = '#';
@@ -230,6 +227,29 @@ class CourseController extends Controller
     {
         $this->performDestroyById($id);
         return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+
+    public function destroyAll(Request $request)
+    {
+        if (!auth()->user()?->hasRole('admin')) {
+            abort(403);
+        }
+
+        $deletedCount = 0;
+
+        DB::transaction(function () use (&$deletedCount): void {
+            $courseIds = Course::query()->pluck('id')->map(fn ($v) => (int) $v)->all();
+
+            if ($courseIds === []) {
+                $deletedCount = 0;
+                return;
+            }
+
+            CourseHomework::query()->whereIn('course_id', $courseIds)->delete();
+            $deletedCount = Course::query()->whereIn('id', $courseIds)->delete();
+        });
+
+        return redirect()->route('courses.index')->with('ok', $deletedCount . ' ders sistemden kaldirildi.');
     }
 
     public function export(Course $course): StreamedResponse
