@@ -11,6 +11,16 @@
         gap: 0.75rem;
         grid-template-columns: minmax(0, 1fr);
     }
+    .course-action-row {
+        display: grid;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .course-action-row .course-action-wide {
+        grid-column: 1 / -1;
+    }
     .course-cards-grid {
         display: grid !important;
         width: 100%;
@@ -20,6 +30,13 @@
     @media (min-width: 768px) {
         .course-search-layout {
             grid-template-columns: minmax(0, 1fr) auto;
+        }
+        .course-action-row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .course-action-row .course-action-wide {
+            grid-column: auto;
         }
     }
     @media (min-width: 640px) {
@@ -56,14 +73,25 @@
             class="h-14 rounded-xl border border-gray-300 bg-white px-5 text-lg text-gray-800 outline-none ring-[#4c1d95] placeholder:text-gray-400 focus:ring-2"
             placeholder="Ders basligini aratmak icin yaziniz."
         >
-        <a href="{{ route('courses.create') }}" class="inline-flex h-14 items-center justify-center rounded-xl bg-[#4c1d95] px-6 text-lg font-semibold text-white hover:bg-[#3b0764]">Ders Oluştur</a>
+        <div class="course-action-row">
+            <a href="{{ route('courses.create') }}" class="course-action-wide inline-flex h-14 items-center justify-center rounded-xl bg-[#4c1d95] px-6 text-sm font-semibold leading-tight text-white hover:bg-[#3b0764]">Ders Oluştur</a>
+            <button id="course-import-open" type="button" class="inline-flex h-14 items-center justify-center rounded-xl px-4 text-sm font-semibold leading-tight" style="white-space:nowrap;background:#0f766e;color:#fff;border:0;">Yükle</button>
+            <a href="{{ route('courses.export-all') }}" class="inline-flex h-14 items-center justify-center rounded-xl px-4 text-sm font-semibold leading-tight" style="white-space:nowrap;background:#1d4ed8;color:#fff;border:0;text-decoration:none;">İndir</a>
+            @if(auth()->user()?->hasRole('admin'))
+                <button type="submit" form="course-destroy-all-form" class="course-action-wide inline-flex h-14 items-center justify-center rounded-xl px-4 text-sm font-semibold leading-tight" style="white-space:nowrap;background:linear-gradient(180deg,#ef4444,#dc2626);color:#fff;border:0;">Tüm Dersleri Sil</button>
+            @endif
+        </div>
     </form>
-    <form id="course-import-form" method="POST" action="{{ route('courses.import') }}" enctype="multipart/form-data" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <form id="course-import-form" method="POST" action="{{ route('courses.import') }}" enctype="multipart/form-data" style="display:none;">
         @csrf
         <input id="course-import-file" type="file" name="course_json[]" accept=".json,application/json,text/plain" multiple style="display:none;">
-        <button id="course-import-open" type="button" class="inline-flex h-14 items-center justify-center rounded-xl px-6 text-lg font-semibold" style="white-space:nowrap;background:#0f766e;color:#fff;border:0;">Ders Yukle</button>
-        <a href="{{ route('courses.export-all') }}" class="inline-flex h-14 items-center justify-center rounded-xl px-6 text-lg font-semibold" style="white-space:nowrap;background:#1d4ed8;color:#fff;border:0;text-decoration:none;">Tum Dersleri Indir</a>
     </form>
+    @if(auth()->user()?->hasRole('admin'))
+        <form id="course-destroy-all-form" method="POST" action="{{ route('courses.destroy-all') }}" data-confirm="Tum dersler ve bagli odevler sistemden kaldirilsin mi?" style="display:none;">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endif
 
     <div class="course-cards-grid">
         @forelse($items as $item)
@@ -73,24 +101,13 @@
                 $desc = trim((string) data_get($item->lesson_payload, 'lesson_description', ''));
                 if ($desc === '') $desc = trim((string) data_get($firstSlide, 'description', ''));
                 if ($desc === '') $desc = $item->name . ' dersi icin hazirlanan konu anlatimi ve etkinlik icerikleri.';
-                $thumb = (string) (data_get($item->lesson_payload, 'cover_image') ?: data_get($firstSlide, 'image_url') ?: '');
-                if ($thumb !== '') {
-                    $thumb = preg_replace('#^https?://[^/]+/[^/]+/public/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^https?://[^/]+/public/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^https?://[^/]+/storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^/?storage/#i', '', $thumb);
-                    $thumb = preg_replace('#^/?course-covers/#i', '', $thumb);
-                    if (!preg_match('#^https?://#i', $thumb)) {
-                        $thumb = route('courses.cover', ['path' => ltrim($thumb, '/')]);
-                    }
-                }
                 $difficulty = (string) (data_get($item->lesson_payload, 'difficulty') ?: (((int) ($item->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($item->schoolClass?->name ?? 6) + 5) . '+';
             @endphp
             <x-course-card
                 :title="$item->name"
                 :description="$desc"
-                :image="$thumb"
+                :image="(string) ($item->coverImageUrl() ?: data_get($firstSlide, 'image_url') ?: '')"
                 :logo="asset('logo.png')"
                 :age="$age"
                 :difficulty="$difficulty"
