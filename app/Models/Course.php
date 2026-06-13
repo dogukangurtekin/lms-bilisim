@@ -36,14 +36,39 @@ class Course extends Model
         }
 
         if (!empty($decoded['cover_image']) && is_string($decoded['cover_image'])) {
-            $cover = $decoded['cover_image'];
-            $cover = preg_replace('#^https?://[^/]+/[^/]+/public/storage/#i', 'storage/', $cover);
-            $cover = preg_replace('#^https?://[^/]+/public/storage/#i', 'storage/', $cover);
-            $cover = preg_replace('#^/storage/#i', 'storage/', $cover);
+            $cover = trim((string) $decoded['cover_image']);
+            $cover = str_replace('\\', '/', $cover);
+
+            if (preg_match('#^https?://#i', $cover)) {
+                $cover = preg_replace('#^https?://[^/]+/?#i', '', $cover);
+            }
+
+            $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
+            $cover = preg_replace('#^/?course-covers/#i', 'course-covers/', $cover);
+
             $decoded['cover_image'] = $cover;
         }
 
         return $decoded;
+    }
+
+    public function coverImageUrl(): string
+    {
+        $cover = trim((string) data_get($this->lesson_payload, 'cover_image', ''));
+        if ($cover === '') {
+            return '';
+        }
+
+        $cover = str_replace('\\', '/', $cover);
+        $cover = preg_replace('#^https?://[^/]+/?#i', '', $cover);
+        $cover = preg_replace('#^/?storage/#i', '', $cover);
+        $cover = preg_replace('#^/?course-covers/#i', '', $cover);
+
+        if ($cover === '') {
+            return '';
+        }
+
+        return route('courses.cover', ['path' => ltrim($cover, '/')]);
     }
 
     public function setLessonPayloadAttribute($value): void
