@@ -748,7 +748,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const raw = String(url || '').trim();
         if (!raw) return '';
         if (raw.startsWith('blob:')) return raw;
-        if (/^https?:\/\//i.test(raw)) return raw;
+        if (/^https?:\/\//i.test(raw)) {
+            try {
+                const parsed = new URL(raw);
+                const path = String(parsed.pathname || '');
+                const match = path.match(/(?:^|\/)(course-covers\/[^/?#]+)/i);
+                if (match) return '/' + match[1].replace(/^\/+/, '');
+                return raw;
+            } catch (_) {
+                return raw;
+            }
+        }
         if (raw.startsWith('/course-covers/')) return raw;
         if (raw.startsWith('course-covers/')) return '/' + raw;
         if (raw.startsWith('/storage/course-covers/')) return raw.replace('/storage/', '/');
