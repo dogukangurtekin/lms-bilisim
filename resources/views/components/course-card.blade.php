@@ -18,7 +18,7 @@
 ])
 
 <article class="group flex h-full w-full max-w-none flex-col rounded-2xl bg-white p-4 shadow-lg transition duration-300 hover:scale-[1.015] hover:shadow-2xl">
-    <div class="relative overflow-hidden rounded-xl">
+    <div class="relative overflow-hidden rounded-xl" style="height:14rem;background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%);">
         @if(!empty($downloadUrl))
             <a href="{{ $downloadUrl }}" title="Dersi indir" aria-label="Dersi indir"
                style="position:absolute;right:10px;top:10px;z-index:30;width:38px;height:38px;border-radius:9999px;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 8px 18px rgba(2,6,23,.28);">
@@ -26,9 +26,16 @@
             </a>
         @endif
         @if(!empty($image))
-            <img src="{{ $image }}" alt="{{ $title }}" class="h-56 w-full bg-gray-100 object-contain">
-            <div style="position:absolute;left:0;top:0;bottom:0;width:120px;background:#4c1d95;z-index:10;clip-path:polygon(0 0,100% 0,58% 100%,0 100%);"></div>
-            <div style="position:absolute;left:24px;top:24px;z-index:20;width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.16);overflow:hidden;">
+            <img
+                src="{{ $image }}"
+                alt="{{ $title }}"
+                loading="eager"
+                decoding="async"
+                onerror="this.style.display='none';"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:1;"
+            >
+            <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(15,23,42,.12) 0%,rgba(15,23,42,.02) 24%,rgba(255,255,255,0) 48%);z-index:2;pointer-events:none;"></div>
+            <div style="position:absolute;left:18px;top:18px;z-index:20;width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.16);overflow:hidden;">
                 <img src="{{ $logo }}" alt="logo" class="h-10 w-10 rounded-full object-contain" style="width:40px;height:40px;max-width:40px;max-height:40px;object-fit:contain;display:block;">
             </div>
         @else
@@ -67,17 +74,17 @@
             </a>
 
             @if(!empty($deleteUrl))
-                <a
-                    href="{{ $deleteUrl }}"
-                    class="course-delete-link"
-                    data-delete-url="{{ $deleteUrl }}"
-                    onmouseenter="this.style.backgroundColor='#b91c1c'"
-                    onmouseleave="this.style.backgroundColor='#dc2626'"
-                    style="display:inline-flex;width:100%;height:48px;align-items:center;justify-content:center;border:0;border-radius:12px;background:#dc2626;color:#fff;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;transition:background-color .15s ease;"
-                >
-                    Dersi Sil
-                </a>
-            @endif
+                        <a
+                            href="{{ $deleteUrl }}"
+                            class="course-delete-link"
+                            data-delete-url="{{ $deleteUrl }}"
+                            onmouseenter="this.style.backgroundColor='#b91c1c'"
+                            onmouseleave="this.style.backgroundColor='#dc2626'"
+                            style="display:inline-flex!important;width:100%;height:48px;align-items:center;justify-content:center;border:2px solid #b91c1c!important;border-radius:12px;background-color:#dc2626!important;color:#fff!important;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none!important;transition:background-color .15s ease,transform .15s ease;box-shadow:0 8px 18px rgba(220,38,38,.28);position:relative;z-index:10;"
+                        >
+                            Dersi Sil
+                        </a>
+                    @endif
 
             @if($assignEnabled && !empty($assignCourseId))
                 <button
