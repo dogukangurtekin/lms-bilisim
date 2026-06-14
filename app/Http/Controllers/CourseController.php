@@ -35,15 +35,32 @@ class CourseController extends Controller
         $user = $request->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
 
-        $items = Course::with(['teacher.user', 'schoolClass'])
-            ->when($user?->hasRole('teacher'), fn ($query) => $query->where('teacher_id', $teacherId))
-            ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
-            ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
-            ->orderBy($sort, $dir)
-            ->paginate(20)
-            ->withQueryString();
+        try {
+            $items = Course::query()
+                ->when($user?->hasRole('teacher'), fn ($query) => $query->where('teacher_id', $teacherId))
+                ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
+                ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
+                ->orderBy($sort, $dir)
+                ->paginate(20)
+                ->withQueryString();
+        } catch (\Throwable $e) {
+            Log::warning('Course index fallback triggered', [
+                'message' => $e->getMessage(),
+            ]);
+            $items = Course::query()
+                ->orderByDesc('id')
+                ->paginate(20)
+                ->withQueryString();
+        }
 
-        $teachers = Teacher::with('user')->orderByDesc('id')->get();
+        try {
+            $teachers = Teacher::query()->orderByDesc('id')->get();
+        } catch (\Throwable $e) {
+            Log::warning('Course teachers fallback triggered', [
+                'message' => $e->getMessage(),
+            ]);
+            $teachers = collect();
+        }
         $canManageCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
         $canAssignCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
 
