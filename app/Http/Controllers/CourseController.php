@@ -477,14 +477,34 @@ class CourseController extends Controller
 
     private function storeCoverAsWebp(UploadedFile $file): string
     {
-        $extension = strtolower((string) $file->getClientOriginalExtension());
-        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'webp';
-        $relative = 'course-covers/' . Str::uuid() . '.' . $extension;
-        $file->storePubliclyAs('course-covers', basename($relative), 'public');
-
+        $relative = 'course-covers/' . Str::uuid() . '.png';
         $outputPath = Storage::disk('public')->path($relative);
-        if (!is_file($outputPath) || filesize($outputPath) <= 0) {
-            throw new \RuntimeException('Kapak gorseli kaydedilemedi.');
+        $sourcePath = $file->getRealPath();
+
+        if ($sourcePath && is_file($sourcePath)) {
+            $magick = $this->resolveMagickBinary();
+            if ($magick) {
+                $process = new Process([
+                    $magick,
+                    $sourcePath,
+                    '-auto-orient',
+                    '-resize', '1600x900^',
+                    '-gravity', 'center',
+                    '-extent', '1600x900',
+                    '-background', 'white',
+                    '-flatten',
+                    $outputPath,
+                ]);
+                $process->setTimeout(30);
+                $process->run();
+                if (! $process->isSuccessful()) {
+                    throw new \RuntimeException('Kapak gorseli PNG olarak donusturulemedi.');
+                }
+            } else {
+                $file->storePubliclyAs('course-covers', basename($relative), 'public');
+            }
+        } else {
+            $file->storePubliclyAs('course-covers', basename($relative), 'public');
         }
 
         $publicMirrorPath = public_path($relative);
