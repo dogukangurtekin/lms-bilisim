@@ -126,13 +126,25 @@ class CourseController extends Controller
         $normalized = preg_replace('#^/?storage/#i', '', $safePath);
         $normalized = preg_replace('#^/?kapak-gorseli/#i', '', (string) $normalized);
         $normalized = preg_replace('#^/?course-covers/#i', '', (string) $normalized);
-        $fullPath = public_path('kapak-gorseli/' . ltrim((string) $normalized, '/'));
-        if (!is_file($fullPath)) {
-            abort(404);
+        $relative = ltrim((string) $normalized, '/');
+        $candidates = array_values(array_filter([
+            public_path('kapak-gorseli/' . $relative),
+            public_path('kapak-gorseli/' . preg_replace('/\.webp$/i', '.png', $relative)),
+            storage_path('app/public/kapak-gorseli/' . $relative),
+            storage_path('app/public/kapak-gorseli/' . preg_replace('/\.webp$/i', '.png', $relative)),
+            storage_path('app/public/course-covers/' . $relative),
+            storage_path('app/public/course-covers/' . preg_replace('/\.png$/i', '.webp', $relative)),
+        ]));
+
+        foreach ($candidates as $fullPath) {
+            if (is_file($fullPath)) {
+                return response()->file($fullPath, [
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
         }
-        return response()->file($fullPath, [
-            'Cache-Control' => 'public, max-age=86400',
-        ]);
+
+        abort(404);
     }
     public function store(StoreCourseRequest $request)
     {
@@ -469,7 +481,7 @@ class CourseController extends Controller
                 'cover_image_file' => $e->getMessage(),
             ]);
         }
-        $payload['cover_image'] = asset($path);
+        $payload['cover_image'] = $path;
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
         unset($data['cover_image_file']);
 
@@ -503,19 +515,13 @@ class CourseController extends Controller
                 $process->setTimeout(30);
                 $process->run();
                 if (! $process->isSuccessful()) {
-                    throw new \RuntimeException('Kapak gorseli PNG olarak donusturulemedi.');
+                    $this->storeCoverWithGd($sourcePath, $outputPath);
                 }
             } else {
-                $raw = @file_get_contents($sourcePath);
-                if ($raw === false || @file_put_contents($outputPath, $raw) === false) {
-                    throw new \RuntimeException('Kapak gorseli kopyalanamadi.');
-                }
+                $this->storeCoverWithGd($sourcePath, $outputPath);
             }
         } else {
-            $raw = @file_get_contents((string) $file->getPathname());
-            if ($raw === false || @file_put_contents($outputPath, $raw) === false) {
-                throw new \RuntimeException('Kapak gorseli kopyalanamadi.');
-            }
+            $this->storeCoverWithGd((string) $file->getPathname(), $outputPath);
         }
 
         if (!is_file($outputPath) || filesize($outputPath) <= 0) {
@@ -589,10 +595,10 @@ class CourseController extends Controller
 
         $dst = imagecreatetruecolor($dstW, $dstH);
         imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $dstW, $dstH, $cropW, $cropH);
-        if (!@imagewebp($dst, $outputPath, 78)) {
+        if (!@imagepng($dst, $outputPath, 6)) {
             imagedestroy($dst);
             imagedestroy($src);
-            throw new \RuntimeException('Kapak gorseli webp olarak kaydedilemedi.');
+            throw new \RuntimeException('Kapak gorseli PNG olarak kaydedilemedi.');
         }
         imagedestroy($dst);
         imagedestroy($src);

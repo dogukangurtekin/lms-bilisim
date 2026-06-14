@@ -85,6 +85,23 @@ class Course extends Model
         }
 
         $relative = 'kapak-gorseli/' . ltrim($cover, '/');
+        $publicPath = public_path($relative);
+        if (is_file($publicPath)) {
+            return asset($relative);
+        }
+
+        $storageFallbacks = [
+            storage_path('app/public/' . $relative),
+            storage_path('app/public/' . preg_replace('/\.png$/i', '.webp', $relative)),
+            storage_path('app/public/course-covers/' . basename($relative)),
+        ];
+
+        foreach ($storageFallbacks as $fallbackPath) {
+            if (is_file($fallbackPath)) {
+                return route('courses.cover', ['path' => basename(dirname($fallbackPath)) . '/' . basename($fallbackPath)]);
+            }
+        }
+
         return asset($relative);
     }
 
