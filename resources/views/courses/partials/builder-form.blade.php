@@ -760,10 +760,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (raw.startsWith('blob:')) return raw;
         if (/^https?:\/\//i.test(raw)) return raw;
         const base = String(appBaseUrl || '').replace(/\/+$/, '');
-        if (raw.startsWith('/course-covers/')) return base + raw;
-        if (raw.startsWith('course-covers/')) return base + '/' + raw;
-        if (raw.startsWith('/storage/course-covers/')) return base + '/course-covers/' + raw.replace(/^\/storage\/course-covers\//i, '');
-        if (raw.startsWith('storage/course-covers/')) return base + '/course-covers/' + raw.replace(/^storage\/course-covers\//i, '');
+        if (raw.startsWith('/kapak-gorseli/')) return base + raw;
+        if (raw.startsWith('kapak-gorseli/')) return base + '/' + raw;
+        if (raw.startsWith('/course-covers/')) return base + '/kapak-gorseli/' + raw.replace(/^\/course-covers\//i, '');
+        if (raw.startsWith('course-covers/')) return base + '/kapak-gorseli/' + raw.replace(/^course-covers\//i, '');
+        if (raw.startsWith('/storage/course-covers/')) return base + '/kapak-gorseli/' + raw.replace(/^\/storage\/course-covers\//i, '');
+        if (raw.startsWith('storage/course-covers/')) return base + '/kapak-gorseli/' + raw.replace(/^storage\/course-covers\//i, '');
         if (raw.startsWith('storage/')) return base + '/' + raw.replace(/^storage\//, '');
         return raw;
     }
@@ -780,9 +782,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         value = value.replace(/^\/+/g, '');
         value = value.replace(/^storage\//i, '');
-        const match = value.match(/(?:^|\/)course-covers\/([^/?#]+)/i);
-        if (match) return 'course-covers/' + match[1];
-        if (value.startsWith('course-covers/')) return value;
+        const match = value.match(/(?:^|\/)(?:course-covers|kapak-gorseli)\/([^/?#]+)/i);
+        if (match) return 'kapak-gorseli/' + match[1];
+        if (value.startsWith('kapak-gorseli/')) return value;
+        if (value.startsWith('course-covers/')) return value.replace(/^course-covers\//i, 'kapak-gorseli/');
         return value;
     }
     function renderList() {
@@ -984,10 +987,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = await response.json();
                 const serverPath = String(data.path || '').trim();
                 const serverUrl = String(data.url || '').trim();
-                state.cover_image = serverPath ? serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'course-covers/') : '';
+                state.cover_image = serverPath ? serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'kapak-gorseli/') : '';
                 if (!state.cover_image && serverUrl) {
-                    const match = serverUrl.match(/\/course-covers\/([^/?#]+)/i);
-                    state.cover_image = match ? ('course-covers/' + match[1]) : '';
+                    const match = serverUrl.match(/\/(?:course-covers|kapak-gorseli)\/([^/?#]+)/i);
+                    state.cover_image = match ? ('kapak-gorseli/' + match[1]) : '';
                 }
             }
         } catch (_) {}

@@ -113,24 +113,24 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => route('courses.cover', ['token' => rtrim(strtr(base64_encode($path), '+/', '-_'), '=')]),
+            'url' => asset($path),
             'path' => $path,
         ]);
     }
-    public function cover(string $token)
+    public function cover(string $path)
     {
-        $decoded = base64_decode(strtr($token, '-_', '+/'), true);
-        $safePath = is_string($decoded) ? trim(str_replace('\\', '/', $decoded), '/') : '';
+        $safePath = trim(str_replace('\\', '/', $path), '/');
         if ($safePath === '' || str_contains($safePath, '..')) {
             abort(404);
         }
         $normalized = preg_replace('#^/?storage/#i', '', $safePath);
+        $normalized = preg_replace('#^/?kapak-gorseli/#i', '', (string) $normalized);
         $normalized = preg_replace('#^/?course-covers/#i', '', (string) $normalized);
-        $fullPath = 'course-covers/' . ltrim((string) $normalized, '/');
-        if (!Storage::disk('public')->exists($fullPath)) {
+        $fullPath = public_path('kapak-gorseli/' . ltrim((string) $normalized, '/'));
+        if (!is_file($fullPath)) {
             abort(404);
         }
-        return response()->file(Storage::disk('public')->path($fullPath), [
+        return response()->file($fullPath, [
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -469,7 +469,7 @@ class CourseController extends Controller
                 'cover_image_file' => $e->getMessage(),
             ]);
         }
-        $payload['cover_image'] = route('courses.cover', ['token' => rtrim(strtr(base64_encode($path), '+/', '-_'), '=')]);
+        $payload['cover_image'] = asset($path);
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
         unset($data['cover_image_file']);
 
@@ -478,8 +478,12 @@ class CourseController extends Controller
 
     private function storeCoverAsWebp(UploadedFile $file): string
     {
-        $relative = 'course-covers/' . Str::uuid() . '.png';
-        $outputPath = Storage::disk('public')->path($relative);
+        $relative = 'kapak-gorseli/' . Str::uuid() . '.png';
+        $outputPath = public_path($relative);
+        $outputDir = dirname($outputPath);
+        if (!is_dir($outputDir)) {
+            @mkdir($outputDir, 0775, true);
+        }
         $sourcePath = $file->getRealPath();
 
         if ($sourcePath && is_file($sourcePath)) {
@@ -502,19 +506,14 @@ class CourseController extends Controller
                     throw new \RuntimeException('Kapak gorseli PNG olarak donusturulemedi.');
                 }
             } else {
-                $file->storePubliclyAs('course-covers', basename($relative), 'public');
+                $file->move($outputDir, basename($relative));
             }
         } else {
-            $file->storePubliclyAs('course-covers', basename($relative), 'public');
+            $file->move($outputDir, basename($relative));
         }
 
-        $publicMirrorPath = public_path($relative);
-        $publicMirrorDir = dirname($publicMirrorPath);
-        if (!is_dir($publicMirrorDir)) {
-            @mkdir($publicMirrorDir, 0775, true);
-        }
-        if (!@copy($outputPath, $publicMirrorPath) || !is_file($publicMirrorPath) || filesize($publicMirrorPath) <= 0) {
-            throw new \RuntimeException('Kapak gorseli genel dizine kopyalanamadi.');
+        if (!is_file($outputPath) || filesize($outputPath) <= 0) {
+            throw new \RuntimeException('Kapak gorseli kaydedilemedi.');
         }
 
         return $relative;

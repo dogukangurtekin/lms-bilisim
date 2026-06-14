@@ -41,7 +41,7 @@ class Course extends Model
 
             if (preg_match('#^https?://#i', $cover)) {
                 if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
-                    $cover = 'course-covers/' . $match[1];
+                    $cover = 'kapak-gorseli/' . $match[1];
                 } else {
                     $decoded['cover_image'] = $cover;
                     return $decoded;
@@ -49,9 +49,10 @@ class Course extends Model
             }
 
             $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
-            $cover = preg_replace('#^/?course-covers/#i', 'course-covers/', $cover);
-            $cover = preg_replace('#^/?courses/cover/#i', 'course-covers/', $cover);
-            $cover = preg_replace('#^/?courses/.*?/course-covers/#i', 'course-covers/', $cover);
+            $cover = preg_replace('#^/?course-covers/#i', 'kapak-gorseli/', $cover);
+            $cover = preg_replace('#^/?kapak-gorseli/#i', 'kapak-gorseli/', $cover);
+            $cover = preg_replace('#^/?courses/cover/#i', 'kapak-gorseli/', $cover);
+            $cover = preg_replace('#^/?courses/.*?/course-covers/#i', 'kapak-gorseli/', $cover);
 
             $decoded['cover_image'] = $cover;
         }
@@ -69,21 +70,22 @@ class Course extends Model
         $cover = str_replace('\\', '/', $cover);
         if (preg_match('#^https?://#i', $cover)) {
             if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
-                $cover = 'course-covers/' . $match[1];
+                $cover = 'kapak-gorseli/' . $match[1];
             } else {
                 return $cover;
             }
         }
         $cover = preg_replace('#^/?storage/#i', '', $cover);
         $cover = preg_replace('#^/?course-covers/#i', '', $cover);
+        $cover = preg_replace('#^/?kapak-gorseli/#i', '', $cover);
         $cover = preg_replace('#^/?courses/cover/#i', '', $cover);
 
         if ($cover === '') {
             return '';
         }
 
-        $relative = 'course-covers/' . ltrim($cover, '/');
-        return route('courses.cover', ['token' => rtrim(strtr(base64_encode($relative), '+/', '-_'), '=')]);
+        $relative = 'kapak-gorseli/' . ltrim($cover, '/');
+        return asset($relative);
     }
 
     public function setLessonPayloadAttribute($value): void

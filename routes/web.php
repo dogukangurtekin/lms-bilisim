@@ -104,7 +104,8 @@ Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'par
     ->middleware('signed')
     ->name('parent.progress-report');
 
-Route::get('/kapak-gorseli/{token}', [CourseController::class, 'cover'])
+Route::get('/kapak-gorseli/{path}', [CourseController::class, 'cover'])
+    ->where('path', '.*')
     ->name('courses.cover');
 
 Route::middleware('auth')->group(function () {
