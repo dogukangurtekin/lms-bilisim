@@ -74,7 +74,13 @@ class Course extends Model
             return '';
         }
 
-        return route('courses.cover', ['path' => ltrim($cover, '/')]);
+        $relative = 'course-covers/' . ltrim($cover, '/');
+        $publicPath = public_path($relative);
+        if (is_file($publicPath) && filesize($publicPath) > 0) {
+            return asset($relative);
+        }
+
+        return route('courses.cover', ['path' => ltrim($relative, '/')]);
     }
 
     public function setLessonPayloadAttribute($value): void

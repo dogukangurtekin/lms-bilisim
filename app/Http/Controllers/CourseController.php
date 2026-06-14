@@ -113,7 +113,7 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => route('courses.cover', ['path' => ltrim($path, '/')]),
+            'url' => asset($path),
             'path' => $path,
         ]);
     }
@@ -468,7 +468,7 @@ class CourseController extends Controller
                 'cover_image_file' => $e->getMessage(),
             ]);
         }
-        $payload['cover_image'] = route('courses.cover', ['path' => ltrim($path, '/')]);
+        $payload['cover_image'] = $path;
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
         unset($data['cover_image_file']);
 
@@ -485,6 +485,15 @@ class CourseController extends Controller
         $outputPath = Storage::disk('public')->path($relative);
         if (!is_file($outputPath) || filesize($outputPath) <= 0) {
             throw new \RuntimeException('Kapak gorseli kaydedilemedi.');
+        }
+
+        $publicMirrorPath = public_path($relative);
+        $publicMirrorDir = dirname($publicMirrorPath);
+        if (!is_dir($publicMirrorDir)) {
+            @mkdir($publicMirrorDir, 0775, true);
+        }
+        if (!@copy($outputPath, $publicMirrorPath) || !is_file($publicMirrorPath) || filesize($publicMirrorPath) <= 0) {
+            throw new \RuntimeException('Kapak gorseli genel dizine kopyalanamadi.');
         }
 
         return $relative;

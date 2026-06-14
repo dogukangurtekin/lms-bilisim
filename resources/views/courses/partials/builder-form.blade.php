@@ -762,9 +762,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const base = String(appBaseUrl || '').replace(/\/+$/, '');
         if (raw.startsWith('/course-covers/')) return base + raw;
         if (raw.startsWith('course-covers/')) return base + '/' + raw;
-        if (raw.startsWith('/storage/course-covers/')) return raw.replace('/storage/', '/');
-        if (raw.startsWith('storage/course-covers/')) return base + '/' + raw.replace(/^storage\//, '');
-        if (raw.startsWith('storage/')) return base + '/' + raw;
+        if (raw.startsWith('/storage/course-covers/')) return base + '/course-covers/' + raw.replace(/^\/storage\/course-covers\//i, '');
+        if (raw.startsWith('storage/course-covers/')) return base + '/course-covers/' + raw.replace(/^storage\/course-covers\//i, '');
+        if (raw.startsWith('storage/')) return base + '/' + raw.replace(/^storage\//, '');
         return raw;
     }
     function normalizeCoverStoragePath(url) {

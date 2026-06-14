@@ -32,7 +32,7 @@
                 loading="eager"
                 decoding="async"
                 onerror="this.style.opacity='0';this.style.visibility='hidden';"
-                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:1;opacity:.01;"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;z-index:1;opacity:1;"
             >
             <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(15,23,42,.12) 0%,rgba(15,23,42,.02) 24%,rgba(255,255,255,0) 48%);z-index:2;pointer-events:none;"></div>
             <div style="position:absolute;left:18px;top:18px;z-index:20;width:64px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:#fff;box-shadow:0 8px 20px rgba(15,23,42,.16);overflow:hidden;">
