@@ -506,10 +506,16 @@ class CourseController extends Controller
                     throw new \RuntimeException('Kapak gorseli PNG olarak donusturulemedi.');
                 }
             } else {
-                $file->move($outputDir, basename($relative));
+                $raw = @file_get_contents($sourcePath);
+                if ($raw === false || @file_put_contents($outputPath, $raw) === false) {
+                    throw new \RuntimeException('Kapak gorseli kopyalanamadi.');
+                }
             }
         } else {
-            $file->move($outputDir, basename($relative));
+            $raw = @file_get_contents((string) $file->getPathname());
+            if ($raw === false || @file_put_contents($outputPath, $raw) === false) {
+                throw new \RuntimeException('Kapak gorseli kopyalanamadi.');
+            }
         }
 
         if (!is_file($outputPath) || filesize($outputPath) <= 0) {
