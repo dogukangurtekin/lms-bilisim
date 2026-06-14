@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const existingCoverUrl = @json($existingCoverUrl);
     const appBaseUrl = @json(url('/'));
     const draftKey = 'lesson_builder_draft_{{ $isEdit ? 'edit_' . $course->id : 'create' }}';
-    const shouldPersistDraft = {{ $isEdit ? 'true' : 'false' }};
+    const shouldPersistDraft = true;
     if ((!state.slides || state.slides.length === 0) && shouldPersistDraft) {
         try {
             const draft = localStorage.getItem(draftKey);
@@ -1175,7 +1175,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (builderForm) {
-        builderForm.addEventListener('submit', () => {
+        builderForm.addEventListener('submit', (e) => {
+            const title = (lessonTitle?.value || '').trim();
+            if (!title) {
+                e.preventDefault();
+                alert('Ders basligi bos olamaz. Lütfen bir ders adı girin.');
+                lessonTitle?.focus();
+                return;
+            }
             saveCurrent();
             // Basarili kayittan sonra taslak temizlensin.
             if (shouldPersistDraft) {
