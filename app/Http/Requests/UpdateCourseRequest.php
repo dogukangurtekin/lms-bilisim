@@ -32,6 +32,12 @@ class UpdateCourseRequest extends FormRequest
             return;
         }
 
+        $existingCourse = $this->route('course');
+        if ($existingCourse && !empty($existingCourse->teacher_id)) {
+            $this->merge(['teacher_id' => $existingCourse->teacher_id]);
+            return;
+        }
+
         $userId = Auth::id();
         $teacherId = null;
 

@@ -49,6 +49,12 @@ class StoreCourseRequest extends FormRequest
 
         if ($teacherId) {
             $this->merge(['teacher_id' => $teacherId]);
+            return;
+        }
+
+        $fallbackTeacherId = Teacher::query()->value('id');
+        if ($fallbackTeacherId) {
+            $this->merge(['teacher_id' => $fallbackTeacherId]);
         }
     }
 }
