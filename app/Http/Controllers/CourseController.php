@@ -44,7 +44,10 @@ class CourseController extends Controller
             ->withQueryString();
 
         $teachers = Teacher::with('user')->orderByDesc('id')->get();
-        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers'));
+        $canManageCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
+        $canAssignCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
+
+        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'canManageCourses', 'canAssignCourses'));
     }
 
     public function create()
