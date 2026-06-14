@@ -36,25 +36,7 @@ class Course extends Model
         }
 
         if (!empty($decoded['cover_image']) && is_string($decoded['cover_image'])) {
-            $cover = trim((string) $decoded['cover_image']);
-            $cover = str_replace('\\', '/', $cover);
-
-            if (preg_match('#^https?://#i', $cover)) {
-                if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
-                    $cover = 'kapak-gorseli/' . $match[1];
-                } else {
-                    $decoded['cover_image'] = $cover;
-                    return $decoded;
-                }
-            }
-
-            $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
-            $cover = preg_replace('#^/?course-covers/#i', 'kapak-gorseli/', $cover);
-            $cover = preg_replace('#^/?kapak-gorseli/#i', 'kapak-gorseli/', $cover);
-            $cover = preg_replace('#^/?courses/cover/#i', 'kapak-gorseli/', $cover);
-            $cover = preg_replace('#^/?courses/.*?/course-covers/#i', 'kapak-gorseli/', $cover);
-
-            $decoded['cover_image'] = $cover;
+            $decoded['cover_image'] = $this->normalizeCoverPath((string) $decoded['cover_image']);
         }
 
         return $decoded;
@@ -62,24 +44,7 @@ class Course extends Model
 
     public function coverImageUrl(): string
     {
-        $cover = trim((string) data_get($this->lesson_payload, 'cover_image', ''));
-        if ($cover === '') {
-            return '';
-        }
-
-        $cover = str_replace('\\', '/', $cover);
-        if (preg_match('#^https?://#i', $cover)) {
-            if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
-                $cover = 'kapak-gorseli/' . $match[1];
-            } else {
-                return $cover;
-            }
-        }
-        $cover = preg_replace('#^/?storage/#i', '', $cover);
-        $cover = preg_replace('#^/?course-covers/#i', '', $cover);
-        $cover = preg_replace('#^/?kapak-gorseli/#i', '', $cover);
-        $cover = preg_replace('#^/?courses/cover/#i', '', $cover);
-
+        $cover = $this->normalizeCoverPath((string) data_get($this->lesson_payload, 'cover_image', ''));
         if ($cover === '') {
             return '';
         }
@@ -103,6 +68,34 @@ class Course extends Model
         }
 
         return asset($relative);
+    }
+
+    private function normalizeCoverPath(string $cover): string
+    {
+        $cover = trim(str_replace('\\', '/', $cover));
+        if ($cover === '') {
+            return '';
+        }
+
+        if (str_starts_with($cover, 'http://') || str_starts_with($cover, 'https://')) {
+            $path = (string) parse_url($cover, PHP_URL_PATH);
+            $cover = trim($path, '/');
+        }
+
+        $cover = ltrim($cover, '/');
+        $cover = preg_replace('#^storage/#i', '', $cover) ?? $cover;
+
+        if (str_starts_with($cover, 'course-covers/')) {
+            $cover = 'kapak-gorseli/' . substr($cover, strlen('course-covers/'));
+        } elseif (str_starts_with($cover, 'kapak-gorseli/')) {
+            $cover = $cover;
+        } elseif (str_starts_with($cover, 'courses/cover/')) {
+            $cover = 'kapak-gorseli/' . substr($cover, strlen('courses/cover/'));
+        } elseif (str_contains($cover, '/course-covers/')) {
+            $cover = 'kapak-gorseli/' . basename($cover);
+        }
+
+        return ltrim($cover, '/');
     }
 
     public function setLessonPayloadAttribute($value): void
