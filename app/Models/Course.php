@@ -40,8 +40,12 @@ class Course extends Model
             $cover = str_replace('\\', '/', $cover);
 
             if (preg_match('#^https?://#i', $cover)) {
-                $decoded['cover_image'] = $cover;
-                return $decoded;
+                if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
+                    $cover = 'course-covers/' . $match[1];
+                } else {
+                    $decoded['cover_image'] = $cover;
+                    return $decoded;
+                }
             }
 
             $cover = preg_replace('#^/?storage/#i', 'storage/', $cover);
@@ -64,7 +68,11 @@ class Course extends Model
 
         $cover = str_replace('\\', '/', $cover);
         if (preg_match('#^https?://#i', $cover)) {
-            return $cover;
+            if (preg_match('#/(?:course-covers|kapak-gorseli)/([^/?#]+)#i', $cover, $match)) {
+                $cover = 'course-covers/' . $match[1];
+            } else {
+                return $cover;
+            }
         }
         $cover = preg_replace('#^/?storage/#i', '', $cover);
         $cover = preg_replace('#^/?course-covers/#i', '', $cover);
@@ -75,7 +83,7 @@ class Course extends Model
         }
 
         $relative = 'course-covers/' . ltrim($cover, '/');
-        return route('courses.cover', ['path' => ltrim($relative, '/')]);
+        return route('courses.cover', ['token' => rtrim(strtr(base64_encode($relative), '+/', '-_'), '=')]);
     }
 
     public function setLessonPayloadAttribute($value): void

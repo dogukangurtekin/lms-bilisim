@@ -113,13 +113,14 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => route('courses.cover', ['path' => ltrim($path, '/')]),
+            'url' => route('courses.cover', ['token' => rtrim(strtr(base64_encode($path), '+/', '-_'), '=')]),
             'path' => $path,
         ]);
     }
-    public function cover(string $path)
+    public function cover(string $token)
     {
-        $safePath = trim(str_replace('\\', '/', $path), '/');
+        $decoded = base64_decode(strtr($token, '-_', '+/'), true);
+        $safePath = is_string($decoded) ? trim(str_replace('\\', '/', $decoded), '/') : '';
         if ($safePath === '' || str_contains($safePath, '..')) {
             abort(404);
         }
@@ -468,7 +469,7 @@ class CourseController extends Controller
                 'cover_image_file' => $e->getMessage(),
             ]);
         }
-        $payload['cover_image'] = route('courses.cover', ['path' => ltrim($path, '/')]);
+        $payload['cover_image'] = route('courses.cover', ['token' => rtrim(strtr(base64_encode($path), '+/', '-_'), '=')]);
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
         unset($data['cover_image_file']);
 
