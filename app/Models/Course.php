@@ -54,21 +54,26 @@ class Course extends Model
 
         $relative = 'kapak-gorseli/' . ltrim($cover, '/');
         $relative = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $relative) ?? $relative;
-        $publicPath = public_path($relative);
-        if (is_file($publicPath)) {
-            return asset($relative);
+        $publicPaths = [
+            public_path($relative),
+            public_path('public/' . $relative),
+        ];
+        foreach ($publicPaths as $publicPath) {
+            if (is_file($publicPath)) {
+                return asset($relative);
+            }
         }
 
-        $storageFallbacks = [
-            storage_path('app/public/' . $relative),
-            storage_path('app/public/' . preg_replace('/\.png$/i', '.webp', $relative)),
-            storage_path('app/public/course-covers/' . basename($relative)),
-        ];
+        if (is_file(storage_path('app/public/' . $relative))) {
+            return route('courses.cover', ['path' => $relative]);
+        }
 
-        foreach ($storageFallbacks as $fallbackPath) {
-            if (is_file($fallbackPath)) {
-                return route('courses.cover', ['path' => basename(dirname($fallbackPath)) . '/' . basename($fallbackPath)]);
-            }
+        if (is_file(storage_path('app/public/course-covers/' . basename($relative)))) {
+            return route('courses.cover', ['path' => 'course-covers/' . basename($relative)]);
+        }
+
+        if (is_file(public_path('public/' . $relative))) {
+            return asset($relative);
         }
 
         return asset($relative);

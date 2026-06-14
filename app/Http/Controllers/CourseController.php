@@ -133,7 +133,7 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => asset($path),
+            'url' => route('courses.cover', ['path' => $path]),
             'path' => $path,
         ]);
     }
@@ -147,7 +147,10 @@ class CourseController extends Controller
         $normalized = preg_replace('#^/?kapak-gorseli/#i', '', (string) $normalized);
         $normalized = preg_replace('#^/?course-covers/#i', '', (string) $normalized);
         $relative = ltrim((string) $normalized, '/');
+        $baseDir = $this->coverStorageDirectory();
         $candidates = array_values(array_filter([
+            $baseDir . '/' . $relative,
+            $baseDir . '/' . preg_replace('/\.webp$/i', '.png', $relative),
             public_path('kapak-gorseli/' . $relative),
             public_path('kapak-gorseli/' . preg_replace('/\.webp$/i', '.png', $relative)),
             storage_path('app/public/kapak-gorseli/' . $relative),
@@ -511,7 +514,7 @@ class CourseController extends Controller
     private function storeCoverAsWebp(UploadedFile $file): string
     {
         $relative = 'kapak-gorseli/' . Str::uuid() . '.png';
-        $outputPath = public_path($relative);
+        $outputPath = $this->coverStorageDirectory() . '/' . basename($relative);
         $outputDir = dirname($outputPath);
         if (!is_dir($outputDir)) {
             @mkdir($outputDir, 0775, true);
@@ -549,6 +552,21 @@ class CourseController extends Controller
         }
 
         return $relative;
+    }
+
+    private function coverStorageDirectory(): string
+    {
+        $alt = public_path('public/kapak-gorseli');
+        if (is_dir($alt) || @mkdir($alt, 0775, true) || is_dir($alt)) {
+            return $alt;
+        }
+
+        $preferred = public_path('kapak-gorseli');
+        if (is_dir($preferred) || @mkdir($preferred, 0775, true) || is_dir($preferred)) {
+            return $preferred;
+        }
+
+        return $preferred;
     }
 
     private function resolveMagickBinary(): ?string
