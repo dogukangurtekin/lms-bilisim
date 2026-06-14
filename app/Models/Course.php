@@ -75,11 +75,6 @@ class Course extends Model
         }
 
         $relative = 'course-covers/' . ltrim($cover, '/');
-        $publicPath = public_path($relative);
-        if (is_file($publicPath) && filesize($publicPath) > 0) {
-            return asset($relative);
-        }
-
         return route('courses.cover', ['path' => ltrim($relative, '/')]);
     }
 

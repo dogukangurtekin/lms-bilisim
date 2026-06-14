@@ -113,7 +113,7 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => asset($path),
+            'url' => route('courses.cover', ['path' => ltrim($path, '/')]),
             'path' => $path,
         ]);
     }
@@ -468,7 +468,7 @@ class CourseController extends Controller
                 'cover_image_file' => $e->getMessage(),
             ]);
         }
-        $payload['cover_image'] = $path;
+        $payload['cover_image'] = route('courses.cover', ['path' => ltrim($path, '/')]);
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
         unset($data['cover_image_file']);
 
