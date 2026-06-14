@@ -49,7 +49,11 @@ class Course extends Model
             return '';
         }
 
+        $cover = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
+        $cover = preg_replace('#^(?:course-covers/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
+
         $relative = 'kapak-gorseli/' . ltrim($cover, '/');
+        $relative = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $relative) ?? $relative;
         $publicPath = public_path($relative);
         if (is_file($publicPath)) {
             return asset($relative);
@@ -94,6 +98,8 @@ class Course extends Model
         } elseif (str_contains($cover, '/course-covers/')) {
             $cover = 'kapak-gorseli/' . basename($cover);
         }
+
+        $cover = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
 
         return ltrim($cover, '/');
     }
