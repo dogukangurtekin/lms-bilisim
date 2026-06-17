@@ -20,13 +20,26 @@
 @php
     $hasCover = filled($image);
     $normalizedDescription = str_replace(["\\r\\n", "\\n", "\\r"], "\n", (string) $description);
+    $difficultyValue = trim((string) $difficulty);
+    $difficultyStyle = match (mb_strtolower($difficultyValue)) {
+        'kolay' => 'background:#16a34a;color:#fff;',
+        'orta' => 'background:#2563eb;color:#fff;',
+        'zor' => 'background:#ef4444;color:#fff;',
+        default => 'background:#6d28d9;color:#fff;',
+    };
 @endphp
 
-<article class="group relative flex h-full flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_14px_40px_rgba(15,23,42,.10)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_26px_55px_rgba(15,23,42,.14)]">
+<article
+    class="group relative flex h-full flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]"
+    style="border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;"
+>
     <div class="relative">
         <div class="relative h-56 overflow-hidden bg-slate-100">
             @if($hasCover)
-                <div class="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]" style="background-image:url('{{ $image }}')"></div>
+                <div
+                    class="absolute inset-0 bg-no-repeat bg-center transition duration-500 group-hover:scale-[1.01]"
+                    style="background-image:url('{{ $image }}');background-size:contain;background-color:#f8fafc;"
+                ></div>
             @else
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(76,29,149,.14),_transparent_32%),linear-gradient(135deg,#eef2ff_0%,#f8fafc_100%)]"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
@@ -53,11 +66,11 @@
 
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
         <div class="flex items-start justify-between gap-4">
-            <h4 class="text-[28px] font-black leading-tight tracking-tight text-slate-900">
+            <h4 class="text-[32px] font-black leading-tight tracking-tight text-slate-900">
                 {{ $title }}
             </h4>
-            <span class="inline-flex shrink-0 items-center rounded-full bg-violet-700 px-4 py-2 text-sm font-bold text-white shadow-sm">
-                {{ $difficulty }}
+            <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-bold shadow-sm" style="{{ $difficultyStyle }}">
+                {{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}
             </span>
         </div>
 

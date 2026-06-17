@@ -27,9 +27,9 @@
 <div class="lesson-builder">
     <div class="lesson-builder-top">
         <div style="display:grid;grid-template-columns:1fr 300px;gap:10px;width:100%">
-            <input type="text" id="lesson_title" placeholder="Ders ba?l???" value="{{ old('name', $isEdit ? $course->name : '') }}">
+            <input type="text" id="lesson_title" placeholder="Ders başlığı" value="{{ old('name', $isEdit ? $course->name : '') }}">
             <select id="top_class_select">
-                <option value="__ALL__" @selected($selectedClass === '__ALL__')>T?m S?n?flar</option>
+                <option value="__ALL__" @selected($selectedClass === '__ALL__')>Tüm Sınıflar</option>
                 @foreach($classes as $class)
                     <option value="{{ $class->id }}" @selected((string)$selectedClass === (string)$class->id)>
                         {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
@@ -54,8 +54,8 @@
 
         <section class="builder-center">
             <div class="builder-tabs">
-                <button type="button" class="tab-btn" data-tab="text">Yaz? Ekle</button>
-                <button type="button" class="tab-btn" data-tab="media">G?rsel/Video</button>
+                <button type="button" class="tab-btn" data-tab="text">Yazı Ekle</button>
+                <button type="button" class="tab-btn" data-tab="media">Görsel/Video</button>
                 <button type="button" class="tab-btn active" data-tab="code">Kod Ekle</button>
                 <button type="button" class="tab-btn" data-tab="question">Soru Ekle</button>
             </div>
@@ -65,14 +65,14 @@
                 <input type="text" id="slide_title">
                 <label>Sayfa XP</label>
                 <input type="number" id="slide_xp" min="0" max="500" value="0">
-                <label>Konu Anlat?m? / A??klama</label>
+                <label>Konu Anlatımı / Açıklama</label>
                 <textarea id="slide_content" rows="6"></textarea>
-                <label>??renci Y?nlendirme Notu</label>
-                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada ??renci ne yapmal??"></textarea>
+                <label>Öğrenci Yönlendirme Notu</label>
+                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
             </div>
 
             <div class="builder-panel" data-panel="media" style="display:none">
-                <label>G?rsel URL</label>
+                <label>Görsel URL</label>
                 <input type="text" id="slide_image_url" placeholder="https://...">
                 <label>Video URL</label>
                 <input type="text" id="slide_video_url" placeholder="https://youtube.com/...">
@@ -107,7 +107,7 @@
                     <div style="display:grid;gap:10px">
                         <div>
                             <label>Müfredat Başlığı</label>
-                            <input type="text" id="curriculum_title" placeholder="Mobil Dunyaya Ilk Adim: Arayuzu Kesfediyorum">
+                            <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                             <div>
@@ -136,21 +136,21 @@
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
-                <label>??erik Tipi</label>
+                <label>İçerik Tipi</label>
                 <select id="slide_kind">
-                    <option value="topic">Konu Anlatimi</option>
-                    <option value="question">Soru Sayfasi</option>
-                    <option value="task">G?rev Sayfas?</option>
-                    <option value="summary">?zet Sayfas?</option>
+                    <option value="topic">Konu Anlatımı</option>
+                    <option value="question">Soru Sayfası</option>
+                    <option value="task">Görev Sayfası</option>
+                    <option value="summary">Özet Sayfası</option>
                 </select>
                 <label>Etkilesim Tipi</label>
                 <select id="slide_interaction_type">
                     <option value="none">Yok</option>
-                    <option value="multiple_choice">?oktan Se?meli</option>
-                    <option value="true_false">Do?ru Yanl??</option>
-                    <option value="matching">E?le?tirme</option>
-                    <option value="drag_drop">S?r?kle B?rak</option>
-                    <option value="short_answer">K?sa Cevap</option>
+                    <option value="multiple_choice">Çoktan Seçmeli</option>
+                    <option value="true_false">Doğru Yanlış</option>
+                    <option value="matching">Eşleştirme</option>
+                    <option value="drag_drop">Sürükle Bırak</option>
+                    <option value="short_answer">Kısa Cevap</option>
                     <option value="checklist">Kontrol Listesi</option>
                 </select>
                 <label>Soru Metni</label>
@@ -165,7 +165,7 @@
                         </select>
                     </div>
                     <div>
-                        <label>S?re</label>
+                        <label>Süre</label>
                         <select id="slide_time_limit">
                             @for($s=10;$s<=60;$s+=5)
                                 <option value="{{ $s }}">{{ $s }} sn</option>
@@ -198,22 +198,22 @@
                 <option value="Oyun">Oyun</option>
                 <option value="Yapay Zeka">Yapay Zeka</option>
             </select>
-            <label>Ders Zorlu?u</label>
+            <label>Ders Zorluğu</label>
             <select id="lesson_difficulty">
                 <option value="Kolay">Kolay</option>
                 <option value="Orta">Orta</option>
                 <option value="Zor">Zor</option>
             </select>
-            <label>Ders A??klamas?</label>
-            <textarea id="lesson_description" rows="3" placeholder="Ders ba?l??? altinda gosterilecek aciklama"></textarea>
-            <label>Kapak G?rseli Y?kle</label>
+            <label>Ders Açıklaması</label>
+            <textarea id="lesson_description" rows="3" placeholder="Ders başlığı altında gösterilecek açıklama"></textarea>
+            <label>Kapak Görseli Yükle</label>
             <input type="file" id="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
             <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
-                <img id="cover_image_preview" alt="Kapak ?nizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
+                <img id="cover_image_preview" alt="Kapak önizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
             </div>
-            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapa?? Sil</button>
+            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapağı Sil</button>
         </aside>
     </div>
 </div>
@@ -229,7 +229,7 @@
 <div id="builder-preview-modal" class="modal">
     <div class="modal-card" style="width:min(96vw,1500px);max-width:96vw;max-height:92vh;display:flex;flex-direction:column">
         <div class="modal-head">
-            <strong>Ders ?nizleme</strong>
+            <strong>Ders Önizleme</strong>
             <button class="btn" type="button" data-close-modal>Kapat</button>
         </div>
         <div id="preview_slide_stage" class="card" style="min-height:70vh;max-height:74vh;overflow:hidden;margin:0 0 10px"></div>
@@ -244,8 +244,8 @@
 <div id="cover-crop-modal" class="modal">
     <div class="modal-card" style="width:min(92vw,980px);max-width:980px">
         <div class="modal-head">
-            <strong>Kapak G?rseli K?rp (16:9)</strong>
-            <button class="btn" type="button" id="cover-crop-cancel">?ptal</button>
+            <strong>Kapak Görseli Kırp (16:9)</strong>
+            <button class="btn" type="button" id="cover-crop-cancel">İptal</button>
         </div>
         <div style="display:grid;gap:10px">
             <div id="cover-crop-viewport" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #cbd5e1;background:#0f172a">
@@ -262,7 +262,7 @@
                     <span style="font-size:12px;color:#64748b">Zoom</span>
                     <input id="cover-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
                 </label>
-                <button class="btn" type="button" id="cover-crop-apply">K?rpmay? Uygula</button>
+                <button class="btn" type="button" id="cover-crop-apply">Kırpmayı Uygula</button>
             </div>
         </div>
     </div>
@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (s.question_prompt) html += '<div class="card"><b>Soru:</b> ' + escapeHtml(s.question_prompt) + '</div>';
         if (s.interaction_type && s.interaction_type !== 'none') {
             const p = Number(s.points || 5) * (s.double_points ? 2 : 1);
-            html += '<p><b>Puan:</b> ' + p + ' | <b>S?re:</b> ' + Number(s.time_limit || 10) + ' sn</p>';
+            html += '<p><b>Puan:</b> ' + p + ' | <b>Süre:</b> ' + Number(s.time_limit || 10) + ' sn</p>';
         }
         if (s.code) {
             const mergedCode = (themeCss ? ('<style>' + themeCss + '</style>') : '') + String(s.code || '');
@@ -1171,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const title = (lessonTitle?.value || '').trim();
             if (!title) {
                 e.preventDefault();
-                alert('Ders ba?l??? bos olamaz. Lütfen bir ders adı girin.');
+                alert('Ders başlığı boş olamaz. Lütfen bir ders adı girin.');
                 lessonTitle?.focus();
                 return;
             }

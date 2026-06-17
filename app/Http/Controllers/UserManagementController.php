@@ -120,7 +120,7 @@ class UserManagementController extends Controller
         return $this->bulkStoreByRole($request, 'teacher');
     }
 
-    private function bulkStoreByRole(Request $request, string $roleSlug): RedirectResponse
+    private function bulkStoreByRole(Request $request, string $roleSlug): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         @set_time_limit(300);
 
@@ -242,9 +242,30 @@ class UserManagementController extends Controller
                 $message .= '. Ornek hata: ' . $errorSamples[0];
             }
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $message . '. XLSX veya XLS kullanin.',
+                    'created' => 0,
+                    'skipped' => $skipped,
+                    'total' => max(1, count($rows) - 1),
+                ], 422);
+            }
             return back()->withErrors(['file' => $message . '. XLSX veya XLS kullanin.']);
         }
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => "Toplu kayit tamamlandi ({$roleSlug}).",
+                'created' => $created,
+                'skipped' => $skipped,
+                'total' => max(1, count($rows) - 1),
+                'duplicate_count' => $duplicateCount,
+                'invalid_count' => $invalidCount,
+                'failed_count' => $failedCount,
+            ]);
+        }
         return redirect()->route('users.index')->with('ok', "Toplu kayit tamamlandi ({$roleSlug}). Basarili: {$created}, Atlanan: {$skipped}.");
     }
 

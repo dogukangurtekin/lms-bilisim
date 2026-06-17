@@ -6,6 +6,8 @@
     .classes-form .field-wrap{min-width:180px}
     .classes-filter .field-wrap{min-width:180px}
     .classes-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .classes-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .classes-actions .btn-danger{background:#dc2626 !important;border-color:#b91c1c !important}
     @media (max-width: 768px){
         .classes-form,.classes-filter{display:grid !important;grid-template-columns:1fr;gap:10px !important;align-items:stretch !important}
         .classes-form .field-wrap,.classes-filter .field-wrap{min-width:0;width:100%}
@@ -15,6 +17,15 @@
     }
 </style>
 <div class="card">
+    <div class="classes-actions" style="margin-bottom:14px">
+        @if(auth()->user()?->hasRole('admin'))
+            <form id="classes-destroy-all-form" method="POST" action="{{ route('classes.destroy-all') }}" data-confirm="Tüm sınıflar sistemden kaldırılsın mı?">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Tüm Sınıfları Sil</button>
+            </form>
+        @endif
+    </div>
     <form method="POST" action="{{ route('classes.store') }}" class="actions classes-form" style="margin-bottom:14px;align-items:end;flex-wrap:wrap;gap:10px">
         @csrf
         <div class="field-wrap"><label>Sınıf Adı</label><input name="name" value="{{ old('name') }}" placeholder="Örn: 5"></div>
@@ -51,12 +62,17 @@
     const form = document.getElementById('classes-filter-form');
     const className = document.getElementById('classes-class-name');
     const section = document.getElementById('classes-section');
+    const destroyAllForm = document.getElementById('classes-destroy-all-form');
     if (form) {
         let timer = null;
         const submitLater = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => form.submit(), 300); };
         className?.addEventListener('input', submitLater);
         section?.addEventListener('input', submitLater);
     }
+    destroyAllForm?.addEventListener('submit', (e) => {
+        const ok = window.confirm('Tüm sınıflar silinsin mi? Bu işlem geri alınamaz.');
+        if (!ok) e.preventDefault();
+    });
 
 })();
 </script>
