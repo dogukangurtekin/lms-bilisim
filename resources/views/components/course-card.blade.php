@@ -83,22 +83,23 @@
             $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
             $btnCols = max(2, min(4, $btnCount));
         @endphp
-        <div class="mt-auto grid gap-2" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
+        <div class="mt-auto grid gap-3" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
             <a href="{{ $contentUrl }}"
-               class="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-slate-800">
+               style="display:inline-flex;align-items:center;justify-content:center;height:48px;border-radius:999px;background:linear-gradient(135deg,#1f2937,#0f172a);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 10px 20px rgba(15,23,42,.12);transition:transform .15s ease,filter .15s ease;">
                 İçerik
             </a>
 
             <a href="{{ $primaryUrl }}"
-               class="inline-flex h-12 items-center justify-center rounded-full bg-gradient-to-r from-violet-700 via-indigo-600 to-blue-600 px-4 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:-translate-y-0.5 hover:brightness-110">
+               style="display:inline-flex;align-items:center;justify-content:center;height:48px;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(124,58,237,.18);transition:transform .15s ease,filter .15s ease;">
                 {{ $primaryLabel }}
             </a>
 
             @if(!empty($deleteUrl))
                 <a
                     href="{{ $deleteUrl }}"
-                    class="course-delete-link inline-flex h-12 items-center justify-center rounded-full bg-rose-500 px-4 text-sm font-bold text-white shadow-lg shadow-rose-500/20 transition hover:-translate-y-0.5 hover:bg-rose-600"
+                    class="course-delete-link"
                     data-delete-url="{{ $deleteUrl }}"
+                    style="display:inline-flex;align-items:center;justify-content:center;height:48px;border-radius:999px;background:linear-gradient(135deg,#fb7185,#e11d48);color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(225,29,72,.18);transition:transform .15s ease,filter .15s ease;"
                 >
                     Dersi Sil
                 </a>
@@ -107,7 +108,7 @@
             @if($assignEnabled && !empty($assignCourseId))
                 <button
                     type="button"
-                    class="inline-flex h-12 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-4 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:brightness-110"
+                    style="display:inline-flex;align-items:center;justify-content:center;height:48px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;font-size:15px;font-weight:800;text-decoration:none;border:0;box-shadow:0 12px 24px rgba(249,115,22,.18);cursor:pointer;transition:transform .15s ease,filter .15s ease;"
                     data-assign-course-id="{{ $assignCourseId }}"
                     data-assign-course-name="{{ $assignCourseName }}"
                     data-assign-current-teacher="{{ (int) $assignCurrentTeacher }}"

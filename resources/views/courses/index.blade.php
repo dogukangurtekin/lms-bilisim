@@ -189,13 +189,14 @@
                         name="q"
                         value="{{ $q ?? request('q') }}"
                         placeholder="Ders ara..."
+                        style="box-shadow:0 12px 28px rgba(15,23,42,.08);"
                     >
                     <div class="courses-actions">
-                        <a href="{{ route('courses.create') }}" class="primary">+ Ders Oluştur</a>
-                        <button id="course-import-open" type="button" class="teal">Yükle</button>
-                        <a href="{{ route('courses.export-all') }}" class="blue">İndir</a>
+                        <a href="{{ route('courses.create') }}" class="primary" style="box-shadow:0 16px 30px rgba(124,58,237,.22);">+ Ders Oluştur</a>
+                        <button id="course-import-open" type="button" class="teal" style="box-shadow:0 16px 30px rgba(20,184,166,.22);">Yükle</button>
+                        <a href="{{ route('courses.export-all') }}" class="blue" style="box-shadow:0 16px 30px rgba(59,130,246,.22);">İndir</a>
                         @if(auth()->user()?->hasRole('admin'))
-                            <button type="submit" form="course-destroy-all-form" class="red">Sil</button>
+                            <button type="submit" form="course-destroy-all-form" class="red" style="box-shadow:0 16px 30px rgba(239,68,68,.22);">Sil</button>
                         @endif
                     </div>
                 </form>
