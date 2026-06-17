@@ -27,9 +27,9 @@
 <div class="lesson-builder">
     <div class="lesson-builder-top">
         <div style="display:grid;grid-template-columns:1fr 300px;gap:10px;width:100%">
-            <input type="text" id="lesson_title" placeholder="Ders basligi" value="{{ old('name', $isEdit ? $course->name : '') }}">
+            <input type="text" id="lesson_title" placeholder="Ders ba?l???" value="{{ old('name', $isEdit ? $course->name : '') }}">
             <select id="top_class_select">
-                <option value="__ALL__" @selected($selectedClass === '__ALL__')>Tum Siniflar</option>
+                <option value="__ALL__" @selected($selectedClass === '__ALL__')>T?m S?n?flar</option>
                 @foreach($classes as $class)
                     <option value="{{ $class->id }}" @selected((string)$selectedClass === (string)$class->id)>
                         {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
@@ -54,8 +54,8 @@
 
         <section class="builder-center">
             <div class="builder-tabs">
-                <button type="button" class="tab-btn" data-tab="text">Yazi Ekle</button>
-                <button type="button" class="tab-btn" data-tab="media">Gorsel/Video</button>
+                <button type="button" class="tab-btn" data-tab="text">Yaz? Ekle</button>
+                <button type="button" class="tab-btn" data-tab="media">G?rsel/Video</button>
                 <button type="button" class="tab-btn active" data-tab="code">Kod Ekle</button>
                 <button type="button" class="tab-btn" data-tab="question">Soru Ekle</button>
             </div>
@@ -65,14 +65,14 @@
                 <input type="text" id="slide_title">
                 <label>Sayfa XP</label>
                 <input type="number" id="slide_xp" min="0" max="500" value="0">
-                <label>Konu Anlatimi / Aciklama</label>
+                <label>Konu Anlat?m? / A??klama</label>
                 <textarea id="slide_content" rows="6"></textarea>
-                <label>Ogrenci Yonlendirme Notu</label>
-                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada ogrenci ne yapmali?"></textarea>
+                <label>??renci Y?nlendirme Notu</label>
+                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada ??renci ne yapmal??"></textarea>
             </div>
 
             <div class="builder-panel" data-panel="media" style="display:none">
-                <label>Gorsel URL</label>
+                <label>G?rsel URL</label>
                 <input type="text" id="slide_image_url" placeholder="https://...">
                 <label>Video URL</label>
                 <input type="text" id="slide_video_url" placeholder="https://youtube.com/...">
@@ -136,21 +136,21 @@
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
-                <label>Icerik Tipi</label>
+                <label>??erik Tipi</label>
                 <select id="slide_kind">
                     <option value="topic">Konu Anlatimi</option>
                     <option value="question">Soru Sayfasi</option>
-                    <option value="task">Gorev Sayfasi</option>
-                    <option value="summary">Ozet Sayfasi</option>
+                    <option value="task">G?rev Sayfas?</option>
+                    <option value="summary">?zet Sayfas?</option>
                 </select>
                 <label>Etkilesim Tipi</label>
                 <select id="slide_interaction_type">
                     <option value="none">Yok</option>
-                    <option value="multiple_choice">Coktan Secmeli</option>
-                    <option value="true_false">Dogru Yanlis</option>
-                    <option value="matching">Eslestirme</option>
-                    <option value="drag_drop">Surukle Birak</option>
-                    <option value="short_answer">Kisa Cevap</option>
+                    <option value="multiple_choice">?oktan Se?meli</option>
+                    <option value="true_false">Do?ru Yanl??</option>
+                    <option value="matching">E?le?tirme</option>
+                    <option value="drag_drop">S?r?kle B?rak</option>
+                    <option value="short_answer">K?sa Cevap</option>
                     <option value="checklist">Kontrol Listesi</option>
                 </select>
                 <label>Soru Metni</label>
@@ -165,7 +165,7 @@
                         </select>
                     </div>
                     <div>
-                        <label>Sure</label>
+                        <label>S?re</label>
                         <select id="slide_time_limit">
                             @for($s=10;$s<=60;$s+=5)
                                 <option value="{{ $s }}">{{ $s }} sn</option>
@@ -198,22 +198,22 @@
                 <option value="Oyun">Oyun</option>
                 <option value="Yapay Zeka">Yapay Zeka</option>
             </select>
-            <label>Ders Zorlugu</label>
+            <label>Ders Zorlu?u</label>
             <select id="lesson_difficulty">
                 <option value="Kolay">Kolay</option>
                 <option value="Orta">Orta</option>
                 <option value="Zor">Zor</option>
             </select>
-            <label>Ders Aciklamasi</label>
-            <textarea id="lesson_description" rows="3" placeholder="Ders basligi altinda gosterilecek aciklama"></textarea>
-            <label>Kapak Gorseli Yukle</label>
-            <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
+            <label>Ders A??klamas?</label>
+            <textarea id="lesson_description" rows="3" placeholder="Ders ba?l??? altinda gosterilecek aciklama"></textarea>
+            <label>Kapak G?rseli Y?kle</label>
+            <input type="file" id="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
             <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
-                <img id="cover_image_preview" alt="Kapak onizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
+                <img id="cover_image_preview" alt="Kapak ?nizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
             </div>
-            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapagi Sil</button>
+            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapa?? Sil</button>
         </aside>
     </div>
 </div>
@@ -224,11 +224,12 @@
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
 <input type="hidden" id="school_class_id_hidden" name="school_class_id" value="{{ old('school_class_id', $isEdit ? $course->school_class_id : '') }}">
 <input type="hidden" id="weekly_hours_hidden" name="weekly_hours" value="{{ $defaultWeeklyHours }}">
+<input type="hidden" id="cover_image_data" name="cover_image_data" value="">
 
 <div id="builder-preview-modal" class="modal">
     <div class="modal-card" style="width:min(96vw,1500px);max-width:96vw;max-height:92vh;display:flex;flex-direction:column">
         <div class="modal-head">
-            <strong>Ders Onizleme</strong>
+            <strong>Ders ?nizleme</strong>
             <button class="btn" type="button" data-close-modal>Kapat</button>
         </div>
         <div id="preview_slide_stage" class="card" style="min-height:70vh;max-height:74vh;overflow:hidden;margin:0 0 10px"></div>
@@ -243,8 +244,8 @@
 <div id="cover-crop-modal" class="modal">
     <div class="modal-card" style="width:min(92vw,980px);max-width:980px">
         <div class="modal-head">
-            <strong>Kapak Gorseli Kirp (16:9)</strong>
-            <button class="btn" type="button" id="cover-crop-cancel">Iptal</button>
+            <strong>Kapak G?rseli K?rp (16:9)</strong>
+            <button class="btn" type="button" id="cover-crop-cancel">?ptal</button>
         </div>
         <div style="display:grid;gap:10px">
             <div id="cover-crop-viewport" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #cbd5e1;background:#0f172a">
@@ -261,7 +262,7 @@
                     <span style="font-size:12px;color:#64748b">Zoom</span>
                     <input id="cover-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
                 </label>
-                <button class="btn" type="button" id="cover-crop-apply">Kirpmayi Uygula</button>
+                <button class="btn" type="button" id="cover-crop-apply">K?rpmay? Uygula</button>
             </div>
         </div>
     </div>
@@ -310,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const hTeacher = document.getElementById('teacher_id_hidden');
     const hClass = document.getElementById('school_class_id_hidden');
     const hWeekly = document.getElementById('weekly_hours_hidden');
+    const coverImageData = document.getElementById('cover_image_data');
 
     const fields = {
         title: document.getElementById('slide_title'),
@@ -815,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (s.question_prompt) html += '<div class="card"><b>Soru:</b> ' + escapeHtml(s.question_prompt) + '</div>';
         if (s.interaction_type && s.interaction_type !== 'none') {
             const p = Number(s.points || 5) * (s.double_points ? 2 : 1);
-            html += '<p><b>Puan:</b> ' + p + ' | <b>Sure:</b> ' + Number(s.time_limit || 10) + ' sn</p>';
+            html += '<p><b>Puan:</b> ' + p + ' | <b>S?re:</b> ' + Number(s.time_limit || 10) + ' sn</p>';
         }
         if (s.code) {
             const mergedCode = (themeCss ? ('<style>' + themeCss + '</style>') : '') + String(s.code || '');
@@ -965,37 +967,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
         if (!blob) return;
-        const croppedFile = new File([blob], `cover-${Date.now()}.png`, { type: 'image/png' });
-        const dt = new DataTransfer();
-        dt.items.add(croppedFile);
-        coverImageFile.files = dt.files;
-
         const previewUrl = URL.createObjectURL(blob);
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(reader.error || new Error('Kapak resmi okunamadi.'));
+            reader.readAsDataURL(blob);
+        });
 
-        try {
-            const formData = new FormData();
-            formData.append('cover_image', croppedFile);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
-            const response = await fetch('{{ route('courses.upload-cover') }}', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: formData,
-            });
-            if (response.ok) {
-                const data = await response.json();
-                const serverPath = String(data.path || '').trim();
-                const serverUrl = String(data.url || '').trim();
-                state.cover_image = serverPath ? serverPath.replace(/^\/?storage\//, '').replace(/^\/?course-covers\//, 'kapak-gorseli/') : '';
-                if (!state.cover_image && serverUrl) {
-                    const match = serverUrl.match(/\/(?:course-covers|kapak-gorseli)\/([^/?#]+)/i);
-                    state.cover_image = match ? ('kapak-gorseli/' + match[1]) : '';
-                }
-            }
-        } catch (_) {}
-
-        if (!state.cover_image) state.cover_image = previewUrl;
+        state.cover_image = '';
+        if (coverImageData) {
+            coverImageData.value = dataUrl;
+        }
+        if (coverImageFile) {
+            coverImageFile.value = '';
+        }
         if (coverImagePreviewBox) {
             coverImagePreviewBox.style.display = 'block';
             coverImagePreviewBox.style.backgroundImage = 'none';
@@ -1010,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         }
         if (coverImagePathLabel) {
-            coverImagePathLabel.textContent = 'Kapak yolu: ' + String(state.cover_image || serverPath || previewUrl);
+            coverImagePathLabel.textContent = 'Kapak önizleme hazır. Kaydet dediğinde dosya yüklenecek.';
         }
         if (coverImageRemove) {
             coverImageRemove.style.display = 'inline-flex';
@@ -1135,6 +1121,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (coverImageFile) {
             coverImageFile.value = '';
         }
+        if (coverImageData) {
+            coverImageData.value = '';
+        }
         state.cover_image = '';
         if (coverImagePreview) {
             coverImagePreview.src = '';
@@ -1182,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const title = (lessonTitle?.value || '').trim();
             if (!title) {
                 e.preventDefault();
-                alert('Ders basligi bos olamaz. Lütfen bir ders adı girin.');
+                alert('Ders ba?l??? bos olamaz. Lütfen bir ders adı girin.');
                 lessonTitle?.focus();
                 return;
             }

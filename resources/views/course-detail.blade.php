@@ -16,11 +16,11 @@
             </div>
             @if($isCompleted ?? false)
                 <span class="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 text-base font-semibold text-white">
-                    Bu dersi tamamladiniz
+                    Bu dersi tamamlad?n?z
                 </span>
             @else
                 <a href="{{ $startUrl ?? '#' }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-[#FDBA12] px-6 text-base font-semibold text-white transition hover:brightness-95">
-                    Derse Basla
+                    Derse Ba?la
                 </a>
             @endif
         </div>
@@ -35,7 +35,7 @@
 
             @if(!empty($kazanimlar))
                 <section>
-                    <h3 class="text-lg font-bold text-gray-900">Kazanimlar:</h3>
+                    <h3 class="text-lg font-bold text-gray-900">Kazan?mlar:</h3>
                     <ul class="mt-2 list-disc space-y-1 pl-6 text-base">
                         @foreach($kazanimlar as $item)
                             <li>{{ $item }}</li>

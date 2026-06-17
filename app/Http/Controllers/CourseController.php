@@ -148,6 +148,13 @@ class CourseController extends Controller
         $normalized = preg_replace('#^/?course-covers/#i', '', (string) $normalized);
         $relative = ltrim((string) $normalized, '/');
         $baseDir = $this->coverStorageDirectory();
+        $baseName = pathinfo($relative, PATHINFO_FILENAME);
+        $extensions = ['png', 'webp', 'jpg', 'jpeg'];
+        $candidatesRelative = [];
+        foreach ($extensions as $ext) {
+            $candidatesRelative[] = 'kapak-gorseli/' . $baseName . '.' . $ext;
+            $candidatesRelative[] = 'course-covers/' . $baseName . '.' . $ext;
+        }
         $candidates = array_values(array_filter([
             $baseDir . '/' . $relative,
             $baseDir . '/' . preg_replace('/\.webp$/i', '.png', $relative),
@@ -157,6 +164,8 @@ class CourseController extends Controller
             storage_path('app/public/kapak-gorseli/' . preg_replace('/\.webp$/i', '.png', $relative)),
             storage_path('app/public/course-covers/' . $relative),
             storage_path('app/public/course-covers/' . preg_replace('/\.png$/i', '.webp', $relative)),
+            ...array_map(fn ($candidate) => public_path($candidate), $candidatesRelative),
+            ...array_map(fn ($candidate) => storage_path('app/public/' . $candidate), $candidatesRelative),
         ]));
 
         foreach ($candidates as $fullPath) {
@@ -484,17 +493,32 @@ class CourseController extends Controller
 
     private function attachCoverImageToPayload(Request $request, array $data): array
     {
-        if (! $request->hasFile('cover_image_file')) {
-            unset($data['cover_image_file']);
-            return $data;
-        }
-
         $payload = [];
         if (!empty($data['lesson_payload'])) {
             $decoded = json_decode((string) $data['lesson_payload'], true);
             if (is_array($decoded)) {
                 $payload = $decoded;
             }
+        }
+
+        $base64 = (string) $request->input('cover_image_data', '');
+        if ($base64 !== '') {
+            try {
+                $path = $this->storeCoverFromDataUrl($base64);
+            } catch (\Throwable $e) {
+                throw ValidationException::withMessages([
+                    'cover_image_file' => $e->getMessage(),
+                ]);
+            }
+            $payload['cover_image'] = $path;
+            $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
+            unset($data['cover_image_file'], $data['cover_image_data']);
+            return $data;
+        }
+
+        if (! $request->hasFile('cover_image_file')) {
+            unset($data['cover_image_file'], $data['cover_image_data']);
+            return $data;
         }
 
         try {
@@ -506,23 +530,64 @@ class CourseController extends Controller
         }
         $payload['cover_image'] = $path;
         $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
-        unset($data['cover_image_file']);
+        unset($data['cover_image_file'], $data['cover_image_data']);
 
         return $data;
     }
 
-    private function storeCoverAsWebp(UploadedFile $file): string
+    private function storeCoverFromDataUrl(string $dataUrl): string
     {
-        $relative = 'kapak-gorseli/' . Str::uuid() . '.png';
-        $outputPath = $this->coverStorageDirectory() . '/' . basename($relative);
-        $outputDir = dirname($outputPath);
+        if (! preg_match('#^data:image/(png|jpeg|jpg|webp);base64,#i', $dataUrl)) {
+            throw new \RuntimeException('Kapak gorseli gecersiz formatta.');
+        }
+
+        [$meta, $encoded] = explode(',', $dataUrl, 2) + [null, null];
+        if (! is_string($encoded) || $encoded === '') {
+            throw new \RuntimeException('Kapak gorseli okunamadi.');
+        }
+
+        $binary = base64_decode($encoded, true);
+        if ($binary === false || $binary === '') {
+            throw new \RuntimeException('Kapak gorseli base64 cozulemedi.');
+        }
+
+        $outputDir = $this->coverStorageDirectory();
         if (!is_dir($outputDir)) {
             @mkdir($outputDir, 0775, true);
         }
+        if (!is_dir($outputDir) || !is_writable($outputDir)) {
+            throw new \RuntimeException('Kapak gorseli kayit klasoru yazilabilir degil.');
+        }
+
+        $relative = 'kapak-gorseli/' . Str::uuid() . '.png';
+        $outputPath = $outputDir . '/' . basename($relative);
+        if (file_put_contents($outputPath, $binary) === false || !is_file($outputPath) || filesize($outputPath) <= 0) {
+            throw new \RuntimeException('Kapak gorseli kaydedilemedi.');
+        }
+
+        return $relative;
+    }
+
+    private function storeCoverAsWebp(UploadedFile $file): string
+    {
+        $outputDir = $this->coverStorageDirectory();
+        if (!is_dir($outputDir)) {
+            @mkdir($outputDir, 0775, true);
+        }
+        if (!is_dir($outputDir) || !is_writable($outputDir)) {
+            throw new \RuntimeException('Kapak gorseli kayit klasoru yazilabilir degil.');
+        }
+
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        $extension = in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true) ? $extension : 'png';
+        $relative = 'kapak-gorseli/' . Str::uuid() . '.' . $extension;
+        $outputPath = $outputDir . '/' . basename($relative);
         $sourcePath = $file->getRealPath();
 
-        if ($sourcePath && is_file($sourcePath)) {
-            $magick = $this->resolveMagickBinary();
+        $magick = $this->resolveMagickBinary();
+        $canUseImagePipeline = $sourcePath && is_file($sourcePath) && ($magick || function_exists('imagecreatefromstring'));
+
+        if ($canUseImagePipeline) {
             if ($magick) {
                 $process = new Process([
                     $magick,
@@ -537,14 +602,25 @@ class CourseController extends Controller
                 ]);
                 $process->setTimeout(30);
                 $process->run();
-                if (! $process->isSuccessful()) {
+                if (! $process->isSuccessful() || !is_file($outputPath) || filesize($outputPath) <= 0) {
                     $this->storeCoverWithGd($sourcePath, $outputPath);
                 }
             } else {
                 $this->storeCoverWithGd($sourcePath, $outputPath);
             }
         } else {
-            $this->storeCoverWithGd((string) $file->getPathname(), $outputPath);
+            $stream = fopen((string) $file->getRealPath(), 'rb');
+            if ($stream === false) {
+                throw new \RuntimeException('Kapak gorseli okunamadi.');
+            }
+            $target = fopen($outputPath, 'wb');
+            if ($target === false) {
+                fclose($stream);
+                throw new \RuntimeException('Kapak gorseli yazilamadi.');
+            }
+            stream_copy_to_stream($stream, $target);
+            fclose($stream);
+            fclose($target);
         }
 
         if (!is_file($outputPath) || filesize($outputPath) <= 0) {
@@ -556,14 +632,14 @@ class CourseController extends Controller
 
     private function coverStorageDirectory(): string
     {
-        $alt = public_path('public/kapak-gorseli');
-        if (is_dir($alt) || @mkdir($alt, 0775, true) || is_dir($alt)) {
-            return $alt;
-        }
-
         $preferred = public_path('kapak-gorseli');
         if (is_dir($preferred) || @mkdir($preferred, 0775, true) || is_dir($preferred)) {
             return $preferred;
+        }
+
+        $alt = public_path('public/kapak-gorseli');
+        if (is_dir($alt) || @mkdir($alt, 0775, true) || is_dir($alt)) {
+            return $alt;
         }
 
         return $preferred;
@@ -599,8 +675,8 @@ class CourseController extends Controller
 
     private function storeCoverWithGd(string $sourcePath, string $outputPath): void
     {
-        if (!function_exists('imagecreatefromstring') || !function_exists('imagewebp')) {
-            throw new \RuntimeException('Kapak gorseli islenemedi. GD/webp destegi bulunamadi.');
+        if (!function_exists('imagecreatefromstring') || (!function_exists('imagewebp') && !function_exists('imagepng'))) {
+            throw new \RuntimeException('Kapak gorseli islenemedi. GD destegi bulunamadi.');
         }
 
         $raw = @file_get_contents($sourcePath);
@@ -633,7 +709,10 @@ class CourseController extends Controller
 
         $dst = imagecreatetruecolor($dstW, $dstH);
         imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $dstW, $dstH, $cropW, $cropH);
-        if (!@imagepng($dst, $outputPath, 6)) {
+        $saved = function_exists('imagepng')
+            ? @imagepng($dst, $outputPath, 6)
+            : false;
+        if (! $saved) {
             imagedestroy($dst);
             imagedestroy($src);
             throw new \RuntimeException('Kapak gorseli PNG olarak kaydedilemedi.');

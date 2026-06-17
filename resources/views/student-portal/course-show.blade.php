@@ -1,8 +1,8 @@
 ﻿@extends('layout.app')
-@section('title','Ders Icerigi')
+@section('title','Ders ??eri?i')
 @section('content')
 <div class="top" style="margin-bottom:10px">
-    <a class="btn" href="{{ route('student.portal.courses') }}">Derslerime Geri Don</a>
+    <a class="btn" href="{{ route('student.portal.courses') }}">Derslerime Geri D?n</a>
 </div>
 <div class="card">
     @php
@@ -37,7 +37,7 @@
     @endphp
     @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
     @if(empty($slides))
-        <p>Ogretmen henuz bu ders icin slide paylasmadi.</p>
+        <p>??retmen hen?z bu ders i?in slide payla?mad?.</p>
     @else
         <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin:0 0 10px">
             <p style="margin:0"><b>Ders:</b> {{ $course->name }}</p>
@@ -48,7 +48,7 @@
                     Geri
                 </button>
                 <button class="btn" type="button" id="student-course-next" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px">
-                    <span id="student-course-next-label">Ileri</span>
+                    <span id="student-course-next-label">?leri</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                 </button>
             </div>

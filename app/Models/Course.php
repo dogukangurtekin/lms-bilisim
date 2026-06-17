@@ -76,6 +76,17 @@ class Course extends Model
             return asset($relative);
         }
 
+        $baseName = pathinfo($relative, PATHINFO_FILENAME);
+        foreach (['png', 'webp', 'jpg', 'jpeg'] as $ext) {
+            $altRelative = 'kapak-gorseli/' . $baseName . '.' . $ext;
+            if (is_file(public_path($altRelative)) || is_file(public_path('public/' . $altRelative))) {
+                return asset($altRelative);
+            }
+            if (is_file(storage_path('app/public/' . $altRelative))) {
+                return route('courses.cover', ['path' => $altRelative]);
+            }
+        }
+
         return asset($relative);
     }
 
