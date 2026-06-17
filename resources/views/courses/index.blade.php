@@ -16,14 +16,14 @@
     .courses-hero {
         position: relative;
         overflow: hidden;
-        border-radius: 30px;
+        border-radius: 34px;
         background:
             radial-gradient(circle at top right, rgba(99,102,241,.18), transparent 30%),
             radial-gradient(circle at bottom left, rgba(14,165,233,.16), transparent 28%),
             linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #334155 100%);
         color: #fff;
         padding: 1.5rem;
-        box-shadow: 0 18px 45px rgba(15,23,42,.16);
+        box-shadow: 0 22px 50px rgba(15,23,42,.15);
     }
     .courses-hero-grid {
         display: grid;
@@ -65,7 +65,7 @@
         align-items: center;
         justify-content: center;
         min-height: 3.1rem;
-        border-radius: 18px;
+        border-radius: 999px;
         font-weight: 800;
         font-size: .95rem;
         letter-spacing: .01em;
@@ -76,12 +76,7 @@
     .courses-actions .primary {
         background: linear-gradient(135deg, #7c3aed 0%, #4338ca 100%);
         color: #fff;
-        box-shadow: 0 12px 24px rgba(99,102,241,.25);
-    }
-    .courses-actions .ghost {
-        background: rgba(255,255,255,.95);
-        color: #0f172a;
-        border: 1px solid rgba(148,163,184,.4);
+        box-shadow: 0 16px 30px rgba(99,102,241,.24);
     }
     .courses-actions .teal {
         background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
@@ -110,14 +105,15 @@
         font-size: .95rem;
         font-weight: 700;
         white-space: nowrap;
-        border: 1px solid rgba(148,163,184,.18);
-        background: rgba(255,255,255,.08);
+        border: 0;
+        background: rgba(255,255,255,.10);
         color: rgba(255,255,255,.9);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
     .category-pill.active {
         background: #fff;
         color: #312e81;
-        box-shadow: 0 12px 26px rgba(15,23,42,.18);
+        box-shadow: 0 14px 30px rgba(15,23,42,.14);
     }
     .courses-meta {
         display: grid;
@@ -125,11 +121,12 @@
         gap: .75rem;
     }
     .meta-card {
-        border-radius: 22px;
+        border-radius: 24px;
         padding: 1rem;
         background: rgba(255,255,255,.1);
-        border: 1px solid rgba(255,255,255,.12);
+        border: 0;
         backdrop-filter: blur(8px);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
     }
     .course-cards-grid {
         display: grid !important;
@@ -152,7 +149,7 @@
     <div class="courses-hero">
         <div class="courses-hero-grid">
             <div class="space-y-4">
-                <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white/90 ring-1 ring-white/10">
+                <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-white/90">
                     <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                     Ders Kataloğu
                 </div>
@@ -175,7 +172,7 @@
             </div>
 
             <div class="space-y-3">
-                <div class="category-strip">
+                    <div class="category-strip">
                     @foreach($categories as $category)
                         <a
                             href="{{ route('courses.index', array_merge(request()->except('page'), ['category' => $category])) }}"
@@ -252,7 +249,7 @@
         @endforelse
     </div>
 
-    <div class="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-slate-200">
+    <div class="rounded-2xl bg-white/80 p-3 shadow-sm">
         {{ $items->links() }}
     </div>
 </section>
