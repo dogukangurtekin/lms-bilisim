@@ -7,7 +7,9 @@ use App\Http\Requests\UpdateSchoolClassRequest;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Services\Domain\SchoolClassService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SchoolClassController extends Controller
 {
@@ -48,4 +50,45 @@ class SchoolClassController extends Controller
     public function edit(SchoolClass $class) { return view('school-classes.edit', ['classroom' => $class]); }
     public function update(UpdateSchoolClassRequest $request, SchoolClass $class) { $this->service->update($class, $request->validated()); return $request->expectsJson() ? response()->json($class->refresh()) : redirect()->route('classes.index')->with('ok', 'Sinif guncellendi'); }
     public function destroy(SchoolClass $class) { $this->service->delete($class); return request()->expectsJson() ? response()->json([], 204) : redirect()->route('classes.index')->with('ok', 'Sinif silindi'); }
+
+    public function destroyAll(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        DB::transaction(function (): void {
+            SchoolClass::query()->delete();
+        });
+
+        return $request->expectsJson()
+            ? response()->json(['message' => 'Tum siniflar silindi'])
+            : redirect()->route('classes.index')->with('ok', 'Tum siniflar silindi');
+    }
+
+    public function destroySelected(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        $data = $request->validate([
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+
+        DB::transaction(function () use ($data): void {
+            SchoolClass::query()->whereIn('id', $data['class_ids'])->delete();
+        });
+
+        return $request->expectsJson()
+            ? response()->json(['message' => 'Secili siniflar silindi'])
+            : redirect()->route('classes.index')->with('ok', 'Secili siniflar silindi');
+    }
+
+    public function destroyAllGet(Request $request): RedirectResponse
+    {
+        return redirect()->route('classes.index');
+    }
+
+    public function destroySelectedGet(Request $request): RedirectResponse
+    {
+        return redirect()->route('classes.index');
+    }
 }

@@ -21,7 +21,6 @@
         @if(auth()->user()?->hasRole('admin'))
             <form id="classes-destroy-all-form" method="POST" action="{{ route('classes.destroy-all') }}" data-confirm="Tüm sınıflar sistemden kaldırılsın mı?">
                 @csrf
-                @method('DELETE')
                 <button type="submit" class="btn btn-danger">Tüm Sınıfları Sil</button>
             </form>
         @endif
