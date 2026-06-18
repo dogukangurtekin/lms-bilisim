@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.3.1";
+const SW_VERSION = "v1.3.2";
 const RUNTIME_CACHE = `runtime-${SW_VERSION}`;
 const SHELL_CACHE = `shell-${SW_VERSION}`;
 const OFFLINE_URL = "offline.html";
@@ -55,16 +55,29 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         try {
           const preload = await event.preloadResponse;
-          if (preload) return preload;
-          return await fetch(request);
+          if (preload instanceof Response) {
+            return preload;
+          }
+
+          const networkResponse = await fetch(request);
+          if (networkResponse instanceof Response) {
+            return networkResponse;
+          }
+
+          throw new Error("Navigation fetch did not return a Response");
         } catch (_error) {
           // Never serve cached HTML for auth-related pages to avoid stale CSRF/session.
           const path = url.pathname.toLowerCase();
           if (path.includes("/login") || path.includes("/logout") || path.includes("/admin")) {
             return offlineResponse();
           }
-          const fallback = await caches.match(OFFLINE_URL);
-          return fallback || offlineResponse();
+          try {
+            const fallback = await caches.match(OFFLINE_URL);
+            if (fallback instanceof Response) {
+              return fallback;
+            }
+          } catch (_cacheError) {}
+          return offlineResponse();
         }
       })()
     );
@@ -73,22 +86,31 @@ self.addEventListener("fetch", (event) => {
 
   if (request.destination === "script" || request.destination === "style" || request.destination === "image" || request.destination === "font") {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        const networkFetch = fetch(request)
-          .then((response) => {
-            if (response && response.ok) {
-              const copy = response.clone();
-              caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy)).catch(() => {});
+      (async () => {
+        const cached = await caches.match(request);
+        try {
+          const response = await fetch(request);
+          if (response instanceof Response) {
+            if (response.ok) {
+              caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, response.clone())).catch(() => {});
             }
             return response;
-          })
-          .catch(async () => {
-            return cached || offlineResponse();
-          });
-        return cached || networkFetch;
-      })
+          }
+        } catch (_error) {}
+
+        if (cached instanceof Response) {
+          return cached;
+        }
+
+        return offlineResponse();
+      })()
     );
+    return;
   }
+
+  event.respondWith(
+    fetch(request).catch(() => offlineResponse())
+  );
 });
 
 self.addEventListener("push", (event) => {
