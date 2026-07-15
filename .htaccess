@@ -2,3 +2,7 @@
     RewriteEngine On
     RewriteBase /okul-laravel-yeni/
 </IfModule>
+
+<IfModule mod_core.c>
+    LimitRequestBody 0
+</IfModule>

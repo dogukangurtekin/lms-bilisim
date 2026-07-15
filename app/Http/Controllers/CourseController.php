@@ -304,13 +304,15 @@ class CourseController extends Controller
             abort(403);
         }
 
+        $lessonPayload = (array) ($course->lesson_payload ?? []);
+        $lessonPayload['cover_image_data'] = $this->exportCoverDataUrl($course);
         $payload = [
             'exported_at' => now()->toIso8601String(),
             'course' => [
                 'name' => (string) $course->name,
                 'code' => (string) $course->code,
                 'weekly_hours' => (int) $course->weekly_hours,
-                'lesson_payload' => (array) ($course->lesson_payload ?? []),
+                'lesson_payload' => $lessonPayload,
             ],
         ];
 
@@ -333,12 +335,17 @@ class CourseController extends Controller
         $payload = [
             'exported_at' => now()->toIso8601String(),
             'count' => $courses->count(),
-            'courses' => $courses->map(fn (Course $c) => [
-                'name' => (string) $c->name,
-                'code' => (string) $c->code,
-                'weekly_hours' => (int) $c->weekly_hours,
-                'lesson_payload' => (array) ($c->lesson_payload ?? []),
-            ])->values()->all(),
+            'courses' => $courses->map(function (Course $c) {
+                $lessonPayload = (array) ($c->lesson_payload ?? []);
+                $lessonPayload['cover_image_data'] = $this->exportCoverDataUrl($c);
+
+                return [
+                    'name' => (string) $c->name,
+                    'code' => (string) $c->code,
+                    'weekly_hours' => (int) $c->weekly_hours,
+                    'lesson_payload' => $lessonPayload,
+                ];
+            })->values()->all(),
         ];
 
         $filename = 'tum-dersler-' . now()->format('Ymd-His') . '.json';
@@ -351,7 +358,7 @@ class CourseController extends Controller
     {
         $data = $request->validate([
             'course_json' => ['required'],
-            'course_json.*' => ['file', 'mimes:json,txt', 'max:5120'],
+            'course_json.*' => ['file', 'mimes:json,txt', 'max:65536'],
         ]);
 
         $user = auth()->user();
@@ -373,24 +380,54 @@ class CourseController extends Controller
 
         $created = [];
         foreach ($files as $file) {
-            $raw = file_get_contents($file->getRealPath());
-            $decoded = json_decode((string) $raw, true);
-            if (!is_array($decoded)) continue;
+            $raw = (string) file_get_contents($file->getRealPath());
+            $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw;
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
 
             $rows = [];
             if (isset($decoded['course']) && is_array($decoded['course'])) {
                 $rows[] = $decoded['course'];
             } elseif (isset($decoded['courses']) && is_array($decoded['courses'])) {
                 $rows = array_values(array_filter($decoded['courses'], fn ($x) => is_array($x)));
+            } elseif (array_is_list($decoded)) {
+                $rows = array_values(array_filter($decoded, fn ($x) => is_array($x)));
+            } else {
+                $rows[] = $decoded;
             }
 
             foreach ($rows as $c) {
-                $name = trim((string) ($c['name'] ?? ''));
+                $courseData = is_array($c) ? $c : [];
+                if (isset($courseData['course']) && is_array($courseData['course'])) {
+                    $courseData = $courseData['course'];
+                }
+                $name = trim((string) ($courseData['name'] ?? $courseData['title'] ?? ''));
                 if ($name === '') continue;
-                $rawCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($c['code'] ?? 'CRS')));
+                $rawCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($courseData['code'] ?? 'CRS')));
                 $baseCode = substr($rawCode !== '' ? $rawCode : 'CRS', 0, 20);
                 $finalCode = $baseCode . '-' . strtoupper(Str::random(6)); // max 27 char
-                $lessonPayload = (array) ($c['lesson_payload'] ?? []);
+                $lessonPayload = (array) ($courseData['lesson_payload'] ?? $courseData['payload'] ?? []);
+                if ($lessonPayload === [] && (isset($courseData['slides']) || isset($courseData['curriculum']))) {
+                    $lessonPayload = array_filter([
+                        'slides' => $courseData['slides'] ?? null,
+                        'curriculum' => $courseData['curriculum'] ?? null,
+                        'lesson_description' => $courseData['lesson_description'] ?? null,
+                        'difficulty' => $courseData['difficulty'] ?? null,
+                        'category' => $courseData['category'] ?? null,
+                        'cover_image' => $courseData['cover_image'] ?? null,
+                        'cover_image_data' => $courseData['cover_image_data'] ?? null,
+                    ], fn ($v) => $v !== null && $v !== '');
+                }
+                if (!empty($lessonPayload['cover_image_data']) && is_string($lessonPayload['cover_image_data'])) {
+                    try {
+                        $lessonPayload['cover_image'] = $this->storeCoverFromDataUrl($lessonPayload['cover_image_data']);
+                    } catch (\Throwable $e) {
+                        Log::warning('Course cover import failed', ['message' => $e->getMessage(), 'course_name' => $name]);
+                    }
+                    unset($lessonPayload['cover_image_data']);
+                }
                 $cover = trim((string) ($lessonPayload['cover_image'] ?? ''));
                 if ($cover !== '') {
                     $cover = ltrim(str_replace('\\', '/', $cover), '/');
@@ -407,7 +444,7 @@ class CourseController extends Controller
                     'code' => $finalCode,
                     'teacher_id' => $teacherId,
                     'school_class_id' => null,
-                    'weekly_hours' => max(1, min(20, (int) ($c['weekly_hours'] ?? 2))),
+                    'weekly_hours' => max(1, min(20, (int) ($courseData['weekly_hours'] ?? 2))),
                     'lesson_payload' => $lessonPayload,
                     'created_by' => auth()->id(),
                 ]);
@@ -719,5 +756,53 @@ class CourseController extends Controller
         }
         imagedestroy($dst);
         imagedestroy($src);
+    }
+
+    private function exportCoverDataUrl(Course $course): string
+    {
+        $cover = $this->resolveCoverFilePath((string) data_get($course->lesson_payload, 'cover_image', ''));
+        if ($cover === '' || ! is_file($cover)) {
+            return '';
+        }
+
+        $mime = match (strtolower(pathinfo($cover, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+        $binary = @file_get_contents($cover);
+        if ($binary === false || $binary === '') {
+            return '';
+        }
+
+        return 'data:' . $mime . ';base64,' . base64_encode($binary);
+    }
+
+    private function resolveCoverFilePath(string $cover): string
+    {
+        $cover = trim(str_replace('\\', '/', $cover));
+        if ($cover === '') {
+            return '';
+        }
+
+        $cover = ltrim($cover, '/');
+        $relative = preg_replace('#^storage/#i', '', $cover) ?? $cover;
+        $relative = preg_replace('#^public/#i', '', $relative) ?? $relative;
+
+        $paths = [
+            public_path($relative),
+            public_path('public/' . $relative),
+            storage_path('app/public/' . $relative),
+            storage_path('app/public/kapak-gorseli/' . basename($relative)),
+            public_path('kapak-gorseli/' . basename($relative)),
+        ];
+
+        foreach ($paths as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return '';
     }
 }

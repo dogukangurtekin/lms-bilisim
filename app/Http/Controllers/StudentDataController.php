@@ -14,7 +14,7 @@ use App\Services\StudentProgressReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
@@ -368,7 +368,7 @@ class StudentDataController extends Controller
         return view('reports.students-progress-bulk', compact('reports', 'downloadUrl'));
     }
 
-    public function bulkProgressDownloadTask(string $taskId): Response
+    public function bulkProgressDownloadTask(string $taskId): StreamedResponse
     {
         $task = $this->readBulkTask($taskId);
         if (! $task || ($task['completed_at'] ?? null) === null) {

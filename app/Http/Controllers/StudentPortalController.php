@@ -491,7 +491,7 @@ class StudentPortalController extends Controller
             'message' => $messages[$messageKey],
         ]);
 
-        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±nÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±f panosunda paylaÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€¦Ã‚Â¸ÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±ldÃƒÆ’Ã¢â‚¬ÂÃƒâ€šÃ‚Â±.');
+        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj s?n?f panosunda payla??ld?.');
     }
 
     public function progress()
@@ -593,7 +593,7 @@ class StudentPortalController extends Controller
             'm08' => 'Bugün bir arkadaşıma kodda yardım edeceğim.',
             'm09' => 'Hedefim temiz kod yazmak ve düzenli ilerlemek.',
             'm10' => 'Robotumu daha akıllı hale getirmek için çalışıyorum.',
-            'm11' => 'Yazılım öğrenmek sabır ister, ben hazırım.',
+            'm11' => 'Yaz?l?m ??renmek sab?r ister, ben haz?r?m.',
             'm12' => 'Başarı, vazgeçmeden tekrar denemekle gelir.',
             'm13' => 'Sınıf olarak birbirimizi motive ederek daha hızlı gelişiriz.',
             'm14' => 'Bugün öğrendiğim her satır kod geleceğime yatırımdır.',

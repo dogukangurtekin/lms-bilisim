@@ -114,6 +114,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
     Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
     Route::get('/qr-okut/{student}', [QrLoginController::class, 'scannerPage'])->middleware('role:admin,teacher')->name('qr.login.scanner');
@@ -170,6 +171,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/canli-quiz', [LiveQuizController::class, 'index'])->name('live-quiz.index');
         Route::get('/kodlama-etkinlikleri/yonetim', [CodingActivityManagementController::class, 'index'])->name('coding.activities.manage');
+        Route::get('/kodlama-etkinlikleri/indir/tumu', [CodingActivityManagementController::class, 'exportAll'])->name('coding.activities.export.all');
+        Route::get('/kodlama-etkinlikleri/{activity}/indir', [CodingActivityManagementController::class, 'export'])->name('coding.activities.export');
+        Route::post('/kodlama-etkinlikleri/yukle', [CodingActivityManagementController::class, 'import'])->name('coding.activities.import');
+        Route::delete('/kodlama-etkinlikleri/tumu', [CodingActivityManagementController::class, 'destroyAll'])->name('coding.activities.destroy.all');
         Route::post('/kodlama-etkinlikleri', [CodingActivityManagementController::class, 'store'])->name('coding.activities.store');
         Route::put('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'update'])->name('coding.activities.update');
         Route::delete('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'destroy'])->name('coding.activities.destroy');

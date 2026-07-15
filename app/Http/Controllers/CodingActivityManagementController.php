@@ -10,7 +10,10 @@ use App\Models\DailyActivityAssignment;
 use App\Models\QuestionOption;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CodingActivityManagementController extends Controller
 {
@@ -20,8 +23,9 @@ class CodingActivityManagementController extends Controller
         $todayAssignment = DailyActivityAssignment::with('activity')->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))->first();
         $selectedId = (int) request()->integer('edit');
         $editingActivity = $selectedId > 0 ? CodingActivity::with('questions.options')->find($selectedId) : null;
+        $isAdmin = (bool) auth()->user()?->hasRole('admin');
 
-        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity'));
+        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin'));
     }
 
     public function store(StoreCodingActivityRequest $request): RedirectResponse
@@ -93,6 +97,142 @@ class CodingActivityManagementController extends Controller
         );
 
         return back()->with('ok', 'Bugünün etkinliği atandı.');
+    }
+
+    public function exportAll(): StreamedResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $activities = CodingActivity::with(['questions.options'])->latest()->get();
+        $payload = [
+            'exported_at' => now()->toIso8601String(),
+            'activities' => $activities->map(fn (CodingActivity $activity) => $this->serializeActivity($activity))->values()->all(),
+        ];
+
+        $filename = 'gunluk-calismalar-' . now()->format('Ymd-His') . '.json';
+
+        return response()->streamDownload(function () use ($payload): void {
+            echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+    }
+
+    public function export(CodingActivity $activity): StreamedResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $activity->loadMissing('questions.options');
+        $payload = [
+            'exported_at' => now()->toIso8601String(),
+            'activity' => $this->serializeActivity($activity),
+        ];
+
+        $filename = Str::slug($activity->title) . '-gunluk-calisma.json';
+
+        return response()->streamDownload(function () use ($payload): void {
+            echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $request->validate([
+            'activity_json' => ['required'],
+            'activity_json.*' => ['file', 'mimes:json,txt', 'max:65536'],
+        ]);
+
+        $files = $request->file('activity_json');
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        $created = [];
+        foreach ($files as $file) {
+            $raw = (string) file_get_contents($file->getRealPath());
+            $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw;
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+
+            $rows = [];
+            if (isset($decoded['activity']) && is_array($decoded['activity'])) {
+                $rows[] = $decoded['activity'];
+            } elseif (isset($decoded['activities']) && is_array($decoded['activities'])) {
+                $rows = array_values(array_filter($decoded['activities'], fn ($x) => is_array($x)));
+            } elseif (array_is_list($decoded)) {
+                $rows = array_values(array_filter($decoded, fn ($x) => is_array($x)));
+            } else {
+                $rows[] = $decoded;
+            }
+
+            foreach ($rows as $row) {
+                $activityData = is_array($row) ? $row : [];
+                $title = trim((string) ($activityData['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+
+                $activity = CodingActivity::create([
+                    'created_by' => auth()->id(),
+                    'title' => $title,
+                    'type' => (string) ($activityData['type'] ?? 'daily_task'),
+                    'instruction' => $activityData['instruction'] ?? null,
+                    'lesson_pages' => array_values(array_filter((array) ($activityData['lesson_pages'] ?? []), fn ($v) => $v !== null && $v !== '')),
+                    'base_xp' => (int) ($activityData['base_xp'] ?? 20),
+                    'is_active' => (bool) ($activityData['is_active'] ?? true),
+                    'is_random_pool' => (bool) ($activityData['is_random_pool'] ?? true),
+                ]);
+
+                $this->syncQuestions($activity, (array) ($activityData['questions'] ?? []));
+                $created[] = $activity->id;
+            }
+        }
+
+        if ($created === []) {
+            return back()->with('error', 'Yuklenen dosyalarda gecerli gunluk calisma bulunamadi.');
+        }
+
+        return back()->with('ok', count($created) . ' gunluk calisma yuklendi.');
+    }
+
+    public function destroyAll(): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        DB::transaction(function (): void {
+            DailyActivityAssignment::query()->delete();
+            ActivityQuestion::query()->delete();
+            CodingActivity::query()->delete();
+        });
+
+        return redirect()->route('coding.activities.manage')->with('ok', 'Tum gunluk calismalar silindi.');
+    }
+
+    private function serializeActivity(CodingActivity $activity): array
+    {
+        $questions = $activity->questions->map(function (ActivityQuestion $question) {
+            return [
+                'prompt' => $question->prompt,
+                'question_type' => $question->question_type,
+                'points' => $question->points,
+                'answer' => data_get($question->answer_key, 'answer', ''),
+                'options' => $question->options->pluck('label')->values()->all(),
+                'correct_options' => $question->options->where('is_correct', true)->pluck('option_key')->values()->all(),
+            ];
+        })->values()->all();
+
+        return [
+            'title' => $activity->title,
+            'type' => $activity->type,
+            'instruction' => $activity->instruction,
+            'lesson_pages' => array_values((array) $activity->lesson_pages),
+            'base_xp' => $activity->base_xp,
+            'is_active' => $activity->is_active,
+            'is_random_pool' => $activity->is_random_pool,
+            'questions' => $questions,
+        ];
     }
 
     private function syncQuestions(CodingActivity $activity, array $questions): void
