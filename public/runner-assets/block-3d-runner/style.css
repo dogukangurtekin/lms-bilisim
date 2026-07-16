@@ -1,0 +1,3 @@
+/* Intentionally minimal.
+   The runner has its own inline styles, but some deployments request a standalone
+   stylesheet URL. Keeping this file present avoids 404/MIME issues. */

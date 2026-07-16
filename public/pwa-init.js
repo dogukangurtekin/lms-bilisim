@@ -64,7 +64,8 @@
   function setupInstallPrompt() {
     const button = createInstallButton();
     window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
+      // Let the browser keep its default install flow when it wants to.
+      // We still capture the event so the custom button can trigger prompt().
       deferredPrompt = event;
       window.__pwaPromptInstall = async function () {
         if (!deferredPrompt) return false;

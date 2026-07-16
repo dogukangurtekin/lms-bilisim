@@ -93,12 +93,12 @@ Route::any('/public/{path}', fn (string $path) => redirect('/' . ltrim($path, '/
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
-    Route::post('/login/game', [AuthController::class, 'gameLogin'])->name('login.game');
-    Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->name('qr.guest.generate');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.attempt');
+    Route::post('/login/game', [AuthController::class, 'gameLogin'])->middleware('throttle:10,1')->name('login.game');
+    Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->middleware('throttle:10,1')->name('qr.guest.generate');
     Route::get('/qr/guest/status/{token}', [QrLoginController::class, 'status'])->name('qr.guest.status');
 });
-Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])->name('qr.login.consume');
+Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])->middleware('throttle:20,1')->name('qr.login.consume');
 
 Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'parentProgressReport'])
     ->middleware('signed')
@@ -268,7 +268,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/gelisim-raporum', [StudentPortalController::class, 'progressReport'])->name('student.portal.progress-report');
     });
 
-    Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
     Route::post('/webpush/subscribe', [NotificationController::class, 'subscribe'])->name('notifications.subscribe');
     Route::post('/webpush/unsubscribe', [NotificationController::class, 'unsubscribe'])->name('notifications.unsubscribe');
     Route::post('/webpush/device-status', [NotificationController::class, 'syncDeviceStatus'])->name('notifications.device-status');
@@ -285,6 +284,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/scores', [ScoreController::class, 'store'])->name('flamestone.scores.store');
     });
 });
+
+Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
 
 
 

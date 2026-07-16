@@ -1,0 +1,3 @@
+/* Intentionally minimal.
+   The runner has inline styles, but some routes request a stylesheet URL.
+   This prevents 404/MIME problems on production hosts. */

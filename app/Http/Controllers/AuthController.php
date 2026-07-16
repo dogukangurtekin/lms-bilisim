@@ -7,6 +7,7 @@ use App\Models\StudentTimeStat;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -29,11 +30,22 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $key = $this->loginThrottleKey($request);
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            return back()
+                ->withErrors(['email' => 'Cok fazla deneme yapildi. Lutfen ' . $seconds . ' saniye sonra tekrar deneyin.'])
+                ->onlyInput('email');
+        }
+
         $user = $this->resolveLoginUser((string) $credentials['email']);
 
         if (! $user || ! $this->matchesPassword($user, (string) $credentials['password'])) {
+            RateLimiter::hit($key, 60);
             return back()->withErrors(['email' => 'Giris bilgileri hatali'])->onlyInput('email');
         }
+
+        RateLimiter::clear($key);
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
@@ -133,6 +145,11 @@ class AuthController extends Controller
             'message' => 'Tebrikler, giris yapiliyor.',
             'redirect' => route('dashboard'),
         ]);
+    }
+
+    private function loginThrottleKey(Request $request): string
+    {
+        return 'login|' . strtolower((string) $request->input('email', '')) . '|' . $request->ip();
     }
 
     public function logout(Request $request)

@@ -704,19 +704,21 @@ class StudentPortalController extends Controller
     {
         $completedIds = StudentHomeworkProgress::query()
             ->where('student_id', $student->id)
+            ->whereNotNull('completed_at')
             ->pluck('course_homework_id')
             ->filter()
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        return CourseHomework::withTrashed()
+        return CourseHomework::query()
             ->with(['course', 'schoolClass'])
             ->where(function ($q) use ($student, $completedIds) {
                 $q->where(function ($active) use ($student) {
                     $active->where('school_class_id', $student->school_class_id)
                         ->whereNull('deleted_at');
                 });
-                if (!empty($completedIds)) {
+
+                if ($completedIds !== []) {
                     $q->orWhereIn('id', $completedIds);
                 }
             })
