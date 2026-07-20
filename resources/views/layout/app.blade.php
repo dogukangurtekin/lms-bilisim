@@ -7,9 +7,9 @@
     <meta name="description" content="Okul yonetim sistemi admin paneli">
     <title>@yield('title', 'School Management')</title>
     @vite('resources/css/app.css')
-    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     @if(auth()->user()?->hasRole('student'))
-    <link rel="stylesheet" href="{{ asset('css/student.css') }}">
+    <link rel="stylesheet" href="{{ url('/public/css/student.css') }}">
     @endif
 </head>
 <body class="{{ auth()->user()?->role?->slug ? 'role-'.auth()->user()->role->slug : 'role-guest' }} @yield('body_class')">

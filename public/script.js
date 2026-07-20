@@ -75,18 +75,18 @@ const AVATAR_DEFAULT_ID = "3d-robot";
 const AVATAR_CATALOG = [
   { id: "3d-robot", name: "Robo", cost: 0, image: "avatars/3d/robot.png", gradient: "linear-gradient(135deg,#e2e8f0,#94a3b8)" },
   { id: "3d-ninja", name: "Ninja", cost: 120, image: "avatars/3d/ninja.png", gradient: "linear-gradient(135deg,#bbf7d0,#4ade80)" },
-  { id: "3d-ninja-light", name: "Ninja Iþýk", cost: 180, image: "avatars/3d/ninja-light.png", gradient: "linear-gradient(135deg,#fef3c7,#f59e0b)" },
+  { id: "3d-ninja-light", name: "Ninja Iï¿½ï¿½k", cost: 180, image: "avatars/3d/ninja-light.png", gradient: "linear-gradient(135deg,#fef3c7,#f59e0b)" },
   { id: "3d-ninja-dark", name: "Ninja Gece", cost: 220, image: "avatars/3d/ninja-dark.png", gradient: "linear-gradient(135deg,#c7d2fe,#4338ca)" },
   { id: "3d-astro", name: "Kozmo", cost: 260, image: "avatars/3d/astronaut.png", gradient: "linear-gradient(135deg,#bae6fd,#38bdf8)" },
-  { id: "3d-astro-light", name: "Kozmo Iþýk", cost: 300, image: "avatars/3d/astronaut-light.png", gradient: "linear-gradient(135deg,#fecdd3,#fb7185)" },
+  { id: "3d-astro-light", name: "Kozmo Iï¿½ï¿½k", cost: 300, image: "avatars/3d/astronaut-light.png", gradient: "linear-gradient(135deg,#fecdd3,#fb7185)" },
   { id: "3d-astro-dark", name: "Kozmo Gece", cost: 340, image: "avatars/3d/astronaut-dark.png", gradient: "linear-gradient(135deg,#a7f3d0,#34d399)" },
-  { id: "3d-man-astro", name: "Yýldýz", cost: 380, image: "avatars/3d/man-astronaut.png", gradient: "linear-gradient(135deg,#fcd34d,#f59e0b)" },
+  { id: "3d-man-astro", name: "Yï¿½ldï¿½z", cost: 380, image: "avatars/3d/man-astronaut.png", gradient: "linear-gradient(135deg,#fcd34d,#f59e0b)" },
   { id: "3d-nova", name: "Nova", cost: 420, image: "avatars/3d/woman-astronaut.png", gradient: "linear-gradient(135deg,#c4b5fd,#7c3aed)" },
   { id: "3d-man-hero", name: "Kahraman", cost: 480, image: "avatars/3d/man-superhero.png", gradient: "linear-gradient(135deg,#fca5a5,#f97316)" },
   { id: "3d-woman-hero", name: "Kahraman+", cost: 540, image: "avatars/3d/woman-superhero.png", gradient: "linear-gradient(135deg,#fbcfe8,#ec4899)" },
   { id: "3d-hero-tech", name: "Tekno", cost: 600, image: "avatars/3d/man-superhero.png", gradient: "linear-gradient(135deg,#bae6fd,#22d3ee)" },
-  { id: "3d-hero-space", name: "Uzaycý", cost: 660, image: "avatars/3d/astronaut.png", gradient: "linear-gradient(135deg,#ddd6fe,#8b5cf6)" },
-  { id: "3d-hero-stealth", name: "Gölge", cost: 720, image: "avatars/3d/ninja-dark.png", gradient: "linear-gradient(135deg,#e2e8f0,#64748b)" },
+  { id: "3d-hero-space", name: "Uzaycï¿½", cost: 660, image: "avatars/3d/astronaut.png", gradient: "linear-gradient(135deg,#ddd6fe,#8b5cf6)" },
+  { id: "3d-hero-stealth", name: "Gï¿½lge", cost: 720, image: "avatars/3d/ninja-dark.png", gradient: "linear-gradient(135deg,#e2e8f0,#64748b)" },
   { id: "3d-hero-cosmo", name: "Kozmik", cost: 780, image: "avatars/3d/astronaut-light.png", gradient: "linear-gradient(135deg,#fed7aa,#fb923c)" }
 ];
 
@@ -332,7 +332,7 @@ function computeRangeTotalXPFromLevels({
   return Math.max(0, sum);
 }
 
-/* ================= GLOBAL DEÐÝÞKENLER ================= */
+/* ================= GLOBAL DEï¿½ï¿½ï¿½KENLER ================= */
 let currentTaskId = null;
 let taskQuestions = [];
 let currentQuestions = [];
@@ -444,14 +444,14 @@ let editingComputeHomeworkId = null;
 let computeRunnerSession = null;
 let computeRunnerTimerInterval = null;
 let homeListCache = {
-  tasks: { title: "Ödevler", pending: [], completed: [] },
+  tasks: { title: "ï¿½devler", pending: [], completed: [] },
   activities: { title: "Etkinlikler", pending: [], completed: [] },
-  block: { title: "Blok Kodlama Ödevleri", pending: [], completed: [] },
-  compute: { title: "Compute It Ödevleri", pending: [], completed: [] },
+  block: { title: "Blok Kodlama ï¿½devleri", pending: [], completed: [] },
+  compute: { title: "Compute It ï¿½devleri", pending: [], completed: [] },
   lessons: { title: "Dersler", pending: [], completed: [] }
 };
 let studentCombinedListCache = {
-  homework: { title: "Ödevlerim", pending: [], completed: [] },
+  homework: { title: "ï¿½devlerim", pending: [], completed: [] },
   apps: { title: "Uygulamalar", pending: [], completed: [] }
 };
 let studentCombinedTabState = { homework: "pending", apps: "pending" };
@@ -608,7 +608,7 @@ function ensureLoggedOutView() {
   }
   if (loginBtn) {
     loginBtn.disabled = false;
-    loginBtn.innerText = "Giriþ Yap";
+    loginBtn.innerText = "Giriï¿½ Yap";
   }
   if (appScreen) appScreen.style.display = "none";
   if (menuBtn) menuBtn.style.display = "none";
@@ -692,7 +692,7 @@ function applyThemeMode(mode) {
   btns.forEach((btn) => {
     if (!btn) return;
     btn.innerText = normalized === "dark" ? "??" : "??";
-    btn.title = normalized === "dark" ? "Açýk Mod" : "Karanlýk Mod";
+    btn.title = normalized === "dark" ? "Aï¿½ï¿½k Mod" : "Karanlï¿½k Mod";
   });
   try {
     localStorage.setItem(THEME_KEY, normalized);
@@ -803,7 +803,7 @@ window.openBlockRunner = async function(userId, options = {}){
   document.getElementById('activity-title').innerText = options?.title || 'Blok Kodlama - Grid Runner';
   document.getElementById('activity-link').innerText = appUrl("block-grid-runner/index.html");
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "×";
+  if (closeBtn) closeBtn.innerText = "ï¿½";
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
   if (topTitle) topTitle.innerText = "Blok Kodlama";
   let assignmentProgressData = null;
@@ -827,7 +827,7 @@ window.openBlockRunner = async function(userId, options = {}){
     const rangeEnd = Math.max(rangeStart, Number(options?.levelEnd || rangeStart));
     blockRunnerSession = {
       userId: userId || currentUserId,
-      assignmentTitle: String(options?.title || "Blok Kodlama Ödevi"),
+      assignmentTitle: String(options?.title || "Blok Kodlama ï¿½devi"),
       running: false,
       startAt: null,
       savedElapsedSeconds: 0,
@@ -956,7 +956,7 @@ async function saveBlock3DAssignmentProgressFromEvent(data = {}) {
 
     await setDoc(progressRef, {
       assignmentId,
-      assignmentTitle: String(assignment.title || data.assignmentTitle || "3D Blok Kodlama Ödevi"),
+      assignmentTitle: String(assignment.title || data.assignmentTitle || "3D Blok Kodlama ï¿½devi"),
       levelStart,
       levelEnd,
       userId: uid,
@@ -1022,7 +1022,7 @@ window.addEventListener('message', async function(e){
       levelStart,
       levelEnd
     });
-    showNotice("3D ödev formu hazýrlandý. Sýnýf ve tarih seçip kaydedin.", "#2ecc71");
+    showNotice("3D ï¿½dev formu hazï¿½rlandï¿½. Sï¿½nï¿½f ve tarih seï¿½ip kaydedin.", "#2ecc71");
     return;
   }
   const isComputeSource = data.source === "compute-it";
@@ -1120,7 +1120,7 @@ window.addEventListener('message', async function(e){
             block3DRunnerSession = {
               userId: uid,
               assignmentId: data.assignmentId || activeBlockAssignmentId || null,
-              assignmentTitle: data.assignmentTitle || "3D Blok Kodlama Ödevi",
+              assignmentTitle: data.assignmentTitle || "3D Blok Kodlama ï¿½devi",
               levelStart: Math.max(1, Number(data.levelStart || 1)),
               levelEnd: Math.max(1, Number(data.levelEnd || data.levelStart || 1)),
               completionHandled: false,
@@ -1129,7 +1129,7 @@ window.addEventListener('message', async function(e){
           }
           block3DRunnerSession.latestData = {
             assignmentId: data.assignmentId || block3DRunnerSession.assignmentId || activeBlockAssignmentId || null,
-            assignmentTitle: data.assignmentTitle || block3DRunnerSession.assignmentTitle || "3D Blok Kodlama Ödevi",
+            assignmentTitle: data.assignmentTitle || block3DRunnerSession.assignmentTitle || "3D Blok Kodlama ï¿½devi",
             levelStart: Math.max(1, Number(data.levelStart || block3DRunnerSession.levelStart || 1)),
             levelEnd: Math.max(1, Number(data.levelEnd || block3DRunnerSession.levelEnd || data.levelStart || 1)),
             levels: Array.isArray(data.levels) ? data.levels : [],
@@ -1256,7 +1256,7 @@ window.addEventListener('message', async function(e){
           await setDoc(doc(db, "blockAssignmentProgress", `${assignmentId}_${uid}`), {
             assignmentId,
             assignmentType: "lightbot",
-            assignmentTitle: String(data.assignmentTitle || "Code Robot Lab Ödevi"),
+            assignmentTitle: String(data.assignmentTitle || "Code Robot Lab ï¿½devi"),
             userId: uid,
             levelStart,
             levelEnd,
@@ -1331,7 +1331,7 @@ window.addEventListener('message', async function(e){
           await setDoc(doc(db, "blockAssignmentProgress", `${assignmentId}_${uid}`), {
             assignmentId,
             assignmentType: "silentteacher",
-            assignmentTitle: String(data.assignmentTitle || "Python Quiz Lab Ödevi"),
+            assignmentTitle: String(data.assignmentTitle || "Python Quiz Lab ï¿½devi"),
             userId: uid,
             levelStart,
             levelEnd,
@@ -1438,7 +1438,7 @@ window.addEventListener('message', async function(e){
           block3DRunnerSession.latestData = {
             ...(block3DRunnerSession.latestData || {}),
             assignmentId: data.assignmentId || block3DRunnerSession.assignmentId || activeBlockAssignmentId || null,
-            assignmentTitle: data.assignmentTitle || block3DRunnerSession.assignmentTitle || "3D Blok Kodlama Ödevi",
+            assignmentTitle: data.assignmentTitle || block3DRunnerSession.assignmentTitle || "3D Blok Kodlama ï¿½devi",
             levelStart: Math.max(1, Number(data.levelStart || block3DRunnerSession.levelStart || 1)),
             levelEnd: Math.max(1, Number(data.levelEnd || block3DRunnerSession.levelEnd || data.levelStart || 1)),
             levels: Array.isArray(data.levels) ? data.levels : [],
@@ -1579,13 +1579,13 @@ window.addEventListener('message', async function(e){
             console.warn("block assignment final save error", saveErr);
           }
           showCompletionCelebration({
-            title: "Blok Kodlama Tamamlandý!",
-            message: "Harika iþ! Ödev baþarýyla tamamlandý ve kaydedildi.",
+            title: "Blok Kodlama Tamamlandï¿½!",
+            message: "Harika iï¿½! ï¿½dev baï¿½arï¿½yla tamamlandï¿½ ve kaydedildi.",
             accent: "#f59e0b",
             xp: blockXpTotal,
             durationSeconds: blockDurationSec,
             requireAction: true,
-            actionText: "Kaydet ve Çýk",
+            actionText: "Kaydet ve ï¿½ï¿½k",
             onAction: async () => await saveAndExitCompletedRunner()
           });
         }
@@ -1692,13 +1692,13 @@ window.addEventListener('message', async function(e){
         console.warn("compute range complete finalize error", e);
       }
       showCompletionCelebration({
-        title: "Compute It Tamamlandý!",
-        message: "Ödevde verilen seviye aralýðý tamamlandý.",
+        title: "Compute It Tamamlandï¿½!",
+        message: "ï¿½devde verilen seviye aralï¿½ï¿½ï¿½ tamamlandï¿½.",
         accent: "#f59e0b",
         xp,
         durationSeconds: sec,
         requireAction: true,
-        actionText: "Kaydet ve Çýk",
+        actionText: "Kaydet ve ï¿½ï¿½k",
         onAction: () => {
           closeBlockRunnerView();
           return true;
@@ -1741,20 +1741,20 @@ window.addEventListener('message', async function(e){
         console.warn("block range complete finalize error", e);
       }
       showCompletionCelebration({
-        title: "Blok Kodlama Tamamlandý!",
-        message: "Ödevde verilen seviye aralýðý tamamlandý.",
+        title: "Blok Kodlama Tamamlandï¿½!",
+        message: "ï¿½devde verilen seviye aralï¿½ï¿½ï¿½ tamamlandï¿½.",
         accent: "#f59e0b",
         xp,
         durationSeconds: sec,
         requireAction: true,
-        actionText: "Kaydet ve Çýk",
+        actionText: "Kaydet ve ï¿½ï¿½k",
         onAction: async () => await saveAndExitCompletedRunner()
       });
       return;
     }
   }
   else if (data.type === "LOCKED_LEVEL_WARNING") {
-    showNotice(data.message || "Bu seviye henüz kilitli.", "#f39c12");
+    showNotice(data.message || "Bu seviye henï¿½z kilitli.", "#f39c12");
   }
 });
 
@@ -1849,14 +1849,14 @@ async function loadBlockReportsForTeacher(){
         const xp = rpt.lastXP || computeXPFromGameStates(gsPayload);
         const item = document.createElement('div');
         item.className = 'list-item';
-        item.innerHTML = `<div><strong>${s.name||s.displayName||s.email||s.id}</strong><br/><small>${s.class||''} ${s.section||''}</small></div><div style="text-align:right"><div style="font-weight:700">${xp} XP</div><div style="color:#6b7280">${percent}%</div><div style="margin-top:6px"><button class="btn" data-uid="${s.id}" style="padding:6px 8px;">Göster</button></div></div>`;
+        item.innerHTML = `<div><strong>${s.name||s.displayName||s.email||s.id}</strong><br/><small>${s.class||''} ${s.section||''}</small></div><div style="text-align:right"><div style="font-weight:700">${xp} XP</div><div style="color:#6b7280">${percent}%</div><div style="margin-top:6px"><button class="btn" data-uid="${s.id}" style="padding:6px 8px;">Gï¿½ster</button></div></div>`;
         const btn = item.querySelector('button');
         btn.addEventListener('click', ()=>{ openBlockRunner(s.id); });
         list.appendChild(item);
       }catch(e){ console.warn('report load student', s.id, e); }
     }
     loading.style.display = 'none'; list.style.display = 'block';
-  }catch(e){ loading.innerText = 'Rapor yüklenemedi'; console.warn(e); }
+  }catch(e){ loading.innerText = 'Rapor yï¿½klenemedi'; console.warn(e); }
 }
 
 function computePercentFromGameStates(payload){
@@ -1905,8 +1905,8 @@ function setupIframeFallback(iframe, link, options = {}) {
   if (contentFrameLoadTimer) clearTimeout(contentFrameLoadTimer);
   const waitMs = Math.max(500, Number(options?.waitMs || 2500));
   const countdownSeconds = Math.max(0, Number(options?.fallbackCountdownSeconds || 0));
-  const loadingText = String(options?.loadingText || "Ýçerik iframe penceresinde yükleniyor...");
-  const redirectText = String(options?.redirectText || "Iframe açýlmadý. Yeni pencereye yönlendiriliyorsunuz");
+  const loadingText = String(options?.loadingText || "ï¿½ï¿½erik iframe penceresinde yï¿½kleniyor...");
+  const redirectText = String(options?.redirectText || "Iframe aï¿½ï¿½lmadï¿½. Yeni pencereye yï¿½nlendiriliyorsunuz");
   const showLoadingNotice = !!options?.showLoadingNotice;
   if (showLoadingNotice && iframe.id === "activity-iframe") {
     setActivityFrameStatus(loadingText, "info");
@@ -1917,19 +1917,19 @@ function setupIframeFallback(iframe, link, options = {}) {
     if (fallbackOpened || !link) return;
     fallbackOpened = true;
     if (iframe.id === "activity-iframe") {
-      setActivityFrameStatus("Site iframe içinde açýlamadý. Yeni sekmede açýlýyor...", "warn");
+      setActivityFrameStatus("Site iframe iï¿½inde aï¿½ï¿½lamadï¿½. Yeni sekmede aï¿½ï¿½lï¿½yor...", "warn");
     } else {
-      showNotice("Site iframe içinde açýlamadý. Yeni sekmede açýlýyor...", "#f39c12");
+      showNotice("Site iframe iï¿½inde aï¿½ï¿½lamadï¿½. Yeni sekmede aï¿½ï¿½lï¿½yor...", "#f39c12");
     }
     try {
       const w = window.open(link, "_blank");
       if (!w) {
-        if (iframe.id === "activity-iframe") setActivityFrameStatus("Tarayýcý yeni sekmeyi engelledi. Butona týklayýn.", "error");
-        else showNotice("Tarayýcý yeni sekmeyi engelledi. Butona týklayýn.", "#f39c12");
+        if (iframe.id === "activity-iframe") setActivityFrameStatus("Tarayï¿½cï¿½ yeni sekmeyi engelledi. Butona tï¿½klayï¿½n.", "error");
+        else showNotice("Tarayï¿½cï¿½ yeni sekmeyi engelledi. Butona tï¿½klayï¿½n.", "#f39c12");
       }
     } catch (e) {
-      if (iframe.id === "activity-iframe") setActivityFrameStatus("Yeni sekme açýlamadý. Butona týklayýn.", "error");
-      else showNotice("Yeni sekme açýlamadý. Butona týklayýn.", "#f39c12");
+      if (iframe.id === "activity-iframe") setActivityFrameStatus("Yeni sekme aï¿½ï¿½lamadï¿½. Butona tï¿½klayï¿½n.", "error");
+      else showNotice("Yeni sekme aï¿½ï¿½lamadï¿½. Butona tï¿½klayï¿½n.", "#f39c12");
     }
     if (iframe.id === "activity-iframe") {
       const overlay = document.getElementById("external-app-overlay");
@@ -1982,7 +1982,7 @@ function setupIframeFallback(iframe, link, options = {}) {
   if (iframe.id === "content-app-iframe") contentFrameLoadTimer = timer;
 }
 
-/* ================= BÝLDÝRÝM SÝSTEMÝ ================= */
+/* ================= Bï¿½LDï¿½Rï¿½M Sï¿½STEMï¿½ ================= */
 function showNotice(msg, color = "#4a90e2") {
   const text = String(msg || "").trim();
   if (!text) return;
@@ -2005,8 +2005,8 @@ function showNotice(msg, color = "#4a90e2") {
 }
 
 let loadingNoticeEl = null;
-function showLoadingNotice(msg = "Rapor hazýrlanýyor...", color = "#1d4ed8") {
-  const text = String(msg || "").trim() || "Rapor hazýrlanýyor...";
+function showLoadingNotice(msg = "Rapor hazï¿½rlanï¿½yor...", color = "#1d4ed8") {
+  const text = String(msg || "").trim() || "Rapor hazï¿½rlanï¿½yor...";
   if (loadingNoticeEl && typeof window.appToastDismiss === "function") {
     window.appToastDismiss(loadingNoticeEl);
     loadingNoticeEl = null;
@@ -2032,7 +2032,7 @@ function showLoadingNotice(msg = "Rapor hazýrlanýyor...", color = "#1d4ed8") {
 }
 
 let reportLoadingOverlayEl = null;
-function showReportLoadingOverlay(msg = "Rapor hazýrlanýyor, lütfen bekleyin") {
+function showReportLoadingOverlay(msg = "Rapor hazï¿½rlanï¿½yor, lï¿½tfen bekleyin") {
   if (reportLoadingOverlayEl) return;
   const overlay = document.createElement("div");
   overlay.id = "report-loading-overlay";
@@ -2075,40 +2075,40 @@ let badgeQuizStatsCache = null;
 let badgeQuizStatsAt = 0;
 
 const BADGE_DEFS = [
-  { id: "quiz-5", name: "Soru Ustasý", icon: "?", metric: "quizCompleted", target: 5, desc: "5 canlý quiz tamamlayýnca kazanýlýr." },
-  { id: "quiz-10", name: "Quiz Þampiyonu", icon: "??", metric: "quizCompleted", target: 10, desc: "10 canlý quiz tamamlayýnca kazanýlýr." },
-  { id: "quiz-20", name: "Bilgi Avcýsý", icon: "??", metric: "quizCompleted", target: 20, desc: "20 canlý quiz tamamlayýnca kazanýlýr." },
-  { id: "quiz-50", name: "Bilgi Efsanesi", icon: "??", metric: "quizCompleted", target: 50, desc: "50 canlý quiz tamamlayýnca kazanýlýr." },
-  { id: "task-3", name: "Görev Baþlangýcý", icon: "?", metric: "tasksCompleted", target: 3, desc: "3 ödevi tamamlayýnca kazanýlýr." },
-  { id: "task-5", name: "Görev Ustasý", icon: "??", metric: "tasksCompleted", target: 5, desc: "5 ödevi tamamlayýnca kazanýlýr." },
-  { id: "task-10", name: "Görev Kaptaný", icon: "??", metric: "tasksCompleted", target: 10, desc: "10 ödevi tamamlayýnca kazanýlýr." },
-  { id: "task-20", name: "Görev Efsanesi", icon: "??", metric: "tasksCompleted", target: 20, desc: "20 ödevi tamamlayýnca kazanýlýr." },
-  { id: "act-3", name: "Etkinlik Kaþifi", icon: "??", metric: "activitiesCompleted", target: 3, desc: "3 etkinliði tamamlayýnca kazanýlýr." },
-  { id: "act-5", name: "Etkinlik Ustasý", icon: "??", metric: "activitiesCompleted", target: 5, desc: "5 etkinliði tamamlayýnca kazanýlýr." },
-  { id: "act-10", name: "Etkinlik Maratonu", icon: "??", metric: "activitiesCompleted", target: 10, desc: "10 etkinliði tamamlayýnca kazanýlýr." },
-  { id: "act-20", name: "Etkinlik Efsanesi", icon: "??", metric: "activitiesCompleted", target: 20, desc: "20 etkinliði tamamlayýnca kazanýlýr." },
-  { id: "block-3", name: "Kodlama Ustasý", icon: "??", metric: "blockCompleted", target: 3, desc: "3 blok kodlama tamamlayýnca kazanýlýr." },
-  { id: "block-5", name: "Kodlama Þefi", icon: "??", metric: "blockCompleted", target: 5, desc: "5 blok kodlama tamamlayýnca kazanýlýr." },
-  { id: "block-10", name: "Kodlama Efsanesi", icon: "???", metric: "blockCompleted", target: 10, desc: "10 blok kodlama tamamlayýnca kazanýlýr." },
-  { id: "compute-3", name: "Mantýk Ustasý", icon: "??", metric: "computeCompleted", target: 3, desc: "3 Compute It görevi tamamlayýnca kazanýlýr." },
-  { id: "compute-5", name: "Algoritma Þefi", icon: "??", metric: "computeCompleted", target: 5, desc: "5 Compute It görevi tamamlayýnca kazanýlýr." },
-  { id: "compute-10", name: "Algoritma Efsanesi", icon: "??", metric: "computeCompleted", target: 10, desc: "10 Compute It görevi tamamlayýnca kazanýlýr." },
-  { id: "lesson-3", name: "Ders Kaþifi", icon: "??", metric: "lessonsCompleted", target: 3, desc: "3 dersi tamamlayýnca kazanýlýr." },
-  { id: "lesson-5", name: "Ders Ustasý", icon: "??", metric: "lessonsCompleted", target: 5, desc: "5 dersi tamamlayýnca kazanýlýr." },
-  { id: "lesson-10", name: "Ders Efsanesi", icon: "??", metric: "lessonsCompleted", target: 10, desc: "10 dersi tamamlayýnca kazanýlýr." },
-  { id: "total-10", name: "Biliþim Baþlangýç", icon: "??", metric: "totalCompleted", target: 10, desc: "Toplam 10 görev/etkinlik tamamlayýnca kazanýlýr." },
-  { id: "total-25", name: "Biliþim Ustasý", icon: "??", metric: "totalCompleted", target: 25, desc: "Toplam 25 görev/etkinlik tamamlayýnca kazanýlýr." },
-  { id: "total-50", name: "Biliþim Efsanesi", icon: "??", metric: "totalCompleted", target: 50, desc: "Toplam 50 görev/etkinlik tamamlayýnca kazanýlýr." },
-  { id: "xp-100", name: "XP Toplayýcý", icon: "??", metric: "xp", target: 100, desc: "Toplam 100 XP’ye ulaþýnca kazanýlýr." },
-  { id: "xp-300", name: "XP Ustasý", icon: "??", metric: "xp", target: 300, desc: "Toplam 300 XP’ye ulaþýnca kazanýlýr." },
-  { id: "xp-600", name: "XP Efsanesi", icon: "??", metric: "xp", target: 600, desc: "Toplam 600 XP’ye ulaþýnca kazanýlýr." },
-  { id: "rate-40", name: "Ýstikrar", icon: "??", metric: "completionRate", target: 40, desc: "Genel tamamlama oraný %40’ý geçince kazanýlýr." },
-  { id: "rate-70", name: "Azimli", icon: "??", metric: "completionRate", target: 70, desc: "Genel tamamlama oraný %70’i geçince kazanýlýr." },
-  { id: "rate-90", name: "Disiplinli", icon: "??", metric: "completionRate", target: 90, desc: "Genel tamamlama oraný %90’ý geçince kazanýlýr." }
+  { id: "quiz-5", name: "Soru Ustasï¿½", icon: "?", metric: "quizCompleted", target: 5, desc: "5 canlï¿½ quiz tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "quiz-10", name: "Quiz ï¿½ampiyonu", icon: "??", metric: "quizCompleted", target: 10, desc: "10 canlï¿½ quiz tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "quiz-20", name: "Bilgi Avcï¿½sï¿½", icon: "??", metric: "quizCompleted", target: 20, desc: "20 canlï¿½ quiz tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "quiz-50", name: "Bilgi Efsanesi", icon: "??", metric: "quizCompleted", target: 50, desc: "50 canlï¿½ quiz tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "task-3", name: "Gï¿½rev Baï¿½langï¿½cï¿½", icon: "?", metric: "tasksCompleted", target: 3, desc: "3 ï¿½devi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "task-5", name: "Gï¿½rev Ustasï¿½", icon: "??", metric: "tasksCompleted", target: 5, desc: "5 ï¿½devi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "task-10", name: "Gï¿½rev Kaptanï¿½", icon: "??", metric: "tasksCompleted", target: 10, desc: "10 ï¿½devi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "task-20", name: "Gï¿½rev Efsanesi", icon: "??", metric: "tasksCompleted", target: 20, desc: "20 ï¿½devi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "act-3", name: "Etkinlik Kaï¿½ifi", icon: "??", metric: "activitiesCompleted", target: 3, desc: "3 etkinliï¿½i tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "act-5", name: "Etkinlik Ustasï¿½", icon: "??", metric: "activitiesCompleted", target: 5, desc: "5 etkinliï¿½i tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "act-10", name: "Etkinlik Maratonu", icon: "??", metric: "activitiesCompleted", target: 10, desc: "10 etkinliï¿½i tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "act-20", name: "Etkinlik Efsanesi", icon: "??", metric: "activitiesCompleted", target: 20, desc: "20 etkinliï¿½i tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "block-3", name: "Kodlama Ustasï¿½", icon: "??", metric: "blockCompleted", target: 3, desc: "3 blok kodlama tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "block-5", name: "Kodlama ï¿½efi", icon: "??", metric: "blockCompleted", target: 5, desc: "5 blok kodlama tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "block-10", name: "Kodlama Efsanesi", icon: "???", metric: "blockCompleted", target: 10, desc: "10 blok kodlama tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "compute-3", name: "Mantï¿½k Ustasï¿½", icon: "??", metric: "computeCompleted", target: 3, desc: "3 Compute It gï¿½revi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "compute-5", name: "Algoritma ï¿½efi", icon: "??", metric: "computeCompleted", target: 5, desc: "5 Compute It gï¿½revi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "compute-10", name: "Algoritma Efsanesi", icon: "??", metric: "computeCompleted", target: 10, desc: "10 Compute It gï¿½revi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "lesson-3", name: "Ders Kaï¿½ifi", icon: "??", metric: "lessonsCompleted", target: 3, desc: "3 dersi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "lesson-5", name: "Ders Ustasï¿½", icon: "??", metric: "lessonsCompleted", target: 5, desc: "5 dersi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "lesson-10", name: "Ders Efsanesi", icon: "??", metric: "lessonsCompleted", target: 10, desc: "10 dersi tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "total-10", name: "Biliï¿½im Baï¿½langï¿½ï¿½", icon: "??", metric: "totalCompleted", target: 10, desc: "Toplam 10 gï¿½rev/etkinlik tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "total-25", name: "Biliï¿½im Ustasï¿½", icon: "??", metric: "totalCompleted", target: 25, desc: "Toplam 25 gï¿½rev/etkinlik tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "total-50", name: "Biliï¿½im Efsanesi", icon: "??", metric: "totalCompleted", target: 50, desc: "Toplam 50 gï¿½rev/etkinlik tamamlayï¿½nca kazanï¿½lï¿½r." },
+  { id: "xp-100", name: "XP Toplayï¿½cï¿½", icon: "??", metric: "xp", target: 100, desc: "Toplam 100 XPï¿½ye ulaï¿½ï¿½nca kazanï¿½lï¿½r." },
+  { id: "xp-300", name: "XP Ustasï¿½", icon: "??", metric: "xp", target: 300, desc: "Toplam 300 XPï¿½ye ulaï¿½ï¿½nca kazanï¿½lï¿½r." },
+  { id: "xp-600", name: "XP Efsanesi", icon: "??", metric: "xp", target: 600, desc: "Toplam 600 XPï¿½ye ulaï¿½ï¿½nca kazanï¿½lï¿½r." },
+  { id: "rate-40", name: "ï¿½stikrar", icon: "??", metric: "completionRate", target: 40, desc: "Genel tamamlama oranï¿½ %40ï¿½ï¿½ geï¿½ince kazanï¿½lï¿½r." },
+  { id: "rate-70", name: "Azimli", icon: "??", metric: "completionRate", target: 70, desc: "Genel tamamlama oranï¿½ %70ï¿½i geï¿½ince kazanï¿½lï¿½r." },
+  { id: "rate-90", name: "Disiplinli", icon: "??", metric: "completionRate", target: 90, desc: "Genel tamamlama oranï¿½ %90ï¿½ï¿½ geï¿½ince kazanï¿½lï¿½r." }
 ];
 function showCompletionCelebration({
   title = "Tebrikler!",
-  message = "Ödev tamamlandý.",
+  message = "ï¿½dev tamamlandï¿½.",
   accent = "#f59e0b",
   xp = null,
   durationSeconds = null,
@@ -2179,7 +2179,7 @@ function showCompletionCelebration({
     `;
 
     const badge = document.createElement("div");
-    badge.textContent = "Kayýt veritabanýna iþlendi";
+    badge.textContent = "Kayï¿½t veritabanï¿½na iï¿½lendi";
     badge.style.cssText = `
       display: inline-flex;
       align-items: center;
@@ -2339,7 +2339,7 @@ function isRunnerCompletionHandled() {
 
 function syncRunnerSaveButtons() {
   const done = isRunnerCompletionHandled();
-  const text = done ? "Kaydet ve Çýk" : "Kaydet";
+  const text = done ? "Kaydet ve ï¿½ï¿½k" : "Kaydet";
   const ids = ["btn-activity-save", "btn-activity-head-save", "btn-activity-full-save"];
   ids.forEach((id) => {
     const el = document.getElementById(id);
@@ -2394,22 +2394,22 @@ async function requestRunnerExitWithPromptPolicy() {
   return true;
 }
 
-/* ================= SAYFA YÖNETÝMÝ ================= */
+/* ================= SAYFA Yï¿½NETï¿½Mï¿½ ================= */
 function getHomeTabsByRole(role) {
   if (role === "teacher") {
     return [
-      { id: "teacher-analytics", label: "Özet Bilgiler" },
-      { id: "tasks-section", label: "Ödevler" },
+      { id: "teacher-analytics", label: "ï¿½zet Bilgiler" },
+      { id: "tasks-section", label: "ï¿½devler" },
       { id: "activities-section", label: "Etkinlikler" },
       { id: "quiz-section", label: "Quizler" },
       { id: "block-homework-section", label: "Blok & 3D Blok Code" },
       { id: "compute-homework-section", label: "Compute It" },
       { id: "lessons-section", label: "Dersler" },
-      { id: "top-students-card", label: "Öðrencilerim" }
+      { id: "top-students-card", label: "ï¿½ï¿½rencilerim" }
     ];
   }
   return [
-    { id: "tasks-section", label: "Ödevlerim" },
+    { id: "tasks-section", label: "ï¿½devlerim" },
     { id: "activities-section", label: "Etkinliklerim" },
     { id: "block-homework-section", label: "Blok Kodlama" },
     { id: "compute-homework-section", label: "Compute It" },
@@ -2484,16 +2484,16 @@ function setLiveQuizImagePreview(dataUrl = "") {
   const preview = document.getElementById("live-q-image-preview");
   if (!preview) return;
   if (!currentLiveQuizImageDataUrl) {
-    preview.innerHTML = "Soruya görsel ekleyebilirsin.";
+    preview.innerHTML = "Soruya gï¿½rsel ekleyebilirsin.";
     return;
   }
-  preview.innerHTML = `<img src="${currentLiveQuizImageDataUrl}" alt="Soru görseli">`;
+  preview.innerHTML = `<img src="${currentLiveQuizImageDataUrl}" alt="Soru gï¿½rseli">`;
 }
 
 async function readLiveQuizImageFile(file) {
   if (!file) return "";
   if (!String(file.type || "").startsWith("image/")) {
-    showNotice("Sadece görsel dosyasý yükleyin.", "#e74c3c");
+    showNotice("Sadece gï¿½rsel dosyasï¿½ yï¿½kleyin.", "#e74c3c");
     return "";
   }
   const objectUrl = URL.createObjectURL(file);
@@ -2518,14 +2518,14 @@ async function readLiveQuizImageFile(file) {
     if (!ctx) throw new Error("canvas-context-failed");
     ctx.drawImage(img, 0, 0, targetW, targetH);
 
-    // Metadata'sýz yeniden encode: DB packet boyutunu ciddi azaltýr.
+    // Metadata'sï¿½z yeniden encode: DB packet boyutunu ciddi azaltï¿½r.
     let dataUrl = canvas.toDataURL("image/webp", 0.78);
     if (!dataUrl || dataUrl === "data:,") {
       dataUrl = canvas.toDataURL("image/jpeg", 0.8);
     }
     return String(dataUrl || "");
   } catch (_err) {
-    showNotice("Görsel iþlenemedi. Farklý bir görsel deneyin.", "#e74c3c");
+    showNotice("Gï¿½rsel iï¿½lenemedi. Farklï¿½ bir gï¿½rsel deneyin.", "#e74c3c");
     return "";
   } finally {
     URL.revokeObjectURL(objectUrl);
@@ -2571,8 +2571,8 @@ function setLiveCorrectChoice(value = "") {
 function getLiveCorrectFromInputs(type = "multiple") {
   if (type === "matching") return "";
   if (type === "truefalse") {
-    if (liveQuizCorrectChoice === "A") return "doðru";
-    if (liveQuizCorrectChoice === "B") return "yanlýþ";
+    if (liveQuizCorrectChoice === "A") return "doï¿½ru";
+    if (liveQuizCorrectChoice === "B") return "yanlï¿½ï¿½";
     return "";
   }
   return liveQuizCorrectChoice;
@@ -2588,7 +2588,7 @@ function fillLiveQuizEditorFromQuestion(q = {}) {
   const qType = q.type || "multiple";
   const existingCorrect = String(q.correct || "").trim();
   if (qType === "truefalse") {
-    setLiveCorrectChoice(existingCorrect === "doðru" ? "A" : existingCorrect === "yanlýþ" ? "B" : "");
+    setLiveCorrectChoice(existingCorrect === "doï¿½ru" ? "A" : existingCorrect === "yanlï¿½ï¿½" ? "B" : "");
   } else {
     setLiveCorrectChoice(existingCorrect);
   }
@@ -2615,7 +2615,7 @@ function duplicateLiveQuizQuestion(index) {
   liveQuizSelectedQuestionIndex = index + 1;
   renderLiveQuizQuestionList();
   fillLiveQuizEditorFromQuestion(liveQuizItems[liveQuizSelectedQuestionIndex] || {});
-  showNotice("Soru kopyalandý.", "#2ecc71");
+  showNotice("Soru kopyalandï¿½.", "#2ecc71");
 }
 
 function moveLiveQuizQuestion(fromIndex, toIndex) {
@@ -2662,7 +2662,7 @@ function removeLiveQuizQuestion(index) {
 }
 
 function renderLiveQuizBuilderPreview() {
-  const qText = document.getElementById("live-q-text")?.value?.trim() || "Soru önizlemesi burada görünecek.";
+  const qText = document.getElementById("live-q-text")?.value?.trim() || "Soru ï¿½nizlemesi burada gï¿½rï¿½necek.";
   const qType = document.getElementById("live-q-type")?.value || "multiple";
   const a = (document.getElementById("live-q-a")?.value || "").trim();
   const b = (document.getElementById("live-q-b")?.value || "").trim();
@@ -2673,7 +2673,7 @@ function renderLiveQuizBuilderPreview() {
   if (!previewQ || !previewGrid) return;
   const hasImage = !!currentLiveQuizImageDataUrl;
   if (hasImage) {
-    previewQ.innerHTML = `<div style="display:grid;gap:8px;"><img src="${currentLiveQuizImageDataUrl}" alt="Soru görseli" style="max-height:180px;max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.25);object-fit:cover;"><div>${escapeHtmlBasic(qText)}</div></div>`;
+    previewQ.innerHTML = `<div style="display:grid;gap:8px;"><img src="${currentLiveQuizImageDataUrl}" alt="Soru gï¿½rseli" style="max-height:180px;max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,0.25);object-fit:cover;"><div>${escapeHtmlBasic(qText)}</div></div>`;
   } else {
     previewQ.innerText = qText;
   }
@@ -2685,7 +2685,7 @@ function renderLiveQuizBuilderPreview() {
       : `<div class="live-quiz-preview-item">1. Sol ifade</div><div class="live-quiz-preview-item">2. Sol ifade</div>`;
     const rightHtml = pairs.length
       ? pairs.map((p, i) => `<div class="live-quiz-preview-item">${String.fromCharCode(65 + i)}) ${p.right}</div>`).join("")
-      : `<div class="live-quiz-preview-item">A) Sað ifade</div><div class="live-quiz-preview-item">B) Sað ifade</div>`;
+      : `<div class="live-quiz-preview-item">A) Saï¿½ ifade</div><div class="live-quiz-preview-item">B) Saï¿½ ifade</div>`;
     previewGrid.innerHTML = `
       <div style="display:grid;gap:8px;">${leftHtml}</div>
       <div style="display:grid;gap:8px;">${rightHtml}</div>
@@ -2693,8 +2693,8 @@ function renderLiveQuizBuilderPreview() {
     return;
   }
   const options = qType === "truefalse"
-    ? ["Doðru", "Yanlýþ"]
-    : [a || "A seçeneði", b || "B seçeneði", c || "C seçeneði", d || "D seçeneði"];
+    ? ["Doï¿½ru", "Yanlï¿½ï¿½"]
+    : [a || "A seï¿½eneï¿½i", b || "B seï¿½eneï¿½i", c || "C seï¿½eneï¿½i", d || "D seï¿½eneï¿½i"];
   const correctValue = getLiveCorrectFromInputs(qType);
   previewGrid.innerHTML = options.map((opt, i) => `
     <div class="live-quiz-preview-item">${
@@ -2717,7 +2717,7 @@ function updateLiveQuizEditorForType() {
     const enabled = !isTrueFalse && !isMatching;
     el.disabled = !enabled;
     if (isTrueFalse) {
-      el.value = idx === 0 ? "Doðru" : idx === 1 ? "Yanlýþ" : "";
+      el.value = idx === 0 ? "Doï¿½ru" : idx === 1 ? "Yanlï¿½ï¿½" : "";
     } else if (isMatching) {
       el.value = "";
     }
@@ -2756,11 +2756,11 @@ function renderLiveQuizQuestionList() {
           <div><strong>${i + 1}.</strong> ${getLiveQuizQuestionSummary(q, i)}</div>
           <div class="meta">${
             q?.type === "truefalse"
-              ? "Doðru/Yanlýþ"
+              ? "Doï¿½ru/Yanlï¿½ï¿½"
               : q?.type === "matching"
-                ? "Sürükle-Býrak Eþleþtirme"
-                : "Çoktan Seçmeli"
-          }${q?.imageDataUrl ? " • Görselli" : ""} • ${questionDuration} sn • ${questionXP} XP${q?.doubleXp ? " (2x)" : ""} • Sürükle-býrak ile sýrala</div>
+                ? "Sï¿½rï¿½kle-Bï¿½rak Eï¿½leï¿½tirme"
+                : "ï¿½oktan Seï¿½meli"
+          }${q?.imageDataUrl ? " ï¿½ Gï¿½rselli" : ""} ï¿½ ${questionDuration} sn ï¿½ ${questionXP} XP${q?.doubleXp ? " (2x)" : ""} ï¿½ Sï¿½rï¿½kle-bï¿½rak ile sï¿½rala</div>
         </div>
         <div style="display:flex;gap:4px;">
           <button class="btn" data-act="copy" style="padding:4px 7px;font-size:12px;background:#eef2ff;color:#1e3a8a;">Kopya</button>
@@ -2844,7 +2844,7 @@ function openLiveQuizModal() {
   listenTeacherLiveSession();
   setTeacherHomeResultsView(
     teacherHomeLatestRankingRows,
-    teacherHomeLatestResultsMeta || "Son quiz sonuçlarý",
+    teacherHomeLatestResultsMeta || "Son quiz sonuï¿½larï¿½",
     teacherHomeDisplayedResultsSessionId || ""
   );
 }
@@ -2869,7 +2869,7 @@ function setLiveQuizTab(tab) {
   if (createPane) createPane.style.display = next === "create" ? "grid" : "none";
   if (startPane) startPane.style.display = next === "start" ? "block" : "none";
   if (resultsPane) resultsPane.style.display = next === "results" ? "block" : "none";
-  if (titleEl) titleEl.innerText = next === "results" ? "Quiz Sonuçlarý" : "Canlý Quiz";
+  if (titleEl) titleEl.innerText = next === "results" ? "Quiz Sonuï¿½larï¿½" : "Canlï¿½ Quiz";
   if (next === "start") {
     loadTeacherLiveQuizList();
     listenTeacherLiveSession();
@@ -2879,7 +2879,7 @@ function setLiveQuizTab(tab) {
 async function loadTeacherLiveQuizList() {
   const list = document.getElementById("live-quiz-list");
   if (!list || userRole !== "teacher" || !currentUserId) return;
-  list.innerHTML = `<div class="loading">Yükleniyor...</div>`;
+  list.innerHTML = `<div class="loading">Yï¿½kleniyor...</div>`;
   try {
     const qx = query(collection(db, "liveQuizzes"), where("teacherId", "==", currentUserId));
     const snap = await getDocs(qx);
@@ -2888,7 +2888,7 @@ async function loadTeacherLiveQuizList() {
     rows.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     const visibleRows = rows.filter((qz) => !qz?.isDeleted);
     if (!visibleRows.length) {
-      list.innerHTML = `<div class="empty-state">Kayýtlý quiz yok.</div>`;
+      list.innerHTML = `<div class="empty-state">Kayï¿½tlï¿½ quiz yok.</div>`;
       return;
     }
     list.innerHTML = "";
@@ -2898,11 +2898,11 @@ async function loadTeacherLiveQuizList() {
       div.innerHTML = `
         <div>
           <div style="font-weight:700;">${qz.title || "Quiz"}</div>
-          <small>${(qz.questions || []).length} soru • ${qz.targetClass || "Tüm sýnýflar"}${qz.targetSection ? "/" + qz.targetSection : ""}</small>
+          <small>${(qz.questions || []).length} soru ï¿½ ${qz.targetClass || "Tï¿½m sï¿½nï¿½flar"}${qz.targetSection ? "/" + qz.targetSection : ""}</small>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary">Düzenle</button>
-          <button class="btn btn-success">Baþlat</button>
+          <button class="btn btn-primary">Dï¿½zenle</button>
+          <button class="btn btn-success">Baï¿½lat</button>
           <button class="btn btn-danger">Sil</button>
         </div>
       `;
@@ -2929,7 +2929,7 @@ async function loadTeacherLiveQuizList() {
       list.appendChild(div);
     });
   } catch (e) {
-    list.innerHTML = `<div style="color:#b91c1c;">Quizler yüklenemedi</div>`;
+    list.innerHTML = `<div style="color:#b91c1c;">Quizler yï¿½klenemedi</div>`;
   }
 }
 
@@ -2952,14 +2952,14 @@ function setTeacherHomeResultsView(rows = [], metaText = "", sessionId = "") {
     if (!resultsList) return;
     if (resultsMeta) resultsMeta.innerText = teacherHomeLatestResultsMeta;
     if (!teacherHomeLatestRankingRows.length) {
-      resultsList.innerHTML = `<div class="empty-state" style="padding:10px;">Henüz tamamlanan quiz sonucu yok.</div>`;
+      resultsList.innerHTML = `<div class="empty-state" style="padding:10px;">Henï¿½z tamamlanan quiz sonucu yok.</div>`;
       return;
     }
     resultsList.innerHTML = teacherHomeLatestRankingRows.slice(0, 24).map((r, i) => `
     <div class="list-item" style="cursor:default;padding:8px 10px;">
       <div>
         <strong>${i + 1}. ${r.studentName || r.name || r.userId || "-"}</strong><br>
-        <small>${r.correct || 0}D / ${r.wrong || 0}Y • ${formatQuizDurationText(r.durationMs, r.durationMinutes)}</small>
+        <small>${r.correct || 0}D / ${r.wrong || 0}Y ï¿½ ${formatQuizDurationText(r.durationMs, r.durationMinutes)}</small>
       </div>
       <div style="text-align:right;">
         <div style="font-weight:700;color:#2563eb;">${r.xpEarned ?? r.xp ?? 0} XP</div>
@@ -2993,12 +2993,12 @@ function getSortedQuizRanking(rows = []) {
 
 function openTeacherQuizResultsReport() {
   if (!teacherHomeLatestRankingRows.length) {
-    showNotice("Rapor için quiz sonucu bulunamadý.", "#f39c12");
+    showNotice("Rapor iï¿½in quiz sonucu bulunamadï¿½.", "#f39c12");
     return;
   }
   const reportWindow = window.open("", "_blank");
   if (!reportWindow) {
-    showNotice("Rapor penceresi açýlamadý.", "#e74c3c");
+    showNotice("Rapor penceresi aï¿½ï¿½lamadï¿½.", "#e74c3c");
     return;
   }
   const rowsHtml = teacherHomeLatestRankingRows.map((r, i) => {
@@ -3023,7 +3023,7 @@ function openTeacherQuizResultsReport() {
     `;
   }).join("");
   reportWindow.document.write(`
-    <html lang="tr"><head><meta charset="UTF-8"><title>Quiz Sonuç Raporu</title>
+    <html lang="tr"><head><meta charset="UTF-8"><title>Quiz Sonuï¿½ Raporu</title>
     <style>
       body{font-family:Segoe UI,Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:16px;}
       .card{max-width:1100px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;}
@@ -3043,19 +3043,19 @@ function openTeacherQuizResultsReport() {
     </style></head><body>
       <div class="top-actions">
         <button class="btn-close" onclick="window.close()">Kapat</button>
-        <button onclick="window.print()">Yazdýrma Önizleme</button>
+        <button onclick="window.print()">Yazdï¿½rma ï¿½nizleme</button>
       </div>
       <div class="card">
         <div class="report-head">
           <div class="report-head-left">
-            <img src="logo.png" alt="Logo" class="report-logo">
-            <h2>Quiz Sonuç Raporu</h2>
+            <img src="/public/logo.png" alt="Logo" class="report-logo">
+            <h2>Quiz Sonuï¿½ Raporu</h2>
           </div>
         </div>
-        <div class="meta">${teacherHomeLatestResultsMeta || "Quiz sonuçlarý"} • ${new Date().toLocaleString("tr-TR")}</div>
-        <table><thead><tr><th>#</th><th>Öðrenci</th><th>Doðru</th><th>Yanlýþ</th><th>XP</th><th>Baþarý</th><th>Süre</th><th>Doðru Grafiði</th></tr></thead>
+        <div class="meta">${teacherHomeLatestResultsMeta || "Quiz sonuï¿½larï¿½"} ï¿½ ${new Date().toLocaleString("tr-TR")}</div>
+        <table><thead><tr><th>#</th><th>ï¿½ï¿½renci</th><th>Doï¿½ru</th><th>Yanlï¿½ï¿½</th><th>XP</th><th>Baï¿½arï¿½</th><th>Sï¿½re</th><th>Doï¿½ru Grafiï¿½i</th></tr></thead>
         <tbody>${rowsHtml}</tbody></table>
-        <div class="actions"><button onclick="window.print()">PDF / Yazdýr</button></div>
+        <div class="actions"><button onclick="window.print()">PDF / Yazdï¿½r</button></div>
       </div>
     </body></html>
   `);
@@ -3084,7 +3084,7 @@ function startTeacherHomeQuizListener() {
     const visibleRows = rows.filter((qz) => !qz?.isDeleted);
     countEl.innerText = String(visibleRows.length);
     if (!visibleRows.length) {
-      list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">??</div>Henüz quiz eklenmedi.</div>`;
+      list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">??</div>Henï¿½z quiz eklenmedi.</div>`;
       if (completedList) completedList.innerHTML = "";
       if (noPendingEl) noPendingEl.style.display = "none";
       if (noCompletedEl) noCompletedEl.style.display = "none";
@@ -3097,11 +3097,11 @@ function startTeacherHomeQuizListener() {
       div.innerHTML = `
         <div>
           <div style="font-weight:700;">${qz.title || "Quiz"}</div>
-          <small>${(qz.questions || []).length} soru • ${qz.targetClass || "Tüm sýnýflar"}${qz.targetSection ? "/" + qz.targetSection : ""}</small>
-          <div style="font-size:12px;color:#64748b;margin-top:3px;">Oluþturulma: ${created}</div>
+          <small>${(qz.questions || []).length} soru ï¿½ ${qz.targetClass || "Tï¿½m sï¿½nï¿½flar"}${qz.targetSection ? "/" + qz.targetSection : ""}</small>
+          <div style="font-size:12px;color:#64748b;margin-top:3px;">Oluï¿½turulma: ${created}</div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary">Yönet</button>
+          <button class="btn btn-primary">Yï¿½net</button>
           <button class="btn btn-danger">Sil</button>
         </div>
       `;
@@ -3156,19 +3156,19 @@ function startTeacherHomeQuizListener() {
     renderTeacherQuizSessionSelector();
     return;
   }
-  list.innerHTML = `<div class="loading">Quizler yükleniyor...</div>`;
-  if (completedList) completedList.innerHTML = `<div class="loading">Quizler yükleniyor...</div>`;
-  if (resultsList) resultsList.innerHTML = `<div class="loading">Sonuçlar yükleniyor...</div>`;
-  if (resultsListModal) resultsListModal.innerHTML = `<div class="loading">Sonuçlar yükleniyor...</div>`;
-  if (resultsMeta) resultsMeta.innerText = "Sonuçlar yükleniyor...";
-  if (resultsMetaModal) resultsMetaModal.innerText = "Sonuçlar yükleniyor...";
+  list.innerHTML = `<div class="loading">Quizler yï¿½kleniyor...</div>`;
+  if (completedList) completedList.innerHTML = `<div class="loading">Quizler yï¿½kleniyor...</div>`;
+  if (resultsList) resultsList.innerHTML = `<div class="loading">Sonuï¿½lar yï¿½kleniyor...</div>`;
+  if (resultsListModal) resultsListModal.innerHTML = `<div class="loading">Sonuï¿½lar yï¿½kleniyor...</div>`;
+  if (resultsMeta) resultsMeta.innerText = "Sonuï¿½lar yï¿½kleniyor...";
+  if (resultsMetaModal) resultsMetaModal.innerText = "Sonuï¿½lar yï¿½kleniyor...";
   const qx = query(collection(db, "liveQuizzes"), where("teacherId", "==", currentUserId));
   liveQuizHomeUnsub = onSnapshot(qx, (snap) => {
     quizRowsCache = [];
     snap.forEach((d) => quizRowsCache.push({ id: d.id, ...d.data() }));
     renderQuizCards();
   }, () => {
-    list.innerHTML = `<div style="color:#b91c1c;">Quiz listesi yüklenemedi.</div>`;
+    list.innerHTML = `<div style="color:#b91c1c;">Quiz listesi yï¿½klenemedi.</div>`;
     if (completedList) completedList.innerHTML = "";
   });
 
@@ -3205,7 +3205,7 @@ function startTeacherHomeQuizListener() {
         const firstItems = bySessionTmp.get(teacherSelectedQuizSessionId) || [];
         const ranking = getSortedQuizRanking(firstItems);
         const headerQuizTitle = ranking[0]?.quizTitle || "Quiz";
-        const metaText = `${headerQuizTitle} • ${ranking.length} öðrenci tamamladý • Sonuç listesi`;
+        const metaText = `${headerQuizTitle} ï¿½ ${ranking.length} ï¿½ï¿½renci tamamladï¿½ ï¿½ Sonuï¿½ listesi`;
         setTeacherHomeResultsView(ranking, metaText, teacherSelectedQuizSessionId);
         renderTeacherQuizSessionSelector();
       } else {
@@ -3248,7 +3248,7 @@ function startTeacherHomeQuizListener() {
     if (!sessionRows.length) {
       teacherSelectedQuizSessionId = "";
       renderTeacherQuizSessionSelector();
-      setTeacherHomeResultsView(getSortedQuizRanking(rows), "Quiz sonuçlarý", rows[0]?.sessionId || "");
+      setTeacherHomeResultsView(getSortedQuizRanking(rows), "Quiz sonuï¿½larï¿½", rows[0]?.sessionId || "");
       return;
     }
     const sessionMap = new Map(sessionRows.map((s) => [s.sessionId, s.items]));
@@ -3258,8 +3258,8 @@ function startTeacherHomeQuizListener() {
     renderTeacherQuizSessionSelector();
     bindTeacherQuizSessionSelectorHandlers(sessionMap);
   }, () => {
-    setTeacherHomeResultsView([], "Sonuçlar alýnamadý.", "");
-    if (resultsList) resultsList.innerHTML = `<div style="color:#b91c1c;">Quiz sonuçlarý yüklenemedi.</div>`;
+    setTeacherHomeResultsView([], "Sonuï¿½lar alï¿½namadï¿½.", "");
+    if (resultsList) resultsList.innerHTML = `<div style="color:#b91c1c;">Quiz sonuï¿½larï¿½ yï¿½klenemedi.</div>`;
   });
 }
 
@@ -3273,7 +3273,7 @@ async function saveLiveQuiz() {
   const targetClass = (document.getElementById("live-quiz-class")?.value || "").trim();
   const targetSection = (document.getElementById("live-quiz-section")?.value || "").trim();
   if (!title || !liveQuizItems.length) {
-    showNotice("Quiz baþlýðý ve en az 1 soru gerekli.", "#e74c3c");
+    showNotice("Quiz baï¿½lï¿½ï¿½ï¿½ ve en az 1 soru gerekli.", "#e74c3c");
     return;
   }
   const payload = {
@@ -3294,7 +3294,7 @@ async function saveLiveQuiz() {
   } catch (e) {
     const msg = String(e?.message || "");
     if (msg.toLowerCase().includes("packet bigger than")) {
-      showNotice("Quiz kaydedilemedi: Görsel boyutu çok büyük. Daha küçük görsel seçin.", "#e74c3c");
+      showNotice("Quiz kaydedilemedi: Gï¿½rsel boyutu ï¿½ok bï¿½yï¿½k. Daha kï¿½ï¿½ï¿½k gï¿½rsel seï¿½in.", "#e74c3c");
     } else {
       showNotice("Quiz kaydedilemedi.", "#e74c3c");
     }
@@ -3303,10 +3303,10 @@ async function saveLiveQuiz() {
 
 async function deleteLiveQuiz() {
   if (!liveQuizEditingId) {
-    showNotice("Silmek için önce bir quiz seçin.", "#f39c12");
+    showNotice("Silmek iï¿½in ï¿½nce bir quiz seï¿½in.", "#f39c12");
     return;
   }
-  const ok = await showConfirm("Seçili quiz silinsin mi?");
+  const ok = await showConfirm("Seï¿½ili quiz silinsin mi?");
   if (!ok) return;
   try {
     await deleteOrArchiveLiveQuiz(liveQuizEditingId);
@@ -3351,7 +3351,7 @@ async function deleteOrArchiveLiveQuiz(quizId) {
 
 async function startLiveSession(quiz) {
   if (activeLiveSession?.status === "live") {
-    showNotice("Aktif canlý quiz var. Önce mevcut oturumu bitirin.", "#f39c12");
+    showNotice("Aktif canlï¿½ quiz var. ï¿½nce mevcut oturumu bitirin.", "#f39c12");
     return;
   }
   try {
@@ -3378,11 +3378,11 @@ async function startLiveSession(quiz) {
       createdAt: serverTimestamp()
     });
     activeLiveSession = { id: ref.id, ...quiz, currentIndex: 0, endsAtMs, status: "live", questionDurationSec: fallbackDuration };
-    showNotice("Canlý quiz baþlatýldý.", "#f97316");
+    showNotice("Canlï¿½ quiz baï¿½latï¿½ldï¿½.", "#f97316");
     listenTeacherLiveSession();
     openTeacherLiveMonitor();
   } catch (e) {
-    showNotice("Canlý quiz baþlatýlamadý.", "#e74c3c");
+    showNotice("Canlï¿½ quiz baï¿½latï¿½lamadï¿½.", "#e74c3c");
   }
 }
 
@@ -3495,8 +3495,8 @@ function normalizeLiveText(value) {
 
 function normalizeTrueFalseValue(value) {
   const v = normalizeLiveText(value);
-  if (v === "dogru" || v === "doðru") return "doðru";
-  if (v === "yanlis" || v === "yanlýþ") return "yanlýþ";
+  if (v === "dogru" || v === "doï¿½ru") return "doï¿½ru";
+  if (v === "yanlis" || v === "yanlï¿½ï¿½") return "yanlï¿½ï¿½";
   return v;
 }
 
@@ -3644,7 +3644,7 @@ function getBlockLevelNamesByTypeAndRange(typeRaw, start, end) {
     const e = Math.max(s, Number(end || s));
     const out = [];
     for (let i = s - 1; i <= e - 1 && i < sections.length; i++) {
-      out.push(String(sections[i]?.name || `Bölüm ${i + 1}`));
+      out.push(String(sections[i]?.name || `Bï¿½lï¿½m ${i + 1}`));
     }
     return out;
   }
@@ -3698,8 +3698,8 @@ function getLiveQuestionOptionEntries(question) {
   }
   if (question.type === "truefalse") {
     return [
-      { key: "doðru", label: "Doðru" },
-      { key: "yanlýþ", label: "Yanlýþ" }
+      { key: "doï¿½ru", label: "Doï¿½ru" },
+      { key: "yanlï¿½ï¿½", label: "Yanlï¿½ï¿½" }
     ];
   }
   const opts = Array.isArray(question.options) ? question.options : [];
@@ -3783,17 +3783,17 @@ function updateTeacherLiveMetaText(live) {
   const metaEl = document.getElementById("live-session-meta");
   if (titleEl) {
     titleEl.innerText = live
-      ? `${live.quizTitle || "Quiz"} • Soru ${Number(live.currentIndex || 0) + 1}/${(live.questions || []).length}`
-      : "Canlý oturum yok";
+      ? `${live.quizTitle || "Quiz"} ï¿½ Soru ${Number(live.currentIndex || 0) + 1}/${(live.questions || []).length}`
+      : "Canlï¿½ oturum yok";
   }
   if (metaEl) {
     metaEl.innerText = live
-      ? `Kalan: ${Math.max(0, Math.floor((Number(live.endsAtMs || 0) - Date.now()) / 1000))} sn • ${live.isLocked ? "?? Soru kilitli" : "?? Soru açýk"}`
+      ? `Kalan: ${Math.max(0, Math.floor((Number(live.endsAtMs || 0) - Date.now()) / 1000))} sn ï¿½ ${live.isLocked ? "?? Soru kilitli" : "?? Soru aï¿½ï¿½k"}`
       : "";
   }
   const lockBtn = document.getElementById("btn-live-session-lock");
   if (lockBtn) {
-    lockBtn.innerText = live?.isLocked ? "Kilidi Aç" : "Soruyu Kilitle";
+    lockBtn.innerText = live?.isLocked ? "Kilidi Aï¿½" : "Soruyu Kilitle";
     lockBtn.classList.toggle("btn-warning", !live?.isLocked);
     lockBtn.classList.toggle("btn-success", !!live?.isLocked);
     lockBtn.disabled = !live;
@@ -3824,8 +3824,8 @@ function startTeacherLiveTicker() {
   }, 500);
 }
 
-// Öðrenci istemcisinden oturum ilerletmeyiz.
-// Soru geçiþinin tek otoritesi öðretmen oturumudur.
+// ï¿½ï¿½renci istemcisinden oturum ilerletmeyiz.
+// Soru geï¿½iï¿½inin tek otoritesi ï¿½ï¿½retmen oturumudur.
 async function tryFallbackAdvanceLiveSession(_live) {}
 
 function renderLiveTeacherRank(rows = []) {
@@ -3836,12 +3836,12 @@ function renderLiveTeacherRank(rows = []) {
     .sort((a, b) => Number(b?.xp || 0) - Number(a?.xp || 0))
     .slice(0, 7);
   if (!ranked.length) {
-    box.innerHTML = `<div class="empty-state">Henüz katýlým yok.</div>`;
+    box.innerHTML = `<div class="empty-state">Henï¿½z katï¿½lï¿½m yok.</div>`;
     return;
   }
   box.innerHTML = ranked.map((r, i) => `
     <div class="list-item" style="cursor:default;">
-      <div><strong>${i + 1}. ${r.name || r.userId || "-"}</strong><br><small>${r.correct || 0} doðru</small></div>
+      <div><strong>${i + 1}. ${r.name || r.userId || "-"}</strong><br><small>${r.correct || 0} doï¿½ru</small></div>
       <div style="font-weight:700;color:#2563eb;">${r.xp || 0} XP</div>
     </div>
   `).join("");
@@ -3852,14 +3852,14 @@ function renderTeacherAnswerStats(live, answers = []) {
   const feedBox = document.getElementById("live-session-answer-feed");
   if (!statsBox || !feedBox) return;
   if (!live || live.status !== "live") {
-    statsBox.innerHTML = `<div class="empty-state">Canlý soru yok.</div>`;
+    statsBox.innerHTML = `<div class="empty-state">Canlï¿½ soru yok.</div>`;
     feedBox.innerHTML = "";
     return;
   }
   const qIndex = Number(live.currentIndex || 0);
   const question = live.questions?.[qIndex];
   if (!question) {
-    statsBox.innerHTML = `<div class="empty-state">Soru bulunamadý.</div>`;
+    statsBox.innerHTML = `<div class="empty-state">Soru bulunamadï¿½.</div>`;
     feedBox.innerHTML = "";
     return;
   }
@@ -3880,14 +3880,14 @@ function renderTeacherAnswerStats(live, answers = []) {
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">
         <div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;background:#f8fafc;">
           <div style="font-weight:600;">Soru Tipi</div>
-          <div style="font-size:14px;font-weight:700;color:#1e3a8a;">Sürükle-Býrak Eþleþtirme</div>
+          <div style="font-size:14px;font-weight:700;color:#1e3a8a;">Sï¿½rï¿½kle-Bï¿½rak Eï¿½leï¿½tirme</div>
         </div>
         <div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;background:#f8fafc;">
-          <div style="font-weight:600;">Yanýtlayan</div>
+          <div style="font-weight:600;">Yanï¿½tlayan</div>
           <div style="font-size:18px;font-weight:700;color:#1d4ed8;">${totalAnswered}</div>
         </div>
         <div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;background:#f8fafc;">
-          <div style="font-weight:600;">Doðru</div>
+          <div style="font-weight:600;">Doï¿½ru</div>
           <div style="font-size:18px;font-weight:700;color:#16a34a;">${correctCount}</div>
         </div>
       </div>
@@ -3904,13 +3904,13 @@ function renderTeacherAnswerStats(live, answers = []) {
       `).join("")}
     </div>
     <div style="margin-top:8px;color:#334155;font-size:13px;">
-      Yanýtlayan: <strong>${totalAnswered}</strong> • Doðru: <strong>${correctCount}</strong>
+      Yanï¿½tlayan: <strong>${totalAnswered}</strong> ï¿½ Doï¿½ru: <strong>${correctCount}</strong>
     </div>
   `;
   }
 
   if (!answers.length) {
-    feedBox.innerHTML = `<div class="empty-state">Henüz cevap gelmedi.</div>`;
+    feedBox.innerHTML = `<div class="empty-state">Henï¿½z cevap gelmedi.</div>`;
     return;
   }
   const sorted = answers
@@ -3925,7 +3925,7 @@ function renderTeacherAnswerStats(live, answers = []) {
     return `
       <div class="list-item" style="cursor:default;padding:8px 10px;">
         <div><strong>${who}</strong><br><small>${option?.label || answer.selected || "-"}</small></div>
-        <div style="font-weight:700;color:${ok ? "#16a34a" : "#dc2626"};">${ok ? "Doðru" : "Yanlýþ"}</div>
+        <div style="font-weight:700;color:${ok ? "#16a34a" : "#dc2626"};">${ok ? "Doï¿½ru" : "Yanlï¿½ï¿½"}</div>
       </div>
     `;
   }).join("");
@@ -3987,10 +3987,10 @@ function renderTeacherLiveMonitor(live = activeLiveSession) {
   if (!titleEl || !subEl || !metricsEl || !listEl) return;
 
   if (!live || live.status !== "live") {
-    titleEl.innerText = "Canlý Quiz Takip";
-    subEl.innerText = "Aktif canlý quiz bulunmuyor.";
+    titleEl.innerText = "Canlï¿½ Quiz Takip";
+    subEl.innerText = "Aktif canlï¿½ quiz bulunmuyor.";
     metricsEl.innerHTML = "";
-    listEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Canlý oturum baþladýðýnda tüm öðrenciler burada anlýk listelenir.</div>`;
+    listEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Canlï¿½ oturum baï¿½ladï¿½ï¿½ï¿½nda tï¿½m ï¿½ï¿½renciler burada anlï¿½k listelenir.</div>`;
     return;
   }
 
@@ -4018,7 +4018,7 @@ function renderTeacherLiveMonitor(live = activeLiveSession) {
     answerMap.set(uid, row);
   });
 
-  // Sadece quize gerçekten katýlanlar: answer veya score kaydý bulunan kullanýcýlar.
+  // Sadece quize gerï¿½ekten katï¿½lanlar: answer veya score kaydï¿½ bulunan kullanï¿½cï¿½lar.
   const studentMetaMap = new Map(
     (teacherLiveMonitorStudents || []).map((s) => [String(s.id || ""), s])
   );
@@ -4053,19 +4053,19 @@ function renderTeacherLiveMonitor(live = activeLiveSession) {
     return isLiveAnswerCorrect(question, getLiveSelectedKey(question, row.answer));
   }).length;
   const totalXP = rows.reduce((sum, row) => sum + Number(row.score?.xp || 0), 0);
-  const classLabel = live.targetClass ? `${live.targetClass}${live.targetSection ? "/" + live.targetSection : ""}` : "Tüm Sýnýflar";
+  const classLabel = live.targetClass ? `${live.targetClass}${live.targetSection ? "/" + live.targetSection : ""}` : "Tï¿½m Sï¿½nï¿½flar";
 
-  titleEl.innerText = `${live.quizTitle || "Quiz"} • Canlý Takip`;
-  subEl.innerText = `Soru ${Math.min(qIndex + 1, Math.max(totalQuestions, 1))}/${Math.max(totalQuestions, 1)} • ${classLabel} • Kalan ${Math.max(0, Math.floor((Number(live.endsAtMs || 0) - Date.now()) / 1000))} sn`;
+  titleEl.innerText = `${live.quizTitle || "Quiz"} ï¿½ Canlï¿½ Takip`;
+  subEl.innerText = `Soru ${Math.min(qIndex + 1, Math.max(totalQuestions, 1))}/${Math.max(totalQuestions, 1)} ï¿½ ${classLabel} ï¿½ Kalan ${Math.max(0, Math.floor((Number(live.endsAtMs || 0) - Date.now()) / 1000))} sn`;
   metricsEl.innerHTML = `
-    <div class="teacher-live-metric"><div class="k">Öðrenci</div><div class="v">${rows.length}</div></div>
-    <div class="teacher-live-metric"><div class="k">Yanýtlayan</div><div class="v">${answeredCount}</div></div>
-    <div class="teacher-live-metric"><div class="k">Doðru</div><div class="v">${correctCount}</div></div>
+    <div class="teacher-live-metric"><div class="k">ï¿½ï¿½renci</div><div class="v">${rows.length}</div></div>
+    <div class="teacher-live-metric"><div class="k">Yanï¿½tlayan</div><div class="v">${answeredCount}</div></div>
+    <div class="teacher-live-metric"><div class="k">Doï¿½ru</div><div class="v">${correctCount}</div></div>
     <div class="teacher-live-metric"><div class="k">Toplam XP</div><div class="v">${totalXP}</div></div>
   `;
 
   if (!rows.length) {
-    listEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Henüz quize katýlan öðrenci yok.</div>`;
+    listEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Henï¿½z quize katï¿½lan ï¿½ï¿½renci yok.</div>`;
     return;
   }
   listEl.innerHTML = rows.map((row) => {
@@ -4074,7 +4074,7 @@ function renderTeacherLiveMonitor(live = activeLiveSession) {
     const selectedLabel = options.find((opt) => opt.key === selectedKey)?.label || (row.answer?.selected || "-");
     const isCorrect = question && row.answer ? isLiveAnswerCorrect(question, selectedKey) : false;
     const statusClass = row.answer ? "answered" : "pending";
-    const statusText = row.answer ? (isCorrect ? "Cevaplandý • Doðru" : "Cevaplandý • Yanlýþ") : "Cevap bekleniyor";
+    const statusText = row.answer ? (isCorrect ? "Cevaplandï¿½ ï¿½ Doï¿½ru" : "Cevaplandï¿½ ï¿½ Yanlï¿½ï¿½") : "Cevap bekleniyor";
     const classText = row.className ? `${row.className}${row.section ? "/" + row.section : ""}` : "-";
     return `
       <div class="teacher-live-student-card ${statusClass}">
@@ -4084,9 +4084,9 @@ function renderTeacherLiveMonitor(live = activeLiveSession) {
         </div>
         <div class="teacher-live-status ${statusClass}">${statusText}</div>
         <div class="teacher-live-student-meta">
-          <div>Seçim: <strong>${selectedLabel || "-"}</strong></div>
-          <div>XP: <strong>${Number(row.score?.xp || 0)}</strong> • Doðru: <strong>${Number(row.score?.correct || 0)}</strong></div>
-          <div>Sýnýf: <strong>${classText}</strong></div>
+          <div>Seï¿½im: <strong>${selectedLabel || "-"}</strong></div>
+          <div>XP: <strong>${Number(row.score?.xp || 0)}</strong> ï¿½ Doï¿½ru: <strong>${Number(row.score?.correct || 0)}</strong></div>
+          <div>Sï¿½nï¿½f: <strong>${classText}</strong></div>
         </div>
       </div>
     `;
@@ -4407,7 +4407,7 @@ async function teacherEndLiveSession(reason = "manual") {
     };
   });
   if (rankingRows.length) {
-    const meta = `${sessionData.quizTitle || "Quiz"} • ${rankingRows.length} öðrenci tamamladý • Sonuç listesi`;
+    const meta = `${sessionData.quizTitle || "Quiz"} ï¿½ ${rankingRows.length} ï¿½ï¿½renci tamamladï¿½ ï¿½ Sonuï¿½ listesi`;
     setTeacherHomeResultsView(getSortedQuizRanking(rankingRows), meta, activeLiveSession.id);
   }
   const winner = scores[0] || null;
@@ -4430,14 +4430,14 @@ async function teacherEndLiveSession(reason = "manual") {
 
 async function teacherToggleLiveLock() {
   if (!activeLiveSession?.id) {
-    showNotice("Aktif canlý oturum yok.", "#f39c12");
+    showNotice("Aktif canlï¿½ oturum yok.", "#f39c12");
     return;
   }
   try {
     const ref = doc(db, "liveQuizSessions", activeLiveSession.id);
     await updateDoc(ref, { isLocked: !activeLiveSession?.isLocked });
   } catch (e) {
-    showNotice("Kilit durumu güncellenemedi.", "#e74c3c");
+    showNotice("Kilit durumu gï¿½ncellenemedi.", "#e74c3c");
   }
 }
 
@@ -4477,12 +4477,12 @@ function startStudentLiveQuizListener() {
     const inviteText = document.getElementById("live-quiz-invite-text");
     if (!invite || !inviteText) return;
     if (live) {
-      inviteText.innerText = `“${live.quizTitle || "Canlý Quiz"}” baþladý. Katýlmak için týklayýn.`;
+      inviteText.innerText = `ï¿½${live.quizTitle || "Canlï¿½ Quiz"}ï¿½ baï¿½ladï¿½. Katï¿½lmak iï¿½in tï¿½klayï¿½n.`;
       const playerOpen = document.getElementById("live-quiz-player")?.style.display === "flex";
       if (!playerOpen) {
         invite.style.display = "flex";
         if (lastLiveInviteSessionId !== live.id) {
-          showNotice("?? Canlý quize katýl bildirimi", "#f97316");
+          showNotice("?? Canlï¿½ quize katï¿½l bildirimi", "#f97316");
         }
       }
       lastLiveInviteSessionId = live.id;
@@ -4523,7 +4523,7 @@ async function renderStudentLiveQuestion() {
   const qIndex = Number(session.currentIndex || 0);
   const q = session.questions?.[qIndex] || null;
   const answerKey = `${session.id}_${qIndex}_${currentUserId}`;
-  // Intro ve ilk render gecikmesini azaltmak için önce local cache/pending kullan.
+  // Intro ve ilk render gecikmesini azaltmak iï¿½in ï¿½nce local cache/pending kullan.
   let existingAnswer = studentLivePendingAnswers.get(answerKey) || studentLiveAnswerCache.get(answerKey) || null;
   if (!existingAnswer) {
     resolveStudentLiveAnswer(session.id, qIndex).then((ans) => {
@@ -4541,9 +4541,9 @@ async function renderStudentLiveQuestion() {
   const now = Date.now();
   const leftSec = Math.max(0, Math.floor((effectiveEndsAtMs - now) / 1000));
   const isQuestionTimeOver = leftSec <= 0;
-  if (title) title.innerText = `${session.quizTitle || "Canlý Quiz"} • ${Number(session.currentIndex || 0) + 1}/${(session.questions || []).length}`;
+  if (title) title.innerText = `${session.quizTitle || "Canlï¿½ Quiz"} ï¿½ ${Number(session.currentIndex || 0) + 1}/${(session.questions || []).length}`;
   if (!q) {
-    if (qBox) qBox.innerText = "Soru bulunamadý.";
+    if (qBox) qBox.innerText = "Soru bulunamadï¿½.";
     if (oBox) oBox.innerHTML = "";
     return;
   }
@@ -4578,7 +4578,7 @@ async function renderStudentLiveQuestion() {
     if (q?.imageDataUrl) {
       const img = document.createElement("img");
       img.src = String(q.imageDataUrl);
-      img.alt = "Soru görseli";
+      img.alt = "Soru gï¿½rseli";
       img.style.maxWidth = "100%";
       img.style.maxHeight = "220px";
       img.style.objectFit = "cover";
@@ -4594,26 +4594,26 @@ async function renderStudentLiveQuestion() {
   if (info) {
     const questionXP = Math.max(0, Number(q?.xp ?? MAX_QUESTION_XP)) * (q?.doubleXp ? 2 : 1);
     const statusText = existingAnswer?.pending
-      ? "Cevabýn gönderiliyor..."
+      ? "Cevabï¿½n gï¿½nderiliyor..."
       : existingAnswer
-      ? `Bu soruyu cevapladýn: ${existingAnswer.selectedKey || existingAnswer.selected || "Yanýt kaydedildi"}`
-      : ((session.isLocked || isQuestionTimeOver) ? "Bu soru süresi doldu. Sonraki soru bekleniyor." : `Doðru cevap +${questionXP} XP`);
+      ? `Bu soruyu cevapladï¿½n: ${existingAnswer.selectedKey || existingAnswer.selected || "Yanï¿½t kaydedildi"}`
+      : ((session.isLocked || isQuestionTimeOver) ? "Bu soru sï¿½resi doldu. Sonraki soru bekleniyor." : `Doï¿½ru cevap +${questionXP} XP`);
     info.innerText = statusText;
   }
   if (q.type === "matching") {
     if (info) {
       const statusText = existingAnswer?.pending
-        ? "Cevabýn gönderiliyor..."
+        ? "Cevabï¿½n gï¿½nderiliyor..."
         : existingAnswer
-        ? "Bu eþleþtirme sorusu cevaplandý."
-        : (session.isLocked ? "Bu soru öðretmen tarafýndan kilitlendi." : "Eþleþmeleri sürükle-býrak ile tamamlayýn.");
+        ? "Bu eï¿½leï¿½tirme sorusu cevaplandï¿½."
+        : (session.isLocked ? "Bu soru ï¿½ï¿½retmen tarafï¿½ndan kilitlendi." : "Eï¿½leï¿½meleri sï¿½rï¿½kle-bï¿½rak ile tamamlayï¿½n.");
       info.innerText = statusText;
     }
     renderStudentMatchingQuestion(q, session, existingAnswer, isQuestionTimeOver);
     return;
   }
   if (oBox) {
-    const opts = q.type === "truefalse" ? ["doðru", "yanlýþ"] : (Array.isArray(q.options) ? q.options : []);
+    const opts = q.type === "truefalse" ? ["doï¿½ru", "yanlï¿½ï¿½"] : (Array.isArray(q.options) ? q.options : []);
     oBox.innerHTML = "";
     opts.forEach((opt, i) => {
       const btn = document.createElement("button");
@@ -4622,7 +4622,7 @@ async function renderStudentLiveQuestion() {
       const answerKey = existingAnswer ? (q.type === "truefalse" ? normalizeTrueFalseValue(existingAnswer.selectedKey || existingAnswer.selected) : String(existingAnswer.selectedKey || "").toUpperCase()) : "";
       const isSelected = !!existingAnswer && selectedKey === answerKey;
       if (q.type === "truefalse") {
-        btn.classList.add(selectedKey === "doðru" ? "tf-true" : "tf-false");
+        btn.classList.add(selectedKey === "doï¿½ru" ? "tf-true" : "tf-false");
       } else {
         btn.classList.add(i === 0 ? "opt-a" : i === 1 ? "opt-b" : i === 2 ? "opt-c" : "opt-d");
       }
@@ -4634,8 +4634,8 @@ async function renderStudentLiveQuestion() {
           btn.classList.add(existingAnswer?.isCorrect ? "correct" : "wrong");
         }
       }
-      const keyText = q.type === "truefalse" ? (selectedKey === "doðru" ? "D" : "Y") : String.fromCharCode(65 + i);
-      const optTextRaw = q.type === "truefalse" ? (selectedKey === "doðru" ? "Doðru" : "Yanlýþ") : `${opt}`;
+      const keyText = q.type === "truefalse" ? (selectedKey === "doï¿½ru" ? "D" : "Y") : String.fromCharCode(65 + i);
+      const optTextRaw = q.type === "truefalse" ? (selectedKey === "doï¿½ru" ? "Doï¿½ru" : "Yanlï¿½ï¿½") : `${opt}`;
       const isCorrectOption = q.type === "truefalse"
         ? normalizeTrueFalseValue(q?.correct) === normalizeTrueFalseValue(selectedKey)
         : String(q?.correct || "").trim().toUpperCase() === selectedKey;
@@ -4653,7 +4653,7 @@ function renderStudentMatchingQuestion(question, session, existingAnswer, isQues
   if (!oBox) return;
   const pairs = Array.isArray(question?.pairs) ? question.pairs : [];
   if (!pairs.length) {
-    oBox.innerHTML = `<div class="empty-state">Eþleþtirme verisi bulunamadý.</div>`;
+    oBox.innerHTML = `<div class="empty-state">Eï¿½leï¿½tirme verisi bulunamadï¿½.</div>`;
     return;
   }
   const initialMap = (existingAnswer?.selectedMap && typeof existingAnswer.selectedMap === "object")
@@ -4679,26 +4679,26 @@ function renderStudentMatchingQuestion(question, session, existingAnswer, isQues
     <div class="live-match-board">
       <div class="live-match-grid">
         <div>
-          <div class="live-match-col-title">Sol Ýfadeler</div>
+          <div class="live-match-col-title">Sol ï¿½fadeler</div>
           ${pairs.map((p) => `<div class="live-match-left-item">${p.left || "-"}</div>`).join("")}
         </div>
         <div>
-          <div class="live-match-col-title">Sað Eþleþme</div>
+          <div class="live-match-col-title">Saï¿½ Eï¿½leï¿½me</div>
           ${pairs.map((p, i) => `
             <div class="live-match-dropzone ${initialMap[p.left] ? "filled" : ""}" data-left="${encodeURIComponent(p.left || "")}">
-              <span>${initialMap[p.left] || "Buraya býrak"}</span>
+              <span>${initialMap[p.left] || "Buraya bï¿½rak"}</span>
               <button class="btn" data-clear="${i}" style="display:${initialMap[p.left] && !answeredPersisted ? "inline-flex" : "none"};padding:4px 8px;background:#eef2ff;color:#1e3a8a;">Temizle</button>
             </div>
           `).join("")}
         </div>
       </div>
-      <div class="live-match-col-title" style="margin-top:8px;">Karýþýk Kartlar</div>
+      <div class="live-match-col-title" style="margin-top:8px;">Karï¿½ï¿½ï¿½k Kartlar</div>
       <div class="live-match-chip-wrap" id="live-match-chip-wrap">
         ${chipOrder.map((text, i) => `
           <div class="live-match-chip ${usedValues.has(text) ? "used" : ""}" draggable="${answeredPersisted ? "false" : "true"}" data-chip="${i}" data-value="${encodeURIComponent(text)}">${text}</div>
         `).join("")}
       </div>
-      <button class="btn btn-primary live-match-submit" id="btn-submit-live-matching" ${answeredPersisted || session?.isLocked ? "disabled" : ""}>Eþleþtirmeyi Gönder</button>
+      <button class="btn btn-primary live-match-submit" id="btn-submit-live-matching" ${answeredPersisted || session?.isLocked ? "disabled" : ""}>Eï¿½leï¿½tirmeyi Gï¿½nder</button>
     </div>
   `;
   if (answeredPersisted || session?.isLocked) return;
@@ -4766,7 +4766,7 @@ function renderStudentMatchingQuestion(question, session, existingAnswer, isQues
     submitBtn.onclick = async () => {
       const complete = pairs.every((p) => !!localMap[p.left]);
       if (!complete) {
-        showNotice("Lütfen tüm eþleþtirmeleri tamamlayýn.", "#f39c12");
+        showNotice("Lï¿½tfen tï¿½m eï¿½leï¿½tirmeleri tamamlayï¿½n.", "#f39c12");
         return;
       }
       await submitStudentLiveMatchingAnswer(localMap);
@@ -4847,14 +4847,14 @@ async function submitStudentLiveAnswer(opt, idx) {
   const session = activeStudentLiveSession;
   if (!session?.id) return;
   if (session?.isLocked) {
-    showNotice("Bu soru kilitli. Öðretmenin açmasýný bekleyin.", "#f39c12");
+    showNotice("Bu soru kilitli. ï¿½ï¿½retmenin aï¿½masï¿½nï¿½ bekleyin.", "#f39c12");
     return;
   }
   const qIndex = Number(session.currentIndex || 0);
   const q = session.questions?.[qIndex];
   if (!q) return;
   if (Date.now() >= getStudentLiveEffectiveEndsAtMs(session)) {
-    showNotice("Bu sorunun süresi doldu. Sonraki soruyu bekleyin.", "#f39c12");
+    showNotice("Bu sorunun sï¿½resi doldu. Sonraki soruyu bekleyin.", "#f39c12");
     return;
   }
   const submitKey = `${session.id}_${qIndex}_${currentUserId}`;
@@ -4880,7 +4880,7 @@ async function submitStudentLiveAnswer(opt, idx) {
     const cachedExisting = studentLiveAnswerCache.get(submitKey) || studentLivePendingAnswers.get(submitKey);
     if (cachedExisting?.answeredAtMs) {
       studentLivePendingAnswers.delete(submitKey);
-      showNotice("Bu soruyu zaten cevapladýn.", "#f39c12");
+      showNotice("Bu soruyu zaten cevapladï¿½n.", "#f39c12");
       renderStudentLiveQuestion();
       return;
     }
@@ -4898,11 +4898,11 @@ async function submitStudentLiveAnswer(opt, idx) {
       answeredAtMs: Date.now()
     };
 
-    // Öðretmen paneline düþen asýl veri answers koleksiyonudur; önce bunu yazýp UI'ý anýnda güncelle.
+    // ï¿½ï¿½retmen paneline dï¿½ï¿½en asï¿½l veri answers koleksiyonudur; ï¿½nce bunu yazï¿½p UI'ï¿½ anï¿½nda gï¿½ncelle.
     await setDoc(ansRef, answerPayload);
     studentLivePendingAnswers.delete(submitKey);
     studentLiveAnswerCache.set(submitKey, answerPayload);
-    showNotice(isCorrect ? `Doðru! +${questionXP} XP` : "Yanlýþ cevap.", isCorrect ? "#2ecc71" : "#e74c3c");
+    showNotice(isCorrect ? `Doï¿½ru! +${questionXP} XP` : "Yanlï¿½ï¿½ cevap.", isCorrect ? "#2ecc71" : "#e74c3c");
     renderStudentLiveQuestion();
 
     const writes = [
@@ -4918,7 +4918,7 @@ async function submitStudentLiveAnswer(opt, idx) {
       updateUserXPDisplay();
       addStudentQuizPoints(xp);
     } else if (xp > 0 && !xpGranted) {
-      showNotice("XP þu an kaydedilemedi, quiz sonunda tekrar denenecek.", "#f39c12");
+      showNotice("XP ï¿½u an kaydedilemedi, quiz sonunda tekrar denenecek.", "#f39c12");
     }
     await syncStudentLiveQuizProgress(session.id, false);
   } catch (e) {
@@ -4934,14 +4934,14 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
   const session = activeStudentLiveSession;
   if (!session?.id) return;
   if (session?.isLocked) {
-    showNotice("Bu soru kilitli. Öðretmenin açmasýný bekleyin.", "#f39c12");
+    showNotice("Bu soru kilitli. ï¿½ï¿½retmenin aï¿½masï¿½nï¿½ bekleyin.", "#f39c12");
     return;
   }
   const qIndex = Number(session.currentIndex || 0);
   const q = session.questions?.[qIndex];
   if (!q || q.type !== "matching") return;
   if (Date.now() >= getStudentLiveEffectiveEndsAtMs(session)) {
-    showNotice("Bu sorunun süresi doldu. Sonraki soruyu bekleyin.", "#f39c12");
+    showNotice("Bu sorunun sï¿½resi doldu. Sonraki soruyu bekleyin.", "#f39c12");
     return;
   }
   const submitKey = `${session.id}_${qIndex}_${currentUserId}`;
@@ -4954,7 +4954,7 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
     qIndex,
     selectedKey: serializeLiveMatchingMap(normalizedMap),
     selectedMap: normalizedMap,
-    selected: "Eþleþtirme",
+    selected: "Eï¿½leï¿½tirme",
     pending: true,
     answeredAtMs: 0
   };
@@ -4966,7 +4966,7 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
     const cachedExisting = studentLiveAnswerCache.get(submitKey) || studentLivePendingAnswers.get(submitKey);
     if (cachedExisting?.answeredAtMs) {
       studentLivePendingAnswers.delete(submitKey);
-      showNotice("Bu soruyu zaten cevapladýn.", "#f39c12");
+      showNotice("Bu soruyu zaten cevapladï¿½n.", "#f39c12");
       renderStudentLiveQuestion();
       return;
     }
@@ -4979,7 +4979,7 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
       qIndex,
       selectedKey: serializeLiveMatchingMap(normalizedMap),
       selectedMap: normalizedMap,
-      selected: "Eþleþtirme",
+      selected: "Eï¿½leï¿½tirme",
       isCorrect,
       xp,
       answeredAtMs: Date.now()
@@ -4988,7 +4988,7 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
     await setDoc(ansRef, answerPayload);
     studentLivePendingAnswers.delete(submitKey);
     studentLiveAnswerCache.set(submitKey, answerPayload);
-    showNotice(isCorrect ? `Eþleþtirme doðru! +${questionXP} XP` : "Eþleþtirme yanlýþ.", isCorrect ? "#2ecc71" : "#e74c3c");
+    showNotice(isCorrect ? `Eï¿½leï¿½tirme doï¿½ru! +${questionXP} XP` : "Eï¿½leï¿½tirme yanlï¿½ï¿½.", isCorrect ? "#2ecc71" : "#e74c3c");
     renderStudentLiveQuestion();
 
     const writes = [
@@ -5004,7 +5004,7 @@ async function submitStudentLiveMatchingAnswer(selectedMap = {}) {
       updateUserXPDisplay();
       addStudentQuizPoints(xp);
     } else if (xp > 0 && !xpGranted) {
-      showNotice("XP þu an kaydedilemedi, quiz sonunda tekrar denenecek.", "#f39c12");
+      showNotice("XP ï¿½u an kaydedilemedi, quiz sonunda tekrar denenecek.", "#f39c12");
     }
     await syncStudentLiveQuizProgress(session.id, false);
   } catch (e) {
@@ -5020,7 +5020,7 @@ function renderStudentLiveRank(rows = []) {
   const box = document.getElementById("live-player-rank");
   if (!box) return;
   if (!rows.length) {
-    box.innerHTML = `<div class="empty-state">Henüz sýralama oluþmadý.</div>`;
+    box.innerHTML = `<div class="empty-state">Henï¿½z sï¿½ralama oluï¿½madï¿½.</div>`;
     return;
   }
   box.innerHTML = rows.slice(0, 10).map((r, i) => {
@@ -5071,7 +5071,7 @@ function getStudentLiveEffectiveEndsAtMs(session) {
       endsAtMs: Date.now() + (durationSec * 1000)
     };
   }
-  // Öðrenciye soru geç gelirse hak kaybýný önlemek için lokal süreyi baz al.
+  // ï¿½ï¿½renciye soru geï¿½ gelirse hak kaybï¿½nï¿½ ï¿½nlemek iï¿½in lokal sï¿½reyi baz al.
   return Math.max(
     Number(session?.endsAtMs || 0),
     Number(studentLiveLocalQuestionTimer.endsAtMs || 0)
@@ -5100,7 +5100,7 @@ function openLivePlayer() {
       const live = activeStudentLiveSession;
       const idx = Number(live?.currentIndex || 0);
       const total = Math.max(0, Number(Array.isArray(live?.questions) ? live.questions.length : 0));
-      // Son soruda süre dolup state senkronu gecikirse öðrenci ekraný takýlý kalmasýn.
+      // Son soruda sï¿½re dolup state senkronu gecikirse ï¿½ï¿½renci ekranï¿½ takï¿½lï¿½ kalmasï¿½n.
       if (live && total > 0 && idx + 1 >= total) {
         setTimeout(() => {
           if (!activeStudentLiveSession) return;
@@ -5111,7 +5111,7 @@ function openLivePlayer() {
           const stillExpired = Date.now() >= Number(cur?.endsAtMs || 0);
           if (stillLast && stillExpired) {
             closeLivePlayer(true);
-            showNotice("Quiz süresi doldu.", "#4a90e2");
+            showNotice("Quiz sï¿½resi doldu.", "#4a90e2");
           }
         }, 1800);
       }
@@ -5122,7 +5122,7 @@ function openLivePlayer() {
 
 function closeLivePlayer(force = false) {
   if (!force && activeStudentLiveSession?.status === "live") {
-    showNotice("Canlý quiz bitmeden çýkamazsýn. 'Katýl' ile devam et.", "#f39c12");
+    showNotice("Canlï¿½ quiz bitmeden ï¿½ï¿½kamazsï¿½n. 'Katï¿½l' ile devam et.", "#f39c12");
     return;
   }
   const modal = document.getElementById("live-quiz-player");
@@ -5140,11 +5140,11 @@ document.getElementById("btn-download-student-pdf").onclick = async function () 
 
 async function downloadStudentPdf() {
   if (!currentStudentDetail) {
-    showNotice("Öðrenci bilgisi yok!", "#e74c3c");
+    showNotice("ï¿½ï¿½renci bilgisi yok!", "#e74c3c");
     return;
   }
-  const hideLoadingNotice = showLoadingNotice("Rapor hazýrlanýyor...");
-  showReportLoadingOverlay("Rapor hazýrlanýyor, lütfen bekleyin");
+  const hideLoadingNotice = showLoadingNotice("Rapor hazï¿½rlanï¿½yor...");
+  showReportLoadingOverlay("Rapor hazï¿½rlanï¿½yor, lï¿½tfen bekleyin");
   try {
     await openStudentReportWindow(currentStudentDetail);
   } finally {
@@ -5162,7 +5162,7 @@ window.closeStudentDetail = function() {
   }
 };
 
-/* ================= ÇIKIÞ ================= */
+/* ================= ï¿½IKIï¿½ ================= */
 async function handleUserLogout({ closeSideMenu = true, closeDropdown = true } = {}) {
   if (logoutInProgress) return;
   logoutInProgress = true;
@@ -5191,11 +5191,11 @@ async function handleUserLogout({ closeSideMenu = true, closeDropdown = true } =
   }
   try {
     await signOut(auth);
-    showNotice("Çýkýþ yapýldý", "#4a90e2");
+    showNotice("ï¿½ï¿½kï¿½ï¿½ yapï¿½ldï¿½", "#4a90e2");
   } catch (e) {
     logoutInProgress = false;
     console.warn("logout failed:", e);
-    showNotice("Çýkýþ yapýlamadý. Tekrar deneyin.", "#e74c3c");
+    showNotice("ï¿½ï¿½kï¿½ï¿½ yapï¿½lamadï¿½. Tekrar deneyin.", "#e74c3c");
   }
 }
 
@@ -5294,7 +5294,7 @@ document.getElementById("teacher-certificates-modal").onclick = function(e) {
 
 
 
-/* ================= FÝLTRELEME ================= */
+/* ================= Fï¿½LTRELEME ================= */
 window.filterTasks = function(filterType) {
   currentFilter = filterType;
   
@@ -5659,14 +5659,14 @@ function renderAvatarShop() {
     const isOwned = owned.includes(avatar.id);
     const isSelected = avatar.id === selectedId;
     const stateClass = `${isOwned ? "owned" : ""} ${isSelected ? "selected" : ""}`.trim();
-    const buttonText = isSelected ? "Kullanýlýyor" : isOwned ? "Seç" : `${avatar.cost} XP ile Al`;
+    const buttonText = isSelected ? "Kullanï¿½lï¿½yor" : isOwned ? "Seï¿½" : `${avatar.cost} XP ile Al`;
     const buttonClass = isSelected ? "btn-success" : isOwned ? "btn-primary" : "btn-warning";
     const disabledAttr = isSelected ? "disabled" : "";
     return `
       <div class="avatar-card ${stateClass}">
         <div class="avatar-icon" style="background:${avatar.gradient};"><img src="${buildAvatarImageDataUri(avatar)}" alt="${avatar.name}"></div>
         <h4>${avatar.name}</h4>
-        <div class="avatar-cost">${avatar.cost === 0 ? "Ücretsiz" : `${avatar.cost} XP`}</div>
+        <div class="avatar-cost">${avatar.cost === 0 ? "ï¿½cretsiz" : `${avatar.cost} XP`}</div>
         <button class="btn ${buttonClass}" data-avatar-action="${isOwned ? "select" : "buy"}" data-avatar-id="${avatar.id}" ${disabledAttr}>${buttonText}</button>
       </div>
     `;
@@ -5692,7 +5692,7 @@ async function handleAvatarAction(avatarId, action) {
 
     if (action === "select") {
       if (!owned.includes(avatar.id)) {
-        showNotice("Bu avatar henüz satýn alýnmadý.", "#e74c3c");
+        showNotice("Bu avatar henï¿½z satï¿½n alï¿½nmadï¿½.", "#e74c3c");
         return;
       }
       if (selectedId === avatar.id) return;
@@ -5700,7 +5700,7 @@ async function handleAvatarAction(avatarId, action) {
       userData = { ...(userData || {}), selectedAvatarId: avatar.id };
       renderHeaderAvatar();
       renderAvatarShop();
-      showNotice(`Profil avatarý: ${avatar.name}`, "#2ecc71");
+      showNotice(`Profil avatarï¿½: ${avatar.name}`, "#2ecc71");
       return;
     }
 
@@ -5718,14 +5718,14 @@ async function handleAvatarAction(avatarId, action) {
       return;
     }
 
-    const ok = await confirmDialog(`"${avatar.name}" için ${avatarCost} XP harcansýn mý?`, {
-      yesText: "Evet, Satýn Al",
-      noText: "Vazgeç",
+    const ok = await confirmDialog(`"${avatar.name}" iï¿½in ${avatarCost} XP harcansï¿½n mï¿½?`, {
+      yesText: "Evet, Satï¿½n Al",
+      noText: "Vazgeï¿½",
       yesClass: "btn btn-success"
     });
     if (!ok) return;
 
-    // Satýn alma anýnda tekrar doðrula: stale XP ile alýmý engeller.
+    // Satï¿½n alma anï¿½nda tekrar doï¿½rula: stale XP ile alï¿½mï¿½ engeller.
     const latestSnap = await getDoc(userRef);
     const latest = latestSnap.exists() ? latestSnap.data() : (src || {});
     const latestOwned = normalizeOwnedAvatarIds(latest?.ownedAvatarIds);
@@ -5758,9 +5758,9 @@ async function handleAvatarAction(avatarId, action) {
     updateUserXPDisplay();
     renderHeaderAvatar();
     renderAvatarShop();
-    showNotice(`"${avatar.name}" avatarý satýn alýndý.`, "#2ecc71");
+    showNotice(`"${avatar.name}" avatarï¿½ satï¿½n alï¿½ndï¿½.`, "#2ecc71");
   } catch (e) {
-    showNotice("Avatar iþlemi sýrasýnda hata oluþtu.", "#e74c3c");
+    showNotice("Avatar iï¿½lemi sï¿½rasï¿½nda hata oluï¿½tu.", "#e74c3c");
     console.error("avatar action error:", e);
   } finally {
     avatarActionBusy = false;
@@ -5917,11 +5917,11 @@ function buildDonePendingBarSvg(done, total, doneColor, pendingColor) {
   const pendingW = innerW - doneW;
   const donePct = safeTotal > 0 ? Math.round((safeDone / safeTotal) * 100) : 0;
   return `
-    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tamamlandý/Tamamlanmadý">
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Tamamlandï¿½/Tamamlanmadï¿½">
       <rect x="${pad}" y="${pad + 6}" width="${innerW}" height="${barH}" rx="999" fill="#e5e7eb"/>
       <rect x="${pad}" y="${pad + 6}" width="${doneW}" height="${barH}" rx="999" fill="${doneColor}"/>
       <rect x="${pad + doneW}" y="${pad + 6}" width="${pendingW}" height="${barH}" rx="999" fill="${pendingColor}"/>
-      <text x="${w / 2}" y="${h - 4}" text-anchor="middle" fill="#475569" font-size="9">%${donePct} tamamlandý</text>
+      <text x="${w / 2}" y="${h - 4}" text-anchor="middle" fill="#475569" font-size="9">%${donePct} tamamlandï¿½</text>
     </svg>
   `;
 }
@@ -5967,7 +5967,7 @@ function buildCategoryBarChartSvg(labels = [], completed = [], totals = [], barC
     `;
   }).join("");
   return `
-    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Kategori Bazlý Tamamlanma">
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Kategori Bazlï¿½ Tamamlanma">
       <rect x="0" y="0" width="${w}" height="${h}" fill="#f8fafc" rx="10"/>
       ${gridSvg}
       ${bars}
@@ -6096,11 +6096,11 @@ function setComputeTeacherHeaderMode(enabled) {
 function setBlockRunnerStartButton(running) {
   const btn = document.getElementById("btn-activity-head-start");
   if (!btn) return;
-  btn.innerText = running ? "Duraklat" : "Baþlat";
+  btn.innerText = running ? "Duraklat" : "Baï¿½lat";
   btn.classList.toggle("paused", running);
   const pauseTitle = document.getElementById("activity-pause-title");
   const pauseBtn = document.getElementById("btn-activity-resume");
-  if (pauseTitle) pauseTitle.innerText = running ? "Çalýþýyor" : "Hazýr";
+  if (pauseTitle) pauseTitle.innerText = running ? "ï¿½alï¿½ï¿½ï¿½yor" : "Hazï¿½r";
   if (pauseBtn) {
     pauseBtn.innerHTML = "&#9654;";
     pauseBtn.classList.add("btn-play-resume");
@@ -6298,7 +6298,7 @@ async function saveComputeRunnerSession({
 
   await setDoc(progressRef, {
     assignmentId: activeComputeAssignmentId,
-    assignmentTitle: String(assignment.title || "Compute It Ödevi"),
+    assignmentTitle: String(assignment.title || "Compute It ï¿½devi"),
     levelStart,
     levelEnd,
     userId: uid,
@@ -6327,8 +6327,8 @@ async function saveComputeRunnerSession({
   const uiTotalLevels = Math.max(1, effectiveTotalLevels, uiCompletedLevels);
   if (askContinue) {
     const ok = await infoDialog(
-      `%${progressPercentForUi} seviyesine ulaþtýn. Süre: ${Math.floor(elapsed / 60)} dk. Tamamlanan seviye: ${uiCompletedLevels}/${uiTotalLevels}. Devam etmek ister misin?`,
-      { showContinue: true, okText: "Çýk", continueText: "Devam Et", pauseSession: false }
+      `%${progressPercentForUi} seviyesine ulaï¿½tï¿½n. Sï¿½re: ${Math.floor(elapsed / 60)} dk. Tamamlanan seviye: ${uiCompletedLevels}/${uiTotalLevels}. Devam etmek ister misin?`,
+      { showContinue: true, okText: "ï¿½ï¿½k", continueText: "Devam Et", pauseSession: false }
     );
     if (!ok) {
       resumeComputeRunnerTimer();
@@ -6476,7 +6476,7 @@ async function saveBlockRunnerSession({ closeAfter = false, askContinue = false,
         }, 0);
       await setDoc(progressRef, {
         assignmentId: activeBlockAssignmentId,
-        assignmentTitle: String(blockRunnerSession?.assignmentTitle || "Blok Kodlama Ödevi"),
+        assignmentTitle: String(blockRunnerSession?.assignmentTitle || "Blok Kodlama ï¿½devi"),
         levelStart: Number(blockRunnerSession?.rangeStart || 1),
         levelEnd: Number(blockRunnerSession?.rangeEnd || Math.max(1, Number(blockRunnerSession?.rangeStart || 1))),
         userId: uid,
@@ -6504,8 +6504,8 @@ async function saveBlockRunnerSession({ closeAfter = false, askContinue = false,
 
   if (askContinue) {
     const ok = await infoDialog(
-      `%${progressPercent} seviyesine ulaþtýn. Süre: ${elapsedMinutes} dk. Tamamlanan seviye: ${completedLevels}/${totalLevels}. Devam etmek ister misin?`,
-      { showContinue: true, okText: "Çýk", continueText: "Devam Et", pauseSession: false }
+      `%${progressPercent} seviyesine ulaï¿½tï¿½n. Sï¿½re: ${elapsedMinutes} dk. Tamamlanan seviye: ${completedLevels}/${totalLevels}. Devam etmek ister misin?`,
+      { showContinue: true, okText: "ï¿½ï¿½k", continueText: "Devam Et", pauseSession: false }
     );
     if (!ok) {
       resumeBlockRunnerTimer();
@@ -6531,7 +6531,7 @@ async function saveBlock3DRunnerSession({ closeAfter = false, askContinue = fals
     ...(block3DRunnerSession.latestData || {}),
     source: "block-3d",
     assignmentId: String(block3DRunnerSession.assignmentId || activeBlockAssignmentId || ""),
-    assignmentTitle: String(block3DRunnerSession.assignmentTitle || "3D Blok Kodlama Ödevi"),
+    assignmentTitle: String(block3DRunnerSession.assignmentTitle || "3D Blok Kodlama ï¿½devi"),
     levelStart: Number(block3DRunnerSession.levelStart || 1),
     levelEnd: Number(block3DRunnerSession.levelEnd || block3DRunnerSession.levelStart || 1)
   };
@@ -6560,12 +6560,12 @@ async function saveBlock3DRunnerSession({ closeAfter = false, askContinue = fals
 
   if (askContinue) {
     const ok = await infoDialog(
-      `%${percent} seviyesine ulaþtýn. Süre: ${Math.floor(elapsed / 60)} dk. Tamamlanan seviye: ${completedLevels}/${totalLevels}. Devam etmek ister misin?`,
-      { showContinue: true, okText: "Çýk", continueText: "Devam Et", pauseSession: false }
+      `%${percent} seviyesine ulaï¿½tï¿½n. Sï¿½re: ${Math.floor(elapsed / 60)} dk. Tamamlanan seviye: ${completedLevels}/${totalLevels}. Devam etmek ister misin?`,
+      { showContinue: true, okText: "ï¿½ï¿½k", continueText: "Devam Et", pauseSession: false }
     );
     if (!ok) return false;
   } else {
-    showNotice(`3D ödev verileri kaydedildi. Ýlerleme: %${percent}.`, "#2ecc71");
+    showNotice(`3D ï¿½dev verileri kaydedildi. ï¿½lerleme: %${percent}.`, "#2ecc71");
   }
 
   if (closeAfter) closeBlockRunnerView();
@@ -6596,7 +6596,7 @@ function closeBlockRunnerView() {
   if (fullStartBtn) fullStartBtn.style.display = "";
   if (fullSaveBtn) fullSaveBtn.style.display = "";
   if (fullExitBtn) {
-    fullExitBtn.innerText = "Tam Ekrandan Çýk";
+    fullExitBtn.innerText = "Tam Ekrandan ï¿½ï¿½k";
     fullExitBtn.title = "";
     fullExitBtn.classList.remove("line-trace-close-btn");
   }
@@ -6642,7 +6642,7 @@ function taskMatchesStudent(task) {
   return task.targetClass === studentClass;
 }
 
-/* ================= EMAIL DÜZELTME ================= */
+/* ================= EMAIL Dï¿½ZELTME ================= */
 function fixEmail(e) {
   if (!e) return "";
   if (e.includes("@")) return e.trim().toLowerCase();
@@ -6652,10 +6652,10 @@ function fixEmail(e) {
 function normalizeUserRole(rawRole) {
   const role = String(rawRole || "").trim().toLowerCase();
   if (!role) return "student";
-  if (role === "teacher" || role === "ogretmen" || role === "öðretmen" || role === "admin" || role === "administrator") {
+  if (role === "teacher" || role === "ogretmen" || role === "ï¿½ï¿½retmen" || role === "admin" || role === "administrator") {
     return "teacher";
   }
-  if (role === "student" || role === "ogrenci" || role === "öðrenci") {
+  if (role === "student" || role === "ogrenci" || role === "ï¿½ï¿½renci") {
     return "student";
   }
   return role;
@@ -6673,10 +6673,10 @@ function isSystemAdminUser(profile = null) {
 
 function getStrictUserRole(rawRole) {
   const role = String(rawRole || "").trim().toLowerCase();
-  if (role === "teacher" || role === "ogretmen" || role === "öðretmen" || role === "admin" || role === "administrator") {
+  if (role === "teacher" || role === "ogretmen" || role === "ï¿½ï¿½retmen" || role === "admin" || role === "administrator") {
     return "teacher";
   }
-  if (role === "student" || role === "ogrenci" || role === "öðrenci") {
+  if (role === "student" || role === "ogrenci" || role === "ï¿½ï¿½renci") {
     return "student";
   }
   return "";
@@ -6724,7 +6724,7 @@ async function resolveExistingUserProfileByAuth(authUser) {
       }
     }
   } catch (e) {
-    console.warn("Kullanýcý profil fallback sorgusu baþarýsýz:", e);
+    console.warn("Kullanï¿½cï¿½ profil fallback sorgusu baï¿½arï¿½sï¿½z:", e);
   }
   return null;
 }
@@ -6746,7 +6746,7 @@ async function shouldPromoteToTeacherByAlias(authUser, currentRole) {
       if (hasTeacher) return true;
     }
   } catch (e) {
-    console.warn("teacher alias kontrolü baþarýsýz:", e);
+    console.warn("teacher alias kontrolï¿½ baï¿½arï¿½sï¿½z:", e);
   }
   return false;
 }
@@ -6808,10 +6808,10 @@ function generateTempPassword(length = 8) {
 function getCallableErrorMessage(err) {
   const code = String(err?.code || "").toLowerCase();
   const message = String(err?.message || err?.details || "Bilinmeyen hata");
-  if (code.includes("permission-denied")) return "Yetki hatasý. Fonksiyon eriþimi engellendi.";
-  if (code.includes("unauthenticated")) return "Oturum doðrulanamadý. Lütfen tekrar giriþ yapýn.";
-  if (code.includes("not-found")) return "Bulut fonksiyonu bulunamadý. Functions deploy gerekli olabilir.";
-  if (code.includes("unavailable")) return "Þu anda sunucuya ulaþýlamýyor.";
+  if (code.includes("permission-denied")) return "Yetki hatasï¿½. Fonksiyon eriï¿½imi engellendi.";
+  if (code.includes("unauthenticated")) return "Oturum doï¿½rulanamadï¿½. Lï¿½tfen tekrar giriï¿½ yapï¿½n.";
+  if (code.includes("not-found")) return "Bulut fonksiyonu bulunamadï¿½. Functions deploy gerekli olabilir.";
+  if (code.includes("unavailable")) return "ï¿½u anda sunucuya ulaï¿½ï¿½lamï¿½yor.";
   return message;
 }
 
@@ -6830,14 +6830,14 @@ async function setUserPasswordBySecondaryAuthFallback(student, newPassword, curr
     "123456"
   ].filter(Boolean)));
   if (!emailCandidates.length || !passHints.length) {
-    throw new Error("Öðrenci e-postasý veya mevcut þifre bilgisi bulunamadý.");
+    throw new Error("ï¿½ï¿½renci e-postasï¿½ veya mevcut ï¿½ifre bilgisi bulunamadï¿½.");
   }
   let lastErr = null;
   for (const email of emailCandidates) {
     for (const currentPass of passHints) {
       try {
         const cred = await signInWithEmailAndPassword(secondaryAuth, email, currentPass);
-        if (!cred?.user) throw new Error("Ýkincil oturum açýlamadý.");
+        if (!cred?.user) throw new Error("ï¿½kincil oturum aï¿½ï¿½lamadï¿½.");
         await updatePassword(cred.user, newPassword);
         try { await signOut(secondaryAuth); } catch {}
         return true;
@@ -6848,7 +6848,7 @@ async function setUserPasswordBySecondaryAuthFallback(student, newPassword, curr
     }
   }
   const detail = getCallableErrorMessage(lastErr);
-  throw new Error(`Yedek þifre güncelleme baþarýsýz: ${detail}`);
+  throw new Error(`Yedek ï¿½ifre gï¿½ncelleme baï¿½arï¿½sï¿½z: ${detail}`);
 }
 
 async function deleteUserBySecondaryAuthFallback(student, currentPasswordHints = []) {
@@ -6866,14 +6866,14 @@ async function deleteUserBySecondaryAuthFallback(student, currentPasswordHints =
     "123456"
   ].filter(Boolean)));
   if (!emailCandidates.length || !passHints.length) {
-    throw new Error("Öðrenci e-postasý veya mevcut þifre bilgisi bulunamadý.");
+    throw new Error("ï¿½ï¿½renci e-postasï¿½ veya mevcut ï¿½ifre bilgisi bulunamadï¿½.");
   }
   let lastErr = null;
   for (const email of emailCandidates) {
     for (const currentPass of passHints) {
       try {
         const cred = await signInWithEmailAndPassword(secondaryAuth, email, currentPass);
-        if (!cred?.user) throw new Error("Ýkincil oturum açýlamadý.");
+        if (!cred?.user) throw new Error("ï¿½kincil oturum aï¿½ï¿½lamadï¿½.");
         await deleteAuthUser(cred.user);
         try { await signOut(secondaryAuth); } catch {}
         return true;
@@ -6884,7 +6884,7 @@ async function deleteUserBySecondaryAuthFallback(student, currentPasswordHints =
     }
   }
   const detail = getCallableErrorMessage(lastErr);
-  throw new Error(`Yedek kullanýcý silme baþarýsýz: ${detail}`);
+  throw new Error(`Yedek kullanï¿½cï¿½ silme baï¿½arï¿½sï¿½z: ${detail}`);
 }
 
 async function deleteStudentAccountWithFallback(student, options = {}) {
@@ -6897,7 +6897,7 @@ async function deleteStudentAccountWithFallback(student, options = {}) {
     } catch (authDeleteErr) {
       try {
         await deleteUserBySecondaryAuthFallback(student, hintList);
-        console.warn("deleteUserByAdmin fallback kullanýldý:", authDeleteErr);
+        console.warn("deleteUserByAdmin fallback kullanï¿½ldï¿½:", authDeleteErr);
         return { authDeleted: true, usedFallback: true };
       } catch (fallbackErr) {
         const fnMsg = getCallableErrorMessage(authDeleteErr);
@@ -6917,7 +6917,7 @@ async function deleteStudentAccountWithFallback(student, options = {}) {
 async function applyStudentPasswordUpdate(student, newPassword, options = {}) {
   const nextPass = String(newPassword || "").trim();
   if (!nextPass || nextPass.length < 6) {
-    throw new Error("Þifre en az 6 karakter olmalý.");
+    throw new Error("ï¿½ifre en az 6 karakter olmalï¿½.");
   }
   const guessedEmail = String(student?.email || "").trim() || fixEmail(String(student?.username || "").trim());
   if (guessedEmail && !String(student?.email || "").trim()) {
@@ -6932,9 +6932,9 @@ async function applyStudentPasswordUpdate(student, newPassword, options = {}) {
     try {
       await setUserPasswordByAdmin({ uid: student.id, newPassword: nextPass });
     } catch (pwErr) {
-      // Cloud Function çalýþmýyorsa/eriþilemiyorsa fallback ile güncelle.
+      // Cloud Function ï¿½alï¿½ï¿½mï¿½yorsa/eriï¿½ilemiyorsa fallback ile gï¿½ncelle.
       await setUserPasswordBySecondaryAuthFallback(student, nextPass, hintList);
-      console.warn("setUserPasswordByAdmin fallback kullanýldý:", pwErr);
+      console.warn("setUserPasswordByAdmin fallback kullanï¿½ldï¿½:", pwErr);
     }
   } else {
     await setUserPasswordBySecondaryAuthFallback(student, nextPass, hintList);
@@ -6948,7 +6948,7 @@ async function applyStudentPasswordUpdate(student, newPassword, options = {}) {
   return nextPass;
 }
 
-/* ================= SEKME DEÐÝÞTÝRME ================= */
+/* ================= SEKME DEï¿½ï¿½ï¿½Tï¿½RME ================= */
 window.switchTab = function(tabName) {
   document.querySelectorAll('#student-tabs .tab-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -6989,7 +6989,7 @@ window.openComputeItRunner = async function(userId, options = {}){
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
   if (topTitle) topTitle.innerText = "Compute It";
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "×";
+  if (closeBtn) closeBtn.innerText = "ï¿½";
   setBlockRunnerStartButton(false);
   if (userRole === "teacher" || userRole === "admin") {
     setActivityPausedUI(false);
@@ -7002,7 +7002,7 @@ window.openComputeItRunner = async function(userId, options = {}){
     computeRunnerSession = {
       userId: activeComputeRunnerUserId || currentUserId,
       assignmentId: options?.assignmentId || activeComputeAssignmentId || null,
-      assignmentTitle: options?.title || "Compute It Ödevi",
+      assignmentTitle: options?.title || "Compute It ï¿½devi",
       running: false,
       startAt: null,
       savedElapsedSeconds: 0,
@@ -7087,7 +7087,7 @@ window.openBlock3DRunner = function(options = {}) {
     ? {
         userId: currentUserId || null,
         assignmentId: options?.assignmentId || null,
-        assignmentTitle: options?.title || "3D Blok Kodlama Ödevi",
+        assignmentTitle: options?.title || "3D Blok Kodlama ï¿½devi",
         levelStart: Math.max(1, Number(options?.levelStart || 1)),
         levelEnd: Math.max(1, Number(options?.levelEnd || options?.levelStart || 1)),
         completionHandled: false,
@@ -7133,7 +7133,7 @@ window.openBlock3DRunner = function(options = {}) {
   if (titleEl) titleEl.innerText = options?.title || "3D Blok Kodlama";
   if (linkEl) linkEl.innerText = appUrl(`block-3d-runner/index.html?${params.toString()}`);
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "Çýk";
+  if (closeBtn) closeBtn.innerText = "ï¿½ï¿½k";
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
   if (topTitle) topTitle.innerText = "3D Blok Kodlama";
   const fullBar = document.getElementById("activity-fullbar");
@@ -7176,24 +7176,24 @@ window.openLineTraceRunner = function(options = {}) {
   iframe.src = lineQuery ? appUrl(`line-trace-runner/index.html?${lineQuery}`) : appUrl("line-trace-runner/index.html");
   const titleEl = document.getElementById("activity-title");
   const linkEl = document.getElementById("activity-link");
-  if (titleEl) titleEl.innerText = options?.title || "Çizgi Oyunu";
+  if (titleEl) titleEl.innerText = options?.title || "ï¿½izgi Oyunu";
   if (linkEl) linkEl.innerText = appUrl("line-trace-runner/index.html");
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "Çýk";
+  if (closeBtn) closeBtn.innerText = "ï¿½ï¿½k";
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
-  if (topTitle) topTitle.innerText = "Çizgi Oyunu";
+  if (topTitle) topTitle.innerText = "ï¿½izgi Oyunu";
   const fullBar = document.getElementById("activity-fullbar");
   const fullTitle = document.getElementById("activity-full-title");
   const fullStartBtn = document.getElementById("btn-activity-full-start");
   const fullSaveBtn = document.getElementById("btn-activity-full-save");
   const fullExitBtn = document.getElementById("btn-activity-full-exit");
   if (fullBar) fullBar.style.display = "flex";
-  if (fullTitle) fullTitle.innerText = options?.title || "Çizgi Oyunu";
+  if (fullTitle) fullTitle.innerText = options?.title || "ï¿½izgi Oyunu";
   if (fullStartBtn) fullStartBtn.style.display = "none";
   if (fullSaveBtn) fullSaveBtn.style.display = "none";
   if (fullExitBtn) {
     fullExitBtn.innerText = "?";
-    fullExitBtn.title = "Çýk";
+    fullExitBtn.title = "ï¿½ï¿½k";
     fullExitBtn.classList.add("line-trace-close-btn");
   }
 };
@@ -7237,7 +7237,7 @@ window.openSilentTeacherRunner = function(options = {}) {
   if (titleEl) titleEl.innerText = options?.title || "Python Quiz Lab";
   if (linkEl) linkEl.innerText = appUrl("silent-teacher-runner/index.html");
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "Çýk";
+  if (closeBtn) closeBtn.innerText = "ï¿½ï¿½k";
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
   if (topTitle) topTitle.innerText = "Python Quiz Lab";
   const fullBar = document.getElementById("activity-fullbar");
@@ -7251,7 +7251,7 @@ window.openSilentTeacherRunner = function(options = {}) {
   if (fullSaveBtn) fullSaveBtn.style.display = "none";
   if (fullExitBtn) {
     fullExitBtn.innerText = "?";
-    fullExitBtn.title = "Çýk";
+    fullExitBtn.title = "ï¿½ï¿½k";
     fullExitBtn.classList.add("line-trace-close-btn");
   }
 };
@@ -7295,7 +7295,7 @@ window.openLightbotRunner = function(options = {}) {
   if (titleEl) titleEl.innerText = options?.title || "Code Robot Lab";
   if (linkEl) linkEl.innerText = appUrl("lightbot-runner/index.html");
   const closeBtn = document.getElementById("btn-close-activity");
-  if (closeBtn) closeBtn.innerText = "Çýk";
+  if (closeBtn) closeBtn.innerText = "ï¿½ï¿½k";
   const topTitle = document.querySelector("#activity-modal .modal-header h2");
   if (topTitle) topTitle.innerText = "Code Robot Lab";
   const fullBar = document.getElementById("activity-fullbar");
@@ -7309,7 +7309,7 @@ window.openLightbotRunner = function(options = {}) {
   if (fullSaveBtn) fullSaveBtn.style.display = "none";
   if (fullExitBtn) {
     fullExitBtn.innerText = "?";
-    fullExitBtn.title = "Çýk";
+    fullExitBtn.title = "ï¿½ï¿½k";
     fullExitBtn.classList.add("line-trace-close-btn");
   }
 };
@@ -7333,10 +7333,10 @@ function setBlockAssignCreateButton(typeRaw) {
   currentBlockAssignType = type;
   const createBtn = document.getElementById("btn-create-block-homework");
   if (createBtn) {
-    if (type === "silentteacher") createBtn.innerText = "Python Quiz Ödevi Ver";
-    else if (type === "lightbot") createBtn.innerText = "Code Robot Ödevi Ver";
-    else if (type === "computeit") createBtn.innerText = "Compute It Ödevi Ver";
-    else createBtn.innerText = "Ödev Ver";
+    if (type === "silentteacher") createBtn.innerText = "Python Quiz ï¿½devi Ver";
+    else if (type === "lightbot") createBtn.innerText = "Code Robot ï¿½devi Ver";
+    else if (type === "computeit") createBtn.innerText = "Compute It ï¿½devi Ver";
+    else createBtn.innerText = "ï¿½dev Ver";
   }
 }
 
@@ -7405,7 +7405,7 @@ window.switchBlockAssignTab = function(typeName) {
     const teacherLabel = document.getElementById("teacher-block-homework-label");
     const activeAssignBtn = document.querySelector('#block-homework-assign-tabs .tab-btn.active');
     if (teacherLabel && activeAssignBtn) {
-      teacherLabel.innerText = activeAssignBtn.innerText + ' ödevi';
+      teacherLabel.innerText = activeAssignBtn.innerText + ' ï¿½devi';
     }
     if (computeSection) computeSection.style.display = isComputeTab ? "block" : "none";
     if (blockTabs) blockTabs.style.display = isComputeTab ? "none" : "flex";
@@ -7458,9 +7458,9 @@ function getFlowchartEls() {
 
 function getFlowNodeTextByType(type) {
   const t = String(type || "").toLowerCase();
-  if (t === "start") return "baþla";
+  if (t === "start") return "baï¿½la";
   if (t === "end") return "dur";
-  if (t === "input") return "deger|Bir deðer girin";
+  if (t === "input") return "deger|Bir deï¿½er girin";
   if (t === "output") return "|Hello World!";
   if (t === "decision") return "x > 0";
   return "x = 1";
@@ -7476,7 +7476,7 @@ function parseFlowInputText(text) {
   const parts = String(text || "").split("|");
   return {
     varName: (parts[0] || "deger").trim() || "deger",
-    message: (parts[1] || "Bir deðer girin").trim() || "Bir deðer girin"
+    message: (parts[1] || "Bir deï¿½er girin").trim() || "Bir deï¿½er girin"
   };
 }
 
@@ -7549,7 +7549,7 @@ function populateFlowOutputVarSelect(selectedVar = "") {
   const known = getFlowKnownVariables();
   const selected = String(selectedVar || "").trim();
   if (selected && !known.includes(selected)) known.unshift(selected);
-  sel.innerHTML = `<option value="">(Deðiþken seçilmedi)</option>${known.map((v) => `<option value="${v}">${v}</option>`).join("")}`;
+  sel.innerHTML = `<option value="">(Deï¿½iï¿½ken seï¿½ilmedi)</option>${known.map((v) => `<option value="${v}">${v}</option>`).join("")}`;
   sel.value = selected;
 }
 
@@ -7580,7 +7580,7 @@ function toFlowNumber(value) {
 
 function getFlowNodeDisplayText(node) {
   if (!node) return "";
-  if (node.type === "start") return "baþla";
+  if (node.type === "start") return "baï¿½la";
   if (node.type === "end") return "dur";
   if (node.type === "input") {
     const p = parseFlowInputText(node.text);
@@ -7599,7 +7599,7 @@ function showFlowNodeEditor(nodeId) {
   if (!node || !modal) return;
   flowNodeEditTargetId = node.id;
   const title = document.getElementById("flow-node-editor-title");
-  if (title) title.innerText = `Düðüm Düzenle: ${node.type}`;
+  if (title) title.innerText = `Dï¿½ï¿½ï¿½m Dï¿½zenle: ${node.type}`;
   const ro = document.getElementById("flow-node-editor-readonly");
   const inBox = document.getElementById("flow-node-editor-input");
   const outBox = document.getElementById("flow-node-editor-output");
@@ -7611,7 +7611,7 @@ function showFlowNodeEditor(nodeId) {
   if (node.type === "start" || node.type === "end") {
     if (ro) {
       ro.style.display = "block";
-      ro.innerText = node.type === "start" ? 'Baþla düðümü sabittir, deðeri deðiþtirilemez.' : 'Dur düðümü sabittir, deðeri deðiþtirilemez.';
+      ro.innerText = node.type === "start" ? 'Baï¿½la dï¿½ï¿½ï¿½mï¿½ sabittir, deï¿½eri deï¿½iï¿½tirilemez.' : 'Dur dï¿½ï¿½ï¿½mï¿½ sabittir, deï¿½eri deï¿½iï¿½tirilemez.';
     }
   } else if (node.type === "input") {
     if (inBox) inBox.style.display = "block";
@@ -7666,12 +7666,12 @@ function saveFlowNodeEditor() {
   }
   if (node.type === "input") {
     const varName = String(document.getElementById("flow-edit-input-var")?.value || "").trim() || "deger";
-    const msg = String(document.getElementById("flow-edit-input-msg")?.value || "").trim() || "Bir deðer girin";
+    const msg = String(document.getElementById("flow-edit-input-msg")?.value || "").trim() || "Bir deï¿½er girin";
     node.text = `${varName}|${msg}`;
   } else if (node.type === "output") {
     const varName = String(document.getElementById("flow-edit-output-var")?.value || "").trim();
     const msg = String(document.getElementById("flow-edit-output-msg")?.value || "").trim();
-    node.text = `${varName}|${msg || "Çýktý"}`;
+    node.text = `${varName}|${msg || "ï¿½ï¿½ktï¿½"}`;
   } else if (node.type === "process") {
     const resultVar = String(document.getElementById("flow-edit-proc-result")?.value || "").trim() || "sonuc";
     const leftVar = String(document.getElementById("flow-edit-proc-left")?.value || "").trim() || "a";
@@ -7693,7 +7693,7 @@ function showFlowRuntimeInputModal(question, initialValue = "") {
   const q = document.getElementById("flow-runtime-input-question");
   const input = document.getElementById("flow-runtime-input-value");
   if (!modal || !q || !input) return Promise.resolve(String(initialValue || ""));
-  q.innerText = String(question || "Deðer girin");
+  q.innerText = String(question || "Deï¿½er girin");
   input.value = String(initialValue ?? "");
   modal.style.display = "flex";
   setTimeout(() => input.focus(), 0);
@@ -7759,7 +7759,7 @@ function addFlowEdge(fromId, toId) {
   if (fromNode?.type === "decision") {
     const outCount = getFlowOutgoingEdges(fromId).length;
     if (outCount >= 2) return false;
-    label = outCount === 0 ? "Evet" : "Hayýr";
+    label = outCount === 0 ? "Evet" : "Hayï¿½r";
   }
   flowEdges.push({
     id: `e_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
@@ -7773,13 +7773,13 @@ function addFlowEdge(fromId, toId) {
 
 function deleteSelectedFlowEdge() {
   if (!flowSelectedEdgeId) {
-    appendFlowOutput("Önce silmek için bir baðlantý çizgisi seçin.");
+    appendFlowOutput("ï¿½nce silmek iï¿½in bir baï¿½lantï¿½ ï¿½izgisi seï¿½in.");
     return;
   }
   flowEdges = flowEdges.filter((e) => e.id !== flowSelectedEdgeId);
   flowSelectedEdgeId = null;
   renderFlowchart();
-  appendFlowOutput("Baðlantý silindi.");
+  appendFlowOutput("Baï¿½lantï¿½ silindi.");
 }
 
 function getFlowNodeCenter(node) {
@@ -7794,7 +7794,7 @@ function getFlowNodeCenter(node) {
 function normalizeFlowEdgeLabel(label) {
   const txt = String(label || "").trim().toLowerCase();
   if (txt === "t" || txt === "evet" || txt === "true") return "Evet";
-  if (txt === "f" || txt === "hayýr" || txt === "hayir" || txt === "false") return "Hayýr";
+  if (txt === "f" || txt === "hayï¿½r" || txt === "hayir" || txt === "false") return "Hayï¿½r";
   return "";
 }
 
@@ -7840,7 +7840,7 @@ function buildFlowGraphProps(graph) {
     const out = outMap.get(id) || 0;
     const input = inMap.get(id) || 0;
     const outYes = edgeList.filter((e) => String(e.from) === id && normalizeFlowEdgeLabel(e.label) === "Evet").length;
-    const outNo = edgeList.filter((e) => String(e.from) === id && normalizeFlowEdgeLabel(e.label) === "Hayýr").length;
+    const outNo = edgeList.filter((e) => String(e.from) === id && normalizeFlowEdgeLabel(e.label) === "Hayï¿½r").length;
     props.set(id, `${type}|i${input}|o${out}|y${outYes}|n${outNo}`);
   });
   return { nodeList, edgeList, nodeMap, edgeMap, props };
@@ -7906,7 +7906,7 @@ function areFlowGraphsEquivalent(templateGraph, answerGraph) {
 function buildFlowTemplatePreviewHtml(template) {
   const nodes = Array.isArray(template?.nodes) ? template.nodes : [];
   const edges = Array.isArray(template?.edges) ? template.edges : [];
-  if (!nodes.length) return "<div>Hedef þema yok.</div>";
+  if (!nodes.length) return "<div>Hedef ï¿½ema yok.</div>";
   const minX = Math.min(...nodes.map((n) => Number(n.x || 0)));
   const minY = Math.min(...nodes.map((n) => Number(n.y || 0)));
   const maxX = Math.max(...nodes.map((n) => Number(n.x || 0))) + 180;
@@ -7932,7 +7932,7 @@ function buildFlowTemplatePreviewHtml(template) {
   }).join("");
   const nodeHtml = nodes.map((n) => {
     const t = String(n.type || "process");
-    const text = t === "start" ? "baþla" : t === "end" ? "dur" : t === "input" ? "in" : t === "output" ? "out" : t === "decision" ? "if" : "act";
+    const text = t === "start" ? "baï¿½la" : t === "end" ? "dur" : t === "input" ? "in" : t === "output" ? "out" : t === "decision" ? "if" : "act";
     const left = Number(n.x || 0) - minX + 20;
     const top = Number(n.y || 0) - minY + 20;
     const cls = t === "decision" ? `flow-node ${t}` : `flow-node ${t}`;
@@ -7993,9 +7993,9 @@ function setFlowchartMode(mode = "teacher", assignment = null) {
   if (timerEl) timerEl.style.display = editable ? "none" : "inline-flex";
   if (help) {
     if (editable) {
-      help.innerText = 'Ýpucu: Soldan þekli sürükleyip býrak. "Baðla Modu" ile iki düðümü seçip baðlantý kur. Þekle çift týklayýp metin düzenle.';
+      help.innerText = 'ï¿½pucu: Soldan ï¿½ekli sï¿½rï¿½kleyip bï¿½rak. "Baï¿½la Modu" ile iki dï¿½ï¿½ï¿½mï¿½ seï¿½ip baï¿½lantï¿½ kur. ï¿½ekle ï¿½ift tï¿½klayï¿½p metin dï¿½zenle.';
     } else {
-      const q = String(assignment?.flowQuestion || assignment?.question || "Flowchart þablonunu doðru baðlantýlarla oluþtur.");
+      const q = String(assignment?.flowQuestion || assignment?.question || "Flowchart ï¿½ablonunu doï¿½ru baï¿½lantï¿½larla oluï¿½tur.");
       help.innerText = `Soru: ${q}`;
     }
   }
@@ -8016,7 +8016,7 @@ function setFlowchartMode(mode = "teacher", assignment = null) {
 function setFlowAssignButtonLabel() {
   const btn = document.getElementById("flow-assign");
   if (!btn) return;
-  btn.innerText = editingFlowchartAssignmentId ? "Ödevi Güncelle" : "Ödev Ver";
+  btn.innerText = editingFlowchartAssignmentId ? "ï¿½devi Gï¿½ncelle" : "ï¿½dev Ver";
   const deleteAssignmentBtn = document.getElementById("flow-delete-assignment");
   if (deleteAssignmentBtn) deleteAssignmentBtn.style.display = editingFlowchartAssignmentId ? "inline-flex" : "none";
 }
@@ -8116,7 +8116,7 @@ function renderFlowchartLines() {
       label.style.pointerEvents = "auto";
       label.style.cursor = "pointer";
       label.addEventListener("click", selectEdge);
-      label.textContent = edge.label === "T" ? "Evet" : edge.label === "F" ? "Hayýr" : edge.label;
+      label.textContent = edge.label === "T" ? "Evet" : edge.label === "F" ? "Hayï¿½r" : edge.label;
       svg.appendChild(label);
     }
   });
@@ -8159,13 +8159,13 @@ function renderFlowchart() {
         if (!flowConnectSourceId) {
           flowConnectSourceId = node.id;
           flowSelectedNodeId = node.id;
-          appendFlowOutput("Baðla: 1. düðüm seçildi. Þimdi 2. düðümü týklayýn.");
+          appendFlowOutput("Baï¿½la: 1. dï¿½ï¿½ï¿½m seï¿½ildi. ï¿½imdi 2. dï¿½ï¿½ï¿½mï¿½ tï¿½klayï¿½n.");
         } else {
           if (flowConnectSourceId === node.id) {
-            appendFlowOutput("Ayný düðüm seçildi. Farklý bir 2. düðüm seçin.");
+            appendFlowOutput("Aynï¿½ dï¿½ï¿½ï¿½m seï¿½ildi. Farklï¿½ bir 2. dï¿½ï¿½ï¿½m seï¿½in.");
           } else {
             const ok = addFlowEdge(flowConnectSourceId, node.id);
-            appendFlowOutput(ok ? "Baðlantý eklendi." : "Baðlantý eklenemedi.");
+            appendFlowOutput(ok ? "Baï¿½lantï¿½ eklendi." : "Baï¿½lantï¿½ eklenemedi.");
             flowConnectSourceId = null;
           }
           flowSelectedNodeId = node.id;
@@ -8240,12 +8240,12 @@ function highlightFlowNode(nodeId) {
 async function runFlowchart() {
   if (flowRunnerBusy) return;
   if (!flowNodes.length) {
-    appendFlowOutput("Akýþ boþ.");
+    appendFlowOutput("Akï¿½ï¿½ boï¿½.");
     return;
   }
   let current = flowNodes.find((n) => n.type === "start") || getOrderedFlowNodes()[0];
   if (!current) {
-    appendFlowOutput("Baþlangýç düðümü bulunamadý.");
+    appendFlowOutput("Baï¿½langï¿½ï¿½ dï¿½ï¿½ï¿½mï¿½ bulunamadï¿½.");
     return;
   }
   flowRunCancelled = false;
@@ -8288,10 +8288,10 @@ async function runFlowchart() {
         const ok = evalFlowCondition(n.text, vars);
         const outs = getFlowOutgoingEdges(n.id);
         const trueEdge = outs.find((e) => e.label === "Evet" || e.label === "T") || outs[0];
-        const falseEdge = outs.find((e) => e.label === "Hayýr" || e.label === "F") || outs[1] || outs[0];
+        const falseEdge = outs.find((e) => e.label === "Hayï¿½r" || e.label === "F") || outs[1] || outs[0];
         nextNodeId = (ok ? trueEdge : falseEdge)?.to || null;
       } else if (n.type === "end") {
-        appendFlowOutput("Akýþ tamamlandý.");
+        appendFlowOutput("Akï¿½ï¿½ tamamlandï¿½.");
         break;
       }
       if (!nextNodeId && n.type !== "decision") {
@@ -8302,7 +8302,7 @@ async function runFlowchart() {
       break;
     }
     if (!nextNodeId) {
-      if (n.type !== "end") appendFlowOutput("Akýþ sonlandý (baðlantý yok).");
+      if (n.type !== "end") appendFlowOutput("Akï¿½ï¿½ sonlandï¿½ (baï¿½lantï¿½ yok).");
       break;
     }
     current = getFlowNodeById(nextNodeId);
@@ -8335,7 +8335,7 @@ function toggleFlowConnectMode() {
   flowConnectSourceId = null;
   const btn = document.getElementById("flow-auto");
   if (btn) btn.classList.toggle("active", flowConnectMode);
-  appendFlowOutput(flowConnectMode ? "Baðla modu aktif: 2 düðüm seçerek baðla." : "Baðla modu kapalý.");
+  appendFlowOutput(flowConnectMode ? "Baï¿½la modu aktif: 2 dï¿½ï¿½ï¿½m seï¿½erek baï¿½la." : "Baï¿½la modu kapalï¿½.");
 }
 
 function editSelectedFlowNode() {
@@ -8379,7 +8379,7 @@ function clearFlowchart() {
   flowEdges.push({ id: `e_${Date.now()}_clear`, from: a.id, to: b.id, label: "" });
   renderFlowchart();
   const { output } = getFlowchartEls();
-  if (output) output.textContent = "Flowchart çýktýsý burada görünecek.";
+  if (output) output.textContent = "Flowchart ï¿½ï¿½ktï¿½sï¿½ burada gï¿½rï¿½necek.";
 }
 
 function openFlowchartModal() {
@@ -8430,14 +8430,14 @@ function openFlowchartAssignmentForStudent(assignment) {
   startFlowAssignmentTimer(0);
   modal.style.display = "flex";
   flowNodes = [
-    { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "start", text: "baþla", x: 420, y: 120 },
+    { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "start", text: "baï¿½la", x: 420, y: 120 },
     { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "end", text: "dur", x: 420, y: 300 }
   ];
   flowEdges = [];
   flowSelectedNodeId = null;
   flowSelectedEdgeId = null;
   flowConnectSourceId = null;
-  if (output) output.textContent = "Flowchart çýktýsý burada görünecek.";
+  if (output) output.textContent = "Flowchart ï¿½ï¿½ktï¿½sï¿½ burada gï¿½rï¿½necek.";
   renderFlowchart();
 }
 
@@ -8456,7 +8456,7 @@ async function submitFlowchartAssignmentAnswer() {
   const answer = exportFlowchartGraph(flowNodes, flowEdges);
   const correct = areFlowGraphsEquivalent(template, answer);
   if (!correct) {
-    showNotice("Þekil/baðlantý eþleþmedi. Tekrar deneyin.", "#e74c3c");
+    showNotice("ï¿½ekil/baï¿½lantï¿½ eï¿½leï¿½medi. Tekrar deneyin.", "#e74c3c");
     return;
   }
   const aid = String(assignment.id);
@@ -8474,7 +8474,7 @@ async function submitFlowchartAssignmentAnswer() {
     await setDoc(progressRef, {
       assignmentId: aid,
       assignmentType: "flowchart",
-      assignmentTitle: assignment.title || "Flowchart Ödevi",
+      assignmentTitle: assignment.title || "Flowchart ï¿½devi",
       userId: uid,
       completed: true,
       percent: 100,
@@ -8504,13 +8504,13 @@ async function submitFlowchartAssignmentAnswer() {
     });
     renderBlockHomeworkList();
     showCompletionCelebration({
-      title: "Flowchart Tamamlandý!",
-      message: `Doðru cevap! ${shapeCount} þekil ile ödev baþarýyla tamamlandý.`,
+      title: "Flowchart Tamamlandï¿½!",
+      message: `Doï¿½ru cevap! ${shapeCount} ï¿½ekil ile ï¿½dev baï¿½arï¿½yla tamamlandï¿½.`,
       accent: "#f59e0b",
       xp,
       durationSeconds: totalSeconds,
       requireAction: true,
-      actionText: "Kaydet ve Çýk",
+      actionText: "Kaydet ve ï¿½ï¿½k",
       onAction: async () => {
         closeFlowchartModal();
         return true;
@@ -8518,7 +8518,7 @@ async function submitFlowchartAssignmentAnswer() {
     });
   } catch (e) {
     startFlowAssignmentTimer(elapsedSeconds);
-    showNotice("Flowchart ödevi kaydedilemedi: " + e.message, "#e74c3c");
+    showNotice("Flowchart ï¿½devi kaydedilemedi: " + e.message, "#e74c3c");
   }
 }
 
@@ -8544,7 +8544,7 @@ function closeFlowchartModal() {
 function openFlowchartAssignmentModal() {
   if (userRole !== "admin") return;
   if (!flowNodes.length || !flowEdges.length) {
-    showNotice("Önce flowchart þemasýný oluþturun.", "#f39c12");
+    showNotice("ï¿½nce flowchart ï¿½emasï¿½nï¿½ oluï¿½turun.", "#f39c12");
     return;
   }
   const modal = document.getElementById("flowchart-assignment-modal");
@@ -8559,24 +8559,24 @@ function openFlowchartAssignmentModal() {
   const saveBtn = document.getElementById("btn-save-flow-assignment");
   const deleteBtn = document.getElementById("btn-delete-flow-assignment");
   if (editingFlowchartAssignmentId && editingFlowchartAssignmentData) {
-    if (titleEl) titleEl.value = String(editingFlowchartAssignmentData.title || "Flowchart Ödevi");
+    if (titleEl) titleEl.value = String(editingFlowchartAssignmentData.title || "Flowchart ï¿½devi");
     if (qEl) qEl.value = String(editingFlowchartAssignmentData.flowQuestion || "");
     if (classEl) classEl.value = String(editingFlowchartAssignmentData.targetClass || "");
     if (secEl) secEl.value = String(editingFlowchartAssignmentData.targetSection || "");
     if (dlEl) dlEl.value = String(editingFlowchartAssignmentData.deadline || "");
     if (tmEl) tmEl.value = String(editingFlowchartAssignmentData.deadlineTime || "23:59");
     if (xpEl) xpEl.value = String(clampAppLevelXP(editingFlowchartAssignmentData.xp ?? MAX_APP_LEVEL_XP));
-    if (saveBtn) saveBtn.innerText = "Ödevi Güncelle";
+    if (saveBtn) saveBtn.innerText = "ï¿½devi Gï¿½ncelle";
     if (deleteBtn) deleteBtn.style.display = "inline-flex";
   } else {
-    if (titleEl) titleEl.value = titleEl.value || "Flowchart Ödevi";
+    if (titleEl) titleEl.value = titleEl.value || "Flowchart ï¿½devi";
     if (qEl) qEl.value = qEl.value || "";
     if (classEl) classEl.value = classEl.value || "";
     if (secEl) secEl.value = secEl.value || "";
     if (dlEl) dlEl.value = dlEl.value || "";
     if (tmEl) tmEl.value = tmEl.value || "23:59";
     if (xpEl) xpEl.value = xpEl.value || String(MAX_APP_LEVEL_XP);
-    if (saveBtn) saveBtn.innerText = "Ödevi Yayýnla";
+    if (saveBtn) saveBtn.innerText = "ï¿½devi Yayï¿½nla";
     if (deleteBtn) deleteBtn.style.display = "none";
   }
   modal.style.display = "flex";
@@ -8587,11 +8587,11 @@ function closeFlowchartAssignmentModal() {
   if (modal) modal.style.display = "none";
   const saveBtn = document.getElementById("btn-save-flow-assignment");
   const deleteBtn = document.getElementById("btn-delete-flow-assignment");
-  if (saveBtn) saveBtn.innerText = "Ödevi Yayýnla";
+  if (saveBtn) saveBtn.innerText = "ï¿½devi Yayï¿½nla";
   if (deleteBtn) deleteBtn.style.display = "none";
 }
 
-async function deleteFlowchartAssignmentById(assignmentId, title = "Flowchart Ödevi") {
+async function deleteFlowchartAssignmentById(assignmentId, title = "Flowchart ï¿½devi") {
   const id = String(assignmentId || "").trim();
   if (!id || userRole !== "teacher") return false;
   const ok = await confirmDialog(`"${title}" silinsin mi?`);
@@ -8605,10 +8605,10 @@ async function deleteFlowchartAssignmentById(assignmentId, title = "Flowchart Öd
       snap.forEach((d) => batch.delete(d.ref));
       await batch.commit();
     }
-    showNotice("Flowchart ödevi silindi.", "#2ecc71");
+    showNotice("Flowchart ï¿½devi silindi.", "#2ecc71");
     return true;
   } catch (e) {
-    showNotice("Flowchart ödevi silinemedi: " + e.message, "#e74c3c");
+    showNotice("Flowchart ï¿½devi silinemedi: " + e.message, "#e74c3c");
     return false;
   }
 }
@@ -8623,7 +8623,7 @@ async function saveFlowchartAssignmentFromCurrent() {
   const deadlineTime = String(document.getElementById("flow-assignment-time")?.value || "23:59").trim() || "23:59";
   const xp = clampAppLevelXP(document.getElementById("flow-assignment-xp")?.value ?? MAX_APP_LEVEL_XP);
   if (!title) {
-    showNotice("Ödev baþlýðý zorunlu.", "#e74c3c");
+    showNotice("ï¿½dev baï¿½lï¿½ï¿½ï¿½ zorunlu.", "#e74c3c");
     return;
   }
   if (!question) {
@@ -8632,7 +8632,7 @@ async function saveFlowchartAssignmentFromCurrent() {
   }
   const template = exportFlowchartGraph(flowNodes, flowEdges);
   if (!template.nodes.length || !template.edges.length) {
-    showNotice("Geçerli bir flowchart þemasý oluþturun.", "#e74c3c");
+    showNotice("Geï¿½erli bir flowchart ï¿½emasï¿½ oluï¿½turun.", "#e74c3c");
     return;
   }
   try {
@@ -8673,12 +8673,12 @@ async function saveFlowchartAssignmentFromCurrent() {
       });
     }
     closeFlowchartAssignmentModal();
-    showNotice(editingFlowchartAssignmentId ? "Flowchart ödevi güncellendi." : "Flowchart ödevi yayýnlandý.", "#2ecc71");
+    showNotice(editingFlowchartAssignmentId ? "Flowchart ï¿½devi gï¿½ncellendi." : "Flowchart ï¿½devi yayï¿½nlandï¿½.", "#2ecc71");
     editingFlowchartAssignmentId = null;
     editingFlowchartAssignmentData = null;
     setFlowAssignButtonLabel();
   } catch (e) {
-    showNotice("Flowchart ödevi kaydedilemedi: " + e.message, "#e74c3c");
+    showNotice("Flowchart ï¿½devi kaydedilemedi: " + e.message, "#e74c3c");
   }
 }
 
@@ -8770,7 +8770,7 @@ function initFlowchartEditor() {
   document.getElementById("flow-assign")?.addEventListener("click", openFlowchartAssignmentModal);
   document.getElementById("flow-delete-assignment")?.addEventListener("click", async () => {
     if (!editingFlowchartAssignmentId) return;
-    const title = String(editingFlowchartAssignmentData?.title || "Flowchart Ödevi");
+    const title = String(editingFlowchartAssignmentData?.title || "Flowchart ï¿½devi");
     const deleted = await deleteFlowchartAssignmentById(editingFlowchartAssignmentId, title);
     if (!deleted) return;
     editingFlowchartAssignmentId = null;
@@ -8789,7 +8789,7 @@ function initFlowchartEditor() {
   document.getElementById("btn-save-flow-assignment")?.addEventListener("click", saveFlowchartAssignmentFromCurrent);
   document.getElementById("btn-delete-flow-assignment")?.addEventListener("click", async () => {
     if (!editingFlowchartAssignmentId) return;
-    const title = String(editingFlowchartAssignmentData?.title || "Flowchart Ödevi");
+    const title = String(editingFlowchartAssignmentData?.title || "Flowchart ï¿½devi");
     const deleted = await deleteFlowchartAssignmentById(editingFlowchartAssignmentId, title);
     if (!deleted) return;
     editingFlowchartAssignmentId = null;
@@ -8813,7 +8813,7 @@ function initFlowchartEditor() {
   });
 }
 
-/* ================= MENÜ KONTROLÜ ================= */
+/* ================= MENï¿½ KONTROLï¿½ ================= */
 document.getElementById("open-menu").onclick = function() {
   if (userRole === "student") applyStudentSidebarMinimalMode();
   closeOtherSidebarSubmenus("");
@@ -8940,7 +8940,7 @@ function restoreLoginButtonState() {
   const stillOnLogin = !!loginScreen && !loginScreen.classList.contains("hidden");
   if (!loginBtn || !stillOnLogin) return;
   loginBtn.disabled = false;
-  loginBtn.innerText = "Giriþ Yap";
+  loginBtn.innerText = "Giriï¿½ Yap";
 }
 
 function applyUserDropdownMenuByRole(isTeacher) {
@@ -8996,7 +8996,7 @@ function renderProfileChangeApprovalRows(rows = []) {
   const list = document.getElementById("profile-change-approvals-list");
   if (!list) return;
   if (!rows.length) {
-    list.innerHTML = `<div style="padding:10px; color:#64748b;">Bekleyen profil deðiþikliði yok.</div>`;
+    list.innerHTML = `<div style="padding:10px; color:#64748b;">Bekleyen profil deï¿½iï¿½ikliï¿½i yok.</div>`;
     return;
   }
   list.innerHTML = rows.map((row) => {
@@ -9011,14 +9011,14 @@ function renderProfileChangeApprovalRows(rows = []) {
         <div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
           <div>
             <div style="font-weight:700;">${studentName}</div>
-            <div style="font-size:12px; color:#64748b;">Sýnýf/Þube: ${classText}</div>
+            <div style="font-size:12px; color:#64748b;">Sï¿½nï¿½f/ï¿½ube: ${classText}</div>
             <div style="font-size:12px; color:#64748b;">Talep: ${escapeHtmlBasic(whenText)}</div>
           </div>
           <div style="font-size:12px; color:#0f766e; font-weight:600;">Onay Bekliyor</div>
         </div>
         <div style="margin-top:8px; font-size:13px;">
           <div><strong>Yeni Ad Soyad:</strong> ${fullName}</div>
-          <div><strong>Þifre:</strong> ${hasPassword ? "Deðiþecek" : "Deðiþmeyecek"}</div>
+          <div><strong>ï¿½ifre:</strong> ${hasPassword ? "Deï¿½iï¿½ecek" : "Deï¿½iï¿½meyecek"}</div>
         </div>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <button class="btn btn-success" data-profile-request-action="approve" data-request-id="${escapeHtmlBasic(row.id)}">Onayla</button>
@@ -9033,7 +9033,7 @@ function startProfileChangeApprovalsListener() {
   stopProfileChangeApprovalsListener();
   if (userRole !== "admin") return;
   const list = document.getElementById("profile-change-approvals-list");
-  if (list) list.innerHTML = `<div style="padding:10px; color:#64748b;">Yükleniyor...</div>`;
+  if (list) list.innerHTML = `<div style="padding:10px; color:#64748b;">Yï¿½kleniyor...</div>`;
   const q = query(
     collection(db, PROFILE_CHANGE_REQUESTS_COLLECTION),
     where("status", "==", "pending")
@@ -9050,7 +9050,7 @@ function startProfileChangeApprovalsListener() {
   }, (err) => {
     console.warn("profile approvals listener error", err);
     if (list) {
-      list.innerHTML = `<div style="padding:10px; color:#b91c1c;">Bekleyen talepler yüklenemedi.</div>`;
+      list.innerHTML = `<div style="padding:10px; color:#b91c1c;">Bekleyen talepler yï¿½klenemedi.</div>`;
     }
   });
 }
@@ -9066,7 +9066,7 @@ function openProfileModal() {
   if (dropdown) dropdown.style.display = "none";
 }
 
-/* ================= MODAL KONTROLÜ ================= */
+/* ================= MODAL KONTROLï¿½ ================= */
 const createModal = document.getElementById("create-task-modal");
 const studentsModal = document.getElementById("students-modal");
 const passwordModal = document.getElementById("password-modal");
@@ -9137,19 +9137,19 @@ const resetAllStudentsPasswordsBtn = document.getElementById("btn-reset-all-stud
 if (resetAllStudentsPasswordsBtn) {
   resetAllStudentsPasswordsBtn.onclick = async function() {
     if (userRole !== "admin") return;
-    const ok = await confirmDialog("Tüm öðrencilerin þifresi 123456 olarak sýfýrlansýn mý?");
+    const ok = await confirmDialog("Tï¿½m ï¿½ï¿½rencilerin ï¿½ifresi 123456 olarak sï¿½fï¿½rlansï¿½n mï¿½?");
     if (!ok) return;
     const btn = resetAllStudentsPasswordsBtn;
     const oldText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = "Sýfýrlanýyor...";
+    btn.innerText = "Sï¿½fï¿½rlanï¿½yor...";
     try {
       const studentsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
       const allRows = [];
       studentsSnap.forEach((docSnap) => allRows.push({ id: docSnap.id, ...docSnap.data() }));
       const rows = getUniqueStudents(getTeacherManagedStudents(allRows)).filter((row) => isStrictStudentRow(row));
       if (!rows.length) {
-        showNotice("Sýfýrlanacak öðrenci bulunamadý.", "#f39c12");
+        showNotice("Sï¿½fï¿½rlanacak ï¿½ï¿½renci bulunamadï¿½.", "#f39c12");
         return;
       }
       let success = 0;
@@ -9167,16 +9167,16 @@ if (resetAllStudentsPasswordsBtn) {
       }
       await loadStudentsModal();
       if (failed.length === 0) {
-        await infoDialog(`${success} öðrencinin þifresi 123456 olarak sýfýrlandý.`, { okText: "Tamam" });
+        await infoDialog(`${success} ï¿½ï¿½rencinin ï¿½ifresi 123456 olarak sï¿½fï¿½rlandï¿½.`, { okText: "Tamam" });
       } else {
         const sample = failed.slice(0, 8).join("\n");
         await infoDialog(
-          `Toplu sýfýrlama tamamlandý.\nBaþarýlý: ${success}/${rows.length}\nBaþarýsýz: ${failed.length}\n\n${sample}`,
+          `Toplu sï¿½fï¿½rlama tamamlandï¿½.\nBaï¿½arï¿½lï¿½: ${success}/${rows.length}\nBaï¿½arï¿½sï¿½z: ${failed.length}\n\n${sample}`,
           { okText: "Tamam" }
         );
       }
     } catch (e) {
-      showNotice("Toplu þifre sýfýrlama baþarýsýz: " + getCallableErrorMessage(e), "#e74c3c");
+      showNotice("Toplu ï¿½ifre sï¿½fï¿½rlama baï¿½arï¿½sï¿½z: " + getCallableErrorMessage(e), "#e74c3c");
     } finally {
       btn.disabled = false;
       btn.innerText = oldText;
@@ -9188,9 +9188,9 @@ const deleteAllStudentsBtn = document.getElementById("btn-delete-all-students");
 if (deleteAllStudentsBtn) {
   deleteAllStudentsBtn.onclick = async function() {
     if (userRole !== "admin") return;
-    const ok = await confirmDialog("Listendeki tüm öðrenciler silinsin mi? Bu iþlem geri alýnamaz.", {
-      yesText: "Evet, Tümünü Sil",
-      noText: "Vazgeç"
+    const ok = await confirmDialog("Listendeki tï¿½m ï¿½ï¿½renciler silinsin mi? Bu iï¿½lem geri alï¿½namaz.", {
+      yesText: "Evet, Tï¿½mï¿½nï¿½ Sil",
+      noText: "Vazgeï¿½"
     });
     if (!ok) return;
 
@@ -9198,7 +9198,7 @@ if (deleteAllStudentsBtn) {
     const oldText = btn.innerText;
     btn.disabled = true;
     btn.innerText = "Siliniyor...";
-    const hideOverlay = showBulkStudentsDeleteOverlay("Tüm öðrenciler siliniyor lütfen bekleyin...");
+    const hideOverlay = showBulkStudentsDeleteOverlay("Tï¿½m ï¿½ï¿½renciler siliniyor lï¿½tfen bekleyin...");
 
     try {
       const studentsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
@@ -9211,8 +9211,8 @@ if (deleteAllStudentsBtn) {
         hideOverlay();
         await infoDialog(
           skippedProtected > 0
-            ? "Silinecek öðrenci bulunamadý. Öðretmen/admin hesaplarý koruma nedeniyle iþlem dýþý býrakýldý."
-            : "Silinecek öðrenci bulunamadý.",
+            ? "Silinecek ï¿½ï¿½renci bulunamadï¿½. ï¿½ï¿½retmen/admin hesaplarï¿½ koruma nedeniyle iï¿½lem dï¿½ï¿½ï¿½ bï¿½rakï¿½ldï¿½."
+            : "Silinecek ï¿½ï¿½renci bulunamadï¿½.",
           { okText: "Tamam" }
         );
         return;
@@ -9239,19 +9239,19 @@ if (deleteAllStudentsBtn) {
       hideOverlay();
       if (failed.length === 0) {
         await infoDialog(
-          `Toplu silme tamamlandý.\nSilinen öðrenci: ${success}\nKorunan hesap: ${skippedProtected}\nAuth uyarýsý: ${authWarningCount}`,
+          `Toplu silme tamamlandï¿½.\nSilinen ï¿½ï¿½renci: ${success}\nKorunan hesap: ${skippedProtected}\nAuth uyarï¿½sï¿½: ${authWarningCount}`,
           { okText: "Tamam" }
         );
       } else {
         const sample = failed.slice(0, 8).join("\n");
         await infoDialog(
-          `Toplu silme tamamlandý.\nBaþarýlý: ${success}/${rows.length}\nBaþarýsýz: ${failed.length}\nKorunan hesap: ${skippedProtected}\nAuth uyarýsý: ${authWarningCount}\n\n${sample}`,
+          `Toplu silme tamamlandï¿½.\nBaï¿½arï¿½lï¿½: ${success}/${rows.length}\nBaï¿½arï¿½sï¿½z: ${failed.length}\nKorunan hesap: ${skippedProtected}\nAuth uyarï¿½sï¿½: ${authWarningCount}\n\n${sample}`,
           { okText: "Tamam" }
         );
       }
     } catch (e) {
       hideOverlay();
-      showNotice("Toplu silme baþarýsýz: " + getCallableErrorMessage(e), "#e74c3c");
+      showNotice("Toplu silme baï¿½arï¿½sï¿½z: " + getCallableErrorMessage(e), "#e74c3c");
     } finally {
       btn.disabled = false;
       btn.innerText = oldText;
@@ -9262,7 +9262,7 @@ if (deleteAllStudentsBtn) {
 document.getElementById("btn-open-add-student").onclick = async function() {
   if (userRole !== "admin") return;
   if (isSystemAdminUser(userData)) {
-    showNotice("Bu hesap sadece öðretmen ekleyebilir.", "#f39c12");
+    showNotice("Bu hesap sadece ï¿½ï¿½retmen ekleyebilir.", "#f39c12");
     return;
   }
   await refreshAndApplyClassSectionDropdowns();
@@ -9465,12 +9465,12 @@ if (profileChangeApprovalsList) {
       const reqRef = doc(db, PROFILE_CHANGE_REQUESTS_COLLECTION, requestId);
       const reqSnap = await getDoc(reqRef);
       if (!reqSnap.exists()) {
-        showNotice("Talep bulunamadý.", "#e74c3c");
+        showNotice("Talep bulunamadï¿½.", "#e74c3c");
         return;
       }
       const req = reqSnap.data() || {};
       if (!recordBelongsToCurrentTeacher(req)) {
-        showNotice("Bu talep için yetkiniz yok.", "#e74c3c");
+        showNotice("Bu talep iï¿½in yetkiniz yok.", "#e74c3c");
         return;
       }
       if (action === "reject") {
@@ -9485,18 +9485,18 @@ if (profileChangeApprovalsList) {
       }
       const studentId = String(req.studentId || "");
       if (!studentId) {
-        showNotice("Talep öðrenci bilgisi eksik.", "#e74c3c");
+        showNotice("Talep ï¿½ï¿½renci bilgisi eksik.", "#e74c3c");
         return;
       }
       const studentRef = doc(db, "users", studentId);
       const studentSnap = await getDoc(studentRef);
       if (!studentSnap.exists()) {
-        showNotice("Öðrenci kaydý bulunamadý.", "#e74c3c");
+        showNotice("ï¿½ï¿½renci kaydï¿½ bulunamadï¿½.", "#e74c3c");
         return;
       }
       const student = { id: studentId, ...(studentSnap.data() || {}) };
       if (!recordBelongsToCurrentTeacher(student)) {
-        showNotice("Bu öðrenciyi güncelleme yetkiniz yok.", "#e74c3c");
+        showNotice("Bu ï¿½ï¿½renciyi gï¿½ncelleme yetkiniz yok.", "#e74c3c");
         return;
       }
       const nextFirstName = String(req.newFirstName || "").trim();
@@ -9526,9 +9526,9 @@ if (profileChangeApprovalsList) {
         reviewedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      showNotice("Talep onaylandý ve uygulandý.", "#2ecc71");
+      showNotice("Talep onaylandï¿½ ve uygulandï¿½.", "#2ecc71");
     } catch (e) {
-      showNotice("Talep iþlenemedi: " + getCallableErrorMessage(e), "#e74c3c");
+      showNotice("Talep iï¿½lenemedi: " + getCallableErrorMessage(e), "#e74c3c");
     } finally {
       actionBtn.disabled = false;
     }
@@ -9613,7 +9613,7 @@ function getStudentAiContext() {
 function findStudentAiMatches(question, ctx) {
   const tokens = String(question || "")
     .toLocaleLowerCase("tr-TR")
-    .replace(/[^a-z0-9ýðüþöç\s]/gi, " ")
+    .replace(/[^a-z0-9ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½\s]/gi, " ")
     .split(/\s+/)
     .filter((w) => w.length >= 3);
   if (!tokens.length) return [];
@@ -9627,7 +9627,7 @@ function findStudentAiMatches(question, ctx) {
       if (hit) rows.push({ kind, title, q });
     });
   };
-  pushRows(ctx.tasks, "Ödev");
+  pushRows(ctx.tasks, "ï¿½dev");
   pushRows(ctx.activities, "Etkinlik");
   pushRows(ctx.blockItems, "Blok");
   pushRows(ctx.computeItems, "Compute");
@@ -9639,44 +9639,44 @@ function buildStudentAiReply(question) {
   const q = String(question || "").trim();
   const ql = q.toLocaleLowerCase("tr-TR");
   const ctx = getStudentAiContext();
-  if (!q) return "Sorunu yazarsan bu platformdaki içeriklerine göre yardýmcý olurum.";
+  if (!q) return "Sorunu yazarsan bu platformdaki iï¿½eriklerine gï¿½re yardï¿½mcï¿½ olurum.";
   if (/(merhaba|selam|naber|iyi misin)/i.test(ql)) {
-    return "Merhaba. Ödev, etkinlik, blok kodlama, compute it, ders içerikleri ve XP durumun hakkýnda yardýmcý olabilirim.";
+    return "Merhaba. ï¿½dev, etkinlik, blok kodlama, compute it, ders iï¿½erikleri ve XP durumun hakkï¿½nda yardï¿½mcï¿½ olabilirim.";
   }
   if (/(xp|puan|seviye puan)/i.test(ql)) {
-    return `Toplam XP: ${ctx.xp}.\nÝstersen hangi ödevlerden XP kazanabileceðini de listeleyebilirim.`;
+    return `Toplam XP: ${ctx.xp}.\nï¿½stersen hangi ï¿½devlerden XP kazanabileceï¿½ini de listeleyebilirim.`;
   }
-  if (/(ödev|odev|task)/i.test(ql) && !/(blok|compute|flow|3d)/i.test(ql)) {
+  if (/(ï¿½dev|odev|task)/i.test(ql) && !/(blok|compute|flow|3d)/i.test(ql)) {
     const pending = Math.max(0, ctx.tasks.length - ctx.taskCompleted);
-    const titles = ctx.tasks.slice(0, 5).map((t) => `- ${t.title || "Ödev"}`).join("\n");
-    return `Ödevlerin: ${ctx.tasks.length} adet.\nTamamlanan: ${ctx.taskCompleted}\nBekleyen: ${pending}\n${titles || "- Þu an atanmýþ ödev görünmüyor."}`;
+    const titles = ctx.tasks.slice(0, 5).map((t) => `- ${t.title || "ï¿½dev"}`).join("\n");
+    return `ï¿½devlerin: ${ctx.tasks.length} adet.\nTamamlanan: ${ctx.taskCompleted}\nBekleyen: ${pending}\n${titles || "- ï¿½u an atanmï¿½ï¿½ ï¿½dev gï¿½rï¿½nmï¿½yor."}`;
   }
-  if (/(etkinlik|icerik|içerik|uygulama)/i.test(ql)) {
+  if (/(etkinlik|icerik|iï¿½erik|uygulama)/i.test(ql)) {
     const pending = Math.max(0, ctx.activities.length - ctx.activityCompleted);
     const titles = ctx.activities.slice(0, 5).map((a) => `- ${a.title || "Etkinlik"}`).join("\n");
-    return `Etkinliklerin: ${ctx.activities.length} adet.\nTamamlanan: ${ctx.activityCompleted}\nBekleyen: ${pending}\n${titles || "- Þu an atanmýþ etkinlik görünmüyor."}`;
+    return `Etkinliklerin: ${ctx.activities.length} adet.\nTamamlanan: ${ctx.activityCompleted}\nBekleyen: ${pending}\n${titles || "- ï¿½u an atanmï¿½ï¿½ etkinlik gï¿½rï¿½nmï¿½yor."}`;
   }
-  if (/(blok|3d|flowchart|akis|akýþ)/i.test(ql)) {
+  if (/(blok|3d|flowchart|akis|akï¿½ï¿½)/i.test(ql)) {
     const block2D = ctx.blockItems.filter((a) => getBlockHomeworkType(a.assignmentType) === "block2d").length;
     const block3D = ctx.blockItems.filter((a) => getBlockHomeworkType(a.assignmentType) === "block3d").length;
     const flowchart = ctx.blockItems.filter((a) => getBlockHomeworkType(a.assignmentType) === "flowchart").length;
-    return `Blok kodlama ödevlerin: ${ctx.blockItems.length} adet.\n2D: ${block2D}, 3D: ${block3D}, Flowchart: ${flowchart}\nTamamlanan toplam blok ödevi: ${ctx.blockCompleted}`;
+    return `Blok kodlama ï¿½devlerin: ${ctx.blockItems.length} adet.\n2D: ${block2D}, 3D: ${block3D}, Flowchart: ${flowchart}\nTamamlanan toplam blok ï¿½devi: ${ctx.blockCompleted}`;
   }
   if (/(compute|compute it)/i.test(ql)) {
     const pending = Math.max(0, ctx.computeItems.length - ctx.computeCompleted);
-    const titles = ctx.computeItems.slice(0, 5).map((a) => `- ${a.title || "Compute It Ödevi"}`).join("\n");
-    return `Compute It ödevlerin: ${ctx.computeItems.length} adet.\nTamamlanan: ${ctx.computeCompleted}\nBekleyen: ${pending}\n${titles || "- Þu an compute ödevi görünmüyor."}`;
+    const titles = ctx.computeItems.slice(0, 5).map((a) => `- ${a.title || "Compute It ï¿½devi"}`).join("\n");
+    return `Compute It ï¿½devlerin: ${ctx.computeItems.length} adet.\nTamamlanan: ${ctx.computeCompleted}\nBekleyen: ${pending}\n${titles || "- ï¿½u an compute ï¿½devi gï¿½rï¿½nmï¿½yor."}`;
   }
   if (/(ders|konu|slayt)/i.test(ql)) {
     const titles = ctx.lessonItems.slice(0, 7).map((l) => `- ${l.title || "Ders"}`).join("\n");
-    return `Ders içeriklerin: ${ctx.lessonItems.length} adet.\n${titles || "- Henüz ders içeriði atanmadý."}`;
+    return `Ders iï¿½eriklerin: ${ctx.lessonItems.length} adet.\n${titles || "- Henï¿½z ders iï¿½eriï¿½i atanmadï¿½."}`;
   }
   const matches = findStudentAiMatches(q, ctx);
   if (matches.length) {
-    const list = matches.map((m) => `- [${m.kind}] ${m.title || m.q || "Ýçerik"}`).join("\n");
-    return `Soruna yakýn içerikler buldum:\n${list}`;
+    const list = matches.map((m) => `- [${m.kind}] ${m.title || m.q || "ï¿½ï¿½erik"}`).join("\n");
+    return `Soruna yakï¿½n iï¿½erikler buldum:\n${list}`;
   }
-  return "Bu asistan sadece platformdaki ödev, etkinlik, blok kodlama, compute it, flowchart, ders ve XP verilerine göre yanýt verir. Bu baþlýklarda daha net bir soru yazabilirsin.";
+  return "Bu asistan sadece platformdaki ï¿½dev, etkinlik, blok kodlama, compute it, flowchart, ders ve XP verilerine gï¿½re yanï¿½t verir. Bu baï¿½lï¿½klarda daha net bir soru yazabilirsin.";
 }
 
 function renderStudentAiMessages() {
@@ -9726,7 +9726,7 @@ function buildStudentAiRemoteContext() {
       lessonTotal: ctx.lessonItems.length
     },
     items: {
-      tasks: ctx.tasks.slice(0, 12).map((v) => String(v?.title || "Ödev")),
+      tasks: ctx.tasks.slice(0, 12).map((v) => String(v?.title || "ï¿½dev")),
       activities: ctx.activities.slice(0, 12).map((v) => String(v?.title || "Etkinlik")),
       block: ctx.blockItems.slice(0, 12).map((v) => String(v?.title || "Blok Kodlama")),
       compute: ctx.computeItems.slice(0, 12).map((v) => String(v?.title || "Compute It")),
@@ -9757,7 +9757,7 @@ async function askStudentAi(question) {
   const q = String(question || "").trim();
   if (!q) return;
   addStudentAiMessage("user", q);
-  const waitId = addStudentAiMessage("bot", "Düþünüyorum...");
+  const waitId = addStudentAiMessage("bot", "Dï¿½ï¿½ï¿½nï¿½yorum...");
   const remoteReply = await fetchStudentAiRemoteReply(q);
   const reply = remoteReply || buildStudentAiReply(q);
   updateStudentAiMessage(waitId, reply);
@@ -9770,7 +9770,7 @@ function openStudentAiPanel() {
   studentAiOpen = true;
   panel.style.display = "flex";
   if (studentAiMessages.length === 0) {
-    addStudentAiMessage("bot", "Merhaba, ben platform asistanýn. Ýçeriklerinle ilgili sorularýný sorabilirsin.");
+    addStudentAiMessage("bot", "Merhaba, ben platform asistanï¿½n. ï¿½ï¿½eriklerinle ilgili sorularï¿½nï¿½ sorabilirsin.");
   } else {
     renderStudentAiMessages();
   }
@@ -9858,10 +9858,10 @@ function buildLiveQuizQuestionFromEditor(notifyOnError = true) {
   const payload = { type, question, imageDataUrl: currentLiveQuizImageDataUrl || "", options: [], pairs: [], correct: "", durationSec, xp, doubleXp };
 
   if (type === "truefalse") {
-    payload.options = ["doðru", "yanlýþ"];
+    payload.options = ["doï¿½ru", "yanlï¿½ï¿½"];
     payload.correct = getLiveCorrectFromInputs(type);
-    if (!["doðru","yanlýþ"].includes(payload.correct)) {
-      if (notifyOnError) showNotice("Doðru cevap doðru/yanlýþ olmalý.", "#e74c3c");
+    if (!["doï¿½ru","yanlï¿½ï¿½"].includes(payload.correct)) {
+      if (notifyOnError) showNotice("Doï¿½ru cevap doï¿½ru/yanlï¿½ï¿½ olmalï¿½.", "#e74c3c");
       return null;
     }
     return payload;
@@ -9870,7 +9870,7 @@ function buildLiveQuizQuestionFromEditor(notifyOnError = true) {
     const pairsText = document.getElementById("live-q-match-pairs")?.value || "";
     const pairs = parseLiveMatchingPairsFromText(pairsText);
     if (pairs.length < 2) {
-      if (notifyOnError) showNotice("Eþleþtirme için en az 2 satýr girin (Sol = Sað).", "#e74c3c");
+      if (notifyOnError) showNotice("Eï¿½leï¿½tirme iï¿½in en az 2 satï¿½r girin (Sol = Saï¿½).", "#e74c3c");
       return null;
     }
     payload.pairs = pairs;
@@ -9880,12 +9880,12 @@ function buildLiveQuizQuestionFromEditor(notifyOnError = true) {
   }
   const opts = ["live-q-a","live-q-b","live-q-c","live-q-d"].map((id) => (document.getElementById(id)?.value || "").trim()).filter(Boolean);
   if (opts.length < 2) {
-    if (notifyOnError) showNotice("En az 2 seçenek gerekli.", "#e74c3c");
+    if (notifyOnError) showNotice("En az 2 seï¿½enek gerekli.", "#e74c3c");
     return null;
   }
   const corr = getLiveCorrectFromInputs(type);
   if (!["A","B","C","D"].includes(corr)) {
-    if (notifyOnError) showNotice("Doðru seçenek A/B/C/D olmalý.", "#e74c3c");
+    if (notifyOnError) showNotice("Doï¿½ru seï¿½enek A/B/C/D olmalï¿½.", "#e74c3c");
     return null;
   }
   payload.options = opts;
@@ -9908,9 +9908,9 @@ document.getElementById("btn-save-live-quiz-question")?.addEventListener("click"
   }
   renderLiveQuizBuilderPreview();
   renderLiveQuizQuestionList();
-  // Hýzlý soru üretimi için kaydet sonrasý yeni soru formunu otomatik aç.
+  // Hï¿½zlï¿½ soru ï¿½retimi iï¿½in kaydet sonrasï¿½ yeni soru formunu otomatik aï¿½.
   prepareNewLiveQuizQuestionForm();
-  showNotice(wasEditingExistingQuestion ? "Soru güncellendi. Yeni soru formu hazýr." : "Soru kaydedildi. Yeni soru formu hazýr.", "#2ecc71");
+  showNotice(wasEditingExistingQuestion ? "Soru gï¿½ncellendi. Yeni soru formu hazï¿½r." : "Soru kaydedildi. Yeni soru formu hazï¿½r.", "#2ecc71");
 });
 
 document.getElementById("live-q-image")?.addEventListener("change", async (ev) => {
@@ -10023,7 +10023,7 @@ document.querySelectorAll("[data-lesson-cmd]").forEach((btn) => {
 const insertLessonImageBtn = document.getElementById("btn-lesson-insert-image");
 if (insertLessonImageBtn) {
   insertLessonImageBtn.onclick = function () {
-    const url = (document.getElementById("slide-image-url")?.value || "").trim() || prompt("Görsel URL girin:");
+    const url = (document.getElementById("slide-image-url")?.value || "").trim() || prompt("Gï¿½rsel URL girin:");
     if (!url) return;
     const editor = document.getElementById("slide-content-editor");
     if (!editor) return;
@@ -10078,7 +10078,7 @@ if (slideImageFileEl) {
       if (urlInput) urlInput.value = dataUrl;
       updateLessonSlidePreview();
     } catch (err) {
-      showNotice("Görsel okunamadý.", "#e74c3c");
+      showNotice("Gï¿½rsel okunamadï¿½.", "#e74c3c");
     }
   });
 }
@@ -10093,7 +10093,7 @@ if (slideQuestionImageFileEl) {
       if (urlInput) urlInput.value = dataUrl;
       updateLessonSlidePreview();
     } catch (err) {
-      showNotice("Görsel okunamadý.", "#e74c3c");
+      showNotice("Gï¿½rsel okunamadï¿½.", "#e74c3c");
     }
   });
 }
@@ -10107,7 +10107,7 @@ if (lessonBgFileEl) {
       const bgInput = document.getElementById("lesson-bg");
       if (bgInput) bgInput.value = dataUrl;
     } catch (err) {
-      showNotice("Arka plan görseli okunamadý.", "#e74c3c");
+      showNotice("Arka plan gï¿½rseli okunamadï¿½.", "#e74c3c");
     }
   });
 }
@@ -10117,7 +10117,7 @@ if (addCanvasTextBtn) {
     const text = await openLessonTextModal({
       title: "Metin Ekle",
       value: "Yeni metin",
-      placeholder: "Ekrana eklenecek metni yazýn"
+      placeholder: "Ekrana eklenecek metni yazï¿½n"
     });
     if (text === null) return;
     lessonCanvasElements.push({
@@ -10158,7 +10158,7 @@ if (deleteAllCanvasTextBtn) {
 const addCanvasImageBtn = document.getElementById("btn-add-canvas-image");
 if (addCanvasImageBtn) {
   addCanvasImageBtn.addEventListener("click", async () => {
-    let src = prompt("Görsel URL girin (boþ býrakýp dosya seçebilirsiniz):", "") || "";
+    let src = prompt("Gï¿½rsel URL girin (boï¿½ bï¿½rakï¿½p dosya seï¿½ebilirsiniz):", "") || "";
     src = src.trim();
     if (!src) {
       const fileInput = document.createElement("input");
@@ -10248,12 +10248,12 @@ if (previewLessonBtn) {
       ? lessonDraft.slides.map((slide) => ({ ...slide }))
       : [];
     if (!slides.length) {
-      showNotice("Önizleme için en az bir slide ekleyin.", "#f39c12");
+      showNotice("ï¿½nizleme iï¿½in en az bir slide ekleyin.", "#f39c12");
       return;
     }
     const previewLesson = {
       id: `preview_${Date.now()}`,
-      title: title || "Önizleme Dersi",
+      title: title || "ï¿½nizleme Dersi",
       description,
       targetClass,
       targetSection,
@@ -10402,7 +10402,7 @@ if (quickCodeBtn) {
     const codeInput = document.getElementById("slide-code-input");
     if (codeInput) {
       if (!String(codeInput.value || "").trim()) {
-        codeInput.value = "<div id=\"app\">Merhaba</div>\n<style>\n  #app { color: #2563eb; font-weight: 700; }\n</style>\n<script>\n  console.log(\"Kod hazýr\");\n</script>";
+        codeInput.value = "<div id=\"app\">Merhaba</div>\n<style>\n  #app { color: #2563eb; font-weight: 700; }\n</style>\n<script>\n  console.log(\"Kod hazï¿½r\");\n</script>";
       }
       codeInput.focus();
     }
@@ -10440,7 +10440,7 @@ function buildTeacherQuizSessionLabel(session = {}) {
   const dt = Number(session.latestFinishedAtMs || 0) > 0
     ? new Date(Number(session.latestFinishedAtMs || 0)).toLocaleString("tr-TR")
     : "-";
-  return `${title} • ${count} öðrenci • ${dt}`;
+  return `${title} ï¿½ ${count} ï¿½ï¿½renci ï¿½ ${dt}`;
 }
 
 function renderTeacherQuizSessionSelector() {
@@ -10451,7 +10451,7 @@ function renderTeacherQuizSessionSelector() {
   selects.forEach((sel) => {
     if (!sel) return;
     const current = String(teacherSelectedQuizSessionId || "");
-    sel.innerHTML = `<option value="">Yapýlan quiz seçin</option>`;
+    sel.innerHTML = `<option value="">Yapï¿½lan quiz seï¿½in</option>`;
     teacherQuizResultSessions.forEach((s) => {
       const opt = document.createElement("option");
       opt.value = String(s.sessionId || "");
@@ -10478,7 +10478,7 @@ function bindTeacherQuizSessionSelectorHandlers(sessionMap = new Map()) {
     const items = sessionMap.get(active) || [];
     const ranking = getSortedQuizRanking(items);
     const headerQuizTitle = ranking[0]?.quizTitle || "Quiz";
-    const metaText = `${headerQuizTitle} • ${ranking.length} öðrenci tamamladý • Sonuç listesi`;
+    const metaText = `${headerQuizTitle} ï¿½ ${ranking.length} ï¿½ï¿½renci tamamladï¿½ ï¿½ Sonuï¿½ listesi`;
     setTeacherHomeResultsView(ranking, metaText, active);
     renderTeacherQuizSessionSelector();
   };
@@ -10537,7 +10537,7 @@ if (saveLessonBtn) {
     const targetSection = (document.getElementById("lesson-section")?.value || "").trim();
     const bgImage = (document.getElementById("lesson-bg")?.value || "").trim();
     if (!title) {
-      showNotice("Ders baþlýðý zorunlu.", "#e74c3c");
+      showNotice("Ders baï¿½lï¿½ï¿½ï¿½ zorunlu.", "#e74c3c");
       return;
     }
     if (!Array.isArray(lessonDraft.slides) || lessonDraft.slides.length === 0) {
@@ -10572,7 +10572,7 @@ if (saveLessonBtn) {
         await addDoc(collection(db, "lessons"), { ...payload, createdAt: serverTimestamp() });
       }
       closeLessonBuilderModal();
-      showNotice("Ders kaydedildi. Taslak listesine eklendi, 'Ödev Olarak Ver' ile yayýnlayabilirsiniz.", "#2ecc71");
+      showNotice("Ders kaydedildi. Taslak listesine eklendi, 'ï¿½dev Olarak Ver' ile yayï¿½nlayabilirsiniz.", "#2ecc71");
     } catch (e) {
       showNotice("Ders kaydedilemedi: " + e.message, "#e74c3c");
     }
@@ -10582,14 +10582,14 @@ const deleteLessonBtn = document.getElementById("btn-delete-lesson");
 if (deleteLessonBtn) {
   deleteLessonBtn.onclick = async function () {
     if (userRole !== "teacher" || !editingLessonId) {
-      showNotice("Silmek için kayýtlý bir ders açýn.", "#f39c12");
+      showNotice("Silmek iï¿½in kayï¿½tlï¿½ bir ders aï¿½ï¿½n.", "#f39c12");
       return;
     }
     const ok = await confirmDialog("Bu dersi tamamen silmek istiyor musunuz?");
     if (!ok) return;
     try {
       await deleteDoc(doc(db, "lessons", editingLessonId));
-      // baðlý ilerlemeleri de temizle
+      // baï¿½lï¿½ ilerlemeleri de temizle
       const progSnap = await getDocs(query(collection(db, "lessonProgress"), where("lessonId", "==", editingLessonId)));
       const batch = writeBatch(db);
       progSnap.forEach((d) => batch.delete(d.ref));
@@ -10695,7 +10695,7 @@ document.getElementById("btn-app-save").onclick = async function () {
 };
 document.getElementById("btn-app-open").onclick = async function () {
   if (!lastAppItem) {
-    showNotice("Uygulama seçilmedi!", "#e74c3c");
+    showNotice("Uygulama seï¿½ilmedi!", "#e74c3c");
     return;
   }
   await startAppSession(lastAppItem.content, lastAppItem.item, lastAppItem.appUsage, lastAppItem.completedSet, lastAppItem.answers, lastAppItem.options);
@@ -10728,7 +10728,7 @@ document.getElementById("btn-confirm-yes").onclick = function () {
     yesBtn.style.flex = "1";
   }
   if (noBtn) {
-    noBtn.innerText = "Vazgeç";
+    noBtn.innerText = "Vazgeï¿½";
     noBtn.className = "btn";
     noBtn.style.flex = "1";
     noBtn.style.background = "#eee";
@@ -10748,7 +10748,7 @@ document.getElementById("btn-confirm-no").onclick = function () {
     yesBtn.style.flex = "1";
   }
   if (noBtn) {
-    noBtn.innerText = "Vazgeç";
+    noBtn.innerText = "Vazgeï¿½";
     noBtn.className = "btn";
     noBtn.style.flex = "1";
     noBtn.style.background = "#eee";
@@ -10776,7 +10776,7 @@ document.getElementById("btn-info-continue").onclick = function () {
 document.getElementById("btn-assign-content").onclick = async function () {
   if (userRole !== "admin") return;
   if (!selectedContentId) {
-    showNotice("Önce bir içerik kaydedin!", "#e74c3c");
+    showNotice("ï¿½nce bir iï¿½erik kaydedin!", "#e74c3c");
     return;
   }
   const title = document.getElementById("content-title").value.trim();
@@ -10788,7 +10788,7 @@ document.getElementById("btn-assign-content").onclick = async function () {
   try {
     const contentDoc = await getDoc(doc(db, "contents", selectedContentId));
     if (!contentDoc.exists()) {
-      showNotice("Ýçerik bulunamadý!", "#e74c3c");
+      showNotice("ï¿½ï¿½erik bulunamadï¿½!", "#e74c3c");
       return;
     }
     const contentData = contentDoc.data();
@@ -10807,10 +10807,10 @@ document.getElementById("btn-assign-content").onclick = async function () {
       teacherEmail: String(userData?.email || auth?.currentUser?.email || "").trim().toLowerCase(),
       createdAt: serverTimestamp()
     });
-    showNotice("Etkinlik olarak atandý!", "#2ecc71");
+    showNotice("Etkinlik olarak atandï¿½!", "#2ecc71");
     loadContentAssignments();
   } catch (e) {
-    showNotice("Etkinlik atanamadý: " + e.message, "#e74c3c");
+    showNotice("Etkinlik atanamadï¿½: " + e.message, "#e74c3c");
   }
 };
 
@@ -10821,8 +10821,8 @@ document.getElementById("btn-open-my-stats").onclick = async function() {
     await loadMyStatsModal();
     renderStudentBadges();
   } catch (e) {
-    console.error("Ýstatistik modal açma hatasý:", e);
-    showNotice("Ýstatistikler açýlýrken hata oluþtu.", "#e74c3c");
+    console.error("ï¿½statistik modal aï¿½ma hatasï¿½:", e);
+    showNotice("ï¿½statistikler aï¿½ï¿½lï¿½rken hata oluï¿½tu.", "#e74c3c");
   }
   document.getElementById("side-menu").style.width = "0";
 };
@@ -10979,10 +10979,10 @@ function setBlockHomeworkModalType(typeRaw) {
   if (typeInput) typeInput.value = type;
   const titleEl = document.getElementById("block-homework-modal-title");
   if (titleEl) {
-    if (type === "block3d") titleEl.innerText = "3D Blok Kodlama Ödevi Ver";
-    else if (type === "silentteacher") titleEl.innerText = "Python Quiz Lab Ödevi Ver";
-    else if (type === "lightbot") titleEl.innerText = "Code Robot Lab Ödevi Ver";
-    else titleEl.innerText = "Blok Kodlama Ödevi Ver";
+    if (type === "block3d") titleEl.innerText = "3D Blok Kodlama ï¿½devi Ver";
+    else if (type === "silentteacher") titleEl.innerText = "Python Quiz Lab ï¿½devi Ver";
+    else if (type === "lightbot") titleEl.innerText = "Code Robot Lab ï¿½devi Ver";
+    else titleEl.innerText = "Blok Kodlama ï¿½devi Ver";
   }
 }
 
@@ -11083,7 +11083,7 @@ if (saveBlockHomeworkBtn) {
     let levelStart = Math.max(1, Math.min(maxLevels, parseInt(document.getElementById("block-hw-level-start")?.value || "1")));
     let levelEnd = Math.max(1, Math.min(maxLevels, parseInt(document.getElementById("block-hw-level-end")?.value || "1")));
     if (!title) {
-      showNotice("Ödev baþlýðý zorunlu.", "#e74c3c");
+      showNotice("ï¿½dev baï¿½lï¿½ï¿½ï¿½ zorunlu.", "#e74c3c");
       return;
     }
     if (levelStart > levelEnd) {
@@ -11092,7 +11092,7 @@ if (saveBlockHomeworkBtn) {
       levelEnd = t;
     }
     if (levelStart > maxLevels || levelEnd > maxLevels) {
-      showNotice(`Seviye aralýðý 1-${maxLevels} olmalý.`, "#e74c3c");
+      showNotice(`Seviye aralï¿½ï¿½ï¿½ 1-${maxLevels} olmalï¿½.`, "#e74c3c");
       return;
     }
     try {
@@ -11129,14 +11129,14 @@ if (saveBlockHomeworkBtn) {
       }
       const modal = document.getElementById("block-homework-modal");
       if (modal) modal.style.display = "none";
-      showNotice(editingBlockHomeworkId ? "Blok kodlama ödevi güncellendi." : "Blok kodlama ödevi verildi.", "#2ecc71");
+      showNotice(editingBlockHomeworkId ? "Blok kodlama ï¿½devi gï¿½ncellendi." : "Blok kodlama ï¿½devi verildi.", "#2ecc71");
       editingBlockHomeworkId = null;
       setBlockHomeworkModalType("block2d");
       if (saveBlockHomeworkBtn) saveBlockHomeworkBtn.innerText = "Kaydet";
       const deleteBtn = document.getElementById("btn-delete-block-homework");
       if (deleteBtn) deleteBtn.style.display = "none";
     } catch (e) {
-      showNotice("Blok kodlama ödevi kaydedilemedi: " + e.message, "#e74c3c");
+      showNotice("Blok kodlama ï¿½devi kaydedilemedi: " + e.message, "#e74c3c");
     }
   };
 }
@@ -11145,7 +11145,7 @@ const deleteBlockHomeworkBtn = document.getElementById("btn-delete-block-homewor
 if (deleteBlockHomeworkBtn) {
   deleteBlockHomeworkBtn.onclick = async function () {
     if (userRole !== "teacher" || !editingBlockHomeworkId) return;
-    const ok = await confirmDialog("Blok kodlama ödevini silmek istiyor musunuz?");
+    const ok = await confirmDialog("Blok kodlama ï¿½devini silmek istiyor musunuz?");
     if (!ok) return;
     try {
       await deleteDoc(doc(db, "blockAssignments", editingBlockHomeworkId));
@@ -11163,9 +11163,9 @@ if (deleteBlockHomeworkBtn) {
       const saveBtn = document.getElementById("btn-save-block-homework");
       if (saveBtn) saveBtn.innerText = "Kaydet";
       deleteBlockHomeworkBtn.style.display = "none";
-      showNotice("Blok kodlama ödevi silindi.", "#2ecc71");
+      showNotice("Blok kodlama ï¿½devi silindi.", "#2ecc71");
     } catch (e) {
-      showNotice("Blok kodlama ödevi silinemedi: " + e.message, "#e74c3c");
+      showNotice("Blok kodlama ï¿½devi silinemedi: " + e.message, "#e74c3c");
     }
   };
 }
@@ -11249,7 +11249,7 @@ if (saveComputeHomeworkBtn) {
     let levelStart = Math.max(1, Math.min(maxLevels, parseInt(document.getElementById("compute-hw-level-start")?.value || "1")));
     let levelEnd = Math.max(1, Math.min(maxLevels, parseInt(document.getElementById("compute-hw-level-end")?.value || "1")));
     if (!title) {
-      showNotice("Ödev baþlýðý zorunlu.", "#e74c3c");
+      showNotice("ï¿½dev baï¿½lï¿½ï¿½ï¿½ zorunlu.", "#e74c3c");
       return;
     }
     if (levelStart > levelEnd) {
@@ -11258,7 +11258,7 @@ if (saveComputeHomeworkBtn) {
       levelEnd = t;
     }
     if (levelStart > maxLevels || levelEnd > maxLevels) {
-      showNotice(`Seviye aralýðý 1-${maxLevels} olmalý.`, "#e74c3c");
+      showNotice(`Seviye aralï¿½ï¿½ï¿½ 1-${maxLevels} olmalï¿½.`, "#e74c3c");
       return;
     }
     try {
@@ -11293,13 +11293,13 @@ if (saveComputeHomeworkBtn) {
       }
       const modal = document.getElementById("compute-homework-modal");
       if (modal) modal.style.display = "none";
-      showNotice(editingComputeHomeworkId ? "Compute It ödevi güncellendi." : "Compute It ödevi verildi.", "#2ecc71");
+      showNotice(editingComputeHomeworkId ? "Compute It ï¿½devi gï¿½ncellendi." : "Compute It ï¿½devi verildi.", "#2ecc71");
       editingComputeHomeworkId = null;
       if (saveComputeHomeworkBtn) saveComputeHomeworkBtn.innerText = "Kaydet";
       const deleteBtn = document.getElementById("btn-delete-compute-homework");
       if (deleteBtn) deleteBtn.style.display = "none";
     } catch (e) {
-      showNotice("Compute It ödevi kaydedilemedi: " + e.message, "#e74c3c");
+      showNotice("Compute It ï¿½devi kaydedilemedi: " + e.message, "#e74c3c");
     }
   };
 }
@@ -11308,7 +11308,7 @@ const deleteComputeHomeworkBtn = document.getElementById("btn-delete-compute-hom
 if (deleteComputeHomeworkBtn) {
   deleteComputeHomeworkBtn.onclick = async function () {
     if (userRole !== "teacher" || !editingComputeHomeworkId) return;
-    const ok = await confirmDialog("Compute It ödevini silmek istiyor musunuz?");
+    const ok = await confirmDialog("Compute It ï¿½devini silmek istiyor musunuz?");
     if (!ok) return;
     try {
       await deleteDoc(doc(db, "computeAssignments", editingComputeHomeworkId));
@@ -11318,9 +11318,9 @@ if (deleteComputeHomeworkBtn) {
       const saveBtn = document.getElementById("btn-save-compute-homework");
       if (saveBtn) saveBtn.innerText = "Kaydet";
       deleteComputeHomeworkBtn.style.display = "none";
-      showNotice("Compute It ödevi silindi. Öðrenci ilerleme verileri korunur.", "#2ecc71");
+      showNotice("Compute It ï¿½devi silindi. ï¿½ï¿½renci ilerleme verileri korunur.", "#2ecc71");
     } catch (e) {
-      showNotice("Compute It ödevi silinemedi: " + e.message, "#e74c3c");
+      showNotice("Compute It ï¿½devi silinemedi: " + e.message, "#e74c3c");
     }
   };
 }
@@ -11331,12 +11331,12 @@ document.getElementById("btn-close-my-stats").onclick = function() {
 
 document.getElementById("btn-my-stats-report").onclick = async function() {
   if (userRole !== "student") return;
-  const hideLoadingNotice = showLoadingNotice("Rapor hazýrlanýyor...");
-  showReportLoadingOverlay("Rapor hazýrlanýyor, lütfen bekleyin");
+  const hideLoadingNotice = showLoadingNotice("Rapor hazï¿½rlanï¿½yor...");
+  showReportLoadingOverlay("Rapor hazï¿½rlanï¿½yor, lï¿½tfen bekleyin");
   try {
     if (!currentStudentDetail) await loadMyStatsModal();
     if (!currentStudentDetail) {
-      showNotice("Rapor verisi henüz hazýr deðil.", "#e74c3c");
+      showNotice("Rapor verisi henï¿½z hazï¿½r deï¿½il.", "#e74c3c");
       return;
     }
     if (currentStudentDetail.student && currentStudentDetail.student.id === currentUserId) {
@@ -11344,8 +11344,8 @@ document.getElementById("btn-my-stats-report").onclick = async function() {
     }
     await openStudentReportWindow(currentStudentDetail);
   } catch (e) {
-    console.error("Rapor açma hatasý:", e);
-    showNotice("Rapor açýlamadý. Lütfen tekrar deneyin.", "#e74c3c");
+    console.error("Rapor aï¿½ma hatasï¿½:", e);
+    showNotice("Rapor aï¿½ï¿½lamadï¿½. Lï¿½tfen tekrar deneyin.", "#e74c3c");
   } finally {
     hideLoadingNotice();
     hideReportLoadingOverlay();
@@ -11370,7 +11370,7 @@ document.getElementById("btn-profile-save").onclick = async function() {
       return;
     }
     if (newPassword && newPassword.length < 6) {
-      showNotice("Þifre en az 6 karakter olmalý!", "#e74c3c");
+      showNotice("ï¿½ifre en az 6 karakter olmalï¿½!", "#e74c3c");
       return;
     }
     if (userRole === "student") {
@@ -11378,12 +11378,12 @@ document.getElementById("btn-profile-save").onclick = async function() {
       const oldLastName = String(userData?.lastName || "").trim();
       const hasNameChange = oldFirstName !== newFirstName || oldLastName !== newLastName;
       if (!hasNameChange && !newPassword) {
-        showNotice("Deðiþiklik bulunamadý.", "#f39c12");
+        showNotice("Deï¿½iï¿½iklik bulunamadï¿½.", "#f39c12");
         return;
       }
       const ownerTeacherId = String(userData?.ownerTeacherId || userData?.createdBy || "").trim();
       if (!ownerTeacherId) {
-        showNotice("Onay verecek öðretmen bulunamadý.", "#e74c3c");
+        showNotice("Onay verecek ï¿½ï¿½retmen bulunamadï¿½.", "#e74c3c");
         return;
       }
       await setDoc(doc(db, PROFILE_CHANGE_REQUESTS_COLLECTION, currentUserId), {
@@ -11404,7 +11404,7 @@ document.getElementById("btn-profile-save").onclick = async function() {
         requestedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
-      showNotice("Profil deðiþikliði onaya gönderildi.", "#2ecc71");
+      showNotice("Profil deï¿½iï¿½ikliï¿½i onaya gï¿½nderildi.", "#2ecc71");
       document.getElementById("profile-password").value = "";
       if (profileModal) profileModal.style.display = "none";
       stopProfileChangeApprovalsListener();
@@ -11434,19 +11434,19 @@ document.getElementById("btn-profile-save").onclick = async function() {
         { currentPasswordHints: [String(userData?.loginCardPassword || "")] }
       );
     }
-    showNotice("Profil güncellendi!", "#2ecc71");
+    showNotice("Profil gï¿½ncellendi!", "#2ecc71");
     document.getElementById("profile-password").value = "";
     if (profileModal) profileModal.style.display = "none";
     stopProfileChangeApprovalsListener();
   } catch (e) {
-    showNotice("Güncelleme hatasý: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("Gï¿½ncelleme hatasï¿½: " + getCallableErrorMessage(e), "#e74c3c");
   }
 };
 
 document.getElementById("btn-profile-delete").onclick = async function() {
   if (userRole !== "admin") return;
   if (!currentUserId) return;
-  if (!confirm("Hesabýnýzý silmek istediðinize emin misiniz?")) return;
+  if (!confirm("Hesabï¿½nï¿½zï¿½ silmek istediï¿½inize emin misiniz?")) return;
   try {
     await deleteUserByAdmin({ uid: currentUserId });
     showNotice("Hesap silindi!", "#e74c3c");
@@ -11469,18 +11469,18 @@ document.getElementById("btn-save-assignment").onclick = async function() {
       deadline: document.getElementById("assignment-deadline").value,
       deadlineTime: document.getElementById("assignment-deadline-time").value
     });
-    showNotice("Etkinlik güncellendi!", "#2ecc71");
+    showNotice("Etkinlik gï¿½ncellendi!", "#2ecc71");
     if (assignmentModal) assignmentModal.style.display = "none";
     currentAssignmentId = null;
   } catch (e) {
-    showNotice("Etkinlik güncellenemedi: " + e.message, "#e74c3c");
+    showNotice("Etkinlik gï¿½ncellenemedi: " + e.message, "#e74c3c");
   }
 };
 
 document.getElementById("btn-delete-assignment").onclick = async function() {
   if (!currentAssignmentId) return;
   const assignment = contentAssignments.find(a => a.id === currentAssignmentId);
-  const ok = await confirmDialog("Etkinliði ve iliþkili verileri tamamen silmek istiyor musunuz?");
+  const ok = await confirmDialog("Etkinliï¿½i ve iliï¿½kili verileri tamamen silmek istiyor musunuz?");
   if (!ok) return;
   await deleteAssignmentCompletely(assignment || { id: currentAssignmentId });
   if (assignmentModal) assignmentModal.style.display = "none";
@@ -11497,7 +11497,7 @@ document.getElementById("btn-password-save").onclick = async function() {
   const newPassword = document.getElementById("password-new").value;
   if (!passwordChangeUserId) return;
   if (!newPassword || newPassword.length < 6) {
-    showNotice("Þifre en az 6 karakter olmalý!", "#e74c3c");
+    showNotice("ï¿½ifre en az 6 karakter olmalï¿½!", "#e74c3c");
     return;
   }
   try {
@@ -11513,12 +11513,12 @@ document.getElementById("btn-password-save").onclick = async function() {
       newPassword,
       { currentPasswordHints: [String(studentData.loginCardPassword || "")] }
     );
-    showNotice("Þifre güncellendi!", "#2ecc71");
+    showNotice("ï¿½ifre gï¿½ncellendi!", "#2ecc71");
     document.getElementById("password-new").value = "";
     if (passwordModal) passwordModal.style.display = "none";
     passwordChangeUserId = null;
   } catch (e) {
-    showNotice("Þifre güncellenemedi: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("ï¿½ifre gï¿½ncellenemedi: " + getCallableErrorMessage(e), "#e74c3c");
   }
 };
 
@@ -11602,7 +11602,7 @@ async function createTeacherAccount({ firstName, lastName, username, password, b
 document.getElementById("btn-add-student-save").onclick = async function () {
   if (userRole !== "admin") return;
   if (isSystemAdminUser(userData)) {
-    showNotice("Bu hesap sadece öðretmen ekleyebilir.", "#f39c12");
+    showNotice("Bu hesap sadece ï¿½ï¿½retmen ekleyebilir.", "#f39c12");
     return;
   }
   const firstName = document.getElementById("add-student-firstname").value.trim();
@@ -11613,16 +11613,16 @@ document.getElementById("btn-add-student-save").onclick = async function () {
   const section = document.getElementById("add-student-section").value.trim();
 
   if (!firstName || !lastName || !username || !password || !className || !section) {
-    showNotice("Tüm alanlar zorunlu!", "#e74c3c");
+    showNotice("Tï¿½m alanlar zorunlu!", "#e74c3c");
     return;
   }
   if (password.length < 6) {
-    showNotice("Þifre en az 6 karakter olmalý!", "#e74c3c");
+    showNotice("ï¿½ifre en az 6 karakter olmalï¿½!", "#e74c3c");
     return;
   }
   try {
     await createStudentAccount({ firstName, lastName, username, password, className, section });
-    showNotice("Öðrenci eklendi!", "#2ecc71");
+    showNotice("ï¿½ï¿½renci eklendi!", "#2ecc71");
     document.getElementById("add-student-firstname").value = "";
     document.getElementById("add-student-lastname").value = "";
     document.getElementById("add-student-username").value = "";
@@ -11630,7 +11630,7 @@ document.getElementById("btn-add-student-save").onclick = async function () {
     document.getElementById("add-student-class").value = "";
     document.getElementById("add-student-section").value = "";
   } catch (e) {
-    showNotice("Kayýt hatasý: " + e.message, "#e74c3c");
+    showNotice("Kayï¿½t hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 
@@ -11639,7 +11639,7 @@ document.getElementById("btn-bulk-student-save").onclick = async function () {
   const raw = document.getElementById("bulk-students-input").value.trim();
   const defaultPass = document.getElementById("bulk-default-password").value;
   if (!raw) {
-    showNotice("Toplu kayýt için veri girin!", "#e74c3c");
+    showNotice("Toplu kayï¿½t iï¿½in veri girin!", "#e74c3c");
     return;
   }
   const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -11664,13 +11664,13 @@ document.getElementById("btn-bulk-student-save").onclick = async function () {
       failCount++;
     }
   }
-  showNotice(`Toplu kayýt tamamlandý. Baþarýlý: ${okCount}, Hatalý: ${failCount}`, "#4a90e2");
+  showNotice(`Toplu kayï¿½t tamamlandï¿½. Baï¿½arï¿½lï¿½: ${okCount}, Hatalï¿½: ${failCount}`, "#4a90e2");
 };
 
 document.getElementById("btn-add-teacher-save").onclick = async function () {
   if (userRole !== "admin") return;
   if (!isSystemAdminUser(userData)) {
-    showNotice("Sadece sistem yöneticisi öðretmen ekleyebilir.", "#f39c12");
+    showNotice("Sadece sistem yï¿½neticisi ï¿½ï¿½retmen ekleyebilir.", "#f39c12");
     return;
   }
   const firstName = document.getElementById("add-teacher-firstname").value.trim();
@@ -11682,24 +11682,24 @@ document.getElementById("btn-add-teacher-save").onclick = async function () {
   const assignedClassSections = parseTeacherClassSectionInput(assignedRaw);
 
   if (!firstName || !lastName || !username || !password) {
-    showNotice("Öðretmen ekleme alanlarý zorunludur!", "#e74c3c");
+    showNotice("ï¿½ï¿½retmen ekleme alanlarï¿½ zorunludur!", "#e74c3c");
     return;
   }
   if (!branch) {
-    showNotice("Branþ alaný zorunludur.", "#e74c3c");
+    showNotice("Branï¿½ alanï¿½ zorunludur.", "#e74c3c");
     return;
   }
   if (!assignedClassSections.length) {
-    showNotice("En az bir sýnýf/þube atamasý girin. Örn: 5/A, 6/B", "#e74c3c");
+    showNotice("En az bir sï¿½nï¿½f/ï¿½ube atamasï¿½ girin. ï¿½rn: 5/A, 6/B", "#e74c3c");
     return;
   }
   if (password.length < 6) {
-    showNotice("Þifre en az 6 karakter olmalý!", "#e74c3c");
+    showNotice("ï¿½ifre en az 6 karakter olmalï¿½!", "#e74c3c");
     return;
   }
   try {
     await createTeacherAccount({ firstName, lastName, username, password, branch, assignedClassSections });
-    showNotice("Öðretmen eklendi!", "#2ecc71");
+    showNotice("ï¿½ï¿½retmen eklendi!", "#2ecc71");
     document.getElementById("add-teacher-firstname").value = "";
     document.getElementById("add-teacher-lastname").value = "";
     document.getElementById("add-teacher-username").value = "";
@@ -11707,7 +11707,7 @@ document.getElementById("btn-add-teacher-save").onclick = async function () {
     document.getElementById("add-teacher-class-sections").value = "";
     document.getElementById("add-teacher-password").value = "";
   } catch (e) {
-    showNotice("Öðretmen kayýt hatasý: " + e.message, "#e74c3c");
+    showNotice("ï¿½ï¿½retmen kayï¿½t hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 
@@ -11724,9 +11724,9 @@ if (bulkTeacherDefaultPass) bulkTeacherDefaultPass.style.display = "none";
 
 if (bulkTeacherTemplateBtn) bulkTeacherTemplateBtn.onclick = function () {
   const csv = [
-    "Ad,Soyad,Kullanýcý Adý,Þifre,Branþ,Sýnýf/Þube",
+    "Ad,Soyad,Kullanï¿½cï¿½ Adï¿½,ï¿½ifre,Branï¿½,Sï¿½nï¿½f/ï¿½ube",
     "Ali,Veli,ogretmen.ali,123456,Matematik,5/A|6/B",
-    "Ayþe,Yýlmaz,ogretmen.ayse,123456,Fen,7/C"
+    "Ayï¿½e,Yï¿½lmaz,ogretmen.ayse,123456,Fen,7/C"
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -11741,9 +11741,9 @@ if (bulkTeacherTemplateBtn) bulkTeacherTemplateBtn.onclick = function () {
 
 document.getElementById("btn-download-student-template").onclick = function () {
   const csv = [
-    "Ad,Soyad,Kullanýcý Adý,Þifre,Sýnýf,Þube",
+    "Ad,Soyad,Kullanï¿½cï¿½ Adï¿½,ï¿½ifre,Sï¿½nï¿½f,ï¿½ube",
     "Ali,Veli,ali,123456,9,A",
-    "Ayþe,Yýlmaz,ayse,123456,9,B"
+    "Ayï¿½e,Yï¿½lmaz,ayse,123456,9,B"
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -11783,12 +11783,12 @@ function parseCsvLine(line) {
 }
 
 function getUserDisplayName(user) {
-  if (!user) return "Ýsimsiz";
+  if (!user) return "ï¿½simsiz";
   const first = user.firstName || "";
   const last = user.lastName || "";
   const full = `${first} ${last}`.trim();
   if (full) return full;
-  return user.username ? user.username.split("@")[0] : "Ýsimsiz";
+  return user.username ? user.username.split("@")[0] : "ï¿½simsiz";
 }
 
 function parseXPValue(value) {
@@ -11885,7 +11885,7 @@ async function buildStudentXPAudit(labelOrId) {
   const liveScoresAwardedXP = liveScoresSnap.docs.reduce((sum, d) => sum + parseXPValue(d.data()?.xpAwarded), 0);
 
   const breakdown = [
-    { source: "users.xp (ekranda görünen ana deðer)", xp: parseXPValue(student?.xp) },
+    { source: "users.xp (ekranda gï¿½rï¿½nen ana deï¿½er)", xp: parseXPValue(student?.xp) },
     { source: "completions.xpEarned", xp: completionsXP },
     { source: "contentProgress.totalXP", xp: contentXP },
     { source: "blockAssignmentProgress.totalXP", xp: blockXP },
@@ -11911,21 +11911,21 @@ async function buildStudentXPAudit(labelOrId) {
 
 window.debugStudentXPBreakdown = async function(labelOrId) {
   if (userRole !== "teacher") {
-    showNotice("Bu araç sadece öðretmen hesabýnda kullanýlabilir.", "#f39c12");
+    showNotice("Bu araï¿½ sadece ï¿½ï¿½retmen hesabï¿½nda kullanï¿½labilir.", "#f39c12");
     return null;
   }
   const report = await buildStudentXPAudit(labelOrId);
   if (!report) {
-    showNotice("Öðrenci bulunamadý.", "#e74c3c");
+    showNotice("ï¿½ï¿½renci bulunamadï¿½.", "#e74c3c");
     return null;
   }
   try {
-    console.group(`XP Audit • ${report.student.name} (${report.student.id})`);
+    console.group(`XP Audit ï¿½ ${report.student.name} (${report.student.id})`);
     console.table(report.breakdown);
     console.groupEnd();
   } catch {}
   const userXp = report.breakdown.find((x) => x.source.startsWith("users.xp"))?.xp || 0;
-  showNotice(`XP denetimi hazýr: ${report.student.name} • users.xp=${userXp}`, "#2ecc71");
+  showNotice(`XP denetimi hazï¿½r: ${report.student.name} ï¿½ users.xp=${userXp}`, "#2ecc71");
   return report;
 };
 
@@ -12013,11 +12013,11 @@ async function repairComputeXPData(targetUserId = "") {
 
 window.repairComputeXPData = async function(targetUserId = "") {
   if (userRole !== "teacher") {
-    showNotice("Bu araç sadece öðretmen hesabýnda kullanýlabilir.", "#f39c12");
+    showNotice("Bu araï¿½ sadece ï¿½ï¿½retmen hesabï¿½nda kullanï¿½labilir.", "#f39c12");
     return null;
   }
   const report = await repairComputeXPData(targetUserId);
-  const msg = `Compute XP onarýldý • kayýt: ${report.repairedRows}, öðrenci: ${report.affectedUsers}, toplam düzeltme: ${report.totalUserDelta}`;
+  const msg = `Compute XP onarï¿½ldï¿½ ï¿½ kayï¿½t: ${report.repairedRows}, ï¿½ï¿½renci: ${report.affectedUsers}, toplam dï¿½zeltme: ${report.totalUserDelta}`;
   showNotice(msg, "#2ecc71");
   try {
     console.log("repairComputeXPData", report);
@@ -12029,7 +12029,7 @@ document.getElementById("bulk-students-file").onchange = async function (e) {
   if (userRole !== "admin") return;
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  const hideOverlay = showBulkStudentsDeleteOverlay("Toplu öðrenci kaydý yapýlýyor, lütfen bekleyin...");
+  const hideOverlay = showBulkStudentsDeleteOverlay("Toplu ï¿½ï¿½renci kaydï¿½ yapï¿½lï¿½yor, lï¿½tfen bekleyin...");
   const isExcel = /\.xlsx?$|\.xls$/i.test(file.name);
   const reader = new FileReader();
   reader.onload = async function () {
@@ -12047,11 +12047,11 @@ document.getElementById("bulk-students-file").onchange = async function (e) {
         rows = lines.map(l => parseCsvLine(l));
       }
       if (!rows.length) {
-        showNotice("Dosya boþ.", "#e74c3c");
+        showNotice("Dosya boï¿½.", "#e74c3c");
         return;
       }
       const header = rows[0].join(" ").toLowerCase();
-      if (header.includes("ad") && header.includes("soyad") && header.includes("kullanýcý")) {
+      if (header.includes("ad") && header.includes("soyad") && header.includes("kullanï¿½cï¿½")) {
         rows.shift();
       }
       let okCount = 0;
@@ -12074,7 +12074,7 @@ document.getElementById("bulk-students-file").onchange = async function (e) {
         failCount++;
         }
       }
-      showNotice(`Dosyadan kayýt tamamlandý. Baþarýlý: ${okCount}, Hatalý: ${failCount}`, "#4a90e2");
+      showNotice(`Dosyadan kayï¿½t tamamlandï¿½. Baï¿½arï¿½lï¿½: ${okCount}, Hatalï¿½: ${failCount}`, "#4a90e2");
       e.target.value = "";
     } finally {
       hideOverlay();
@@ -12082,7 +12082,7 @@ document.getElementById("bulk-students-file").onchange = async function (e) {
   };
   reader.onerror = function () {
     hideOverlay();
-    showNotice("Dosya okunamadý.", "#e74c3c");
+    showNotice("Dosya okunamadï¿½.", "#e74c3c");
     e.target.value = "";
   };
   if (isExcel) {
@@ -12112,11 +12112,11 @@ if (bulkTeacherFile) bulkTeacherFile.onchange = async function (e) {
       rows = lines.map(l => parseCsvLine(l));
     }
     if (!rows.length) {
-      showNotice("Dosya boþ.", "#e74c3c");
+      showNotice("Dosya boï¿½.", "#e74c3c");
       return;
     }
     const header = rows[0].join(" ").toLowerCase();
-    if (header.includes("ad") && header.includes("soyad") && header.includes("kullanýcý")) {
+    if (header.includes("ad") && header.includes("soyad") && header.includes("kullanï¿½cï¿½")) {
       rows.shift();
     }
     let okCount = 0;
@@ -12143,7 +12143,7 @@ if (bulkTeacherFile) bulkTeacherFile.onchange = async function (e) {
         failCount++;
       }
     }
-    showNotice(`Dosyadan öðretmen kaydý tamamlandý. Baþarýlý: ${okCount}, Hatalý: ${failCount}`, "#4a90e2");
+    showNotice(`Dosyadan ï¿½ï¿½retmen kaydï¿½ tamamlandï¿½. Baï¿½arï¿½lï¿½: ${okCount}, Hatalï¿½: ${failCount}`, "#4a90e2");
     e.target.value = "";
   };
   if (isExcel) {
@@ -12170,14 +12170,14 @@ async function loadBooksForTeacher() {
   const booksList = document.getElementById("books-list");
   const booksTests = document.getElementById("books-tests");
   if (bookSelect) {
-    bookSelect.innerHTML = `<option value="">Kitap seçiniz</option>`;
+    bookSelect.innerHTML = `<option value="">Kitap seï¿½iniz</option>`;
   }
   if (testSelect) {
-    testSelect.innerHTML = `<option value="">Test seçiniz</option>`;
+    testSelect.innerHTML = `<option value="">Test seï¿½iniz</option>`;
     testSelect.disabled = true;
   }
   if (booksList) {
-    booksList.innerHTML = `<option value="">Kitap seçiniz</option>`;
+    booksList.innerHTML = `<option value="">Kitap seï¿½iniz</option>`;
   }
   if (booksTests) {
     booksTests.innerHTML = `<option value="">Testler</option>`;
@@ -12213,7 +12213,7 @@ if (taskBookSelect) {
   taskBookSelect.onchange = function () {
     const testSelect = document.getElementById("task-book-test");
     if (!testSelect) return;
-    testSelect.innerHTML = `<option value="">Test seçiniz</option>`;
+    testSelect.innerHTML = `<option value="">Test seï¿½iniz</option>`;
     const bookId = taskBookSelect.value;
     if (!bookId) {
       testSelect.disabled = true;
@@ -12259,10 +12259,10 @@ if (clearBookBtn) {
   clearBookBtn.onclick = async function () {
     const bookId = booksListSelect?.value;
     if (!bookId) {
-      showNotice("Silmek için kitap seçin!", "#e74c3c");
+      showNotice("Silmek iï¿½in kitap seï¿½in!", "#e74c3c");
       return;
     }
-    const ok = await confirmDialog("Kitabý ve testlerini silmek istiyor musunuz?");
+    const ok = await confirmDialog("Kitabï¿½ ve testlerini silmek istiyor musunuz?");
     if (!ok) return;
     try {
       await deleteDoc(doc(db, "books", bookId));
@@ -12285,7 +12285,7 @@ document.getElementById("btn-save-book").onclick = async function () {
   const name = document.getElementById("book-name").value.trim();
   const testsRaw = document.getElementById("book-tests").value.trim();
   if (!name) {
-    showNotice("Kitap adý zorunlu!", "#e74c3c");
+    showNotice("Kitap adï¿½ zorunlu!", "#e74c3c");
     return;
   }
   const tests = testsRaw
@@ -12303,13 +12303,13 @@ document.getElementById("btn-save-book").onclick = async function () {
     document.getElementById("book-tests").value = "";
     loadBooksForTeacher();
   } catch (e) {
-    showNotice("Kitap kaydý hatasý: " + e.message, "#e74c3c");
+    showNotice("Kitap kaydï¿½ hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 
 document.getElementById("btn-download-book-template").onclick = function () {
   const csv = [
-    "Kitap Adý,Test1,Test2,Test3,Test4",
+    "Kitap Adï¿½,Test1,Test2,Test3,Test4",
     "Matematik 9,Test1,Test2,Test3,",
     "Fizik 9,Test A,Test B,,"
   ].join("\n");
@@ -12344,7 +12344,7 @@ document.getElementById("bulk-books-file").onchange = async function (e) {
       rows = lines.map(l => parseCsvLine(l));
     }
     if (!rows.length) {
-      showNotice("Dosya boþ.", "#e74c3c");
+      showNotice("Dosya boï¿½.", "#e74c3c");
       return;
     }
     const header = rows[0].join(" ").toLowerCase();
@@ -12372,7 +12372,7 @@ document.getElementById("bulk-books-file").onchange = async function (e) {
         failCount++;
       }
     }
-    showNotice(`Kitap yükleme tamamlandý. Baþarýlý: ${okCount}, Hatalý: ${failCount}`, "#4a90e2");
+    showNotice(`Kitap yï¿½kleme tamamlandï¿½. Baï¿½arï¿½lï¿½: ${okCount}, Hatalï¿½: ${failCount}`, "#4a90e2");
     e.target.value = "";
     loadBooksForTeacher();
   };
@@ -12411,7 +12411,7 @@ document.getElementById("btn-add-line-trace-app").onclick = function () {
   if (userRole !== "admin") return;
   contentItemsDraft.push({
     ...newContentItem("app"),
-    appTitle: "Çizgi Oyunu",
+    appTitle: "ï¿½izgi Oyunu",
     appLink: appUrl("line-trace-runner/index.html"),
     requiredMinutes: 2
   });
@@ -12420,11 +12420,11 @@ document.getElementById("btn-add-line-trace-app").onclick = function () {
 document.getElementById("btn-add-sample").onclick = function () {
   if (userRole !== "admin") return;
   contentItemsDraft.push(
-    { ...newContentItem("heading"), text: "Örnek Çalýþma Baþlýðý" },
-    { ...newContentItem("paragraph"), text: "Bu bölümde öðrenciler konuya giriþ yapar ve temel kavramlarý öðrenir." },
+    { ...newContentItem("heading"), text: "ï¿½rnek ï¿½alï¿½ï¿½ma Baï¿½lï¿½ï¿½ï¿½" },
+    { ...newContentItem("paragraph"), text: "Bu bï¿½lï¿½mde ï¿½ï¿½renciler konuya giriï¿½ yapar ve temel kavramlarï¿½ ï¿½ï¿½renir." },
     { ...newContentItem("image"), src: "" },
-    { ...newContentItem("quiz"), question: "Örnek Soru?", options: ["A", "B", "C", "D"], correct: "A" },
-    { ...newContentItem("app"), appTitle: "Örnek Uygulama", appLink: "https://example.com" }
+    { ...newContentItem("quiz"), question: "ï¿½rnek Soru?", options: ["A", "B", "C", "D"], correct: "A" },
+    { ...newContentItem("app"), appTitle: "ï¿½rnek Uygulama", appLink: "https://example.com" }
   );
   renderContentItemsEditor();
 };
@@ -12436,7 +12436,7 @@ document.getElementById("btn-save-content").onclick = async function () {
   const targetClass = document.getElementById("content-target-class").value.trim();
   const targetSection = document.getElementById("content-target-section").value.trim();
   if (!title) {
-    showNotice("Ýçerik baþlýðý zorunlu!", "#e74c3c");
+    showNotice("ï¿½ï¿½erik baï¿½lï¿½ï¿½ï¿½ zorunlu!", "#e74c3c");
     return;
   }
   const payload = {
@@ -12455,44 +12455,44 @@ document.getElementById("btn-save-content").onclick = async function () {
       const ref = await addDoc(collection(db, "contents"), payload);
       selectedContentId = ref.id;
     }
-    showNotice("Ýçerik kaydedildi!", "#2ecc71");
+    showNotice("ï¿½ï¿½erik kaydedildi!", "#2ecc71");
     loadContents();
   } catch (e) {
-    showNotice("Ýçerik kaydedilemedi: " + e.message, "#e74c3c");
+    showNotice("ï¿½ï¿½erik kaydedilemedi: " + e.message, "#e74c3c");
   }
 };
 
 document.getElementById("btn-delete-content").onclick = async function () {
   if (userRole !== "admin") return;
   if (!selectedContentId) {
-    showNotice("Silinecek içerik seçin!", "#e74c3c");
+    showNotice("Silinecek iï¿½erik seï¿½in!", "#e74c3c");
     return;
   }
-  const ok = await confirmDialog("Ýçeriði ve iliþkili verileri tamamen silmek istiyor musunuz?");
+  const ok = await confirmDialog("ï¿½ï¿½eriï¿½i ve iliï¿½kili verileri tamamen silmek istiyor musunuz?");
   if (!ok) return;
   try {
-    // içerik dokümaný
+    // iï¿½erik dokï¿½manï¿½
     await deleteDoc(doc(db, "contents", selectedContentId));
-    // içerik atamalarý
+    // iï¿½erik atamalarï¿½
     const aq = query(collection(db, "contentAssignments"), where("contentId", "==", selectedContentId));
     const asnap = await getDocs(aq);
     const batch = writeBatch(db);
     asnap.forEach((d) => batch.delete(d.ref));
     if (!asnap.empty) await batch.commit();
-    // içerik progress kayýtlarý
+    // iï¿½erik progress kayï¿½tlarï¿½
     const pq = query(collection(db, "contentProgress"), where("contentId", "==", selectedContentId));
     const psnap = await getDocs(pq);
     const batch2 = writeBatch(db);
     psnap.forEach((d) => batch2.delete(d.ref));
     if (!psnap.empty) await batch2.commit();
 
-    showNotice("Ýçerik tamamen silindi.", "#e74c3c");
+    showNotice("ï¿½ï¿½erik tamamen silindi.", "#e74c3c");
     allContents = allContents.filter(c => c.id !== selectedContentId);
     selectedContentId = null;
     contentItemsDraft = [];
     renderContentList();
   } catch (e) {
-    showNotice("Ýçerik silinemedi: " + e.message, "#e74c3c");
+    showNotice("ï¿½ï¿½erik silinemedi: " + e.message, "#e74c3c");
   }
 };
 
@@ -12506,7 +12506,7 @@ document.getElementById("btn-preview-content").onclick = function () {
   selectContentForView(content);
 };
 
-/* ================= AUTH DURUM ÝZLEME ================= */
+/* ================= AUTH DURUM ï¿½ZLEME ================= */
 onAuthStateChanged(auth, (user) => {
   const loginScreen = document.getElementById("login-screen");
   const appScreen = document.getElementById("app-screen");
@@ -12698,14 +12698,14 @@ onAuthStateChanged(auth, (user) => {
       try {
         const deletedSnap = await getDoc(doc(db, "deletedAuthUsers", user.uid));
         if (deletedSnap.exists()) {
-          showNotice("Bu kullanýcý hesabý silinmiþtir. Giriþ engellendi.", "#e74c3c");
+          showNotice("Bu kullanï¿½cï¿½ hesabï¿½ silinmiï¿½tir. Giriï¿½ engellendi.", "#e74c3c");
           await signOut(auth);
           return;
         }
       } catch {}
       const fallbackProfile = await resolveExistingUserProfileByAuth(user);
       if (!fallbackProfile) {
-        showNotice("Bu hesap için sistem profili bulunamadý. Yönetici ile iletiþime geçin.", "#e74c3c");
+        showNotice("Bu hesap iï¿½in sistem profili bulunamadï¿½. Yï¿½netici ile iletiï¿½ime geï¿½in.", "#e74c3c");
         await signOut(auth);
         return;
       }
@@ -12739,10 +12739,10 @@ onAuthStateChanged(auth, (user) => {
           migratedFromUid: fallbackProfile?.id || "",
           createdAt: serverTimestamp()
         }, { merge: true });
-        showNotice("Hesap profili yüklendi. Yönlendiriliyor...", "#2ecc71");
+        showNotice("Hesap profili yï¿½klendi. Yï¿½nlendiriliyor...", "#2ecc71");
       } catch (e) {
-        console.warn("Kullanýcý dokümaný yazýlamadý, geçici profil ile devam ediliyor:", e);
-        showNotice("Profil kaydý eksik, geçici profil ile devam ediliyor.", "#f39c12");
+        console.warn("Kullanï¿½cï¿½ dokï¿½manï¿½ yazï¿½lamadï¿½, geï¿½ici profil ile devam ediliyor:", e);
+        showNotice("Profil kaydï¿½ eksik, geï¿½ici profil ile devam ediliyor.", "#f39c12");
       }
     } else {
       userData = snap.data();
@@ -12761,7 +12761,7 @@ onAuthStateChanged(auth, (user) => {
         try {
           await updateDoc(doc(db, "users", user.uid), { role: userData.role });
         } catch (e) {
-          console.warn("Kullanýcý rolü normalize edilemedi:", e);
+          console.warn("Kullanï¿½cï¿½ rolï¿½ normalize edilemedi:", e);
         }
       }
     }
@@ -12779,7 +12779,7 @@ onAuthStateChanged(auth, (user) => {
 
     const displayFirst = userData.firstName || "";
     const displayLast = userData.lastName || "";
-    const fallbackName = userData.username ? userData.username.split("@")[0] : "Kullanýcý";
+    const fallbackName = userData.username ? userData.username.split("@")[0] : "Kullanï¿½cï¿½";
     const fullName = (displayFirst || displayLast) ? `${displayFirst} ${displayLast}`.trim() : fallbackName;
     syncResponsiveHeaderGreeting(fullName);
     renderTeacherWorkspaceHero();
@@ -12808,7 +12808,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById("student-tabs").style.display = "flex";
     document.getElementById("teacher-stats").style.display = isTeacher ? "block" : "none";
     document.getElementById("teacher-filters").style.display = "none";
-    document.getElementById("tasks-title").innerText = isTeacher ? "Verilen Ödevler" : "Ödevlerim";
+    document.getElementById("tasks-title").innerText = isTeacher ? "Verilen ï¿½devler" : "ï¿½devlerim";
     const leaderboardSection = document.getElementById("leaderboard-section");
     if (leaderboardSection) leaderboardSection.style.display = isTeacher ? "none" : "block";
     document.getElementById("activities-title").innerText = isTeacher ? "Verilen Etkinlikler" : "Etkinliklerim";
@@ -12816,7 +12816,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById("activities-teacher-stats").style.display = isTeacher ? "block" : "none";
     const blockTitle = document.getElementById("block-homework-title");
     if (blockTitle) {
-      blockTitle.innerText = isTeacher ? "" : "Blok Kodlama Ödevim";
+      blockTitle.innerText = isTeacher ? "" : "Blok Kodlama ï¿½devim";
       blockTitle.style.display = isTeacher ? "none" : "";
     }
     const blockAssignTabs = document.getElementById("block-homework-assign-tabs");
@@ -12830,7 +12830,7 @@ onAuthStateChanged(auth, (user) => {
     const blockCreateBtn = document.getElementById("btn-create-block-homework");
     if (blockCreateBtn) {
       blockCreateBtn.style.display = 'none';
-      blockCreateBtn.innerText = "Ödev Ver";
+      blockCreateBtn.innerText = "ï¿½dev Ver";
     }
     if (isTeacher) {
       switchBlockAssignTab(currentBlockAssignType);
@@ -12838,7 +12838,7 @@ onAuthStateChanged(auth, (user) => {
       setBlockAssignCreateButton("block2d");
     }
     const computeTitle = document.getElementById("compute-homework-title");
-    if (computeTitle) computeTitle.innerText = isTeacher ? "Verilen Compute It Ödevleri" : "Compute It Ödevim";
+    if (computeTitle) computeTitle.innerText = isTeacher ? "Verilen Compute It ï¿½devleri" : "Compute It ï¿½devim";
     const computeTabs = document.getElementById("compute-homework-tabs");
     if (computeTabs) computeTabs.style.display = "flex";
     const computeTeacherStats = document.getElementById("compute-homework-teacher-stats");
@@ -12848,12 +12848,12 @@ onAuthStateChanged(auth, (user) => {
     const computeCreateBtn = document.getElementById("btn-create-compute-homework");
     if (computeCreateBtn) {
       computeCreateBtn.style.display = 'none';
-      computeCreateBtn.innerText = "Ödev Ver";
+      computeCreateBtn.innerText = "ï¿½dev Ver";
     }
     const inlineCreateBtn = document.getElementById('btn-create-block-homework-inline');
     if (inlineCreateBtn) {
       inlineCreateBtn.style.display = isTeacher ? 'inline-flex' : 'none';
-      inlineCreateBtn.innerText = 'Ödev Ver';
+      inlineCreateBtn.innerText = 'ï¿½dev Ver';
       inlineCreateBtn.onclick = function () {
         // open the block homework modal (same as createBtn click)
         openBlockHomeworkModalWithDefaults({ type: getBlockHomeworkType(currentBlockAssignType || 'block2d'), title: '', levelStart: 1, levelEnd: getAvailableBlockLevelCountByType(getBlockHomeworkType(currentBlockAssignType || 'block2d')) });
@@ -12862,7 +12862,7 @@ onAuthStateChanged(auth, (user) => {
     const inlineComputeCreateBtn = document.getElementById('btn-create-compute-homework-inline');
     if (inlineComputeCreateBtn) {
       inlineComputeCreateBtn.style.display = isTeacher ? 'inline-flex' : 'none';
-      inlineComputeCreateBtn.innerText = 'Ödev Ver';
+      inlineComputeCreateBtn.innerText = 'ï¿½dev Ver';
       inlineComputeCreateBtn.onclick = openComputeHomeworkModalWithDefaults;
     }
     const activityFilters = document.getElementById("activity-filters");
@@ -13047,11 +13047,11 @@ onAuthStateChanged(auth, (user) => {
       switchTeacherHomeTab("tasks");
     }
 
-    // sistemde kalma süresi sayacý
+    // sistemde kalma sï¿½resi sayacï¿½
     sessionStart = Date.now();
     if (window._sessionTimer) clearInterval(window._sessionTimer);
     window._sessionTimer = setInterval(() => {
-      // canlý sayaç gerekirse buradan UI güncellenebilir
+      // canlï¿½ sayaï¿½ gerekirse buradan UI gï¿½ncellenebilir
     }, 1000);
 
     if (isTeacher) await refreshAndApplyClassSectionDropdowns();
@@ -13073,30 +13073,30 @@ onAuthStateChanged(auth, (user) => {
     }
     if (isTeacher) loadStatsPage();
     } catch (e) {
-      console.error("Profil yükleme akýþý hatasý:", e);
+      console.error("Profil yï¿½kleme akï¿½ï¿½ï¿½ hatasï¿½:", e);
       flushAuthReadyWaiters(false);
       ensureLoggedOutView();
       restoreLoginButtonState();
-      console.warn("Profil yüklenemedi (gizlendi notification). Hata detaylarý konsolda.", e);
+      console.warn("Profil yï¿½klenemedi (gizlendi notification). Hata detaylarï¿½ konsolda.", e);
     }
   }, (error) => {
-    console.error("Kullanýcý profil dinleyici hatasý:", error);
+    console.error("Kullanï¿½cï¿½ profil dinleyici hatasï¿½:", error);
     flushAuthReadyWaiters(false);
     ensureLoggedOutView();
     restoreLoginButtonState();
-    console.warn("Profil verisi alýnamadý (gizlendi notification). Hata detaylarý konsolda.", error);
+    console.warn("Profil verisi alï¿½namadï¿½ (gizlendi notification). Hata detaylarï¿½ konsolda.", error);
   });
 });
 
-/* ================= ÖÐRENCÝ TAMAMLANAN ÖDEVLERÝ ================= */
+/* ================= ï¿½ï¿½RENCï¿½ TAMAMLANAN ï¿½DEVLERï¿½ ================= */
 function loadStudentCompletions(userId) {
-  console.log("Öðrenci completions dinleniyor:", userId);
+  console.log("ï¿½ï¿½renci completions dinleniyor:", userId);
   
   isCompletionsLoaded = false;
   const q = query(collection(db, "completions"), where("userId", "==", userId));
   
   onSnapshot(q, (snap) => {
-    console.log("Completions güncellendi, sayý:", snap.size);
+    console.log("Completions gï¿½ncellendi, sayï¿½:", snap.size);
     
     completedTasks.clear();
     let totalXP = 0;
@@ -13120,24 +13120,24 @@ function loadStudentCompletions(userId) {
     isCompletionsLoaded = true;
     
     if (isTasksLoaded) {
-      console.log("Her iki veri hazýr, liste güncelleniyor");
+      console.log("Her iki veri hazï¿½r, liste gï¿½ncelleniyor");
       updateTaskLists();
     }
     
   }, (error) => {
-    console.error("Completions dinleme hatasý:", error);
+    console.error("Completions dinleme hatasï¿½:", error);
   });
 }
 
-/* ================= ÖDEVLERÝ YÜKLE ================= */
+/* ================= ï¿½DEVLERï¿½ Yï¿½KLE ================= */
 function loadTasks() {
-  console.log("Tasks yükleniyor...");
+  console.log("Tasks yï¿½kleniyor...");
   
   isTasksLoaded = false;
   const q = query(collection(db, "activities"));
 
   onSnapshot(q, (snap) => {
-    console.log("Tasks güncellendi, sayý:", snap.size);
+    console.log("Tasks gï¿½ncellendi, sayï¿½:", snap.size);
     
     allTasks = [];
     snap.forEach((doc) => {
@@ -13163,7 +13163,7 @@ function loadTasks() {
     isTasksLoaded = true;
     
     if (isCompletionsLoaded || userRole === "teacher") {
-      console.log("Tasks hazýr, liste güncelleniyor");
+      console.log("Tasks hazï¿½r, liste gï¿½ncelleniyor");
       updateTaskLists();
     }
     
@@ -13172,13 +13172,13 @@ function loadTasks() {
     }
     
   }, (error) => {
-    console.error("Tasks dinleme hatasý:", error);
+    console.error("Tasks dinleme hatasï¿½:", error);
   });
 }
 
-/* ================= LÝSTEYÝ GÜNCELLE ================= */
+/* ================= Lï¿½STEYï¿½ Gï¿½NCELLE ================= */
 function updateTaskLists() {
-  console.log("=== LÝSTE GÜNCELLENÝYOR ===");
+  console.log("=== Lï¿½STE Gï¿½NCELLENï¿½YOR ===");
   console.log("Toplam task:", allTasks.length);
   console.log("Tamamlanan task ID'leri:", Array.from(completedTasks.keys()));
   
@@ -13188,7 +13188,7 @@ function updateTaskLists() {
   const noCompleted = document.getElementById("no-completed");
   
   if (!pendingList || !completedList) {
-    console.error("List elementleri bulunamadý!");
+    console.error("List elementleri bulunamadï¿½!");
     return;
   }
   
@@ -13215,14 +13215,14 @@ function updateTaskLists() {
           return hasCompletion || hasManualProgress;
         });
 
-  console.log("Filtrelenmiþ task sayýsý:", filteredTasks.length);
+  console.log("Filtrelenmiï¿½ task sayï¿½sï¿½:", filteredTasks.length);
   
   filteredTasks.forEach((task) => {
     const completion = completedTasks.get(task.id);
     const manualProgress = requiresTeacherApprovalTask(task) ? bookTaskProgressMap.get(task.id) : null;
     const isCompleted = completion !== undefined || (manualProgress && manualProgress.approved);
     
-    console.log(`Task: ${task.title} (${task.id}) - Tamamlanmýþ: ${isCompleted}`);
+    console.log(`Task: ${task.title} (${task.id}) - Tamamlanmï¿½ï¿½: ${isCompleted}`);
     
     const li = createTaskElement(task, isCompleted, completion, manualProgress);
     
@@ -13249,7 +13249,7 @@ function updateTaskLists() {
         pendingRows.push(li);
         pendingCount++;
       }
-      console.log("  -> Öðretmen listesine eklendi");
+      console.log("  -> ï¿½ï¿½retmen listesine eklendi");
     } else {
       if (isCompleted) {
         completedRows.push(li);
@@ -13264,7 +13264,7 @@ function updateTaskLists() {
   });
 
   homeListCache.tasks = {
-    title: userRole === "teacher" ? "Verilen Ödevler" : "Ödevlerim",
+    title: userRole === "teacher" ? "Verilen ï¿½devler" : "ï¿½devlerim",
     pending: pendingRows.slice(),
     completed: completedRows.slice()
   };
@@ -13290,7 +13290,7 @@ function updateTaskLists() {
       () => openAllItemsModal(homeListCache.tasks.title, homeListCache.tasks.pending, homeListCache.tasks.completed)
     );
   }
-  console.log(`Sonuç: Bekleyen ${pendingCount}, Tamamlanan ${completedCount}`);
+  console.log(`Sonuï¿½: Bekleyen ${pendingCount}, Tamamlanan ${completedCount}`);
   
   if (userRole !== "teacher") {
     const statCompleted = document.getElementById("stat-completed");
@@ -13300,7 +13300,7 @@ function updateTaskLists() {
     setTeacherSectionStats("task", taskCompletedUsers.size || taskDoneTotal, avgTaskProgress, taskXpTotal);
   }
   
-  // Otomatik sekme geçiþi kaldýrýldý: Bekleyen sekmesi varsayýlan kalsýn
+  // Otomatik sekme geï¿½iï¿½i kaldï¿½rï¿½ldï¿½: Bekleyen sekmesi varsayï¿½lan kalsï¿½n
   renderStudentCombinedSections();
   renderHomeOverviewStrip();
 }
@@ -13327,13 +13327,13 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
     if (requiresTeacherApprovalTask(task)) {
       const status = manualProgress?.status || "none";
       if (manualProgress?.approved) {
-        badge = `<span class="badge badge-success">Onaylandý</span>`;
+        badge = `<span class="badge badge-success">Onaylandï¿½</span>`;
       } else if (status === "finished") {
         badge = `<span class="badge badge-info">Onay Bekliyor</span>`;
       } else if (status === "started") {
-        badge = `<span class="badge badge-warning">Baþlandý</span>`;
+        badge = `<span class="badge badge-warning">Baï¿½landï¿½</span>`;
       } else if (isExpired) {
-        badge = `<span class="badge badge-danger">Süresi Doldu</span>`;
+        badge = `<span class="badge badge-danger">Sï¿½resi Doldu</span>`;
       } else {
         badge = `<span class="badge badge-pending">Bekliyor</span>`;
       }
@@ -13347,7 +13347,7 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
       }
     } else {
       if (isExpired) {
-        badge = `<span class="badge badge-danger">Süresi Doldu</span>`;
+        badge = `<span class="badge badge-danger">Sï¿½resi Doldu</span>`;
       } else {
         badge = `<span class="badge badge-pending">Bekliyor</span>`;
       }
@@ -13355,9 +13355,9 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
       if (deadline) {
         const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
         if (daysLeft > 0) {
-          deadlineInfo = `<small style="color:${daysLeft <= 2 ? '#e74c3c' : '#f39c12'};display:block;margin-top:4px;">? ${daysLeft} gün kaldý</small>`;
+          deadlineInfo = `<small style="color:${daysLeft <= 2 ? '#e74c3c' : '#f39c12'};display:block;margin-top:4px;">? ${daysLeft} gï¿½n kaldï¿½</small>`;
         } else if (daysLeft === 0) {
-          deadlineInfo = `<small style="color:#e74c3c;display:block;margin-top:4px;">?? Bugün son gün!</small>`;
+          deadlineInfo = `<small style="color:#e74c3c;display:block;margin-top:4px;">?? Bugï¿½n son gï¿½n!</small>`;
         }
       }
     }
@@ -13377,10 +13377,10 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
       ? `<span class="badge badge-danger">?? Kontrol Gerekli</span> `
       : "";
     const rewardXP = getTaskRewardXP(task);
-    const dateInline = deadline ? ` • ?? ${deadline.toLocaleDateString('tr-TR')}` : "";
+    const dateInline = deadline ? ` ï¿½ ?? ${deadline.toLocaleDateString('tr-TR')}` : "";
     const xpInfo = requiresTeacherApprovalTask(task)
-      ? `<small style="color:#7c2d12;display:block;margin-top:4px;">? Onaylanýnca +${rewardXP} XP${dateInline}</small>`
-      : `<small style="color:#1e40af;display:block;margin-top:4px;">? Tamamlayýnca +${rewardXP} XP${dateInline}</small>`;
+      ? `<small style="color:#7c2d12;display:block;margin-top:4px;">? Onaylanï¿½nca +${rewardXP} XP${dateInline}</small>`
+      : `<small style="color:#1e40af;display:block;margin-top:4px;">? Tamamlayï¿½nca +${rewardXP} XP${dateInline}</small>`;
     badge = `${controlBadge}<span class="badge badge-info" style="font-size:1.02rem; padding:8px 14px;">${uniqueCount}${suffix} tamamlama</span>`;
     deadlineInfo = "";
     timeInfo = xpInfo;
@@ -13404,12 +13404,12 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
       const earnedXP = isManual ? MANUAL_TASK_APPROVAL_XP : Math.max(0, Number(completionData?.xpEarned || 0));
       const spentSeconds = isManual ? 0 : Math.max(0, Number(completionData?.duration || 0));
       showCompletionInfoPopup({
-        category: "Ödev",
-        title: task.title || "Ödev",
+        category: "ï¿½dev",
+        title: task.title || "ï¿½dev",
         xp: earnedXP,
         seconds: spentSeconds,
         percent: scorePercent,
-        message: `Bu ödevi tamamladýnýz.`
+        message: `Bu ï¿½devi tamamladï¿½nï¿½z.`
       });
       return;
     }
@@ -13418,12 +13418,12 @@ function createTaskElement(task, isCompleted, completionData, manualProgress) {
   return li;
 }
 
-/* ================= ÖÐRETMEN ÝSTATÝSTÝKLERÝ ================= */
+/* ================= ï¿½ï¿½RETMEN ï¿½STATï¿½STï¿½KLERï¿½ ================= */
 function loadTeacherStats(teacherId) {
   const q = query(collection(db, "completions"));
   
   onSnapshot(q, (snap) => {
-    console.log("Öðretmen için completions güncellendi:", snap.size);
+    console.log("ï¿½ï¿½retmen iï¿½in completions gï¿½ncellendi:", snap.size);
     
     completedTasks.clear();
     snap.forEach((doc) => {
@@ -13511,7 +13511,7 @@ function updateModalStats(taskId) {
   document.getElementById("modal-best-time").innerText = stats.bestTime > 0 ? stats.bestTime + " dk" : "-";
 }
 
-/* ================= GÝRÝÞ / KAYIT ================= */
+/* ================= Gï¿½Rï¿½ï¿½ / KAYIT ================= */
 const loginButtonEl = document.getElementById("btn-login");
 if (loginButtonEl) loginButtonEl.onclick = async function () {
   const emailInput = document.getElementById("email");
@@ -13522,38 +13522,38 @@ if (loginButtonEl) loginButtonEl.onclick = async function () {
   const loginScreen = document.getElementById("login-screen");
 
   if (!emailInput || !passwordInput) {
-    showNotice("Giriþ formu yüklenemedi.", "#e74c3c");
+    showNotice("Giriï¿½ formu yï¿½klenemedi.", "#e74c3c");
     return;
   }
 
   if (!email || !pass) {
-    showNotice("E-posta ve þifre girin!", "#e74c3c");
+    showNotice("E-posta ve ï¿½ifre girin!", "#e74c3c");
     return;
   }
 
   if (loginBtn) {
     loginBtn.disabled = true;
-    loginBtn.innerText = "Giriþ yapýlýyor...";
+    loginBtn.innerText = "Giriï¿½ yapï¿½lï¿½yor...";
   }
   // Bazi oturum cikis race senaryolarinda bu bayrak acik kalabiliyor ve profil yuklemesini bloke ediyor.
   logoutInProgress = false;
   try {
     await signInWithEmailAndPassword(auth, String(email || "").trim(), pass);
-    showNotice("Giriþ baþarýlý, profil yükleniyor...", "#2ecc71");
-    if (loginBtn) loginBtn.innerText = "Profil yükleniyor...";
+    showNotice("Giriï¿½ baï¿½arï¿½lï¿½, profil yï¿½kleniyor...", "#2ecc71");
+    if (loginBtn) loginBtn.innerText = "Profil yï¿½kleniyor...";
     const ready = await waitForAuthReady(12000);
     if (!ready) {
-      showNotice("Giriþ yapýldý, profil yüklenmesi gecikiyor. Lütfen birkaç saniye bekleyin.", "#f39c12");
+      showNotice("Giriï¿½ yapï¿½ldï¿½, profil yï¿½klenmesi gecikiyor. Lï¿½tfen birkaï¿½ saniye bekleyin.", "#f39c12");
       restoreLoginButtonState();
     }
     return;
   } catch (err) {
-    showNotice("Giriþ Hatalý: " + (err?.message || "Kullanýcý adý/þifre hatalý"), "#e74c3c");
+    showNotice("Giriï¿½ Hatalï¿½: " + (err?.message || "Kullanï¿½cï¿½ adï¿½/ï¿½ifre hatalï¿½"), "#e74c3c");
   } finally {
     const stillOnLogin = !!loginScreen && !loginScreen.classList.contains("hidden");
     if (loginBtn && stillOnLogin) {
       loginBtn.disabled = false;
-      loginBtn.innerText = "Giriþ Yap";
+      loginBtn.innerText = "Giriï¿½ Yap";
     }
   }
 };
@@ -13671,7 +13671,7 @@ window.removeQuestion = function (i) {
   showNotice("Soru silindi", "#e74c3c");
 };
 
-/* ================= ÖDEV KAYDET ================= */
+/* ================= ï¿½DEV KAYDET ================= */
 document.getElementById("btn-save-task").onclick = async function () {
   const titleInput = document.getElementById("task-title");
   const descInput = document.getElementById("task-desc");
@@ -13682,7 +13682,7 @@ document.getElementById("btn-save-task").onclick = async function () {
   const saveBtn = document.getElementById("btn-save-task");
 
   if (!titleInput.value) {
-    showNotice("Lütfen ödev baþlýðý yazýn!", "#e74c3c");
+    showNotice("Lï¿½tfen ï¿½dev baï¿½lï¿½ï¿½ï¿½ yazï¿½n!", "#e74c3c");
     return;
   }
   if (!deadlineInput.value) {
@@ -13699,7 +13699,7 @@ document.getElementById("btn-save-task").onclick = async function () {
 
   try {
     saveBtn.disabled = true;
-    saveBtn.innerText = "Yayýnlanýyor...";
+    saveBtn.innerText = "Yayï¿½nlanï¿½yor...";
     syncTaskTargetFromClassSection();
 
     const targetValue = document.getElementById("task-target")?.value || "all";
@@ -13733,7 +13733,7 @@ document.getElementById("btn-save-task").onclick = async function () {
 
     await addDoc(collection(db, "activities"), taskData);
 
-    showNotice("Ödev baþarýyla yayýnlandý!", "#2ecc71");
+    showNotice("ï¿½dev baï¿½arï¿½yla yayï¿½nlandï¿½!", "#2ecc71");
     
     taskQuestions = [];
     titleInput.value = "";
@@ -13748,7 +13748,7 @@ document.getElementById("btn-save-task").onclick = async function () {
     if (taskTargetSection) taskTargetSection.value = "";
     if (bookSelect) bookSelect.value = "";
     if (testSelect) {
-      testSelect.innerHTML = `<option value="">Test seçiniz</option>`;
+      testSelect.innerHTML = `<option value="">Test seï¿½iniz</option>`;
       testSelect.disabled = true;
     }
     updatePreview();
@@ -13756,22 +13756,22 @@ document.getElementById("btn-save-task").onclick = async function () {
     if (createModal) createModal.style.display = "none";
     
     saveBtn.disabled = false;
-    saveBtn.innerText = "ÖDEVÝ YAYINLA";
+    saveBtn.innerText = "ï¿½DEVï¿½ YAYINLA";
   } catch (e) {
     console.error(e);
     showNotice("Hata: " + e.message, "#e74c3c");
     saveBtn.disabled = false;
-    saveBtn.innerText = "ÖDEVÝ YAYINLA";
+    saveBtn.innerText = "ï¿½DEVï¿½ YAYINLA";
   }
 };
 
-/* ================= MODAL AÇMA ================= */
+/* ================= MODAL Aï¿½MA ================= */
 async function openTaskModal(id, data, isCompleted = false) {
   currentTaskId = id;
   const modal = document.getElementById("task-modal");
   
-  document.getElementById("modal-display-title").innerText = data.title || "Baþlýksýz";
-  document.getElementById("modal-display-desc").innerText = data.description || "Açýklama yok.";
+  document.getElementById("modal-display-title").innerText = data.title || "Baï¿½lï¿½ksï¿½z";
+  document.getElementById("modal-display-desc").innerText = data.description || "Aï¿½ï¿½klama yok.";
   document.getElementById("edit-section").style.display = "none";
   
   const deadlineDiv = document.getElementById("modal-deadline");
@@ -13788,7 +13788,7 @@ async function openTaskModal(id, data, isCompleted = false) {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }) + (isExpired ? ' (Süresi doldu)' : '');
+    }) + (isExpired ? ' (Sï¿½resi doldu)' : '');
     
     deadlineDiv.style.display = "block";
     deadlineDiv.className = isExpired ? "deadline-expired" : "";
@@ -13807,8 +13807,8 @@ async function openTaskModal(id, data, isCompleted = false) {
       if (bookApproval) bookApproval.style.display = "block";
       if (bookApprovalTitle) {
         bookApprovalTitle.innerText = isBookOnlyTask(data)
-          ? "?? Kitap/Test Ödevi Onayý"
-          : "?? Sorusuz Ödev Onayý";
+          ? "?? Kitap/Test ï¿½devi Onayï¿½"
+          : "?? Sorusuz ï¿½dev Onayï¿½";
       }
       await populateClassSectionFilters(
         document.getElementById("book-approve-class"),
@@ -13834,12 +13834,12 @@ async function openTaskModal(id, data, isCompleted = false) {
       startBtn.style.display = "none";
       
       const percentage = Math.round((completion.correctAnswers / completion.totalQuestions) * 100);
-      document.getElementById("completed-score").innerText = `Baþarý: %${percentage} | +${completion.xpEarned} XP`;
+      document.getElementById("completed-score").innerText = `Baï¿½arï¿½: %${percentage} | +${completion.xpEarned} XP`;
       
       if (completion.duration) {
         const mins = Math.floor(completion.duration / 60);
         const secs = completion.duration % 60;
-        document.getElementById("completed-time").innerText = `Süre: ${mins} dakika ${secs} saniye`;
+        document.getElementById("completed-time").innerText = `Sï¿½re: ${mins} dakika ${secs} saniye`;
       }
     } else {
       completedInfo.style.display = "none";
@@ -13856,30 +13856,30 @@ async function openTaskModal(id, data, isCompleted = false) {
       const prog = await getBookTaskProgress(id, currentUserId);
       const approved = !!prog?.approved;
       startBtn.style.display = "none";
-      if (bookTaskTitle) bookTaskTitle.innerText = isBookOnlyTask(data) ? "?? Kitap/Test Ödevi" : "?? Sorusuz Ödev";
+      if (bookTaskTitle) bookTaskTitle.innerText = isBookOnlyTask(data) ? "?? Kitap/Test ï¿½devi" : "?? Sorusuz ï¿½dev";
       if (bookTaskNote) {
         bookTaskNote.innerText = isBookOnlyTask(data)
-          ? "Not: Bitirdim dediðinizde öðretmen onayý gerekir."
-          : "Not: Yaptým dediðinizde öðretmen onayý gerekir.";
+          ? "Not: Bitirdim dediï¿½inizde ï¿½ï¿½retmen onayï¿½ gerekir."
+          : "Not: Yaptï¿½m dediï¿½inizde ï¿½ï¿½retmen onayï¿½ gerekir.";
       }
       if (btnStarted) btnStarted.style.display = isBookOnlyTask(data) ? "inline-flex" : "none";
-      if (btnFinished) btnFinished.innerText = isBookOnlyTask(data) ? "Bitirdim" : "Yaptým";
+      if (btnFinished) btnFinished.innerText = isBookOnlyTask(data) ? "Bitirdim" : "Yaptï¿½m";
       if (approved) {
         if (bookActions) bookActions.style.display = "none";
         if (completedInfo) {
           completedInfo.style.display = "block";
-          document.getElementById("completed-score").innerText = `? Bu ödev tamamlandý ve onaylandý. +${MANUAL_TASK_APPROVAL_XP} XP`;
-          document.getElementById("completed-time").innerText = "Ödül XP hesabýna iþlendi.";
+          document.getElementById("completed-score").innerText = `? Bu ï¿½dev tamamlandï¿½ ve onaylandï¿½. +${MANUAL_TASK_APPROVAL_XP} XP`;
+          document.getElementById("completed-time").innerText = "ï¿½dï¿½l XP hesabï¿½na iï¿½lendi.";
         }
       } else {
         if (bookActions) bookActions.style.display = "block";
         if (completedInfo) completedInfo.style.display = "none";
-        const doneText = isBookOnlyTask(data) ? "Bitirdi" : "Yaptý";
+        const doneText = isBookOnlyTask(data) ? "Bitirdi" : "Yaptï¿½";
         const statusText = prog?.status === "finished"
           ? `Durum: ${doneText} (Onay Bekliyor)`
           : prog?.status === "started"
-            ? "Durum: Baþlandý"
-            : "Durum: Baþlanmadý";
+            ? "Durum: Baï¿½landï¿½"
+            : "Durum: Baï¿½lanmadï¿½";
         if (bookStatus) bookStatus.innerText = statusText;
       }
     } else {
@@ -13898,7 +13898,7 @@ function closeModal() {
   document.getElementById("edit-section").style.display = "none";
 }
 
-/* ================= ÖDEV DÜZENLEME ================= */
+/* ================= ï¿½DEV Dï¿½ZENLEME ================= */
 let editingQuestions = [];
 
 document.getElementById("btn-edit-task").onclick = function() {
@@ -13910,7 +13910,7 @@ document.getElementById("btn-edit-task").onclick = function() {
   const editBook = document.getElementById("edit-book");
   const editBookTest = document.getElementById("edit-book-test");
   if (editBook) {
-    editBook.innerHTML = `<option value="">Kitap seçiniz</option>`;
+    editBook.innerHTML = `<option value="">Kitap seï¿½iniz</option>`;
     allBooks.forEach((b) => {
       const opt = document.createElement("option");
       opt.value = b.id;
@@ -13920,7 +13920,7 @@ document.getElementById("btn-edit-task").onclick = function() {
     editBook.value = task.bookId || "";
   }
   if (editBookTest) {
-    editBookTest.innerHTML = `<option value="">Test seçiniz</option>`;
+    editBookTest.innerHTML = `<option value="">Test seï¿½iniz</option>`;
     editBookTest.disabled = true;
     const book = allBooks.find(b => b.id === (task.bookId || ""));
     const tests = book?.tests || [];
@@ -13955,7 +13955,7 @@ if (editBookSelect) {
   editBookSelect.onchange = function () {
     const editBookTest = document.getElementById("edit-book-test");
     if (!editBookTest) return;
-    editBookTest.innerHTML = `<option value="">Test seçiniz</option>`;
+    editBookTest.innerHTML = `<option value="">Test seï¿½iniz</option>`;
     const bookId = editBookSelect.value;
     if (!bookId) {
       editBookTest.disabled = true;
@@ -13987,11 +13987,11 @@ function renderEditQuestions() {
         <button onclick="removeEditQuestion(${index})" style="background:#e74c3c;color:white;border:none;border-radius:5px;padding:5px 8px;cursor:pointer;">Sil</button>
       </div>
       <input type="text" value="${q.question}" onchange="updateEditQuestion(${index}, 'question', this.value)" class="form-control" placeholder="Soru metni">
-      <input type="text" value="${q.correct}" onchange="updateEditQuestion(${index}, 'correct', this.value)" class="form-control" placeholder="Doðru cevap">
+      <input type="text" value="${q.correct}" onchange="updateEditQuestion(${index}, 'correct', this.value)" class="form-control" placeholder="Doï¿½ru cevap">
       <select onchange="updateEditQuestion(${index}, 'type', this.value)" class="form-control">
-        <option value="quiz" ${q.type === 'quiz' ? 'selected' : ''}>Çoktan Seçmeli</option>
-        <option value="truefalse" ${q.type === 'truefalse' ? 'selected' : ''}>Doðru/Yanlýþ</option>
-        <option value="fill" ${q.type === 'fill' ? 'selected' : ''}>Boþluk Doldurma</option>
+        <option value="quiz" ${q.type === 'quiz' ? 'selected' : ''}>ï¿½oktan Seï¿½meli</option>
+        <option value="truefalse" ${q.type === 'truefalse' ? 'selected' : ''}>Doï¿½ru/Yanlï¿½ï¿½</option>
+        <option value="fill" ${q.type === 'fill' ? 'selected' : ''}>Boï¿½luk Doldurma</option>
       </select>
       <input type="file" accept="image/*" class="form-control" onchange="updateEditQuestionImage(${index}, this.files[0])">
     `;
@@ -14070,7 +14070,7 @@ document.getElementById("btn-save-edit").onclick = async function() {
   const editBookTest = document.getElementById("edit-book-test");
   
   if (!newTitle) {
-    showNotice("Baþlýk zorunlu!", "#e74c3c");
+    showNotice("Baï¿½lï¿½k zorunlu!", "#e74c3c");
     return;
   }
   
@@ -14104,24 +14104,24 @@ document.getElementById("btn-save-edit").onclick = async function() {
     
     await updateDoc(doc(db, "activities", currentTaskId), updateData);
     
-    showNotice("Ödev güncellendi!", "#2ecc71");
+    showNotice("ï¿½dev gï¿½ncellendi!", "#2ecc71");
     document.getElementById("edit-section").style.display = "none";
     document.getElementById("modal-display-title").innerText = newTitle;
-    document.getElementById("modal-display-desc").innerText = newDesc || "Açýklama yok.";
+    document.getElementById("modal-display-desc").innerText = newDesc || "Aï¿½ï¿½klama yok.";
   } catch (e) {
-    showNotice("Güncelleme hatasý: " + e.message, "#e74c3c");
+    showNotice("Gï¿½ncelleme hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 
-/* ================= ÖDEV SÝLME ================= */
+/* ================= ï¿½DEV Sï¿½LME ================= */
 document.getElementById("btn-delete-task").onclick = async function () {
   if (!currentTaskId) return;
   
-  const ok = await showConfirm("Bu ödevi silmek istediðinize emin misiniz?");
+  const ok = await showConfirm("Bu ï¿½devi silmek istediï¿½inize emin misiniz?");
   if (!ok) return;
   
   try {
-    // Geçmiþ raporlar ve öðrenci puanlarý korunur: fiziksel silme yerine arþivleme.
+    // Geï¿½miï¿½ raporlar ve ï¿½ï¿½renci puanlarï¿½ korunur: fiziksel silme yerine arï¿½ivleme.
     await updateDoc(doc(db, "activities", currentTaskId), {
       isDeleted: true,
       deletedAt: serverTimestamp(),
@@ -14129,10 +14129,10 @@ document.getElementById("btn-delete-task").onclick = async function () {
       updatedAt: serverTimestamp()
     });
 
-    showNotice("Ödev arþivlendi. Öðrenci geçmiþinde kalacak.", "#2ecc71");
+    showNotice("ï¿½dev arï¿½ivlendi. ï¿½ï¿½renci geï¿½miï¿½inde kalacak.", "#2ecc71");
     closeModal();
   } catch (e) {
-    showNotice("Silme hatasý: " + e.message, "#e74c3c");
+    showNotice("Silme hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 ["email", "password"].forEach((id) => {
@@ -14147,26 +14147,26 @@ document.getElementById("btn-delete-task").onclick = async function () {
   });
 });
 
-/* ================= AKTÝVÝTE BAÞLATMA ================= */
+/* ================= AKTï¿½Vï¿½TE BAï¿½LATMA ================= */
 document.getElementById("btn-start-activity").onclick = async function () {
   if (!currentTaskId) return;
   
   if (completedTasks.has(currentTaskId)) {
-    showNotice("Bu ödevi zaten tamamladýnýz!", "#e74c3c");
+    showNotice("Bu ï¿½devi zaten tamamladï¿½nï¿½z!", "#e74c3c");
     return;
   }
   
   try {
     const taskDoc = await getDoc(doc(db, "activities", currentTaskId));
     if (!taskDoc.exists()) {
-      showNotice("Ödev bulunamadý!", "#e74c3c");
+      showNotice("ï¿½dev bulunamadï¿½!", "#e74c3c");
       return;
     }
     
     const data = taskDoc.data();
     if (!data.questions || data.questions.length === 0) {
       await saveBookTaskProgress({ id: currentTaskId, ...data }, "finished");
-      showNotice("Yaptým olarak kaydedildi. Öðretmen onayý bekleniyor.", "#2ecc71");
+      showNotice("Yaptï¿½m olarak kaydedildi. ï¿½ï¿½retmen onayï¿½ bekleniyor.", "#2ecc71");
       await openTaskModal(currentTaskId, data, false);
       return;
     }
@@ -14243,7 +14243,7 @@ function showQuestion() {
       container.appendChild(btn);
     });
   } else if (q.type === "truefalse") {
-    ["Doðru", "Yanlýþ"].forEach((opt) => {
+    ["Doï¿½ru", "Yanlï¿½ï¿½"].forEach((opt) => {
       const btn = document.createElement("button");
       btn.className = "game-option";
       btn.innerText = opt;
@@ -14254,7 +14254,7 @@ function showQuestion() {
     const input = document.createElement("input");
     input.type = "text";
     input.className = "form-control";
-    input.placeholder = "Cevabýnýzý yazýn...";
+    input.placeholder = "Cevabï¿½nï¿½zï¿½ yazï¿½n...";
     container.appendChild(input);
     
     const submitBtn = document.createElement("button");
@@ -14278,10 +14278,10 @@ function checkAnswer(selected, correct, btnElement) {
   if (isCorrect) {
     btnElement.classList.add("correct");
     correctAnswers++;
-    showNotice("Doðru! ?", "#2ecc71");
+    showNotice("Doï¿½ru! ?", "#2ecc71");
   } else {
     btnElement.classList.add("wrong");
-    showNotice("Yanlýþ!", "#e74c3c");
+    showNotice("Yanlï¿½ï¿½!", "#e74c3c");
   }
   
   setTimeout(() => {
@@ -14303,12 +14303,12 @@ function checkFillAnswer(selected, correct) {
   if (isCorrect) {
     resultDiv.style.background = "#d4edda";
     resultDiv.style.color = "#155724";
-    resultDiv.innerText = "? Doðru!";
+    resultDiv.innerText = "? Doï¿½ru!";
     correctAnswers++;
   } else {
     resultDiv.style.background = "#f8d7da";
     resultDiv.style.color = "#721c24";
-    resultDiv.innerText = "? Yanlýþ! Doðru: " + correct;
+    resultDiv.innerText = "? Yanlï¿½ï¿½! Doï¿½ru: " + correct;
   }
   
   container.appendChild(resultDiv);
@@ -14340,13 +14340,13 @@ function showGameResults() {
   document.getElementById("game-results").style.display = "block";
   document.getElementById("result-text").innerHTML = `
     <p>Toplam Soru: ${currentQuestions.length}</p>
-    <p>Doðru Cevap: ${correctAnswers}</p>
-    <p>Baþarý Oraný: %${percentage}</p>
-    <p style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">Kazanýlan XP: +${xpEarned}</p>
+    <p>Doï¿½ru Cevap: ${correctAnswers}</p>
+    <p>Baï¿½arï¿½ Oranï¿½: %${percentage}</p>
+    <p style="font-size: 1.2rem; color: var(--primary); font-weight: bold;">Kazanï¿½lan XP: +${xpEarned}</p>
   `;
   
   document.getElementById("time-result").innerHTML = `
-    <strong>? Tamamlama Süresi:</strong> ${mins} dakika ${secs} saniye
+    <strong>? Tamamlama Sï¿½resi:</strong> ${mins} dakika ${secs} saniye
   `;
   
   const saveBtn = document.getElementById("btn-complete");
@@ -14362,14 +14362,14 @@ async function saveGameResults(xp, duration) {
   
   try {
     if (!activeTaskId) {
-      showNotice("Ödev bulunamadý!", "#e74c3c");
+      showNotice("ï¿½dev bulunamadï¿½!", "#e74c3c");
       saveBtn.disabled = false;
       saveBtn.innerText = "Kaydet ve Bitir";
       return;
     }
     
     if (completedTasks.has(activeTaskId)) {
-      showNotice("Bu ödev zaten kaydedilmiþ!", "#e74c3c");
+      showNotice("Bu ï¿½dev zaten kaydedilmiï¿½!", "#e74c3c");
       backToMain();
       return;
     }
@@ -14400,24 +14400,24 @@ async function saveGameResults(xp, duration) {
       completedAt: { toDate: () => new Date() }
     });
     
-    // Listeyi hemen güncelle
+    // Listeyi hemen gï¿½ncelle
     updateTaskLists();
     
-    showNotice("Tebrikler! " + xp + " XP kazandýn!", "#2ecc71");
+    showNotice("Tebrikler! " + xp + " XP kazandï¿½n!", "#2ecc71");
     
     setTimeout(() => {
       backToMain();
     }, 1500);
     
   } catch (e) {
-    console.error("Kaydetme hatasý:", e);
-    showNotice("Kaydetme hatasý: " + e.message, "#e74c3c");
+    console.error("Kaydetme hatasï¿½:", e);
+    showNotice("Kaydetme hatasï¿½: " + e.message, "#e74c3c");
     saveBtn.disabled = false;
     saveBtn.innerText = "Kaydet ve Bitir";
   }
 }
 
-/* ================= GERÝ DÖNÜÞ ================= */
+/* ================= GERï¿½ Dï¿½Nï¿½ï¿½ ================= */
 document.getElementById("btn-back").onclick = backToMain;
 
 function backToMain() {
@@ -14443,7 +14443,7 @@ function backToMain() {
   activeTaskId = null;
 }
 
-/* ================= LÝDERLÝK TABLOSU ================= */
+/* ================= Lï¿½DERLï¿½K TABLOSU ================= */
 function buildLeaderboardRankedRows(users = []) {
   const rows = (Array.isArray(users) ? users.slice() : []).sort((a, b) => {
     const xpDiff = Number(b.xp || 0) - Number(a.xp || 0);
@@ -14496,7 +14496,7 @@ function renderLeaderboardPreview(rows = []) {
   if (!list) return;
   list.innerHTML = "";
   if (!rows.length) {
-    list.innerHTML = `<li class="list-item" style="cursor:default;">Sýralama verisi bulunamadý.</li>`;
+    list.innerHTML = `<li class="list-item" style="cursor:default;">Sï¿½ralama verisi bulunamadï¿½.</li>`;
     renderStudentAdventureBoard();
     return;
   }
@@ -14538,7 +14538,7 @@ function renderStudentTopStudentsList(rows = []) {
   if (card) card.style.display = "block";
   list.innerHTML = "";
   if (!rows.length) {
-    list.innerHTML = `<div class="empty-state">Sýralama verisi bulunamadý.</div>`;
+    list.innerHTML = `<div class="empty-state">Sï¿½ralama verisi bulunamadï¿½.</div>`;
     return;
   }
   const topRows = rows.slice(0, 7);
@@ -14575,14 +14575,14 @@ function populateLeaderboardFilters(rows = []) {
   });
   const oldClass = classSelect.value;
   const oldSection = sectionSelect.value;
-  classSelect.innerHTML = `<option value="">Tüm Sýnýflar</option>`;
+  classSelect.innerHTML = `<option value="">Tï¿½m Sï¿½nï¿½flar</option>`;
   Array.from(classSet).sort((a, b) => String(a).localeCompare(String(b), "tr")).forEach((c) => {
     const opt = document.createElement("option");
     opt.value = c;
     opt.textContent = c;
     classSelect.appendChild(opt);
   });
-  sectionSelect.innerHTML = `<option value="">Tüm Þubeler</option>`;
+  sectionSelect.innerHTML = `<option value="">Tï¿½m ï¿½ubeler</option>`;
   Array.from(sectionSet).sort((a, b) => String(a).localeCompare(String(b), "tr")).forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
@@ -14605,7 +14605,7 @@ function updateLeaderboardSectionFilterOptions() {
     if (selectedClass && String(r.className || "") !== selectedClass) return;
     if (r.section) sectionSet.add(String(r.section));
   });
-  sectionSelect.innerHTML = `<option value="">Tüm Þubeler</option>`;
+  sectionSelect.innerHTML = `<option value="">Tï¿½m ï¿½ubeler</option>`;
   Array.from(sectionSet).sort((a, b) => a.localeCompare(b, "tr")).forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
@@ -14624,7 +14624,7 @@ function renderLeaderboardModalList() {
   if (classFilter) rows = rows.filter((r) => String(r.className || "") === classFilter);
   if (sectionFilter) rows = rows.filter((r) => String(r.section || "") === sectionFilter);
   if (!rows.length) {
-    box.innerHTML = `<div class="empty-state">Filtreye uygun öðrenci yok.</div>`;
+    box.innerHTML = `<div class="empty-state">Filtreye uygun ï¿½ï¿½renci yok.</div>`;
     return;
   }
   box.innerHTML = rows.map((u) => {
@@ -14683,7 +14683,7 @@ function loadLeaderboard() {
   });
 }
 
-/* ================= ÖÐRENCÝLERÝM MODALI ================= */
+/* ================= ï¿½ï¿½RENCï¿½LERï¿½M MODALI ================= */
 function getTeacherManagedStudents(students = []) {
   if (userRole !== "teacher") return [];
   if (!currentUserId && !userData?.username && !userData?.email) return [];
@@ -14693,7 +14693,7 @@ function getTeacherManagedStudents(students = []) {
       const key = buildClassSectionKey(s?.className || s?.class || "", s?.section || "");
       return !!key && teacherAssignedClassKeys.has(key);
     }
-    // Geriye uyum: atama tanýmlý deðilse legacy sahiplik alanýný kullan.
+    // Geriye uyum: atama tanï¿½mlï¿½ deï¿½ilse legacy sahiplik alanï¿½nï¿½ kullan.
     return recordBelongsToCurrentTeacher(s);
   });
 }
@@ -14846,7 +14846,7 @@ function applyClassSectionDropdownBindings() {
       const sections = Array.from(classMap.get(selectedClass) || []).sort((a, b) => a.localeCompare(b, "tr"));
       if (sectionIsSelect) {
         const currentSection = normalizeClassSectionText(sectionEl.value || "");
-        sectionEl.innerHTML = `<option value="">Þube seçin</option>`;
+        sectionEl.innerHTML = `<option value="">ï¿½ube seï¿½in</option>`;
         sections.forEach((sec) => {
           const opt = document.createElement("option");
           opt.value = sec;
@@ -14868,7 +14868,7 @@ function applyClassSectionDropdownBindings() {
     if (classIsSelect) {
       const currentClass = normalizeClassSectionText(classEl.value || "");
       const sortedClasses = Array.from(classMap.keys()).sort((a, b) => a.localeCompare(b, "tr"));
-      classEl.innerHTML = `<option value="">Sýnýf seçin</option>`;
+      classEl.innerHTML = `<option value="">Sï¿½nï¿½f seï¿½in</option>`;
       sortedClasses.forEach((cls) => {
         const opt = document.createElement("option");
         opt.value = cls;
@@ -14933,13 +14933,13 @@ function normalizeOwnerToken(value) {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "";
   const trMap = {
-    "ç": "c",
-    "ð": "g",
-    "ý": "i",
-    "Ý": "i",
-    "ö": "o",
-    "þ": "s",
-    "ü": "u"
+    "ï¿½": "c",
+    "ï¿½": "g",
+    "ï¿½": "i",
+    "ï¿½": "i",
+    "ï¿½": "o",
+    "ï¿½": "s",
+    "ï¿½": "u"
   };
   const folded = raw
     .split("")
@@ -14994,7 +14994,7 @@ async function refreshTeacherOwnerAliasTokens() {
     push(row.username);
     if (String(row.email || "").includes("@")) push(String(row.email).split("@")[0]);
   };
-  // kendi tokenlarýný da alias setine ekle
+  // kendi tokenlarï¿½nï¿½ da alias setine ekle
   seedTokens.forEach((t) => teacherOwnerAliasTokens.add(normalizeOwnerToken(t)));
   try {
     const queries = [];
@@ -15028,7 +15028,7 @@ function valueMatchesCurrentTeacher(value) {
     if (normalizeIdentityToken(t) === targetIdentity && targetIdentity) return true;
     if (target.includes(t) || t.includes(target)) return true;
   }
-  // legacy: kayýt email ise, tokenlar arasýnda email-prefix eþleþmesi de kabul et
+  // legacy: kayï¿½t email ise, tokenlar arasï¿½nda email-prefix eï¿½leï¿½mesi de kabul et
   if (target.includes("@")) {
     const prefix = target.split("@")[0];
     if (tokens.has(prefix)) return true;
@@ -15075,7 +15075,7 @@ function recordBelongsToCurrentTeacher(record = {}) {
     record?.ownerEmail
   ].map((v) => normalizeOwnerToken(v)).filter(Boolean);
   if (explicitOwners.length) return explicitOwners.some((v) => valueMatchesCurrentTeacher(v));
-  // Legacy kayýtlar: öðretmen alaný yoksa öðrenci iliþkisinden doðrula.
+  // Legacy kayï¿½tlar: ï¿½ï¿½retmen alanï¿½ yoksa ï¿½ï¿½renci iliï¿½kisinden doï¿½rula.
   const studentRefs = [
     record?.userId,
     record?.studentId,
@@ -15120,9 +15120,9 @@ function renderLoginCardsModal() {
     if (secCmp !== 0) return secCmp;
     return getUserDisplayName(a).localeCompare(getUserDisplayName(b), "tr");
   });
-  if (summary) summary.innerText = `${rows.length} öðrenci kartý hazýr.`;
+  if (summary) summary.innerText = `${rows.length} ï¿½ï¿½renci kartï¿½ hazï¿½r.`;
   if (!rows.length) {
-    grid.innerHTML = `<div class="login-cards-empty">Öðrenci bulunamadý.</div>`;
+    grid.innerHTML = `<div class="login-cards-empty">ï¿½ï¿½renci bulunamadï¿½.</div>`;
     return;
   }
   grid.innerHTML = rows.map((s) => {
@@ -15134,7 +15134,7 @@ function renderLoginCardsModal() {
         <article class="login-card-item">
           <span class="login-card-accent" aria-hidden="true"></span>
           <div class="login-card-head">
-            <img src="logo.png" alt="Logo" class="login-card-logo">
+            <img src="/public/logo.png" alt="Logo" class="login-card-logo">
             <div class="login-card-title-row" style="flex:1;">
               <div class="login-card-title">
                 <span class="name">${escapeHtmlBasic(name)}</span>
@@ -15144,15 +15144,15 @@ function renderLoginCardsModal() {
           </div>
         <div class="login-card-fields">
           <div class="login-card-field">
-            <span class="icon">Kullanýcý Adý</span>
+            <span class="icon">Kullanï¿½cï¿½ Adï¿½</span>
             <span class="val">${escapeHtmlBasic(username)}</span>
           </div>
           <div class="login-card-field password-field">
-            <span class="icon">Þifre</span>
+            <span class="icon">ï¿½ifre</span>
             <span class="val">${escapeHtmlBasic(pass)}</span>
           </div>
         </div>
-        <div class="login-card-foot">Öðrenci Giriþ Bilgilendirme Kartý</div>
+        <div class="login-card-foot">ï¿½ï¿½renci Giriï¿½ Bilgilendirme Kartï¿½</div>
       </article>
     `;
   }).join("");
@@ -15161,8 +15161,8 @@ function renderLoginCardsModal() {
 async function loadLoginCardsModal() {
   const grid = document.getElementById("login-cards-grid");
   const summary = document.getElementById("login-cards-summary");
-  if (grid) grid.innerHTML = `<div class="login-cards-empty">Yükleniyor...</div>`;
-  if (summary) summary.innerText = "Öðrenciler yükleniyor...";
+  if (grid) grid.innerHTML = `<div class="login-cards-empty">Yï¿½kleniyor...</div>`;
+  if (summary) summary.innerText = "ï¿½ï¿½renciler yï¿½kleniyor...";
   const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
   const studentsSnap = await getDocs(studentsQuery);
   const students = [];
@@ -15182,7 +15182,7 @@ function openLoginCardsPrintPreview() {
     return getUserDisplayName(a).localeCompare(getUserDisplayName(b), "tr");
   });
   if (!students.length) {
-    showNotice("Yazdýrýlacak öðrenci kartý bulunamadý.", "#f39c12");
+    showNotice("Yazdï¿½rï¿½lacak ï¿½ï¿½renci kartï¿½ bulunamadï¿½.", "#f39c12");
     return;
   }
   const pageSize = 10;
@@ -15198,7 +15198,7 @@ function openLoginCardsPrintPreview() {
         <article class="print-login-card">
           <span class="print-accent" aria-hidden="true"></span>
           <div class="print-head">
-            <img src="logo.png" alt="Logo" class="print-logo">
+            <img src="/public/logo.png" alt="Logo" class="print-logo">
             <div class="print-title-row">
               <div class="print-title">
                 <span class="print-name">${name}</span>
@@ -15207,14 +15207,14 @@ function openLoginCardsPrintPreview() {
             </div>
           </div>
           <div class="print-row">
-            <div class="print-icon">Kullanýcý Adý</div>
+            <div class="print-icon">Kullanï¿½cï¿½ Adï¿½</div>
             <div class="print-val">${username}</div>
           </div>
           <div class="print-row password-row">
-            <div class="print-icon">Þifre</div>
+            <div class="print-icon">ï¿½ifre</div>
             <div class="print-val">${pass}</div>
           </div>
-          <div class="print-foot">Öðrenci Giriþ Kartý</div>
+          <div class="print-foot">ï¿½ï¿½renci Giriï¿½ Kartï¿½</div>
         </article>
       `;
     }).join("");
@@ -15223,11 +15223,11 @@ function openLoginCardsPrintPreview() {
 
   const w = window.open("", "_blank");
   if (!w) {
-    showNotice("Yazdýrma önizleme penceresi açýlamadý.", "#e74c3c");
+    showNotice("Yazdï¿½rma ï¿½nizleme penceresi aï¿½ï¿½lamadï¿½.", "#e74c3c");
     return;
   }
   w.document.write(`<!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><title>Giriþ Kartlarý</title>
+<html lang="tr"><head><meta charset="utf-8"><title>Giriï¿½ Kartlarï¿½</title>
 <style>
   @page { size: A4 portrait; margin: 8mm; }
   * { box-sizing: border-box; }
@@ -15303,7 +15303,7 @@ function openLoginCardsPrintPreview() {
 </style></head><body>
   <div class="actions">
     <button onclick="window.close()">Kapat</button>
-    <button class="primary" onclick="window.print()">Yazdýr</button>
+    <button class="primary" onclick="window.print()">Yazdï¿½r</button>
   </div>
   ${pageHtml}
 </body></html>`);
@@ -15313,7 +15313,7 @@ function openLoginCardsPrintPreview() {
 async function loadStudentsModal() {
   const list = document.getElementById("students-list");
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>Yï¿½kleniyor...</div>";
   
   const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
   const studentsSnap = await getDocs(studentsQuery);
@@ -15352,7 +15352,7 @@ function populateStudentFilters(students) {
     if (s.section) sections.add(String(s.section));
   });
   
-  classSelect.innerHTML = "<option value=\"\">Sýnýf</option>";
+  classSelect.innerHTML = "<option value=\"\">Sï¿½nï¿½f</option>";
   Array.from(classes).sort((a, b) => String(a).localeCompare(String(b), "tr")).forEach(c => {
     const opt = document.createElement("option");
     opt.value = c;
@@ -15360,7 +15360,7 @@ function populateStudentFilters(students) {
     classSelect.appendChild(opt);
   });
   
-  sectionSelect.innerHTML = "<option value=\"\">Þube</option>";
+  sectionSelect.innerHTML = "<option value=\"\">ï¿½ube</option>";
   Array.from(sections).sort((a, b) => String(a).localeCompare(String(b), "tr")).forEach(s => {
     const opt = document.createElement("option");
     opt.value = s;
@@ -15429,7 +15429,7 @@ function renderClassesList() {
   if (!list) return;
   list.innerHTML = "";
   if (!classManagerRows.length) {
-    list.innerHTML = "<div class='empty-state'>Kayýtlý sýnýf/þube bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>Kayï¿½tlï¿½ sï¿½nï¿½f/ï¿½ube bulunamadï¿½.</div>";
     return;
   }
   const rows = classManagerRows.slice().sort((a, b) => {
@@ -15448,8 +15448,8 @@ function renderClassesList() {
     }
     div.innerHTML = `
       <div style="flex:1;">
-        <div style="font-weight:700;">Sýnýf ${escapeHtmlBasic(row.className || "-")} / ${escapeHtmlBasic(row.section || "-")}</div>
-        <small style="color:#64748b;">Düzenlemek için seçin</small>
+        <div style="font-weight:700;">Sï¿½nï¿½f ${escapeHtmlBasic(row.className || "-")} / ${escapeHtmlBasic(row.section || "-")}</div>
+        <small style="color:#64748b;">Dï¿½zenlemek iï¿½in seï¿½in</small>
       </div>
     `;
     div.onclick = () => {
@@ -15467,7 +15467,7 @@ function renderClassesList() {
 async function loadClassesModal() {
   if (userRole !== "teacher" || !currentUserId) return;
   const list = document.getElementById("classes-list");
-  if (list) list.innerHTML = "<div class='loading'>Yükleniyor...</div>";
+  if (list) list.innerHTML = "<div class='loading'>Yï¿½kleniyor...</div>";
   classManagerSelectedId = null;
   try {
     const snap = await getDocs(query(collection(db, "classSections"), where("userId", "==", currentUserId)));
@@ -15488,7 +15488,7 @@ async function loadClassesModal() {
     applyClassSectionDropdownBindings();
   } catch (e) {
     if (list) {
-      list.innerHTML = `<div class='empty-state'>Sýnýf listesi yüklenemedi: ${escapeHtmlBasic(getCallableErrorMessage(e))}</div>`;
+      list.innerHTML = `<div class='empty-state'>Sï¿½nï¿½f listesi yï¿½klenemedi: ${escapeHtmlBasic(getCallableErrorMessage(e))}</div>`;
     }
   }
 }
@@ -15497,12 +15497,12 @@ async function addClassFromForm() {
   if (userRole !== "teacher" || !currentUserId) return;
   const { className, section } = getClassManagerInputValues();
   if (!className || !section) {
-    showNotice("Sýnýf ve þube zorunludur.", "#e74c3c");
+    showNotice("Sï¿½nï¿½f ve ï¿½ube zorunludur.", "#e74c3c");
     return;
   }
   const exists = classManagerRows.some((r) => r.className === className && r.section === section);
   if (exists) {
-    showNotice("Bu sýnýf/þube zaten mevcut.", "#f39c12");
+    showNotice("Bu sï¿½nï¿½f/ï¿½ube zaten mevcut.", "#f39c12");
     return;
   }
   try {
@@ -15513,23 +15513,23 @@ async function addClassFromForm() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-    showNotice("Sýnýf/þube eklendi.", "#2ecc71");
+    showNotice("Sï¿½nï¿½f/ï¿½ube eklendi.", "#2ecc71");
     await loadClassesModal();
     resetClassManagerForm();
   } catch (e) {
-    showNotice("Sýnýf/þube eklenemedi: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("Sï¿½nï¿½f/ï¿½ube eklenemedi: " + getCallableErrorMessage(e), "#e74c3c");
   }
 }
 
 async function updateSelectedClassFromForm() {
   if (userRole !== "teacher" || !currentUserId) return;
   if (!classManagerSelectedId) {
-    showNotice("Güncellemek için listeden bir satýr seçin.", "#f39c12");
+    showNotice("Gï¿½ncellemek iï¿½in listeden bir satï¿½r seï¿½in.", "#f39c12");
     return;
   }
   const { className, section } = getClassManagerInputValues();
   if (!className || !section) {
-    showNotice("Sýnýf ve þube zorunludur.", "#e74c3c");
+    showNotice("Sï¿½nï¿½f ve ï¿½ube zorunludur.", "#e74c3c");
     return;
   }
   try {
@@ -15538,29 +15538,29 @@ async function updateSelectedClassFromForm() {
       section,
       updatedAt: serverTimestamp()
     });
-    showNotice("Sýnýf/þube güncellendi.", "#2ecc71");
+    showNotice("Sï¿½nï¿½f/ï¿½ube gï¿½ncellendi.", "#2ecc71");
     await loadClassesModal();
     resetClassManagerForm();
   } catch (e) {
-    showNotice("Güncelleme baþarýsýz: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("Gï¿½ncelleme baï¿½arï¿½sï¿½z: " + getCallableErrorMessage(e), "#e74c3c");
   }
 }
 
 async function deleteSelectedClassFromForm() {
   if (userRole !== "teacher" || !currentUserId) return;
   if (!classManagerSelectedId) {
-    showNotice("Silmek için listeden bir satýr seçin.", "#f39c12");
+    showNotice("Silmek iï¿½in listeden bir satï¿½r seï¿½in.", "#f39c12");
     return;
   }
-  const ok = await confirmDialog("Seçili sýnýf/þube kaydý silinsin mi?");
+  const ok = await confirmDialog("Seï¿½ili sï¿½nï¿½f/ï¿½ube kaydï¿½ silinsin mi?");
   if (!ok) return;
   try {
     await deleteDoc(doc(db, "classSections", classManagerSelectedId));
-    showNotice("Sýnýf/þube silindi.", "#2ecc71");
+    showNotice("Sï¿½nï¿½f/ï¿½ube silindi.", "#2ecc71");
     await loadClassesModal();
     resetClassManagerForm();
   } catch (e) {
-    showNotice("Silme baþarýsýz: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("Silme baï¿½arï¿½sï¿½z: " + getCallableErrorMessage(e), "#e74c3c");
   }
 }
 
@@ -15569,7 +15569,7 @@ async function bulkAddClassesFromInput() {
   const raw = String(document.getElementById("class-manager-bulk")?.value || "");
   const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (!lines.length) {
-    showNotice("Toplu ekleme için satýr girin.", "#f39c12");
+    showNotice("Toplu ekleme iï¿½in satï¿½r girin.", "#f39c12");
     return;
   }
   const parsed = [];
@@ -15581,7 +15581,7 @@ async function bulkAddClassesFromInput() {
     }
   });
   if (!parsed.length) {
-    showNotice("Satýr formatý geçersiz. Örn: 5A,A veya 5A/A", "#e74c3c");
+    showNotice("Satï¿½r formatï¿½ geï¿½ersiz. ï¿½rn: 5A,A veya 5A/A", "#e74c3c");
     return;
   }
   const existing = new Set(classManagerRows.map((r) => `${r.className}|${r.section}`));
@@ -15593,7 +15593,7 @@ async function bulkAddClassesFromInput() {
     uniqueNew.push(item);
   });
   if (!uniqueNew.length) {
-    showNotice("Eklenecek yeni sýnýf/þube bulunamadý.", "#f39c12");
+    showNotice("Eklenecek yeni sï¿½nï¿½f/ï¿½ube bulunamadï¿½.", "#f39c12");
     return;
   }
   try {
@@ -15604,12 +15604,12 @@ async function bulkAddClassesFromInput() {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     })));
-    showNotice(`${uniqueNew.length} sýnýf/þube eklendi.`, "#2ecc71");
+    showNotice(`${uniqueNew.length} sï¿½nï¿½f/ï¿½ube eklendi.`, "#2ecc71");
     const bulkInput = document.getElementById("class-manager-bulk");
     if (bulkInput) bulkInput.value = "";
     await loadClassesModal();
   } catch (e) {
-    showNotice("Toplu ekleme baþarýsýz: " + getCallableErrorMessage(e), "#e74c3c");
+    showNotice("Toplu ekleme baï¿½arï¿½sï¿½z: " + getCallableErrorMessage(e), "#e74c3c");
   }
 }
 
@@ -15618,7 +15618,7 @@ document.getElementById("btn-class-update")?.addEventListener("click", updateSel
 document.getElementById("btn-class-delete")?.addEventListener("click", deleteSelectedClassFromForm);
 document.getElementById("btn-class-bulk-add")?.addEventListener("click", bulkAddClassesFromInput);
 
-function showBulkStudentsDeleteOverlay(message = "Tüm öðrenciler siliniyor lütfen bekleyin...") {
+function showBulkStudentsDeleteOverlay(message = "Tï¿½m ï¿½ï¿½renciler siliniyor lï¿½tfen bekleyin...") {
   const existing = document.getElementById("bulk-students-delete-overlay");
   if (existing) existing.remove();
   const overlay = document.createElement("div");
@@ -15647,7 +15647,7 @@ function showBulkStudentsDeleteOverlay(message = "Tüm öðrenciler siliniyor lütfe
 
 async function deleteStudentAndLinkedData(student, options = {}) {
   if (!isStrictStudentRow(student)) {
-    throw new Error("Sadece öðrenci rolündeki hesaplar silinebilir.");
+    throw new Error("Sadece ï¿½ï¿½renci rolï¿½ndeki hesaplar silinebilir.");
   }
   const hints = Array.isArray(options.currentPasswordHints) ? options.currentPasswordHints : [];
   let authDeleteResult = { authDeleted: true };
@@ -15705,7 +15705,7 @@ function renderStudentsList(students) {
   list.innerHTML = "";
   
   if (students.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
     return;
   }
   
@@ -15734,10 +15734,10 @@ function renderStudentsList(students) {
         <input class="form-control student-input input-class" value="${className}" disabled>
         <input class="form-control student-input input-section" value="${section}" disabled>
         <div class="student-actions">
-          <button class="btn btn-warning btn-edit">Düzenle</button>
+          <button class="btn btn-warning btn-edit">Dï¿½zenle</button>
           <button class="btn btn-success btn-save" style="display:none;">Kaydet</button>
-          <button class="btn btn-cancel" style="display:none; background:#eee;">Ýptal</button>
-          <button class="btn btn-primary btn-temp-pass">Þifre Sýfýrla</button>
+          <button class="btn btn-cancel" style="display:none; background:#eee;">ï¿½ptal</button>
+          <button class="btn btn-primary btn-temp-pass">ï¿½ifre Sï¿½fï¿½rla</button>
           <button class="btn btn-danger btn-delete">Sil</button>
         </div>
       </div>
@@ -15757,7 +15757,7 @@ function renderStudentsList(students) {
       userInput.disabled = true;
       passInput.disabled = false;
       passInput.value = "";
-      passInput.placeholder = "Yeni Þifre (opsiyonel)";
+      passInput.placeholder = "Yeni ï¿½ifre (opsiyonel)";
       classInput.disabled = false;
       sectionInput.disabled = false;
       saveBtn.style.display = "inline-block";
@@ -15770,7 +15770,7 @@ function renderStudentsList(students) {
       lastInput.value = fallbackLast;
       userInput.value = username;
       passInput.value = String(student.loginCardPassword || "");
-      passInput.placeholder = "Þifre";
+      passInput.placeholder = "ï¿½ifre";
       classInput.value = className;
       sectionInput.value = section;
       inputs.forEach(i => i.disabled = true);
@@ -15783,7 +15783,7 @@ function renderStudentsList(students) {
       try {
         const enteredPassword = String(passInput.value || "").trim();
         if (enteredPassword && enteredPassword.length < 6) {
-          showNotice("Yeni þifre en az 6 karakter olmalý.", "#e74c3c");
+          showNotice("Yeni ï¿½ifre en az 6 karakter olmalï¿½.", "#e74c3c");
           return;
         }
         const updateData = {
@@ -15798,23 +15798,23 @@ function renderStudentsList(students) {
             currentPasswordHints: [shownPassword, passInput.defaultValue]
           });
         }
-        showNotice("Öðrenci bilgileri güncellendi!", "#2ecc71");
+        showNotice("ï¿½ï¿½renci bilgileri gï¿½ncellendi!", "#2ecc71");
         inputs.forEach(i => i.disabled = true);
         passInput.value = String(student.loginCardPassword || "");
-        passInput.placeholder = "Þifre";
+        passInput.placeholder = "ï¿½ifre";
         saveBtn.style.display = "none";
         cancelBtn.style.display = "none";
         editBtn.style.display = "inline-block";
       } catch (e) {
         passInput.value = String(student.loginCardPassword || "");
-        passInput.placeholder = "Þifre";
-        showNotice("Güncelleme hatasý: " + getCallableErrorMessage(e), "#e74c3c");
+        passInput.placeholder = "ï¿½ifre";
+        showNotice("Gï¿½ncelleme hatasï¿½: " + getCallableErrorMessage(e), "#e74c3c");
       }
     };
 
     if (tempPassBtn) {
       tempPassBtn.onclick = async () => {
-        const ok = await confirmDialog("Þifre sýfýrlansýn mý? Yeni þifre: 123456");
+        const ok = await confirmDialog("ï¿½ifre sï¿½fï¿½rlansï¿½n mï¿½? Yeni ï¿½ifre: 123456");
         if (!ok) return;
         try {
           const resetPassword = "123456";
@@ -15822,30 +15822,30 @@ function renderStudentsList(students) {
             currentPasswordHints: [shownPassword, passInput.value]
           });
           passInput.value = resetPassword;
-          await infoDialog(`Þifre sýfýrlandý.\nYeni þifre: ${resetPassword}`, {
+          await infoDialog(`ï¿½ifre sï¿½fï¿½rlandï¿½.\nYeni ï¿½ifre: ${resetPassword}`, {
             okText: "Tamam"
           });
         } catch (e) {
-          showNotice("Þifre sýfýrlanamadý: " + getCallableErrorMessage(e), "#e74c3c");
+          showNotice("ï¿½ifre sï¿½fï¿½rlanamadï¿½: " + getCallableErrorMessage(e), "#e74c3c");
         }
       };
     }
     
     deleteBtn.onclick = async () => {
-      const ok = await confirmDialog("Öðrenciyi silmek istediðinize emin misiniz?");
+      const ok = await confirmDialog("ï¿½ï¿½renciyi silmek istediï¿½inize emin misiniz?");
       if (!ok) return;
       try {
         const authDeleteResult = await deleteStudentAndLinkedData(student, {
           currentPasswordHints: [shownPassword, passInput.value]
         });
         if (!authDeleteResult?.authDeleted) {
-          showNotice("Öðrenci sistemden kaldýrýldý. Auth silme uyarýsý: " + String(authDeleteResult?.warning || "Bilinmeyen hata"), "#f39c12");
+          showNotice("ï¿½ï¿½renci sistemden kaldï¿½rï¿½ldï¿½. Auth silme uyarï¿½sï¿½: " + String(authDeleteResult?.warning || "Bilinmeyen hata"), "#f39c12");
         } else {
-          showNotice("Öðrenci silindi!", "#2ecc71");
+          showNotice("ï¿½ï¿½renci silindi!", "#2ecc71");
         }
         loadStudentsModal();
       } catch (e) {
-        showNotice("Silme hatasý: " + getCallableErrorMessage(e), "#e74c3c");
+        showNotice("Silme hatasï¿½: " + getCallableErrorMessage(e), "#e74c3c");
       }
     };
     
@@ -15922,7 +15922,7 @@ function getHeroRankFallbacks() {
   const schoolNode = document.getElementById("student-hero-school-rank");
   const clean = (value) => {
     const v = String(value || "").trim();
-    if (!v || v === "-" || v === "—") return null;
+    if (!v || v === "-" || v === "ï¿½") return null;
     return v;
   };
   const classRank = clean(classNode?.textContent);
@@ -15954,7 +15954,7 @@ function getRankFallbacksFromCache(detail) {
 
 function isBlankRank(value) {
   const v = String(value ?? "").trim();
-  return !v || v === "-" || v === "—" || v === "null" || v === "undefined";
+  return !v || v === "-" || v === "ï¿½" || v === "null" || v === "undefined";
 }
 
 function normalizeClassValue(value) {
@@ -16065,7 +16065,7 @@ async function openStudentReportWindow(detail) {
       ? Math.round((contentStats.completedItems / contentStats.totalItems) * 100)
       : 0;
   }
-  // fallback: pop-up istatistiklerinden rapora taþý
+  // fallback: pop-up istatistiklerinden rapora taï¿½ï¿½
   if (!contentStats.appList.length && Array.isArray(detail?.activityItems) && detail.activityItems.length) {
     contentStats.appList = detail.activityItems.map(a => ({
       appId: a.appId || a.id || "",
@@ -16092,7 +16092,7 @@ async function openStudentReportWindow(detail) {
   const badgeRows = badgeList.length
     ? badgeList
         .map((b) => {
-          const tip = escapeHtmlBasic(b.desc || "Rozeti kazanma þartlarý burada gösterilir.");
+          const tip = escapeHtmlBasic(b.desc || "Rozeti kazanma ï¿½artlarï¿½ burada gï¿½sterilir.");
           return `
             <div class="badge-mini" data-tooltip="${tip}" title="${tip}">
               <div class="badge-mini-icon">${b.icon}</div>
@@ -16100,7 +16100,7 @@ async function openStudentReportWindow(detail) {
             </div>`;
         })
         .join("")
-    : `<div style="color:#667085;font-size:11px;">Henüz rozet kazanýlmadý.</div>`;
+    : `<div style="color:#667085;font-size:11px;">Henï¿½z rozet kazanï¿½lmadï¿½.</div>`;
   const quizRows = (quizStats.items || []).map((q, i) => `
       <tr>
         <td>${i + 1}. ${q.quizTitle || "Quiz"}</td>
@@ -16162,7 +16162,7 @@ async function openStudentReportWindow(detail) {
   
   const reportWindow = window.open("", "_blank");
   if (!reportWindow) {
-    showNotice("Yeni pencere açýlamadý.", "#e74c3c");
+    showNotice("Yeni pencere aï¿½ï¿½lamadï¿½.", "#e74c3c");
     return;
   }
   
@@ -16231,7 +16231,7 @@ async function openStudentReportWindow(detail) {
     });
   (Array.isArray(quizStats?.items) ? quizStats.items : []).forEach((qz) => {
     codingRuns.push({
-      app: `Canlý Quiz: ${qz?.quizTitle || "Quiz"}`,
+      app: `Canlï¿½ Quiz: ${qz?.quizTitle || "Quiz"}`,
       range: "-",
       duration: formatQuizDurationText(qz?.durationMs, qz?.durationMinutes) || "-",
       xp: Math.max(0, Number(qz?.xpEarned || 0)),
@@ -16260,7 +16260,7 @@ async function openStudentReportWindow(detail) {
   const group2Completed = blockCompletedCount + computeCompletedCount + (quizStats.totalQuizzes || 0);
   const group2Pending = Math.max(0, group2Total - group2Completed);
   const group1Chart = buildCategoryBarChartSvg(
-    ["Ödev", "Etkinlik", "Ders"],
+    ["ï¿½dev", "Etkinlik", "Ders"],
     [taskCompletedCount, activityCompletedCount, lessonCompletedCount],
     [taskTotalCount, activityTotalCount, lessonTotalCount],
     "#3b82f6"
@@ -16289,7 +16289,7 @@ async function openStudentReportWindow(detail) {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Öðrenci Raporu</title>
+      <title>ï¿½ï¿½renci Raporu</title>
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
         :root {
@@ -16477,71 +16477,71 @@ async function openStudentReportWindow(detail) {
     </head>
     <body>
       <div class="actions actions-fixed no-print">
-        <button id="downloadBtn" class="btn btn-primary">Yazdýr</button>
+        <button id="downloadBtn" class="btn btn-primary">Yazdï¿½r</button>
         <button id="closeBtn" class="btn btn-secondary">Kapat</button>
       </div>
       <div class="page content-page">
         <div class="card header">
           <div style="flex:1;">
-            <img src="logo.png" alt="Logo" class="logo" />
-            <div class="title">Öðrenci Performans Raporu</div>
-            <div class="subtitle">${new Date().toLocaleDateString("tr-TR")} • Kurumsal Öðrenci Takip Sistemi</div>
+            <img src="/public/logo.png" alt="Logo" class="logo" />
+            <div class="title">ï¿½ï¿½renci Performans Raporu</div>
+            <div class="subtitle">${new Date().toLocaleDateString("tr-TR")} ï¿½ Kurumsal ï¿½ï¿½renci Takip Sistemi</div>
           </div>
         </div>
           <div class="card grid">
             <div>
-              <div class="section-title">Öðrenci Bilgileri</div>
+              <div class="section-title">ï¿½ï¿½renci Bilgileri</div>
               <div class="info-pill name-pill" style="font-size:18px; font-weight:800;">${studentName}</div>
               <div class="info-pill class-pill" style="font-size:13px; font-weight:700; margin-top:6px;">${classInfo}</div>
               <div style="margin-top:10px;">
-                <div class="section-title">Tamamlama Oraný</div>
+                <div class="section-title">Tamamlama Oranï¿½</div>
               <div class="mini-bar"><div style="width:${Math.min(100, Math.max(0, combinedCompletionRate || 0))}%;"></div></div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">%${combinedCompletionRate} tamamlandý</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">%${combinedCompletionRate} tamamlandï¿½</div>
             </div>
           </div>
           <div class="report-right">
             <div class="section-title">Genel Performans</div>
           <div class="kpi-grid">
-          <div class="kpi"><div class="value">${workTotalCount}</div><div class="label">Toplam Ödev</div></div>
+          <div class="kpi"><div class="value">${workTotalCount}</div><div class="label">Toplam ï¿½dev</div></div>
           <div class="kpi"><div class="value">${workCompletedCount}</div><div class="label">Tamamlanan</div></div>
-          <div class="kpi"><div class="value">%${combinedAvgScore}</div><div class="label">Ortalama Baþarý</div></div>
+          <div class="kpi"><div class="value">%${combinedAvgScore}</div><div class="label">Ortalama Baï¿½arï¿½</div></div>
           <div class="kpi"><div class="value">${totalXPCombined}</div><div class="label">Toplam XP</div></div>
         </div>
         <div class="kpi-alt-grid">
-          <div class="kpi-alt a">Sýnýf Sýrasý: ${classRank}<small>Sýnýf/Þube içi</small></div>
-          <div class="kpi-alt b">Okul Sýrasý: ${schoolRank}<small>Genel sýralama</small></div>
-          <div class="kpi-alt c">Sistem Süresi<small>${systemTimeText}</small></div>
-          <div class="kpi-alt d">Genel Ýlerleme<small>%${combinedCompletionRate}</small></div>
+          <div class="kpi-alt a">Sï¿½nï¿½f Sï¿½rasï¿½: ${classRank}<small>Sï¿½nï¿½f/ï¿½ube iï¿½i</small></div>
+          <div class="kpi-alt b">Okul Sï¿½rasï¿½: ${schoolRank}<small>Genel sï¿½ralama</small></div>
+          <div class="kpi-alt c">Sistem Sï¿½resi<small>${systemTimeText}</small></div>
+          <div class="kpi-alt d">Genel ï¿½lerleme<small>%${combinedCompletionRate}</small></div>
         </div>
           </div>
         </div>
           <div class="card">
-            <div class="section-title">Kategori Bazlý Tamamlanma</div>
+            <div class="section-title">Kategori Bazlï¿½ Tamamlanma</div>
             <div style="display:grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap:14px; align-items:start;">
               <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 ${group1Chart}
-                <div style="font-size:11px; color:#475569; text-align:center;">Ödev • Etkinlik • Ders</div>
-                <div style="font-size:11px; color:#475569;">Toplam: ${group1Total} • Tamamlandý: ${group1Completed}</div>
+                <div style="font-size:11px; color:#475569; text-align:center;">ï¿½dev ï¿½ Etkinlik ï¿½ Ders</div>
+                <div style="font-size:11px; color:#475569;">Toplam: ${group1Total} ï¿½ Tamamlandï¿½: ${group1Completed}</div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 ${group2Chart}
-                <div style="font-size:11px; color:#475569; text-align:center;">Kodlama Uygulamalarý</div>
-                <div style="font-size:11px; color:#475569;">Toplam: ${group2Total} • Tamamlandý: ${group2Completed}</div>
+                <div style="font-size:11px; color:#475569; text-align:center;">Kodlama Uygulamalarï¿½</div>
+                <div style="font-size:11px; color:#475569;">Toplam: ${group2Total} ï¿½ Tamamlandï¿½: ${group2Completed}</div>
               </div>
             </div>
           </div>
           <div class="card">
-            <div class="section-title">Kazanýlan Rozetler</div>
+            <div class="section-title">Kazanï¿½lan Rozetler</div>
             <div class="badge-mini-grid">
               ${badgeRows}
             </div>
           </div>
           <div class="card">
-            <div class="section-title">Dersler - Ödevler - Etkinlikler</div>
+            <div class="section-title">Dersler - ï¿½devler - Etkinlikler</div>
             <table>
               <thead>
                 <tr>
-                  <th>Ders</th><th>Tarih</th><th>Ýlerleme</th><th>Süre</th><th>XP</th>
+                  <th>Ders</th><th>Tarih</th><th>ï¿½lerleme</th><th>Sï¿½re</th><th>XP</th>
                 </tr>
               </thead>
               <tbody>
@@ -16552,7 +16552,7 @@ async function openStudentReportWindow(detail) {
             <table>
               <thead>
                 <tr>
-                  <th>Uygulama</th><th>Level Aralýðý</th><th>Süre</th><th>XP</th><th>Ýlerleme</th>
+                  <th>Uygulama</th><th>Level Aralï¿½ï¿½ï¿½</th><th>Sï¿½re</th><th>XP</th><th>ï¿½lerleme</th>
                 </tr>
               </thead>
               <tbody>
@@ -16562,20 +16562,20 @@ async function openStudentReportWindow(detail) {
           </div>
           <div class="report-two-col">
             <div class="card">
-              <div class="section-title">Dersler • Etkinlik • Ödevler</div>
+              <div class="section-title">Dersler ï¿½ Etkinlik ï¿½ ï¿½devler</div>
               <div class="kpi-grid" style="margin-bottom:8px; grid-template-columns: repeat(3, minmax(0, 1fr));">
-                <div class="kpi"><div class="value">${taskCompletedCount}/${taskTotalCount}</div><div class="label">Ödevler</div></div>
+                <div class="kpi"><div class="value">${taskCompletedCount}/${taskTotalCount}</div><div class="label">ï¿½devler</div></div>
                 <div class="kpi"><div class="value">${activityCompletedCount}/${activityTotalCount}</div><div class="label">Etkinlikler</div></div>
                 <div class="kpi"><div class="value">${lessonCompletedCount}/${lessonTotalCount}</div><div class="label">Dersler</div></div>
               </div>
               <table>
                 <thead>
                   <tr>
-                    <th>Kategori</th><th>Tamamlanan</th><th>Toplam</th><th>Ýlerleme</th>
+                    <th>Kategori</th><th>Tamamlanan</th><th>Toplam</th><th>ï¿½lerleme</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Ödevler</td><td>${taskCompletedCount}</td><td>${taskTotalCount}</td><td>%${taskTotalCount > 0 ? Math.round((taskCompletedCount / taskTotalCount) * 100) : 0}</td></tr>
+                  <tr><td>ï¿½devler</td><td>${taskCompletedCount}</td><td>${taskTotalCount}</td><td>%${taskTotalCount > 0 ? Math.round((taskCompletedCount / taskTotalCount) * 100) : 0}</td></tr>
                   <tr><td>Etkinlikler</td><td>${activityCompletedCount}</td><td>${activityTotalCount}</td><td>%${activityTotalCount > 0 ? Math.round((activityCompletedCount / activityTotalCount) * 100) : 0}</td></tr>
                   <tr><td>Dersler</td><td>${lessonCompletedCount}</td><td>${lessonTotalCount}</td><td>%${lessonTotalCount > 0 ? Math.round((lessonCompletedCount / lessonTotalCount) * 100) : 0}</td></tr>
                 </tbody>
@@ -16584,7 +16584,7 @@ async function openStudentReportWindow(detail) {
             <div class="card">
               <div class="section-title">Kodlama ve Uygulamalar</div>
               <div class="kpi-grid" style="margin-bottom:8px; grid-template-columns: repeat(5, minmax(0, 1fr));">
-                <div class="kpi"><div class="value">${quizCompleted}/${quizTotal}</div><div class="label">Canlý Quiz</div></div>
+                <div class="kpi"><div class="value">${quizCompleted}/${quizTotal}</div><div class="label">Canlï¿½ Quiz</div></div>
                 <div class="kpi"><div class="value">${block2dCompleted}/${block2dTotal}</div><div class="label">Blok Kodlama</div></div>
                 <div class="kpi"><div class="value">${block3dCompleted}/${block3dTotal}</div><div class="label">3D Blok</div></div>
                 <div class="kpi"><div class="value">${computeCompletedCount}/${computeTotalCount}</div><div class="label">Compute It</div></div>
@@ -16593,11 +16593,11 @@ async function openStudentReportWindow(detail) {
               <table>
                 <thead>
                   <tr>
-                    <th>Uygulama</th><th>Tamamlanan</th><th>Toplam</th><th>Ýlerleme</th>
+                    <th>Uygulama</th><th>Tamamlanan</th><th>Toplam</th><th>ï¿½lerleme</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Canlý Quiz</td><td>${quizCompleted}</td><td>${quizTotal}</td><td>%${quizTotal > 0 ? Math.round((quizCompleted / quizTotal) * 100) : 0}</td></tr>
+                  <tr><td>Canlï¿½ Quiz</td><td>${quizCompleted}</td><td>${quizTotal}</td><td>%${quizTotal > 0 ? Math.round((quizCompleted / quizTotal) * 100) : 0}</td></tr>
                   <tr><td>Blok Kodlama</td><td>${block2dCompleted}</td><td>${block2dTotal}</td><td>%${block2dTotal > 0 ? Math.round((block2dCompleted / block2dTotal) * 100) : 0}</td></tr>
                   <tr><td>3D Blok Kodlama</td><td>${block3dCompleted}</td><td>${block3dTotal}</td><td>%${block3dTotal > 0 ? Math.round((block3dCompleted / block3dTotal) * 100) : 0}</td></tr>
                   <tr><td>Compute It</td><td>${computeCompletedCount}</td><td>${computeTotalCount}</td><td>%${computeTotalCount > 0 ? Math.round((computeCompletedCount / computeTotalCount) * 100) : 0}</td></tr>
@@ -16772,7 +16772,7 @@ async function buildStudentReportHtml(detail) {
   });
   (Array.isArray(quizStats?.items) ? quizStats.items : []).forEach((qz) => {
     codingRuns.push({
-      app: `Canlý Quiz: ${qz?.quizTitle || "Quiz"}`,
+      app: `Canlï¿½ Quiz: ${qz?.quizTitle || "Quiz"}`,
       range: "-",
       duration: formatQuizDurationText(qz?.durationMs, qz?.durationMinutes) || "-",
       xp: Math.max(0, Number(qz?.xpEarned || 0)),
@@ -16861,7 +16861,7 @@ async function buildStudentReportHtml(detail) {
   const group2Completed = blockCompletedCount + computeCompletedCount + (quizStats.totalQuizzes || 0);
   const group2Pending = Math.max(0, group2Total - group2Completed);
   const group1Chart = buildCategoryBarChartSvg(
-    ["Ödev", "Etkinlik", "Ders"],
+    ["ï¿½dev", "Etkinlik", "Ders"],
     [taskCompletedCount, activityCompletedCount, lessonCompletedCount],
     [taskTotalCount, activityTotalCount, lessonTotalCount],
     "#3b82f6"
@@ -16887,7 +16887,7 @@ async function buildStudentReportHtml(detail) {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Öðrenci Raporu</title>
+      <title>ï¿½ï¿½renci Raporu</title>
       <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
       <style>
         :root {
@@ -17015,57 +17015,57 @@ async function buildStudentReportHtml(detail) {
       <div class="page content-page">
         <div class="card header">
           <div style="flex:1;">
-            <img src="logo.png" alt="Logo" class="logo" />
-            <div class="title">Öðrenci Performans Raporu</div>
-            <div class="subtitle">${new Date().toLocaleDateString("tr-TR")} • Kurumsal Öðrenci Takip Sistemi</div>
+            <img src="/public/logo.png" alt="Logo" class="logo" />
+            <div class="title">ï¿½ï¿½renci Performans Raporu</div>
+            <div class="subtitle">${new Date().toLocaleDateString("tr-TR")} ï¿½ Kurumsal ï¿½ï¿½renci Takip Sistemi</div>
           </div>
         </div>
           <div class="card grid">
             <div>
-              <div class="section-title">Öðrenci Bilgileri</div>
+              <div class="section-title">ï¿½ï¿½renci Bilgileri</div>
               <div style="font-size:20px; font-weight:800; color:#0f172a;">${studentName}</div>
               <div style="font-size:14px; font-weight:700; color:#475569; margin-top:4px;">${classInfo}</div>
               <div style="margin-top:10px;">
-                <div class="section-title">Tamamlama Oraný</div>
+                <div class="section-title">Tamamlama Oranï¿½</div>
               <div class="mini-bar"><div style="width:${Math.min(100, Math.max(0, combinedCompletionRate || 0))}%;"></div></div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">%${combinedCompletionRate} tamamlandý</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">%${combinedCompletionRate} tamamlandï¿½</div>
             </div>
           </div>
           <div class="report-right">
             <div class="section-title">Genel Performans</div>
         <div class="kpi-grid">
-          <div class="kpi"><div class="value">${workTotalCount}</div><div class="label">Toplam Ödev</div></div>
+          <div class="kpi"><div class="value">${workTotalCount}</div><div class="label">Toplam ï¿½dev</div></div>
           <div class="kpi"><div class="value">${workCompletedCount}</div><div class="label">Tamamlanan</div></div>
-          <div class="kpi"><div class="value">%${combinedAvgScore}</div><div class="label">Ortalama Baþarý</div></div>
+          <div class="kpi"><div class="value">%${combinedAvgScore}</div><div class="label">Ortalama Baï¿½arï¿½</div></div>
           <div class="kpi"><div class="value">${totalXPCombined}</div><div class="label">Toplam XP</div></div>
         </div>
         <div class="kpi-alt-grid">
-          <div class="kpi-alt a">Sýnýf Sýrasý: ${classRank}<small>Sýnýf/Þube içi</small></div>
-          <div class="kpi-alt b">Okul Sýrasý: ${schoolRank}<small>Genel sýralama</small></div>
-          <div class="kpi-alt c">Toplam Süre<small>${systemTimeText}</small></div>
-          <div class="kpi-alt d">Genel Ýlerleme<small>%${combinedCompletionRate}</small></div>
+          <div class="kpi-alt a">Sï¿½nï¿½f Sï¿½rasï¿½: ${classRank}<small>Sï¿½nï¿½f/ï¿½ube iï¿½i</small></div>
+          <div class="kpi-alt b">Okul Sï¿½rasï¿½: ${schoolRank}<small>Genel sï¿½ralama</small></div>
+          <div class="kpi-alt c">Toplam Sï¿½re<small>${systemTimeText}</small></div>
+          <div class="kpi-alt d">Genel ï¿½lerleme<small>%${combinedCompletionRate}</small></div>
         </div>
           </div>
         </div>
           <div class="card">
-            <div class="section-title">Kategori Bazlý Tamamlanma</div>
+            <div class="section-title">Kategori Bazlï¿½ Tamamlanma</div>
             <div style="display:grid; grid-template-columns: repeat(2, minmax(200px, 1fr)); gap:14px; align-items:start;">
               <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 ${group1Chart}
-                <div style="font-size:11px; color:#475569; text-align:center;">Ödev • Etkinlik • Ders</div>
-                <div style="font-size:11px; color:#475569;">Toplam: ${group1Total} • Tamamlandý: ${group1Completed}</div>
+                <div style="font-size:11px; color:#475569; text-align:center;">ï¿½dev ï¿½ Etkinlik ï¿½ Ders</div>
+                <div style="font-size:11px; color:#475569;">Toplam: ${group1Total} ï¿½ Tamamlandï¿½: ${group1Completed}</div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 ${group2Chart}
-                <div style="font-size:11px; color:#475569; text-align:center;">Kodlama Uygulamalarý</div>
-                <div style="font-size:11px; color:#475569;">Toplam: ${group2Total} • Tamamlandý: ${group2Completed}</div>
+                <div style="font-size:11px; color:#475569; text-align:center;">Kodlama Uygulamalarï¿½</div>
+                <div style="font-size:11px; color:#475569;">Toplam: ${group2Total} ï¿½ Tamamlandï¿½: ${group2Completed}</div>
               </div>
             </div>
-            <div class="section-title" style="margin-top:10px;">Dersler - Ödevler - Etkinlikler</div>
+            <div class="section-title" style="margin-top:10px;">Dersler - ï¿½devler - Etkinlikler</div>
             <table>
               <thead>
                 <tr>
-                  <th>Ders</th><th>Tarih</th><th>Ýlerleme</th><th>Süre</th><th>XP</th>
+                  <th>Ders</th><th>Tarih</th><th>ï¿½lerleme</th><th>Sï¿½re</th><th>XP</th>
                 </tr>
               </thead>
               <tbody>
@@ -17076,7 +17076,7 @@ async function buildStudentReportHtml(detail) {
             <table>
               <thead>
                 <tr>
-                  <th>Uygulama</th><th>Level Aralýðý</th><th>Süre</th><th>XP</th><th>Ýlerleme</th>
+                  <th>Uygulama</th><th>Level Aralï¿½ï¿½ï¿½</th><th>Sï¿½re</th><th>XP</th><th>ï¿½lerleme</th>
                 </tr>
               </thead>
               <tbody>
@@ -17086,20 +17086,20 @@ async function buildStudentReportHtml(detail) {
           </div>
           <div class="report-two-col">
             <div class="card">
-              <div class="section-title">Dersler • Etkinlik • Ödevler</div>
+              <div class="section-title">Dersler ï¿½ Etkinlik ï¿½ ï¿½devler</div>
               <div class="kpi-grid" style="margin-bottom:8px; grid-template-columns: repeat(3, minmax(0, 1fr));">
-                <div class="kpi"><div class="value">${taskCompletedCount}/${taskTotalCount}</div><div class="label">Ödevler</div></div>
+                <div class="kpi"><div class="value">${taskCompletedCount}/${taskTotalCount}</div><div class="label">ï¿½devler</div></div>
                 <div class="kpi"><div class="value">${activityCompletedCount}/${activityTotalCount}</div><div class="label">Etkinlikler</div></div>
                 <div class="kpi"><div class="value">${lessonCompletedCount}/${lessonTotalCount}</div><div class="label">Dersler</div></div>
               </div>
               <table>
                 <thead>
                   <tr>
-                    <th>Kategori</th><th>Tamamlanan</th><th>Toplam</th><th>Ýlerleme</th>
+                    <th>Kategori</th><th>Tamamlanan</th><th>Toplam</th><th>ï¿½lerleme</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Ödevler</td><td>${taskCompletedCount}</td><td>${taskTotalCount}</td><td>%${taskTotalCount > 0 ? Math.round((taskCompletedCount / taskTotalCount) * 100) : 0}</td></tr>
+                  <tr><td>ï¿½devler</td><td>${taskCompletedCount}</td><td>${taskTotalCount}</td><td>%${taskTotalCount > 0 ? Math.round((taskCompletedCount / taskTotalCount) * 100) : 0}</td></tr>
                   <tr><td>Etkinlikler</td><td>${activityCompletedCount}</td><td>${activityTotalCount}</td><td>%${activityTotalCount > 0 ? Math.round((activityCompletedCount / activityTotalCount) * 100) : 0}</td></tr>
                   <tr><td>Dersler</td><td>${lessonCompletedCount}</td><td>${lessonTotalCount}</td><td>%${lessonTotalCount > 0 ? Math.round((lessonCompletedCount / lessonTotalCount) * 100) : 0}</td></tr>
                 </tbody>
@@ -17108,7 +17108,7 @@ async function buildStudentReportHtml(detail) {
             <div class="card">
               <div class="section-title">Kodlama ve Uygulamalar</div>
               <div class="kpi-grid" style="margin-bottom:8px; grid-template-columns: repeat(5, minmax(0, 1fr));">
-                <div class="kpi"><div class="value">${quizCompleted}/${quizTotal}</div><div class="label">Canlý Quiz</div></div>
+                <div class="kpi"><div class="value">${quizCompleted}/${quizTotal}</div><div class="label">Canlï¿½ Quiz</div></div>
                 <div class="kpi"><div class="value">${block2dCompleted}/${block2dTotal}</div><div class="label">Blok Kodlama</div></div>
                 <div class="kpi"><div class="value">${block3dCompleted}/${block3dTotal}</div><div class="label">3D Blok</div></div>
                 <div class="kpi"><div class="value">${computeCompletedCount}/${computeTotalCount}</div><div class="label">Compute It</div></div>
@@ -17117,11 +17117,11 @@ async function buildStudentReportHtml(detail) {
               <table>
                 <thead>
                   <tr>
-                    <th>Uygulama</th><th>Tamamlanan</th><th>Toplam</th><th>Ýlerleme</th>
+                    <th>Uygulama</th><th>Tamamlanan</th><th>Toplam</th><th>ï¿½lerleme</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Canlý Quiz</td><td>${quizCompleted}</td><td>${quizTotal}</td><td>%${quizTotal > 0 ? Math.round((quizCompleted / quizTotal) * 100) : 0}</td></tr>
+                  <tr><td>Canlï¿½ Quiz</td><td>${quizCompleted}</td><td>${quizTotal}</td><td>%${quizTotal > 0 ? Math.round((quizCompleted / quizTotal) * 100) : 0}</td></tr>
                   <tr><td>Blok Kodlama</td><td>${block2dCompleted}</td><td>${block2dTotal}</td><td>%${block2dTotal > 0 ? Math.round((block2dCompleted / block2dTotal) * 100) : 0}</td></tr>
                   <tr><td>3D Blok Kodlama</td><td>${block3dCompleted}</td><td>${block3dTotal}</td><td>%${block3dTotal > 0 ? Math.round((block3dCompleted / block3dTotal) * 100) : 0}</td></tr>
                   <tr><td>Compute It</td><td>${computeCompletedCount}</td><td>${computeTotalCount}</td><td>%${computeTotalCount > 0 ? Math.round((computeCompletedCount / computeTotalCount) * 100) : 0}</td></tr>
@@ -17218,7 +17218,7 @@ async function saveBookTaskProgress(task, status) {
 
 async function applyManualTaskApprovals(taskId, approvalRows = []) {
   const task = allTasks.find((t) => String(t.id) === String(taskId));
-  if (!task) throw new Error("Ödev bulunamadý.");
+  if (!task) throw new Error("ï¿½dev bulunamadï¿½.");
   let approvedNowCount = 0;
   let xpGrantedCount = 0;
   let revokedCount = 0;
@@ -17281,7 +17281,7 @@ function getContentProgress(content) {
 function loadContents() {
   const list = document.getElementById("content-list");
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>Yï¿½kleniyor...</div>";
   const newBtn = document.getElementById("btn-new-content");
   if (newBtn) newBtn.style.display = userRole === "teacher" ? "block" : "none";
 
@@ -17429,10 +17429,10 @@ function renderBlockHomeworkList() {
   if (!pendingList || !completedList) return;
   const activeBlockLabel = getBlockHomeworkTypeLabel(currentBlockAssignType || "block2d");
   if (noPending) {
-    noPending.innerHTML = `<div class="empty-state-icon">??</div>Bekleyen ${activeBlockLabel} ödevi yok.`;
+    noPending.innerHTML = `<div class="empty-state-icon">??</div>Bekleyen ${activeBlockLabel} ï¿½devi yok.`;
   }
   if (noCompleted) {
-    noCompleted.innerHTML = `<div class="empty-state-icon">?</div>Tamamlanan ${activeBlockLabel} ödevi yok.`;
+    noCompleted.innerHTML = `<div class="empty-state-icon">?</div>Tamamlanan ${activeBlockLabel} ï¿½devi yok.`;
   }
 
   pendingList.innerHTML = "";
@@ -17487,11 +17487,11 @@ function renderBlockHomeworkList() {
         : `${Math.max(1, Number(a.levelStart || 1))}-${Math.max(1, Number(a.levelEnd || a.levelStart || 1))}`;
       li.innerHTML = `
         <div>
-          <div style="font-weight:600;">${a.title || `${appLabel} Ödevi`}</div>
-          <small style="color:#666;">?? ${a.deadline || "-"} • ${isFlowchart ? "Flowchart" : (isSilentTeacher || isLightbot) ? `Bölüm ${rangeText}` : `Seviye ${rangeText}`}</small>
+          <div style="font-weight:600;">${a.title || `${appLabel} ï¿½devi`}</div>
+          <small style="color:#666;">?? ${a.deadline || "-"} ï¿½ ${isFlowchart ? "Flowchart" : (isSilentTeacher || isLightbot) ? `Bï¿½lï¿½m ${rangeText}` : `Seviye ${rangeText}`}</small>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <span class="completion-badge" style="background:#dcfce7;color:#166534;border-color:#86efac;">Yayýnda</span>
+          <span class="completion-badge" style="background:#dcfce7;color:#166534;border-color:#86efac;">Yayï¿½nda</span>
           <span class="completion-badge">${Math.min(assigned, done)}/${assigned} tamamlama</span>
         </div>
       `;
@@ -17507,13 +17507,13 @@ function renderBlockHomeworkList() {
           loadFlowchartFromTemplate(a.flowTemplate || {});
           if (!flowNodes.length) {
             flowNodes = [
-              { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "start", text: "baþla", x: 460, y: 120 },
+              { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "start", text: "baï¿½la", x: 460, y: 120 },
               { id: `f_${Date.now()}_${flowNodeSeq++}`, type: "end", text: "dur", x: 460, y: 300 }
             ];
             flowEdges = [];
           }
           renderFlowchart();
-          showNotice("Flowchart ödevi yüklendi. Þemayý düzenleyip 'Ödevi Güncelle' ile kaydedebilirsiniz.", "#4a90e2");
+          showNotice("Flowchart ï¿½devi yï¿½klendi. ï¿½emayï¿½ dï¿½zenleyip 'ï¿½devi Gï¿½ncelle' ile kaydedebilirsiniz.", "#4a90e2");
           return;
         }
         editingBlockHomeworkId = a.id;
@@ -17541,7 +17541,7 @@ function renderBlockHomeworkList() {
         if (sectionInput) sectionInput.value = a.targetSection || "";
         if (deadlineInput) deadlineInput.value = a.deadline || "";
         if (deadlineTimeInput) deadlineTimeInput.value = a.deadlineTime || "23:59";
-        if (saveBtn) saveBtn.innerText = "Güncelle";
+        if (saveBtn) saveBtn.innerText = "Gï¿½ncelle";
         if (deleteBtn) deleteBtn.style.display = "inline-flex";
         const modal = document.getElementById("block-homework-modal");
         if (modal) modal.style.display = "flex";
@@ -17565,9 +17565,9 @@ function renderBlockHomeworkList() {
       li.classList.toggle("completed", isCompleted);
       li.innerHTML = `
         <div>
-          <div style="font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${a.title || `${appLabel} Ödevi`} ${appBadge}</div>
-          <small style="color:#666;">?? ${a.deadline || "-"} • ${isFlowchart ? "Flowchart Soru" : (isSilentTeacher || isLightbot) ? `Bölüm ${rangeText}` : `Seviye ${rangeText}`}</small>
-          ${isFlowchart ? `<small style="color:#666;display:block;">?? ${a.flowQuestion || "Flowchart þemasýný kur"}</small>` : ""}
+          <div style="font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${a.title || `${appLabel} ï¿½devi`} ${appBadge}</div>
+          <small style="color:#666;">?? ${a.deadline || "-"} ï¿½ ${isFlowchart ? "Flowchart Soru" : (isSilentTeacher || isLightbot) ? `Bï¿½lï¿½m ${rangeText}` : `Seviye ${rangeText}`}</small>
+          ${isFlowchart ? `<small style="color:#666;display:block;">?? ${a.flowQuestion || "Flowchart ï¿½emasï¿½nï¿½ kur"}</small>` : ""}
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="completion-badge">%${percent}</span>
@@ -17578,11 +17578,11 @@ function renderBlockHomeworkList() {
         if (isCompleted) {
           showCompletionInfoPopup({
             category: appLabel,
-            title: a.title || `${appLabel} Ödevi`,
+            title: a.title || `${appLabel} ï¿½devi`,
             xp,
             seconds: Math.max(0, Number(p.lastSessionSeconds || 0)),
             percent,
-            message: `Bu ${appLabel.toLowerCase()} ödevini tamamladýnýz.`
+            message: `Bu ${appLabel.toLowerCase()} ï¿½devini tamamladï¿½nï¿½z.`
           });
           return;
         }
@@ -17593,7 +17593,7 @@ function renderBlockHomeworkList() {
         if (isSilentTeacher) {
           openSilentTeacherRunner({
             assignmentId: a.id,
-            title: a.title || "Python Quiz Lab Ödevi",
+            title: a.title || "Python Quiz Lab ï¿½devi",
             levelStart: Math.max(1, Number(a.levelStart || 1)),
             levelEnd: Math.max(1, Number(a.levelEnd || a.levelStart || 1))
           });
@@ -17602,7 +17602,7 @@ function renderBlockHomeworkList() {
         if (isLightbot) {
           openLightbotRunner({
             assignmentId: a.id,
-            title: a.title || "Code Robot Lab Ödevi",
+            title: a.title || "Code Robot Lab ï¿½devi",
             levelStart: Math.max(1, Number(a.levelStart || 1)),
             levelEnd: Math.max(1, Number(a.levelEnd || a.levelStart || 1))
           });
@@ -17611,14 +17611,14 @@ function renderBlockHomeworkList() {
         if (isBlock3D) {
           openBlock3DRunner({
             assignmentId: a.id,
-            title: a.title || "3D Blok Kodlama Ödevi",
+            title: a.title || "3D Blok Kodlama ï¿½devi",
             levelStart: Math.max(1, Number(a.levelStart || 1)),
             levelEnd: Math.max(1, Number(a.levelEnd || a.levelStart || 1))
           });
         } else {
           openBlockRunner(currentUserId, {
             assignmentId: a.id,
-            title: a.title || "Blok Kodlama Ödevi",
+            title: a.title || "Blok Kodlama ï¿½devi",
             levelStart: Math.max(1, Number(a.levelStart || 1)),
             levelEnd: Math.max(1, Number(a.levelEnd || a.levelStart || 1))
           });
@@ -17635,7 +17635,7 @@ function renderBlockHomeworkList() {
   });
 
   homeListCache.block = {
-    title: userRole === "teacher" ? `Verilen ${activeBlockLabel} Ödevleri` : `${activeBlockLabel} Ödevim`,
+    title: userRole === "teacher" ? `Verilen ${activeBlockLabel} ï¿½devleri` : `${activeBlockLabel} ï¿½devim`,
     pending: pendingRows.slice(),
     completed: completedRows.slice()
   };
@@ -17886,11 +17886,11 @@ function renderComputeHomeworkList() {
       const rangeText = `${Math.max(1, Number(a.levelStart || 1))}-${Math.max(1, Number(a.levelEnd || a.levelStart || 1))}`;
       li.innerHTML = `
         <div>
-          <div style="font-weight:600;">${a.title || "Compute It Ödevi"}</div>
-          <small style="color:#666;">?? ${a.deadline || "-"} • Seviye ${rangeText}</small>
+          <div style="font-weight:600;">${a.title || "Compute It ï¿½devi"}</div>
+          <small style="color:#666;">?? ${a.deadline || "-"} ï¿½ Seviye ${rangeText}</small>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <span class="completion-badge" style="background:#dcfce7;color:#166534;border-color:#86efac;">Yayýnda</span>
+          <span class="completion-badge" style="background:#dcfce7;color:#166534;border-color:#86efac;">Yayï¿½nda</span>
           <span class="completion-badge">${Math.min(assigned, done)}/${assigned} tamamlama</span>
         </div>
       `;
@@ -17913,8 +17913,8 @@ function renderComputeHomeworkList() {
       li.classList.toggle("completed", isCompleted);
       li.innerHTML = `
         <div>
-          <div style="font-weight:600;">${a.title || "Compute It Ödevi"}</div>
-          <small style="color:#666;">?? ${a.deadline || "-"} • Seviye ${rangeText}</small>
+          <div style="font-weight:600;">${a.title || "Compute It ï¿½devi"}</div>
+          <small style="color:#666;">?? ${a.deadline || "-"} ï¿½ Seviye ${rangeText}</small>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="completion-badge">%${percent}</span>
@@ -17925,17 +17925,17 @@ function renderComputeHomeworkList() {
         if (isCompleted) {
           showCompletionInfoPopup({
             category: "Compute It",
-            title: a.title || "Compute It Ödevi",
+            title: a.title || "Compute It ï¿½devi",
             xp,
             seconds: Math.max(0, Number(p.lastSessionSeconds || 0)),
             percent,
-            message: "Bu compute it ödevini tamamladýnýz."
+            message: "Bu compute it ï¿½devini tamamladï¿½nï¿½z."
           });
           return;
         }
         openComputeItRunner(currentUserId, {
           assignmentId: a.id,
-          title: a.title || "Compute It Ödevi",
+          title: a.title || "Compute It ï¿½devi",
           levelStart: Math.max(1, Number(a.levelStart || 1)),
           levelEnd: Math.max(1, Number(a.levelEnd || a.levelStart || 1)),
           completedLevelIds: Array.isArray(p.completedLevelIds) ? p.completedLevelIds : []
@@ -17952,7 +17952,7 @@ function renderComputeHomeworkList() {
   });
 
   homeListCache.compute = {
-    title: userRole === "teacher" ? "Verilen Compute It Ödevleri" : "Compute It Ödevim",
+    title: userRole === "teacher" ? "Verilen Compute It ï¿½devleri" : "Compute It ï¿½devim",
     pending: pendingRows.slice(),
     completed: completedRows.slice()
   };
@@ -18073,10 +18073,10 @@ async function publishLessonAssignment(lesson) {
     });
     const targetLabel = publishTargetClass
       ? `${publishTargetClass}${publishTargetSection ? "/" + publishTargetSection : ""}`
-      : "Tüm Sýnýflar";
-    showNotice(`Ders ${targetLabel} için ödev olarak yayýnlandý.`, "#2ecc71");
+      : "Tï¿½m Sï¿½nï¿½flar";
+    showNotice(`Ders ${targetLabel} iï¿½in ï¿½dev olarak yayï¿½nlandï¿½.`, "#2ecc71");
   } catch (e) {
-    showNotice("Ders yayýnlanamadý: " + e.message, "#e74c3c");
+    showNotice("Ders yayï¿½nlanamadï¿½: " + e.message, "#e74c3c");
   }
 }
 
@@ -18097,7 +18097,7 @@ function renderTeacherLessonsModalList() {
   if (metaEl) {
     const draftCount = items.filter((l) => l?.isPublished === false).length;
     const publishedCount = items.filter((l) => l?.isPublished !== false).length;
-    metaEl.innerText = `Toplam: ${items.length} • Taslak: ${draftCount} • Yayýnda: ${publishedCount}`;
+    metaEl.innerText = `Toplam: ${items.length} ï¿½ Taslak: ${draftCount} ï¿½ Yayï¿½nda: ${publishedCount}`;
   }
 
   if (!items.length) {
@@ -18121,13 +18121,13 @@ function renderTeacherLessonsModalList() {
     li.innerHTML = `
       <div>
         <div style="font-weight:700;">${lesson.title || "Ders"}</div>
-        <small style="color:#64748b;">?? ${slides.length} slide • Hedef: ${lesson.targetClass || "Seçilmedi"}${lesson.targetSection ? "/" + lesson.targetSection : ""}</small>
+        <small style="color:#64748b;">?? ${slides.length} slide ï¿½ Hedef: ${lesson.targetClass || "Seï¿½ilmedi"}${lesson.targetSection ? "/" + lesson.targetSection : ""}</small>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-        <span class="completion-badge" style="background:${isPublished ? "#dcfce7" : "#fff7ed"};color:${isPublished ? "#166534" : "#9a3412"};border-color:${isPublished ? "#86efac" : "#fdba74"};">${isPublished ? "Yayýnda" : "Taslak"}</span>
+        <span class="completion-badge" style="background:${isPublished ? "#dcfce7" : "#fff7ed"};color:${isPublished ? "#166534" : "#9a3412"};border-color:${isPublished ? "#86efac" : "#fdba74"};">${isPublished ? "Yayï¿½nda" : "Taslak"}</span>
         <span class="completion-badge">${done}/${assigned} tamamlama</span>
-        ${!isPublished ? `<button type="button" class="btn btn-primary btn-lesson-publish" style="padding:6px 10px;">Ödev Olarak Ver</button>` : ""}
-        <button type="button" class="btn" style="padding:6px 10px;background:#e2e8f0;" data-edit="1">Düzenle</button>
+        ${!isPublished ? `<button type="button" class="btn btn-primary btn-lesson-publish" style="padding:6px 10px;">ï¿½dev Olarak Ver</button>` : ""}
+        <button type="button" class="btn" style="padding:6px 10px;background:#e2e8f0;" data-edit="1">Dï¿½zenle</button>
       </div>
     `;
     li.querySelector('[data-edit="1"]')?.addEventListener("click", (ev) => {
@@ -18158,7 +18158,7 @@ function loadLessons() {
         row?.ownerId,
         row?.teacherEmail,
         row?.ownerEmail,
-        row?.userId // lessons koleksiyonunda öðretmen sahibi çoðunlukla userId içinde tutuluyor
+        row?.userId // lessons koleksiyonunda ï¿½ï¿½retmen sahibi ï¿½oï¿½unlukla userId iï¿½inde tutuluyor
       ];
       return ownerCandidates.some((v) => valueMatchesCurrentTeacher(v));
     };
@@ -18183,12 +18183,12 @@ function loadLessons() {
     snap.forEach((d) => {
       const v = d.data() || {};
       if (!v.lessonId) return;
-      // öðrencide tek kayýt: lessonId -> progress
+      // ï¿½ï¿½rencide tek kayï¿½t: lessonId -> progress
       if (userRole === "student") {
         lessonProgressMap.set(String(v.lessonId), v);
         return;
       }
-      // öðretmende birden fazla öðrenci olacaðý için benzersiz anahtar
+      // ï¿½ï¿½retmende birden fazla ï¿½ï¿½renci olacaï¿½ï¿½ iï¿½in benzersiz anahtar
       const key = `${String(v.lessonId)}__${String(v.userId || d.id)}`;
       lessonProgressMap.set(key, v);
     });
@@ -18243,12 +18243,12 @@ function renderLessonsList() {
       li.innerHTML = `
         <div>
           <div style="font-weight:600;">${lesson.title || "Ders"}</div>
-          <small style="color:#666;">?? ${slides.length} slide • Hedef: ${lesson.targetClass || "Seçilmedi"}${lesson.targetSection ? "/" + lesson.targetSection : ""}</small>
+          <small style="color:#666;">?? ${slides.length} slide ï¿½ Hedef: ${lesson.targetClass || "Seï¿½ilmedi"}${lesson.targetSection ? "/" + lesson.targetSection : ""}</small>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <span class="completion-badge" style="background:${isPublished ? "#dcfce7" : "#fff7ed"};color:${isPublished ? "#166534" : "#9a3412"};border-color:${isPublished ? "#86efac" : "#fdba74"};">${isPublished ? "Yayýnda" : "Taslak"}</span>
+          <span class="completion-badge" style="background:${isPublished ? "#dcfce7" : "#fff7ed"};color:${isPublished ? "#166534" : "#9a3412"};border-color:${isPublished ? "#86efac" : "#fdba74"};">${isPublished ? "Yayï¿½nda" : "Taslak"}</span>
           <span class="completion-badge">${done}/${assigned} tamamlama</span>
-          ${!isPublished ? `<button type="button" class="btn btn-primary btn-lesson-publish" style="padding:6px 10px;">Ödev Olarak Ver</button>` : ""}
+          ${!isPublished ? `<button type="button" class="btn btn-primary btn-lesson-publish" style="padding:6px 10px;">ï¿½dev Olarak Ver</button>` : ""}
         </div>
       `;
       li.onclick = () => openLessonBuilderModal(lesson);
@@ -18291,7 +18291,7 @@ function renderLessonsList() {
             xp,
             seconds: 0,
             percent,
-            message: "Bu dersi tamamladýnýz."
+            message: "Bu dersi tamamladï¿½nï¿½z."
           });
           return;
         }
@@ -18451,8 +18451,8 @@ function renderLessonSlideList() {
     row.draggable = true;
     row.dataset.slideIndex = String(i);
     row.innerHTML = `
-      <div class="lesson-frame-title">${i + 1}. ${s.title || "Baþlýksýz Slide"}</div>
-      <div class="lesson-frame-meta">${typeLabel} • ${s.layout || "text"}</div>
+      <div class="lesson-frame-title">${i + 1}. ${s.title || "Baï¿½lï¿½ksï¿½z Slide"}</div>
+      <div class="lesson-frame-meta">${typeLabel} ï¿½ ${s.layout || "text"}</div>
     `;
     row.addEventListener("dragstart", (ev) => {
       lessonSlideDragIndex = i;
@@ -18572,7 +18572,7 @@ function readLessonSlideForm() {
         .map((opt) => String(opt || "").trim());
       correct = String(get("slide-correct-choice") || "0");
     } else if (questionType === "boolean") {
-      options = ["Doðru", "Yanlýþ"];
+      options = ["Doï¿½ru", "Yanlï¿½ï¿½"];
       correct = get("slide-correct-boolean") === "yanlis" ? "yanlis" : "dogru";
     } else if (questionType === "dragdrop") {
       fillAnswers = parseLessonDragdropPairsText(get("slide-dragdrop-pairs"));
@@ -18653,10 +18653,10 @@ function renderLessonCanvasEditor() {
     node.addEventListener("dblclick", async (ev) => {
       ev.stopPropagation();
       if (el.type === "text") {
-        const txt = await openLessonTextModal({ title: "Metni Düzenle", value: el.text || "", placeholder: "Metin girin" });
+        const txt = await openLessonTextModal({ title: "Metni Dï¿½zenle", value: el.text || "", placeholder: "Metin girin" });
         if (txt !== null) el.text = txt;
       } else {
-        const src = prompt("Görsel URL düzenle:", el.src || "");
+        const src = prompt("Gï¿½rsel URL dï¿½zenle:", el.src || "");
         if (src !== null) el.src = src;
       }
       renderLessonCanvasEditor();
@@ -18707,27 +18707,27 @@ function updateLessonSlidePreview() {
       }
     } else if (draftQType === "boolean") {
       const b = normalizeBooleanToken(draft.correct);
-      correctLabel = b === false ? "Yanlýþ" : "Doðru";
+      correctLabel = b === false ? "Yanlï¿½ï¿½" : "Doï¿½ru";
     }
     box.innerHTML = `
-      <div style="font-weight:700;margin-bottom:6px;">Soru Önizleme</div>
+      <div style="font-weight:700;margin-bottom:6px;">Soru ï¿½nizleme</div>
       <div style="margin-bottom:6px;padding:8px;border-radius:8px;background:${cardBg};color:${cardText};border:1px solid ${cardBorder};">${draft.question || "-"}</div>
-      <div style="font-size:12px;color:#475569;">Tür: ${draftQType}${draftQType === "fill" || draftQType === "dragdrop" ? ` • Alan: ${(draft.fillAnswers || []).length}` : ` • Doðru: ${correctLabel || "-"}`} • XP: ${questionXP}</div>
-      ${(draft.type || "content") === "mixed" ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0;"><div>${draft.content || "<span style='color:#94a3b8;'>Ýçerik yok</span>"}</div>` : ""}
+      <div style="font-size:12px;color:#475569;">Tï¿½r: ${draftQType}${draftQType === "fill" || draftQType === "dragdrop" ? ` ï¿½ Alan: ${(draft.fillAnswers || []).length}` : ` ï¿½ Doï¿½ru: ${correctLabel || "-"}`} ï¿½ XP: ${questionXP}</div>
+      ${(draft.type || "content") === "mixed" ? `<hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0;"><div>${draft.content || "<span style='color:#94a3b8;'>ï¿½ï¿½erik yok</span>"}</div>` : ""}
     `;
     return;
   }
-  const html = draft.content || "<span style='color:#94a3b8;'>Ýçerik yok</span>";
+  const html = draft.content || "<span style='color:#94a3b8;'>ï¿½ï¿½erik yok</span>";
   if (draft.layout === "code") {
     const codeSource = String(draft.codeSnippet || draft.content || "").trim();
     box.innerHTML = `
-      <div style="font-weight:700;margin-bottom:6px;">Kod Önizleme</div>
+      <div style="font-weight:700;margin-bottom:6px;">Kod ï¿½nizleme</div>
       <div id="lesson-code-preview-wrap" style="border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#fff;min-height:180px;"></div>
     `;
     const wrap = document.getElementById("lesson-code-preview-wrap");
     if (!wrap) return;
     if (!codeSource) {
-      wrap.innerHTML = `<div style="padding:12px;color:#64748b;">Kod yok. HTML/CSS/JS kodunu tek kutuya yazýn.</div>`;
+      wrap.innerHTML = `<div style="padding:12px;color:#64748b;">Kod yok. HTML/CSS/JS kodunu tek kutuya yazï¿½n.</div>`;
       return;
     }
     const frame = document.createElement("iframe");
@@ -18742,10 +18742,10 @@ function updateLessonSlidePreview() {
   if (draft.layout === "canvas") {
     const blocks = Array.isArray(draft.elements) ? draft.elements : [];
     box.innerHTML = `
-      <div style="font-weight:700;margin-bottom:6px;">Serbest Yerleþim</div>
-      <div style="font-size:12px;color:#64748b;">Blok sayýsý: ${blocks.length}</div>
+      <div style="font-weight:700;margin-bottom:6px;">Serbest Yerleï¿½im</div>
+      <div style="font-size:12px;color:#64748b;">Blok sayï¿½sï¿½: ${blocks.length}</div>
       <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${blocks.map((b, i) => `<span style="font-size:12px;background:#e2e8f0;border-radius:999px;padding:2px 8px;">${i+1}. ${b.type === "text" ? "Metin" : "Görsel"}</span>`).join("")}
+        ${blocks.map((b, i) => `<span style="font-size:12px;background:#e2e8f0;border-radius:999px;padding:2px 8px;">${i+1}. ${b.type === "text" ? "Metin" : "Gï¿½rsel"}</span>`).join("")}
       </div>
     `;
     return;
@@ -18938,7 +18938,7 @@ function renderLessonPlayer() {
       const codeSource = String(cur.codeSnippet || cur.content || "").trim();
       bodyHtml = codeSource
         ? `<div class="lesson-code-frame-wrap"><iframe class="lesson-code-frame" sandbox="allow-scripts" srcdoc="${escapeHtmlBasic(codeSource)}"></iframe></div>`
-        : `<div style="padding:10px;border:1px dashed #94a3b8;border-radius:8px;color:#64748b;">Kod içeriði bulunamadý.</div>`;
+        : `<div style="padding:10px;border:1px dashed #94a3b8;border-radius:8px;color:#64748b;">Kod iï¿½eriï¿½i bulunamadï¿½.</div>`;
     } else if (cur.layout === "canvas") {
       const blocks = Array.isArray(cur.elements) ? cur.elements : [];
       bodyHtml = `
@@ -19019,7 +19019,7 @@ function renderLessonPlayer() {
         ? String(selected).trim().length > 0
         : !!selected);
     const answeredCorrect = hasAnswered ? isLessonAnswerCorrect(cur, selected) : null;
-    const optSource = qType === "boolean" ? ["Doðru", "Yanlýþ"] : (cur.options || []);
+    const optSource = qType === "boolean" ? ["Doï¿½ru", "Yanlï¿½ï¿½"] : (cur.options || []);
     const fillCount = Array.isArray(cur.fillAnswers) ? cur.fillAnswers.length : 0;
     const isOptionCorrect = (key, optionText, idx) => {
       if (qType === "boolean") return normalizeChoiceToken(cur?.correct) === normalizeChoiceToken(key);
@@ -19036,11 +19036,11 @@ function renderLessonPlayer() {
           .filter((p) => p.left && p.right)
       : [];
     const opts = qType === "short"
-      ? `<input id="lesson-short-answer" class="form-control lesson-q-input" value="${typeof selected === "string" ? selected : ""}" placeholder="Cevabýnýzý yazýn" ${isLockedByTime ? "disabled" : ""}>`
+      ? `<input id="lesson-short-answer" class="form-control lesson-q-input" value="${typeof selected === "string" ? selected : ""}" placeholder="Cevabï¿½nï¿½zï¿½ yazï¿½n" ${isLockedByTime ? "disabled" : ""}>`
       : qType === "fill"
         ? Array.from({ length: Math.max(1, fillCount) }).map((_, i) => {
             const val = Array.isArray(selected) ? (selected[i] || "") : "";
-            return `<input class="form-control lesson-fill-input lesson-q-input" data-fill-index="${i}" value="${val}" placeholder="Boþluk ${i + 1}" ${isLockedByTime ? "disabled" : ""}>`;
+            return `<input class="form-control lesson-fill-input lesson-q-input" data-fill-index="${i}" value="${val}" placeholder="Boï¿½luk ${i + 1}" ${isLockedByTime ? "disabled" : ""}>`;
           }).join("")
         : qType === "dragdrop"
           ? (() => {
@@ -19049,17 +19049,17 @@ function renderLessonPlayer() {
               return `
                 <div class="lesson-dd-board">
                   <div class="lesson-dd-bank">
-                    <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Sürükle</div>
+                    <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Sï¿½rï¿½kle</div>
                     ${leftBank.map((label, idx) => `<span class="lesson-dd-chip" draggable="true" data-dd-drag="${escapeHtmlBasic(label)}">${idx + 1}. ${escapeHtmlBasic(label)}</span>`).join("")}
                   </div>
                   <div class="lesson-dd-targets">
-                    <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Býrak</div>
+                    <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Bï¿½rak</div>
                     ${ddPairs.map((pair, idx) => {
                       const val = String(selectedMap[idx] || "");
                       return `
                         <div class="lesson-dd-drop" data-dd-drop="${idx}">
                           <div style="font-size:12px;color:#64748b;">${idx + 1}. ${escapeHtmlBasic(pair.right)}</div>
-                          <div class="drop-answer">${val ? escapeHtmlBasic(val) : "<span style='opacity:.6'>Buraya býrak</span>"}</div>
+                          <div class="drop-answer">${val ? escapeHtmlBasic(val) : "<span style='opacity:.6'>Buraya bï¿½rak</span>"}</div>
                         </div>
                       `;
                     }).join("")}
@@ -19077,7 +19077,7 @@ function renderLessonPlayer() {
                 : (normalizeChoiceToken(selected) === normalizeChoiceToken(key));
               const optionIsCorrect = isOptionCorrect(key, o, idx);
               const colorClass = qType === "boolean"
-                ? (String(o).toLowerCase() === "doðru" || String(o).toLowerCase() === "dogru" ? "q-t" : "q-f")
+                ? (String(o).toLowerCase() === "doï¿½ru" || String(o).toLowerCase() === "dogru" ? "q-t" : "q-f")
                 : (idx === 0 ? "q-a" : idx === 1 ? "q-b" : idx === 2 ? "q-c" : "q-d");
               const classes = ["lesson-q-option", colorClass];
               if (chosen && hasAnswered) classes.push(answeredCorrect ? "is-correct" : "is-wrong");
@@ -19092,11 +19092,11 @@ function renderLessonPlayer() {
             }).join("")
           }</div>`;
     const saveBtn = (qType === "short" || qType === "fill" || qType === "dragdrop")
-      ? `<button id="btn-save-question-answer" class="btn btn-primary" style="margin-top:10px;" ${isLockedByTime ? "disabled" : ""}>Cevabý Kaydet</button>`
+      ? `<button id="btn-save-question-answer" class="btn btn-primary" style="margin-top:10px;" ${isLockedByTime ? "disabled" : ""}>Cevabï¿½ Kaydet</button>`
       : "";
     const statusHtml = hasAnswered
-      ? `<div class="lesson-answer-status ${answeredCorrect ? "is-correct" : "is-wrong"}">${answeredCorrect ? "? Doðru cevap" : "? Yanlýþ cevap"}</div>`
-      : (isLockedByTime ? `<div class="lesson-answer-status is-wrong">Süre doldu.</div>` : "");
+      ? `<div class="lesson-answer-status ${answeredCorrect ? "is-correct" : "is-wrong"}">${answeredCorrect ? "? Doï¿½ru cevap" : "? Yanlï¿½ï¿½ cevap"}</div>`
+      : (isLockedByTime ? `<div class="lesson-answer-status is-wrong">Sï¿½re doldu.</div>` : "");
     const hasChoiceGrid = qType === "multiple" || qType === "boolean";
     const questionBody = hasChoiceGrid
       ? `
@@ -19130,7 +19130,7 @@ function renderLessonPlayer() {
         ${hasTimer ? `
         <div class="lesson-question-timer" data-question-key="${escapeHtmlBasic(String(slideAnswerKey))}">
           <div class="lesson-question-timer-head">
-            <span>Süre</span>
+            <span>Sï¿½re</span>
             <span data-lesson-question-time>${Math.max(0, Math.ceil(remainingNow))} sn</span>
           </div>
           <div class="lesson-question-timer-track">
@@ -19181,7 +19181,7 @@ function renderLessonPlayer() {
       if (hasLessonAnswerValue(cur, st.answered[slideAnswerKey])) return;
       st.answered[slideAnswerKey] = choice;
       const ok = isLessonAnswerCorrect(cur, choice);
-      showNotice(ok ? `Doðru cevap! +${questionXP} XP` : "Cevap kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
+      showNotice(ok ? `Doï¿½ru cevap! +${questionXP} XP` : "Cevap kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
       renderLessonPlayer();
       animateLessonAnswerFeedback(ok);
       persistLessonProgress(false);
@@ -19261,7 +19261,7 @@ function renderLessonPlayer() {
         const arr = Array.from(stage.querySelectorAll(".lesson-fill-input")).map((el) => (el.value || "").trim());
         st.answered[slideAnswerKey] = arr;
         const ok = isLessonAnswerCorrect(cur, arr);
-        showNotice(ok ? `Boþluk cevaplarý doðru! +${questionXP} XP` : "Boþluk cevaplarý kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
+        showNotice(ok ? `Boï¿½luk cevaplarï¿½ doï¿½ru! +${questionXP} XP` : "Boï¿½luk cevaplarï¿½ kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
         renderLessonPlayer();
         animateLessonAnswerFeedback(ok);
         persistLessonProgress(false);
@@ -19271,7 +19271,7 @@ function renderLessonPlayer() {
           ? st.answered[slideAnswerKey]
           : {};
         const ok = isLessonAnswerCorrect(cur, mapVal);
-        showNotice(ok ? `Eþleþtirme doðru! +${questionXP} XP` : "Eþleþtirme kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
+        showNotice(ok ? `Eï¿½leï¿½tirme doï¿½ru! +${questionXP} XP` : "Eï¿½leï¿½tirme kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
         renderLessonPlayer();
         animateLessonAnswerFeedback(ok);
         persistLessonProgress(false);
@@ -19281,7 +19281,7 @@ function renderLessonPlayer() {
         const txt = (input?.value || "").trim();
         st.answered[slideAnswerKey] = txt;
         const ok = isLessonAnswerCorrect(cur, txt);
-        showNotice(ok ? `Doðru cevap! +${questionXP} XP` : "Cevap kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
+        showNotice(ok ? `Doï¿½ru cevap! +${questionXP} XP` : "Cevap kaydedildi.", ok ? "#2ecc71" : "#4a90e2");
         renderLessonPlayer();
         animateLessonAnswerFeedback(ok);
         persistLessonProgress(false);
@@ -19428,7 +19428,7 @@ function getMultipleChoiceIndex(value, options = []) {
   const leadMatch = token.match(/^([abcd])(?:[\)\].:\-\s]|$)/);
   if (leadMatch) return letters.indexOf(leadMatch[1]);
   if (/^[abcd]$/.test(token)) return letters.indexOf(token);
-  // "a) paris" gibi deðerlerde, ilk tokený harf olarak yakala
+  // "a) paris" gibi deï¿½erlerde, ilk tokenï¿½ harf olarak yakala
   const firstToken = token.split(/\s+/)[0] || "";
   const firstTokenLetter = firstToken.replace(/[^abcd0-4]/g, "");
   if (/^[0-3]$/.test(firstTokenLetter)) return Number(firstTokenLetter);
@@ -19451,7 +19451,7 @@ function getMultipleChoiceCandidateIndices(value, options = []) {
   const idx = getMultipleChoiceIndex(value, options);
   if (idx >= 0) set.add(idx);
 
-  // String içinde standalone harf/digit geçiyorsa aday olarak ekle: "sik a", "dogru: 1"
+  // String iï¿½inde standalone harf/digit geï¿½iyorsa aday olarak ekle: "sik a", "dogru: 1"
   const letterMatches = token.match(/(^|[^a-z0-9])([abcd])([^a-z0-9]|$)/g) || [];
   letterMatches.forEach((m) => {
     const ch = (m.match(/[abcd]/) || [])[0] || "";
@@ -19473,7 +19473,7 @@ function getMultipleChoiceCandidateIndices(value, options = []) {
     });
   }
 
-  // "A) Paris" gibi formatlarda marker sonrasý metni option text ile de eþleþtir.
+  // "A) Paris" gibi formatlarda marker sonrasï¿½ metni option text ile de eï¿½leï¿½tir.
   const withoutLead = token.replace(/^([abcd]|[1-4])\s*[\)\].:\-]?\s*/, "").trim();
   if (withoutLead) {
     const byTail = options.findIndex((opt) => normalizeChoiceToken(opt) === withoutLead);
@@ -19487,12 +19487,12 @@ function normalizeBooleanToken(value) {
   const t = normalizeChoiceToken(value);
   if (!t) return null;
   const truthy = new Set(["dogru", "true", "1", "a", "evet", "yes", "t"]);
-  const falsy = new Set(["yanlis", "yanlýþ", "false", "0", "2", "b", "hayir", "hayýr", "no", "f"]);
+  const falsy = new Set(["yanlis", "yanlï¿½ï¿½", "false", "0", "2", "b", "hayir", "hayï¿½r", "no", "f"]);
   if (truthy.has(t)) return true;
   if (falsy.has(t)) return false;
   if (t.includes("dogru")) return true;
   if (t.includes("yanlis")) return false;
-  if (t.includes("hayir") || t.includes("hayýr")) return false;
+  if (t.includes("hayir") || t.includes("hayï¿½r")) return false;
   return null;
 }
 
@@ -19549,7 +19549,7 @@ function isLessonAnswerCorrect(slide, answer) {
       const answerText = normalizeChoiceToken(options[answerIdx]);
       if (answerText && answerText === normalizeChoiceToken(slide?.correct)) return true;
     }
-    // fallback: normalize edilmiþ metin birebir aynýysa yine doðru kabul et
+    // fallback: normalize edilmiï¿½ metin birebir aynï¿½ysa yine doï¿½ru kabul et
     const normalizedAnswer = normalizeChoiceToken(answer);
     const normalizedCorrect = normalizeChoiceToken(slide?.correct);
     if (normalizedAnswer && normalizedAnswer === normalizedCorrect) return true;
@@ -19631,7 +19631,7 @@ function updateLessonProgressBar() {
   const percent = Math.min(100, basePercent + qPercent);
   const xp = Math.round((visitedCount * 2) + questionXPBonus);
   const label = document.getElementById("lesson-player-progress");
-  if (label) label.innerText = `%${percent} tamamlandý • ${xp} XP`;
+  if (label) label.innerText = `%${percent} tamamlandï¿½ ï¿½ ${xp} XP`;
 }
 
 async function persistLessonProgress(closeAfter) {
@@ -19712,7 +19712,7 @@ function openComputeHomeworkModalForEdit(assignment) {
   if (deadlineTimeInput) deadlineTimeInput.value = assignment.deadlineTime || "23:59";
   if (startInput) startInput.value = String(Math.max(1, Number(assignment.levelStart || 1)));
   if (endInput) endInput.value = String(Math.max(1, Number(assignment.levelEnd || assignment.levelStart || 1)));
-  if (saveBtn) saveBtn.innerText = "Güncelle";
+  if (saveBtn) saveBtn.innerText = "Gï¿½ncelle";
   if (deleteBtn) deleteBtn.style.display = "inline-flex";
   const modal = document.getElementById("compute-homework-modal");
   if (modal) modal.style.display = "flex";
@@ -19772,7 +19772,7 @@ async function updateComputeAssignmentProgressFromLevelEvent({ uid, levelId, lev
     }
     await setDoc(progressRef, {
       assignmentId: activeComputeAssignmentId,
-      assignmentTitle: String(assignment.title || "Compute It Ödevi"),
+      assignmentTitle: String(assignment.title || "Compute It ï¿½devi"),
       levelStart,
       levelEnd,
       userId: uid,
@@ -19817,13 +19817,13 @@ async function updateComputeAssignmentProgressFromLevelEvent({ uid, levelId, lev
         } catch (e) {}
       }
       showCompletionCelebration({
-        title: "Compute It Tamamlandý!",
-        message: "Muhteþem! Ödev bitti, veriler baþarýyla kaydedildi.",
+        title: "Compute It Tamamlandï¿½!",
+        message: "Muhteï¿½em! ï¿½dev bitti, veriler baï¿½arï¿½yla kaydedildi.",
         accent: "#f59e0b",
         xp: Math.max(0, Number(totalXP || 0)),
         durationSeconds: Math.max(0, Number(elapsedSeconds || 0)),
         requireAction: true,
-        actionText: "Kaydet ve Çýk",
+        actionText: "Kaydet ve ï¿½ï¿½k",
         onAction: () => {
           closeBlockRunnerView();
           return true;
@@ -19913,7 +19913,7 @@ function setStudentCombinedTab(kind = "homework", tab = "pending") {
   const cache = studentCombinedListCache[panelKey] || { pending: [], completed: [] };
   const show = tabName === "completed" ? (cache.completed || []).length > HOME_PREVIEW_LIMIT : (cache.pending || []).length > HOME_PREVIEW_LIMIT;
   const buttonId = panelKey === "apps" ? "btn-show-all-student-apps" : "btn-show-all-student-homework";
-  setShowMoreButton(buttonId, show, () => openAllItemsModal(cache.title || "Ýçerikler", cache.pending || [], cache.completed || []));
+  setShowMoreButton(buttonId, show, () => openAllItemsModal(cache.title || "ï¿½ï¿½erikler", cache.pending || [], cache.completed || []));
 }
 
 window.switchStudentCombinedTab = function(kind, tab) {
@@ -19963,7 +19963,7 @@ function renderStudentCombinedSections() {
   if (noAppsCompleted) noAppsCompleted.style.display = appsCompletedRows.length === 0 ? "block" : "none";
 
   studentCombinedListCache.homework = {
-    title: "Ödevlerim",
+    title: "ï¿½devlerim",
     pending: homeworkPendingRows.slice(),
     completed: homeworkCompletedRows.slice()
   };
@@ -19989,7 +19989,7 @@ function updateBlockHomeworkShowMoreButton() {
   setShowMoreButton(
     "btn-show-all-block-homework",
     show,
-    () => openAllItemsModal(cache.title || "Blok Kodlama Ödevim", cache.pending || [], cache.completed || [])
+    () => openAllItemsModal(cache.title || "Blok Kodlama ï¿½devim", cache.pending || [], cache.completed || [])
   );
 }
 
@@ -20074,12 +20074,12 @@ function renderBadgeGrid(containerId, badges = [], onlyEarned = false) {
   if (!grid) return;
   const list = onlyEarned ? badges.filter((b) => b.earned) : badges;
   if (!list.length) {
-    grid.innerHTML = `<div style="grid-column: 1 / -1; color:#64748b; text-align:center;">Henüz rozet kazanýlmadý.</div>`;
+    grid.innerHTML = `<div style="grid-column: 1 / -1; color:#64748b; text-align:center;">Henï¿½z rozet kazanï¿½lmadï¿½.</div>`;
     return;
   }
   grid.innerHTML = list
     .map((b) => {
-      const tip = escapeHtmlBasic(b.desc || "Rozeti kazanma þartlarý burada gösterilir.");
+      const tip = escapeHtmlBasic(b.desc || "Rozeti kazanma ï¿½artlarï¿½ burada gï¿½sterilir.");
       return `
         <div class="badge-card ${b.earned ? "earned" : ""}" data-tooltip="${tip}" title="${tip}">
           <div class="badge-icon">${b.icon}</div>
@@ -20106,7 +20106,7 @@ async function renderStudentBadges() {
 }
 
 function buildCertificateAwardText(fullName) {
-  return `${fullName}, Biliþim, Kodlama, Yazýlým ve Robotik alanlarýndaki eðitim çalýþmalarýnda gösterdiði özveri, disiplin ve üretken baþarýlarýyla bu sertifikayý almaya hak kazanmýþtýr.`;
+  return `${fullName}, Biliï¿½im, Kodlama, Yazï¿½lï¿½m ve Robotik alanlarï¿½ndaki eï¿½itim ï¿½alï¿½ï¿½malarï¿½nda gï¿½sterdiï¿½i ï¿½zveri, disiplin ve ï¿½retken baï¿½arï¿½larï¿½yla bu sertifikayï¿½ almaya hak kazanmï¿½ï¿½tï¿½r.`;
 }
 
 function renderStudentCertificateCard() {
@@ -20130,8 +20130,8 @@ function renderStudentCertificateCard() {
   setText("certificate-xp", `${xp} XP`);
   setText("certificate-completion", `%${summary.completionRate} (${summary.completed}/${summary.total})`);
   setText("certificate-date", issuedAt);
-  setText("certificate-principal-name", "Okul Müdürü");
-  setText("certificate-teacher-name", "Ders Öðretmeni");
+  setText("certificate-principal-name", "Okul Mï¿½dï¿½rï¿½");
+  setText("certificate-teacher-name", "Ders ï¿½ï¿½retmeni");
   const awardText = document.getElementById("certificate-award-text");
   if (awardText) {
     awardText.innerText = buildCertificateAwardText(fullName);
@@ -20154,12 +20154,12 @@ async function downloadStudentCertificatePdf() {
       issuedAt: getTeacherCertificateIssuedDate()
     }];
     openCertificatePreviewWindow({
-      title: `${fullName} Sertifikasý`,
+      title: `${fullName} Sertifikasï¿½`,
       pages
     });
   } catch (e) {
     console.error("certificate pdf", e);
-    showNotice("Sertifika önizlemesi açýlamadý.", "#e74c3c");
+    showNotice("Sertifika ï¿½nizlemesi aï¿½ï¿½lamadï¿½.", "#e74c3c");
   }
 }
 
@@ -20188,8 +20188,8 @@ function setTeacherCertificateCard(student, summary) {
   setText("teacher-certificate-xp", `${xp} XP`);
   setText("teacher-certificate-completion", `%${completionRate} (${completed}/${total})`);
   setText("teacher-certificate-date", getTeacherCertificateIssuedDate());
-  setText("teacher-certificate-principal-name", "Okul Müdürü");
-  setText("teacher-certificate-teacher-name", "Ders Öðretmeni");
+  setText("teacher-certificate-principal-name", "Okul Mï¿½dï¿½rï¿½");
+  setText("teacher-certificate-teacher-name", "Ders ï¿½ï¿½retmeni");
   const awardText = document.getElementById("teacher-certificate-award-text");
   if (awardText) {
     awardText.innerText = buildCertificateAwardText(fullName);
@@ -20206,7 +20206,7 @@ function escapeHtml(value) {
 }
 
 function buildCertificatePageHtml(page) {
-  const fullName = escapeHtml(page.fullName || "Öðrenci");
+  const fullName = escapeHtml(page.fullName || "ï¿½ï¿½renci");
   const cls = escapeHtml(page.className || "-");
   const sec = escapeHtml(page.section || "-");
   const xp = Math.max(0, Number(page.xp || 0));
@@ -20214,27 +20214,27 @@ function buildCertificatePageHtml(page) {
   const completed = Math.max(0, Number(page.completed || 0));
   const total = Math.max(0, Number(page.total || 0));
   const issuedAt = escapeHtml(page.issuedAt || getTeacherCertificateIssuedDate());
-  const principalName = escapeHtml(page.principalName || "Okul Müdürü");
-  const teacherName = escapeHtml(page.teacherName || "Ders Öðretmeni");
+  const principalName = escapeHtml(page.principalName || "Okul Mï¿½dï¿½rï¿½");
+  const teacherName = escapeHtml(page.teacherName || "Ders ï¿½ï¿½retmeni");
   const awardText = buildCertificateAwardText(fullName);
   return `
     <section class="cert-page">
       <div class="cert-card">
         <div class="cert-frame">
-          <img src="logo.png" alt="Logo" class="cert-logo" />
+          <img src="/public/logo.png" alt="Logo" class="cert-logo" />
           <div class="cert-badge">?</div>
-          <h1 class="cert-title">BAÞARI SERTÝFÝKASI</h1>
+          <h1 class="cert-title">BAï¿½ARI SERTï¿½Fï¿½KASI</h1>
           <div class="cert-name">${fullName}</div>
           <p class="cert-text">${awardText}</p>
           <div class="cert-meta">
-            <div class="cert-meta-item"><span class="k">Sýnýf / Þube</span><span class="v">${cls} / ${sec}</span></div>
+            <div class="cert-meta-item"><span class="k">Sï¿½nï¿½f / ï¿½ube</span><span class="v">${cls} / ${sec}</span></div>
             <div class="cert-meta-item"><span class="k">Toplam XP</span><span class="v">${xp} XP</span></div>
             <div class="cert-meta-item"><span class="k">Tamamlama</span><span class="v">%${completionRate} (${completed}/${total})</span></div>
-            <div class="cert-meta-item"><span class="k">Veriliþ Tarihi</span><span class="v">${issuedAt}</span></div>
+            <div class="cert-meta-item"><span class="k">Veriliï¿½ Tarihi</span><span class="v">${issuedAt}</span></div>
           </div>
           <div class="cert-signatures">
-            <div class="sig-box"><div class="line"></div><div class="label">Ders Öðretmeni</div><div class="name">${teacherName}</div></div>
-            <div class="sig-box"><div class="line"></div><div class="label">Okul Müdürü</div><div class="name">${principalName}</div></div>
+            <div class="sig-box"><div class="line"></div><div class="label">Ders ï¿½ï¿½retmeni</div><div class="name">${teacherName}</div></div>
+            <div class="sig-box"><div class="line"></div><div class="label">Okul Mï¿½dï¿½rï¿½</div><div class="name">${principalName}</div></div>
           </div>
         </div>
       </div>
@@ -20306,10 +20306,10 @@ function getCertificatePreviewStyles() {
 function openCertificatePreviewWindow({ title, pages }) {
   const reportWindow = window.open("", "_blank");
   if (!reportWindow) {
-    showNotice("Yeni sekme açýlamadý.", "#e74c3c");
+    showNotice("Yeni sekme aï¿½ï¿½lamadï¿½.", "#e74c3c");
     return;
   }
-  const safeTitle = escapeHtml(title || "Sertifika Önizleme");
+  const safeTitle = escapeHtml(title || "Sertifika ï¿½nizleme");
   const bodyHtml = (pages || []).map((p) => buildCertificatePageHtml(p)).join("");
   reportWindow.document.write(`
     <html lang="tr">
@@ -20322,10 +20322,10 @@ function openCertificatePreviewWindow({ title, pages }) {
       </head>
       <body>
         <div class="toolbar">
-          <button id="certPrintBtn" class="btn btn-primary">PDF / Yazdýr</button>
+          <button id="certPrintBtn" class="btn btn-primary">PDF / Yazdï¿½r</button>
           <button id="certCloseBtn" class="btn btn-danger">Kapat</button>
         </div>
-        ${bodyHtml || "<div style='padding:20px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;'>Sertifika verisi bulunamadý.</div>"}
+        ${bodyHtml || "<div style='padding:20px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;'>Sertifika verisi bulunamadï¿½.</div>"}
       </body>
     </html>
   `);
@@ -20465,7 +20465,7 @@ function updateTeacherCertificateSectionOptions() {
     if (s.section) sections.add(String(s.section));
   });
   const currentVal = sectionSel.value || "";
-  sectionSel.innerHTML = `<option value="">Tümü</option>`;
+  sectionSel.innerHTML = `<option value="">Tï¿½mï¿½</option>`;
   Array.from(sections).sort((a, b) => a.localeCompare(b, "tr")).forEach((sec) => {
     const opt = document.createElement("option");
     opt.value = sec;
@@ -20482,7 +20482,7 @@ async function updateTeacherCertificateStudentOptions() {
   if (!studentSel) return;
   const filtered = getTeacherCertificateFilteredStudents();
   const prev = studentSel.value || "";
-  studentSel.innerHTML = `<option value="">Öðrenci seçin</option>`;
+  studentSel.innerHTML = `<option value="">ï¿½ï¿½renci seï¿½in</option>`;
   filtered.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s.id;
@@ -20501,12 +20501,12 @@ async function renderTeacherCertificateCardBySelection() {
   const studentId = document.getElementById("teacher-cert-student")?.value || "";
   const emptySummary = { completed: 0, total: 0, completionRate: 0 };
   if (!studentId) {
-    setTeacherCertificateCard({ firstName: "Öðrenci", lastName: "Seçilmedi", className: "-", section: "-", xp: 0 }, emptySummary);
+    setTeacherCertificateCard({ firstName: "ï¿½ï¿½renci", lastName: "Seï¿½ilmedi", className: "-", section: "-", xp: 0 }, emptySummary);
     return;
   }
   const student = teacherCertificateStudents.find((s) => String(s.id) === String(studentId));
   if (!student) {
-    setTeacherCertificateCard({ firstName: "Öðrenci", lastName: "Bulunamadý", className: "-", section: "-", xp: 0 }, emptySummary);
+    setTeacherCertificateCard({ firstName: "ï¿½ï¿½renci", lastName: "Bulunamadï¿½", className: "-", section: "-", xp: 0 }, emptySummary);
     return;
   }
   const summary = await getTeacherStudentCertificateSummary(student);
@@ -20525,7 +20525,7 @@ async function openTeacherCertificatesModal() {
     const classes = new Set();
     teacherCertificateStudents.forEach((s) => { if (s.className) classes.add(String(s.className)); });
     const prev = classSel.value || "";
-    classSel.innerHTML = `<option value="">Tümü</option>`;
+    classSel.innerHTML = `<option value="">Tï¿½mï¿½</option>`;
     Array.from(classes).sort((a, b) => a.localeCompare(b, "tr")).forEach((cls) => {
       const opt = document.createElement("option");
       opt.value = cls;
@@ -20543,12 +20543,12 @@ async function downloadSelectedTeacherCertificatePdf() {
   try {
     const studentId = document.getElementById("teacher-cert-student")?.value || "";
     if (!studentId) {
-      showNotice("Lütfen öðrenci seçin.", "#e74c3c");
+      showNotice("Lï¿½tfen ï¿½ï¿½renci seï¿½in.", "#e74c3c");
       return;
     }
     const student = teacherCertificateStudents.find((s) => String(s.id) === String(studentId));
     if (!student) {
-      showNotice("Öðrenci bulunamadý.", "#e74c3c");
+      showNotice("ï¿½ï¿½renci bulunamadï¿½.", "#e74c3c");
       return;
     }
     const summary = await getTeacherStudentCertificateSummary(student, true);
@@ -20564,12 +20564,12 @@ async function downloadSelectedTeacherCertificatePdf() {
       issuedAt: getTeacherCertificateIssuedDate()
     }];
     openCertificatePreviewWindow({
-      title: `${getUserDisplayName(student)} Sertifikasý`,
+      title: `${getUserDisplayName(student)} Sertifikasï¿½`,
       pages
     });
   } catch (e) {
     console.error("teacher certificate single", e);
-    showNotice("Sertifika önizlemesi açýlamadý.", "#e74c3c");
+    showNotice("Sertifika ï¿½nizlemesi aï¿½ï¿½lamadï¿½.", "#e74c3c");
   }
 }
 
@@ -20577,10 +20577,10 @@ async function downloadFilteredTeacherCertificatesPdf() {
   try {
     const students = getTeacherCertificateFilteredStudents();
     if (!students.length) {
-      showNotice("Seçili filtrede öðrenci yok.", "#e74c3c");
+      showNotice("Seï¿½ili filtrede ï¿½ï¿½renci yok.", "#e74c3c");
       return;
     }
-    showNotice(`Sertifikalar hazýrlanýyor (${students.length} öðrenci)...`, "#4a90e2");
+    showNotice(`Sertifikalar hazï¿½rlanï¿½yor (${students.length} ï¿½ï¿½renci)...`, "#4a90e2");
     const pages = [];
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
@@ -20601,13 +20601,13 @@ async function downloadFilteredTeacherCertificatesPdf() {
     const classVal = document.getElementById("teacher-cert-class")?.value || "tum_siniflar";
     const sectionVal = document.getElementById("teacher-cert-section")?.value || "tum_subeler";
     openCertificatePreviewWindow({
-      title: `Sýnýf Sertifikalarý ${classVal}/${sectionVal}`,
+      title: `Sï¿½nï¿½f Sertifikalarï¿½ ${classVal}/${sectionVal}`,
       pages
     });
-    showNotice("Sertifika önizleme sekmesi açýldý.", "#2ecc71");
+    showNotice("Sertifika ï¿½nizleme sekmesi aï¿½ï¿½ldï¿½.", "#2ecc71");
   } catch (e) {
     console.error("teacher certificate bulk", e);
-    showNotice("Toplu sertifika önizlemesi açýlamadý.", "#e74c3c");
+    showNotice("Toplu sertifika ï¿½nizlemesi aï¿½ï¿½lamadï¿½.", "#e74c3c");
   }
 }
 
@@ -20623,7 +20623,7 @@ function renderHomeOverviewStrip() {
       el.innerText = `${total} toplam`;
       return;
     }
-    el.innerText = `${pending} bekleyen • ${completed} tamamlanan`;
+    el.innerText = `${pending} bekleyen ï¿½ ${completed} tamamlanan`;
   };
 
   const task = userRole === "teacher"
@@ -20661,11 +20661,11 @@ function renderHomeOverviewStrip() {
     setText("student-mini-compute", compute.total);
     setText("student-mini-lessons", lesson.total);
 
-    setText("student-mini-tasks-meta", `${task.pending} bekleyen • ${task.completed} tamamlanan`);
-    setText("student-mini-activities-meta", `${act.pending} bekleyen • ${act.completed} tamamlanan`);
-    setText("student-mini-block-meta", `${block.pending} bekleyen • ${block.completed} tamamlanan`);
-    setText("student-mini-compute-meta", `${compute.pending} bekleyen • ${compute.completed} tamamlanan`);
-    setText("student-mini-lessons-meta", `${lesson.pending} bekleyen • ${lesson.completed} tamamlanan`);
+    setText("student-mini-tasks-meta", `${task.pending} bekleyen ï¿½ ${task.completed} tamamlanan`);
+    setText("student-mini-activities-meta", `${act.pending} bekleyen ï¿½ ${act.completed} tamamlanan`);
+    setText("student-mini-block-meta", `${block.pending} bekleyen ï¿½ ${block.completed} tamamlanan`);
+    setText("student-mini-compute-meta", `${compute.pending} bekleyen ï¿½ ${compute.completed} tamamlanan`);
+    setText("student-mini-lessons-meta", `${lesson.pending} bekleyen ï¿½ ${lesson.completed} tamamlanan`);
   }
 
   renderStudentAdventureBoard();
@@ -20708,15 +20708,15 @@ function renderStudentAdventureBoard() {
   let classRank = classRankRow ? Number(classRankRow.rank || 0) : null;
   if (myStatsSummaryCache?.schoolRank) schoolRank = myStatsSummaryCache.schoolRank;
   if (myStatsSummaryCache?.classRank) classRank = myStatsSummaryCache.classRank;
-  const rankText = schoolRank ? `${schoolRank}. sýradasýn` : "Sýralaman hazýrlanýyor";
+  const rankText = schoolRank ? `${schoolRank}. sï¿½radasï¿½n` : "Sï¿½ralaman hazï¿½rlanï¿½yor";
   const heroMessage = pending > 0
-    ? `${pending} görevin seni bekliyor. Bir sonraki adýmý seçip ilerleme çubuðunu hýzla doldurabilirsin.`
-    : "Tüm görevlerini bitirdin. Þimdi tekrar yapabilir, istatistiklerini inceleyebilir veya liderlikte yerini koruyabilirsin.";
+    ? `${pending} gï¿½revin seni bekliyor. Bir sonraki adï¿½mï¿½ seï¿½ip ilerleme ï¿½ubuï¿½unu hï¿½zla doldurabilirsin.`
+    : "Tï¿½m gï¿½revlerini bitirdin. ï¿½imdi tekrar yapabilir, istatistiklerini inceleyebilir veya liderlikte yerini koruyabilirsin.";
   const progressNote = pending > 0
-    ? `Þu ana kadar ${completed} görev tamamladýn. Bir sonraki hedefin: en az 1 bekleyen görevi bitirmek.`
-    : "Harika ilerledin. Yeni içerikler geldikçe bu alan otomatik güncellenecek.";
+    ? `ï¿½u ana kadar ${completed} gï¿½rev tamamladï¿½n. Bir sonraki hedefin: en az 1 bekleyen gï¿½revi bitirmek.`
+    : "Harika ilerledin. Yeni iï¿½erikler geldikï¿½e bu alan otomatik gï¿½ncellenecek.";
 
-  setText("student-hero-greeting", `${firstName}, bugün yeni bir adým atmaya hazýr mýsýn?`);
+  setText("student-hero-greeting", `${firstName}, bugï¿½n yeni bir adï¿½m atmaya hazï¿½r mï¿½sï¿½n?`);
   setText("student-hero-message", heroMessage);
   setText("student-hero-xp", `${xp} XP`);
   setText("student-hero-completed", completed);
@@ -20725,8 +20725,8 @@ function renderStudentAdventureBoard() {
   setText("student-hero-progress-text", `%${rate}`);
   setText("student-hero-progress-note", progressNote);
   // show compact class rank value in hero stats and avoid long explanatory text
-  setText("student-hero-class-rank", classRank ? `${classRank}.` : "—");
-  setText("student-hero-school-rank", schoolRank ? `${schoolRank}.` : "—");
+  setText("student-hero-class-rank", classRank ? `${classRank}.` : "ï¿½");
+  setText("student-hero-school-rank", schoolRank ? `${schoolRank}.` : "ï¿½");
   setText("student-hero-rank-note", "");
   const progressFill = document.getElementById("student-hero-progress-fill");
   if (progressFill) progressFill.style.width = `${rate}%`;
@@ -20755,9 +20755,9 @@ function renderTeacherWorkspaceHero() {
   const computeDone = Number(String(document.getElementById("stats-compute-completions")?.innerText || "0").replace(/[^\d.-]/g, "")) || 0;
   const topRows = document.querySelectorAll("#top-students-list .top-student-row").length;
   const fullName = getUserDisplayName(userData || {});
-  const teacherName = String(fullName || "Öðretmen").trim().split(/\s+/)[0] || "Öðretmen";
+  const teacherName = String(fullName || "ï¿½ï¿½retmen").trim().split(/\s+/)[0] || "ï¿½ï¿½retmen";
   const categories = [
-    { key: "Ödev", value: taskDone },
+    { key: "ï¿½dev", value: taskDone },
     { key: "Etkinlik", value: activityDone },
     { key: "Blok Kodlama", value: blockDone },
     { key: "Compute It", value: computeDone }
@@ -20767,12 +20767,12 @@ function renderTeacherWorkspaceHero() {
   const attendancePercent = totalStudentsNum > 0 ? Math.round((activeStudentsNum / totalStudentsNum) * 100) : 0;
   const supportPercent = totalStudentsNum > 0 ? Math.max(0, 100 - attendancePercent) : 0;
   const motivationPercent = totalStudentsNum > 0 ? Math.min(100, Math.round((topRows / totalStudentsNum) * 100)) : 0;
-  let statusNote = "Sýnýfýn verileri toplanýyor. Kartlar güncellendikçe bu alan da yenilenir.";
+  let statusNote = "Sï¿½nï¿½fï¿½n verileri toplanï¿½yor. Kartlar gï¿½ncellendikï¿½e bu alan da yenilenir.";
   if (totalStudentsNum > 0) {
-    statusNote = `${activeStudentsNum}/${totalStudentsNum} öðrenci aktif görünüyor. Ortalama tamamlama ${avgCompletionNum}% seviyesinde ve baþarý listesinde ${topRows} öðrenci öne çýkýyor.`;
+    statusNote = `${activeStudentsNum}/${totalStudentsNum} ï¿½ï¿½renci aktif gï¿½rï¿½nï¿½yor. Ortalama tamamlama ${avgCompletionNum}% seviyesinde ve baï¿½arï¿½ listesinde ${topRows} ï¿½ï¿½renci ï¿½ne ï¿½ï¿½kï¿½yor.`;
   }
-  setText("teacher-hero-title", `${teacherName}, akýþ hazýr.`);
-  setText("teacher-hero-text", "Kýsa sinyallerle sýnýfýn ritmini anýnda okuyun.");
+  setText("teacher-hero-title", `${teacherName}, akï¿½ï¿½ hazï¿½r.`);
+  setText("teacher-hero-text", "Kï¿½sa sinyallerle sï¿½nï¿½fï¿½n ritmini anï¿½nda okuyun.");
   setText("teacher-hero-total-students", totalStudents);
   setText("teacher-hero-active-students", activeStudents);
   setText("teacher-hero-avg-completion", avgCompletion);
@@ -20788,33 +20788,33 @@ function renderTeacherWorkspaceHero() {
   setWidth("teacher-rail-progress", avgCompletionNum);
   setText(
     "teacher-hero-focus-title",
-    activeStudentsNum < totalStudentsNum ? "Katýlýmý artýrýn" : "Tamamlama hýzýný yükseltin"
+    activeStudentsNum < totalStudentsNum ? "Katï¿½lï¿½mï¿½ artï¿½rï¿½n" : "Tamamlama hï¿½zï¿½nï¿½ yï¿½kseltin"
   );
   setText(
     "teacher-hero-focus-text",
     activeStudentsNum < totalStudentsNum
-      ? `${Math.max(0, totalStudentsNum - activeStudentsNum)} öðrenci beklemede.`
+      ? `${Math.max(0, totalStudentsNum - activeStudentsNum)} ï¿½ï¿½renci beklemede.`
       : `Ortalama %${Math.max(avgCompletionNum, 0)} seviyesinde.`
   );
   setText(
     "teacher-hero-strong-title",
-    strongest && strongest.value > 0 ? `${strongest.key} önde` : "Kategori verisi bekleniyor"
+    strongest && strongest.value > 0 ? `${strongest.key} ï¿½nde` : "Kategori verisi bekleniyor"
   );
   setText(
     "teacher-hero-strong-text",
     strongest && strongest.value > 0
-      ? `${strongest.value} tamamlanma ile güçlü sinyal veriyor.`
-      : "Ýlk tamamlamalarda netleþecek."
+      ? `${strongest.value} tamamlanma ile gï¿½ï¿½lï¿½ sinyal veriyor.`
+      : "ï¿½lk tamamlamalarda netleï¿½ecek."
   );
   setText(
     "teacher-hero-rhythm-title",
-    totalCompletionsNum > 0 ? `${totalCompletionsNum} toplam üretim` : "Ritim bekleniyor"
+    totalCompletionsNum > 0 ? `${totalCompletionsNum} toplam ï¿½retim` : "Ritim bekleniyor"
   );
   setText(
     "teacher-hero-rhythm-text",
     totalCompletionsNum > 0
-      ? `${weakest && weakest.value >= 0 ? `${weakest.key} yavaþ kalýyor.` : "Daðýlým dengeleniyor."}`
-      : "Ýlk veriyle hareketlenecek."
+      ? `${weakest && weakest.value >= 0 ? `${weakest.key} yavaï¿½ kalï¿½yor.` : "Daï¿½ï¿½lï¿½m dengeleniyor."}`
+      : "ï¿½lk veriyle hareketlenecek."
   );
   const formatClassLabel = (row) => {
     if (!row) return "";
@@ -20831,11 +20831,11 @@ function renderTeacherWorkspaceHero() {
   const maxAvgXP = Number(teacherClassSignals?.maxAvgXP || 0);
 
   if (classLow) {
-    setText("teacher-info-support-title", `Destek: ${formatClassLabel(classLow) || "Sýnýf"}`);
+    setText("teacher-info-support-title", `Destek: ${formatClassLabel(classLow) || "Sï¿½nï¿½f"}`);
     setWidth("teacher-info-support-bar", classLow.activeRate);
     setText(
       "teacher-info-support-text",
-      `%${classLow.activeRate} aktiflik • ${classLow.total} öðrenci`
+      `%${classLow.activeRate} aktiflik ï¿½ ${classLow.total} ï¿½ï¿½renci`
     );
   } else {
     setText(
@@ -20846,29 +20846,29 @@ function renderTeacherWorkspaceHero() {
     setText(
       "teacher-info-support-text",
       activeStudentsNum < totalStudentsNum
-        ? "Pasif öðrencilere kýsa görev verin."
-        : "Akýþ þu an dengeli görünüyor."
+        ? "Pasif ï¿½ï¿½rencilere kï¿½sa gï¿½rev verin."
+        : "Akï¿½ï¿½ ï¿½u an dengeli gï¿½rï¿½nï¿½yor."
     );
   }
 
   if (classXP) {
-    setText("teacher-info-motivation-title", `${formatClassLabel(classXP) || "Sýnýf"} XP önde`);
+    setText("teacher-info-motivation-title", `${formatClassLabel(classXP) || "Sï¿½nï¿½f"} XP ï¿½nde`);
     const xpPct = maxAvgXP > 0 ? Math.round((classXP.avgXP / maxAvgXP) * 100) : motivationPercent;
     setWidth("teacher-info-motivation-bar", xpPct);
-    setText("teacher-info-motivation-text", `Ort. ${classXP.avgXP} XP/öðrenci`);
+    setText("teacher-info-motivation-text", `Ort. ${classXP.avgXP} XP/ï¿½ï¿½renci`);
   } else {
-    setText("teacher-info-motivation-title", `${totalXPNum} toplam XP üretildi`);
+    setText("teacher-info-motivation-title", `${totalXPNum} toplam XP ï¿½retildi`);
     setWidth("teacher-info-motivation-bar", motivationPercent);
     setText(
       "teacher-info-motivation-text",
       topRows > 0
-        ? `${topRows} öðrenci öne çýkýyor.`
-        : "Baþarý listesi bekleniyor."
+        ? `${topRows} ï¿½ï¿½renci ï¿½ne ï¿½ï¿½kï¿½yor.`
+        : "Baï¿½arï¿½ listesi bekleniyor."
     );
   }
 
   if (classCompletion) {
-    setText("teacher-info-focus-title", `${formatClassLabel(classCompletion) || "Sýnýf"} önde`);
+    setText("teacher-info-focus-title", `${formatClassLabel(classCompletion) || "Sï¿½nï¿½f"} ï¿½nde`);
     setWidth("teacher-info-focus-bar", classCompletion.avgCompletion);
     setText(
       "teacher-info-focus-text",
@@ -20876,15 +20876,15 @@ function renderTeacherWorkspaceHero() {
     );
   } else {
     setWidth("teacher-info-focus-bar", Math.max(0, avgCompletionNum));
-    setText("teacher-info-focus-title", "Kýsa plan önerisi");
-    setText("teacher-info-focus-text", "3 kýsa görev + 1 derin çalýþma önerisi.");
+    setText("teacher-info-focus-title", "Kï¿½sa plan ï¿½nerisi");
+    setText("teacher-info-focus-text", "3 kï¿½sa gï¿½rev + 1 derin ï¿½alï¿½ï¿½ma ï¿½nerisi.");
   }
 
   if (classTop && classTotal > 0) {
     setWidth("teacher-info-status-bar", classTop.activeRate);
     setText(
       "teacher-hero-status-note",
-      `${classTotal} sýnýf/þube izleniyor. En aktif ${formatClassLabel(classTop)} (%${classTop.activeRate}).`
+      `${classTotal} sï¿½nï¿½f/ï¿½ube izleniyor. En aktif ${formatClassLabel(classTop)} (%${classTop.activeRate}).`
     );
   } else {
     setWidth("teacher-info-status-bar", attendancePercent);
@@ -20897,7 +20897,7 @@ function renderTeacherWorkspaceHero() {
   setMini("teacher-mini-top-active", classTop ? formatClassLabel(classTop) : "-");
   setMini(
     "teacher-mini-top-active-sub",
-    classTop ? `%${classTop.activeRate} aktif` : "Aktiflik oraný"
+    classTop ? `%${classTop.activeRate} aktif` : "Aktiflik oranï¿½"
   );
   setMini("teacher-mini-top-completion", classCompletion ? formatClassLabel(classCompletion) : "-");
   setMini(
@@ -20907,32 +20907,32 @@ function renderTeacherWorkspaceHero() {
   setMini("teacher-mini-top-xp", classXP ? formatClassLabel(classXP) : "-");
   setMini(
     "teacher-mini-top-xp-sub",
-    classXP ? `${classXP.avgXP} XP/öðrenci` : "Ort. XP/öðrenci"
+    classXP ? `${classXP.avgXP} XP/ï¿½ï¿½renci` : "Ort. XP/ï¿½ï¿½renci"
   );
   setMini("teacher-mini-low-active", classLow ? formatClassLabel(classLow) : "-");
   setMini(
     "teacher-mini-low-active-sub",
-    classLow ? `%${classLow.activeRate} aktif` : "Öncelik önerisi"
+    classLow ? `%${classLow.activeRate} aktif` : "ï¿½ncelik ï¿½nerisi"
   );
 }
 
 function syncResponsiveHeaderGreeting(explicitFullName = "") {
   const displayFirst = explicitFullName || getUserDisplayName(userData || {});
-  const fullName = String(displayFirst || "Kullanýcý").trim();
+  const fullName = String(displayFirst || "Kullanï¿½cï¿½").trim();
   const welcomeLabel = document.getElementById("user-welcome");
   const fullNameEl = document.getElementById("user-fullname");
   const userMenuTrigger = document.getElementById("user-menu-trigger");
   const isCompactTeacherHeader = userRole === "teacher" && window.matchMedia("(max-width: 720px)").matches;
   if (fullNameEl) {
-    fullNameEl.innerText = userRole === "student" ? `Hoþ geldin, ${fullName}` : "";
+    fullNameEl.innerText = userRole === "student" ? `Hoï¿½ geldin, ${fullName}` : "";
   }
   if (welcomeLabel) {
     welcomeLabel.innerText = userRole === "teacher"
-      ? (isCompactTeacherHeader ? "" : `Hoþ geldin, ${fullName} Öðrt.`)
+      ? (isCompactTeacherHeader ? "" : `Hoï¿½ geldin, ${fullName} ï¿½ï¿½rt.`)
       : "";
   }
   if (userMenuTrigger) {
-    userMenuTrigger.innerText = `Hoþ geldin, ${fullName}`;
+    userMenuTrigger.innerText = `Hoï¿½ geldin, ${fullName}`;
   }
 }
 
@@ -20977,7 +20977,7 @@ function openAllItemsModal(title, pendingRows = [], completedRows = []) {
   const titleEl = document.getElementById("all-items-title");
   const list = document.getElementById("all-tasks-list");
   if (!modal || !titleEl || !list) return;
-  titleEl.innerText = title || "Tüm Ýçerikler";
+  titleEl.innerText = title || "Tï¿½m ï¿½ï¿½erikler";
   list.innerHTML = "";
 
   const addHeading = (text, marginTop = "0") => {
@@ -20996,7 +20996,7 @@ function openAllItemsModal(title, pendingRows = [], completedRows = []) {
         item.onclick = (ev) => {
           ev.preventDefault();
           ev.stopPropagation();
-          // Açýlan düzenleme modalý arkada kalmasýn diye önce "Daha Fazla Göster" modalýný kapat.
+          // Aï¿½ï¿½lan dï¿½zenleme modalï¿½ arkada kalmasï¿½n diye ï¿½nce "Daha Fazla Gï¿½ster" modalï¿½nï¿½ kapat.
           if (modal) modal.style.display = "none";
           setTimeout(() => {
             try {
@@ -21022,7 +21022,7 @@ function openAllItemsModal(title, pendingRows = [], completedRows = []) {
     addRows(completedRows);
   }
   if (!pendingRows.length && !completedRows.length) {
-    list.innerHTML = "<div class='empty-state'>Kayýt bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>Kayï¿½t bulunamadï¿½.</div>";
   }
   modal.style.display = "flex";
 }
@@ -21088,7 +21088,7 @@ async function openAssignedContent(assignment) {
   const deadlineDate = getAssignmentDeadlineDate(assignment);
   const isExpired = deadlineDate ? deadlineDate < new Date() : false;
   if (isExpired) {
-    showNotice("Bu etkinliðin süresi doldu. Tamamlanamaz.", "#e74c3c");
+    showNotice("Bu etkinliï¿½in sï¿½resi doldu. Tamamlanamaz.", "#e74c3c");
   }
   if (userRole === "student") {
     const prog = getAssignmentAppProgress(assignment);
@@ -21099,14 +21099,14 @@ async function openAssignedContent(assignment) {
         xp: getAssignmentCompletionXP(assignment),
         seconds: Math.max(0, Number(prog.seconds || 0)),
         percent: Math.max(0, Number(prog.percent || 0)),
-        message: "Bu etkinliði tamamladýnýz."
+        message: "Bu etkinliï¿½i tamamladï¿½nï¿½z."
       });
       return;
     }
   }
   const contentDoc = await getDoc(doc(db, "contents", assignment.contentId));
   if (!contentDoc.exists()) {
-    showNotice("Ýçerik bulunamadý!", "#e74c3c");
+    showNotice("ï¿½ï¿½erik bulunamadï¿½!", "#e74c3c");
     return;
   }
   const content = { id: contentDoc.id, ...contentDoc.data() };
@@ -21212,27 +21212,27 @@ function updateActivityLists() {
     const li = document.createElement("li");
     li.className = "list-item" + (isCompleted ? " completed" : "");
       let rightBadges = `<span class="badge ${isCompleted ? "badge-success" : isExpired ? "badge-danger" : "badge-pending"}">
-          ${isExpired && !isCompleted ? "Süresi Doldu" : `%${percent}`}
+          ${isExpired && !isCompleted ? "Sï¿½resi Doldu" : `%${percent}`}
         </span>`;
       if (userRole === "student") {
-        let label = "Baþlanmadý";
+        let label = "Baï¿½lanmadï¿½";
         let cls = "badge-pending";
         if (isCompleted) {
-          label = "Tamamlandý";
+          label = "Tamamlandï¿½";
           cls = "badge-success";
         } else if (percent >= 100) {
-          label = "Tamamlandý";
+          label = "Tamamlandï¿½";
           cls = "badge-success";
         } else if (percent >= 60) {
-          label = "Ýlerliyor";
+          label = "ï¿½lerliyor";
           cls = "badge-mid";
         } else if (percent > 0) {
-          label = "Baþlandý";
+          label = "Baï¿½landï¿½";
           cls = "badge-progress";
         }
         rightBadges = `
           <span class="badge ${isExpired && !isCompleted ? "badge-danger" : "badge-info"}">%${percent}</span>
-          <span class="badge ${isExpired && !isCompleted ? "badge-danger" : cls}">${isExpired && !isCompleted ? "Süresi Doldu" : label}</span>
+          <span class="badge ${isExpired && !isCompleted ? "badge-danger" : cls}">${isExpired && !isCompleted ? "Sï¿½resi Doldu" : label}</span>
         `;
       }
       if (userRole === "teacher" || userRole === "admin") {
@@ -21245,13 +21245,13 @@ function updateActivityLists() {
           <span class="badge ${isExpired ? "badge-danger" : "badge-info"}">
             ${count}${totalStudents ? "/" + totalStudents : ""} Tamamlama
           </span>
-          ${isExpired ? `<span class="badge badge-danger">Süresi Doldu</span>` : ""}
+          ${isExpired ? `<span class="badge badge-danger">Sï¿½resi Doldu</span>` : ""}
         `;
       }
       li.innerHTML = `
         <div style="flex:1;">
           <div style="font-weight:600;">${assignment.title || "Etkinlik"}</div>
-          <small style="color:#666;">?? ${assignment.createdAtDate.toLocaleDateString("tr-TR")}${deadlineDate ? ` • Son: ${deadlineDate.toLocaleDateString("tr-TR")}` : ""}</small>
+          <small style="color:#666;">?? ${assignment.createdAtDate.toLocaleDateString("tr-TR")}${deadlineDate ? ` ï¿½ Son: ${deadlineDate.toLocaleDateString("tr-TR")}` : ""}</small>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">${rightBadges}</div>
       `;
@@ -21321,7 +21321,7 @@ function updateActivityLists() {
       if (el) el.innerText = completedCount;
     }
 
-    // öðretmen butonlarý kaldýrýldý
+    // ï¿½ï¿½retmen butonlarï¿½ kaldï¿½rï¿½ldï¿½
     renderStudentCombinedSections();
     renderHomeOverviewStrip();
 }
@@ -21334,10 +21334,10 @@ function formatMinutesSeconds(totalSeconds) {
   return `${mins} dk ${secs} sn`;
 }
 
-function buildCompletionInfoHTML({ category = "Ýçerik", title = "", xp = 0, seconds = 0, percent = null, message = "" } = {}) {
-  const safeCategory = String(category || "Ýçerik");
+function buildCompletionInfoHTML({ category = "ï¿½ï¿½erik", title = "", xp = 0, seconds = 0, percent = null, message = "" } = {}) {
+  const safeCategory = String(category || "ï¿½ï¿½erik");
   const safeTitle = escapeHtml(String(title || safeCategory));
-  const safeMessage = escapeHtml(String(message || `Bu ${safeCategory.toLowerCase()} tamamladýnýz.`));
+  const safeMessage = escapeHtml(String(message || `Bu ${safeCategory.toLowerCase()} tamamladï¿½nï¿½z.`));
   const safeXP = Math.max(0, Math.round(Number(xp || 0)));
   const safeSeconds = Math.max(0, Math.round(Number(seconds || 0)));
   const safePercent = Number.isFinite(Number(percent)) ? Math.max(0, Math.min(100, Math.round(Number(percent)))) : null;
@@ -21349,15 +21349,15 @@ function buildCompletionInfoHTML({ category = "Ýçerik", title = "", xp = 0, seco
       <div class="completion-info-subtitle">${safeMessage}</div>
       <div class="completion-info-grid">
         <div class="completion-info-item">
-          <div class="k">Kazanýlan XP</div>
+          <div class="k">Kazanï¿½lan XP</div>
           <div class="v">${safeXP} XP</div>
         </div>
         <div class="completion-info-item">
-          <div class="k">Geçirilen Süre</div>
+          <div class="k">Geï¿½irilen Sï¿½re</div>
           <div class="v">${escapeHtml(timeText)}</div>
         </div>
         <div class="completion-info-item">
-          <div class="k">Ýlerleme</div>
+          <div class="k">ï¿½lerleme</div>
           <div class="v">${escapeHtml(percentText)}</div>
         </div>
       </div>
@@ -21365,11 +21365,11 @@ function buildCompletionInfoHTML({ category = "Ýçerik", title = "", xp = 0, seco
   `;
 }
 
-async function showCompletionInfoPopup({ category = "Ýçerik", title = "", xp = 0, seconds = 0, percent = null, message = "" } = {}) {
+async function showCompletionInfoPopup({ category = "ï¿½ï¿½erik", title = "", xp = 0, seconds = 0, percent = null, message = "" } = {}) {
   const html = buildCompletionInfoHTML({ category, title, xp, seconds, percent, message });
   await infoDialog(html, {
     allowHtml: true,
-    title: "Tamamlandý Bilgisi",
+    title: "Tamamlandï¿½ Bilgisi",
     iconText: "?",
     iconBg: "#dcfce7",
     iconColor: "#15803d",
@@ -21400,7 +21400,7 @@ function confirmDialog(message, options = {}) {
       yesBtn.style.flex = "1";
     }
     if (noBtn) {
-      noBtn.innerText = options.noText || "Vazgeç";
+      noBtn.innerText = options.noText || "Vazgeï¿½";
       noBtn.className = "btn";
       noBtn.style.flex = "1";
       noBtn.style.background = "#eee";
@@ -21471,7 +21471,7 @@ async function saveSessionTime() {
       localStorage.setItem(currentUserKey, String(baseSystemSeconds));
     }
   } catch (e) {
-    console.error("Süre kaydý hatasý:", e);
+    console.error("Sï¿½re kaydï¿½ hatasï¿½:", e);
   }
 }
 
@@ -21529,7 +21529,7 @@ document.getElementById("btn-activity-start").onclick = async function () {
 async function loadBookTaskApprovals(task) {
   const list = document.getElementById("book-approval-list");
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Öðrenciler yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>ï¿½ï¿½renciler yï¿½kleniyor...</div>";
   const classFilter = document.getElementById("book-approve-class");
   const sectionFilter = document.getElementById("book-approve-section");
   const studentsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
@@ -21552,14 +21552,14 @@ async function loadBookTaskApprovals(task) {
 
   list.innerHTML = "";
   if (filtered.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
     return;
   }
   filtered.forEach((s) => {
     const prog = progressMap.get(s.id);
     const status = prog?.status || "none";
     const approved = !!prog?.approved;
-    const label = status === "finished" ? "Yaptý" : status === "started" ? "Baþladý" : "Yapmadý";
+    const label = status === "finished" ? "Yaptï¿½" : status === "started" ? "Baï¿½ladï¿½" : "Yapmadï¿½";
     const badgeClass = status === "finished" ? "badge-success" : status === "started" ? "badge-info" : "badge-pending";
     const row = document.createElement("div");
     row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed #e5e7eb;";
@@ -21588,13 +21588,13 @@ document.getElementById("btn-book-approve").onclick = async function () {
   }));
   try {
     const stats = await applyManualTaskApprovals(currentTaskId, rows);
-    showNotice(`Onaylar güncellendi. +${MANUAL_TASK_APPROVAL_XP} XP verilen öðrenci: ${stats.xpGrantedCount}`, "#2ecc71");
+    showNotice(`Onaylar gï¿½ncellendi. +${MANUAL_TASK_APPROVAL_XP} XP verilen ï¿½ï¿½renci: ${stats.xpGrantedCount}`, "#2ecc71");
     const task = allTasks.find((t) => t.id === currentTaskId);
     if (task) await loadBookTaskApprovals(task);
     if (userRole === "teacher") loadStatsPage();
     renderHomeOverviewStrip();
   } catch (e) {
-    showNotice("Onay güncelleme hatasý: " + e.message, "#e74c3c");
+    showNotice("Onay gï¿½ncelleme hatasï¿½: " + e.message, "#e74c3c");
   }
 };
 
@@ -21606,8 +21606,8 @@ if (btnBookStarted) {
     if (!task) return;
     await saveBookTaskProgress(task, "started");
     const bookStatus = document.getElementById("book-task-status");
-    if (bookStatus) bookStatus.innerText = "Durum: Baþlandý";
-    showNotice("Baþlandý olarak kaydedildi.", "#4a90e2");
+    if (bookStatus) bookStatus.innerText = "Durum: Baï¿½landï¿½";
+    showNotice("Baï¿½landï¿½ olarak kaydedildi.", "#4a90e2");
   };
 }
 const btnBookFinished = document.getElementById("btn-book-finished");
@@ -21618,9 +21618,9 @@ if (btnBookFinished) {
     if (!task) return;
     await saveBookTaskProgress(task, "finished");
     const bookStatus = document.getElementById("book-task-status");
-    const doneText = isBookOnlyTask(task) ? "Bitirdi" : "Yaptý";
+    const doneText = isBookOnlyTask(task) ? "Bitirdi" : "Yaptï¿½";
     if (bookStatus) bookStatus.innerText = `Durum: ${doneText} (Onay Bekliyor)`;
-    showNotice(`${doneText} olarak kaydedildi. Öðretmen onayý bekleniyor.`, "#2ecc71");
+    showNotice(`${doneText} olarak kaydedildi. ï¿½ï¿½retmen onayï¿½ bekleniyor.`, "#2ecc71");
   };
 }
 
@@ -21628,8 +21628,8 @@ async function populateClassSectionFilters(classSelect, sectionSelect) {
   if (!classSelect || !sectionSelect) return;
   const prevClass = String(classSelect.value || "");
   const prevSection = String(sectionSelect.value || "");
-  classSelect.innerHTML = `<option value="">Sýnýf</option>`;
-  sectionSelect.innerHTML = `<option value="">Þube</option>`;
+  classSelect.innerHTML = `<option value="">Sï¿½nï¿½f</option>`;
+  sectionSelect.innerHTML = `<option value="">ï¿½ube</option>`;
   const classMap = new Map();
 
   if (userRole === "teacher" && (!Array.isArray(classSectionCatalog) || classSectionCatalog.length === 0)) {
@@ -21668,7 +21668,7 @@ async function populateClassSectionFilters(classSelect, sectionSelect) {
   });
 
   const syncSections = () => {
-    sectionSelect.innerHTML = `<option value="">Þube</option>`;
+    sectionSelect.innerHTML = `<option value="">ï¿½ube</option>`;
     const cls = classSelect.value;
     if (!cls) return;
     const sections = classMap.get(cls) || new Set();
@@ -21697,27 +21697,27 @@ async function loadApprovalsModal() {
   const taskSelect = document.getElementById("approvals-task-select");
   const list = document.getElementById("approvals-list");
   if (!taskSelect || !list) return;
-  taskSelect.innerHTML = `<option value="">Onaylý ödev seçiniz</option>`;
+  taskSelect.innerHTML = `<option value="">Onaylï¿½ ï¿½dev seï¿½iniz</option>`;
   const approvalTasks = allTasks.filter(t => requiresTeacherApprovalTask(t));
   approvalTasks.forEach((t) => {
     const opt = document.createElement("option");
     opt.value = t.id;
-    opt.textContent = t.title || "Ödev";
+    opt.textContent = t.title || "ï¿½dev";
     taskSelect.appendChild(opt);
   });
   const classSel = document.getElementById("approvals-class");
   const sectionSel = document.getElementById("approvals-section");
   await populateClassSectionFilters(classSel, sectionSel);
-  list.innerHTML = "<div class='empty-state'>Ödev seçiniz.</div>";
+  list.innerHTML = "<div class='empty-state'>ï¿½dev seï¿½iniz.</div>";
 }
 
 async function renderApprovalsList(taskId) {
   const list = document.getElementById("approvals-list");
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Öðrenciler yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>ï¿½ï¿½renciler yï¿½kleniyor...</div>";
   const task = allTasks.find(t => t.id === taskId);
   if (!task) {
-    list.innerHTML = "<div class='empty-state'>Ödev bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½dev bulunamadï¿½.</div>";
     return;
   }
   const studentsSnap = await getDocs(query(collection(db, "users"), where("role", "==", "student")));
@@ -21739,14 +21739,14 @@ async function renderApprovalsList(taskId) {
   progSnap.forEach((docSnap) => progressMap.set(docSnap.data().userId, docSnap.data()));
   list.innerHTML = "";
   if (filtered.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
     return;
   }
   filtered.forEach((s) => {
     const prog = progressMap.get(s.id);
     const status = prog?.status || "none";
     const approved = !!prog?.approved;
-    const label = status === "finished" ? "Yaptý" : status === "started" ? "Baþladý" : "Yapmadý";
+    const label = status === "finished" ? "Yaptï¿½" : status === "started" ? "Baï¿½ladï¿½" : "Yapmadï¿½";
     const badgeClass = status === "finished" ? "badge-success" : status === "started" ? "badge-info" : "badge-pending";
     const row = document.createElement("div");
     row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed #e5e7eb;";
@@ -21822,7 +21822,7 @@ if (approvalsApproveBtn) {
   approvalsApproveBtn.onclick = async function () {
     const taskId = approvalsTaskSelect?.value;
     if (!taskId) {
-      showNotice("Ödev seçin!", "#e74c3c");
+      showNotice("ï¿½dev seï¿½in!", "#e74c3c");
       return;
     }
     const checks = Array.from(document.querySelectorAll(".approval-checkbox"));
@@ -21832,12 +21832,12 @@ if (approvalsApproveBtn) {
     }));
     try {
       const stats = await applyManualTaskApprovals(taskId, rows);
-      showNotice(`Onaylar güncellendi. +${MANUAL_TASK_APPROVAL_XP} XP verilen öðrenci: ${stats.xpGrantedCount}`, "#2ecc71");
+      showNotice(`Onaylar gï¿½ncellendi. +${MANUAL_TASK_APPROVAL_XP} XP verilen ï¿½ï¿½renci: ${stats.xpGrantedCount}`, "#2ecc71");
       await renderApprovalsList(taskId);
       if (userRole === "teacher") loadStatsPage();
       renderHomeOverviewStrip();
     } catch (e) {
-      showNotice("Onay güncelleme hatasý: " + e.message, "#e74c3c");
+      showNotice("Onay gï¿½ncelleme hatasï¿½: " + e.message, "#e74c3c");
     }
   };
 }
@@ -22062,7 +22062,7 @@ if (activityHeadAddLevelBtn) {
     try {
       iframe?.contentWindow?.postMessage({ type: "OPEN_DESIGNER" }, "*");
     } catch (e) {
-      showNotice("Seviye ekleme penceresi açýlamadý.", "#e74c3c");
+      showNotice("Seviye ekleme penceresi aï¿½ï¿½lamadï¿½.", "#e74c3c");
     }
   };
 }
@@ -22074,7 +22074,7 @@ if (activityHeadEditLevelBtn) {
     try {
       iframe?.contentWindow?.postMessage({ type: "OPEN_EDIT_LEVEL" }, "*");
     } catch (e) {
-      showNotice("Seviye düzenleme penceresi açýlamadý.", "#e74c3c");
+      showNotice("Seviye dï¿½zenleme penceresi aï¿½ï¿½lamadï¿½.", "#e74c3c");
     }
   };
 }
@@ -22086,7 +22086,7 @@ if (activityHeadDeleteLevelBtn) {
     try {
       iframe?.contentWindow?.postMessage({ type: "OPEN_DELETE_LEVEL" }, "*");
     } catch (e) {
-      showNotice("Seviye silme penceresi açýlamadý.", "#e74c3c");
+      showNotice("Seviye silme penceresi aï¿½ï¿½lamadï¿½.", "#e74c3c");
     }
   };
 }
@@ -22098,7 +22098,7 @@ if (activityHeadMoveUpBtn) {
     try {
       iframe?.contentWindow?.postMessage({ type: "MOVE_LEVEL_UP" }, "*");
     } catch (e) {
-      showNotice("Seviye yukarý taþýnamadý.", "#e74c3c");
+      showNotice("Seviye yukarï¿½ taï¿½ï¿½namadï¿½.", "#e74c3c");
     }
   };
 }
@@ -22110,7 +22110,7 @@ if (activityHeadMoveDownBtn) {
     try {
       iframe?.contentWindow?.postMessage({ type: "MOVE_LEVEL_DOWN" }, "*");
     } catch (e) {
-      showNotice("Seviye aþaðý taþýnamadý.", "#e74c3c");
+      showNotice("Seviye aï¿½aï¿½ï¿½ taï¿½ï¿½namadï¿½.", "#e74c3c");
     }
   };
 }
@@ -22142,7 +22142,7 @@ if (externalOpenBtn) {
     }
     const w = window.open(resolveAppLink(link), "_blank");
     if (!w) {
-      showNotice("Tarayýcý yeni sekmeyi engelledi. Pop-up izni verin.", "#e74c3c");
+      showNotice("Tarayï¿½cï¿½ yeni sekmeyi engelledi. Pop-up izni verin.", "#e74c3c");
     }
   };
 }
@@ -22172,7 +22172,7 @@ if (activityFullOpenTabBtn) {
 }
 
 function setActivityStartButtons(running) {
-  const text = running ? "Duraklat" : "Baþlat";
+  const text = running ? "Duraklat" : "Baï¿½lat";
   const btn = document.getElementById("btn-activity-start");
   const btnFull = document.getElementById("btn-activity-full-start");
   const btnHead = document.getElementById("btn-activity-head-start");
@@ -22238,9 +22238,9 @@ async function startActivitySession() {
       setupIframeFallback(iframe, item.appLink, {
         waitMs: 5000,
         showLoadingNotice: true,
-        loadingText: "Ýçerik iframe penceresinde yükleniyor...",
+        loadingText: "ï¿½ï¿½erik iframe penceresinde yï¿½kleniyor...",
         fallbackCountdownSeconds: 2,
-        redirectText: "Iframe açýlamadý. Yeni pencereye yönlendiriliyorsunuz"
+        redirectText: "Iframe aï¿½ï¿½lamadï¿½. Yeni pencereye yï¿½nlendiriliyorsunuz"
       });
     }
     // original behavior: iframe already has src and fallback setup
@@ -22311,29 +22311,29 @@ async function stopActivitySession(opts = {}) {
   const shortSession = isActivityAssignment && totalSeconds < 60;
   
   if (opts.requireConfirm && shortSession) {
-    const ok = await confirmDialog("Henüz uygulamayý tamamlamadýn. Çýkarsan etkinlik bitmemiþ sayýlacak ve tekrar baþtan yapacaksýn. Devam edilsin mi?");
+    const ok = await confirmDialog("Henï¿½z uygulamayï¿½ tamamlamadï¿½n. ï¿½ï¿½karsan etkinlik bitmemiï¿½ sayï¿½lacak ve tekrar baï¿½tan yapacaksï¿½n. Devam edilsin mi?");
     if (!ok) return false;
   }
   
   if (shortSession && opts.showMessage) {
     if (opts.askContinue) {
       const wantsExit = await infoDialog(
-        "Bu etkinlik ödevinde Kaydet ve Çýk için en az 1 dk geçirmelisin.",
+        "Bu etkinlik ï¿½devinde Kaydet ve ï¿½ï¿½k iï¿½in en az 1 dk geï¿½irmelisin.",
         {
           showContinue: true,
-          okText: "Kaydet ve Çýk",
+          okText: "Kaydet ve ï¿½ï¿½k",
           continueText: "Devam Et",
           okClass: "btn btn-warning",
           continueClass: "btn btn-primary"
         }
       );
       if (wantsExit) {
-        await infoDialog("Henüz 1 dk dolmadý. Lütfen en az 1 dk etkinlikte kalýp tekrar kaydet.", { okText: "Tamam" });
+        await infoDialog("Henï¿½z 1 dk dolmadï¿½. Lï¿½tfen en az 1 dk etkinlikte kalï¿½p tekrar kaydet.", { okText: "Tamam" });
       }
       return false;
     }
     const ok = await infoDialog(
-      "Henüz 1 dk dolmadý. Bu etkinlik ödevi için en az 1 dk geçirmelisin.",
+      "Henï¿½z 1 dk dolmadï¿½. Bu etkinlik ï¿½devi iï¿½in en az 1 dk geï¿½irmelisin.",
       { showContinue: false, okText: "Tamam" }
     );
     if (!ok && opts.allowContinue) return false;
@@ -22359,10 +22359,10 @@ async function stopActivitySession(opts = {}) {
     if (opts.showMessage) {
       if (opts.askContinue) {
         const wantsExit = await infoDialog(
-          `%${percent} tamamladýn. Ne yapmak istersin?`,
+          `%${percent} tamamladï¿½n. Ne yapmak istersin?`,
           {
             showContinue: true,
-            okText: "Kaydet ve Çýk",
+            okText: "Kaydet ve ï¿½ï¿½k",
             continueText: "Devam Et",
             okClass: "btn btn-success",
             continueClass: "btn btn-primary"
@@ -22382,9 +22382,9 @@ async function stopActivitySession(opts = {}) {
           }, 1000);
           return false;
         }
-        await infoDialog(`Verileriniz kayýt oldu. +${earnedXP} XP kazandýnýz.`, { okText: "Tamam" });
+        await infoDialog(`Verileriniz kayï¿½t oldu. +${earnedXP} XP kazandï¿½nï¿½z.`, { okText: "Tamam" });
       } else {
-        await infoDialog(`%${percent} tamamladýn. Tebrikler!`);
+        await infoDialog(`%${percent} tamamladï¿½n. Tebrikler!`);
       }
     }
     if (percent > 0) {
@@ -22412,27 +22412,27 @@ async function stopActivitySession(opts = {}) {
 async function deleteAssignmentCompletely(assignment) {
   if (!assignment?.id) return;
   try {
-    // Geçmiþ raporlar ve öðrenci puanlarý korunur: fiziksel silme yerine arþivleme.
+    // Geï¿½miï¿½ raporlar ve ï¿½ï¿½renci puanlarï¿½ korunur: fiziksel silme yerine arï¿½ivleme.
     await updateDoc(doc(db, "contentAssignments", assignment.id), {
       isDeleted: true,
       deletedAt: serverTimestamp(),
       deletedBy: currentUserId || null,
       updatedAt: serverTimestamp()
     });
-    showNotice("Etkinlik arþivlendi. Öðrenci geçmiþinde kalacak.", "#e74c3c");
+    showNotice("Etkinlik arï¿½ivlendi. ï¿½ï¿½renci geï¿½miï¿½inde kalacak.", "#e74c3c");
     contentAssignments = contentAssignments.map((a) =>
       a.id === assignment.id ? { ...a, isDeleted: true } : a
     );
     updateActivityLists();
   } catch (e) {
-    showNotice("Silme hatasý: " + e.message, "#e74c3c");
+    showNotice("Silme hatasï¿½: " + e.message, "#e74c3c");
   }
 }
 
 async function renderAssignmentStudentsList(assignment) {
   const list = document.getElementById("assignment-students-list");
   if (!list || !assignment) return;
-  list.innerHTML = "<div class='loading'>Öðrenciler yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>ï¿½ï¿½renciler yï¿½kleniyor...</div>";
   const classVal = document.getElementById("assignment-filter-class")?.value || "";
   const sectionVal = document.getElementById("assignment-filter-section")?.value || "";
   let students = allStudents;
@@ -22458,7 +22458,7 @@ async function renderAssignmentStudentsList(assignment) {
   });
   list.innerHTML = "";
   if (filtered.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
     return;
   }
   filtered.forEach((s) => {
@@ -22471,7 +22471,7 @@ async function renderAssignmentStudentsList(assignment) {
       });
     }
     const done = best > 0 || (prog?.completedItemIds || []).length > 0;
-    const label = done ? "Yaptý" : "Yapmadý";
+    const label = done ? "Yaptï¿½" : "Yapmadï¿½";
     const badgeClass = done ? "badge-success" : "badge-pending";
     const row = document.createElement("div");
     row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed #e5e7eb;";
@@ -22489,7 +22489,7 @@ async function renderAssignmentStudentsList(assignment) {
 async function renderTaskStudentsList(task) {
   const list = document.getElementById("task-students-list");
   if (!list || !task) return;
-  list.innerHTML = "<div class='loading'>Yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>Yï¿½kleniyor...</div>";
   const classVal = document.getElementById("task-students-filter-class")?.value || "";
   const sectionVal = document.getElementById("task-students-filter-section")?.value || "";
   let students = allStudents;
@@ -22533,23 +22533,23 @@ async function renderTaskStudentsList(task) {
 
   list.innerHTML = "";
   if (displayStudents.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
     return;
   }
   displayStudents.forEach((student) => {
     const comp = completionMap.get(student.id);
     const displayName = getUserDisplayName(student);
     const classInfo = student.className && student.section ? `${student.className}/${student.section}` : "-";
-    let badge = `<span class="badge badge-pending">Yapmadý</span>`;
+    let badge = `<span class="badge badge-pending">Yapmadï¿½</span>`;
     if (requiresTeacherApprovalTask(task)) {
       const status = comp?.status || "none";
       const approved = !!comp?.approved;
       if (approved) {
-        badge = `<span class="badge badge-success">Yaptý</span>`;
+        badge = `<span class="badge badge-success">Yaptï¿½</span>`;
       } else if (status === "finished") {
         badge = `<span class="badge badge-info">Bitirdi</span>`;
       } else if (status === "started") {
-        badge = `<span class="badge badge-progress">Baþladý</span>`;
+        badge = `<span class="badge badge-progress">Baï¿½ladï¿½</span>`;
       }
     } else if (comp) {
       const percent = Math.round((comp.correctAnswers / comp.totalQuestions) * 100);
@@ -22604,7 +22604,7 @@ function renderContentList() {
   list.innerHTML = "";
 
   if (userRole !== "teacher") {
-    list.innerHTML = "<div class='empty-state'>Ýçerikler öðrenci ekranýnda gösterilmez.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½erikler ï¿½ï¿½renci ekranï¿½nda gï¿½sterilmez.</div>";
     if (empty) empty.style.display = "block";
     if (editor) editor.style.display = "none";
     if (viewer) viewer.style.display = "none";
@@ -22614,7 +22614,7 @@ function renderContentList() {
   let contents = allContents.slice();
 
   if (contents.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Ýçerik bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½ï¿½erik bulunamadï¿½.</div>";
     if (empty) empty.style.display = "block";
     if (editor) editor.style.display = "none";
     if (viewer) viewer.style.display = "none";
@@ -22625,16 +22625,16 @@ function renderContentList() {
     const div = document.createElement("div");
     div.className = "content-item" + (selectedContentId === content.id ? " active" : "");
     const progress = getContentProgress(content);
-    const tag = content.targetClass ? `${content.targetClass}${content.targetSection ? "/" + content.targetSection : ""}` : "Tüm Sýnýflar";
+    const tag = content.targetClass ? `${content.targetClass}${content.targetSection ? "/" + content.targetSection : ""}` : "Tï¿½m Sï¿½nï¿½flar";
     div.innerHTML = `
       <div style="flex:1;">
-        <div style="font-weight:600;">${content.title || "Baþlýksýz"}</div>
+        <div style="font-weight:600;">${content.title || "Baï¿½lï¿½ksï¿½z"}</div>
         <div style="font-size:12px;color:#666;">${content.description || ""}</div>
         <div class="content-tag">${tag}</div>
         ${userRole === "student" ? `<div class="progress-mini"><div style="width:${progress.percent}%"></div></div>
-        <div style="font-size:11px;color:#666;margin-top:4px;">%${progress.percent} • ${progress.completed}/${progress.total} • ${progress.totalXP} XP</div>` : ""}
+        <div style="font-size:11px;color:#666;margin-top:4px;">%${progress.percent} ï¿½ ${progress.completed}/${progress.total} ï¿½ ${progress.totalXP} XP</div>` : ""}
       </div>
-      <div style="font-size:12px;color:#999;">${(content.items || []).length} öðe</div>
+      <div style="font-size:12px;color:#999;">${(content.items || []).length} ï¿½ï¿½e</div>
     `;
     div.onclick = () => {
       selectedContentId = content.id;
@@ -22679,7 +22679,7 @@ function selectContentForView(content, options = {}) {
   if (editor) editor.style.display = "none";
   if (viewer) viewer.style.display = "block";
   if (empty) empty.style.display = "none";
-  // Uygulama bilgilerini üst çubukta göster
+  // Uygulama bilgilerini ï¿½st ï¿½ubukta gï¿½ster
   const firstApp = (content.items || []).find(it => it.type === "app");
   const titleEl = document.getElementById("app-title");
   const linkEl = document.getElementById("app-link");
@@ -22702,11 +22702,11 @@ function selectContentForView(content, options = {}) {
 
   const progress = getContentProgress(content);
   header.innerHTML = `
-    <div style="font-weight:700;font-size:18px;">${content.title || "Baþlýksýz"}</div>
+    <div style="font-weight:700;font-size:18px;">${content.title || "Baï¿½lï¿½ksï¿½z"}</div>
     <div style="color:#666;font-size:12px;">${content.description || ""}</div>
     <div style="margin-top:8px;">
       <div class="progress-mini"><div style="width:${progress.percent}%"></div></div>
-      <div style="font-size:12px;color:#666;margin-top:4px;">%${progress.percent} • ${progress.completed}/${progress.total} • ${progress.totalXP} XP</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;">%${progress.percent} ï¿½ ${progress.completed}/${progress.total} ï¿½ ${progress.totalXP} XP</div>
     </div>
   `;
 
@@ -22724,17 +22724,17 @@ function selectContentForView(content, options = {}) {
     const isQuestion = item.type === "quiz" || item.type === "truefalse" || item.type === "short";
     const checkbox = isQuestion ? "" : `<label style="display:flex; gap:8px; align-items:center; font-size:12px; color:#666;">
       <input type="checkbox" ${checked ? "checked" : ""} data-id="${item.id}" ${readOnly ? "disabled" : ""}>
-      Tamamlandý
+      Tamamlandï¿½
     </label>`;
     const answerData = answers[item.id] || {};
 
     let inner = "";
     if (item.type === "heading") {
-      inner = `<div style="font-size:18px;font-weight:700;">${item.text || "Baþlýk"}</div>`;
+      inner = `<div style="font-size:18px;font-weight:700;">${item.text || "Baï¿½lï¿½k"}</div>`;
     } else if (item.type === "paragraph") {
       inner = `<div style="line-height:1.5;">${item.text || ""}</div>`;
     } else if (item.type === "image") {
-      inner = item.src ? `<img src="${item.src}" style="max-width:100%;border-radius:12px;">` : `<div>Görsel yok</div>`;
+      inner = item.src ? `<img src="${item.src}" style="max-width:100%;border-radius:12px;">` : `<div>Gï¿½rsel yok</div>`;
     } else if (item.type === "video") {
       inner = item.url ? `<div style="color:#2563eb;">${item.url}</div>` : `<div>Video URL yok</div>`;
     } else if (item.type === "quiz") {
@@ -22758,7 +22758,7 @@ function selectContentForView(content, options = {}) {
         </div>
         <button class="btn btn-primary btn-answer" data-id="${item.id}" style="margin-top:8px;" ${readOnly ? "disabled" : ""}>Cevapla</button>
         <div class="answer-status" style="margin-top:6px; font-size:12px; color:${answerData.correct ? "#16a34a" : answerData.answer ? "#dc2626" : "#6b7280"};">
-          ${answerData.answer ? (answerData.correct ? "Doðru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlýþ, tekrar deneyebilirsin.") : "Henüz cevaplanmadý"}
+          ${answerData.answer ? (answerData.correct ? "Doï¿½ru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlï¿½ï¿½, tekrar deneyebilirsin.") : "Henï¿½z cevaplanmadï¿½"}
         </div>
       `;
     } else if (item.type === "truefalse") {
@@ -22768,26 +22768,26 @@ function selectContentForView(content, options = {}) {
           <label class="kahoot-option k-t ${answerData.answer === "true" ? "is-selected" : ""}">
             <input type="radio" name="q_${item.id}" value="true" ${answerData.answer === "true" ? "checked" : ""} ${readOnly ? "disabled" : ""}>
             <span class="k-key">D</span>
-            <span class="k-text">Doðru</span>
+            <span class="k-text">Doï¿½ru</span>
           </label>
           <label class="kahoot-option k-f ${answerData.answer === "false" ? "is-selected" : ""}">
             <input type="radio" name="q_${item.id}" value="false" ${answerData.answer === "false" ? "checked" : ""} ${readOnly ? "disabled" : ""}>
             <span class="k-key">Y</span>
-            <span class="k-text">Yanlýþ</span>
+            <span class="k-text">Yanlï¿½ï¿½</span>
           </label>
         </div>
         <button class="btn btn-primary btn-answer" data-id="${item.id}" style="margin-top:8px;" ${readOnly ? "disabled" : ""}>Cevapla</button>
         <div class="answer-status" style="margin-top:6px; font-size:12px; color:${answerData.correct ? "#16a34a" : answerData.answer ? "#dc2626" : "#6b7280"};">
-          ${answerData.answer ? (answerData.correct ? "Doðru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlýþ, tekrar deneyebilirsin.") : "Henüz cevaplanmadý"}
+          ${answerData.answer ? (answerData.correct ? "Doï¿½ru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlï¿½ï¿½, tekrar deneyebilirsin.") : "Henï¿½z cevaplanmadï¿½"}
         </div>
       `;
     } else if (item.type === "short") {
       inner = `
         <div style="font-weight:600;">${item.question || "Soru"}</div>
-        <input class="form-control" data-short-id="${item.id}" placeholder="Cevabýn" ${readOnly ? "disabled" : ""}>
+        <input class="form-control" data-short-id="${item.id}" placeholder="Cevabï¿½n" ${readOnly ? "disabled" : ""}>
         <button class="btn btn-primary btn-answer" data-id="${item.id}" style="margin-top:8px;" ${readOnly ? "disabled" : ""}>Cevapla</button>
         <div class="answer-status" style="margin-top:6px; font-size:12px; color:${answerData.correct ? "#16a34a" : answerData.answer ? "#dc2626" : "#6b7280"};">
-          ${answerData.answer ? (answerData.correct ? "Doðru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlýþ, tekrar deneyebilirsin.") : "Henüz cevaplanmadý"}
+          ${answerData.answer ? (answerData.correct ? "Doï¿½ru! +" + clampQuestionXP(item.xp || 0) + " XP" : "Yanlï¿½ï¿½, tekrar deneyebilirsin.") : "Henï¿½z cevaplanmadï¿½"}
         </div>
       `;
     } else if (item.type === "app") {
@@ -22798,11 +22798,11 @@ function selectContentForView(content, options = {}) {
       inner = `
         <div style="font-weight:600;">${item.appTitle || "Uygulama"}</div>
         <div style="font-size:12px;color:#666;word-break:break-all;">${item.appLink || ""}</div>
-        <button class="btn btn-primary btn-open-app" data-id="${item.id}" style="margin-top:8px;" ${readOnly ? "disabled" : ""}>Uygulamayý Aç</button>
-        <div style="margin-top:6px;font-size:12px;color:#666;">Geçirilen süre: ${mins} dk ${secs} sn / Gerekli: ${required} dk</div>
-        <div style="font-size:12px;color:#2563eb;">Ýlerleme: %${usage.percent || 0}</div>
+        <button class="btn btn-primary btn-open-app" data-id="${item.id}" style="margin-top:8px;" ${readOnly ? "disabled" : ""}>Uygulamayï¿½ Aï¿½</button>
+        <div style="margin-top:6px;font-size:12px;color:#666;">Geï¿½irilen sï¿½re: ${mins} dk ${secs} sn / Gerekli: ${required} dk</div>
+        <div style="font-size:12px;color:#2563eb;">ï¿½lerleme: %${usage.percent || 0}</div>
         <div style="font-size:12px;color:${usage.seconds >= required * 60 ? "#16a34a" : "#6b7280"};">
-          ${usage.seconds >= required * 60 ? "Tamamlandý" : "Tamamlanmadý"}
+          ${usage.seconds >= required * 60 ? "Tamamlandï¿½" : "Tamamlanmadï¿½"}
         </div>
       `;
     }
@@ -22847,7 +22847,7 @@ function selectContentForView(content, options = {}) {
         answer = checkedInput?.value || "";
       }
       if (!answer) {
-        showNotice("Cevap seçiniz!", "#e74c3c");
+        showNotice("Cevap seï¿½iniz!", "#e74c3c");
         return;
       }
       const correct = isAnswerCorrect(item, answer);
@@ -22895,21 +22895,21 @@ function isAnswerCorrect(item, answer) {
 
 async function updateContentProgress(content, completedItemIds, answers = {}, appUsage = {}, prevTotalXP = 0) {
   if (!currentUserId) return;
-  // Eðer bu içerik bir ödev olarak verildiyse ve öðretmen tarafýndan silinmiþse,
-  // öðrenci tarafýndan yapýlan "boþ" kayýtlar (hiç kullaným/ilerleme olmadan) öðretmenin
-  // bekleyen/kalan verisini kirletmemesi için kaydedilmemeli.
+  // Eï¿½er bu iï¿½erik bir ï¿½dev olarak verildiyse ve ï¿½ï¿½retmen tarafï¿½ndan silinmiï¿½se,
+  // ï¿½ï¿½renci tarafï¿½ndan yapï¿½lan "boï¿½" kayï¿½tlar (hiï¿½ kullanï¿½m/ilerleme olmadan) ï¿½ï¿½retmenin
+  // bekleyen/kalan verisini kirletmemesi iï¿½in kaydedilmemeli.
   try {
     const assignment = (contentAssignments || []).find(a => a.contentId === content.id);
     if (assignment && assignment.isDeleted) {
       const hasUsage = Object.values(appUsage || {}).some(u => Number(u?.seconds || 0) > 0 || Number(u?.percent || 0) > 0 || Number(u?.xp || 0) > 0);
       const hasItems = Array.isArray(completedItemIds) && completedItemIds.length > 0;
       if (!hasUsage && !hasItems) {
-        // Öðrenci ödevi yapmadan silmiþ/kapamýþsa gereksiz progress kaydý oluþturma.
+        // ï¿½ï¿½renci ï¿½devi yapmadan silmiï¿½/kapamï¿½ï¿½sa gereksiz progress kaydï¿½ oluï¿½turma.
         return;
       }
     }
   } catch (e) {
-    // Hata olsa da devam et; güvenlik nedeniyle iþlem bozulmasýn.
+    // Hata olsa da devam et; gï¿½venlik nedeniyle iï¿½lem bozulmasï¿½n.
     console.warn('updateContentProgress assignment check failed:', e);
   }
   const ref = doc(db, "contentProgress", buildContentProgressKey(content.id));
@@ -22937,7 +22937,7 @@ async function updateContentProgress(content, completedItemIds, answers = {}, ap
     try {
       await updateDoc(doc(db, "users", currentUserId), { xp: increment(delta) });
     } catch (e) {
-      console.error("XP güncelleme hatasý:", e);
+      console.error("XP gï¿½ncelleme hatasï¿½:", e);
     }
   }
   updateActivityLists();
@@ -23057,7 +23057,7 @@ function renderContentItemsEditor() {
     let inner = "";
     if (item.type === "heading") {
       inner = `
-        <input class="form-control" data-field="text" placeholder="Baþlýk" value="${item.text || ""}">
+        <input class="form-control" data-field="text" placeholder="Baï¿½lï¿½k" value="${item.text || ""}">
         <input class="form-control" data-field="xp" type="number" min="0" placeholder="XP" value="${item.xp ?? 0}">
       `;
     } else if (item.type === "paragraph") {
@@ -23067,9 +23067,9 @@ function renderContentItemsEditor() {
       `;
     } else if (item.type === "image") {
       inner = `
-        <input class="form-control" data-field="src" placeholder="Görsel URL" value="${item.src || ""}">
+        <input class="form-control" data-field="src" placeholder="Gï¿½rsel URL" value="${item.src || ""}">
         <input class="form-control" type="file" accept="image/*" data-field="file">
-        <div style="font-size:12px;color:#666;">Sürükle-býrak ile görsel ekleyebilirsiniz.</div>
+        <div style="font-size:12px;color:#666;">Sï¿½rï¿½kle-bï¿½rak ile gï¿½rsel ekleyebilirsiniz.</div>
         <input class="form-control" data-field="xp" type="number" min="0" placeholder="XP" value="${item.xp ?? 0}">
       `;
     } else if (item.type === "video") {
@@ -23080,17 +23080,17 @@ function renderContentItemsEditor() {
     } else if (item.type === "quiz") {
       inner = `
         <input class="form-control" data-field="question" placeholder="Soru" value="${item.question || ""}">
-        ${item.options.map((opt, i) => `<input class="form-control" data-field="opt-${i}" placeholder="Seçenek ${i + 1}" value="${opt || ""}">`).join("")}
-        <input class="form-control" data-field="correct" placeholder="Doðru Cevap" value="${item.correct || ""}">
+        ${item.options.map((opt, i) => `<input class="form-control" data-field="opt-${i}" placeholder="Seï¿½enek ${i + 1}" value="${opt || ""}">`).join("")}
+        <input class="form-control" data-field="correct" placeholder="Doï¿½ru Cevap" value="${item.correct || ""}">
         <input class="form-control" data-field="xp" type="number" min="0" max="${MAX_QUESTION_XP}" placeholder="XP" value="${clampQuestionXP(item.xp ?? MAX_QUESTION_XP)}">
       `;
     } else if (item.type === "truefalse") {
       inner = `
         <input class="form-control" data-field="question" placeholder="Soru" value="${item.question || ""}">
         <select class="form-control" data-field="correct">
-          <option value="">Doðru/Yanlýþ Seç</option>
-          <option value="true" ${item.correct === "true" ? "selected" : ""}>Doðru</option>
-          <option value="false" ${item.correct === "false" ? "selected" : ""}>Yanlýþ</option>
+          <option value="">Doï¿½ru/Yanlï¿½ï¿½ Seï¿½</option>
+          <option value="true" ${item.correct === "true" ? "selected" : ""}>Doï¿½ru</option>
+          <option value="false" ${item.correct === "false" ? "selected" : ""}>Yanlï¿½ï¿½</option>
         </select>
         <input class="form-control" data-field="xp" type="number" min="0" max="${MAX_QUESTION_XP}" placeholder="XP" value="${clampQuestionXP(item.xp ?? MAX_QUESTION_XP)}">
       `;
@@ -23102,9 +23102,9 @@ function renderContentItemsEditor() {
       `;
     } else if (item.type === "app") {
       inner = `
-        <input class="form-control" data-field="appTitle" placeholder="Uygulama Baþlýðý" value="${item.appTitle || ""}">
+        <input class="form-control" data-field="appTitle" placeholder="Uygulama Baï¿½lï¿½ï¿½ï¿½" value="${item.appTitle || ""}">
         <input class="form-control" data-field="appLink" placeholder="Uygulama Linki (https://...)" value="${item.appLink || ""}">
-        <input class="form-control" data-field="requiredMinutes" type="number" min="1" placeholder="Gerekli Süre (dk)" value="${item.requiredMinutes ?? 1}">
+        <input class="form-control" data-field="requiredMinutes" type="number" min="1" placeholder="Gerekli Sï¿½re (dk)" value="${item.requiredMinutes ?? 1}">
       `;
     }
 
@@ -23228,7 +23228,7 @@ function renderTasksList() {
   }
   
   if (tasks.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Filtreye uygun ödev bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>Filtreye uygun ï¿½dev bulunamadï¿½.</div>";
     return;
   }
   
@@ -23241,11 +23241,11 @@ function renderTasksList() {
       ? `<button class="btn btn-danger btn-task-list-delete" data-task-id="${task.id}" style="padding:6px 10px;">Sil</button>`
       : `<span class="badge badge-info">Detay</span>`;
     const archiveBadge = isArchived
-      ? `<small style="color:#ef4444;display:block;">Arþivlendi</small>`
+      ? `<small style="color:#ef4444;display:block;">Arï¿½ivlendi</small>`
       : "";
     div.innerHTML = `
       <div style="flex:1;">
-        <div style="font-weight:600;">${task.title || "Baþlýksýz"}</div>
+        <div style="font-weight:600;">${task.title || "Baï¿½lï¿½ksï¿½z"}</div>
         <small style="color:#666;">?? ${dateStr}</small>
         ${archiveBadge}
       </div>
@@ -23272,10 +23272,10 @@ function renderTasksList() {
 async function archiveTaskById(task) {
   if (!task?.id || userRole !== "teacher") return;
   if (task?.isDeleted) {
-    showNotice("Bu ödev zaten arþivlenmiþ.", "#f39c12");
+    showNotice("Bu ï¿½dev zaten arï¿½ivlenmiï¿½.", "#f39c12");
     return;
   }
-  const ok = await confirmDialog(`"${task.title || "Ödev"}" arþivlensin mi?`);
+  const ok = await confirmDialog(`"${task.title || "ï¿½dev"}" arï¿½ivlensin mi?`);
   if (!ok) return;
   try {
     await updateDoc(doc(db, "activities", task.id), {
@@ -23284,9 +23284,9 @@ async function archiveTaskById(task) {
       deletedBy: currentUserId || null,
       updatedAt: serverTimestamp()
     });
-    showNotice("Ödev arþivlendi. Öðrenci geçmiþinde kalacak.", "#2ecc71");
+    showNotice("ï¿½dev arï¿½ivlendi. ï¿½ï¿½renci geï¿½miï¿½inde kalacak.", "#2ecc71");
   } catch (e) {
-    showNotice("Silme hatasý: " + e.message, "#e74c3c");
+    showNotice("Silme hatasï¿½: " + e.message, "#e74c3c");
   }
 }
 
@@ -23296,7 +23296,7 @@ function loadAllTasksModal() {
   list.innerHTML = "";
   
   if (allTasks.length === 0) {
-    list.innerHTML = "<div class='empty-state'>Ödev bulunamadý.</div>";
+    list.innerHTML = "<div class='empty-state'>ï¿½dev bulunamadï¿½.</div>";
     return;
   }
   
@@ -23306,10 +23306,10 @@ function loadAllTasksModal() {
     const dateStr = getTaskDate(task).toLocaleDateString("tr-TR");
     div.innerHTML = `
       <div style="flex:1;">
-        <div style="font-weight:600;">${task.title || "Baþlýksýz"}</div>
+        <div style="font-weight:600;">${task.title || "Baï¿½lï¿½ksï¿½z"}</div>
         <small style="color:#666;">?? ${dateStr}</small>
       </div>
-      <span class="badge badge-info">Düzenle</span>
+      <span class="badge badge-info">Dï¿½zenle</span>
     `;
     div.onclick = async () => {
       if (allTasksModal) allTasksModal.style.display = "none";
@@ -23326,7 +23326,7 @@ async function openTaskStudentsModal(task) {
   currentTaskStudentsId = task.id;
   const title = document.getElementById("task-students-title");
   const list = document.getElementById("task-students-list");
-  if (title) title.innerText = `Ödev Durumu: ${task.title || "Baþlýksýz"}`;
+  if (title) title.innerText = `ï¿½dev Durumu: ${task.title || "Baï¿½lï¿½ksï¿½z"}`;
   if (!list) return;
   const classSel = document.getElementById("task-students-filter-class");
   const sectionSel = document.getElementById("task-students-filter-section");
@@ -23338,7 +23338,7 @@ async function openTaskStudentsModal(task) {
 async function loadReportsModal() {
   const list = document.getElementById("reports-list");
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>Yï¿½kleniyor...</div>";
   try {
     const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
     const studentsSnap = await getDocs(studentsQuery);
@@ -23350,7 +23350,7 @@ async function loadReportsModal() {
     
     list.innerHTML = "";
     if (displayStudents.length === 0) {
-      list.innerHTML = "<div class='empty-state'>Öðrenci bulunamadý.</div>";
+      list.innerHTML = "<div class='empty-state'>ï¿½ï¿½renci bulunamadï¿½.</div>";
       return;
     }
     
@@ -23435,14 +23435,14 @@ async function loadReportsModal() {
       row.style.cursor = "pointer";
       row.innerHTML = `
         <div style="flex:1;">
-          <div style="font-weight:600;">Sýnýf ${className}/${section}</div>
+          <div style="font-weight:600;">Sï¿½nï¿½f ${className}/${section}</div>
           <small style="color:#666;display:block;margin-top:4px;">
             Mevcut: ${totalStudents} | Tamamlama: %${cappedRate}
           </small>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
-          <button class="btn btn-primary btn-class-pdf" style="padding:6px 10px;">Sýnýf Raporu Ýndir</button>
-          <button class="btn btn-primary btn-class-all" style="padding:6px 10px; background:#1d4ed8;">Tüm Öðrenciler PDF</button>
+          <button class="btn btn-primary btn-class-pdf" style="padding:6px 10px;">Sï¿½nï¿½f Raporu ï¿½ndir</button>
+          <button class="btn btn-primary btn-class-all" style="padding:6px 10px; background:#1d4ed8;">Tï¿½m ï¿½ï¿½renciler PDF</button>
         </div>
       `;
       
@@ -23465,7 +23465,7 @@ async function loadReportsModal() {
     }
   } catch (e) {
     console.error("loadReportsModal error:", e);
-    list.innerHTML = `<div class='empty-state'>Rapor listesi yüklenemedi: ${escapeHtml(e?.message || "Bilinmeyen hata")}</div>`;
+    list.innerHTML = `<div class='empty-state'>Rapor listesi yï¿½klenemedi: ${escapeHtml(e?.message || "Bilinmeyen hata")}</div>`;
   }
   syncRunnerSaveButtons();
 }
@@ -23474,9 +23474,9 @@ async function openClassStudentsModal(className, section, group, totalTasks, cla
   if (!taskStudentsModal) return;
   const title = document.getElementById("task-students-title");
   const list = document.getElementById("task-students-list");
-  if (title) title.innerText = `Sýnýf ${className}/${section} Öðrenciler`;
+  if (title) title.innerText = `Sï¿½nï¿½f ${className}/${section} ï¿½ï¿½renciler`;
   if (!list) return;
-  list.innerHTML = "<div class='loading'>Öðrenciler yükleniyor...</div>";
+  list.innerHTML = "<div class='loading'>ï¿½ï¿½renciler yï¿½kleniyor...</div>";
   
   const container = document.createElement("div");
   container.style.display = "flex";
@@ -23595,7 +23595,7 @@ async function openClassStudentsModal(className, section, group, totalTasks, cla
 function populateTaskTargets() {
   const targetSelect = document.getElementById("task-target");
   if (!targetSelect) return;
-  targetSelect.innerHTML = "<option value=\"all\">Tüm Sýnýflar</option>";
+  targetSelect.innerHTML = "<option value=\"all\">Tï¿½m Sï¿½nï¿½flar</option>";
   
   const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
   getDocs(studentsQuery).then((snap) => {
@@ -23613,13 +23613,13 @@ function populateTaskTargets() {
     Array.from(classMap.keys()).sort().forEach(className => {
       const optClass = document.createElement("option");
       optClass.value = `class:${className}`;
-      optClass.textContent = `Sýnýf ${className} (Tümü)`;
+      optClass.textContent = `Sï¿½nï¿½f ${className} (Tï¿½mï¿½)`;
       targetSelect.appendChild(optClass);
       
       Array.from(classMap.get(className)).sort().forEach(section => {
         const opt = document.createElement("option");
         opt.value = `class:${className}|section:${section}`;
-        opt.textContent = `Sýnýf ${className}/${section}`;
+        opt.textContent = `Sï¿½nï¿½f ${className}/${section}`;
         targetSelect.appendChild(opt);
       });
     });
@@ -23691,7 +23691,7 @@ document.getElementById("task-target")?.addEventListener("change", () => {
 async function downloadClassPdf(className, section, students, completionRate) {
   const { jsPDF } = window.jspdf || {};
   if (!jsPDF) {
-    showNotice("PDF kütüphanesi yüklenemedi!", "#e74c3c");
+    showNotice("PDF kï¿½tï¿½phanesi yï¿½klenemedi!", "#e74c3c");
     return;
   }
   
@@ -23804,11 +23804,11 @@ async function downloadClassPdf(className, section, students, completionRate) {
   
   container.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h2 style="margin:0;color:#2563eb;">Sýnýf Raporu</h2>
+      <h2 style="margin:0;color:#2563eb;">Sï¿½nï¿½f Raporu</h2>
       <span style="font-size:12px;color:#6b7280;">${new Date().toLocaleDateString("tr-TR")}</span>
     </div>
     <div style="margin-bottom:10px;">
-      <strong>Sýnýf/Þube:</strong> ${className}/${section} | <strong>Öðrenci:</strong> ${rows.length}
+      <strong>Sï¿½nï¿½f/ï¿½ube:</strong> ${className}/${section} | <strong>ï¿½ï¿½renci:</strong> ${rows.length}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px;">
       <div style="padding:10px;background:#f0f7ff;border-radius:8px;">
@@ -23816,7 +23816,7 @@ async function downloadClassPdf(className, section, students, completionRate) {
         <div style="font-size:18px;font-weight:bold;color:#2563eb;">%${classAvgCompletion}</div>
       </div>
       <div style="padding:10px;background:#f0fff4;border-radius:8px;">
-        <div style="font-size:12px;color:#6b7280;">Ortalama Baþarý</div>
+        <div style="font-size:12px;color:#6b7280;">Ortalama Baï¿½arï¿½</div>
         <div style="font-size:18px;font-weight:bold;color:#16a34a;">%${classAvgScore}</div>
       </div>
       <div style="padding:10px;background:#fff7ed;border-radius:8px;">
@@ -23830,7 +23830,7 @@ async function downloadClassPdf(className, section, students, completionRate) {
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
       <div>
-        <div style="font-size:12px;color:#6b7280;">Ödev Tamamlama</div>
+        <div style="font-size:12px;color:#6b7280;">ï¿½dev Tamamlama</div>
         <div style="height:10px;background:#f3f4f6;border-radius:999px;overflow:hidden;margin-top:6px;">
           <div style="height:10px;background:#3b82f6;width:${Math.min(100, Math.max(0, taskCompletionRate))}%;"></div>
         </div>
@@ -23842,7 +23842,7 @@ async function downloadClassPdf(className, section, students, completionRate) {
         </div>
       </div>
     </div>
-    <h3 style="margin:0 0 8px 0;color:#111827;">Öðrenci Listesi</h3>
+    <h3 style="margin:0 0 8px 0;color:#111827;">ï¿½ï¿½renci Listesi</h3>
     ${listItems || "<div style='color:#6b7280;'>Veri yok.</div>"}
   `;
   
@@ -23874,7 +23874,7 @@ async function downloadClassPdf(className, section, students, completionRate) {
 async function downloadClassStudentsPdf(className, section, students) {
   const { jsPDF } = window.jspdf || {};
   if (!jsPDF) {
-    showNotice("PDF kütüphanesi yüklenemedi!", "#e74c3c");
+    showNotice("PDF kï¿½tï¿½phanesi yï¿½klenemedi!", "#e74c3c");
     return;
   }
   const pdf = new jsPDF("p", "mm", "a4");
@@ -23911,7 +23911,7 @@ async function downloadClassStudentsPdf(className, section, students) {
 async function openAllStudentsReportPreview(className, section, students) {
   const reportWindow = window.open("", "_blank");
   if (!reportWindow) {
-    showNotice("Yeni pencere açýlamadý.", "#e74c3c");
+    showNotice("Yeni pencere aï¿½ï¿½lamadï¿½.", "#e74c3c");
     return;
   }
   if (reportsModal) reportsModal.style.display = "none";
@@ -23921,7 +23921,7 @@ async function openAllStudentsReportPreview(className, section, students) {
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Sýnýf Öðrenci Raporlarý</title>
+      <title>Sï¿½nï¿½f ï¿½ï¿½renci Raporlarï¿½</title>
       <style>
         body { margin: 0; padding: 16px; background:#f4f5f9; font-family: "Montserrat","Segoe UI",Tahoma,Arial,sans-serif; }
         .loading-overlay { position: fixed; inset: 0; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.9); z-index: 50; }
@@ -23930,7 +23930,7 @@ async function openAllStudentsReportPreview(className, section, students) {
     </head>
     <body>
       <div class="loading-overlay" id="loading-overlay">
-        <div class="loading-card">Raporlar hazýrlanýyor...</div>
+        <div class="loading-card">Raporlar hazï¿½rlanï¿½yor...</div>
       </div>
       <div id="report-root"></div>
     </body>
@@ -23988,15 +23988,15 @@ async function openAllStudentsReportPreview(className, section, students) {
     const root = reportWindow.document.getElementById("report-root");
     if (root) {
       const note = failedCount > 0
-        ? `<div class="preview-note">${failedCount} öðrenci raporu hazýrlanamadý. Kalan raporlar gösteriliyor.</div>`
+        ? `<div class="preview-note">${failedCount} ï¿½ï¿½renci raporu hazï¿½rlanamadï¿½. Kalan raporlar gï¿½steriliyor.</div>`
         : "";
       root.innerHTML = `
         <div class="toolbar">
-          <button id="downloadAll" class="btn btn-primary">Raporu Ýndir</button>
+          <button id="downloadAll" class="btn btn-primary">Raporu ï¿½ndir</button>
           <button id="closeAll" class="btn btn-danger" style="background:#dc2626; color:#fff;">Kapat</button>
         </div>
         ${note}
-        ${blocks.join("") || "<div class='preview-note'>Hiç rapor oluþturulamadý.</div>"}
+        ${blocks.join("") || "<div class='preview-note'>Hiï¿½ rapor oluï¿½turulamadï¿½.</div>"}
       `;
       const btn = reportWindow.document.getElementById("downloadAll");
       if (btn) {
@@ -24016,7 +24016,7 @@ async function openAllStudentsReportPreview(className, section, students) {
     console.error("openAllStudentsReportPreview error:", e);
     const root = reportWindow.document.getElementById("report-root");
     if (root) {
-      root.innerHTML = `<div class="preview-note">Rapor hazýrlanýrken hata oluþtu: ${escapeHtml(e?.message || "Bilinmeyen hata")}</div>`;
+      root.innerHTML = `<div class="preview-note">Rapor hazï¿½rlanï¿½rken hata oluï¿½tu: ${escapeHtml(e?.message || "Bilinmeyen hata")}</div>`;
     }
   } finally {
     suppressStudentDetailModal = false;
@@ -24025,7 +24025,7 @@ async function openAllStudentsReportPreview(className, section, students) {
   }
 }
 
-/* ================= ÝSTATÝSTÝK SAYFASI ================= */
+/* ================= ï¿½STATï¿½STï¿½K SAYFASI ================= */
 async function loadStatsPage() {
   if (statsPageLoading) {
     statsPageQueued = true;
@@ -24191,7 +24191,7 @@ async function loadStatsPage() {
       const taskId = String(p.taskId || "");
       if (!studentIdLookup.has(userId) || !taskId) return;
       if (userRole === "teacher" && teacherTaskIds.size && !teacherTaskIds.has(taskId)) return;
-      // Bilinen onaylý ödevleri say; eski/silinmiþ görevler için de approved kaydý varsa grafiðe yansýt.
+      // Bilinen onaylï¿½ ï¿½devleri say; eski/silinmiï¿½ gï¿½revler iï¿½in de approved kaydï¿½ varsa grafiï¿½e yansï¿½t.
       const approved = !!p.approved;
       if (!approved) return;
       if (manualTaskIds.size && !manualTaskIds.has(taskId)) return;
@@ -24201,7 +24201,7 @@ async function loadStatsPage() {
         userSet.add(taskId);
         manualDoneByUser.set(userId, (manualDoneByUser.get(userId) || 0) + 1);
       }
-      // Onaylý her ödev +5 XP
+      // Onaylï¿½ her ï¿½dev +5 XP
       xpByUser.set(userId, (xpByUser.get(userId) || 0) + MANUAL_TASK_APPROVAL_XP);
     });
 
@@ -24264,7 +24264,7 @@ async function loadStatsPage() {
         Number(computeStateDoneByUser.get(student.id) || 0)
       );
       const completedLessons = Number(lessonDoneByUser.get(student.id) || 0);
-      // Atama silinse bile kaydedilmiþ öðrenci ilerlemesi grafikte görünmeye devam etsin.
+      // Atama silinse bile kaydedilmiï¿½ ï¿½ï¿½renci ilerlemesi grafikte gï¿½rï¿½nmeye devam etsin.
       const totalTasks = Math.max(tasksForStudent.length || 0, completedCount);
       const totalActivities = Math.max(assignmentsForStudent.length || 0, completedActivities);
       const totalBlocks = Math.max(
@@ -24382,7 +24382,7 @@ async function loadStatsPage() {
             <div class="top-student-avatar"><img src="${avatarImg}" alt="${s.name} avatar"></div>
             <div>
               <div class="top-student-name">${s.name}${medal ? `<span class="top-student-medal">${medal}</span>` : ""}</div>
-              <div class="top-student-meta">Baþarý: %${s.completionRate}</div>
+              <div class="top-student-meta">Baï¿½arï¿½: %${s.completionRate}</div>
             </div>
             <div class="top-student-xp">${s.xp} XP</div>
           `;
@@ -24476,10 +24476,10 @@ async function loadStatsPage() {
     if (contentEl) contentEl.style.display = "block";
     
   } catch (error) {
-    console.error("Ýstatistik hatasý:", error);
+    console.error("ï¿½statistik hatasï¿½:", error);
     if (loadingEl) loadingEl.innerHTML = "Hata: " + error.message;
   } finally {
-    // Hata olsa bile panel "Yükleniyor" ekranýnda takýlý kalmasýn.
+    // Hata olsa bile panel "Yï¿½kleniyor" ekranï¿½nda takï¿½lï¿½ kalmasï¿½n.
     if (loadingEl) loadingEl.style.display = "none";
     if (contentEl) contentEl.style.display = "block";
     statsPageLoading = false;
@@ -24506,15 +24506,15 @@ function renderClassChart(completedCount, totalPossible) {
     summaryEl.innerHTML = `
       <div class="pie-summary-item completed">
         <div class="pie-summary-val">${completed}</div>
-        <div class="pie-summary-label">Tamamlanan • %${completedPct}</div>
+        <div class="pie-summary-label">Tamamlanan ï¿½ %${completedPct}</div>
       </div>
       <div class="pie-summary-item pending">
         <div class="pie-summary-val">${pending}</div>
-        <div class="pie-summary-label">Bekleyen • %${pendingPct}</div>
+        <div class="pie-summary-label">Bekleyen ï¿½ %${pendingPct}</div>
       </div>
       <div class="pie-summary-item total">
         <div class="pie-summary-val">${total}</div>
-        <div class="pie-summary-label">Toplam Görev</div>
+        <div class="pie-summary-label">Toplam Gï¿½rev</div>
       </div>
     `;
   }
@@ -24568,7 +24568,7 @@ function renderClassTypeChart(data) {
   classTypeChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: ["Ödev", "Etkinlik", "Blok", "3D Blok", "Compute", "Derslerim"],
+      labels: ["ï¿½dev", "Etkinlik", "Blok", "3D Blok", "Compute", "Derslerim"],
       datasets: [{
         label: "Tamamlama %",
         data: [
@@ -24622,7 +24622,7 @@ function renderClassTypeChart(data) {
 async function showStudentDetail(student, completions, rank) {
   if (taskStudentsModal) taskStudentsModal.style.display = "none";
   document.getElementById("student-detail-name").innerText = 
-    getUserDisplayName(student) + " - Detaylý Ýstatistik";
+    getUserDisplayName(student) + " - Detaylï¿½ ï¿½statistik";
   
   const totalTasks = allTasks.length;
   const completedCount = completions.length;
@@ -24642,7 +24642,7 @@ async function showStudentDetail(student, completions, rank) {
     
     const task = allTasks.find(t => t.id === comp.taskId);
     taskHistory.push({
-      title: task ? task.title : "Bilinmeyen Ödev",
+      title: task ? task.title : "Bilinmeyen ï¿½dev",
       score: Math.round(score),
       duration: comp.duration || 0,
       date: comp.completedAt ? comp.completedAt.toDate().toLocaleDateString("tr-TR") : "-",
@@ -24656,7 +24656,7 @@ async function showStudentDetail(student, completions, rank) {
       if (!data?.approved) return;
       const task = allTasks.find(t => t.id === data.taskId);
       taskHistory.push({
-        title: task ? task.title : `${data.bookName || "Kitap"} ${data.bookTest || ""}`.trim() || "Kitap/Test Ödevi",
+        title: task ? task.title : `${data.bookName || "Kitap"} ${data.bookTest || ""}`.trim() || "Kitap/Test ï¿½devi",
         score: 100,
         duration: 0,
         date: data.updatedAt && typeof data.updatedAt.toDate === "function"
@@ -24666,7 +24666,7 @@ async function showStudentDetail(student, completions, rank) {
       });
     });
   } catch (e) {
-    console.error("Kitap/test ödevleri yüklenemedi:", e);
+    console.error("Kitap/test ï¿½devleri yï¿½klenemedi:", e);
   }
   let lessonHistory = [];
   try {
@@ -24688,7 +24688,7 @@ async function showStudentDetail(student, completions, rank) {
     });
     taskHistory.push(...lessonHistory);
   } catch (e) {
-    console.error("Ders geçmiþi yüklenemedi:", e);
+    console.error("Ders geï¿½miï¿½i yï¿½klenemedi:", e);
   }
   const quizStats = await fetchStudentQuizStats(student.id);
   const computeStats = await fetchComputeRunStats(student.id);
@@ -24698,7 +24698,7 @@ async function showStudentDetail(student, completions, rank) {
     const percent = Math.max(0, Math.min(100, Number(run.percent || 0)));
     const updatedMs = Math.max(0, Number(run.updatedAtMs || 0));
     return {
-      title: run?.title || "Compute It Ödevi",
+      title: run?.title || "Compute It ï¿½devi",
       score: Math.round(percent),
       duration: durationSec,
       date: updatedMs > 0 ? new Date(updatedMs).toLocaleDateString("tr-TR") : "-",
@@ -24765,7 +24765,7 @@ async function showStudentDetail(student, completions, rank) {
   if (quizHistoryContainer) quizHistoryContainer.innerHTML = "";
   
   if (taskHistory.length === 0) {
-    historyContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henüz tamamlanan ödev yok.</p>";
+    historyContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henï¿½z tamamlanan ï¿½dev yok.</p>";
   } else {
     taskHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
     
@@ -24784,7 +24784,7 @@ async function showStudentDetail(student, completions, rank) {
           </span>
         </div>
         <small style="color: #666; display: block; margin-top: 5px;">
-          Tarih: ${task.date} | Süre: ${mins}dk ${secs}sn | XP: +${task.xp}
+          Tarih: ${task.date} | Sï¿½re: ${mins}dk ${secs}sn | XP: +${task.xp}
         </small>
       `;
       historyContainer.appendChild(div);
@@ -24816,12 +24816,12 @@ async function showStudentDetail(student, completions, rank) {
       });
     });
   } catch (e) {
-    console.error("Etkinlik geçmiþi yüklenemedi:", e);
+    console.error("Etkinlik geï¿½miï¿½i yï¿½klenemedi:", e);
   }
 
   if (contentHistoryContainer) {
     if (activityHistory.length === 0) {
-      contentHistoryContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henüz tamamlanan etkinlik yok.</p>";
+      contentHistoryContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henï¿½z tamamlanan etkinlik yok.</p>";
     } else {
       activityHistory.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       activityHistory.forEach((act) => {
@@ -24839,7 +24839,7 @@ async function showStudentDetail(student, completions, rank) {
             <span class="badge ${cls}">%${act.percent}</span>
           </div>
           <small style="color: #666; display: block; margin-top: 5px;">
-            Tarih: ${act.updatedAt} | Süre: ${mins}dk ${secs}sn
+            Tarih: ${act.updatedAt} | Sï¿½re: ${mins}dk ${secs}sn
           </small>
         `;
         contentHistoryContainer.appendChild(div);
@@ -24849,7 +24849,7 @@ async function showStudentDetail(student, completions, rank) {
 
   if (quizHistoryContainer) {
     if (!quizHistory.length) {
-      quizHistoryContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henüz quiz sonucu yok.</p>";
+      quizHistoryContainer.innerHTML = "<p style='text-align: center; color: #888; padding: 20px;'>Henï¿½z quiz sonucu yok.</p>";
     } else {
       quizHistory.forEach((qz) => {
         const div = document.createElement("div");
@@ -24860,7 +24860,7 @@ async function showStudentDetail(student, completions, rank) {
             <span class="badge ${qz.successRate >= 80 ? 'badge-success' : qz.successRate >= 60 ? 'badge-info' : 'badge-pending'}">%${qz.successRate}</span>
           </div>
           <small style="color: #666; display: block; margin-top: 5px;">
-            Tarih: ${qz.date} | Süre: ${qz.durationText} | Doðru: ${qz.correct} • Yanlýþ: ${qz.wrong} | XP: +${qz.xp}
+            Tarih: ${qz.date} | Sï¿½re: ${qz.durationText} | Doï¿½ru: ${qz.correct} ï¿½ Yanlï¿½ï¿½: ${qz.wrong} | XP: +${qz.xp}
           </small>
         `;
         quizHistoryContainer.appendChild(div);
@@ -24966,7 +24966,7 @@ async function fetchBlockRunStats(studentId) {
       const assignmentType = getBlockHomeworkType(val.assignmentType);
       assignmentMap.set(String(d.id), {
         id: d.id,
-        title: String(val.title || "Blok Kodlama Ödevi"),
+        title: String(val.title || "Blok Kodlama ï¿½devi"),
         assignmentType,
         levelStart: Math.max(1, Number(val.levelStart || 1)),
         levelEnd: Math.max(1, Number(val.levelEnd || val.levelStart || 1))
@@ -24996,7 +24996,7 @@ async function fetchBlockRunStats(studentId) {
         : Math.max(0, Number(p.percent || 0));
       runs.push({
         assignmentId,
-        title: String(p.assignmentTitle || assignment?.title || "Blok Kodlama Ödevi"),
+        title: String(p.assignmentTitle || assignment?.title || "Blok Kodlama ï¿½devi"),
         rangeText: assignmentType === "flowchart" ? "Flowchart Soru" : `${levelStart}-${levelEnd}`,
         assignmentType,
         durationSeconds,
@@ -25357,7 +25357,7 @@ async function fetchComputeRunStats(studentId) {
       const val = d.data() || {};
       assignmentMap.set(String(d.id), {
         id: d.id,
-        title: String(val.title || "Compute It Ödevi"),
+        title: String(val.title || "Compute It ï¿½devi"),
         levelStart: Math.max(1, Number(val.levelStart || 1)),
         levelEnd: Math.max(1, Number(val.levelEnd || val.levelStart || 1))
       });
@@ -25391,7 +25391,7 @@ async function fetchComputeRunStats(studentId) {
         : percentField;
       runs.push({
         assignmentId,
-        title: String(p.assignmentTitle || assignment?.title || "Compute It Ödevi"),
+        title: String(p.assignmentTitle || assignment?.title || "Compute It ï¿½devi"),
         rangeText: `${levelStart}-${levelEnd}`,
         durationSeconds,
         xp: Math.max(0, totalXPRow),
@@ -25462,12 +25462,12 @@ async function fetchComputeRunStats(studentId) {
 async function renderStudentBlockRunReport(studentId) {
   const container = document.getElementById("student-blockrun-report");
   if (!container) return;
-  container.innerHTML = '<div id="blockrun-summary">Yükleniyor...</div>';
+  container.innerHTML = '<div id="blockrun-summary">Yï¿½kleniyor...</div>';
   try {
     const stats = await fetchBlockRunStats(studentId);
     const rows = (stats.runs || []).map((run, i) => `
       <tr>
-        <td>${i + 1}. ${run.title || "Blok Kodlama Ödevi"}</td>
+        <td>${i + 1}. ${run.title || "Blok Kodlama ï¿½devi"}</td>
         <td>${run.assignmentType === "flowchart" ? (run.rangeText || "Flowchart Soru") : `Seviye ${run.rangeText || "-"}`}</td>
         <td>${Math.floor((run.durationSeconds || 0) / 60)} dk ${(run.durationSeconds || 0) % 60} sn</td>
         <td>${run.xp || 0} XP</td>
@@ -25478,9 +25478,9 @@ async function renderStudentBlockRunReport(studentId) {
         <table style="width:100%; border-collapse:collapse; font-size:12px;">
           <thead>
             <tr>
-              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">Ödev</th>
-              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">Aralýk</th>
-              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">Süre</th>
+              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">ï¿½dev</th>
+              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">Aralï¿½k</th>
+              <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">Sï¿½re</th>
               <th style="text-align:left; border-bottom:1px solid #e5e7eb; padding:6px;">XP</th>
             </tr>
           </thead>
@@ -25493,7 +25493,7 @@ async function renderStudentBlockRunReport(studentId) {
     container.innerHTML = listHtml;
   } catch (e) {
     console.warn("renderStudentBlockRunReport", e);
-    container.innerHTML = '<div style="color:#b91c1c;">Veri yüklenemedi</div>';
+    container.innerHTML = '<div style="color:#b91c1c;">Veri yï¿½klenemedi</div>';
   }
 }
 
@@ -25513,7 +25513,7 @@ function renderStudentChart(taskHistory) {
     data: {
       labels: labels,
       datasets: [{
-        label: "Baþarý %",
+        label: "Baï¿½arï¿½ %",
         data: scores,
         borderColor: "rgba(46, 204, 113, 1)",
         backgroundColor: "rgba(46, 204, 113, 0.2)",
@@ -25550,7 +25550,7 @@ function renderStudentQuizChart(quizHistory = [], quizStats = {}) {
       labels,
       datasets: [
         {
-          label: "Baþarý %",
+          label: "Baï¿½arï¿½ %",
           data: successData,
           backgroundColor: "rgba(34, 197, 94, 0.72)",
           borderColor: "rgba(22, 163, 74, 1)",
@@ -25558,7 +25558,7 @@ function renderStudentQuizChart(quizHistory = [], quizStats = {}) {
         }
       ]
     } : {
-      labels: ["Doðru", "Yanlýþ"],
+      labels: ["Doï¿½ru", "Yanlï¿½ï¿½"],
       datasets: [{
         data: [
           Math.max(0, Number(quizStats.totalCorrect || 0)),
@@ -25575,7 +25575,7 @@ function renderStudentQuizChart(quizHistory = [], quizStats = {}) {
         legend: { display: true },
         title: {
           display: true,
-          text: hasRows ? "Son Quizlerde Baþarý Yüzdesi" : "Toplam Quiz Doðru/Yanlýþ"
+          text: hasRows ? "Son Quizlerde Baï¿½arï¿½ Yï¿½zdesi" : "Toplam Quiz Doï¿½ru/Yanlï¿½ï¿½"
         }
       },
       scales: hasRows ? { y: { beginAtZero: true, max: 100 } } : {}
@@ -25631,43 +25631,43 @@ async function loadMyStatsModal() {
 
       safeChart(myStatsChart, "myTaskChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Ödev", data: [taskCompleted, Math.max(0, taskTotal - taskCompleted)], backgroundColor: ["#22c55e", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "ï¿½dev", data: [taskCompleted, Math.max(0, taskTotal - taskCompleted)], backgroundColor: ["#22c55e", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myStatsChart = c; });
 
       safeChart(myActivityChart, "myActivityChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Etkinlik", data: [activityCompleted, Math.max(0, activityTotal - activityCompleted)], backgroundColor: ["#3b82f6", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Etkinlik", data: [activityCompleted, Math.max(0, activityTotal - activityCompleted)], backgroundColor: ["#3b82f6", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myActivityChart = c; });
 
       safeChart(myLessonChart, "myLessonChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Dersler", data: [lessonCompleted, Math.max(0, lessonTotal - lessonCompleted)], backgroundColor: ["#14b8a6", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Dersler", data: [lessonCompleted, Math.max(0, lessonTotal - lessonCompleted)], backgroundColor: ["#14b8a6", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myLessonChart = c; });
 
       safeChart(myBlockChart, "myBlockChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Blok Kodlama (2D)", data: [block2dCompleted, Math.max(0, block2dTotal - block2dCompleted)], backgroundColor: ["#f59e0b", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Blok Kodlama (2D)", data: [block2dCompleted, Math.max(0, block2dTotal - block2dCompleted)], backgroundColor: ["#f59e0b", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myBlockChart = c; });
 
       safeChart(myBlock3DChart, "myBlock3DChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "3D Blok Kodlama", data: [block3dCompleted, Math.max(0, block3dTotal - block3dCompleted)], backgroundColor: ["#f97316", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "3D Blok Kodlama", data: [block3dCompleted, Math.max(0, block3dTotal - block3dCompleted)], backgroundColor: ["#f97316", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myBlock3DChart = c; });
 
       safeChart(myComputeChart, "myComputeChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Compute It", data: [computeCompleted, Math.max(0, computeTotal - computeCompleted)], backgroundColor: ["#8b5cf6", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Compute It", data: [computeCompleted, Math.max(0, computeTotal - computeCompleted)], backgroundColor: ["#8b5cf6", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myComputeChart = c; });
 
       safeChart(myPythonQuizChart, "myPythonQuizChart", {
         type: "bar",
-        data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Python Quiz", data: [pythonCompleted, Math.max(0, pythonTotal - pythonCompleted)], backgroundColor: ["#6366f1", "#e5e7eb"], borderRadius: 8 }] },
+        data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Python Quiz", data: [pythonCompleted, Math.max(0, pythonTotal - pythonCompleted)], backgroundColor: ["#6366f1", "#e5e7eb"], borderRadius: 8 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
       }, (c) => { myPythonQuizChart = c; });
     };
@@ -25676,25 +25676,25 @@ async function loadMyStatsModal() {
       if (!summary || summary.ok === false) return;
       statsSummaryCache = summary;
       myStatsSummaryCache = summary;
-      const classRankText = summary.classRank ? `${summary.classRank}.` : "—";
-      const schoolRankText = summary.schoolRank ? `${summary.schoolRank}.` : "—";
+      const classRankText = summary.classRank ? `${summary.classRank}.` : "ï¿½";
+      const schoolRankText = summary.schoolRank ? `${summary.schoolRank}.` : "ï¿½";
       setText("student-hero-class-rank", classRankText);
       setText("student-hero-school-rank", schoolRankText);
       if (currentStudentDetail && currentStudentDetail.student && currentStudentDetail.student.id === currentUserId) {
         currentStudentDetail.classRank = summary.classRank ?? null;
         currentStudentDetail.schoolRank = summary.schoolRank ?? null;
       }
-      setText("my-task-summary", `${summary.completedCount || 0}/${summary.totalTasks || 0} • %${summary.taskRate || 0}`);
-      setText("my-activity-summary", `${summary.activityCompleted || 0}/${summary.totalActivities || 0} • %${summary.activityRate || 0}`);
+      setText("my-task-summary", `${summary.completedCount || 0}/${summary.totalTasks || 0} ï¿½ %${summary.taskRate || 0}`);
+      setText("my-activity-summary", `${summary.activityCompleted || 0}/${summary.totalActivities || 0} ï¿½ %${summary.activityRate || 0}`);
       const lessonCompleted = Math.max(0, Number(summary.lessonCompleted || 0));
       const lessonTotalRaw = Math.max(0, Number(summary.lessonTotal || 0));
       const lessonTotal = Math.max(lessonTotalRaw, lessonCompleted);
       const lessonRate = lessonTotal > 0 ? Math.round((lessonCompleted / lessonTotal) * 100) : Math.max(0, Number(summary.lessonRate || 0));
-      setText("my-lesson-summary", `${lessonCompleted}/${lessonTotal} • %${lessonRate}`);
-      setText("my-block2d-summary", `${summary.block2DCompleted || 0}/${summary.block2DTotal || 0} • %${summary.block2DRate || 0}`);
-      setText("my-block3d-summary", `${summary.block3DCompleted || 0}/${summary.block3DTotal || 0} • %${summary.block3DRate || 0}`);
-      setText("my-compute-summary", `${summary.computeCompleted || 0}/${summary.computeTotal || 0} • %${summary.computeRate || 0}`);
-      setText("my-python-quiz-summary", `${summary.pythonQuizCompleted || 0}/${summary.pythonQuizTotal || 0} • %${summary.pythonQuizRate || 0}`);
+      setText("my-lesson-summary", `${lessonCompleted}/${lessonTotal} ï¿½ %${lessonRate}`);
+      setText("my-block2d-summary", `${summary.block2DCompleted || 0}/${summary.block2DTotal || 0} ï¿½ %${summary.block2DRate || 0}`);
+      setText("my-block3d-summary", `${summary.block3DCompleted || 0}/${summary.block3DTotal || 0} ï¿½ %${summary.block3DRate || 0}`);
+      setText("my-compute-summary", `${summary.computeCompleted || 0}/${summary.computeTotal || 0} ï¿½ %${summary.computeRate || 0}`);
+      setText("my-python-quiz-summary", `${summary.pythonQuizCompleted || 0}/${summary.pythonQuizTotal || 0} ï¿½ %${summary.pythonQuizRate || 0}`);
       setText("my-total-xp", summary.totalXP || 0);
       renderChartsFromSummary(summary);
     };
@@ -25808,13 +25808,13 @@ async function loadMyStatsModal() {
     const pythonQuizPending = Math.max(0, pythonQuizTotal - pythonQuizCompleted);
     const pythonQuizRate = pythonQuizTotal > 0 ? Math.round((pythonQuizCompleted / pythonQuizTotal) * 100) : 0;
 
-    setText("my-task-summary", `${completedCount}/${totalTasks} • %${taskRate}`);
-    setText("my-activity-summary", `${activityCompleted}/${totalActivities} • %${activityRate}`);
-    setText("my-lesson-summary", `${lessonCompleted}/${lessonTotal} • %${lessonRate}`);
-    setText("my-block2d-summary", `${block2DCompleted}/${block2DAssignments.length} • %${block2DRate}`);
-    setText("my-block3d-summary", `${block3DCompleted}/${block3DAssignments.length} • %${block3DRate}`);
-    setText("my-compute-summary", `${computeCompleted}/${computeAssignmentsForStudent.length} • %${computeRate}`);
-    setText("my-python-quiz-summary", `${pythonQuizCompleted}/${pythonQuizTotal} • %${pythonQuizRate}`);
+    setText("my-task-summary", `${completedCount}/${totalTasks} ï¿½ %${taskRate}`);
+    setText("my-activity-summary", `${activityCompleted}/${totalActivities} ï¿½ %${activityRate}`);
+    setText("my-lesson-summary", `${lessonCompleted}/${lessonTotal} ï¿½ %${lessonRate}`);
+    setText("my-block2d-summary", `${block2DCompleted}/${block2DAssignments.length} ï¿½ %${block2DRate}`);
+    setText("my-block3d-summary", `${block3DCompleted}/${block3DAssignments.length} ï¿½ %${block3DRate}`);
+    setText("my-compute-summary", `${computeCompleted}/${computeAssignmentsForStudent.length} ï¿½ %${computeRate}`);
+    setText("my-python-quiz-summary", `${pythonQuizCompleted}/${pythonQuizTotal} ï¿½ %${pythonQuizRate}`);
     setText("my-total-xp", totalXP);
 
     const student = userData ? { ...userData, id: currentUserId } : { id: currentUserId };
@@ -25825,7 +25825,7 @@ async function loadMyStatsModal() {
       .map(p => {
         const task = allTasks.find(t => t.id === p.taskId);
         return {
-          title: task?.title || `${p.bookName || "Kitap"} ${p.bookTest || ""}`.trim() || "Kitap/Test Ödevi",
+          title: task?.title || `${p.bookName || "Kitap"} ${p.bookTest || ""}`.trim() || "Kitap/Test ï¿½devi",
           score: 100,
           duration: 0,
           date: p.updatedAt && typeof p.updatedAt.toDate === "function"
@@ -25836,7 +25836,7 @@ async function loadMyStatsModal() {
       });
 
     const taskHistory = completions.map(c => ({
-      title: c.taskTitle || "Ödev",
+      title: c.taskTitle || "ï¿½dev",
       score: Math.round((Number(c.correctAnswers || 0) / Math.max(1, Number(c.totalQuestions || 1))) * 100),
       duration: Number(c.duration || 0),
       date: c.completedAt && typeof c.completedAt.toDate === "function" ? c.completedAt.toDate().toLocaleDateString("tr-TR") : "-",
@@ -25881,44 +25881,44 @@ async function loadMyStatsModal() {
 
     safeChart(myStatsChart, "myTaskChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Ödev", data: [completedCount, Math.max(0, totalTasks - completedCount)], backgroundColor: ["#22c55e", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "ï¿½dev", data: [completedCount, Math.max(0, totalTasks - completedCount)], backgroundColor: ["#22c55e", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myStatsChart = c; });
 
     safeChart(myActivityChart, "myActivityChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Etkinlik", data: [activityCompleted, Math.max(0, totalActivities - activityCompleted)], backgroundColor: ["#3b82f6", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Etkinlik", data: [activityCompleted, Math.max(0, totalActivities - activityCompleted)], backgroundColor: ["#3b82f6", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myActivityChart = c; });
 
     safeChart(myLessonChart, "myLessonChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Dersler", data: [lessonCompleted, Math.max(0, lessonTotal - lessonCompleted)], backgroundColor: ["#14b8a6", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Dersler", data: [lessonCompleted, Math.max(0, lessonTotal - lessonCompleted)], backgroundColor: ["#14b8a6", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myLessonChart = c; });
 
     safeChart(myBlockChart, "myBlockChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Blok Kodlama (2D)", data: [block2DCompleted, Math.max(0, block2DAssignments.length - block2DCompleted)], backgroundColor: ["#f59e0b", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Blok Kodlama (2D)", data: [block2DCompleted, Math.max(0, block2DAssignments.length - block2DCompleted)], backgroundColor: ["#f59e0b", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myBlockChart = c; });
 
     safeChart(myBlock3DChart, "myBlock3DChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "3D Blok Kodlama", data: [block3DCompleted, Math.max(0, block3DAssignments.length - block3DCompleted)], backgroundColor: ["#f97316", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "3D Blok Kodlama", data: [block3DCompleted, Math.max(0, block3DAssignments.length - block3DCompleted)], backgroundColor: ["#f97316", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myBlock3DChart = c; });
 
     safeChart(myComputeChart, "myComputeChart", {
       type: "bar",
-      data: { labels: ["Yapýlan", "Bekleyen"], datasets: [{ label: "Compute It", data: [computeCompleted, Math.max(0, computeAssignmentsForStudent.length - computeCompleted)], backgroundColor: ["#8b5cf6", "#e5e7eb"], borderRadius: 8 }] },
+      data: { labels: ["Yapï¿½lan", "Bekleyen"], datasets: [{ label: "Compute It", data: [computeCompleted, Math.max(0, computeAssignmentsForStudent.length - computeCompleted)], backgroundColor: ["#8b5cf6", "#e5e7eb"], borderRadius: 8 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     }, (c) => { myComputeChart = c; });
 
     safeChart(myPythonQuizChart, "myPythonQuizChart", {
       type: "bar",
       data: {
-        labels: ["Yapýlan", "Bekleyen"],
+        labels: ["Yapï¿½lan", "Bekleyen"],
         datasets: [{
           label: "Python Quiz",
           data: [pythonQuizCompleted, pythonQuizPending],
@@ -25949,8 +25949,8 @@ async function loadMyStatsModal() {
       lessonHistory: lessonProgressItems
     };
   } catch (e) {
-    console.error("loadMyStatsModal hatasý:", e);
-    showNotice("Ýstatistikler yüklenemedi. Lütfen tekrar deneyin.", "#e74c3c");
+    console.error("loadMyStatsModal hatasï¿½:", e);
+    showNotice("ï¿½statistikler yï¿½klenemedi. Lï¿½tfen tekrar deneyin.", "#e74c3c");
   }
 }
 

@@ -94,7 +94,7 @@
             @foreach($posts as $post)
                 <article class="board-post">
                     <div class="board-post-head">
-                        <img src="{{ $post['avatar_path'] ? asset($post['avatar_path']) : asset('logo192.png') }}" alt="{{ $post['first_name'] }} {{ $post['last_name'] }}">
+                        <img src="{{ $post['avatar_path'] ? (str_starts_with($post['avatar_path'], 'http') ? $post['avatar_path'] : url('/public/' . ltrim((string) $post['avatar_path'], '/'))) : url('/public/logo192.png') }}" alt="{{ $post['first_name'] }} {{ $post['last_name'] }}">
                         <div>
                             <div class="board-post-name">{{ $post['first_name'] }} {{ $post['last_name'] }}</div>
                         </div>

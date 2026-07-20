@@ -111,7 +111,7 @@ class PushNotificationService
                 'title' => $title,
                 'body' => $body,
                 'url' => $log->url ?: url('/bildirimler'),
-                'icon' => asset('logo192.png'),
+                'icon' => url('/public/logo192.png'),
             ], JSON_UNESCAPED_UNICODE);
 
             foreach ($userSubs as $s) {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     @include('partials.pwa-head')
     <title>Giriş</title>
-    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap');
         body{margin:0;font-family:'Manrope',Segoe UI,Arial,sans-serif;background:#eef2f9;color:#0f172a}
@@ -240,7 +240,7 @@
             <div class="shape tr2"></div>
         </div>
         <div class="brand-content">
-            <img src="{{ asset('logo.png') }}" alt="Logo">
+            <img src="{{ url('/public/logo.png') }}" alt="Logo">
             <h1>Dijital Bilişim Eğitim Platformu</h1>
             <p>Özelsin Çünkü Gelecek Sensin</p>
         </div>

@@ -165,7 +165,7 @@
                 :title="$item->name"
                 :description="$desc"
                 :image="$thumb"
-                :logo="asset('logo.png')"
+                :logo="url('/public/logo.png')"
                 :age="$age"
                 :difficulty="$difficulty"
                 :content-url="route('course.detail', ['id' => $item->id])"

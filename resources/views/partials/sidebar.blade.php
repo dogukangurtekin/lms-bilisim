@@ -6,7 +6,7 @@
             $initialSeconds = (int) ($timeStat?->total_seconds ?? 0);
         @endphp
         <div class="student-sidebar-top sidebar-brand">
-            <img src="{{ asset('logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
+            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
         </div>
         <nav class="student-sidebar-nav">
@@ -51,7 +51,7 @@
         </div>
     @else
         <div class="sidebar-top sidebar-brand">
-            <img src="{{ asset('logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
+            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
         </div>
         <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">

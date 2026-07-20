@@ -4,5 +4,5 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Egitim">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
-<link rel="apple-touch-icon" href="{{ asset('logo192.png') }}">
+<link rel="manifest" href="{{ url('/public/manifest.webmanifest') }}">
+<link rel="apple-touch-icon" href="{{ url('/public/logo192.png') }}">

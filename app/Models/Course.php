@@ -54,14 +54,12 @@ class Course extends Model
 
         $relative = 'kapak-gorseli/' . ltrim($cover, '/');
         $relative = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $relative) ?? $relative;
-        $publicPaths = [
-            public_path($relative),
-            public_path('public/' . $relative),
-        ];
-        foreach ($publicPaths as $publicPath) {
-            if (is_file($publicPath)) {
-                return asset($relative);
-            }
+        if (is_file(public_path('public/' . $relative))) {
+            return url('/public/' . $relative);
+        }
+
+        if (is_file(public_path($relative))) {
+            return url('/public/' . $relative);
         }
 
         if (is_file(storage_path('app/public/' . $relative))) {
@@ -72,22 +70,18 @@ class Course extends Model
             return route('courses.cover', ['path' => 'course-covers/' . basename($relative)]);
         }
 
-        if (is_file(public_path('public/' . $relative))) {
-            return asset($relative);
-        }
-
         $baseName = pathinfo($relative, PATHINFO_FILENAME);
         foreach (['png', 'webp', 'jpg', 'jpeg'] as $ext) {
             $altRelative = 'kapak-gorseli/' . $baseName . '.' . $ext;
             if (is_file(public_path($altRelative)) || is_file(public_path('public/' . $altRelative))) {
-                return asset($altRelative);
+                return url('/public/' . $altRelative);
             }
             if (is_file(storage_path('app/public/' . $altRelative))) {
                 return route('courses.cover', ['path' => $altRelative]);
             }
         }
 
-        return asset($relative);
+        return url('/public/' . $relative);
     }
 
     private function normalizeCoverPath(string $cover): string
