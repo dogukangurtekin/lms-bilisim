@@ -1,4 +1,4 @@
-﻿@php
+@php
     $completed = (int) ($report['kpi']['completed_total'] ?? 0);
     $total = max(1, (int) ($report['kpi']['total_assignments'] ?? 0));
     $remaining = max(0, $total - $completed);

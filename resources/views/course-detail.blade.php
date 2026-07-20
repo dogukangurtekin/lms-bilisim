@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title', $title)
 @section('content')
 <section class="space-y-5">

@@ -1,4 +1,4 @@
-﻿<aside class="sidebar sidebar-pro">
+<aside class="sidebar sidebar-pro">
     @if(auth()->user()?->hasRole('student'))
         @php
             $currentStudent = \App\Models\Student::where('user_id', auth()->id())->first();

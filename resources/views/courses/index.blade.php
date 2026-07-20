@@ -140,7 +140,7 @@
 
     <form id="course-import-form" method="POST" action="{{ route('courses.import') }}" enctype="multipart/form-data" style="display:none;">
         @csrf
-        <input id="course-import-file" type="file" name="course_json[]" accept=".json,application/json,text/plain" multiple style="display:none;">
+        <input id="course-import-file" type="file" name="course_json[]" accept=".coursepkg,.json,application/json,text/plain,application/octet-stream" multiple style="display:none;">
     </form>
     @if(auth()->user()?->hasRole('admin'))
         <form id="course-destroy-all-form" method="POST" action="{{ route('courses.destroy-all') }}" data-confirm="Tüm dersler ve bağlı ödevler sistemden kaldırılsın mı?" style="display:none;">
@@ -171,6 +171,7 @@
                 :content-url="route('course.detail', ['id' => $item->id])"
                 :primary-url="route('courses.edit', $item)"
                 primary-label="Düzenle"
+                :download-url="route('courses.export', $item)"
                 :delete-url="auth()->user()?->hasRole('student') ? null : url('/courses/delete/' . $item->id)"
                 :assign-enabled="auth()->user()?->hasRole('admin','teacher')"
                 :assign-course-id="$item->id"

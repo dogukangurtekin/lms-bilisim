@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Ders Olusturucu (Duzenle)')
 @section('content')
 <div class="top"><h1>Dersi Duzenle</h1></div>

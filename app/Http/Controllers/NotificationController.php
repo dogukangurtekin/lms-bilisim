@@ -105,14 +105,15 @@ class NotificationController extends Controller
 
         if ($publicKey === '') {
             return response()->json([
-                'ok' => false,
-                'message' => 'WEBPUSH_VAPID_PUBLIC_KEY missing',
+                'ok' => true,
+                'enabled' => false,
                 'public_key' => '',
-            ], 503);
+            ]);
         }
 
         return response()->json([
             'ok' => true,
+            'enabled' => true,
             'public_key' => $publicKey,
         ]);
     }

@@ -258,13 +258,15 @@
                 return;
             }
             if (!keyRes.ok) {
-                throw new Error('Public key alinamadi: HTTP ' + keyRes.status);
+                console.warn('[WebPush] Public key alinamadi: HTTP ' + keyRes.status);
+                pushConfigMissing = true;
+                return;
             }
             const keyJson = await keyRes.json().catch(() => ({}));
             const vapidPublicKey = String(keyJson.public_key || '');
             if (!vapidPublicKey) {
                 pushConfigMissing = true;
-                throw new Error('WEBPUSH_VAPID_PUBLIC_KEY bos veya sunucuda tanimsiz.');
+                return;
             }
             const reg = await navigator.serviceWorker.register(serviceWorkerUrl);
             let sub = await reg.pushManager.getSubscription();

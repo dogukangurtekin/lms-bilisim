@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Panelim')
 @section('content')
 <div class="student-v2-compact">

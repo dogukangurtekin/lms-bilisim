@@ -79,7 +79,7 @@
         </p>
 
         @php
-            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCount = 2 + (!empty($downloadUrl) ? 1 : 0) + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
             $btnCols = max(2, min(4, $btnCount));
         @endphp
         <div class="mt-auto grid gap-3" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
@@ -92,6 +92,17 @@
                style="display:inline-flex;align-items:center;justify-content:center;height:54px;border-radius:999px;background:#5b21b6;color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(91,33,182,.18);transition:transform .15s ease,filter .15s ease;">
                 {{ $primaryLabel }}
             </a>
+
+            @if(!empty($downloadUrl))
+                <a
+                    href="{{ $downloadUrl }}"
+                    title="Dersi indir"
+                    aria-label="Dersi indir"
+                    style="display:inline-flex;align-items:center;justify-content:center;height:54px;border-radius:999px;background:#0f766e;color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(15,118,110,.18);transition:transform .15s ease,filter .15s ease;"
+                >
+                    İndir
+                </a>
+            @endif
 
             @if(!empty($deleteUrl))
                 <a

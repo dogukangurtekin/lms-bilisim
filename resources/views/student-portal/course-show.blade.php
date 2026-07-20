@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Ders ??eri?i')
 @section('content')
 <div class="top" style="margin-bottom:10px">

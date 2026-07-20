@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 
 @section('title', 'Klavye Hız Yarışması')
 @section('body_class', 'play-compact')

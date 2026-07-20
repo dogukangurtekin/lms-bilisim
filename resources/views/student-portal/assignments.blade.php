@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Ödevlerim')
 @section('content')
 <div class="top"><h1>Ödevlerim</h1></div>

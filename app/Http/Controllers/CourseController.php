@@ -304,22 +304,20 @@ class CourseController extends Controller
             abort(403);
         }
 
-        $lessonPayload = (array) ($course->lesson_payload ?? []);
-        $lessonPayload['cover_image_data'] = $this->exportCoverDataUrl($course);
-        $payload = [
+        $package = $this->buildCoursePackage([
             'exported_at' => now()->toIso8601String(),
             'course' => [
                 'name' => (string) $course->name,
                 'code' => (string) $course->code,
                 'weekly_hours' => (int) $course->weekly_hours,
-                'lesson_payload' => $lessonPayload,
+                'lesson_payload' => (array) ($course->lesson_payload ?? []),
             ],
-        ];
+        ], $this->exportCoverBinary($course), $this->exportCoverMime($course));
 
-        $filename = 'ders-' . Str::slug((string) $course->name ?: 'course') . '-' . $course->id . '.json';
-        return response()->streamDownload(function () use ($payload) {
-            echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+        $filename = 'ders-' . Str::slug((string) $course->name ?: 'course') . '-' . $course->id . '.coursepkg';
+        return response()->streamDownload(function () use ($package) {
+            echo $package;
+        }, $filename, ['Content-Type' => 'application/octet-stream']);
     }
 
     public function exportAll(): StreamedResponse
@@ -338,6 +336,7 @@ class CourseController extends Controller
             'courses' => $courses->map(function (Course $c) {
                 $lessonPayload = (array) ($c->lesson_payload ?? []);
                 $lessonPayload['cover_image_data'] = $this->exportCoverDataUrl($c);
+                $lessonPayload['cover_image_mime'] = $this->exportCoverMime($c);
 
                 return [
                     'name' => (string) $c->name,
@@ -348,21 +347,28 @@ class CourseController extends Controller
             })->values()->all(),
         ];
 
-        $filename = 'tum-dersler-' . now()->format('Ymd-His') . '.json';
+        $filename = 'tum-dersler-' . now()->format('Ymd-His') . '.coursepkg';
         return response()->streamDownload(function () use ($payload) {
             echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        }, $filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+        }, $filename, ['Content-Type' => 'application/octet-stream']);
     }
 
     public function import(Request $request)
     {
         $data = $request->validate([
             'course_json' => ['required'],
-            'course_json.*' => ['file', 'mimes:json,txt', 'max:65536'],
+            'course_json.*' => ['file', 'mimetypes:application/json,text/plain,application/octet-stream', 'max:65536'],
         ]);
 
         $user = auth()->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($teacherId <= 0 && $user?->hasRole('admin')) {
+            $teacher = Teacher::query()->firstOrCreate(
+                ['user_id' => $user->id],
+                ['branch' => null, 'phone' => null, 'hire_date' => null]
+            );
+            $teacherId = (int) $teacher->id;
+        }
         if ($teacherId <= 0) {
             $teacherId = (int) Teacher::query()->value('id');
         }
@@ -380,9 +386,7 @@ class CourseController extends Controller
 
         $created = [];
         foreach ($files as $file) {
-            $raw = (string) file_get_contents($file->getRealPath());
-            $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw;
-            $decoded = json_decode($raw, true);
+            $decoded = $this->decodeCourseImportPayload((string) file_get_contents($file->getRealPath()), $coverBinary);
             if (!is_array($decoded)) {
                 continue;
             }
@@ -420,6 +424,9 @@ class CourseController extends Controller
                         'cover_image_data' => $courseData['cover_image_data'] ?? null,
                     ], fn ($v) => $v !== null && $v !== '');
                 }
+                if (isset($coverBinary) && $coverBinary !== '' && empty($lessonPayload['cover_image_data'])) {
+                    $lessonPayload['cover_image_data'] = $this->binaryToDataUrl($coverBinary, $courseData['cover_image_mime'] ?? 'image/png');
+                }
                 if (!empty($lessonPayload['cover_image_data']) && is_string($lessonPayload['cover_image_data'])) {
                     try {
                         $lessonPayload['cover_image'] = $this->storeCoverFromDataUrl($lessonPayload['cover_image_data']);
@@ -427,13 +434,21 @@ class CourseController extends Controller
                         Log::warning('Course cover import failed', ['message' => $e->getMessage(), 'course_name' => $name]);
                     }
                     unset($lessonPayload['cover_image_data']);
+                } elseif (!empty($lessonPayload['cover_image']) && is_string($lessonPayload['cover_image'])) {
+                    try {
+                        $lessonPayload['cover_image'] = $this->storeCoverFromUrlOrPath((string) $lessonPayload['cover_image']);
+                    } catch (\Throwable $e) {
+                        Log::warning('Course cover import fallback failed', ['message' => $e->getMessage(), 'course_name' => $name]);
+                        unset($lessonPayload['cover_image']);
+                    }
                 }
                 $cover = trim((string) ($lessonPayload['cover_image'] ?? ''));
                 if ($cover !== '') {
                     $cover = ltrim(str_replace('\\', '/', $cover), '/');
                     $cover = preg_replace('#^storage/#i', '', $cover);
                     $cover = preg_replace('#^course-covers/#i', 'course-covers/', $cover);
-                    if (!Storage::disk('public')->exists($cover)) {
+                    $resolvedCoverPath = $this->resolveCoverFilePath($cover);
+                    if ($resolvedCoverPath === '' || !is_file($resolvedCoverPath)) {
                         unset($lessonPayload['cover_image']);
                     } else {
                         $lessonPayload['cover_image'] = $cover;
@@ -452,9 +467,135 @@ class CourseController extends Controller
         }
 
         if (count($created) < 1) {
-            return redirect()->route('courses.index')->with('error', 'Yuklenen dosyalarda gecerli ders bulunamadi.');
+            return redirect()->route('courses.index')->with('error', 'Yuklenen dosyalarda gecerli ders bulunamadi. .coursepkg dosyasi indirildigi sekilde yuklenmeli.');
         }
-        return redirect()->route('courses.index')->with('ok', count($created) . ' ders yuklendi.');
+        return redirect()->route('courses.index')->with('ok', count($created) . ' ders yuklendi. Kapak verisi varsa da geri yuklendi.');
+    }
+
+    private function buildCoursePackage(array $payload, string $coverBinary = '', string $coverMime = 'image/png'): string
+    {
+        $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        if ($json === false) {
+            throw new \RuntimeException('Ders paketi olusturulamadi.');
+        }
+
+        $boundary = 'COURSEPKG-' . Str::lower(Str::random(24));
+        $parts = [];
+        $parts[] = "--{$boundary}\r\nContent-Type: application/json; charset=UTF-8\r\nContent-Disposition: form-data; name=\"manifest\"; filename=\"manifest.json\"\r\n\r\n{$json}\r\n";
+
+        if ($coverBinary !== '') {
+            $courseName = (string) data_get($payload, 'course.name', 'course');
+            $base = Str::slug($courseName ?: 'course');
+            $coverName = $base !== '' ? $base . '-cover.' . $this->mimeToExtension($coverMime) : 'cover.' . $this->mimeToExtension($coverMime);
+            $parts[] = "--{$boundary}\r\nContent-Type: {$coverMime}\r\nContent-Disposition: form-data; name=\"cover\"; filename=\"{$coverName}\"\r\n\r\n{$coverBinary}\r\n";
+        }
+
+        $parts[] = "--{$boundary}--\r\n";
+        return "COURSEPKG2\r\nBOUNDARY:{$boundary}\r\n\r\n" . implode('', $parts);
+    }
+
+    private function decodeCourseImportPayload(string $raw, ?string &$coverBinary = null): ?array
+    {
+        $coverBinary = null;
+        $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw;
+
+        if (str_starts_with($raw, 'COURSEPKG2')) {
+            $split = preg_split("/\r?\n\r?\n/", $raw, 2);
+            if (! is_array($split) || count($split) !== 2) {
+                return null;
+            }
+
+            [$header, $body] = $split;
+            if (!preg_match('/^BOUNDARY:(.+)$/m', $header, $m)) {
+                return null;
+            }
+            $boundary = trim($m[1]);
+            $parts = preg_split('/\r?\n--' . preg_quote($boundary, '/') . '(?:--)?\r?\n/', "\r\n" . $body);
+            if (! is_array($parts) || count($parts) < 2) {
+                return null;
+            }
+
+            $manifest = '';
+            $coverBinary = '';
+            foreach ($parts as $part) {
+                if (trim($part) === '') {
+                    continue;
+                }
+                [$partHeaders, $partBody] = preg_split("/\r?\n\r?\n/", $part, 2) + [null, null];
+                if (! is_string($partHeaders) || ! is_string($partBody)) {
+                    continue;
+                }
+                if (str_contains($partHeaders, 'application/json')) {
+                    $manifest = trim($partBody);
+                } elseif (preg_match('/Content-Type:\s*([^\r\n]+)/i', $partHeaders, $typeMatch)) {
+                    $coverBinary = rtrim($partBody, "\r\n");
+                    $coverMime = trim($typeMatch[1]);
+                    $coverBinary = $coverBinary;
+                }
+            }
+
+            if ($manifest === '') {
+                return null;
+            }
+
+            $decoded = json_decode($manifest, true);
+            return is_array($decoded) ? $decoded : null;
+        }
+
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function exportCoverBinary(Course $course): string
+    {
+        $cover = $this->resolveCoverFilePath((string) data_get($course->lesson_payload, 'cover_image', ''));
+        if ($cover !== '' && is_file($cover)) {
+            $binary = (string) @file_get_contents($cover);
+            if ($binary !== '') {
+                return $binary;
+            }
+        }
+
+        $coverUrl = $course->coverImageUrl();
+        if ($coverUrl !== '') {
+            $binary = (string) @file_get_contents($coverUrl);
+            return $binary;
+        }
+
+        return '';
+    }
+
+    private function exportCoverMime(Course $course): string
+    {
+        $cover = $this->resolveCoverFilePath((string) data_get($course->lesson_payload, 'cover_image', ''));
+        if ($cover === '' || ! is_file($cover)) {
+            $cover = $course->coverImageUrl();
+            $path = (string) parse_url($cover, PHP_URL_PATH);
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        } else {
+            $ext = strtolower(pathinfo($cover, PATHINFO_EXTENSION));
+        }
+
+        return match ($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+    }
+
+    private function mimeToExtension(string $mime): string
+    {
+        return match ($mime) {
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+            default => 'png',
+        };
+    }
+
+    private function binaryToDataUrl(string $binary, string $mime = 'image/png'): string
+    {
+        $mime = trim($mime) !== '' ? $mime : 'image/png';
+        return 'data:' . $mime . ';base64,' . base64_encode($binary);
     }
 
     private function performDestroyById(int $courseId): void
@@ -761,21 +902,81 @@ class CourseController extends Controller
     private function exportCoverDataUrl(Course $course): string
     {
         $cover = $this->resolveCoverFilePath((string) data_get($course->lesson_payload, 'cover_image', ''));
-        if ($cover === '' || ! is_file($cover)) {
-            return '';
+        $binary = '';
+        $mime = 'image/png';
+
+        if ($cover !== '' && is_file($cover)) {
+            $binary = (string) @file_get_contents($cover);
+            $mime = match (strtolower(pathinfo($cover, PATHINFO_EXTENSION))) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            };
+        } else {
+            $coverUrl = $course->coverImageUrl();
+            if ($coverUrl !== '') {
+                $path = (string) parse_url($coverUrl, PHP_URL_PATH);
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $mime = match ($ext) {
+                    'jpg', 'jpeg' => 'image/jpeg',
+                    'webp' => 'image/webp',
+                    default => 'image/png',
+                };
+
+                try {
+                    $binary = (string) @file_get_contents($coverUrl);
+                } catch (\Throwable $e) {
+                    $binary = '';
+                }
+            }
         }
 
-        $mime = match (strtolower(pathinfo($cover, PATHINFO_EXTENSION))) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'webp' => 'image/webp',
-            default => 'image/png',
-        };
-        $binary = @file_get_contents($cover);
-        if ($binary === false || $binary === '') {
+        if ($binary === '') {
             return '';
         }
 
         return 'data:' . $mime . ';base64,' . base64_encode($binary);
+    }
+
+    private function storeCoverFromUrlOrPath(string $cover): string
+    {
+        $cover = trim($cover);
+        if ($cover === '') {
+            throw new \RuntimeException('Kapak gorseli bos.');
+        }
+
+        if (str_starts_with($cover, 'data:image/')) {
+            return $this->storeCoverFromDataUrl($cover);
+        }
+
+        $path = $this->resolveCoverFilePath($cover);
+        if ($path !== '' && is_file($path)) {
+            $binary = (string) @file_get_contents($path);
+            if ($binary !== '') {
+                $relative = 'kapak-gorseli/' . Str::uuid() . '.' . pathinfo($path, PATHINFO_EXTENSION);
+                $outputPath = $this->coverStorageDirectory() . '/' . basename($relative);
+                if (file_put_contents($outputPath, $binary) === false) {
+                    throw new \RuntimeException('Kapak gorseli yazilamadi.');
+                }
+                return $relative;
+            }
+        }
+
+        if (str_starts_with($cover, 'http://') || str_starts_with($cover, 'https://')) {
+            $binary = @file_get_contents($cover);
+            if ($binary !== false && $binary !== '') {
+                $ext = strtolower(pathinfo((string) parse_url($cover, PHP_URL_PATH), PATHINFO_EXTENSION));
+                $ext = in_array($ext, ['png', 'webp', 'jpg', 'jpeg'], true) ? $ext : 'png';
+                $relative = 'kapak-gorseli/' . Str::uuid() . '.' . $ext;
+                $outputPath = $this->coverStorageDirectory() . '/' . basename($relative);
+                if (file_put_contents($outputPath, $binary) === false) {
+                    throw new \RuntimeException('Kapak gorseli yazilamadi.');
+                }
+                return $relative;
+            }
+        }
+
+        throw new \RuntimeException('Kapak gorseli alinamadi.');
     }
 
     private function resolveCoverFilePath(string $cover): string
