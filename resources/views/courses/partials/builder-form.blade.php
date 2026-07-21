@@ -2,9 +2,101 @@
     $isEdit = isset($course);
     $initialPayload = old('lesson_payload');
     if ($initialPayload === null) {
-        $payloadSeed = $isEdit ? (array) ($course->lesson_payload ?? ['slides' => []]) : ['slides' => []];
-        if ($isEdit && empty($payloadSeed['cover_image'])) {
-            $payloadSeed['cover_image'] = $course->coverImageUrl() ?: '';
+        $payloadSeed = $isEdit ? (array) ($course->lesson_payload ?? []) : [];
+        $legacySlides = [];
+        $legacyPages = [];
+        if ($isEdit) {
+            $legacyPages = array_values(array_filter((array) (
+                data_get($payloadSeed, 'lesson_pages')
+                ?? data_get($payloadSeed, 'pages')
+                ?? data_get($payloadSeed, 'sections')
+                ?? data_get($payloadSeed, 'modules')
+                ?? data_get($payloadSeed, 'contents')
+                ?? []
+            ), fn ($item) => trim((string) $item) !== ''));
+
+            if (!empty($legacyPages) && empty(data_get($payloadSeed, 'slides'))) {
+                foreach ($legacyPages as $idx => $pageText) {
+                    $legacySlides[] = [
+                        'title' => 'Sayfa ' . ($idx + 1),
+                        'xp' => 0,
+                        'kind' => 'topic',
+                        'interaction_type' => 'none',
+                        'points' => 5,
+                        'time_limit' => 10,
+                        'double_points' => false,
+                        'content' => (string) $pageText,
+                        'instructions' => '',
+                        'image_url' => '',
+                        'video_url' => '',
+                        'file_url' => '',
+                        'code' => '',
+                        'question_prompt' => '',
+                        'question' => ['options' => [], 'pairs' => [], 'items' => []],
+                    ];
+                }
+            }
+
+            $singleContent = trim((string) (
+                data_get($payloadSeed, 'content')
+                ?: data_get($payloadSeed, 'text')
+                ?: data_get($payloadSeed, 'body')
+                ?: data_get($payloadSeed, 'description')
+                ?: ''
+            ));
+            $singleCode = trim((string) (
+                data_get($payloadSeed, 'code')
+                ?: data_get($payloadSeed, 'html')
+                ?: data_get($payloadSeed, 'source_code')
+                ?: data_get($payloadSeed, 'script')
+                ?: ''
+            ));
+            $singleQuestion = trim((string) (
+                data_get($payloadSeed, 'question_prompt')
+                ?: data_get($payloadSeed, 'prompt')
+                ?: data_get($payloadSeed, 'questionText')
+                ?: ''
+            ));
+            if (empty($legacyPages) && empty(data_get($payloadSeed, 'slides')) && ($singleContent !== '' || $singleCode !== '' || $singleQuestion !== '')) {
+                $legacySlides[] = [
+                    'title' => (string) (data_get($payloadSeed, 'title') ?: data_get($payloadSeed, 'lesson_title') ?: 'Sayfa 1'),
+                    'xp' => (int) (data_get($payloadSeed, 'xp') ?: 0),
+                    'kind' => (string) (data_get($payloadSeed, 'kind') ?: 'topic'),
+                    'interaction_type' => (string) (data_get($payloadSeed, 'interaction_type') ?: 'none'),
+                    'points' => (int) (data_get($payloadSeed, 'points') ?: 5),
+                    'time_limit' => (int) (data_get($payloadSeed, 'time_limit') ?: 10),
+                    'double_points' => (bool) data_get($payloadSeed, 'double_points', false),
+                    'content' => $singleContent,
+                    'instructions' => (string) (data_get($payloadSeed, 'instructions') ?: ''),
+                    'image_url' => (string) (data_get($payloadSeed, 'image_url') ?: ''),
+                    'video_url' => (string) (data_get($payloadSeed, 'video_url') ?: ''),
+                    'file_url' => (string) (data_get($payloadSeed, 'file_url') ?: ''),
+                    'code' => $singleCode,
+                    'question_prompt' => $singleQuestion,
+                    'question' => data_get($payloadSeed, 'question') ?: ['options' => [], 'pairs' => [], 'items' => []],
+                ];
+            }
+        }
+        $payloadSeed = array_replace_recursive([
+            'slides' => [],
+            'curriculum' => [],
+            'lesson_description' => '',
+            'category' => '',
+            'difficulty' => '',
+            'cover_image' => '',
+        ], $payloadSeed);
+        if (!empty($legacySlides) && empty($payloadSeed['slides'])) {
+            $payloadSeed['slides'] = $legacySlides;
+        }
+        if ($isEdit) {
+            $payloadSeed['slides'] = array_values(array_filter((array) ($payloadSeed['slides'] ?? []), fn ($slide) => is_array($slide)));
+            $payloadSeed['curriculum'] = is_array($payloadSeed['curriculum'] ?? null) ? $payloadSeed['curriculum'] : [];
+            $payloadSeed['lesson_description'] = (string) ($payloadSeed['lesson_description'] ?? '');
+            $payloadSeed['category'] = (string) ($payloadSeed['category'] ?? '');
+            $payloadSeed['difficulty'] = (string) ($payloadSeed['difficulty'] ?? '');
+            if (empty($payloadSeed['cover_image'])) {
+                $payloadSeed['cover_image'] = $course->coverImageUrl() ?: '';
+            }
         }
         $initialPayload = json_encode($payloadSeed, JSON_UNESCAPED_UNICODE);
     }
@@ -25,6 +117,16 @@
 </style>
 
 <div class="lesson-builder">
+    <div id="course-upload-progress" style="display:none;position:sticky;top:0;z-index:20;margin-bottom:12px;background:#fff;border:1px solid #dbe5f2;border-radius:12px;padding:10px 12px;box-shadow:0 10px 24px rgba(15,23,42,.08);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;">
+            <strong style="color:#0f172a;font-size:14px;">Ders yükleniyor</strong>
+            <span id="course-upload-progress-text" style="color:#2563eb;font-weight:700;font-size:13px;">%0</span>
+        </div>
+        <div style="height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;">
+            <div id="course-upload-progress-bar" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .15s ease;"></div>
+        </div>
+    </div>
+
     <div class="lesson-builder-top">
         <div style="display:grid;grid-template-columns:1fr 300px;gap:10px;width:100%">
             <input type="text" id="lesson_title" placeholder="Ders başlığı" value="{{ old('name', $isEdit ? $course->name : '') }}">
@@ -305,6 +407,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const coverCropZoom = document.getElementById('cover-crop-zoom');
     const coverCropApply = document.getElementById('cover-crop-apply');
     const coverCropCancel = document.getElementById('cover-crop-cancel');
+    const appToast = window.appToast;
+    const appToastDismiss = window.appToastDismiss;
+    const uploadProgressWrap = document.getElementById('course-upload-progress');
+    const uploadProgressBar = document.getElementById('course-upload-progress-bar');
+    const uploadProgressText = document.getElementById('course-upload-progress-text');
 
     const hName = document.getElementById('course_name_hidden');
     const hCode = document.getElementById('course_code_hidden');
@@ -480,6 +587,32 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_) {}
     }
     if (!Array.isArray(state.slides)) state.slides = [];
+    state.slides = state.slides
+        .filter((slide) => slide && typeof slide === 'object')
+        .map((slide) => ({
+            ...slide,
+            title: String(slide.title || slide.baslik || slide.name || 'Basliksiz Slide'),
+            xp: Number.isFinite(Number(slide.xp)) ? Number(slide.xp) : Number(slide.point || slide.points || 0),
+            kind: String(slide.kind || slide.type || 'topic'),
+            interaction_type: String(slide.interaction_type || slide.interactionType || 'none'),
+            content: String(slide.content || slide.text || slide.body || slide.description || ''),
+            instructions: String(slide.instructions || slide.instruction || ''),
+            image_url: String(slide.image_url || slide.imageUrl || slide.image || ''),
+            video_url: String(slide.video_url || slide.videoUrl || slide.video || ''),
+            file_url: String(slide.file_url || slide.fileUrl || slide.file || ''),
+            code: String(slide.code || slide.html || slide.source_code || slide.script || ''),
+            question_prompt: String(slide.question_prompt || slide.prompt || slide.questionText || ''),
+            points: Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5,
+            time_limit: Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10,
+            double_points: !!(slide.double_points ?? slide.doublePoints),
+            question: slide.question && typeof slide.question === 'object'
+                ? slide.question
+                : (slide.question_data && typeof slide.question_data === 'object'
+                    ? slide.question_data
+                    : (slide.quiz && typeof slide.quiz === 'object'
+                        ? slide.quiz
+                        : { options: [], pairs: [], items: [] })),
+        }));
     if (!state.theme_template) state.theme_template = 'default';
     if (!state.cover_image && existingCoverUrl) state.cover_image = existingCoverUrl;
     let active = 0;
@@ -502,7 +635,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function ensureSlide() {
         if (state.slides.length === 0) {
-            state.slides.push({title: 'Basliksiz Slide', xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+            state.slides.push({
+                title: 'Basliksiz Slide',
+                xp: 0,
+                kind: 'topic',
+                interaction_type: 'none',
+                points: 5,
+                time_limit: 10,
+                double_points: false,
+                content: '',
+                instructions: '',
+                image_url: '',
+                video_url: '',
+                file_url: '',
+                code: '',
+                question_prompt: '',
+                question: { options: [], pairs: [], items: [] }
+            });
         }
     }
     function escapeHtml(v) {
@@ -1176,6 +1325,71 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             saveCurrent();
+            const showUploadProgress = (percent, label) => {
+                if (!uploadProgressWrap || !uploadProgressBar || !uploadProgressText) return;
+                uploadProgressWrap.style.display = 'block';
+                uploadProgressBar.style.width = Math.max(0, Math.min(100, percent)) + '%';
+                uploadProgressText.textContent = label || ('%' + Math.max(0, Math.min(100, percent)));
+            };
+            const hideUploadProgress = () => {
+                if (!uploadProgressWrap || !uploadProgressBar || !uploadProgressText) return;
+                uploadProgressWrap.style.display = 'none';
+                uploadProgressBar.style.width = '0%';
+                uploadProgressText.textContent = '%0';
+            };
+            if (builderForm.method && builderForm.method.toLowerCase() === 'post' && typeof window.XMLHttpRequest !== 'undefined') {
+                e.preventDefault();
+                const formData = new FormData(builderForm);
+                let notice = null;
+                const clearNotice = () => {
+                    if (notice && typeof appToastDismiss === 'function') {
+                        appToastDismiss(notice);
+                    }
+                    notice = null;
+                };
+                const setNotice = (text) => {
+                    if (typeof appToast !== 'function') return;
+                    if (notice && typeof appToastDismiss === 'function') {
+                        appToastDismiss(notice);
+                    }
+                    notice = appToast('warning', text, { sticky: true });
+                };
+                showUploadProgress(0, '%0');
+                setNotice('Ders yükleniyor: %0');
+                const xhr = new XMLHttpRequest();
+                xhr.open((builderForm.getAttribute('method') || 'POST').toUpperCase(), builderForm.action, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.upload.addEventListener('progress', (evt) => {
+                    if (!evt.lengthComputable) {
+                        showUploadProgress(0, 'Yükleniyor...');
+                        setNotice('Ders yükleniyor...');
+                        return;
+                    }
+                    const percent = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
+                    showUploadProgress(percent, '%' + percent);
+                    setNotice(`Ders yükleniyor: %${percent}`);
+                });
+                xhr.addEventListener('load', () => {
+                    clearNotice();
+                    hideUploadProgress();
+                    if (xhr.status >= 200 && xhr.status < 400) {
+                        window.location.href = xhr.responseURL || builderForm.action;
+                        return;
+                    }
+                    alert('Ders kaydedilemedi. Lütfen tekrar deneyin.');
+                });
+                xhr.addEventListener('error', () => {
+                    clearNotice();
+                    hideUploadProgress();
+                    alert('Ders yüklenirken ağ hatası oluştu.');
+                });
+                xhr.addEventListener('abort', () => {
+                    clearNotice();
+                    hideUploadProgress();
+                });
+                xhr.send(formData);
+                return;
+            }
             // Basarili kayittan sonra taslak temizlensin.
             if (shouldPersistDraft) {
                 setTimeout(() => {

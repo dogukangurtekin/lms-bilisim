@@ -307,10 +307,22 @@ class CourseController extends Controller
         $package = $this->buildCoursePackage([
             'exported_at' => now()->toIso8601String(),
             'course' => [
+                'id' => (int) $course->id,
                 'name' => (string) $course->name,
                 'code' => (string) $course->code,
+                'teacher_id' => (int) $course->teacher_id,
+                'school_class_id' => $course->school_class_id !== null ? (int) $course->school_class_id : null,
                 'weekly_hours' => (int) $course->weekly_hours,
                 'lesson_payload' => (array) ($course->lesson_payload ?? []),
+                'created_by' => $course->created_by !== null ? (int) $course->created_by : null,
+                'slides' => (array) data_get($course->lesson_payload, 'slides', []),
+                'curriculum' => (array) data_get($course->lesson_payload, 'curriculum', []),
+                'lesson_description' => (string) data_get($course->lesson_payload, 'lesson_description', ''),
+                'category' => (string) data_get($course->lesson_payload, 'category', ''),
+                'difficulty' => (string) data_get($course->lesson_payload, 'difficulty', ''),
+                'cover_image' => (string) data_get($course->lesson_payload, 'cover_image', ''),
+                'cover_image_data' => $this->exportCoverDataUrl($course),
+                'cover_image_mime' => $this->exportCoverMime($course),
             ],
         ], $this->exportCoverBinary($course), $this->exportCoverMime($course));
 
@@ -339,10 +351,22 @@ class CourseController extends Controller
                 $lessonPayload['cover_image_mime'] = $this->exportCoverMime($c);
 
                 return [
+                    'id' => (int) $c->id,
                     'name' => (string) $c->name,
                     'code' => (string) $c->code,
+                    'teacher_id' => $c->teacher_id !== null ? (int) $c->teacher_id : null,
+                    'school_class_id' => $c->school_class_id !== null ? (int) $c->school_class_id : null,
                     'weekly_hours' => (int) $c->weekly_hours,
+                    'created_by' => $c->created_by !== null ? (int) $c->created_by : null,
                     'lesson_payload' => $lessonPayload,
+                    'slides' => (array) data_get($lessonPayload, 'slides', []),
+                    'curriculum' => (array) data_get($lessonPayload, 'curriculum', []),
+                    'lesson_description' => (string) data_get($lessonPayload, 'lesson_description', ''),
+                    'category' => (string) data_get($lessonPayload, 'category', ''),
+                    'difficulty' => (string) data_get($lessonPayload, 'difficulty', ''),
+                    'cover_image' => (string) data_get($lessonPayload, 'cover_image', ''),
+                    'cover_image_data' => (string) data_get($lessonPayload, 'cover_image_data', ''),
+                    'cover_image_mime' => (string) data_get($lessonPayload, 'cover_image_mime', 'image/png'),
                 ];
             })->values()->all(),
         ];
@@ -412,17 +436,96 @@ class CourseController extends Controller
                 $rawCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($courseData['code'] ?? 'CRS')));
                 $baseCode = substr($rawCode !== '' ? $rawCode : 'CRS', 0, 20);
                 $finalCode = $baseCode . '-' . strtoupper(Str::random(6)); // max 27 char
-                $lessonPayload = (array) ($courseData['lesson_payload'] ?? $courseData['payload'] ?? []);
-                if ($lessonPayload === [] && (isset($courseData['slides']) || isset($courseData['curriculum']))) {
-                    $lessonPayload = array_filter([
-                        'slides' => $courseData['slides'] ?? null,
-                        'curriculum' => $courseData['curriculum'] ?? null,
-                        'lesson_description' => $courseData['lesson_description'] ?? null,
-                        'difficulty' => $courseData['difficulty'] ?? null,
-                        'category' => $courseData['category'] ?? null,
-                        'cover_image' => $courseData['cover_image'] ?? null,
-                        'cover_image_data' => $courseData['cover_image_data'] ?? null,
-                    ], fn ($v) => $v !== null && $v !== '');
+                $lessonPayloadRaw = $courseData['lesson_payload'] ?? $courseData['payload'] ?? [];
+                if (is_string($lessonPayloadRaw)) {
+                    $decodedPayload = json_decode($lessonPayloadRaw, true);
+                    $lessonPayload = is_array($decodedPayload) ? $decodedPayload : [];
+                } else {
+                    $lessonPayload = (array) $lessonPayloadRaw;
+                }
+                $topLevelPayload = array_filter([
+                    'slides' => $courseData['slides'] ?? null,
+                    'curriculum' => $courseData['curriculum'] ?? null,
+                    'lesson_description' => $courseData['lesson_description'] ?? null,
+                    'difficulty' => $courseData['difficulty'] ?? null,
+                    'category' => $courseData['category'] ?? null,
+                    'cover_image' => $courseData['cover_image'] ?? null,
+                    'cover_image_data' => $courseData['cover_image_data'] ?? null,
+                ], fn ($v) => $v !== null && $v !== '');
+                $lessonPayload = array_replace_recursive($lessonPayload, $topLevelPayload);
+                if (empty($lessonPayload['slides']) && is_array(data_get($lessonPayload, 'lesson_pages'))) {
+                    $lessonPayload['slides'] = array_values(array_map(function ($text, $idx) {
+                        return [
+                            'title' => 'Sayfa ' . ($idx + 1),
+                            'xp' => 0,
+                            'kind' => 'topic',
+                            'interaction_type' => 'none',
+                            'points' => 5,
+                            'time_limit' => 10,
+                            'double_points' => false,
+                            'content' => (string) $text,
+                            'instructions' => '',
+                            'image_url' => '',
+                            'video_url' => '',
+                            'file_url' => '',
+                            'code' => '',
+                            'question_prompt' => '',
+                            'question' => ['options' => [], 'pairs' => [], 'items' => []],
+                        ];
+                    }, (array) $lessonPayload['lesson_pages'], array_keys((array) $lessonPayload['lesson_pages'])));
+                }
+                if (empty($lessonPayload['slides'])) {
+                    $legacyText = trim((string) (
+                        $courseData['content']
+                        ?? $courseData['text']
+                        ?? $courseData['body']
+                        ?? $courseData['description']
+                        ?? data_get($lessonPayload, 'content')
+                        ?? data_get($lessonPayload, 'text')
+                        ?? data_get($lessonPayload, 'body')
+                        ?? data_get($lessonPayload, 'description')
+                        ?? ''
+                    ));
+                    $legacyCode = trim((string) (
+                        $courseData['code']
+                        ?? data_get($lessonPayload, 'code')
+                        ?? data_get($lessonPayload, 'html')
+                        ?? data_get($lessonPayload, 'source_code')
+                        ?? data_get($lessonPayload, 'script')
+                        ?? ''
+                    ));
+                    $legacyQuestion = trim((string) (
+                        $courseData['question_prompt']
+                        ?? data_get($lessonPayload, 'question_prompt')
+                        ?? data_get($lessonPayload, 'prompt')
+                        ?? data_get($lessonPayload, 'questionText')
+                        ?? ''
+                    ));
+                    if ($legacyText !== '' || $legacyCode !== '' || $legacyQuestion !== '') {
+                        $lessonPayload['slides'] = [[
+                            'title' => (string) (data_get($lessonPayload, 'title') ?: $courseData['name'] ?: 'Sayfa 1'),
+                            'xp' => (int) (data_get($lessonPayload, 'xp') ?: 0),
+                            'kind' => (string) (data_get($lessonPayload, 'kind') ?: 'topic'),
+                            'interaction_type' => (string) (data_get($lessonPayload, 'interaction_type') ?: 'none'),
+                            'points' => (int) (data_get($lessonPayload, 'points') ?: 5),
+                            'time_limit' => (int) (data_get($lessonPayload, 'time_limit') ?: 10),
+                            'double_points' => (bool) data_get($lessonPayload, 'double_points', false),
+                            'content' => $legacyText,
+                            'instructions' => (string) (data_get($lessonPayload, 'instructions') ?: ''),
+                            'image_url' => (string) (data_get($lessonPayload, 'image_url') ?: ''),
+                            'video_url' => (string) (data_get($lessonPayload, 'video_url') ?: ''),
+                            'file_url' => (string) (data_get($lessonPayload, 'file_url') ?: ''),
+                            'code' => $legacyCode,
+                            'question_prompt' => $legacyQuestion,
+                            'question' => data_get($lessonPayload, 'question') ?: ['options' => [], 'pairs' => [], 'items' => []],
+                        ]];
+                    }
+                }
+                if (! isset($lessonPayload['slides']) || ! is_array($lessonPayload['slides'])) {
+                    $lessonPayload['slides'] = [];
+                }
+                if (! isset($lessonPayload['curriculum']) || ! is_array($lessonPayload['curriculum'])) {
+                    $lessonPayload['curriculum'] = [];
                 }
                 if (isset($coverBinary) && $coverBinary !== '' && empty($lessonPayload['cover_image_data'])) {
                     $lessonPayload['cover_image_data'] = $this->binaryToDataUrl($coverBinary, $courseData['cover_image_mime'] ?? 'image/png');
@@ -454,14 +557,34 @@ class CourseController extends Controller
                         $lessonPayload['cover_image'] = $cover;
                     }
                 }
+                $importTeacherId = (int) ($courseData['teacher_id'] ?? 0);
+                if ($importTeacherId <= 0 || !Teacher::query()->whereKey($importTeacherId)->exists()) {
+                    $importTeacherId = $teacherId;
+                }
+
+                $importClassId = $courseData['school_class_id'] ?? null;
+                $importClassId = is_numeric($importClassId) ? (int) $importClassId : null;
+                if ($importClassId !== null && !SchoolClass::query()->whereKey($importClassId)->exists()) {
+                    $importClassId = null;
+                }
+
+                $importCreatedBy = $courseData['created_by'] ?? null;
+                $importCreatedBy = is_numeric($importCreatedBy) ? (int) $importCreatedBy : null;
+                if ($importCreatedBy !== null && !\App\Models\User::query()->whereKey($importCreatedBy)->exists()) {
+                    $importCreatedBy = auth()->id();
+                }
+                if ($importCreatedBy === null) {
+                    $importCreatedBy = auth()->id();
+                }
+
                 $created[] = Course::query()->create([
                     'name' => $name,
                     'code' => $finalCode,
-                    'teacher_id' => $teacherId,
-                    'school_class_id' => null,
+                    'teacher_id' => $importTeacherId,
+                    'school_class_id' => $importClassId,
                     'weekly_hours' => max(1, min(20, (int) ($courseData['weekly_hours'] ?? 2))),
                     'lesson_payload' => $lessonPayload,
-                    'created_by' => auth()->id(),
+                    'created_by' => $importCreatedBy,
                 ]);
             }
         }
