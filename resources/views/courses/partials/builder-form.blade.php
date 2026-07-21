@@ -320,7 +320,7 @@
     </div>
 </div>
 
-<input type="hidden" id="lesson_payload" name="lesson_payload" value="{{ e($initialPayload) }}">
+<input type="hidden" id="lesson_payload" name="lesson_payload" value='{{ $initialPayload }}'>
 <input type="hidden" id="course_name_hidden" name="name" value="{{ old('name', $isEdit ? $course->name : '') }}">
 <input type="hidden" id="course_code_hidden" name="code" value="{{ $defaultCode }}">
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
@@ -370,7 +370,7 @@
     </div>
 </div>
 
-@if($errors->any())
+@if(isset($errors) && $errors->any())
     <div style="color:#b91c1c;margin:8px 0">{{ $errors->first() }}</div>
 @endif
 
