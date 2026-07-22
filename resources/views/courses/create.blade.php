@@ -3,6 +3,7 @@
 @section('content')
 <div class="top"><h1>Ders Oluşturucu</h1></div>
 <div class="card">
+    @include('courses.partials.theme-css')
     <form method="POST" action="{{ route('courses.store') }}" enctype="multipart/form-data">
         @csrf
         @include('courses.partials.builder-form')

@@ -6,11 +6,9 @@
 </div>
 <div class="card">
     @php
-        $slides = $course->lesson_payload['slides'] ?? [];
-        $globalThemeCss = $course->lesson_payload['global_theme_css'] ?? '';
-        $themeTemplate = $course->lesson_payload['theme_template'] ?? 'default';
+        $slides = $slides ?? ($course->lesson_payload['slides'] ?? []);
     @endphp
-    @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
+    @include('courses.partials.theme-css')
     @if(empty($slides))
         <p>Bu ders icin henuz slide icerigi olusturulmamis.</p>
     @else
@@ -47,6 +45,9 @@
                 const tmpl = document.getElementById('course-show-slide-templates');
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
                 let idx = 0;
+                let lastDirection = 1;
+                let touchStartX = 0;
+                let touchStartY = 0;
 
                 function fitIframeToHolder(iframe, holder) {
                     if (!iframe || !holder) return;
@@ -94,12 +95,26 @@
 
                 function render() {
                     const current = slides[idx];
+                    const previous = stage.querySelector('#course-show-fit');
+                    if (previous) {
+                        previous.style.transition = 'opacity .18s ease, transform .18s ease';
+                        previous.style.opacity = '0';
+                        previous.style.transform = 'translateX(' + (lastDirection > 0 ? '-18px' : '18px') + ') scale(.985)';
+                        setTimeout(() => previous.remove(), 180);
+                    }
                     stage.innerHTML = '<div id="course-show-fit" style="width:100%;height:100%;min-height:72vh;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch"></div>';
                     const fit = document.getElementById('course-show-fit');
+                    fit.style.opacity = '0';
+                    fit.style.transform = 'translateX(' + (lastDirection > 0 ? '18px' : '-18px') + ') scale(.985)';
+                    fit.style.transition = 'opacity .22s ease, transform .22s ease';
                     const node = current.cloneNode(true);
                     node.style.width = '100%';
                     node.style.height = '100%';
                     fit.appendChild(node);
+                    requestAnimationFrame(() => {
+                        fit.style.opacity = '1';
+                        fit.style.transform = 'translateX(0) scale(1)';
+                    });
                     fitStage();
                     counter.textContent = (idx + 1) + ' / ' + slides.length;
                     prevBtn.disabled = idx <= 0;
@@ -109,14 +124,31 @@
 
                 prevBtn.addEventListener('click', function () {
                     if (idx <= 0) return;
+                    lastDirection = -1;
                     idx -= 1;
                     render();
                 });
                 nextBtn.addEventListener('click', function () {
                     if (idx >= slides.length - 1) return;
+                    lastDirection = 1;
                     idx += 1;
                     render();
                 });
+                stage.addEventListener('touchstart', (e) => {
+                    const t = e.changedTouches && e.changedTouches[0];
+                    if (!t) return;
+                    touchStartX = t.clientX;
+                    touchStartY = t.clientY;
+                }, { passive: true });
+                stage.addEventListener('touchend', (e) => {
+                    const t = e.changedTouches && e.changedTouches[0];
+                    if (!t) return;
+                    const dx = t.clientX - touchStartX;
+                    const dy = t.clientY - touchStartY;
+                    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+                    if (dx < 0) nextBtn.click();
+                    else prevBtn.click();
+                }, { passive: true });
                 window.addEventListener('resize', fitStage);
                 render();
             });

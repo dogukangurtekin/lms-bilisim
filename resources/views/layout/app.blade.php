@@ -493,6 +493,55 @@
 })();
 </script>
 @endif
+@if(auth()->check() && auth()->user()?->hasRole('student'))
+<script>
+(() => {
+    const pingUrl = @json(route('student.portal.time.ping'));
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!pingUrl || !csrfToken) return;
+
+    let inFlight = false;
+    let timer = null;
+
+    const ping = async () => {
+        if (inFlight) return;
+        inFlight = true;
+        try {
+            await fetch(pingUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+        } catch (_) {
+            // Sessizce gec: oturum ping'i sadece canlı tutma amaçlıdır.
+        } finally {
+            inFlight = false;
+        }
+    };
+
+    ping();
+    timer = setInterval(ping, 60000);
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            ping();
+        }
+    });
+
+    window.addEventListener('pageshow', () => {
+        ping();
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (timer) clearInterval(timer);
+    });
+})();
+</script>
+@endif
 @stack('scripts')
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>

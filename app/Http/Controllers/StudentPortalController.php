@@ -19,13 +19,17 @@ use App\Services\StudentProgressReportService;
 use Carbon\Carbon;
 use App\Models\UserStreak;
 use App\Models\UserXpLog;
+use App\Services\LessonPresentation\SlidePresentationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StudentPortalController extends Controller
 {
-    public function __construct(private StudentProgressReportService $reportService)
+    public function __construct(
+        private StudentProgressReportService $reportService,
+        private SlidePresentationService $presentation
+    )
     {
     }
 
@@ -52,6 +56,11 @@ class StudentPortalController extends Controller
         $courses = $this->studentCourses($student)->get();
         $gameAssignments = $this->studentAssignments($student)->get();
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
+        $assignedLessonHomeworks = CourseHomework::query()
+            ->where('school_class_id', $student->school_class_id)
+            ->where('assignment_type', 'lesson')
+            ->whereNull('deleted_at')
+            ->get();
         $courseSlideAssignments = $courses->filter(function ($course) {
             $slides = (array) data_get($course->lesson_payload, 'slides', []);
             return count($slides) > 0;
@@ -84,27 +93,26 @@ class StudentPortalController extends Controller
         $completedGameApps = $completedGameAssignmentCount + $completedCourseGameHomeworkCount;
         $pendingGameApps = max(($gameAssignments->count() + $gameHomeworkCount) - $completedGameApps, 0);
 
-        $lessonHomeworkCount = $courseHomeworks
+        $lessonHomeworkCount = $assignedLessonHomeworks
             ->filter(fn ($h) => (string) $h->assignment_type === 'lesson')
             ->count();
         $completedLessonHomeworkCount = StudentHomeworkProgress::where('student_id', $student->id)
             ->whereIn(
                 'course_homework_id',
-                $courseHomeworks
+                $assignedLessonHomeworks
                     ->filter(fn ($h) => (string) $h->assignment_type === 'lesson')
                     ->pluck('id')
             )
             ->whereNotNull('completed_at')
             ->count();
-        $slideCourseIds = $courseSlideAssignments->pluck('id')->map(fn ($v) => (int) $v)->unique()->values();
-        $lessonHomeworkCourseIds = $courseHomeworks
+        $lessonHomeworkCourseIds = $assignedLessonHomeworks
             ->filter(fn ($h) => (string) $h->assignment_type === 'lesson')
             ->pluck('course_id')
             ->map(fn ($v) => (int) $v)
             ->filter(fn ($v) => $v > 0)
             ->unique()
             ->values();
-        $allCourseAssignmentIds = $slideCourseIds->merge($lessonHomeworkCourseIds)->unique()->values();
+        $allCourseAssignmentIds = $lessonHomeworkCourseIds->unique()->values();
         $completedCourseIds = ContentProgress::where('user_id', $student->user_id)
             ->where('completed', true)
             ->whereIn('content_id', $allCourseAssignmentIds->map(fn ($id) => 'course-' . $id)->values())
@@ -345,7 +353,9 @@ class StudentPortalController extends Controller
             return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi tamamladiniz. Tekrar acilamaz.');
         }
 
-        return view('student-portal.course-show', compact('student', 'course', 'courseProgress'));
+        $slides = $this->presentation->prepareCourseSlides($course, true);
+
+        return view('student-portal.course-show', compact('student', 'course', 'courseProgress', 'slides'));
     }
 
     public function completeCourse(Course $course)
@@ -364,8 +374,22 @@ class StudentPortalController extends Controller
         }
 
         $slides = (array) data_get($course->lesson_payload, 'slides', []);
-        $slideXp = collect($slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0)));
-        $earnedXp = isset($validated['earned_xp']) ? max(0, (int) $validated['earned_xp']) : max(0, (int) $slideXp);
+        $slideXp = collect($slides)->sum(function ($s) {
+            $xp = (int) data_get($s, 'xp', 0);
+            if ($xp > 0) {
+                return $xp;
+            }
+
+            if (data_get($s, 'question_prompt')) {
+                return max(1, (int) data_get($s, 'points', 5));
+            }
+
+            return 2;
+        });
+        $earnedXp = isset($validated['earned_xp'])
+            ? max(0, (int) $validated['earned_xp'])
+            : 0;
+        $earnedXp = max($earnedXp, max(0, (int) $slideXp));
         $durationSeconds = max(0, (int) ($validated['duration_seconds'] ?? 0));
 
         ContentProgress::updateOrCreate(
@@ -389,12 +413,17 @@ class StudentPortalController extends Controller
     {
         $student = $this->getStudent();
         $this->purgeStaleUnfinishedAssignments($student);
+        $courses = $this->studentCourses($student)->get();
+        $courseProgress = ContentProgress::where('user_id', $student->user_id)
+            ->where('content_id', 'like', 'course-%')
+            ->get()
+            ->keyBy('content_id');
         $assignments = $this->studentAssignments($student)->paginate(20, ['*'], 'game_page');
         $courseHomeworks = $this->studentCourseHomeworks($student)->paginate(20, ['*'], 'course_page');
         $progress = StudentHomeworkProgress::where('student_id', $student->id)->get()->keyBy('course_homework_id');
         $gameProgress = StudentGameAssignmentProgress::where('student_id', $student->id)->get()->keyBy('game_assignment_id');
 
-        return view('student-portal.assignments', compact('student', 'assignments', 'courseHomeworks', 'progress', 'gameProgress'));
+        return view('student-portal.assignments', compact('student', 'courses', 'courseProgress', 'assignments', 'courseHomeworks', 'progress', 'gameProgress'));
     }
 
     public function friends()
@@ -491,7 +520,7 @@ class StudentPortalController extends Controller
             'message' => $messages[$messageKey],
         ]);
 
-        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj s?n?f panosunda payla??ld?.');
+        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sınıf panosunda paylaşıldı.');
     }
 
     public function progress()
@@ -553,7 +582,7 @@ class StudentPortalController extends Controller
 
     private function studentAssignments(Student $student)
     {
-        $completedIds = StudentGameAssignmentProgress::query()
+        $visibleIds = StudentGameAssignmentProgress::query()
             ->where('student_id', $student->id)
             ->pluck('game_assignment_id')
             ->filter()
@@ -562,13 +591,11 @@ class StudentPortalController extends Controller
 
         return GameAssignment::withTrashed()
             ->with('levels')
-            ->where(function ($q) use ($student, $completedIds) {
-                $q->where(function ($active) use ($student) {
-                    $active->whereNull('game_assignments.deleted_at')
-                        ->whereHas('classes', fn ($c) => $c->where('school_classes.id', $student->school_class_id));
-                });
-                if (!empty($completedIds)) {
-                    $q->orWhereIn('id', $completedIds);
+            ->where(function ($q) use ($visibleIds) {
+                if ($visibleIds !== []) {
+                    $q->whereIn('id', $visibleIds);
+                } else {
+                    $q->whereRaw('1 = 0');
                 }
             })
             ->latest();
@@ -702,9 +729,8 @@ class StudentPortalController extends Controller
 
     private function studentCourseHomeworks(Student $student)
     {
-        $completedIds = StudentHomeworkProgress::query()
+        $visibleIds = StudentHomeworkProgress::query()
             ->where('student_id', $student->id)
-            ->whereNotNull('completed_at')
             ->pluck('course_homework_id')
             ->filter()
             ->map(fn ($id) => (int) $id)
@@ -712,14 +738,11 @@ class StudentPortalController extends Controller
 
         return CourseHomework::query()
             ->with(['course', 'schoolClass'])
-            ->where(function ($q) use ($student, $completedIds) {
-                $q->where(function ($active) use ($student) {
-                    $active->where('school_class_id', $student->school_class_id)
-                        ->whereNull('deleted_at');
-                });
-
-                if ($completedIds !== []) {
-                    $q->orWhereIn('id', $completedIds);
+            ->where(function ($q) use ($visibleIds) {
+                if ($visibleIds !== []) {
+                    $q->whereIn('id', $visibleIds);
+                } else {
+                    $q->whereRaw('1 = 0');
                 }
             })
             ->latest();
@@ -1086,5 +1109,3 @@ class StudentPortalController extends Controller
         return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
     }
 }
-
-

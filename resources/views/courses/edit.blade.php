@@ -3,6 +3,7 @@
 @section('content')
 <div class="top"><h1>Dersi Duzenle</h1></div>
 <div class="card">
+    @include('courses.partials.theme-css')
     <form method="POST" action="{{ route('courses.update', $course) }}" enctype="multipart/form-data">
         @csrf
         @method('PUT')

@@ -105,6 +105,7 @@
     $defaultTeacherId = old('teacher_id', $isEdit ? $course->teacher_id : ($teachers->first()->id ?? null));
     $defaultWeeklyHours = old('weekly_hours', $isEdit ? $course->weekly_hours : 2);
     $defaultCode = old('code', $isEdit ? $course->code : '');
+    $defaultLessonTitle = old('name', $isEdit ? $course->name : 'Örnek Ders: Layout Galerisi');
 @endphp
 
 <style>
@@ -129,7 +130,7 @@
 
     <div class="lesson-builder-top">
         <div style="display:grid;grid-template-columns:1fr 300px;gap:10px;width:100%">
-            <input type="text" id="lesson_title" placeholder="Ders başlığı" value="{{ old('name', $isEdit ? $course->name : '') }}">
+            <input type="text" id="lesson_title" placeholder="Ders başlığı" value="{{ $defaultLessonTitle }}">
             <select id="top_class_select">
                 <option value="__ALL__" @selected($selectedClass === '__ALL__')>Tüm Sınıflar</option>
                 @foreach($classes as $class)
@@ -157,7 +158,6 @@
         <section class="builder-center">
             <div class="builder-tabs">
                 <button type="button" class="tab-btn" data-tab="text">Yazı Ekle</button>
-                <button type="button" class="tab-btn" data-tab="media">Görsel/Video</button>
                 <button type="button" class="tab-btn active" data-tab="code">Kod Ekle</button>
                 <button type="button" class="tab-btn" data-tab="question">Soru Ekle</button>
             </div>
@@ -173,68 +173,45 @@
                 <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
             </div>
 
-            <div class="builder-panel" data-panel="media" style="display:none">
-                <label>Görsel URL</label>
-                <input type="text" id="slide_image_url" placeholder="https://...">
-                <label>Video URL</label>
-                <input type="text" id="slide_video_url" placeholder="https://youtube.com/...">
-                <label>Ek Kaynak URL</label>
-                <input type="text" id="slide_file_url" placeholder="https://.../pdf">
-            </div>
-
             <div class="builder-panel" data-panel="code">
                 <label>HTML/CSS/JS Kodu</label>
                 <textarea id="slide_code" rows="9" placeholder="<div>...</div> <style>...</style> <script>...</script>"></textarea>
-
-                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
-                    <h4 style="margin:0 0 10px">Tema Şablonları</h4>
-                    <label>Global Tema Şablonu</label>
-                    <select id="theme_template_select">
-                        <option value="none">Temasız / Serbest CSS</option>
-                        <option value="aurora">Aurora Class</option>
-                        <option value="paper">Paper Notebook</option>
-                        <option value="midnight">Midnight Lab</option>
-                        <option value="playful">Playful Blocks</option>
-                        <option value="academy">Academy Board</option>
-                    </select>
-                    <small style="display:block;margin-top:6px;color:#64748b">
-                        Bu şablon; yazı tipi, başlık, paragraf, kart, kod ve tablo görünümünü ders boyunca sabitler.
-                    </small>
-                    <label style="margin-top:10px;display:block">Global Tema CSS</label>
-                    <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
-                </div>
-
-                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0">
-                    <h4 style="margin:0 0 10px">Müfredat Bilgileri</h4>
-                    <div style="display:grid;gap:10px">
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dbe5f2">
+                    <h4 style="margin:0 0 12px">Müfredat Bilgileri</h4>
+                    <label>Müfredat Başlığı</label>
+                    <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                         <div>
-                            <label>Müfredat Başlığı</label>
-                            <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                            <div>
-                                <label>Ders No</label>
-                                <input type="number" id="curriculum_lesson_number" min="1" value="1">
-                            </div>
-                            <div>
-                                <label>İlerleme (0-100)</label>
-                                <input type="number" id="curriculum_progress" min="0" max="100" value="0">
-                            </div>
+                            <label>Ders No</label>
+                            <input type="number" id="curriculum_lesson_number" min="1" value="1">
                         </div>
                         <div>
-                            <label>Konu</label>
-                            <textarea id="curriculum_topic" rows="3" placeholder="Bu derste..."></textarea>
-                        </div>
-                        <div>
-                            <label>Kazanımlar (Her satır bir madde)</label>
-                            <textarea id="curriculum_outcomes" rows="4" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-                        </div>
-                        <div>
-                            <label>Etkinlikler (Her satır bir madde)</label>
-                            <textarea id="curriculum_activities" rows="4" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                            <label>İlerleme (0-100)</label>
+                            <input type="number" id="curriculum_progress" min="0" max="100" value="0">
                         </div>
                     </div>
+                    <label>Konu</label>
+                    <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
+                    <label>Kazanımlar (Her satır bir madde)</label>
+                    <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
+                    <label>Etkinlikler (Her satır bir madde)</label>
+                    <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
                 </div>
+                <h4 style="margin:16px 0 10px">Tema Şablonları</h4>
+                <label>Global Tema Şablonu</label>
+                <select id="theme_template_select">
+                    <option value="none">Temasız</option>
+                    <option value="aurora">Aurora</option>
+                    <option value="paper">Paper</option>
+                    <option value="midnight">Midnight</option>
+                    <option value="playful">Playful</option>
+                    <option value="academy">Academy</option>
+                </select>
+                <small style="display:block;margin:8px 0 12px;color:#64748b">
+                    Bu şablon; yazı tipi, başlık, paragraf, kart, kod ve tablo görünümünü ders boyunca sabitler.
+                </small>
+                <label style="margin-top:10px;display:block">Global Tema CSS</label>
+                <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
@@ -321,7 +298,7 @@
 </div>
 
 <input type="hidden" id="lesson_payload" name="lesson_payload" value='{{ $initialPayload }}'>
-<input type="hidden" id="course_name_hidden" name="name" value="{{ old('name', $isEdit ? $course->name : '') }}">
+<input type="hidden" id="course_name_hidden" name="name" value="{{ $defaultLessonTitle }}">
 <input type="hidden" id="course_code_hidden" name="code" value="{{ $defaultCode }}">
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
 <input type="hidden" id="school_class_id_hidden" name="school_class_id" value="{{ old('school_class_id', $isEdit ? $course->school_class_id : '') }}">
@@ -390,8 +367,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const lessonTitle = document.getElementById('lesson_title');
     const topClassSelect = document.getElementById('top_class_select');
-    const globalThemeCss = document.getElementById('global_theme_css');
-    const themeTemplateSelect = document.getElementById('theme_template_select');
     const lessonCategory = document.getElementById('lesson_category');
     const lessonDifficulty = document.getElementById('lesson_difficulty');
     const lessonDescription = document.getElementById('lesson_description');
@@ -425,9 +400,6 @@ document.addEventListener('DOMContentLoaded', function () {
         xp: document.getElementById('slide_xp'),
         content: document.getElementById('slide_content'),
         instructions: document.getElementById('slide_instructions'),
-        image_url: document.getElementById('slide_image_url'),
-        video_url: document.getElementById('slide_video_url'),
-        file_url: document.getElementById('slide_file_url'),
         code: document.getElementById('slide_code'),
         kind: document.getElementById('slide_kind'),
         interaction_type: document.getElementById('slide_interaction_type'),
@@ -446,6 +418,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     const questionEditor = document.getElementById('question_editor');
     const currentSlideXpBadge = document.getElementById('current_slide_xp_badge');
+    const globalThemeCss = document.getElementById('global_theme_css');
+    const themeTemplateSelect = document.getElementById('theme_template_select');
 
     const themeTemplates = {
         default: `
@@ -789,7 +763,10 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function syncHiddenInputs() {
-        hName.value = lessonTitle.value || '';
+        if (lessonTitle && !lessonTitle.value.trim()) {
+            lessonTitle.value = 'Örnek Ders: Layout Galerisi';
+        }
+        hName.value = lessonTitle.value || 'Örnek Ders: Layout Galerisi';
         if (!hTeacher.value) hTeacher.value = '{{ $defaultTeacherId }}';
         if (!hWeekly.value) hWeekly.value = '{{ $defaultWeeklyHours }}';
         ensureCourseCode();
@@ -809,9 +786,6 @@ document.addEventListener('DOMContentLoaded', function () {
         s.xp = Math.max(0, Math.min(500, parseInt(fields.xp.value || '0', 10) || 0));
         s.content = fields.content.value || '';
         s.instructions = fields.instructions.value || '';
-        s.image_url = fields.image_url.value || '';
-        s.video_url = fields.video_url.value || '';
-        s.file_url = fields.file_url.value || '';
         s.code = fields.code.value || '';
         s.kind = fields.kind.value;
         s.interaction_type = fields.interaction_type.value;
@@ -825,10 +799,9 @@ document.addEventListener('DOMContentLoaded', function () {
         state.category = lessonCategory.value || 'Kodlama';
         state.difficulty = lessonDifficulty.value || 'Kolay';
         state.lesson_description = lessonDescription?.value || '';
-        state.cover_image = normalizeCoverStoragePath(state.cover_image || '');
-        state.global_theme_css = globalThemeCss.value || '';
-        state.theme_template = themeTemplateSelect?.value || state.theme_template || 'default';
-        state.curriculum = {
+        state.theme_template = themeTemplateSelect ? (themeTemplateSelect.value || 'default') : (state.theme_template || 'default');
+        state.global_theme_css = globalThemeCss ? globalThemeCss.value || '' : (state.global_theme_css || '');
+        state.cover_image = normalizeCoverStoragePath(state.cover_image || '');        state.curriculum = {
             title: curriculum.title.value || '',
             lesson_number: Math.max(1, parseInt(curriculum.lessonNumber.value || '1', 10) || 1),
             konu: curriculum.topic.value || '',
@@ -851,9 +824,6 @@ document.addEventListener('DOMContentLoaded', function () {
         fields.xp.value = Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0;
         fields.content.value = s.content || '';
         fields.instructions.value = s.instructions || '';
-        fields.image_url.value = s.image_url || '';
-        fields.video_url.value = s.video_url || '';
-        fields.file_url.value = s.file_url || '';
         fields.code.value = s.code || '';
         fields.kind.value = s.kind || 'topic';
         fields.interaction_type.value = s.interaction_type || 'none';
@@ -868,6 +838,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (themeTemplateSelect) {
             const templateKey = state.theme_template || 'default';
             themeTemplateSelect.value = templateKey;
+        }
+        if (globalThemeCss) {
+            globalThemeCss.value = state.global_theme_css || '';
         }
         const url = normalizeCoverUrl(state.cover_image || '');
         if (coverImagePreviewBox) {
@@ -889,11 +862,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (coverImageRemove) {
             coverImageRemove.style.display = url ? 'inline-flex' : 'none';
-        }
-        globalThemeCss.value = state.global_theme_css || '';
-        if (themeTemplateSelect) {
-            const templateKey = state.theme_template || 'default';
-            themeTemplateSelect.value = templateKey;
         }
         const c = state.curriculum || {};
         curriculum.title.value = c.title || '';
@@ -954,9 +922,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ensureSlide();
         previewIndex = Math.max(0, Math.min(previewIndex, state.slides.length - 1));
         const s = state.slides[previewIndex] || {};
-        let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';
-        const themeCss = state.global_theme_css || '';
-        if (themeCss) {
+        let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';        if (themeCss) {
             html = '<style>' + themeCss + '</style><div class="slide-theme">' + html;
         }
         if (s.instructions) html += '<p><b>Yonlendirme:</b> ' + escapeHtml(s.instructions) + '</p>';
@@ -1249,12 +1215,12 @@ document.addEventListener('DOMContentLoaded', function () {
     lessonCategory?.addEventListener('change', saveCurrent);
     lessonDifficulty?.addEventListener('change', saveCurrent);
     lessonDescription?.addEventListener('input', saveCurrent);
-    globalThemeCss.addEventListener('input', saveCurrent);
     themeTemplateSelect?.addEventListener('change', () => {
         applyThemePreset(themeTemplateSelect.value);
         saveCurrent();
         renderList();
     });
+    globalThemeCss?.addEventListener('input', saveCurrent);
     if (coverImageFile) {
         coverImageFile.addEventListener('change', (e) => {
             const file = e.target.files && e.target.files[0];
@@ -1283,9 +1249,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         coverImageRemove.style.display = 'none';
         saveCurrent();
-    });
-    Object.values(curriculum).forEach(el => el.addEventListener('input', saveCurrent));
-    fields.interaction_type.addEventListener('change', () => {
+    });    fields.interaction_type.addEventListener('change', () => {
         renderQuestionEditor(fields.interaction_type.value, {});
         saveCurrent();
     });
@@ -1304,9 +1268,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
         ensureSlide();
         loadCurrent();
-        renderList();
-        if (themeTemplateSelect) applyThemePreset(state.theme_template || 'default');
-        saveCurrent();
+        renderList();        saveCurrent();
     } catch (e) {
         console.error('Builder init failed:', e);
     }

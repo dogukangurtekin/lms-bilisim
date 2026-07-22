@@ -1,4 +1,4 @@
-@extends('layout.app')
+﻿@extends('layout.app')
 @section('title','Öğretmen Paneli')
 @section('content')
 @php
@@ -13,13 +13,6 @@
     }
 @endphp
 <div class="dashboard-shell" data-dashboard-shell>
-    <section class="dashboard-hero">
-        <div>
-            <h1>{{ $dashboard['headline_name'] }} | Öğretmen Paneli</h1>
-            <p>Öğrenci, sınıf ve ders verilerini tek bakışta izleyin. Widgetleri düzenleyebilir, gizleyebilir ve boyutlandırabilirsiniz.</p>
-        </div>
-    </section>
-
     <section class="class-tabs-strip" aria-label="Sınıf sekmeleri">
         <a class="class-tab {{ $selectedClassId === 0 ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
         @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
@@ -27,105 +20,69 @@
         @endforeach
     </section>
 
-    <section class="widget-grid" id="dashboard-widget-grid">
-        <a class="dashboard-widget dashboard-widget-qr widget-span-{{ $layout['quick_qr']['span'] ?? 6 }}" data-widget-key="quick_qr" href="{{ route('qr.login.menu') }}" draggable="true">
-            <div class="widget-head">
-                <div>
-                    <strong>Mobil QR Girişi</strong>
-                    <span>Mobilde sabit</span>
-                    <small class="widget-class-tag">{{ $selectedClassLabel }}</small>
-                </div>
-                <button type="button" class="widget-toggle" data-widget-toggle="quick_qr" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="qr-widget-body">
-                <div>
-                    <small>QR giriş</small>
-                    <h3>Hemen okut</h3>
-                    <p>Mobilde açık kalır.</p>
-                </div>
-                <img src="{{ asset('qr-mini.svg') }}" alt="QR">
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </a>
-
-        <article class="dashboard-widget widget-span-{{ $layout['students']['span'] ?? 3 }}" data-widget-key="students" draggable="true">
-            <div class="widget-head">
-                <div><strong>Toplam Öğrenci</strong><span>Aktif havuz</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="students" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>{{ $dashboard['summary']['total_students'] }}</strong>
-                <span>Toplam kayıt</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-
-        <article class="dashboard-widget widget-span-{{ $layout['active_students']['span'] ?? 3 }}" data-widget-key="active_students" draggable="true">
-            <div class="widget-head">
-                <div><strong>Aktif Öğrenci</strong><span>Son 10 dakika</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="active_students" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>{{ $dashboard['summary']['active_students'] }}</strong>
-                <span>Çevrimiçi</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-
-        <article class="dashboard-widget widget-span-{{ $layout['classes']['span'] ?? 3 }}" data-widget-key="classes" draggable="true">
-            <div class="widget-head">
-                <div><strong>Sınıf Sayısı</strong><span>İzlenen sınıflar</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="classes" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>{{ $dashboard['summary']['total_classes'] }}</strong>
-                <span>Sistem genelinde</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-
-        <article class="dashboard-widget widget-span-{{ $layout['courses']['span'] ?? 3 }}" data-widget-key="courses" draggable="true">
-            <div class="widget-head">
-                <div><strong>Ders Sayısı</strong><span>Aktif içerik</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="courses" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>{{ $dashboard['summary']['total_courses'] }}</strong>
-                <span>Tanımlı ders</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-
-        <article class="dashboard-widget widget-span-{{ $layout['avg_completion']['span'] ?? 3 }}" data-widget-key="avg_completion" draggable="true">
-            <div class="widget-head">
-                <div><strong>Ortalama Not</strong><span>Genel başarı</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="avg_completion" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>%{{ $dashboard['summary']['avg_completion'] }}</strong>
-                <span>Yüzdelik başarı</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-
-        <article class="dashboard-widget widget-span-{{ $layout['xp']['span'] ?? 3 }}" data-widget-key="xp" draggable="true">
-            <div class="widget-head">
-                <div><strong>Toplam XP</strong><span>Biriken puan</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                <button type="button" class="widget-toggle" data-widget-toggle="xp" aria-label="Gizle" title="Gizle">−</button>
-            </div>
-            <div class="metric-card">
-                <strong>{{ $dashboard['summary']['total_xp'] }}</strong>
-                <span>Öğrenci üretimi</span>
-            </div>
-            <span class="widget-resize-handle" aria-hidden="true"></span>
-        </article>
-    </section>
-
     <section class="dashboard-main-layout">
-        <div class="dashboard-left-rail"></div>
         <div class="dashboard-center-column">
-            <section class="dashboard-grid-2">
-                <article class="dashboard-widget dashboard-widget-wide widget-span-12" data-widget-key="notes" draggable="true">
+            <section class="dashboard-widget-grid" id="dashboard-widget-grid">
+                <a class="dashboard-widget dashboard-widget-hero dashboard-widget-qr widget-span-12" data-widget-key="quick_qr" href="{{ route('qr.login.menu') }}" draggable="true">
+                    <div class="widget-head">
+                        <div>
+                            <strong>Mobil QR Girişi</strong>
+                            <span>Mobilde sabit</span>
+                            <small class="widget-class-tag">{{ $selectedClassLabel }}</small>
+                        </div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="quick_qr" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="qr-widget-body">
+                        <div>
+                            <small>QR giriş</small>
+                            <h3>Hemen okut</h3>
+                            <p>Mobilde açık kalır.</p>
+                        </div>
+                        <img src="{{ asset('qr-mini.svg') }}" alt="QR">
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </a>
+
+                <article class="dashboard-widget widget-span-4" data-widget-key="students" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Toplam Öğrenci</strong><span>Aktif havuz</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="students" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="metric-card">
+                        <strong>{{ $dashboard['summary']['total_students'] }}</strong>
+                        <span>Toplam kayıt</span>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <article class="dashboard-widget widget-span-4" data-widget-key="active_students" draggable="true">
+                    <div class="widget-head">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <strong>Aktif Öğrenci</strong>
+                            <span style="min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#f8fbff;border:1px solid #dbeafe;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#0f172a;box-shadow:0 6px 16px rgba(15,23,42,.06);">{{ $dashboard['summary']['active_students'] }}</span>
+                        </div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="active_students" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    @php
+                        $activeTop3 = array_slice($dashboard['summary']['active_students_top3'] ?? [], 0, 3);
+                    @endphp
+                    @if($activeTop3 !== [])
+                        <div style="margin-top:10px;padding:10px 12px;border-radius:16px;background:#f8fbff;border:1px solid #dbeafe">
+                            <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">{{ count($activeTop3) }} öğrenci</div>
+                            <div style="display:grid;gap:4px;">
+                                @foreach($activeTop3 as $studentRow)
+                                    <div style="font-size:12px;line-height:1.35;color:#334155;">
+                                        <strong style="font-size:12px;color:#0f172a;">{{ $loop->iteration }}.</strong>
+                                        <span>{{ $studentRow['name'] ?? '-' }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <article class="dashboard-widget widget-span-4 dashboard-notes-widget" data-widget-key="notes" draggable="true">
                     <div class="widget-head">
                         <div><strong>Öğretmen Notları</strong><span>Hızlı öneriler</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
                         <button type="button" class="widget-toggle" data-widget-toggle="notes" aria-label="Gizle" title="Gizle">−</button>
@@ -139,18 +96,136 @@
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
 
+                <article class="dashboard-widget widget-span-4" data-widget-key="classes" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Sınıf Sayısı</strong><span>İzlenen sınıflar</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="classes" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="metric-card">
+                        <strong>{{ $dashboard['summary']['total_classes'] }}</strong>
+                        <span>Sistem genelinde</span>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <article class="dashboard-widget widget-span-4" data-widget-key="courses" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Ders Sayısı</strong><span>Aktif içerik</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="courses" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="metric-card">
+                        <strong>{{ $dashboard['summary']['total_courses'] }}</strong>
+                        <span>Tanımlı ders</span>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <article class="dashboard-widget widget-span-4" data-widget-key="avg_completion" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Ortalama Not</strong><span>Genel başarı</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="avg_completion" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="metric-card">
+                        <strong>%{{ $dashboard['summary']['avg_completion'] }}</strong>
+                        <span>Yüzdelik başarı</span>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <article class="dashboard-widget widget-span-4" data-widget-key="xp" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Toplam XP</strong><span>Biriken puan</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="xp" aria-label="Gizle" title="Gizle">−</button>
+                    </div>
+                    <div class="metric-card">
+                        <strong>{{ $dashboard['summary']['total_xp'] }}</strong>
+                        <span>Öğrenci üretimi</span>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
+                    <article
+                        class="dashboard-widget widget-span-4 dashboard-chart-widget"
+                        data-widget-key="chart_{{ $key }}"
+                        draggable="true"
+                        data-chart-type="{{ $chart['type'] ?? 'bar' }}"
+                    >
+                        <div class="widget-head">
+                            <div>
+                                <strong>{{ $chart['title'] ?? '-' }}</strong>
+                                <span>{{ $chart['subtitle'] ?? '' }}</span>
+                                <small class="widget-class-tag">{{ $selectedClassLabel }}</small>
+                            </div>
+                            <button type="button" class="widget-toggle" data-widget-toggle="chart_{{ $key }}" aria-label="Gizle" title="Gizle">−</button>
+                        </div>
+                        <div class="chart-widget-body">
+                            @if(($chart['type'] ?? '') === 'donut')
+                                <div class="chart-donut" style="--p1:{{ (int) ($chart['items'][0]['percent'] ?? 0) }};--p2:{{ (int) ($chart['items'][1]['percent'] ?? 0) }};--p3:{{ (int) ($chart['items'][2]['percent'] ?? 0) }};--p4:{{ (int) ($chart['items'][3]['percent'] ?? 0) }}">
+                                    <div class="chart-donut-hole"></div>
+                                </div>
+                                <div class="chart-legend">
+                                    @foreach((array) ($chart['items'] ?? []) as $item)
+                                        <div class="chart-legend-item">
+                                            <span class="chart-dot chart-dot-{{ $loop->index + 1 }}"></span>
+                                            <strong>{{ $item['label'] ?? '-' }}</strong>
+                                            <small>{{ (int) ($item['percent'] ?? 0) }}%</small>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @elseif(($chart['type'] ?? '') === 'radial')
+                                <div class="chart-radial">
+                                    @foreach((array) ($chart['items'] ?? []) as $item)
+                                        <div class="chart-radial-row">
+                                            <div class="chart-radial-label">{{ $item['label'] ?? '-' }}</div>
+                                            <div class="chart-radial-bar"><i style="width:{{ (int) ($item['percent'] ?? 0) }}%"></i></div>
+                                            <div class="chart-radial-value">{{ (int) ($item['percent'] ?? 0) }}%</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @elseif(($chart['type'] ?? '') === 'column')
+                                @php
+                                    $columnItems = (array) ($chart['items'] ?? []);
+                                    $columnMax = max(1, max(array_map(fn ($item) => (int) ($item['value'] ?? $item['percent'] ?? 0), $columnItems ?: [[ 'value' => 0 ]])));
+                                @endphp
+                                <div class="chart-column">
+                                    <div class="chart-column-bars">
+                                        @foreach($columnItems as $item)
+                                            @php
+                                                $columnValue = (int) ($item['value'] ?? $item['percent'] ?? 0);
+                                                $columnHeight = max(8, (int) round(($columnValue / $columnMax) * 100));
+                                            @endphp
+                                            <div class="chart-column-item">
+                                                <div class="chart-column-value">{{ $columnValue }}</div>
+                                                <div class="chart-column-track">
+                                                    <i style="height:{{ $columnHeight }}%"></i>
+                                                </div>
+                                                <div class="chart-column-label">{{ $item['label'] ?? '-' }}</div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <div class="chart-bars">
+                                    @foreach((array) ($chart['items'] ?? []) as $item)
+                                        <div class="chart-bar-row">
+                                            <div class="chart-bar-label">{{ $item['label'] ?? '-' }}</div>
+                                            <div class="chart-bar-track"><i style="width:{{ (int) ($item['value'] ?? $item['percent'] ?? 0) }}%"></i></div>
+                                            <div class="chart-bar-value">{{ (int) ($item['value'] ?? $item['percent'] ?? 0) }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                        <span class="widget-resize-handle" aria-hidden="true"></span>
+                    </article>
+                @endforeach
             </section>
         </div>
 
         <aside class="dashboard-right-column">
             <section class="dashboard-sidebar-stack">
-                <div class="dashboard-sidebar-placeholder">
-                    <div class="sidebar-placeholder-card sidebar-placeholder-card--dark">
-                        <strong>Ek Alan</strong>
-                        <span>Öğretmen ve admin hızlı erişim seçenekleri burada olacak.</span>
-                    </div>
-                </div>
-
+                <div class="dashboard-widget-sidebar-grid" id="dashboard-widget-sidebar-grid"></div>
                 <article class="dashboard-widget dashboard-widget-wide widget-span-12 dashboard-leaderboard-panel" data-widget-key="leaderboard" draggable="true">
                     <div class="widget-head">
                         <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf' }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
@@ -204,6 +279,7 @@
     const shell = document.querySelector('[data-dashboard-shell]');
     if (!shell) return;
     const grid = document.getElementById('dashboard-widget-grid');
+    const sidebarGrid = document.getElementById('dashboard-widget-sidebar-grid');
     const library = document.getElementById('dashboard-widget-library');
     const libraryPanel = document.getElementById('widget-library-panel');
     const saveBtn = document.getElementById('dashboard-save-btn');
@@ -217,14 +293,14 @@
 
     const defs = {
         quick_qr: { title: 'Mobil QR Girişi', span: 6, order: 10 },
-        students: { title: 'Toplam Öğrenci', span: 3, order: 20 },
-        active_students: { title: 'Aktif Öğrenci', span: 3, order: 30 },
-        classes: { title: 'Sınıf Sayısı', span: 3, order: 40 },
-        courses: { title: 'Ders Sayısı', span: 3, order: 50 },
-        avg_completion: { title: 'Ortalama Not', span: 3, order: 60 },
-        xp: { title: 'Toplam XP', span: 3, order: 70 },
-        signals: { title: 'Sınıf Sinyalleri', span: 6, order: 80 },
-        notes: { title: 'Öğretmen Notları', span: 6, order: 90 },
+        notes: { title: 'Öğretmen Notları', span: 4, order: 20 },
+        students: { title: 'Toplam Öğrenci', span: 3, order: 30 },
+        active_students: { title: 'Aktif Öğrenci', span: 3, order: 40 },
+        classes: { title: 'Sınıf Sayısı', span: 3, order: 50 },
+        courses: { title: 'Ders Sayısı', span: 3, order: 60 },
+        avg_completion: { title: 'Ortalama Not', span: 3, order: 70 },
+        xp: { title: 'Toplam XP', span: 3, order: 80 },
+        chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
         leaderboard: { title: 'Başarı Listesi', span: 6, order: 100 },
     };
 
@@ -235,6 +311,7 @@
             visible: saved.visible !== false,
             span: Number(saved.span || def.span),
             order: Number(saved.order || def.order),
+            zone: saved.zone || (key === 'leaderboard' ? 'sidebar' : 'grid'),
         };
     });
 
@@ -263,7 +340,7 @@
         notify(editMode ? 'Düzenleme açık' : 'Düzenleme kapatıldı');
     };
 
-    const getMaxOrder = () => Math.max(...Object.values(state).map((item) => Number(item.order || 0)), 0);
+    const getMaxOrder = (zone = null) => Math.max(...Object.entries(state).filter(([, item]) => zone ? item.zone === zone : true).map(([, item]) => Number(item.order || 0)), 0);
 
     const renderLibrary = () => {
         if (!library) return;
@@ -273,11 +350,36 @@
             : '<p class="widget-library-empty">Gizli widget yok.</p>';
     };
 
-    const allWidgetNodes = () => Array.from(shell.querySelectorAll('.dashboard-widget'));
+    const allWidgetNodes = () => Array.from(grid.querySelectorAll('.dashboard-widget'));
+    const sidebarWidgetNodes = () => Array.from(sidebarGrid?.querySelectorAll('.dashboard-widget') || []);
+    const zoneNode = (zone) => zone === 'sidebar' ? sidebarGrid : grid;
+    const applyMasonrySpans = () => {
+        if (!grid) return;
+        const rowHeight = 10;
+        const rowGap = 10;
+        allWidgetNodes().forEach((card) => {
+            if (!card || card.style.display === 'none') return;
+            const height = Math.max(1, card.offsetHeight || card.getBoundingClientRect().height);
+            const span = Math.max(1, Math.ceil((height + rowGap) / (rowHeight + rowGap)));
+            card.style.setProperty('--widget-row-span', String(span));
+            card.style.gridRowEnd = `span ${span}`;
+        });
+        if (sidebarGrid) {
+            sidebarWidgetNodes().forEach((card) => {
+                if (!card || card.style.display === 'none') return;
+                card.style.gridRowEnd = 'auto';
+            });
+        }
+    };
 
     const render = () => {
-        if (!grid) return;
+        if (!grid) {
+            renderLibrary();
+            return;
+        }
         const cards = Object.entries(state).sort((a, b) => a[1].order - b[1].order);
+        const gridOrder = [];
+        const sidebarOrder = [];
         cards.forEach(([key, conf]) => {
             const card = shell.querySelector(`[data-widget-key="${key}"]`);
             if (!card) return;
@@ -291,16 +393,35 @@
             });
             const handle = card.querySelector('.widget-resize-handle');
             if (handle) handle.style.display = editMode ? 'block' : 'none';
+            if (conf.zone === 'sidebar' && key !== 'leaderboard') sidebarOrder.push(card);
+            else gridOrder.push(card);
         });
-        cards.filter(([, conf]) => conf.visible).forEach(([key]) => {
-            const card = shell.querySelector(`[data-widget-key="${key}"]`);
-            if (card) grid.appendChild(card);
+        [...grid.querySelectorAll('.dashboard-widget')].forEach((el) => {
+            if (el.dataset.widgetKey !== 'leaderboard') el.remove();
         });
+        if (sidebarGrid) {
+            [...sidebarGrid.querySelectorAll('.dashboard-widget')].forEach((el) => {
+                if (el.dataset.widgetKey !== 'leaderboard') el.remove();
+            });
+            sidebarOrder
+                .filter((card) => card.dataset.widgetKey !== 'leaderboard')
+                .forEach((card) => sidebarGrid.appendChild(card));
+        }
+        gridOrder
+            .filter((card) => card.dataset.widgetKey !== 'leaderboard')
+            .forEach((card) => grid.appendChild(card));
+        const leaderboard = shell.querySelector('[data-widget-key="leaderboard"]');
+        if (leaderboard && sidebarGrid) sidebarGrid.appendChild(leaderboard);
         if (window.innerWidth <= 640) {
             const qrCard = shell.querySelector('[data-widget-key="quick_qr"]');
             if (qrCard) grid.prepend(qrCard);
         }
         renderLibrary();
+        requestAnimationFrame(() => {
+            applyMasonrySpans();
+            requestAnimationFrame(applyMasonrySpans);
+            setTimeout(applyMasonrySpans, 120);
+        });
     };
 
     const payload = () => {
@@ -310,6 +431,7 @@
                 visible: !!conf.visible,
                 span: clampSpan(conf.span),
                 order: Number(conf.order || (index + 1) * 10),
+                zone: conf.zone || 'grid',
             };
         });
         return data;
@@ -324,7 +446,7 @@
         dragPlaceholder = null;
         dragKey = null;
     };
-    const getVisibleOrder = () => allWidgetNodes().filter((el) => el.style.display !== 'none');
+    const getVisibleOrder = () => [...allWidgetNodes(), ...sidebarWidgetNodes()].filter((el) => el.style.display !== 'none');
     const syncOrdersFromDom = () => {
         getVisibleOrder().forEach((card, index) => {
             const key = card.dataset.widgetKey;
@@ -332,11 +454,17 @@
         });
         dirty = true;
     };
+    const updateZoneFromContainer = (container) => {
+        const zone = container?.id === 'dashboard-widget-sidebar-grid' ? 'sidebar' : 'grid';
+        if (dragKey && state[dragKey]) state[dragKey].zone = zone;
+    };
     const moveDragPlaceholder = (target, clientX) => {
-        if (!dragPlaceholder || !grid || !dragSource || !target || target === dragSource) return;
+        const container = target.closest('#dashboard-widget-sidebar-grid') ? sidebarGrid : grid;
+        if (!dragPlaceholder || !container || !dragSource || !target || target === dragSource) return;
         const rect = target.getBoundingClientRect();
         const before = clientX < rect.left + rect.width / 2;
-        grid.insertBefore(dragPlaceholder, before ? target : target.nextSibling);
+        container.insertBefore(dragPlaceholder, before ? target : target.nextSibling);
+        updateZoneFromContainer(container);
     };
     shell.addEventListener('pointerdown', (e) => {
         if (!editMode) return;
@@ -347,16 +475,19 @@
         dragKey = widget.dataset.widgetKey;
         widget.classList.add('is-dragging');
         dragPlaceholder = document.createElement('div');
-        dragPlaceholder.className = 'dashboard-widget widget-drag-placeholder';
+        dragPlaceholder.className = 'dashboard-widget widget-drag-placeholder widget-drop-preview';
         dragPlaceholder.style.gridColumn = `span ${clampSpan(state[dragKey]?.span || 3)}`;
         dragPlaceholder.style.minHeight = `${Math.max(140, widget.getBoundingClientRect().height)}px`;
         widget.parentNode.insertBefore(dragPlaceholder, widget.nextSibling);
+        updateZoneFromContainer(widget.parentNode);
         widget.setPointerCapture?.(e.pointerId);
     });
     shell.addEventListener('pointermove', (e) => {
         if (!editMode || !dragSource) return;
         const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.dashboard-widget');
         if (!target || target === dragSource || target.classList.contains('widget-drag-placeholder')) return;
+        shell.querySelectorAll('.widget-drop-active').forEach((el) => el.classList.remove('widget-drop-active'));
+        target.classList.add('widget-drop-active');
         moveDragPlaceholder(target, e.clientX);
     });
     shell.addEventListener('pointerup', () => {
@@ -364,11 +495,14 @@
         if (dragPlaceholder && dragSource.parentNode) {
             dragPlaceholder.parentNode?.insertBefore(dragSource, dragPlaceholder);
         }
+        shell.querySelectorAll('.widget-drop-active').forEach((el) => el.classList.remove('widget-drop-active'));
+        updateZoneFromContainer(dragSource.parentNode);
         syncOrdersFromDom();
         clearDragState();
         render();
     });
     shell.addEventListener('pointercancel', () => {
+        shell.querySelectorAll('.widget-drop-active').forEach((el) => el.classList.remove('widget-drop-active'));
         clearDragState();
         render();
     });
@@ -391,7 +525,8 @@
         if (!btn || !editMode) return;
         const key = btn.dataset.libraryAdd;
         state[key].visible = true;
-        state[key].order = getMaxOrder() + 10;
+        state[key].zone = 'grid';
+        state[key].order = getMaxOrder('grid') + 10;
         dirty = true;
         render();
     });
@@ -460,14 +595,14 @@
 
     window.addEventListener('resize', () => render());
 
+    const masonryObserver = new ResizeObserver(() => {
+        requestAnimationFrame(applyMasonrySpans);
+    });
+    masonryObserver.observe(grid);
+    allWidgetNodes().forEach((card) => masonryObserver.observe(card));
+
     render();
 })();
 </script>
 @endpush
 @endsection
-
-
-
-
-
-

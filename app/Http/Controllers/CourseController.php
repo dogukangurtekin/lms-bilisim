@@ -10,6 +10,7 @@ use App\Models\CourseHomework;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Services\Domain\CourseService;
+use App\Services\LessonPresentation\SlidePresentationService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,10 @@ use Symfony\Component\Process\Process;
 
 class CourseController extends Controller
 {
-    public function __construct(private CourseService $service)
+    public function __construct(
+        private CourseService $service,
+        private SlidePresentationService $presentation
+    )
     {
     }
 
@@ -220,6 +224,8 @@ class CourseController extends Controller
             $startUrl = route('student.portal.course-show', $course);
         }
 
+        $slides = $course ? $this->presentation->prepareCourseSlides($course, true) : [];
+
         return view('course-detail', compact(
             'course',
             'title',
@@ -230,7 +236,8 @@ class CourseController extends Controller
             'etkinlikler',
             'progress',
             'isCompleted',
-            'startUrl'
+            'startUrl',
+            'slides'
         ));
     }
     public function edit(Course $course)

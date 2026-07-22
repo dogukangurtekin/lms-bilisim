@@ -6,13 +6,17 @@ use App\Models\CourseHomework;
 use App\Models\GameAssignment;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Services\LessonPresentation\SlidePresentationService;
 use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class TeacherAssignmentController extends Controller
 {
-    public function __construct(private PushNotificationService $pushService)
+    public function __construct(
+        private PushNotificationService $pushService,
+        private SlidePresentationService $presentation
+    )
     {
     }
 
@@ -125,7 +129,9 @@ class TeacherAssignmentController extends Controller
             }
         }
 
-        return view('teacher-assignments.show-course-homework', compact('homework', 'gameUrl', 'gameSlug'));
+        $slides = $homework->course ? $this->presentation->prepareCourseSlides($homework->course, false) : [];
+
+        return view('teacher-assignments.show-course-homework', compact('homework', 'gameUrl', 'gameSlug', 'slides'));
     }
 
     public function editCourseHomework(CourseHomework $homework)
@@ -256,4 +262,3 @@ class TeacherAssignmentController extends Controller
         return redirect()->route('teacher.assignments.index')->with('ok', 'Oyun/uygulama odevi silindi. Ogrenci kayitlari korunur.');
     }
 }
-

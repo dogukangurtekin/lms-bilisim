@@ -44,82 +44,115 @@
 </style>
 
 <div class="card">
-    <h3>Ödevlerim</h3>
+    <h3>Derslerim / Ders Ödevlerim</h3>
     <table class="student-assignment-table">
-        <thead><tr><th>Ders</th><th>Başlık</th><th>Sınıf</th><th>Teslim</th><th>Durum</th><th>İşlem</th></tr></thead>
+        <thead><tr><th>Ders</th><th>Açıklama</th><th>Sınıf</th><th>Durum</th><th>İşlem</th></tr></thead>
         <tbody>
-        @forelse($courseHomeworks as $h)
-            @php $p = $progress[$h->id] ?? null; @endphp
+        @forelse($courses as $c)
+            @php
+                $cp = $courseProgress['course-'.$c->id] ?? null;
+                $slides = (array) data_get($c->lesson_payload, 'slides', []);
+                $firstSlide = $slides[0] ?? [];
+                $desc = trim((string) data_get($c->lesson_payload, 'lesson_description', ''));
+                if ($desc === '') $desc = trim((string) data_get($firstSlide, 'description', ''));
+                if ($desc === '') $desc = $c->name . ' dersi icin hazirlanan konu anlatimi ve etkinlik icerikleri.';
+            @endphp
             <tr>
-                <td data-label="Ders">{{ $h->course?->name ?? '-' }}</td>
-                <td data-label="Başlık">{{ $h->title }}</td>
-                <td data-label="Sınıf">{{ $h->schoolClass?->name }}/{{ $h->schoolClass?->section }}</td>
-                <td data-label="Teslim">{{ $h->due_date?->format('Y-m-d') ?? '-' }}</td>
+                <td data-label="Ders">{{ $c->name }}</td>
+                <td data-label="Açıklama">{{ \Illuminate\Support\Str::limit($desc, 120) }}</td>
+                <td data-label="Sınıf">{{ $c->schoolClass?->name }}/{{ $c->schoolClass?->section }}</td>
                 <td data-label="Durum">
-                    <span class="badge">{{ $p?->completed_at ? 'Tamamlandı' : ($p?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
+                    <span class="badge">{{ $cp?->completed ? 'Tamamlandı' : 'Bekliyor' }}</span>
                 </td>
                 <td class="actions" data-label="İşlem">
-                    <button
-                        class="btn btn-detail"
-                        type="button"
-                        data-homework-detail
-                        data-title="{{ e($h->title) }}"
-                        data-course="{{ e($h->course?->name ?? '-') }}"
-                        data-class="{{ e(($h->schoolClass?->name ?? '-') . '/' . ($h->schoolClass?->section ?? '-')) }}"
-                        data-due="{{ e($h->due_date?->format('Y-m-d') ?? '-') }}"
-                        data-type="{{ e(strtoupper($h->assignment_type ?? 'lesson')) }}"
-                        data-description="{{ e($h->details ?: '-') }}"
-                        data-file-url="{{ $h->attachment_path ? e(asset('storage/'.$h->attachment_path)) : '' }}"
-                        data-file-name="{{ e($h->attachment_original_name ?? '') }}"
-                    >Detay</button>
-
-                    @if($p?->completed_at)
-                        <span class="badge">Tamamlandı</span>
-                    @else
-                        <a class="btn" href="{{ route('student.portal.homework.open', $h) }}">
-                            {{ $p?->started_at ? 'Devam Et' : 'Ödeve Başla' }}
-                        </a>
-                    @endif
+                    <a class="btn" href="{{ route('course.detail', ['id' => $c->id]) }}">İçerik</a>
+                    <a class="btn" href="{{ route('student.portal.course-show', $c) }}">{{ $cp?->completed ? 'Tamamlandı' : 'Derse Başla' }}</a>
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6">Ödev bulunmuyor.</td></tr>
+            <tr><td colspan="5">Henüz atanmış ders bulunmuyor.</td></tr>
         @endforelse
         </tbody>
     </table>
-    {{ $courseHomeworks->links('partials.pagination') }}
 </div>
 
-<div class="card">
-    <h3>Oyun ve Etkinlik Ödevleri</h3>
-    <table class="student-assignment-table">
-        <thead><tr><th>Uygulama</th><th>Ödev</th><th>Teslim</th><th>Level</th><th>Durum</th><th>Başla</th></tr></thead>
-        <tbody>
-        @forelse($assignments as $a)
-            @php $gp = $gameProgress[$a->id] ?? null; @endphp
-            <tr>
-                <td data-label="Uygulama">{{ $a->game_name }}</td>
-                <td data-label="Ödev">{{ $a->title }}</td>
-                <td data-label="Teslim">{{ $a->due_date?->format('Y-m-d') ?? '-' }}</td>
-                <td data-label="Level">{{ $a->level_from ?? '-' }} - {{ $a->level_to ?? '-' }}</td>
-                <td data-label="Durum">
-                    <span class="badge">{{ $gp?->completed_at ? 'Tamamlandı' : ($gp?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
-                </td>
-                <td data-label="Başla">
-                    @if($gp?->completed_at)
-                        <span class="badge">Tamamlandı</span>
-                    @else
-                        <a class="btn" href="{{ route('student.portal.game-assignment.open', $a) }}">Ödeve Başla</a>
-                    @endif
-                </td>
-            </tr>
-        @empty
-            <tr><td colspan="6">Oyun/etkinlik ödevi yok.</td></tr>
-        @endforelse
-        </tbody>
-    </table>
-    {{ $assignments->links('partials.pagination') }}
-</div>
+    <div class="card">
+        <h3>Ödevlerim</h3>
+        <table class="student-assignment-table">
+            <thead><tr><th>Ders</th><th>Başlık</th><th>Sınıf</th><th>Teslim</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody>
+            @forelse($courseHomeworks as $h)
+                @php $p = $progress[$h->id] ?? null; @endphp
+                <tr>
+                    <td data-label="Ders">{{ $h->course?->name ?? '-' }}</td>
+                    <td data-label="Başlık">{{ $h->title }}</td>
+                    <td data-label="Sınıf">{{ $h->schoolClass?->name }}/{{ $h->schoolClass?->section }}</td>
+                    <td data-label="Teslim">{{ $h->due_date?->format('Y-m-d') ?? '-' }}</td>
+                    <td data-label="Durum">
+                        <span class="badge">{{ $p?->completed_at ? 'Tamamlandı' : ($p?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
+                    </td>
+                    <td class="actions" data-label="İşlem">
+                        <button
+                            class="btn btn-detail"
+                            type="button"
+                            data-homework-detail
+                            data-title="{{ e($h->title) }}"
+                            data-course="{{ e($h->course?->name ?? '-') }}"
+                            data-class="{{ e(($h->schoolClass?->name ?? '-') . '/' . ($h->schoolClass?->section ?? '-')) }}"
+                            data-due="{{ e($h->due_date?->format('Y-m-d') ?? '-') }}"
+                            data-type="{{ e(strtoupper($h->assignment_type ?? 'lesson')) }}"
+                            data-description="{{ e($h->details ?: '-') }}"
+                            data-file-url="{{ $h->attachment_path ? e(asset('storage/'.$h->attachment_path)) : '' }}"
+                            data-file-name="{{ e($h->attachment_original_name ?? '') }}"
+                        >Detay</button>
+
+                        @if($p?->completed_at)
+                            <span class="badge">Tamamlandı</span>
+                        @else
+                            <a class="btn" href="{{ route('student.portal.homework.open', $h) }}">
+                                {{ $p?->started_at ? 'Devam Et' : 'Ödeve Başla' }}
+                            </a>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="6">Ödev bulunmuyor.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+        {{ $courseHomeworks->links('partials.pagination') }}
+    </div>
+
+    <div class="card">
+        <h3>Oyun ve Etkinlik Ödevleri</h3>
+        <table class="student-assignment-table">
+            <thead><tr><th>Uygulama</th><th>Ödev</th><th>Teslim</th><th>Level</th><th>Durum</th><th>Başla</th></tr></thead>
+            <tbody>
+            @forelse($assignments as $a)
+                @php $gp = $gameProgress[$a->id] ?? null; @endphp
+                <tr>
+                    <td data-label="Uygulama">{{ $a->game_name }}</td>
+                    <td data-label="Ödev">{{ $a->title }}</td>
+                    <td data-label="Teslim">{{ $a->due_date?->format('Y-m-d') ?? '-' }}</td>
+                    <td data-label="Level">{{ $a->level_from ?? '-' }} - {{ $a->level_to ?? '-' }}</td>
+                    <td data-label="Durum">
+                        <span class="badge">{{ $gp?->completed_at ? 'Tamamlandı' : ($gp?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
+                    </td>
+                    <td data-label="Başla">
+                        @if($gp?->completed_at)
+                            <span class="badge">Tamamlandı</span>
+                        @else
+                            <a class="btn" href="{{ route('student.portal.game-assignment.open', $a) }}">Ödeve Başla</a>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="6">Oyun/etkinlik ödevi yok.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
+        {{ $assignments->links('partials.pagination') }}
+    </div>
 
 <div id="student-homework-detail-modal" class="modal">
     <div class="modal-card">

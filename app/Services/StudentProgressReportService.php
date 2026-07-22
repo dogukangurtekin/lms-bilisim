@@ -26,27 +26,40 @@ class StudentProgressReportService
             ->orderBy('name')
             ->get();
 
+        $visibleHomeworkIds = StudentHomeworkProgress::query()
+            ->where('student_id', $student->id)
+            ->pluck('course_homework_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         $courseHomeworks = CourseHomework::withTrashed()
             ->with(['course', 'schoolClass'])
-            ->where(function ($q) use ($student) {
-                $q->where('school_class_id', $student->school_class_id)
-                    ->orWhereNull('school_class_id')
-                    ->orWhereHas('course', fn ($cq) => $cq->where('school_class_id', $student->school_class_id));
+            ->where(function ($q) use ($visibleHomeworkIds) {
+                if ($visibleHomeworkIds !== []) {
+                    $q->whereIn('id', $visibleHomeworkIds);
+                } else {
+                    $q->whereRaw('1 = 0');
+                }
             })
             ->latest()
             ->get();
 
+        $visibleGameIds = StudentGameAssignmentProgress::query()
+            ->where('student_id', $student->id)
+            ->pluck('game_assignment_id')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         $gameAssignments = GameAssignment::withTrashed()
             ->with(['classes', 'levels'])
-            ->where(function ($q) use ($student) {
-                $q->whereHas('classes', fn ($cq) => $cq->where('school_classes.id', $student->school_class_id))
-                    ->orWhereIn(
-                        'id',
-                        StudentGameAssignmentProgress::query()
-                            ->where('student_id', $student->id)
-                            ->pluck('game_assignment_id')
-                            ->filter()
-                    );
+            ->where(function ($q) use ($visibleGameIds) {
+                if ($visibleGameIds !== []) {
+                    $q->whereIn('id', $visibleGameIds);
+                } else {
+                    $q->whereRaw('1 = 0');
+                }
             })
             ->latest()
             ->get();
@@ -113,16 +126,15 @@ class StudentProgressReportService
         $totalXp = max(0, $gradeXp + $contentXp);
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
-        $courseSlideCount = $courses->filter(fn ($c) => count((array) data_get($c->lesson_payload, 'slides', [])) > 0)->count();
         $completedSlides = ContentProgress::where('user_id', $student->user_id)
             ->where('content_id', 'like', 'course-%')
             ->where('completed', true)
             ->count();
 
-        $totalAssignments = $courseHomeworks->count() + $gameAssignments->count() + $courseSlideCount;
+        $totalAssignments = $courseHomeworks->count() + $gameAssignments->count();
         $completedHomework = $homeworkProgress->filter(fn ($p) => !empty($p->completed_at))->count();
         $completedGames = $gameProgress->filter(fn ($p) => !empty($p->completed_at))->count();
-        $completedTotal = $completedHomework + $completedGames + $completedSlides;
+        $completedTotal = $completedHomework + $completedGames;
         $overallProgress = $totalAssignments > 0 ? (int) round(($completedTotal / $totalAssignments) * 100) : 0;
 
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();
@@ -236,7 +248,7 @@ class StudentProgressReportService
             ['label' => 'Blok', 'value' => $pct($blockCompleted, $blockTotal), 'color' => '#6366f1'],
             ['label' => '3D Blok', 'value' => $pct($block3dCompleted, $block3dTotal), 'color' => '#8b5cf6'],
             ['label' => 'Compute', 'value' => $pct($computeCompleted, $computeTotal), 'color' => '#7c3aed'],
-            ['label' => 'Derslerim', 'value' => $pct($completedSlides, $courseSlideCount), 'color' => '#10b981'],
+            ['label' => 'Derslerim', 'value' => $completedSlides > 0 ? 100 : 0, 'color' => '#10b981'],
             ['label' => 'Günlük Egzersiz', 'value' => $dailySuccessRate, 'color' => '#f59e0b'],
         ];
 

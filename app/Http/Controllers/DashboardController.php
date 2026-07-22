@@ -25,6 +25,7 @@ class DashboardController extends Controller
         'classes' => ['visible' => true, 'span' => 4, 'order' => 50, 'title' => 'Sınıf Sayısı', 'type' => 'stat'],
         'courses' => ['visible' => true, 'span' => 4, 'order' => 60, 'title' => 'Ders Sayısı', 'type' => 'stat'],
         'xp' => ['visible' => true, 'span' => 4, 'order' => 70, 'title' => 'Toplam XP', 'type' => 'stat'],
+        'chart_success_distribution' => ['visible' => true, 'span' => 4, 'order' => 85, 'title' => 'Başarı Dağılımı', 'type' => 'chart'],
         'signals' => ['visible' => true, 'span' => 6, 'order' => 80, 'title' => 'Sınıf Sinyalleri', 'type' => 'signals'],
         'notes' => ['visible' => true, 'span' => 6, 'order' => 90, 'title' => 'Öğretmen Notları', 'type' => 'notes'],
         'leaderboard' => ['visible' => true, 'span' => 12, 'order' => 100, 'title' => 'Başarı Listesi', 'type' => 'leaderboard'],
@@ -106,11 +107,34 @@ class DashboardController extends Controller
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->avg('score'), 1);
 
+            $avgGradeByStudent = Grade::query()
+                ->selectRaw('student_id, ROUND(AVG(score), 1) as avg_score')
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->groupBy('student_id')
+                ->pluck('avg_score', 'student_id');
+
             $activeStudents = StudentTimeStat::query()
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->whereNotNull('last_seen_at')
-                ->where('last_seen_at', '>=', now()->subMinutes(10))
+                ->where('last_seen_at', '>=', now()->subDay())
                 ->count();
+
+            $activeStudentTop3 = StudentTimeStat::query()
+                ->with(['student.user'])
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->whereNotNull('last_seen_at')
+                ->where('last_seen_at', '>=', now()->subDay())
+                ->orderByDesc('last_seen_at')
+                ->limit(3)
+                ->get()
+                ->map(function (StudentTimeStat $row) {
+                    return [
+                        'name' => $row->student?->user?->name ?? '-',
+                        'seen_at' => optional($row->last_seen_at)->format('H:i'),
+                    ];
+                })
+                ->values()
+                ->all();
 
             $absentToday = max(0, $totalStudents - $activeStudents);
             $participationRate = $totalStudents > 0 ? (int) round(($activeStudents / $totalStudents) * 100) : 0;
@@ -139,6 +163,13 @@ class DashboardController extends Controller
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
                 ->pluck('xp', 'user_id');
 
+            $completedContentCountByUser = ContentProgress::query()
+                ->selectRaw('user_id, COUNT(*) as completed_count')
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
+                ->where('completed', true)
+                ->groupBy('user_id')
+                ->pluck('completed_count', 'user_id');
+
             $students = Student::query()
                 ->with(['user', 'schoolClass'])
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
@@ -160,9 +191,60 @@ class DashboardController extends Controller
                     'name' => $student->user?->name ?? ('user_' . $student->user_id),
                     'class_name' => $className,
                     'xp' => $xp,
-                    'avg_grade' => round((float) Grade::where('student_id', $student->id)->avg('score'), 1),
+                    'avg_grade' => (float) ($avgGradeByStudent[$student->id] ?? 0),
                 ];
             });
+
+            $gradeBuckets = ['Çok İyi (75+)' => 0, 'İyi (50-74)' => 0, 'Orta (25-49)' => 0, 'Düşük (0-24)' => 0];
+            foreach ($studentXpRows as $row) {
+                $xp = (int) ($row['xp'] ?? 0);
+                if ($xp >= 75) $gradeBuckets['Çok İyi (75+)']++;
+                elseif ($xp >= 50) $gradeBuckets['İyi (50-74)']++;
+                elseif ($xp >= 25) $gradeBuckets['Orta (25-49)']++;
+                else $gradeBuckets['Düşük (0-24)']++;
+            }
+            $gradeTotal = max(1, array_sum($gradeBuckets));
+            $gradeDistribution = collect($gradeBuckets)->map(fn ($count, $label) => [
+                'label' => $label,
+                'count' => (int) $count,
+                'percent' => (int) round(($count / $gradeTotal) * 100),
+            ])->values()->all();
+
+            $activityBuckets = ['Çok Aktif (20+)' => 0, 'Aktif (11-20)' => 0, 'Orta (6-10)' => 0, 'Pasif (0-5)' => 0];
+            foreach ($students as $student) {
+                $contentCount = (int) ($completedContentCountByUser[$student->user_id] ?? 0);
+                if ($contentCount >= 21) $activityBuckets['Çok Aktif (20+)']++;
+                elseif ($contentCount >= 11) $activityBuckets['Aktif (11-20)']++;
+                elseif ($contentCount >= 6) $activityBuckets['Orta (6-10)']++;
+                else $activityBuckets['Pasif (0-5)']++;
+            }
+            $activityTotal = max(1, array_sum($activityBuckets));
+            $activityDistribution = collect($activityBuckets)->map(fn ($count, $label) => [
+                'label' => $label,
+                'count' => (int) $count,
+                'percent' => (int) round(($count / $activityTotal) * 100),
+            ])->values()->all();
+
+            $contentCompletion = $studentXpRows
+                ->sortByDesc('xp')
+                ->take(5)
+                ->values()
+                ->map(fn (array $row) => [
+                    'label' => $row['name'],
+                    'value' => (int) round(min(100, max(0, (int) $row['xp']))),
+                ])->all();
+
+            $chartWidgets = [
+                'success_distribution' => [
+                    'title' => 'Başarı Dağılımı',
+                    'subtitle' => 'Öğrenci XP verisine göre',
+                    'type' => 'donut',
+                    'span' => 4,
+                    'order' => 85,
+                    'zone' => 'grid',
+                    'items' => $gradeDistribution,
+                ],
+            ];
 
             $totalXp = (int) $studentXpRows->sum('xp');
             $topStudents = $studentXpRows
@@ -209,6 +291,7 @@ class DashboardController extends Controller
                 'summary' => [
                     'total_students' => $totalStudents,
                     'active_students' => $activeStudents,
+                    'active_students_top3' => $activeStudentTop3,
                     'avg_completion' => $progressRate,
                     'total_xp' => $totalXp,
                     'participation' => $participationRate,
@@ -220,6 +303,7 @@ class DashboardController extends Controller
                 'metrics' => [
                     'total_students' => $totalStudents,
                     'active_students' => $activeStudents,
+                    'active_students_top3' => $activeStudentTop3,
                     'avg_completion' => $progressRate,
                     'total_xp' => $totalXp,
                     'participation' => $participationRate,
@@ -252,6 +336,7 @@ class DashboardController extends Controller
                     'xp_leader' => $xpLeader?->class_name ?? '-',
                     'low_activity' => $lowActivity?->class_name ?? '-',
                 ],
+                'chart_widgets' => $chartWidgets,
                 'top_students' => $topStudents,
             ];
         });
@@ -275,6 +360,7 @@ class DashboardController extends Controller
             'layout.*.visible' => ['nullable'],
             'layout.*.span' => ['nullable', 'integer', 'between:1,12'],
             'layout.*.order' => ['nullable', 'integer', 'between:1,999'],
+            'layout.*.zone' => ['nullable', 'in:grid,sidebar'],
         ]);
 
         $layout = [];
@@ -284,6 +370,7 @@ class DashboardController extends Controller
                 'visible' => (bool) ($config['visible'] ?? false),
                 'span' => max(1, min(12, (int) ($config['span'] ?? ($base['span'] ?? 4)))),
                 'order' => max(1, min(999, (int) ($config['order'] ?? ($base['order'] ?? 10)))),
+                'zone' => in_array(($config['zone'] ?? 'grid'), ['grid', 'sidebar'], true) ? $config['zone'] : 'grid',
             ]);
         }
 
@@ -300,10 +387,15 @@ class DashboardController extends Controller
 
         foreach (self::DEFAULT_WIDGETS as $key => $widget) {
             $merged[$key] = array_merge($widget, $saved[$key] ?? []);
+            $merged[$key]['zone'] = in_array($merged[$key]['zone'] ?? 'grid', ['grid', 'sidebar'], true)
+                ? ($merged[$key]['zone'] ?? 'grid')
+                : 'grid';
         }
 
         foreach ($saved as $key => $widget) {
             if (! isset($merged[$key]) && is_array($widget)) {
+                $widgetZone = $widget['zone'] ?? 'grid';
+                $widget['zone'] = in_array($widgetZone, ['grid', 'sidebar'], true) ? $widgetZone : 'grid';
                 $merged[$key] = $widget;
             }
         }

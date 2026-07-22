@@ -1,14 +1,24 @@
 @extends('layout.app')
-@section('title','Ders ??eri?i')
+@section('title','Ders İçeriği')
 @section('content')
 <div class="top" style="margin-bottom:10px">
-    <a class="btn" href="{{ route('student.portal.courses') }}">Derslerime Geri D?n</a>
+    <a class="btn" href="{{ route('student.portal.courses') }}">Derslerime Geri Dön</a>
 </div>
 <div class="card">
     @php
         $payload = $course->lesson_payload ?? [];
         $curriculum = (array) data_get($payload, 'curriculum', []);
-        $slides = $payload['slides'] ?? [];
+        $slides = $slides ?? ($payload['slides'] ?? []);
+        $effectiveSlideXp = function (array $slide): int {
+            $rawXp = (int) ($slide['xp'] ?? 0);
+            if ($rawXp > 0) {
+                return $rawXp;
+            }
+            if (!empty($slide['question_prompt'])) {
+                return max(1, (int) ($slide['points'] ?? 5));
+            }
+            return 2;
+        };
         $finalSummarySlide = [
             '__summary' => true,
             'title' => 'Ders Özeti',
@@ -19,7 +29,7 @@
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
                 'outcomes' => array_values(array_filter((array) (
                     $curriculum['kazanımlar']
-                    ?? $curriculum['kazanÄ±mlar']
+                    ?? $curriculum['kazanımlar']
                     ?? $curriculum['kazanimlar']
                     ?? []
                 ), fn ($item) => trim((string) $item) !== '')),
@@ -31,13 +41,9 @@
         ];
         $slides[] = $finalSummarySlide;
     @endphp
-    @php
-        $globalThemeCss = $payload['global_theme_css'] ?? '';
-        $themeTemplate = $payload['theme_template'] ?? 'default';
-    @endphp
-    @include('courses.partials.theme-css', ['themeTemplate' => $themeTemplate, 'globalThemeCss' => $globalThemeCss])
+    @include('courses.partials.theme-css')
     @if(empty($slides))
-        <p>??retmen hen?z bu ders i?in slide payla?mad?.</p>
+        <p>Öğretmen henüz bu ders için slide paylaşmadı.</p>
     @else
         <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin:0 0 10px">
             <p style="margin:0"><b>Ders:</b> {{ $course->name }}</p>
@@ -48,7 +54,7 @@
                     Geri
                 </button>
                 <button class="btn" type="button" id="student-course-next" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px">
-                    <span id="student-course-next-label">?leri</span>
+                    <span id="student-course-next-label">İleri</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
                 </button>
             </div>
@@ -62,7 +68,8 @@
 
         <template id="student-course-slide-templates">
             @foreach($slides as $i => $slide)
-                <div data-slide-index="{{ $i }}" data-slide-title="{{ $slide['title'] ?? ('Sayfa '.($i+1)) }}" data-slide-xp="{{ (int) ($slide['xp'] ?? 0) }}" data-slide-summary="{{ !empty($slide['__summary']) ? '1' : '0' }}">
+                @php($slideXp = $effectiveSlideXp((array) $slide))
+                <div data-slide-index="{{ $i }}" data-slide-title="{{ $slide['title'] ?? ('Sayfa '.($i+1)) }}" data-slide-xp="{{ $slideXp }}" data-slide-summary="{{ !empty($slide['__summary']) ? '1' : '0' }}">
                     @include('courses.partials.slide-render', ['slide' => $slide, 'hideSlideTitle' => true])
                 </div>
             @endforeach
@@ -80,12 +87,29 @@
                 const tmpl = document.getElementById('student-course-slide-templates');
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
                 let idx = 0;
+                let lastDirection = 1;
+                let touchStartX = 0;
+                let touchStartY = 0;
                 const startedAt = Date.now();
                 let earnedXpTotal = 0;
+                const awardedSlideIndexes = new Set();
                 let nextAdvanceTimer = null;
                 const totalXp = slides.reduce(function (sum, node) {
                     return sum + Math.max(0, Number(node?.dataset?.slideXp || 0));
                 }, 0);
+
+                function awardCurrentSlideXp() {
+                    const current = slides[idx];
+                    if (!current) return 0;
+                    const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
+                    if (isSummary || awardedSlideIndexes.has(idx)) {
+                        return 0;
+                    }
+                    const xp = Math.max(0, Number(current.dataset.slideXp || 0));
+                    awardedSlideIndexes.add(idx);
+                    earnedXpTotal += xp;
+                    return xp;
+                }
 
                 function fitIframeToHolder(iframe, holder) {
                     if (!iframe || !holder) return;
@@ -133,12 +157,26 @@
 
                 function render() {
                     const current = slides[idx];
+                    const previous = stage.querySelector('#student-course-fit');
+                    if (previous) {
+                        previous.style.transition = 'opacity .18s ease, transform .18s ease';
+                        previous.style.opacity = '0';
+                        previous.style.transform = 'translateX(' + (lastDirection > 0 ? '-18px' : '18px') + ') scale(.985)';
+                        setTimeout(() => previous.remove(), 180);
+                    }
                     stage.innerHTML = '<div id="student-course-fit" style="width:100%;height:100%;min-height:72vh;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch"></div>';
                     const fit = document.getElementById('student-course-fit');
+                    fit.style.opacity = '0';
+                    fit.style.transform = 'translateX(' + (lastDirection > 0 ? '18px' : '-18px') + ') scale(.985)';
+                    fit.style.transition = 'opacity .22s ease, transform .22s ease';
                     const node = current.cloneNode(true);
                     node.style.width = '100%';
                     node.style.height = '100%';
                     fit.appendChild(node);
+                    requestAnimationFrame(() => {
+                        fit.style.opacity = '1';
+                        fit.style.transform = 'translateX(0) scale(1)';
+                    });
                     fitStage();
                     if (String(current?.dataset?.slideSummary || '0') === '1') {
                         const earnedEl = stage.querySelector('[data-summary-earned-xp]');
@@ -180,9 +218,9 @@
                             feedbackEl.insertAdjacentElement('afterend', celebrate);
                             if (nextAdvanceTimer) clearTimeout(nextAdvanceTimer);
                             nextAdvanceTimer = setTimeout(() => {
-                                earnedXpTotal += currentXp;
+                                awardCurrentSlideXp();
                                 if (idx >= slides.length - 1 || isSummary) {
-                                    if (earnedXpInput) earnedXpInput.value = String(Math.max(totalXp, earnedXpTotal));
+                                    if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                                     if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
                                     completeForm.submit();
                                     return;
@@ -271,6 +309,7 @@
 
                 prevBtn.addEventListener('click', function () {
                     if (idx <= 0) return;
+                    lastDirection = -1;
                     idx -= 1;
                     render();
                 });
@@ -282,14 +321,34 @@
                     const isSummary = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
                     if (isSummary) {
                         if (!completeForm) return;
-                        if (earnedXpInput) earnedXpInput.value = String(Math.max(totalXp, earnedXpTotal));
+                        if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                         if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
                         completeForm.submit();
                         return;
                     }
+                    lastDirection = 1;
+                    awardCurrentSlideXp();
                     idx += 1;
                     render();
                 });
+                stage.addEventListener('touchstart', (e) => {
+                    const t = e.changedTouches && e.changedTouches[0];
+                    if (!t) return;
+                    touchStartX = t.clientX;
+                    touchStartY = t.clientY;
+                }, { passive: true });
+                stage.addEventListener('touchend', (e) => {
+                    const t = e.changedTouches && e.changedTouches[0];
+                    if (!t) return;
+                    const dx = t.clientX - touchStartX;
+                    const dy = t.clientY - touchStartY;
+                    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+                    if (dx < 0) {
+                        nextBtn.click();
+                    } else {
+                        prevBtn.click();
+                    }
+                }, { passive: true });
                 window.addEventListener('resize', fitStage);
                 render();
             });

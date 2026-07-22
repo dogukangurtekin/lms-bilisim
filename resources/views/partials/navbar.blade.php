@@ -44,12 +44,9 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button class="btn btn-logout" type="submit">
-                <span class="logout-icon">&#x23FB;</span> Çıkış Yap
-            </button>
-        </form>
+        <a class="btn btn-logout" href="{{ route('logout.get') }}">
+            <span class="logout-icon">&#x23FB;</span> Çıkış Yap
+        </a>
     </div>
 </div>
 
@@ -229,4 +226,3 @@
 })();
 </script>
 @endif
-

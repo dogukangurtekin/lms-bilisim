@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function autoSubmitCompletion() {
+        if (!form || form.dataset.submitted === '1') return;
+        form.dataset.submitted = '1';
+        form.submit();
+    }
+
     window.addEventListener('message', function (event) {
         var data = event && event.data;
         if (!data || typeof data !== 'object') return;
@@ -106,6 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modalXp) modalXp.textContent = String(xp);
         if (modalDuration) modalDuration.textContent = formatDuration(sec);
         if (modal) modal.style.display = 'flex';
+        autoSubmitCompletion();
     });
 
     if (saveBtn && form) {

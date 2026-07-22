@@ -55,7 +55,7 @@
             <div><b>Sure:</b> <span id="modal-duration">0 sn</span></div>
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:14px">
-            <button type="button" id="save-exit-btn" class="btn">Kaydet ve Cik</button>
+            <button type="button" id="save-exit-btn" class="btn" style="display:none">Kaydet ve Cik</button>
         </div>
     </div>
 </div>
@@ -145,6 +145,22 @@ document.addEventListener('DOMContentLoaded', function () {
             completeForm.submit();
         });
     }
+
+    function autoSubmitCompletion() {
+        if (!completeForm || completeForm.dataset.submitted === '1') return;
+        completeForm.dataset.submitted = '1';
+        var reachedInput = completeForm.querySelector('input[name="reached_level"]');
+        if (reachedInput) reachedInput.value = String(levelEnd);
+        completeForm.submit();
+    }
+
+    window.addEventListener('message', function (event) {
+        var data = event && event.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'ASSIGNMENT_RANGE_COMPLETED' || data.type === 'LEVEL_COMPLETED') {
+            autoSubmitCompletion();
+        }
+    });
 });
 </script>
 @endpush

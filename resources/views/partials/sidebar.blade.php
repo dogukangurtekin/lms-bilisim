@@ -44,10 +44,7 @@
         <div class="student-sidebar-time" id="student-sidebar-time" data-initial-seconds="{{ $initialSeconds }}" data-ping-url="{{ route('student.portal.time.ping') }}">
             <span>Sistemde Geçen Süre</span>
             <strong id="student-live-time">0s 0dk</strong>
-            <form method="POST" action="{{ route('logout') }}" style="margin-top:8px">
-                @csrf
-                <button class="btn" type="submit" style="width:100%">Çıkış Yap</button>
-            </form>
+            <a class="btn" href="{{ route('logout.get') }}" style="margin-top:8px;width:100%;display:inline-flex;justify-content:center">Çıkış Yap</a>
         </div>
     @else
         <div class="sidebar-top sidebar-brand">

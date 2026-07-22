@@ -1,7 +1,6 @@
 @php
     $completed = (int) ($report['kpi']['completed_total'] ?? 0);
     $total = max(1, (int) ($report['kpi']['total_assignments'] ?? 0));
-    $remaining = max(0, $total - $completed);
     $donePct = (int) round(($completed / $total) * 100);
     $fmtDate = function ($value): string {
         if (! $value) {
@@ -34,25 +33,29 @@
 
     <div class="kpi-grid">
         <article class="kpi-card"><span>Toplam XP</span><strong>{{ $report['kpi']['total_xp'] ?? 0 }}</strong></article>
-        <article class="kpi-card"><span>Tamamlanan Görev</span><strong>{{ $completed }}/{{ $total }}</strong></article>
-        <article class="kpi-card"><span>Bekleyen Görev</span><strong>{{ $remaining }}</strong></article>
+        <article class="kpi-card"><span>Tamamlanan Görev</span><strong>{{ $completed }}</strong></article>
+        <article class="kpi-card">
+            <span>Okul / Sınıf Sırası</span>
+            <strong>{{ $report['kpi']['school_rank'] ?? '-' }} / {{ $report['kpi']['class_rank'] ?? '-' }}</strong>
+        </article>
         <article class="kpi-card">
             <span>Quiz Verisi</span>
             <strong class="small">Katıldığı Quiz: {{ (int) ($report['kpi']['quiz_joined_count'] ?? 0) }}</strong>
             <strong class="small">Quiz Puanı: {{ (int) ($report['kpi']['quiz_total_xp'] ?? 0) }}</strong>
         </article>
-        <article class="kpi-card"><span>Okul / Sınıf Sırası</span><strong>{{ $report['kpi']['school_rank'] ?? '-' }} / {{ $report['kpi']['class_rank'] ?? '-' }}</strong></article>
+        <article class="kpi-card">
+            <span>Başarı Oranı</span>
+            <strong>{{ $donePct }}%</strong>
+        </article>
         <article class="kpi-card"><span>Sistemde Geçen Süre</span><strong class="small">{{ $report['kpi']['time_text'] ?? '-' }}</strong></article>
     </div>
 
     <div class="content-grid">
         <article class="panel">
-            <h3>Görev Dağılımı</h3>
-            <div class="donut-wrap">
-                <div class="donut" style="background: conic-gradient(#2563eb 0 {{ $donePct }}%, #dbeafe {{ $donePct }}% 100%);"></div>
+            <h3>Görev Özeti</h3>
+            <div class="donut-wrap" style="align-items:flex-start">
                 <div>
                     <p><b>{{ $completed }}</b> görev tamamlandı</p>
-                    <p><b>{{ $remaining }}</b> görev beklemede</p>
                     <p><b>{{ $report['kpi']['badge_count'] ?? 0 }}</b> rozet kazanıldı</p>
                 </div>
             </div>
@@ -233,16 +236,6 @@
                 <span>Yanlış Cevaplanan Soru</span>
                 <strong>{{ $dailyWrongCount }}</strong>
             </article>
-        </div>
-        <div style="margin-top:10px;background:#f8fbff;border:1px solid #dbeafe;border-radius:14px;padding:12px;">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;">
-                <strong>Başarı Oranı</strong>
-                <span style="font-weight:800;color:#1d4ed8">%{{ $dailySuccessRate }}</span>
-            </div>
-            <div style="height:12px;border-radius:9999px;background:#e2e8f0;overflow:hidden;">
-                <div style="width:{{ $dailySuccessRate }}%;height:100%;background:linear-gradient(90deg,#22c55e,#2563eb);"></div>
-            </div>
-            <p class="chart-note" style="margin-top:8px;">Başarı oranı, tam doğru tamamlanan günlük egzersizlerin toplam günlük egzersiz sayısına oranıdır.</p>
         </div>
     </article>
 

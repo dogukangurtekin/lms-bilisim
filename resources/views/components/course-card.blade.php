@@ -50,9 +50,13 @@
             @endif
 
             @if(!empty($downloadUrl))
-                <a href="{{ $downloadUrl }}" title="Dersi indir" aria-label="Dersi indir"
-                   class="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 transition hover:scale-105 hover:bg-emerald-600">
-                    <span class="text-lg leading-none">&#8681;</span>
+                <a
+                    href="{{ $downloadUrl }}"
+                    title="Dersi indir"
+                    aria-label="Dersi indir"
+                    class="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg shadow-slate-900/20 ring-1 ring-white/70 transition hover:scale-105 hover:bg-slate-800"
+                >
+                    <span class="text-[17px] leading-none">⬇</span>
                 </a>
             @endif
 
@@ -79,7 +83,7 @@
         </p>
 
         @php
-            $btnCount = 2 + (!empty($downloadUrl) ? 1 : 0) + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
             $btnCols = max(2, min(4, $btnCount));
         @endphp
         <div class="mt-auto grid gap-3" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
@@ -92,18 +96,6 @@
                style="display:inline-flex;align-items:center;justify-content:center;height:54px;border-radius:999px;background:#5b21b6;color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(91,33,182,.18);transition:transform .15s ease,filter .15s ease;">
                 {{ $primaryLabel }}
             </a>
-
-            @if(!empty($downloadUrl))
-                <a
-                    href="{{ $downloadUrl }}"
-                    title="Dersi indir"
-                    aria-label="Dersi indir"
-                    style="display:inline-flex;align-items:center;justify-content:center;height:54px;border-radius:999px;background:#0f766e;color:#fff;font-size:15px;font-weight:800;text-decoration:none;box-shadow:0 12px 24px rgba(15,118,110,.18);transition:transform .15s ease,filter .15s ease;"
-                >
-                    İndir
-                </a>
-            @endif
-
             @if(!empty($deleteUrl))
                 <a
                     href="{{ $deleteUrl }}"

@@ -137,15 +137,15 @@
 
         .category-chart {
             position: relative;
-            height: 250px;
+            height: 230px;
             border: 1px solid #dbeafe;
             border-radius: 14px;
             background: #f8fbff;
-            padding: 16px 12px 12px 56px;
+            padding: 14px 10px 10px 52px;
         }
         .category-grid span {
             position: absolute;
-            left: 50px;
+            left: 46px;
             right: 10px;
             border-top: 1px solid #dbeafe;
         }
@@ -164,13 +164,13 @@
         .category-y em { font-style: normal; }
         .category-bars {
             position: absolute;
-            left: 56px;
+            left: 52px;
             right: 12px;
             bottom: 10px;
             top: 16px;
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
             align-items: end;
         }
         .category-col {
@@ -194,11 +194,13 @@
             min-height: 6px;
         }
         .category-col small {
-            margin-top: 6px;
+            margin-top: 4px;
             color: #475569;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
+            line-height: 1.1;
             white-space: nowrap;
+            text-align: center;
         }
         .chart-note {
             margin: 8px 2px 0;
