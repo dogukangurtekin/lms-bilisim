@@ -114,6 +114,9 @@
 .sq-shape{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:#fff;font-weight:800}
 .sq-red{background:#ef4444}.sq-blue{background:#3b82f6}.sq-yellow{background:#eab308}.sq-green{background:#22c55e}
 .sq-answer-card input[type="text"]{margin:0}
+.text-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
+.text-toolbar button{height:34px;padding:0 10px;border:1px solid #dbe5f2;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer}
+.text-toolbar button:hover{border-color:#2563eb;box-shadow:0 8px 18px rgba(37,99,235,.08)}
 @media (max-width:980px){.sq-answers{grid-template-columns:1fr}}
 </style>
 
@@ -165,12 +168,59 @@
             <div class="builder-panel" data-panel="text" style="display:none">
                 <label>Slide Basligi</label>
                 <input type="text" id="slide_title">
+                <label>Slide Layout</label>
+                <select id="slide_layout">
+                    <option value="auto">Auto - İçeriğe göre seç</option>
+                    <option value="hero">Hero - Kısa vurucu giriş</option>
+                    <option value="section">Section - Bölüm ayrıcı</option>
+                    <option value="text">Text Focus - Metin ağırlıklı</option>
+                    <option value="split">Split Content - İki sütun</option>
+                    <option value="image">Image Focus - Görsel odaklı</option>
+                    <option value="features">Feature Grid - Kartlı özet</option>
+                    <option value="steps">Steps - Adım adım</option>
+                    <option value="timeline">Timeline - Zaman çizgisi</option>
+                    <option value="code">Code - Kod örneği</option>
+                    <option value="interactive">Interactive - Soru sayfası</option>
+                    <option value="summary">Summary - Ders özeti</option>
+                </select>
+                <div id="layout_help_panel" style="margin:12px 0 14px;padding:14px;border:1px solid #dbe5f2;border-radius:14px;background:linear-gradient(180deg,#f8fbff,#ffffff)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+                        <strong id="layout_help_title" style="font-size:14px;color:#0f172a">Auto</strong>
+                        <span id="layout_help_badge" class="badge">İçeriğe göre</span>
+                    </div>
+                    <p id="layout_help_desc" style="margin:0 0 12px;color:#475569;font-size:13px;line-height:1.6">Slide içeriğine göre otomatik yerleşim seçilir.</p>
+                    <div id="layout_wireframe" style="display:grid;gap:8px">
+                        <div style="height:16px;border-radius:8px;background:#dbeafe"></div>
+                        <div style="height:14px;border-radius:8px;background:#eff6ff;width:78%"></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                            <div style="height:58px;border-radius:12px;background:#eff6ff"></div>
+                            <div style="height:58px;border-radius:12px;background:#eff6ff"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="layout_editor_panel" style="margin:0 0 12px;padding:14px;border:1px solid #dbe5f2;border-radius:14px;background:#fff">
+                    <strong style="display:block;margin-bottom:10px;font-size:14px;color:#0f172a">Layout İçerikleri</strong>
+                    <div id="layout_editor_hint" style="color:#64748b;font-size:13px;line-height:1.6;margin-bottom:10px">Seçtiğiniz layout’a göre aşağıdaki alanlar aktif olur.</div>
+                    <div id="layout_editor_fields"></div>
+                </div>
                 <label>Sayfa XP</label>
                 <input type="number" id="slide_xp" min="0" max="500" value="0">
                 <label>Konu Anlatımı / Açıklama</label>
+                <div class="text-toolbar" data-text-toolbar>
+                    <button type="button" data-text-action="bold"><b>B</b></button>
+                    <button type="button" data-text-action="italic"><i>I</i></button>
+                    <button type="button" data-text-action="heading">H1</button>
+                    <button type="button" data-text-action="bullet">• Liste</button>
+                    <button type="button" data-text-action="numbered">1. Liste</button>
+                    <button type="button" data-text-action="quote">"</button>
+                    <button type="button" data-text-action="code">{ }</button>
+                    <button type="button" data-text-action="divider">—</button>
+                </div>
                 <textarea id="slide_content" rows="6"></textarea>
-                <label>Öğrenci Yönlendirme Notu</label>
-                <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
+                <div style="display:none" aria-hidden="true">
+                    <label>Öğrenci Yönlendirme Notu</label>
+                    <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
+                </div>
             </div>
 
             <div class="builder-panel" data-panel="code">
@@ -181,23 +231,28 @@
                     <label>Müfredat Başlığı</label>
                     <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                        <div>
+                        <div style="display:none" aria-hidden="true">
                             <label>Ders No</label>
-                            <input type="number" id="curriculum_lesson_number" min="1" value="1">
+                            <input type="number" id="curriculum_lesson_number" min="1" value="1" style="display:none" aria-hidden="true">
                         </div>
-                        <div>
+                        <div style="display:none" aria-hidden="true">
                             <label>İlerleme (0-100)</label>
-                            <input type="number" id="curriculum_progress" min="0" max="100" value="0">
+                            <input type="number" id="curriculum_progress" min="0" max="100" value="0" style="display:none" aria-hidden="true">
                         </div>
                     </div>
                     <label>Konu</label>
                     <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
                     <label>Kazanımlar (Her satır bir madde)</label>
                     <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-                    <label>Etkinlikler (Her satır bir madde)</label>
-                    <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                    <div style="display:none" aria-hidden="true">
+                    <div style="display:none" aria-hidden="true">
+                        <label>Etkinlikler (Her satır bir madde)</label>
+                        <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                    </div>
+                    </div>
                 </div>
-                <h4 style="margin:16px 0 10px">Tema Şablonları</h4>
+                <h4 style="margin:16px 0 10px;display:none">Tema Şablonları</h4>
+                <div style="display:none" aria-hidden="true">
                 <label>Global Tema Şablonu</label>
                 <select id="theme_template_select">
                     <option value="none">Temasız</option>
@@ -212,6 +267,7 @@
                 </small>
                 <label style="margin-top:10px;display:block">Global Tema CSS</label>
                 <textarea id="global_theme_css" rows="7" placeholder=".slide-theme{background:#0f172a;color:#f8fafc} .slide-theme h3{color:#f8fafc}"></textarea>
+                </div>
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
@@ -286,7 +342,7 @@
             <label>Ders Açıklaması</label>
             <textarea id="lesson_description" rows="3" placeholder="Ders başlığı altında gösterilecek açıklama"></textarea>
             <label>Kapak Görseli Yükle</label>
-            <input type="file" id="cover_image_file" accept="image/*">
+            <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
             <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
             <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
@@ -297,7 +353,7 @@
     </div>
 </div>
 
-<input type="hidden" id="lesson_payload" name="lesson_payload" value='{{ $initialPayload }}'>
+<textarea id="lesson_payload" name="lesson_payload" style="display:none">{{ $initialPayload }}</textarea>
 <input type="hidden" id="course_name_hidden" name="name" value="{{ $defaultLessonTitle }}">
 <input type="hidden" id="course_code_hidden" name="code" value="{{ $defaultCode }}">
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
@@ -397,6 +453,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const fields = {
         title: document.getElementById('slide_title'),
+        layout: document.getElementById('slide_layout'),
         xp: document.getElementById('slide_xp'),
         content: document.getElementById('slide_content'),
         instructions: document.getElementById('slide_instructions'),
@@ -408,6 +465,14 @@ document.addEventListener('DOMContentLoaded', function () {
         time_limit: document.getElementById('slide_time_limit'),
         double_points: document.getElementById('slide_double_points'),
     };
+    const layoutHelpTitle = document.getElementById('layout_help_title');
+    const layoutHelpBadge = document.getElementById('layout_help_badge');
+    const layoutHelpDesc = document.getElementById('layout_help_desc');
+    const layoutWireframe = document.getElementById('layout_wireframe');
+    const layoutEditorFields = document.getElementById('layout_editor_fields');
+    const layoutEditorHint = document.getElementById('layout_editor_hint');
+    const textToolbar = document.querySelector('[data-text-toolbar]');
+    const layoutFileMap = new Map();
     const curriculum = {
         title: document.getElementById('curriculum_title'),
         lessonNumber: document.getElementById('curriculum_lesson_number'),
@@ -549,9 +614,10 @@ document.addEventListener('DOMContentLoaded', function () {
     try { state = JSON.parse(payloadInput.value || '{"slides":[]}'); } catch (e) { state = {slides: []}; }
     const existingCoverUrl = @json($existingCoverUrl);
     const appBaseUrl = @json(url('/'));
+    const isEditMode = {{ $isEdit ? 'true' : 'false' }};
     const draftKey = 'lesson_builder_draft_{{ $isEdit ? 'edit_' . $course->id : 'create' }}';
-    const shouldPersistDraft = true;
-    if ((!state.slides || state.slides.length === 0) && shouldPersistDraft) {
+    const shouldPersistDraft = isEditMode;
+    if (isEditMode && (!state.slides || state.slides.length === 0) && shouldPersistDraft) {
         try {
             const draft = localStorage.getItem(draftKey);
             if (draft) {
@@ -589,6 +655,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }));
     if (!state.theme_template) state.theme_template = 'default';
     if (!state.cover_image && existingCoverUrl) state.cover_image = existingCoverUrl;
+    if (state.cover_image_data) state.cover_image_data = '';
     let active = 0;
     let previewIndex = 0;
     const coverCropState = {
@@ -611,6 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (state.slides.length === 0) {
             state.slides.push({
                 title: 'Basliksiz Slide',
+                layout: 'auto',
                 xp: 0,
                 kind: 'topic',
                 interaction_type: 'none',
@@ -624,12 +692,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 file_url: '',
                 code: '',
                 question_prompt: '',
+                layout_meta: {},
                 question: { options: [], pairs: [], items: [] }
             });
         }
     }
     function escapeHtml(v) {
         return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+    }
+    function insertTextAtCursor(textarea, before, after = '', fallback = '') {
+        if (!textarea) return;
+        const value = textarea.value || '';
+        const start = textarea.selectionStart ?? value.length;
+        const end = textarea.selectionEnd ?? value.length;
+        const selected = value.slice(start, end);
+        const insert = selected ? before + selected + after : (fallback || (before + after));
+        textarea.value = value.slice(0, start) + insert + value.slice(end);
+        const caret = start + insert.length;
+        textarea.focus();
+        textarea.setSelectionRange(caret, caret);
+    }
+    function sanitizeForSave(value) {
+        if (Array.isArray(value)) {
+            return value.map((item) => sanitizeForSave(item));
+        }
+        if (!value || typeof value !== 'object') {
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (trimmed.startsWith('data:image/') || trimmed.startsWith('data:video/') || trimmed.startsWith('blob:')) {
+                    return '';
+                }
+            }
+            return value;
+        }
+        const out = {};
+        Object.entries(value).forEach(([key, item]) => {
+            if (typeof item === 'string') {
+                const trimmed = item.trim();
+                if (trimmed.startsWith('data:image/') || trimmed.startsWith('data:video/') || trimmed.startsWith('blob:')) {
+                    out[key] = '';
+                    return;
+                }
+            }
+            out[key] = sanitizeForSave(item);
+        });
+        return out;
     }
     function readQuestionFromUI(type) {
         if (!questionEditor) return { options: [] };
@@ -684,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const box = (inner) => `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-top:8px">${inner}</div>`;
         if (type === 'multiple_choice') {
             const options = (question.options && question.options.length ? question.options : [{ text: '' }, { text: '' }, { text: '' }, { text: '' }]).slice(0, 6);
-            const shapes = ['â–²','â—†','â—','â– ','â¬Ÿ','â¬¢'];
+            const shapes = ['▲','◆','●','■','⬟','•'];
             const colors = ['sq-red','sq-blue','sq-yellow','sq-green','sq-blue','sq-red'];
             questionEditor.innerHTML = box(`<div class="sq-answers">${options.map((opt, i) => `
                 <div data-q-row="mc" class="sq-answer-card">
@@ -700,12 +807,12 @@ document.addEventListener('DOMContentLoaded', function () {
             questionEditor.innerHTML = box(`
                 <div class="sq-answers">
                     <label class="sq-answer-card" style="cursor:pointer">
-                        <span class="sq-shape sq-blue">â—†</span>
+                        <span class="sq-shape sq-blue">◆</span>
                         <span>Doğru</span>
                         <input type="radio" name="q_tf_correct" value="true" ${correctTrue ? 'checked' : ''} style="width:18px;height:18px">
                     </label>
                     <label class="sq-answer-card" style="cursor:pointer">
-                        <span class="sq-shape sq-red">â–²</span>
+                        <span class="sq-shape sq-red">▲</span>
                         <span>Yanlış</span>
                         <input type="radio" name="q_tf_correct" value="false" ${!correctTrue ? 'checked' : ''} style="width:18px;height:18px">
                     </label>
@@ -783,6 +890,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ensureSlide();
         const s = state.slides[active];
         s.title = fields.title.value || 'Basliksiz Slide';
+        s.layout = fields.layout.value || 'auto';
         s.xp = Math.max(0, Math.min(500, parseInt(fields.xp.value || '0', 10) || 0));
         s.content = fields.content.value || '';
         s.instructions = fields.instructions.value || '';
@@ -793,6 +901,7 @@ document.addEventListener('DOMContentLoaded', function () {
         s.points = parseInt(fields.points.value || '5', 10);
         s.time_limit = parseInt(fields.time_limit.value || '10', 10);
         s.double_points = !!fields.double_points.checked;
+        s.layout_meta = readLayoutMeta();
         s.question = readQuestionFromUI(s.interaction_type);
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + s.xp;
         state.lesson_title = lessonTitle.value || '';
@@ -801,7 +910,9 @@ document.addEventListener('DOMContentLoaded', function () {
         state.lesson_description = lessonDescription?.value || '';
         state.theme_template = themeTemplateSelect ? (themeTemplateSelect.value || 'default') : (state.theme_template || 'default');
         state.global_theme_css = globalThemeCss ? globalThemeCss.value || '' : (state.global_theme_css || '');
-        state.cover_image = normalizeCoverStoragePath(state.cover_image || '');        state.curriculum = {
+        state.cover_image = normalizeCoverStoragePath(state.cover_image || '');
+        delete state.cover_image_data;
+        state.curriculum = {
             title: curriculum.title.value || '',
             lesson_number: Math.max(1, parseInt(curriculum.lessonNumber.value || '1', 10) || 1),
             konu: curriculum.topic.value || '',
@@ -810,7 +921,8 @@ document.addEventListener('DOMContentLoaded', function () {
             progress: Math.max(0, Math.min(100, parseInt(curriculum.progress.value || '0', 10) || 0)),
         };
         syncHiddenInputs();
-        payloadInput.value = JSON.stringify(state);
+        const serializableState = sanitizeForSave(state);
+        payloadInput.value = JSON.stringify(serializableState);
         if (shouldPersistDraft) {
             try {
                 localStorage.setItem(draftKey, payloadInput.value);
@@ -821,6 +933,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ensureSlide();
         const s = state.slides[active];
         fields.title.value = s.title || '';
+        fields.layout.value = s.layout || 'auto';
         fields.xp.value = Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0;
         fields.content.value = s.content || '';
         fields.instructions.value = s.instructions || '';
@@ -831,6 +944,8 @@ document.addEventListener('DOMContentLoaded', function () {
         fields.points.value = s.points || 5;
         fields.time_limit.value = s.time_limit || 10;
         fields.double_points.checked = !!s.double_points;
+        renderLayoutHelp(fields.layout.value);
+        renderLayoutEditor(fields.layout.value, s.layout_meta || {});
         renderQuestionEditor(fields.interaction_type.value, s.question || {});
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
@@ -918,11 +1033,313 @@ document.addEventListener('DOMContentLoaded', function () {
             list.appendChild(b);
         });
     }
+    function layoutDefinition(layout) {
+        const defs = {
+            auto: {
+                title: 'Auto',
+                badge: 'İçeriğe göre',
+                desc: 'Metin, görsel ve kodu okuyup en uygun yerleşimi seçer.',
+                wireframe: '<div style="height:16px;border-radius:8px;background:#dbeafe"></div><div style="height:14px;border-radius:8px;background:#eff6ff;width:78%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="height:58px;border-radius:12px;background:#eff6ff"></div><div style="height:58px;border-radius:12px;background:#eff6ff"></div></div>',
+            },
+            split: {
+                title: 'Split',
+                badge: '2 alan',
+                desc: 'Ekran ikiye bölünür. Sol ve sağ alanlara ayrı ayrı metin, görsel, video veya kod yerleştirilir.',
+                wireframe: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="height:120px;border-radius:12px;background:#dbeafe"></div><div style="height:120px;border-radius:12px;background:#bfdbfe"></div></div>',
+            },
+            hero: {
+                title: 'Hero',
+                badge: 'Giriş',
+                desc: 'Kısa bir vurucu başlık, alt başlık ve büyük bir görsel veya arka plan ile açılış yapar.',
+                wireframe: '<div style="height:24px;border-radius:10px;background:#dbeafe;width:72%"></div><div style="height:18px;border-radius:8px;background:#eff6ff;width:48%;margin-top:8px"></div><div style="height:96px;border-radius:16px;background:#bfdbfe;margin-top:10px"></div>',
+            },
+            image: {
+                title: 'Image Focus',
+                badge: 'Görsel',
+                desc: 'Görsel ana öğedir. Yanında kısa metin ve açıklama kutuları bulunur.',
+                wireframe: '<div style="height:120px;border-radius:14px;background:#bfdbfe"></div><div style="height:14px;border-radius:8px;background:#eff6ff;width:60%;margin-top:10px"></div>',
+            },
+            features: {
+                title: 'Feature Grid',
+                badge: 'Kartlar',
+                desc: 'Birden çok özeti kartlara böler. Maddeleri yan yana gösterir.',
+                wireframe: '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div></div>',
+            },
+            timeline: {
+                title: 'Timeline',
+                badge: 'Süreç',
+                desc: 'Bir süreci zaman çizgisi şeklinde adım adım gösterir.',
+                wireframe: '<div style="display:grid;gap:8px"><div style="height:16px;border-radius:8px;background:#dbeafe;width:86%"></div><div style="height:16px;border-radius:8px;background:#bfdbfe;width:72%"></div><div style="height:16px;border-radius:8px;background:#dbeafe;width:62%"></div></div>',
+            },
+            steps: {
+                title: 'Steps',
+                badge: 'Adım adım',
+                desc: 'Madde madde ilerleyen görev ya da anlatım şeması sunar.',
+                wireframe: '<div style="display:grid;gap:8px"><div style="height:20px;border-radius:10px;background:#dbeafe;width:95%"></div><div style="height:20px;border-radius:10px;background:#bfdbfe;width:88%"></div><div style="height:20px;border-radius:10px;background:#dbeafe;width:80%"></div></div>',
+            },
+            code: {
+                title: 'Code',
+                badge: 'Kod',
+                desc: 'Kod editörü ve canlı çıktı alanı birlikte görünür.',
+                wireframe: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="height:110px;border-radius:12px;background:#1e293b"></div><div style="height:110px;border-radius:12px;background:#dbeafe"></div></div>',
+            },
+            interactive: {
+                title: 'Interactive',
+                badge: 'Soru',
+                desc: 'Soru ve etkileşim alanlarını merkezde gösterir.',
+                wireframe: '<div style="height:24px;border-radius:10px;background:#dbeafe;width:70%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><div style="height:54px;border-radius:12px;background:#bfdbfe"></div><div style="height:54px;border-radius:12px;background:#bfdbfe"></div></div>',
+            },
+            summary: {
+                title: 'Summary',
+                badge: 'Özet',
+                desc: 'Dersin son durumunu ve kazanımları özetler.',
+                wireframe: '<div style="height:18px;border-radius:8px;background:#dbeafe;width:82%"></div><div style="height:86px;border-radius:14px;background:#eff6ff;margin-top:10px"></div>',
+            },
+        };
+        return defs[layout] || defs.auto;
+    }
+    function renderLayoutHelp(layout) {
+        const def = layoutDefinition(layout);
+        if (layoutHelpTitle) layoutHelpTitle.textContent = def.title;
+        if (layoutHelpBadge) layoutHelpBadge.textContent = def.badge;
+        if (layoutHelpDesc) layoutHelpDesc.textContent = def.desc;
+        if (layoutWireframe) layoutWireframe.innerHTML = def.wireframe;
+    }
+    function readLayoutMeta() {
+        const layout = String(fields.layout?.value || 'auto');
+        const meta = { kind: layout };
+        if (layout === 'split') {
+            meta.left = {
+                type: document.getElementById('layout_left_type')?.value || 'text',
+                text: document.getElementById('layout_left_text')?.value || '',
+                image_url: document.getElementById('layout_left_image')?.value || '',
+                video_url: document.getElementById('layout_left_video')?.value || '',
+            };
+            meta.right = {
+                type: document.getElementById('layout_right_type')?.value || 'image',
+                text: document.getElementById('layout_right_text')?.value || '',
+                image_url: document.getElementById('layout_right_image')?.value || '',
+                video_url: document.getElementById('layout_right_video')?.value || '',
+            };
+        } else if (layout === 'hero' || layout === 'image') {
+            meta.media = {
+                type: document.getElementById('layout_media_type')?.value || 'image',
+                text: document.getElementById('layout_media_text')?.value || '',
+                image_url: document.getElementById('layout_media_image')?.value || '',
+                video_url: document.getElementById('layout_media_video')?.value || '',
+            };
+        }
+        return meta;
+    }
+    function renderLayoutEditor(layout, meta) {
+        const def = layoutDefinition(layout);
+        if (!layoutEditorHint) return;
+        if (layout !== 'split') {
+            if (layout === 'hero' || layout === 'image') {
+                layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, metin için tek alan kullanabilirsiniz.';
+                const media = meta?.media || {};
+                layoutEditorFields.innerHTML = `
+                    <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                        <strong style="display:block;margin-bottom:8px">Ana İçerik</strong>
+                        <label>Alan Tipi</label>
+                        <select id="layout_media_type">
+                            <option value="image" ${media.type === 'image' ? 'selected' : ''}>Görsel</option>
+                            <option value="video" ${media.type === 'video' ? 'selected' : ''}>Video</option>
+                            <option value="text" ${media.type === 'text' ? 'selected' : ''}>Metin</option>
+                        </select>
+                        <label style="margin-top:8px">Metin</label>
+                        <textarea id="layout_media_text" rows="4">${escapeHtml(media.text || '')}</textarea>
+                        <label style="margin-top:8px">Görsel Dosyası</label>
+                        <input id="layout_media_image_file" type="file" accept="image/*">
+                        <input id="layout_media_image" type="hidden" value="${escapeHtml(media.image_url || '')}">
+                        <div id="layout_media_image_preview" style="margin-top:8px;${media.image_url ? '' : 'display:none;'}">
+                            <img src="${escapeHtml(media.image_url || '')}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
+                        </div>
+                        <label style="margin-top:8px">Video Dosyası / URL</label>
+                        <input id="layout_media_video_file" type="file" accept="video/*">
+                        <input id="layout_media_video" type="hidden" value="${escapeHtml(media.video_url || '')}">
+                        <small style="display:block;color:#64748b;margin-top:6px">Video seçildiğinde dosya yüklenir; URL girmenize gerek yoktur.</small>
+                    </div>
+                `;
+                bindLayoutMediaFiles();
+                return;
+            }
+            layoutEditorHint.textContent = def.desc + ' Bu düzen için özel alan açılmaz.';
+            layoutEditorFields.innerHTML = '';
+            return;
+        }
+        layoutEditorHint.textContent = 'Split seçildiğinde her iki taraf ayrı blok olarak düzenlenir. Alt metin, görsel veya video alanları ile iki tarafı doldurabilirsiniz.';
+        const left = meta?.left || {};
+        const right = meta?.right || {};
+        layoutEditorFields.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                    <strong style="display:block;margin-bottom:8px">Sol Alan</strong>
+                    <label>Alan Tipi</label>
+                    <select id="layout_left_type">
+                        <option value="text" ${left.type === 'text' ? 'selected' : ''}>Metin</option>
+                        <option value="image" ${left.type === 'image' ? 'selected' : ''}>Görsel</option>
+                        <option value="video" ${left.type === 'video' ? 'selected' : ''}>Video</option>
+                        <option value="code" ${left.type === 'code' ? 'selected' : ''}>Kod</option>
+                    </select>
+                    <label style="margin-top:8px">Metin</label>
+                    <textarea id="layout_left_text" rows="4">${escapeHtml(left.text || '')}</textarea>
+                    <label style="margin-top:8px">Görsel Dosyası</label>
+                    <input id="layout_left_image_file" type="file" accept="image/*">
+                    <input id="layout_left_image" type="hidden" value="${escapeHtml(left.image_url || '')}">
+                    <div id="layout_left_image_preview" style="margin-top:8px;${left.image_url ? '' : 'display:none;'}">
+                        <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
+                    </div>
+                    <label style="margin-top:8px">Video Dosyası / URL</label>
+                    <input id="layout_left_video_file" type="file" accept="video/*">
+                    <input id="layout_left_video" type="hidden" value="${escapeHtml(left.video_url || '')}">
+                </div>
+                <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                    <strong style="display:block;margin-bottom:8px">Sağ Alan</strong>
+                    <label>Alan Tipi</label>
+                    <select id="layout_right_type">
+                        <option value="text" ${right.type === 'text' ? 'selected' : ''}>Metin</option>
+                        <option value="image" ${right.type === 'image' ? 'selected' : ''}>Görsel</option>
+                        <option value="video" ${right.type === 'video' ? 'selected' : ''}>Video</option>
+                        <option value="code" ${right.type === 'code' ? 'selected' : ''}>Kod</option>
+                    </select>
+                    <label style="margin-top:8px">Metin</label>
+                    <textarea id="layout_right_text" rows="4">${escapeHtml(right.text || '')}</textarea>
+                    <label style="margin-top:8px">Görsel Dosyası</label>
+                    <input id="layout_right_image_file" type="file" accept="image/*">
+                    <input id="layout_right_image" type="hidden" value="${escapeHtml(right.image_url || '')}">
+                    <div id="layout_right_image_preview" style="margin-top:8px;${right.image_url ? '' : 'display:none;'}">
+                        <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
+                    </div>
+                    <label style="margin-top:8px">Video Dosyası / URL</label>
+                    <input id="layout_right_video_file" type="file" accept="video/*">
+                    <input id="layout_right_video" type="hidden" value="${escapeHtml(right.video_url || '')}">
+                </div>
+            </div>
+        `;
+        bindLayoutSplitFiles();
+    }
+    textToolbar?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-text-action]');
+        if (!btn) return;
+        const action = String(btn.getAttribute('data-text-action') || '');
+        const ta = fields.content;
+        if (!ta) return;
+        const selStart = ta.selectionStart ?? ta.value.length;
+        const selEnd = ta.selectionEnd ?? ta.value.length;
+        const selected = ta.value.slice(selStart, selEnd);
+        const prefix = selected ? '' : 'Metin';
+        if (action === 'bold') return insertTextAtCursor(ta, '**', '**', '**Kalın metin**');
+        if (action === 'italic') return insertTextAtCursor(ta, '*', '*', '*Vurgulu metin*');
+        if (action === 'heading') return insertTextAtCursor(ta, '# ', '', '# Başlık');
+        if (action === 'bullet') return insertTextAtCursor(ta, '- ', '', '- Madde');
+        if (action === 'numbered') return insertTextAtCursor(ta, '1. ', '', '1. Madde');
+        if (action === 'quote') return insertTextAtCursor(ta, '> ', '', '> Alıntı');
+        if (action === 'code') return insertTextAtCursor(ta, '```\n', '\n```', '```\nkod\n```');
+        if (action === 'divider') return insertTextAtCursor(ta, '\n---\n', '', '\n---\n');
+    });
+    function setImageFromFile(fileInputId, hiddenId, previewId) {
+        const input = document.getElementById(fileInputId);
+        const hidden = document.getElementById(hiddenId);
+        const preview = document.getElementById(previewId);
+        if (!input) return;
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const data = String(reader.result || '');
+                if (hidden) hidden.value = data;
+                if (preview) {
+                    preview.style.display = 'block';
+                    preview.innerHTML = '<img src="' + data.replace(/"/g, '&quot;') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
+                }
+                saveCurrent();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    function setVideoFromFile(fileInputId, hiddenId) {
+        const input = document.getElementById(fileInputId);
+        const hidden = document.getElementById(hiddenId);
+        if (!input) return;
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            if (hidden) hidden.value = url;
+            saveCurrent();
+        });
+    }
+    function bindLayoutSplitFiles() {
+        setImageFromFile('layout_left_image_file', 'layout_left_image', 'layout_left_image_preview');
+        setVideoFromFile('layout_left_video_file', 'layout_left_video');
+        setImageFromFile('layout_right_image_file', 'layout_right_image', 'layout_right_image_preview');
+        setVideoFromFile('layout_right_video_file', 'layout_right_video');
+    }
+    function bindLayoutMediaFiles() {
+        setImageFromFile('layout_media_image_file', 'layout_media_image', 'layout_media_image_preview');
+        setVideoFromFile('layout_media_video_file', 'layout_media_video');
+    }
     function renderPreviewSlide() {
         ensureSlide();
         previewIndex = Math.max(0, Math.min(previewIndex, state.slides.length - 1));
         const s = state.slides[previewIndex] || {};
-        let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';        if (themeCss) {
+        const layout = String(s.layout || 'auto');
+        const meta = s.layout_meta || {};
+        const layoutPreview = (() => {
+            if (layout === 'split') {
+                const left = meta.left || {};
+                const right = meta.right || {};
+                return `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0">
+                        <div style="min-height:160px;border:1px solid #dbe5f2;border-radius:14px;padding:12px;background:#f8fbff">
+                            <div style="font-size:12px;font-weight:800;color:#2563eb;margin-bottom:8px">SOL ALAN</div>
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px">${escapeHtml((left.type || 'text').toUpperCase())}</div>
+                            <div style="display:grid;gap:8px">
+                                <div style="height:12px;border-radius:999px;background:#dbeafe;width:82%"></div>
+                                <div style="height:12px;border-radius:999px;background:#eff6ff;width:66%"></div>
+                                <div style="height:74px;border-radius:12px;background:#bfdbfe"></div>
+                            </div>
+                        </div>
+                        <div style="min-height:160px;border:1px solid #dbe5f2;border-radius:14px;padding:12px;background:#f8fbff">
+                            <div style="font-size:12px;font-weight:800;color:#7c3aed;margin-bottom:8px">SAĞ ALAN</div>
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px">${escapeHtml((right.type || 'image').toUpperCase())}</div>
+                            <div style="display:grid;gap:8px">
+                                <div style="height:74px;border-radius:12px;background:#c4b5fd"></div>
+                                <div style="height:12px;border-radius:999px;background:#ede9fe;width:70%"></div>
+                                <div style="height:12px;border-radius:999px;background:#e9d5ff;width:54%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            if (layout === 'hero') {
+                const media = meta.media || {};
+                return `
+                    <div style="margin:14px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">
+                        <div style="height:18px;width:56%;border-radius:999px;background:#1d4ed8;margin-bottom:10px"></div>
+                        <div style="height:12px;width:38%;border-radius:999px;background:#60a5fa;margin-bottom:18px"></div>
+                        ${media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:130px;object-fit:cover;border-radius:16px;border:1px solid #bfdbfe">` : `<div style="height:130px;border-radius:16px;background:#93c5fd"></div>`}
+                    </div>
+                `;
+            }
+            if (layout === 'image') {
+                const media = meta.media || {};
+                return `
+                    <div style="margin:14px 0;padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2">
+                        ${media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:180px;object-fit:cover;border-radius:16px;border:1px solid #bfdbfe">` : `<div style="height:180px;border-radius:16px;background:#bfdbfe"></div>`}
+                        <div style="height:12px;width:68%;border-radius:999px;background:#dbeafe;margin-top:12px"></div>
+                        <div style="height:12px;width:46%;border-radius:999px;background:#eff6ff;margin-top:8px"></div>
+                    </div>
+                `;
+            }
+            return '';
+        })();
+        let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';
+        html += '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;margin:6px 0 2px">' + escapeHtml((layout || 'auto').replace(/[-_]/g, ' ')) + '</div>';
+        html += layoutPreview;
+        if (themeCss) {
             html = '<style>' + themeCss + '</style><div class="slide-theme">' + html;
         }
         if (s.instructions) html += '<p><b>Yonlendirme:</b> ' + escapeHtml(s.instructions) + '</p>';
@@ -1083,19 +1500,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
         if (!blob) return;
         const previewUrl = URL.createObjectURL(blob);
-        const dataUrl = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ''));
-            reader.onerror = () => reject(reader.error || new Error('Kapak resmi okunamadi.'));
-            reader.readAsDataURL(blob);
-        });
+        const coverFile = new File([blob], 'cover.png', { type: 'image/png' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(coverFile);
 
         state.cover_image = '';
         if (coverImageData) {
-            coverImageData.value = dataUrl;
+            coverImageData.value = '';
         }
         if (coverImageFile) {
-            coverImageFile.value = '';
+            coverImageFile.files = dataTransfer.files;
         }
         if (coverImagePreviewBox) {
             coverImagePreviewBox.style.display = 'block';
@@ -1169,10 +1583,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === coverCropModal) coverCropModal.classList.remove('open');
     });
     coverCropApply?.addEventListener('click', applyCoverCrop);
+    fields.layout?.addEventListener('change', () => {
+        renderLayoutHelp(fields.layout.value);
+        renderLayoutEditor(fields.layout.value, readLayoutMeta());
+        saveCurrent();
+    });
 
     addBtn.addEventListener('click', () => {
         saveCurrent();
-        state.slides.push({title: 'Yeni Slide', xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+        state.slides.push({title: 'Yeni Slide', layout: 'auto', layout_meta: {}, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
         active = state.slides.length - 1;
         loadCurrent(); renderList(); saveCurrent();
     });
@@ -1256,14 +1675,24 @@ document.addEventListener('DOMContentLoaded', function () {
     questionEditor.addEventListener('input', saveCurrent);
     questionEditor.addEventListener('change', saveCurrent);
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = Array.from(document.querySelectorAll('.builder-panel'));
+
+    tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            tabButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const tab = btn.dataset.tab;
-            document.querySelectorAll('.builder-panel').forEach(p => p.style.display = (p.dataset.panel === tab ? 'block' : 'none'));
+            tabPanels.forEach(p => p.style.display = (p.dataset.panel === tab ? 'block' : 'none'));
         });
     });
+
+    if (!isEditMode) {
+        const defaultTab = tabButtons.find((btn) => btn.dataset.tab === 'text');
+        if (defaultTab) {
+            defaultTab.click();
+        }
+    }
 
     try {
         ensureSlide();
@@ -1335,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     clearNotice();
                     hideUploadProgress();
                     if (xhr.status >= 200 && xhr.status < 400) {
-                        window.location.href = xhr.responseURL || builderForm.action;
+                        window.location.href = @json(route('courses.index'));
                         return;
                     }
                     alert('Ders kaydedilemedi. Lütfen tekrar deneyin.');

@@ -21,7 +21,7 @@ class StoreCourseRequest extends FormRequest
             'teacher_id' => ['required','integer','exists:teachers,id'],
             'school_class_id' => ['nullable','integer','exists:school_classes,id'],
             'weekly_hours' => ['required','integer','between:1,20'],
-            'lesson_payload' => ['nullable', 'json'],
+            'lesson_payload' => ['nullable', 'string'],
             'cover_image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
     }

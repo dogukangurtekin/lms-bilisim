@@ -128,6 +128,10 @@ body.play-compact .main{padding:8px;margin-left:0}
 body.play-compact .navbar{padding:8px 10px;margin-bottom:8px}
 body.play-compact .top{margin-bottom:6px}
 body.play-compact .footer{display:none}
+body.lesson-fullscreen .layout{grid-template-columns:1fr}
+body.lesson-fullscreen .sidebar{display:none !important}
+body.lesson-fullscreen .main{margin-left:0 !important}
+body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 @media (max-width: 960px){
   .layout{min-height:100vh}
   .global-menu-toggle{display:inline-flex}

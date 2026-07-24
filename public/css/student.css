@@ -71,6 +71,10 @@ body.role-student .sidebar a.active{
 }
 body.role-student .main{padding:18px;margin-left:280px}
 body.role-student.sidebar-hidden .main{margin-left:0}
+body.role-student.lesson-fullscreen .layout{grid-template-columns:1fr}
+body.role-student.lesson-fullscreen .sidebar{display:none !important}
+body.role-student.lesson-fullscreen .main{margin-left:0 !important}
+body.role-student.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 body.role-student .navbar{
   border:1px solid #dbeafe;
   background:linear-gradient(180deg,#ffffff,#f8fbff);

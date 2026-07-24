@@ -3,12 +3,26 @@
 namespace App\Services\LessonPresentation;
 
 use App\Models\Course;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class SlidePresentationService
 {
+    private const ALLOWED_LAYOUTS = [
+        'auto',
+        'hero',
+        'section',
+        'text',
+        'split',
+        'image',
+        'features',
+        'steps',
+        'timeline',
+        'code',
+        'interactive',
+        'summary',
+    ];
+
     public function prepareCourseSlides(Course $course, bool $withSummary = true): array
     {
         $payload = (array) ($course->lesson_payload ?? []);
@@ -33,7 +47,7 @@ class SlidePresentationService
         $questionPrompt = trim((string) ($slide['question_prompt'] ?? ''));
         $interactionType = trim((string) ($slide['interaction_type'] ?? 'none'));
         $kind = trim((string) ($slide['kind'] ?? 'topic'));
-        $layout = trim((string) ($slide['layout'] ?? ''));
+        $layout = $this->normalizeLayout((string) ($slide['layout'] ?? ''));
 
         if ($layout === '') {
             $layout = $this->inferLayout($title, $content, $image, $code, $questionPrompt, $interactionType, $kind);
@@ -52,39 +66,78 @@ class SlidePresentationService
         ]);
     }
 
+    public function normalizeLayout(string $layout): string
+    {
+        $key = trim(mb_strtolower($layout));
+        $key = str_replace(['_', ' '], '-', $key);
+
+        return in_array($key, self::ALLOWED_LAYOUTS, true) ? $key : '';
+    }
+
     public function inferLayout(string $title, string $content, string $image, string $code, string $questionPrompt, string $interactionType, string $kind = 'topic'): string
     {
-        if ($kind === 'summary') return 'summary';
-        if (Str::contains(mb_strtolower($questionPrompt), ['sonuç', 'final', 'özet'])) return 'summary';
-        if ($interactionType !== 'none') {
-            return match ($interactionType) {
-                'multiple_choice', 'true_false', 'short_answer', 'checklist', 'matching', 'drag_drop' => 'interactive',
-                default => 'interactive',
-            };
+        if ($kind === 'summary') {
+            return 'summary';
         }
-        if ($code !== '') return 'code';
-        if ($image !== '' && $content !== '') return 'split';
-        if ($image !== '') return 'image';
-        if ($this->isTimelineCandidate($content)) return 'timeline';
-        if ($this->isStepsCandidate($content)) return 'steps';
-        if ($this->isFeatureCandidate($content)) return 'features';
-        if ($content !== '' && Str::length($content) < 260 && $title !== '') return 'hero';
-        if ($content !== '') return 'text';
+
+        if (Str::contains(mb_strtolower($questionPrompt), ['sonuç', 'final', 'özet'])) {
+            return 'summary';
+        }
+
+        if ($interactionType !== 'none') {
+            return 'interactive';
+        }
+
+        if ($code !== '') {
+            return 'code';
+        }
+
+        if ($image !== '' && $content !== '') {
+            return 'split';
+        }
+
+        if ($image !== '') {
+            return 'image';
+        }
+
+        if ($this->isTimelineCandidate($content)) {
+            return 'timeline';
+        }
+
+        if ($this->isStepsCandidate($content)) {
+            return 'steps';
+        }
+
+        if ($this->isFeatureCandidate($content)) {
+            return 'features';
+        }
+
+        if ($content !== '' && Str::length($content) < 260 && $title !== '') {
+            return 'hero';
+        }
+
+        if ($content !== '') {
+            return 'text';
+        }
+
         return 'section';
     }
 
     private function buildBlocks(array $slide, string $content, string $image, string $video, string $code, string $questionPrompt, string $interactionType): array
     {
         $blocks = [];
+
         if ($content !== '') {
             $sentences = collect(preg_split('/(?<=[.!?])\s+/u', $content) ?: [])
                 ->map(fn ($item) => trim((string) $item))
                 ->filter()
                 ->values();
+
             $blocks[] = [
                 'type' => 'paragraph',
                 'text' => $sentences->take(2)->implode(' '),
             ];
+
             $rest = $sentences->slice(2)->values()->all();
             if ($rest !== []) {
                 $blocks[] = [
@@ -93,6 +146,7 @@ class SlidePresentationService
                 ];
             }
         }
+
         if ($image !== '') {
             $blocks[] = [
                 'type' => 'image',
@@ -100,18 +154,21 @@ class SlidePresentationService
                 'alt' => (string) ($slide['title'] ?? 'slide image'),
             ];
         }
+
         if ($video !== '') {
             $blocks[] = [
                 'type' => 'video',
                 'url' => $video,
             ];
         }
+
         if ($code !== '') {
             $blocks[] = [
                 'type' => 'code',
                 'source' => $code,
             ];
         }
+
         if ($questionPrompt !== '' || $interactionType !== 'none') {
             $blocks[] = [
                 'type' => 'question',
@@ -122,6 +179,7 @@ class SlidePresentationService
                 'time_limit' => (int) ($slide['time_limit'] ?? 10),
             ];
         }
+
         return $blocks;
     }
 
@@ -143,6 +201,7 @@ class SlidePresentationService
     private function buildSummarySlide(Course $course, array $payload, array $slides): array
     {
         $curriculum = (array) data_get($payload, 'curriculum', []);
+
         return [
             '__summary' => true,
             'title' => 'Ders Özeti',
@@ -151,7 +210,7 @@ class SlidePresentationService
                 'lesson_title' => (string) ($course->name ?? ''),
                 'topic' => (string) ($curriculum['konu'] ?? ''),
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
-                'outcomes' => array_values(array_filter((array) (data_get($curriculum, 'kazanımlar') ?? data_get($curriculum, 'kazanimlar') ?? []), fn ($item) => trim((string) $item) !== '')),
+                'outcomes' => array_values(array_filter((array) (data_get($curriculum, 'kazanimlar') ?? []), fn ($item) => trim((string) $item) !== '')),
                 'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
                 'slide_count' => count($slides),

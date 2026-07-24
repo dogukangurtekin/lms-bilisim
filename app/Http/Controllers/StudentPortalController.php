@@ -353,9 +353,68 @@ class StudentPortalController extends Controller
             return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi tamamladiniz. Tekrar acilamaz.');
         }
 
-        $slides = $this->presentation->prepareCourseSlides($course, true);
+        $slides = $this->presentation->prepareCourseSlides($course, false);
+        $payload = (array) ($course->lesson_payload ?? []);
+        $curriculum = (array) data_get($payload, 'curriculum', []);
+        $summarySlide = [
+            '__summary' => true,
+            'title' => 'Ders Özeti',
+            'xp' => 0,
+            'summary' => [
+                'lesson_title' => (string) ($course->name ?? ''),
+                'topic' => (string) ($curriculum['konu'] ?? ''),
+                'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
+                'outcomes' => array_values(array_filter((array) (
+                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
+                ), fn ($item) => trim((string) $item) !== '')),
+                'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
+                'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
+                'slide_count' => count((array) $slides),
+                'lesson_total_xp' => collect((array) $slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0))),
+            ],
+        ];
 
-        return view('student-portal.course-show', compact('student', 'course', 'courseProgress', 'slides'));
+        return view('student-portal.course-show', [
+            'student' => $student,
+            'course' => $course,
+            'courseProgress' => $courseProgress,
+            'slides' => $slides,
+            'summarySlide' => $summarySlide,
+            'previewMode' => false,
+        ]);
+    }
+
+    public function coursePreview(Course $course)
+    {
+        $slides = $this->presentation->prepareCourseSlides($course, false);
+        $payload = (array) ($course->lesson_payload ?? []);
+        $curriculum = (array) data_get($payload, 'curriculum', []);
+        $summarySlide = [
+            '__summary' => true,
+            'title' => 'Ders Özeti',
+            'xp' => 0,
+            'summary' => [
+                'lesson_title' => (string) ($course->name ?? ''),
+                'topic' => (string) ($curriculum['konu'] ?? ''),
+                'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
+                'outcomes' => array_values(array_filter((array) (
+                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
+                ), fn ($item) => trim((string) $item) !== '')),
+                'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
+                'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
+                'slide_count' => count((array) $slides),
+                'lesson_total_xp' => collect((array) $slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0))),
+            ],
+        ];
+
+        return view('student-portal.course-show', [
+            'student' => null,
+            'course' => $course,
+            'courseProgress' => null,
+            'slides' => $slides,
+            'summarySlide' => $summarySlide,
+            'previewMode' => true,
+        ]);
     }
 
     public function completeCourse(Course $course)
@@ -373,7 +432,7 @@ class StudentPortalController extends Controller
             return redirect()->route('student.portal.courses')->with('ok', 'Bu ders zaten tamamlandi.');
         }
 
-        $slides = (array) data_get($course->lesson_payload, 'slides', []);
+        $slides = $this->presentation->prepareCourseSlides($course, false);
         $slideXp = collect($slides)->sum(function ($s) {
             $xp = (int) data_get($s, 'xp', 0);
             if ($xp > 0) {

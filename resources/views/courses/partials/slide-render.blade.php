@@ -1,10 +1,74 @@
 @php
     $slide = $slide ?? [];
-    $question = $slide['question'] ?? [];
+    $question = is_array($slide['question'] ?? null) ? $slide['question'] : [];
     $hideSlideTitle = $hideSlideTitle ?? false;
     $isSummarySlide = !empty($slide['__summary']);
     $layout = (string) ($slide['layout'] ?? ($isSummarySlide ? 'summary' : 'text'));
     $blocks = (array) ($slide['presentation_blocks'] ?? []);
+
+    $normalizeText = static function ($value): string {
+        $text = trim((string) $value);
+        return $text === '' ? '' : html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    };
+    $pickValue = static function (array $source, array $keys) use ($normalizeText): string {
+        foreach ($keys as $key) {
+            $text = $normalizeText(data_get($source, $key));
+            if ($text !== '') {
+                return $text;
+            }
+        }
+        return '';
+    };
+    $isTruthyCorrect = static function ($item): bool {
+        if (!is_array($item)) {
+            return false;
+        }
+        foreach (['correct', 'is_correct', 'answer_correct'] as $flagKey) {
+            if (array_key_exists($flagKey, $item)) {
+                return filter_var($item[$flagKey], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+        return false;
+    };
+
+    $slide['content'] = $pickValue($slide, ['content', 'text', 'body', 'description', 'lesson_content', 'lesson_text', 'markdown', 'html_content']);
+    $slide['instructions'] = $pickValue($slide, ['instructions', 'instruction', 'note', 'guide', 'direction']);
+    $slide['image_url'] = $pickValue($slide, ['image_url', 'imageUrl', 'image', 'cover_image', 'media_url', 'mediaUrl']);
+    $slide['video_url'] = $pickValue($slide, ['video_url', 'videoUrl', 'video', 'media_video', 'mediaVideo']);
+    $slide['file_url'] = $pickValue($slide, ['file_url', 'fileUrl', 'file', 'attachment_url', 'attachmentUrl']);
+    $suspiciousText = implode(' ', [
+        (string) ($slide['title'] ?? ''),
+        (string) ($slide['subtitle'] ?? ''),
+        (string) ($slide['instructions'] ?? ''),
+        (string) ($slide['content'] ?? ''),
+        (string) ($slide['code'] ?? ''),
+    ]);
+    if (
+        preg_match('/^\s*@php\b/i', $suspiciousText)
+        || str_contains($suspiciousText, "@include('courses.partials.theme-css')")
+        || str_contains($suspiciousText, "route('student.portal.courses')")
+        || str_contains($suspiciousText, '$payload =')
+        || str_contains($suspiciousText, '$finalSummarySlide')
+        || str_contains($suspiciousText, 'lesson_total_xp')
+        || str_contains($suspiciousText, '$slides[] = $finalSummarySlide')
+    ) {
+        $slide['title'] = 'Ders Slaytı';
+        $slide['content'] = '';
+        $slide['subtitle'] = '';
+        $slide['instructions'] = '';
+        $slide['code'] = '';
+        $slide['image_url'] = '';
+        $slide['video_url'] = '';
+        $slide['file_url'] = '';
+    } elseif ($slide['content'] !== '' && preg_match('/^\s*@php\b/i', $slide['content']) && (
+        str_contains($slide['content'], '$payload') ||
+        str_contains($slide['content'], '$finalSummarySlide') ||
+        str_contains($slide['content'], '$curriculum') ||
+        str_contains($slide['content'], '$slides[] = $finalSummarySlide')
+    )) {
+        $slide['content'] = '';
+    }
+
     $responsiveHelper = <<<'HTML'
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -36,6 +100,7 @@ img,video,canvas,svg,table,pre,code{max-width:100%}
 })();
 </script>
 HTML;
+
     $codeSrcdoc = (string) ($slide['code'] ?? '');
     if ($codeSrcdoc !== '') {
         $codeSrcdoc = $responsiveHelper . '<style>' . trim(view('courses.partials.lesson-theme-css')->render()) . '</style>' . $codeSrcdoc;
@@ -43,6 +108,7 @@ HTML;
     $interactionType = (string) ($slide['interaction_type'] ?? 'none');
 @endphp
 <style>
+.lesson-layout-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:.01em;background:rgba(37,99,235,.08);color:#1d4ed8;border:1px solid rgba(37,99,235,.14)}
 .sqz-wrap{margin-top:10px;border-radius:18px;padding:14px;background:linear-gradient(160deg,#4c1d95,#6d28d9 42%,#7c3aed);color:#fff;border:1px solid rgba(255,255,255,.18)}
 .sqz-qcard{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:14px;margin-bottom:12px}
 .sqz-q{margin:0;font-size:34px;line-height:1.2;font-weight:900;color:#fff;text-align:center}
@@ -69,8 +135,8 @@ HTML;
         @php $heroText = (string) ($slide['subtitle'] ?? $slide['instructions'] ?? ''); @endphp
         <div class="lesson-slide-shell">
             @if(!$hideSlideTitle)
-                <div class="lesson-slide-eyebrow">{{ strtoupper(str_replace('_', ' ', $layout)) }}</div>
-                <h3 class="lesson-slide-title">{{ $slide['title'] ?? 'Basliksiz Slide' }}</h3>
+                <div class="lesson-slide-eyebrow">{{ strtoupper(str_replace(['_', '-'], ' ', $layout)) }}</div>
+                <h3 class="lesson-slide-title">{{ $slide['title'] ?? 'Başlıksız Slide' }}</h3>
             @endif
             @if($heroText !== '')
                 <p class="lesson-slide-subtitle">{{ $heroText }}</p>
@@ -104,16 +170,16 @@ HTML;
                 @include('courses.partials.slides.interactive', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @else
                 @if(!empty($slide['content']))
-                    <p class="lesson-paragraph">{{ $slide['content'] }}</p>
+                    <p class="lesson-paragraph">{!! nl2br(e($slide['content'])) !!}</p>
                 @endif
                 @if(!empty($slide['image_url']))
-                    <img src="{{ $slide['image_url'] }}" alt="slide gorsel" class="lesson-image">
+                    <img src="{{ $slide['image_url'] }}" alt="slide görsel" class="lesson-image">
                 @endif
                 @if(!empty($slide['video_url']))
-                    <p><a href="{{ $slide['video_url'] }}" target="_blank">Video Baglantisi</a></p>
+                    <p><a href="{{ $slide['video_url'] }}" target="_blank" rel="noopener">Video Bağlantısı</a></p>
                 @endif
                 @if(!empty($slide['file_url']))
-                    <p><a href="{{ $slide['file_url'] }}" target="_blank">Ek Kaynak</a></p>
+                    <p><a href="{{ $slide['file_url'] }}" target="_blank" rel="noopener">Ek Kaynak</a></p>
                 @endif
                 @if($codeSrcdoc !== '')
                     <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
@@ -131,17 +197,47 @@ HTML;
                     $rawOpts = (array) ($question['options'] ?? []);
                     $opts = [];
                     foreach ($rawOpts as $opt) {
-                        $opts[] = is_array($opt) ? ['text' => (string) ($opt['text'] ?? ''), 'correct' => (bool) ($opt['correct'] ?? false)] : ['text' => (string) $opt, 'correct' => false];
+                        if (is_array($opt)) {
+                            $opts[] = [
+                                'text' => $normalizeText($opt['text'] ?? $opt['label'] ?? $opt['value'] ?? ''),
+                                'correct' => $isTruthyCorrect($opt),
+                            ];
+                        } else {
+                            $opts[] = ['text' => $normalizeText($opt), 'correct' => false];
+                        }
                     }
                     $opts = array_values(array_filter($opts, fn ($v) => trim((string) ($v['text'] ?? '')) !== ''));
+                    if ($opts !== [] && !collect($opts)->contains(fn ($opt) => !empty($opt['correct'])) && isset($question['correct_index'])) {
+                        $correctIndex = max(0, (int) $question['correct_index']);
+                        if (isset($opts[$correctIndex])) {
+                            $opts[$correctIndex]['correct'] = true;
+                        }
+                    }
+                    if ($opts !== [] && !collect($opts)->contains(fn ($opt) => !empty($opt['correct'])) && !empty($question['answer'])) {
+                        $answer = mb_strtolower($normalizeText($question['answer']));
+                        foreach ($opts as &$optItem) {
+                            if (mb_strtolower($normalizeText($optItem['text'])) === $answer) {
+                                $optItem['correct'] = true;
+                                break;
+                            }
+                        }
+                        unset($optItem);
+                    }
                     if ($interactionType === 'multiple_choice' && $opts === []) {
-                        $opts = [['text' => 'Seçenek 1', 'correct' => false], ['text' => 'Seçenek 2', 'correct' => false], ['text' => 'Seçenek 3', 'correct' => false], ['text' => 'Seçenek 4', 'correct' => false]];
+                        $opts = [
+                            ['text' => 'Seçenek 1', 'correct' => false],
+                            ['text' => 'Seçenek 2', 'correct' => false],
+                            ['text' => 'Seçenek 3', 'correct' => false],
+                            ['text' => 'Seçenek 4', 'correct' => false],
+                        ];
                     }
                     $pairs = (array) ($question['pairs'] ?? []);
                     $items = (array) ($question['items'] ?? []);
                     $dragTargets = [];
                     foreach ($items as $it) {
-                        if (is_array($it) && !empty($it['target'])) $dragTargets[] = (string) $it['target'];
+                        if (is_array($it) && !empty($it['target'])) {
+                            $dragTargets[] = (string) $it['target'];
+                        }
                     }
                     $dragTargets = array_values(array_unique(array_filter($dragTargets, fn ($v) => trim($v) !== '')));
                     $inputName = 'sqz-opt-' . md5((string) ($slide['title'] ?? '') . '|' . (string) ($slide['question_prompt'] ?? ''));
@@ -154,7 +250,7 @@ HTML;
                         <p class="sqz-q">{{ $slide['question_prompt'] }}</p>
                         <div class="sqz-meta">
                             <span class="sqz-badge">Puan: {{ (int) ($slide['points'] ?? 5) }}</span>
-                            <span class="sqz-badge">Sure: {{ (int) ($slide['time_limit'] ?? 10) }} sn</span>
+                            <span class="sqz-badge">Süre: {{ (int) ($slide['time_limit'] ?? 10) }} sn</span>
                         </div>
                     </div>
                     @if($interactionType === 'multiple_choice')
@@ -169,8 +265,11 @@ HTML;
                             @endforeach
                         </div>
                     @elseif($interactionType === 'true_false')
+                        @php
+                            $trueOption = collect($question['options'] ?? [])->first(fn ($opt) => is_array($opt) && $isTruthyCorrect($opt));
+                            $trueCorrect = is_array($trueOption) ? true : (!empty($question['correct_index']) ? ((int) $question['correct_index'] === 0) : true);
+                        @endphp
                         <div class="sqz-grid">
-                            @php $trueOption = collect($question['options'] ?? [])->firstWhere('text', 'Dogru'); $trueCorrect = is_array($trueOption) ? (bool) ($trueOption['correct'] ?? true) : true; @endphp
                             <label class="sqz-opt sqz-blue" data-sqz-option data-sqz-correct="{{ $trueCorrect ? '1' : '0' }}">
                                 <input type="radio" name="{{ $inputName }}" value="A" data-sqz-input>
                                 <span class="sqz-shape">A</span>
@@ -189,7 +288,7 @@ HTML;
                                 <div class="sqz-row">
                                     <input class="form-control" type="text" readonly value="{{ $txt }}">
                                     <select class="form-control" data-sqz-input>
-                                        <option value="">Eslestir...</option>
+                                        <option value="">Eşleştir...</option>
                                         @foreach($dragTargets as $target)
                                             <option value="{{ $target }}">{{ $target }}</option>
                                         @endforeach
@@ -208,7 +307,7 @@ HTML;
                         </div>
                     @elseif($interactionType === 'short_answer')
                         <div class="sqz-row" style="grid-template-columns:1fr">
-                            <input class="form-control" type="text" placeholder="Cevabini yaz..." data-sqz-input>
+                            <input class="form-control" type="text" placeholder="Cevabını yaz..." data-sqz-input>
                         </div>
                     @elseif($interactionType === 'checklist')
                         <div class="sqz-grid">

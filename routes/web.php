@@ -137,6 +137,7 @@ Route::middleware('auth')->group(function () {
     Route::view('/block-builder-studio', 'block-builder.index')->name('block-builder.index');
     Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
+    Route::get('/dersler/{course}/onizle', [CourseController::class, 'preview'])->name('course.preview');
     Route::middleware('role:admin,teacher')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');
@@ -160,7 +161,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/app-notifications/{log}/delete', [NotificationController::class, 'destroyLog'])->name('notifications.logs.destroy.post');
         Route::post('/app-notifications/delete-all', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all.post');
         Route::post('/classes/secili', [SchoolClassController::class, 'destroySelected'])->name('classes.destroy-selected');
-        Route::post('/classes/tumu', [SchoolClassController::class, 'destroyAll'])->name('classes.destroy-all');
+        Route::delete('/classes/tumu', [SchoolClassController::class, 'destroyAll'])->name('classes.destroy-all');
         Route::get('/classes/secili-sil', [SchoolClassController::class, 'destroySelectedGet'])->name('classes.destroy-selected.get');
         Route::get('/classes/tumu-sil', [SchoolClassController::class, 'destroyAllGet'])->name('classes.destroy-all.get');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
@@ -286,7 +287,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
-
 
 
 

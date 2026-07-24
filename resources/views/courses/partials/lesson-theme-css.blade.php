@@ -66,6 +66,33 @@
 @media (prefers-reduced-motion: reduce){
     .slide-theme :where(.slide-render){animation:none}
 }
+@media (max-width: 900px){
+    .slide-theme :where(.lesson-split),
+    .slide-theme :where(.lesson-grid-cards){
+        grid-template-columns:1fr;
+    }
+    .slide-theme :where(.lesson-hero-card){
+        padding:18px;
+        border-radius:22px;
+    }
+    .slide-theme :where(.lesson-card){
+        padding:14px;
+        border-radius:18px;
+    }
+    .slide-theme :where(.lesson-image){
+        min-height:180px;
+    }
+    .slide-theme :where(.lesson-code-frame){
+        min-height:280px;
+        border-radius:16px;
+    }
+    .slide-theme :where(.lesson-slide-title){
+        font-size:clamp(24px,8vw,36px);
+    }
+    .slide-theme :where(.lesson-slide-subtitle){
+        font-size:16px;
+    }
+}
 @media (prefers-color-scheme: dark){
     .slide-theme{
         background:

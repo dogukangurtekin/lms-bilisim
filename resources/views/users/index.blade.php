@@ -61,9 +61,9 @@
         <button type="submit" class="btn btn-danger">Tum Ogrencileri Sil</button>
     </form>
 </div>
-<form id="delete-selected-students-form" method="POST" action="{{ route('users.students.destroy-selected') }}">@csrf @method('DELETE')
+<form id="delete-selected-students-form" method="POST" action="{{ route('users.students.destroy-selected') }}" style="display:none">@csrf @method('DELETE')</form>
 <div class="table-responsive users-table-wrap"><table><thead><tr><th><input type="checkbox" id="select-all-students" title="Tum ogrencileri sec"></th><th>ID</th><th>Ad</th><th>E-posta</th><th>Rol</th><th>İşlem</th></tr></thead><tbody>@foreach($users as $item)<tr><td>@if($item->hasRole('student'))<input type="checkbox" class="student-row-checkbox" form="delete-selected-students-form" name="user_ids[]" value="{{ $item->id }}">@endif</td><td>{{ $item->id }}</td><td>{{ $item->name }} @if($item->hasRole('teacher') && $item->teacher)<a class="btn" href="{{ route('users.teachers.classes.edit', $item->teacher) }}" style="margin-left:8px">Sınıf Ata</a>@endif</td><td>{{ $item->email }}</td><td>{{ $item->role?->slug ?? '-' }}</td><td class="actions">@if($item->hasRole('admin'))<button class="btn" type="button" disabled>Admin Silinemez</button>@else<form method="POST" action="{{ route('users.destroy', $item) }}">@csrf @method('DELETE')<button class="btn btn-danger" type="submit">Sil</button></form>@endif</td></tr>@endforeach</tbody></table></div>
-</form>
+
 {{ $users->links() }}
 </div>
 <div class="form-progress-widget" id="form-progress-widget" aria-live="polite">
@@ -205,4 +205,7 @@ hideWidget();
 })();
 </script>
 @endsection
+
+
+
 

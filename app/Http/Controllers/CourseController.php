@@ -41,6 +41,7 @@ class CourseController extends Controller
 
         try {
             $items = Course::query()
+                ->with(['schoolClass:id,name,section,grade_level'])
                 ->when($user?->hasRole('teacher'), fn ($query) => $query->where('teacher_id', $teacherId))
                 ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
                 ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
@@ -52,6 +53,7 @@ class CourseController extends Controller
                 'message' => $e->getMessage(),
             ]);
             $items = Course::query()
+                ->with(['schoolClass:id,name,section,grade_level'])
                 ->orderByDesc('id')
                 ->paginate(20)
                 ->withQueryString();
@@ -193,6 +195,19 @@ class CourseController extends Controller
             ? response()->json($model, 201)
             : redirect()->route('courses.index')->with('ok', 'Ders eklendi');
     }
+    public function preview(Course $course)
+    {
+        $slides = $this->presentation->prepareCourseSlides($course, true);
+
+        return view('student-portal.course-show', [
+            'student' => null,
+            'course' => $course,
+            'courseProgress' => null,
+            'slides' => $slides,
+            'previewMode' => true,
+        ]);
+    }
+
     public function show($id)
     {
         $course = Course::with(['teacher.user', 'schoolClass'])->find($id);
@@ -250,7 +265,7 @@ class CourseController extends Controller
     public function update(UpdateCourseRequest $request, Course $course)
     {
         $data = $request->validated();
-        $data = $this->attachCoverImageToPayload($request, $data);
+        $data = $this->attachCoverImageToPayload($request, $data, $course);
         $this->service->update($course, $data);
 
         return $request->expectsJson()
@@ -799,13 +814,25 @@ class CourseController extends Controller
         return (int) ($adminTeacherId ?? 0);
     }
 
-    private function attachCoverImageToPayload(Request $request, array $data): array
+    private function attachCoverImageToPayload(Request $request, array $data, ?Course $existingCourse = null): array
     {
         $payload = [];
         if (!empty($data['lesson_payload'])) {
-            $decoded = json_decode((string) $data['lesson_payload'], true);
+            $rawPayload = (string) $data['lesson_payload'];
+            $decoded = json_decode($rawPayload, true);
+            if (!is_array($decoded)) {
+                $decoded = json_decode(html_entity_decode($rawPayload, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true);
+            }
             if (is_array($decoded)) {
                 $payload = $decoded;
+            }
+        }
+        $payload = $this->sanitizeLessonPayloadForStorage($payload);
+        $existingCover = '';
+        if ($existingCourse) {
+            $existingCover = trim((string) data_get($existingCourse->lesson_payload, 'cover_image', ''));
+            if ($existingCover === '') {
+                $existingCover = trim((string) $existingCourse->coverImageUrl());
             }
         }
 
@@ -825,6 +852,10 @@ class CourseController extends Controller
         }
 
         if (! $request->hasFile('cover_image_file')) {
+            if ($existingCover !== '' && empty($payload['cover_image'])) {
+                $payload['cover_image'] = $existingCover;
+                $data['lesson_payload'] = json_encode($payload, JSON_UNESCAPED_UNICODE);
+            }
             unset($data['cover_image_file'], $data['cover_image_data']);
             return $data;
         }
@@ -841,6 +872,46 @@ class CourseController extends Controller
         unset($data['cover_image_file'], $data['cover_image_data']);
 
         return $data;
+    }
+
+    private function sanitizeLessonPayloadForStorage(array $payload): array
+    {
+        $walk = function ($value) use (&$walk) {
+            if (is_array($value)) {
+                $clean = [];
+                foreach ($value as $key => $item) {
+                    $clean[$key] = $walk($item);
+                }
+
+                return $clean;
+            }
+
+            if (! is_string($value)) {
+                return $value;
+            }
+
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return $value;
+            }
+
+            if (
+                str_starts_with($trimmed, 'data:image/')
+                || str_starts_with($trimmed, 'data:video/')
+                || str_starts_with($trimmed, 'blob:')
+            ) {
+                return '';
+            }
+
+            return $value;
+        };
+
+        $payload = $walk($payload);
+        if (is_array($payload)) {
+            unset($payload['cover_image_data']);
+        }
+
+        return is_array($payload) ? $payload : [];
     }
 
     private function storeCoverFromDataUrl(string $dataUrl): string

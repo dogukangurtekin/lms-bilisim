@@ -156,10 +156,12 @@
                 $firstSlide = $slides[0] ?? [];
                 $desc = trim((string) data_get($item->lesson_payload, 'lesson_description', ''));
                 if ($desc === '') $desc = trim((string) data_get($firstSlide, 'description', ''));
-                if ($desc === '') $desc = $item->name . ' dersi icin hazirlanan konu anlatimi ve etkinlik icerikleri.';
+                if ($desc === '') $desc = $item->name . ' dersi için hazırlanan konu anlatımı ve etkinlik içerikleri.';
                 $thumb = (string) ($item->coverImageUrl() ?: data_get($firstSlide, 'image_url') ?: '');
                 $difficulty = (string) (data_get($item->lesson_payload, 'difficulty') ?: (((int) ($item->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
-                $age = ((int) ($item->schoolClass?->name ?? 6) + 5) . '+';
+                $className = (string) ($item->schoolClass?->name ?? '6');
+                $classNumber = (int) preg_replace('/\D+/', '', $className);
+                $age = (($classNumber > 0 ? $classNumber : 6) + 5) . '+';
             @endphp
             <x-course-card
                 :title="$item->name"
@@ -169,6 +171,8 @@
                 :age="$age"
                 :difficulty="$difficulty"
                 :content-url="route('course.detail', ['id' => $item->id])"
+                :preview-url="route('course.preview', ['course' => $item->id])"
+                preview-label="Önizle"
                 :primary-url="route('courses.edit', $item)"
                 primary-label="Düzenle"
                 :download-url="route('courses.export', $item)"
@@ -215,7 +219,7 @@
             <select id="course-assign-teacher" name="teacher_id" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
                 <option value="">Öğretmen Seçiniz</option>
                 @foreach(($teachers ?? collect()) as $teacher)
-                    <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Öğretmen #'.$teacher->id) }}</option>
+                    <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Öğretmen #' . $teacher->id) }}</option>
                 @endforeach
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
@@ -242,10 +246,10 @@
         </form>
         <form id="course-assign-form-level" method="POST" data-assign-panel="level" style="display:none">
             @csrf
-            <label style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Kademe</label>
-            <select name="grade_level" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
-                @for($g = 1; $g <= 12; $g++)
-                    <option value="{{ $g }}">{{ $g }}. Kademe</option>
+            <label for="course-assign-level" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Kademe</label>
+            <select id="course-assign-level" name="grade_level" style="width:100%;height:42px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;">
+                @for($i = 1; $i <= 12; $i++)
+                    <option value="{{ $i }}">{{ $i }}. Sınıf</option>
                 @endfor
             </select>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
@@ -257,91 +261,24 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const deleteModal = document.getElementById('course-delete-modal');
-    const deleteCancel = document.getElementById('course-delete-cancel');
-    const deleteConfirm = document.getElementById('course-delete-confirm');
-    let pendingDeleteUrl = '';
-
-    document.addEventListener('click', function (e) {
-        const deleteLink = e.target.closest('.course-delete-link');
-        if (deleteLink) {
-            e.preventDefault();
-            pendingDeleteUrl = deleteLink.dataset.deleteUrl || deleteLink.getAttribute('href') || '';
-            if (pendingDeleteUrl && deleteModal) deleteModal.style.display = 'flex';
-            return;
-        }
-
-        const assignBtn = e.target.closest('[data-assign-course-id]');
-        if (!assignBtn) return;
-        const courseId = assignBtn.getAttribute('data-assign-course-id');
-        const courseName = assignBtn.getAttribute('data-assign-course-name') || '';
-        const currentTeacher = assignBtn.getAttribute('data-assign-current-teacher') || '';
-        const assignModal = document.getElementById('course-assign-modal');
-        const assignTitle = document.getElementById('course-assign-title');
-        const assignFormTeacher = document.getElementById('course-assign-form-teacher');
-        const assignFormClass = document.getElementById('course-assign-form-class');
-        const assignFormLevel = document.getElementById('course-assign-form-level');
-        const assignTeacher = document.getElementById('course-assign-teacher');
-        if (!courseId || !assignModal || !assignFormTeacher || !assignFormClass || !assignFormLevel) return;
-        const teacherRoute = @json(route('courses.assign-teacher', ['course' => '__COURSE_ID__']));
-        const classRoute = @json(route('courses.assign-classes', ['course' => '__COURSE_ID__']));
-        const levelRoute = @json(route('courses.assign-level', ['course' => '__COURSE_ID__']));
-        assignFormTeacher.action = String(teacherRoute).replace('__COURSE_ID__', String(courseId));
-        assignFormClass.action = String(classRoute).replace('__COURSE_ID__', String(courseId));
-        assignFormLevel.action = String(levelRoute).replace('__COURSE_ID__', String(courseId));
-        if (assignTitle) assignTitle.textContent = 'Ders: ' + courseName;
-        if (assignTeacher) assignTeacher.value = String(currentTeacher) === '0' ? '' : String(currentTeacher);
-        assignFormTeacher.style.display = '';
-        assignFormClass.style.display = 'none';
-        assignFormLevel.style.display = 'none';
-        assignModal.style.display = 'flex';
-    });
-
-    deleteCancel?.addEventListener('click', function () {
-        pendingDeleteUrl = '';
-        if (deleteModal) deleteModal.style.display = 'none';
-    });
-    deleteConfirm?.addEventListener('click', function () {
-        if (!pendingDeleteUrl) return;
-        const url = pendingDeleteUrl;
-        pendingDeleteUrl = '';
-        if (deleteModal) deleteModal.style.display = 'none';
-        window.location.assign(url);
-    });
-
-    document.querySelectorAll('.course-assign-cancel-x, #course-assign-cancel').forEach((btn) => {
-        btn.addEventListener('click', function () {
-            const assignModal = document.getElementById('course-assign-modal');
-            if (assignModal) assignModal.style.display = 'none';
-        });
-    });
-
-    document.querySelectorAll('[data-assign-tab]').forEach((btn) => btn.addEventListener('click', () => {
-        const tab = btn.getAttribute('data-assign-tab');
-        document.querySelectorAll('[data-assign-panel]').forEach((panel) => {
-            panel.style.display = panel.getAttribute('data-assign-panel') === tab ? '' : 'none';
-        });
-    }));
-
-    deleteModal?.addEventListener('click', function (e) {
-        if (e.target === deleteModal) {
-            pendingDeleteUrl = '';
-            deleteModal.style.display = 'none';
-        }
-    });
-    const assignModal = document.getElementById('course-assign-modal');
-    assignModal?.addEventListener('click', function (e) {
-        if (e.target === assignModal) assignModal.style.display = 'none';
-    });
-
-    const importOpen = document.getElementById('course-import-open');
+document.addEventListener('DOMContentLoaded', () => {
+    const importOpenBtn = document.getElementById('course-import-open');
+    const importForm = document.getElementById('course-import-form');
     const importFile = document.getElementById('course-import-file');
-    importOpen?.addEventListener('click', () => importFile?.click());
-    importFile?.addEventListener('change', () => {
-        const form = document.getElementById('course-import-form');
-        if (form && importFile.files && importFile.files.length) form.submit();
-    });
+
+    if (importOpenBtn && importForm && importFile) {
+        importOpenBtn.addEventListener('click', () => {
+            importFile.value = '';
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', () => {
+            if (!importFile.files || importFile.files.length === 0) {
+                return;
+            }
+            importForm.submit();
+        });
+    }
 });
 </script>
 @endsection
