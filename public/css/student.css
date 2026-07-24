@@ -8,6 +8,11 @@
   --s-pink:#f472b6;
 }
 body.role-student{background:radial-gradient(circle at 10% 5%,#fff7ed 0,#fef6e9 45%,#ecfeff 100%)}
+html,body{overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+body.role-student{-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body.role-student a,body.role-student button,body.role-student input,body.role-student select,body.role-student textarea,body.role-student [role="button"]{touch-action:manipulation}
+body.role-student button,body.role-student .btn,body.role-student .sidebar a,body.role-student .student-card-link,body.role-student .student-nav-link{min-height:44px;min-width:44px}
+body.role-student input,body.role-student select,body.role-student textarea{font-size:16px}
 body.role-student .layout{min-height:100vh}
 body.role-student .sidebar{
   background:linear-gradient(180deg,#93c5fd,#60a5fa 50%,#38bdf8 100%);
@@ -75,6 +80,9 @@ body.role-student.lesson-fullscreen .layout{grid-template-columns:1fr}
 body.role-student.lesson-fullscreen .sidebar{display:none !important}
 body.role-student.lesson-fullscreen .main{margin-left:0 !important}
 body.role-student.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
+body.role-student .pwa-safe-area-top{padding-top:max(12px, env(safe-area-inset-top))}
+body.role-student .pwa-safe-area-bottom{padding-bottom:max(12px, env(safe-area-inset-bottom))}
+body.role-student.is-offline .toast{display:none}
 body.role-student .navbar{
   border:1px solid #dbeafe;
   background:linear-gradient(180deg,#ffffff,#f8fbff);

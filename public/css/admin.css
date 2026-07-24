@@ -1,8 +1,11 @@
 :root { --bg:#f3f4f6; --card:#fff; --text:#111827; --accent:#2563eb; --muted:#6b7280; }
 *{box-sizing:border-box}
-html,body{max-width:100%;overflow-x:hidden}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif}
+html,body{max-width:100%;overflow-x:hidden;overscroll-behavior:none;-webkit-overflow-scrolling:touch}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 img,video,canvas,svg,iframe{max-width:100%;height:auto}
+a,button,input,select,textarea,[role="button"]{touch-action:manipulation}
+button,.btn,.sidebar a,.navbar-actions a,.navbar-actions button,.notif-bell,.user-menu summary{min-height:44px;min-width:44px}
+input,select,textarea{font-size:16px}
 .main,.card,.navbar,.top,.actions,.grid,table,.teacher-panel,.teacher-main-body,.v2-hero,.v2-rates,.student-hero-layout,.student-hero-kpis,.student-assignment-alert,.student-action-grid,.student-trend-grid,.lesson-builder-grid,.lesson-builder-top,.parent-wa-links,.parent-wa-actions{min-width:0}
 .layout{min-height:100vh}
 .sidebar{
@@ -237,6 +240,21 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   }
 }
 .pwa-standalone .navbar{padding-top:max(12px, env(safe-area-inset-top))}
+.pwa-standalone .main{padding-bottom:max(16px, env(safe-area-inset-bottom))}
+.pwa-standalone .sidebar{padding-bottom:max(16px, env(safe-area-inset-bottom))}
+.is-offline .toast{display:none}
+.is-offline .navbar::after{
+  content:"Cevrimdisi";
+  margin-left:12px;
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:1000}
 .modal.open{display:flex}
 .modal-card{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%}

@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#2563eb">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="logo192.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/logo192.png">
   <title>Baglanti Yok</title>
   <style>
     body {
@@ -15,18 +15,22 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: linear-gradient(160deg, #f8fafc, #e2e8f0);
+      background: radial-gradient(circle at top, #eff6ff, #dbeafe 40%, #e2e8f0 100%);
       color: #0f172a;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 24px;
+      padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     .card {
       width: min(520px, 100%);
       background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
-      padding: 24px;
+      border-radius: 22px;
+      box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+      padding: 28px 22px;
+      border: 1px solid rgba(37,99,235,.12);
     }
     h1 {
       margin-top: 0;
@@ -37,13 +41,24 @@
       line-height: 1.5;
       color: #334155;
     }
+    .logo {
+      width: 96px;
+      height: 96px;
+      object-fit: contain;
+      border-radius: 24px;
+      background: #fff;
+      padding: 10px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      margin-bottom: 18px;
+    }
   </style>
 </head>
 <body>
   <main class="card">
+    <img class="logo" src="/logo192.png" alt="Logo">
     <h1>Su anda baglanti yok</h1>
     <p>Internet baglantisi geldiginde sayfa otomatik olarak guncellenecektir.</p>
   </main>
-  <script src="pwa-init.js" defer></script>
+  <script src="/pwa-init.js" defer></script>
 </body>
 </html>
