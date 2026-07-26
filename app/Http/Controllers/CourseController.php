@@ -139,7 +139,32 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => route('courses.cover', ['path' => $path]),
+            'url' => asset(ltrim($path, '/')),
+            'path' => $path,
+        ]);
+    }
+
+    public function uploadMedia(Request $request)
+    {
+        $validated = $request->validate([
+            'media' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'data_url' => ['nullable', 'string'],
+        ]);
+
+        if (empty($validated['media']) && empty($validated['data_url'])) {
+            return response()->json([
+                'message' => 'Yuklenecek gorsel bulunamadi.',
+            ], 422);
+        }
+
+        if (! empty($validated['data_url'])) {
+            $path = $this->storeCoverFromDataUrl($validated['data_url']);
+        } else {
+            $path = $this->storeCoverAsWebp($validated['media']);
+        }
+
+        return response()->json([
+            'url' => asset(ltrim($path, '/')),
             'path' => $path,
         ]);
     }
@@ -893,14 +918,6 @@ class CourseController extends Controller
             $trimmed = trim($value);
             if ($trimmed === '') {
                 return $value;
-            }
-
-            if (
-                str_starts_with($trimmed, 'data:image/')
-                || str_starts_with($trimmed, 'data:video/')
-                || str_starts_with($trimmed, 'blob:')
-            ) {
-                return '';
             }
 
             return $value;

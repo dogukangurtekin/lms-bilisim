@@ -18,7 +18,25 @@
     document.documentElement.classList.toggle("pwa-standalone", supportsPwaContext());
   }
 
+  function getPwaSettings() {
+    const fallback = {
+      enabled: false,
+      title: "Egitim Portali",
+      subtitle: "Yukleniyor...",
+      logoUrl: "/public/logo192.png",
+    };
+    const source = window.__APP_PWA_SETTINGS || {};
+    return {
+      enabled: !!source.enabled,
+      title: String(source.title || fallback.title),
+      subtitle: String(source.subtitle || fallback.subtitle),
+      logoUrl: String(source.logoUrl || fallback.logoUrl),
+    };
+  }
+
   function createSplashScreen() {
+    const settings = getPwaSettings();
+    if (!settings.enabled) return;
     if (document.getElementById(SPLASH_ID)) return;
     const splash = document.createElement("div");
     splash.id = SPLASH_ID;
@@ -32,9 +50,9 @@
     splash.style.transition = "opacity .35s ease, transform .35s ease";
     splash.innerHTML = `
       <div style="width:min(360px,calc(100vw - 32px));padding:28px 22px;border-radius:28px;background:rgba(255,255,255,.82);backdrop-filter:blur(20px);box-shadow:0 18px 48px rgba(37,99,235,.18);border:1px solid rgba(37,99,235,.12);text-align:center">
-        <img src="/logo192.png" alt="Logo" style="width:92px;height:92px;object-fit:contain;margin:0 auto 14px;display:block;border-radius:22px;background:#fff;padding:10px;box-shadow:0 8px 22px rgba(15,23,42,.08)">
-        <div style="font-weight:900;font-size:20px;line-height:1.2">Egitim Portali</div>
-        <div style="margin-top:6px;font-size:14px;color:#475569">Yukleniyor...</div>
+        <img src="${settings.logoUrl}" alt="Logo" style="width:92px;height:92px;object-fit:contain;margin:0 auto 14px;display:block;border-radius:22px;background:#fff;padding:10px;box-shadow:0 8px 22px rgba(15,23,42,.08)">
+        <div style="font-weight:900;font-size:20px;line-height:1.2">${settings.title}</div>
+        <div style="margin-top:6px;font-size:14px;color:#475569">${settings.subtitle}</div>
         <div style="margin-top:18px;height:8px;background:#dbeafe;border-radius:999px;overflow:hidden">
           <div style="width:48%;height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#0ea5e9);animation:pwaPulse 1.3s ease-in-out infinite"></div>
         </div>

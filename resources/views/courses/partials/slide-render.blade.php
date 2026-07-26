@@ -30,10 +30,28 @@
         }
         return false;
     };
+    $normalizeMediaUrl = static function (string $url): string {
+        $raw = trim($url);
+        if ($raw === '') {
+            return '';
+        }
+        if (preg_match('#^(?:data:|blob:|https?://)#i', $raw)) {
+            return $raw;
+        }
+        $raw = str_replace('\\', '/', $raw);
+        $raw = ltrim($raw, '/');
+        $raw = preg_replace('#^public/#i', '', $raw) ?? $raw;
+        $raw = preg_replace('#^storage/app/public/#i', '', $raw) ?? $raw;
+        $raw = preg_replace('#^storage/#i', '', $raw) ?? $raw;
+        if (str_starts_with($raw, 'course-covers/')) {
+            $raw = 'kapak-gorseli/' . substr($raw, strlen('course-covers/'));
+        }
+        return asset(ltrim($raw, '/'));
+    };
 
     $slide['content'] = $pickValue($slide, ['content', 'text', 'body', 'description', 'lesson_content', 'lesson_text', 'markdown', 'html_content']);
     $slide['instructions'] = $pickValue($slide, ['instructions', 'instruction', 'note', 'guide', 'direction']);
-    $slide['image_url'] = $pickValue($slide, ['image_url', 'imageUrl', 'image', 'cover_image', 'media_url', 'mediaUrl']);
+    $slide['image_url'] = $normalizeMediaUrl($pickValue($slide, ['image_url', 'imageUrl', 'image', 'cover_image', 'media_url', 'mediaUrl']));
     $slide['video_url'] = $pickValue($slide, ['video_url', 'videoUrl', 'video', 'media_video', 'mediaVideo']);
     $slide['file_url'] = $pickValue($slide, ['file_url', 'fileUrl', 'file', 'attachment_url', 'attachmentUrl']);
     $suspiciousText = implode(' ', [

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UserProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,10 +15,18 @@ class ProfileController extends Controller
         $user = $request->user();
         $email = (string) ($user->email ?? '');
         $username = $email !== '' ? (string) strtok($email, '@') : '';
+        $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
+        $meta = (array) ($profile->meta ?? []);
 
         return view('profile.edit', [
             'user' => $user,
             'username' => $username,
+            'pwaSettings' => [
+                'enabled' => (bool) ($meta['pwa_enabled'] ?? false),
+                'title' => (string) ($meta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
+                'subtitle' => (string) ($meta['pwa_subtitle'] ?? 'Yukleniyor...'),
+                'logo_url' => (string) ($meta['pwa_logo_url'] ?? url('/public/logo192.png')),
+            ],
         ]);
     }
 
@@ -29,8 +38,12 @@ class ProfileController extends Controller
             'last_name' => ['required', 'string', 'max:60'],
             'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/i'],
             'password' => ['nullable', 'string', 'min:6', 'max:72', 'confirmed'],
+            'pwa_enabled' => ['nullable', 'boolean'],
+            'pwa_title' => ['nullable', 'string', 'max:60'],
+            'pwa_subtitle' => ['nullable', 'string', 'max:80'],
+            'pwa_logo_url' => ['nullable', 'string', 'max:255'],
         ], [
-            'username.regex' => 'Kullanıcı adı sadece harf, rakam, nokta, alt çizgi ve kısa çizgi içerebilir.',
+            'username.regex' => 'Kullanici adi sadece harf, rakam, nokta, alt cizgi ve kisa cizgi icerebilir.',
         ]);
 
         $first = trim($validated['first_name']);
@@ -46,7 +59,7 @@ class ProfileController extends Controller
             ->whereRaw('LOWER(email) = ?', [strtolower($newEmail)])
             ->exists();
         if ($exists) {
-            return back()->withErrors(['username' => 'Bu kullanıcı adı zaten kullanımda.'])->withInput();
+            return back()->withErrors(['username' => 'Bu kullanici adi zaten kullanilmada.'])->withInput();
         }
 
         $user->name = $fullName;
@@ -56,7 +69,37 @@ class ProfileController extends Controller
         }
         $user->save();
 
-        return back()->with('success', 'Profil bilgileriniz güncellendi.');
+        $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
+        $meta = (array) ($profile->meta ?? []);
+        $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
+        $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
+        $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo192.png');
+        $profile->meta = $meta;
+        $profile->save();
+
+        return back()->with('success', 'Profil bilgileriniz guncellendi.');
+    }
+
+    public function updateBranding(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $validated = $request->validate([
+            'pwa_enabled' => ['nullable', 'boolean'],
+            'pwa_title' => ['nullable', 'string', 'max:60'],
+            'pwa_subtitle' => ['nullable', 'string', 'max:80'],
+            'pwa_logo_url' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
+        $meta = (array) ($profile->meta ?? []);
+        $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
+        $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
+        $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo192.png');
+        $profile->meta = $meta;
+        $profile->save();
+
+        return back()->with('success', 'Logo ve acilis ekranı ayarlari guncellendi.');
     }
 }
-

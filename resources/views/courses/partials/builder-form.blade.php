@@ -109,15 +109,460 @@
 @endphp
 
 <style>
-.sq-answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sq-answer-card{display:grid;grid-template-columns:34px 1fr 28px;gap:8px;align-items:center;background:#fff;border:1px solid #dbe3ef;border-radius:10px;padding:8px}
-.sq-shape{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:#fff;font-weight:800}
-.sq-red{background:#ef4444}.sq-blue{background:#3b82f6}.sq-yellow{background:#eab308}.sq-green{background:#22c55e}
-.sq-answer-card input[type="text"]{margin:0}
-.text-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px}
-.text-toolbar button{height:34px;padding:0 10px;border:1px solid #dbe5f2;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer}
-.text-toolbar button:hover{border-color:#2563eb;box-shadow:0 8px 18px rgba(37,99,235,.08)}
-@media (max-width:980px){.sq-answers{grid-template-columns:1fr}}
+    :root{
+        --builder-bg:#f4f7fb;
+        --builder-surface:#ffffff;
+        --builder-surface-soft:#f8fbff;
+        --builder-border:#d8e3f2;
+        --builder-border-strong:#bfd4f1;
+        --builder-text:#0f172a;
+        --builder-muted:#64748b;
+        --builder-primary:#2563eb;
+        --builder-primary-strong:#1d4ed8;
+        --builder-primary-soft:#dbeafe;
+        --builder-danger:#ef4444;
+        --builder-danger-soft:#fee2e2;
+        --builder-success:#16a34a;
+        --builder-shadow:0 14px 34px rgba(15,23,42,.08);
+        --builder-shadow-strong:0 18px 42px rgba(37,99,235,.12);
+        --builder-radius:22px;
+    }
+    .lesson-builder{
+        overflow:visible;
+        position:relative;
+        color:var(--builder-text);
+        padding:6px 0 24px;
+    }
+    .lesson-builder *{
+        box-sizing:border-box;
+    }
+    .lesson-builder :where(input,select,textarea,button){
+        font:inherit;
+    }
+    .lesson-builder :where(input:not([type=checkbox]):not([type=radio]),select,textarea){
+        width:100%;
+        background:#fff;
+        border:1px solid var(--builder-border);
+        border-radius:16px;
+        color:var(--builder-text);
+        padding:13px 16px;
+        box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
+        transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+    }
+    .lesson-builder :where(input:not([type=checkbox]):not([type=radio]),select,textarea)::placeholder{
+        color:#94a3b8;
+    }
+    .lesson-builder :where(input:not([type=checkbox]):not([type=radio]),select,textarea):focus{
+        outline:none;
+        border-color:var(--builder-primary);
+        box-shadow:0 0 0 4px rgba(37,99,235,.12);
+        background:#fff;
+    }
+    .lesson-builder textarea{
+        resize:vertical;
+        min-height:120px;
+    }
+    .lesson-builder label{
+        display:block;
+        font-size:13px;
+        font-weight:700;
+        letter-spacing:.01em;
+        color:#1e293b;
+        margin:0 0 8px;
+    }
+    .lesson-builder small{
+        color:var(--builder-muted);
+        line-height:1.55;
+    }
+    .lesson-builder .badge{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-height:32px;
+        padding:.25rem .8rem;
+        border-radius:999px;
+        background:var(--builder-primary-soft);
+        color:var(--builder-primary-strong);
+        font-weight:800;
+        box-shadow:none;
+    }
+    .lesson-builder .btn{
+        min-height:44px;
+        padding:0 16px;
+        border-radius:14px;
+        border:1px solid transparent;
+        background:linear-gradient(180deg,#ffffff,#f3f7ff);
+        color:#1e3a8a;
+        font-weight:700;
+        box-shadow:0 8px 18px rgba(37,99,235,.08);
+        transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
+    }
+    .lesson-builder .btn:hover{
+        transform:translateY(-1px);
+        box-shadow:0 14px 28px rgba(37,99,235,.12);
+        border-color:#cfe0ff;
+    }
+    .lesson-builder .btn:active{
+        transform:translateY(0);
+    }
+    .lesson-builder .btn.btn-danger,
+    .lesson-builder .btn-danger{
+        background:linear-gradient(180deg,#fff5f5,#fee2e2);
+        color:#b91c1c;
+        border-color:#fecaca;
+    }
+    .lesson-builder .btn.btn-danger:hover,
+    .lesson-builder .btn-danger:hover{
+        border-color:#fca5a5;
+        box-shadow:0 14px 28px rgba(239,68,68,.12);
+    }
+    .lesson-builder-top{
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:16px;
+        align-items:center;
+        padding:18px;
+        margin-bottom:18px;
+        border:1px solid var(--builder-border);
+        border-radius:28px;
+        background:linear-gradient(180deg,rgba(255,255,255,.98),#f8fbff);
+        box-shadow:var(--builder-shadow);
+    }
+    .lesson-builder-top .actions{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+        align-items:center;
+        gap:10px;
+    }
+    .lesson-builder-top .actions .btn{
+        white-space:nowrap;
+    }
+    .lesson-builder-top > div:first-child{
+        grid-template-columns:minmax(0,1fr) minmax(220px,300px) !important;
+        gap:12px !important;
+    }
+    .lesson-builder-grid{
+        display:grid;
+        grid-template-columns:minmax(250px,.9fr) minmax(0,1.8fr) minmax(240px,.95fr);
+        gap:18px;
+        align-items:start;
+    }
+    .lesson-builder-grid > :where(.builder-left,.builder-center,.builder-right){
+        position:relative;
+        min-width:0;
+        padding:18px;
+        border:1px solid var(--builder-border);
+        border-radius:28px;
+        background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(250,252,255,.98));
+        box-shadow:var(--builder-shadow);
+    }
+    .lesson-builder-grid > :where(.builder-left,.builder-center,.builder-right) h4{
+        margin:0 0 14px;
+        font-size:15px;
+        font-weight:800;
+        letter-spacing:-.01em;
+        color:#0f172a;
+    }
+    .builder-left{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+    }
+    .builder-left #slide_list{
+        display:grid;
+        gap:10px;
+        min-height:220px;
+    }
+    .builder-left :where(button,#slide_list button){
+        width:100%;
+    }
+    .builder-center{
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+    }
+    .builder-tabs{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        padding:10px;
+        border:1px solid var(--builder-border);
+        border-radius:20px;
+        background:linear-gradient(180deg,#f8fbff,#ffffff);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+    }
+    .builder-tabs .tab-btn{
+        min-height:46px;
+        padding:0 18px;
+        border-radius:14px;
+        border:1px solid #d7e4f6;
+        background:#f8fbff;
+        color:#334155;
+        font-weight:800;
+        transition:all .18s ease;
+    }
+    .builder-tabs .tab-btn:hover{
+        border-color:#b9cff1;
+        box-shadow:0 10px 20px rgba(37,99,235,.08);
+        transform:translateY(-1px);
+    }
+    .builder-tabs .tab-btn.active{
+        background:linear-gradient(180deg,#2f6af1,#2554d8);
+        color:#fff;
+        border-color:transparent;
+        box-shadow:0 14px 28px rgba(37,99,235,.22);
+    }
+    .builder-panel{
+        padding:18px;
+        border:1px solid var(--builder-border);
+        border-radius:24px;
+        background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,251,255,.92));
+        box-shadow:var(--builder-shadow);
+    }
+    .builder-panel > label + :where(input,select,textarea){
+        margin-bottom:16px;
+    }
+    .builder-panel [style*="border-top"]{
+        margin-top:18px !important;
+        padding-top:18px !important;
+        border-top-color:#dbe5f2 !important;
+    }
+    .builder-panel [style*="layout_help_panel"],
+    #layout_help_panel,
+    #layout_editor_panel{
+        border-radius:18px !important;
+        border-color:var(--builder-border) !important;
+        background:linear-gradient(180deg,#f8fbff,#ffffff) !important;
+    }
+    #layout_editor_fields > *{
+        margin-bottom:12px;
+    }
+    .builder-right{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+    }
+    .builder-right #cover_image_preview_box{
+        border-radius:18px !important;
+        border:1px solid var(--builder-border) !important;
+        box-shadow:0 12px 26px rgba(15,23,42,.08);
+    }
+    .builder-right #cover_image_preview{
+        object-fit:cover;
+    }
+    #course-upload-progress{
+        border-color:#d8e3f2 !important;
+        background:linear-gradient(180deg,#ffffff,#f8fbff) !important;
+    }
+    #preview_slide_stage,
+    .modal-card{
+        border-radius:28px;
+    }
+    .modal-card{
+        border:1px solid var(--builder-border);
+        background:linear-gradient(180deg,#ffffff,#f8fbff);
+        box-shadow:0 24px 60px rgba(15,23,42,.18);
+    }
+    .modal-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding-bottom:12px;
+        margin-bottom:12px;
+        border-bottom:1px solid #e2e8f0;
+    }
+    .actions{
+        gap:10px;
+    }
+    .actions .btn{
+        min-height:44px;
+    }
+    .sq-answers{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+    }
+    .sq-answer-card{
+        display:grid;
+        grid-template-columns:40px minmax(0,1fr) 28px;
+        gap:10px;
+        align-items:center;
+        background:linear-gradient(180deg,#ffffff,#f8fbff);
+        border:1px solid var(--builder-border);
+        border-radius:16px;
+        padding:10px 12px;
+        box-shadow:0 10px 24px rgba(15,23,42,.04);
+    }
+    .sq-shape{
+        width:32px;
+        height:32px;
+        border-radius:10px;
+        display:grid;
+        place-items:center;
+        color:#fff;
+        font-weight:800;
+        box-shadow:0 8px 18px rgba(15,23,42,.08);
+    }
+    .sq-red{background:#ef4444}
+    .sq-blue{background:#3b82f6}
+    .sq-yellow{background:#eab308}
+    .sq-green{background:#22c55e}
+    .sq-answer-card input[type="text"]{
+        margin:0;
+        min-width:0;
+    }
+    .text-toolbar{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin:10px 0 12px;
+    }
+    .text-toolbar button,
+    .split-text-toolbar button,
+    [data-rich-toolbar] button{
+        height:42px;
+        min-width:42px;
+        padding:0 14px;
+        border:1px solid #d7e4f6;
+        border-radius:14px;
+        background:linear-gradient(180deg,#ffffff,#f7fbff);
+        color:#0f172a;
+        font-weight:800;
+        cursor:pointer;
+        transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .text-toolbar button:hover,
+    .split-text-toolbar button:hover,
+    [data-rich-toolbar] button:hover{
+        border-color:#9ec3ff;
+        box-shadow:0 12px 24px rgba(37,99,235,.1);
+        transform:translateY(-1px);
+    }
+    .lesson-builder [data-rich-toolbar]{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin:10px 0 12px;
+        padding:10px;
+        border:1px solid var(--builder-border);
+        border-radius:18px;
+        background:linear-gradient(180deg,#ffffff,#f8fbff);
+    }
+    .lesson-builder [data-rich-toolbar] select,
+    .lesson-builder [data-rich-toolbar] input[type="color"]{
+        height:42px;
+        min-width:110px;
+        border-radius:12px;
+    }
+    .lesson-builder [data-rich-toolbar] input[type="color"]{
+        padding:3px;
+    }
+    .lesson-builder [contenteditable="true"]{
+        min-height:180px;
+        padding:16px;
+        border:1px solid var(--builder-border);
+        border-radius:18px;
+        background:#fff;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    .lesson-builder [contenteditable="true"]:focus{
+        outline:none;
+        border-color:var(--builder-primary);
+        box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+    .lesson-builder #question_editor{
+        padding:10px 0 0;
+    }
+    .lesson-builder .card,
+    .lesson-builder .badge{
+        border-radius:18px;
+    }
+    .lesson-builder .btn,
+    .lesson-builder .tab-btn{
+        letter-spacing:-.01em;
+    }
+    .lesson-builder .builder-left #slide_list > *{
+        border-radius:16px;
+    }
+    .lesson-builder #slide_list .active,
+    .lesson-builder #slide_list [aria-current="true"]{
+        box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+    .lesson-builder .builder-panel [style*="display:grid"][style*="grid-template-columns:1fr 1fr 1fr"]{
+        gap:12px !important;
+    }
+    .lesson-builder #current_slide_xp_badge{
+        margin-left:auto;
+    }
+    .lesson-builder .builder-panel textarea,
+    .lesson-builder .builder-panel input,
+    .lesson-builder .builder-panel select{
+        background:#fff;
+    }
+    @media (max-width:1280px){
+        .lesson-builder-grid{
+            grid-template-columns:minmax(0,1fr);
+        }
+        .lesson-builder-top{
+            grid-template-columns:minmax(0,1fr);
+        }
+        .lesson-builder-top > div:first-child{
+            grid-template-columns:minmax(0,1fr) minmax(220px,260px) !important;
+        }
+        .lesson-builder-top .actions{
+            justify-content:flex-start;
+        }
+    }
+    @media (max-width:980px){
+        .sq-answers{
+            grid-template-columns:1fr;
+        }
+        .lesson-builder-top > div:first-child{
+            grid-template-columns:1fr !important;
+        }
+        .builder-tabs{
+            gap:8px;
+        }
+        .builder-tabs .tab-btn{
+            flex:1 1 calc(50% - 8px);
+        }
+    }
+    @media (max-width:640px){
+        .lesson-builder{
+            padding-top:0;
+        }
+        .lesson-builder-top,
+        .lesson-builder-grid > :where(.builder-left,.builder-center,.builder-right),
+        .builder-panel,
+        .modal-card{
+            border-radius:20px;
+        }
+        .lesson-builder-top{
+            padding:14px;
+        }
+        .lesson-builder .btn,
+        .lesson-builder .tab-btn,
+        .text-toolbar button,
+        .split-text-toolbar button,
+        [data-rich-toolbar] button{
+            min-height:44px;
+        }
+        .lesson-builder-top .actions{
+            width:100%;
+        }
+        .lesson-builder-top .actions .btn{
+            flex:1 1 100%;
+        }
+        .builder-tabs .tab-btn{
+            flex:1 1 100%;
+        }
+        .sq-answer-card{
+            grid-template-columns:34px minmax(0,1fr) 24px;
+            padding:10px;
+        }
+    }
 </style>
 
 <div class="lesson-builder">
@@ -170,18 +615,8 @@
                 <input type="text" id="slide_title">
                 <label>Slide Layout</label>
                 <select id="slide_layout">
-                    <option value="auto">Auto - İçeriğe göre seç</option>
-                    <option value="hero">Hero - Kısa vurucu giriş</option>
-                    <option value="section">Section - Bölüm ayrıcı</option>
-                    <option value="text">Text Focus - Metin ağırlıklı</option>
                     <option value="split">Split Content - İki sütun</option>
                     <option value="image">Image Focus - Görsel odaklı</option>
-                    <option value="features">Feature Grid - Kartlı özet</option>
-                    <option value="steps">Steps - Adım adım</option>
-                    <option value="timeline">Timeline - Zaman çizgisi</option>
-                    <option value="code">Code - Kod örneği</option>
-                    <option value="interactive">Interactive - Soru sayfası</option>
-                    <option value="summary">Summary - Ders özeti</option>
                 </select>
                 <div id="layout_help_panel" style="margin:12px 0 14px;padding:14px;border:1px solid #dbe5f2;border-radius:14px;background:linear-gradient(180deg,#f8fbff,#ffffff)">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
@@ -205,18 +640,6 @@
                 </div>
                 <label>Sayfa XP</label>
                 <input type="number" id="slide_xp" min="0" max="500" value="0">
-                <label>Konu Anlatımı / Açıklama</label>
-                <div class="text-toolbar" data-text-toolbar>
-                    <button type="button" data-text-action="bold"><b>B</b></button>
-                    <button type="button" data-text-action="italic"><i>I</i></button>
-                    <button type="button" data-text-action="heading">H1</button>
-                    <button type="button" data-text-action="bullet">• Liste</button>
-                    <button type="button" data-text-action="numbered">1. Liste</button>
-                    <button type="button" data-text-action="quote">"</button>
-                    <button type="button" data-text-action="code">{ }</button>
-                    <button type="button" data-text-action="divider">—</button>
-                </div>
-                <textarea id="slide_content" rows="6"></textarea>
                 <div style="display:none" aria-hidden="true">
                     <label>Öğrenci Yönlendirme Notu</label>
                     <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
@@ -465,13 +888,13 @@ document.addEventListener('DOMContentLoaded', function () {
         time_limit: document.getElementById('slide_time_limit'),
         double_points: document.getElementById('slide_double_points'),
     };
+    const contentEditor = document.getElementById('slide_content_editor');
     const layoutHelpTitle = document.getElementById('layout_help_title');
     const layoutHelpBadge = document.getElementById('layout_help_badge');
     const layoutHelpDesc = document.getElementById('layout_help_desc');
     const layoutWireframe = document.getElementById('layout_wireframe');
     const layoutEditorFields = document.getElementById('layout_editor_fields');
     const layoutEditorHint = document.getElementById('layout_editor_hint');
-    const textToolbar = document.querySelector('[data-text-toolbar]');
     const layoutFileMap = new Map();
     const curriculum = {
         title: document.getElementById('curriculum_title'),
@@ -672,6 +1095,10 @@ document.addEventListener('DOMContentLoaded', function () {
         dragStartX: 0,
         dragStartY: 0,
         startSelection: { x: 0, y: 0, w: 0, h: 0 },
+        title: 'Kapak Görseli Kırp',
+        aspectRatio: 16 / 9,
+        onApply: null,
+        target: { hiddenId: '', previewId: '', sourceInputId: '' },
     };
 
     function ensureSlide() {
@@ -712,31 +1139,118 @@ document.addEventListener('DOMContentLoaded', function () {
         textarea.focus();
         textarea.setSelectionRange(caret, caret);
     }
+    function bindRichTextToolbar(toolbarSelector, editorId, hiddenId, options = {}) {
+        const toolbar = typeof toolbarSelector === 'string' ? document.querySelector(toolbarSelector) : toolbarSelector;
+        const editor = typeof editorId === 'string' ? document.getElementById(editorId) : editorId;
+        const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+        if (!toolbar || !editor) return;
+        const sync = () => {
+            if (hidden) hidden.value = editor.innerHTML || '';
+            saveCurrent();
+        };
+        const applyStyle = (tag, value) => {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            document.execCommand(tag, false, value || null);
+            sync();
+        };
+        toolbar.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-text-action]');
+            if (!btn) return;
+            e.preventDefault();
+            const action = String(btn.getAttribute('data-text-action') || '');
+            editor.focus();
+            if (action === 'bold') return applyStyle('bold');
+            if (action === 'italic') return applyStyle('italic');
+            if (action === 'underline') return applyStyle('underline');
+            if (action === 'heading') return applyStyle('formatBlock', 'h1');
+            if (action === 'subheading') return applyStyle('formatBlock', 'h2');
+            if (action === 'bullet') return applyStyle('insertUnorderedList');
+            if (action === 'numbered') return applyStyle('insertOrderedList');
+            if (action === 'quote') return applyStyle('formatBlock', 'blockquote');
+            if (action === 'divider') return applyStyle('insertHorizontalRule');
+        });
+        const fontSelect = options.fontSelectId ? document.getElementById(options.fontSelectId) : null;
+        const sizeSelect = options.sizeSelectId ? document.getElementById(options.sizeSelectId) : null;
+        const colorInput = options.colorInputId ? document.getElementById(options.colorInputId) : null;
+        fontSelect?.addEventListener('change', () => {
+            editor.focus();
+            document.execCommand('fontName', false, fontSelect.value);
+            sync();
+        });
+        sizeSelect?.addEventListener('change', () => {
+            editor.focus();
+            const sizeMap = { '12px': '2', '14px': '3', '16px': '4', '18px': '5', '20px': '6', '24px': '7', '28px': '7' };
+            document.execCommand('fontSize', false, sizeMap[sizeSelect.value] || '3');
+            sync();
+        });
+        colorInput?.addEventListener('input', () => {
+            editor.focus();
+            document.execCommand('foreColor', false, colorInput.value);
+            sync();
+        });
+        editor.addEventListener('input', sync);
+        editor.addEventListener('blur', sync);
+    }
     function sanitizeForSave(value) {
         if (Array.isArray(value)) {
             return value.map((item) => sanitizeForSave(item));
         }
         if (!value || typeof value !== 'object') {
-            if (typeof value === 'string') {
-                const trimmed = value.trim();
-                if (trimmed.startsWith('data:image/') || trimmed.startsWith('data:video/') || trimmed.startsWith('blob:')) {
-                    return '';
-                }
-            }
             return value;
         }
         const out = {};
         Object.entries(value).forEach(([key, item]) => {
-            if (typeof item === 'string') {
-                const trimmed = item.trim();
-                if (trimmed.startsWith('data:image/') || trimmed.startsWith('data:video/') || trimmed.startsWith('blob:')) {
-                    out[key] = '';
-                    return;
-                }
-            }
             out[key] = sanitizeForSave(item);
         });
         return out;
+    }
+    function dataUrlToFile(dataUrl, filename = 'media.png') {
+        const raw = String(dataUrl || '').trim();
+        const match = raw.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.*)$/i);
+        if (!match) return null;
+        const mime = String(match[1] || 'image/png').toLowerCase();
+        const base64 = String(match[3] || '');
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        try {
+            return new File([bytes], filename, { type: mime });
+        } catch (_) {
+            return new Blob([bytes], { type: mime });
+        }
+    }
+    async function uploadImageDataUrl(dataUrl, filename = 'media.png') {
+        const raw = String(dataUrl || '').trim();
+        if (!/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(raw)) {
+            return raw;
+        }
+        const mediaFile = dataUrlToFile(raw, filename);
+        if (!mediaFile) {
+            return raw;
+        }
+        const formData = new FormData();
+        formData.append('media', mediaFile, filename || 'media.png');
+        const response = await fetch(@json(route('courses.upload-media')), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json',
+            },
+            body: formData,
+        });
+        if (!response.ok) {
+            let detail = '';
+            try {
+                const json = await response.json();
+                detail = json?.message || Object.values(json?.errors || {}).flat().join(' ') || '';
+            } catch (_) {}
+            throw new Error(detail || 'Görsel sunucuya yüklenemedi.');
+        }
+        const json = await response.json();
+        return String(json.url || json.path || raw);
     }
     function readQuestionFromUI(type) {
         if (!questionEditor) return { options: [] };
@@ -886,21 +1400,27 @@ document.addEventListener('DOMContentLoaded', function () {
             state.target_scope = 'single_class';
         }
     }
+    function getFieldValue(field, fallback = '') {
+        return field && typeof field.value !== 'undefined' ? (field.value || fallback) : fallback;
+    }
+    function setFieldValue(field, value) {
+        if (field && typeof field.value !== 'undefined') field.value = value;
+    }
     function saveCurrent() {
         ensureSlide();
         const s = state.slides[active];
-        s.title = fields.title.value || 'Basliksiz Slide';
-        s.layout = fields.layout.value || 'auto';
-        s.xp = Math.max(0, Math.min(500, parseInt(fields.xp.value || '0', 10) || 0));
-        s.content = fields.content.value || '';
-        s.instructions = fields.instructions.value || '';
-        s.code = fields.code.value || '';
-        s.kind = fields.kind.value;
-        s.interaction_type = fields.interaction_type.value;
-        s.question_prompt = fields.question_prompt.value || '';
-        s.points = parseInt(fields.points.value || '5', 10);
-        s.time_limit = parseInt(fields.time_limit.value || '10', 10);
-        s.double_points = !!fields.double_points.checked;
+        s.title = getFieldValue(fields.title, 'Basliksiz Slide');
+        s.layout = getFieldValue(fields.layout, 'auto');
+        s.xp = Math.max(0, Math.min(500, parseInt(getFieldValue(fields.xp, '0') || '0', 10) || 0));
+        s.content = contentEditor ? contentEditor.innerHTML || '' : getFieldValue(fields.content, '');
+        s.instructions = getFieldValue(fields.instructions, '');
+        s.code = getFieldValue(fields.code, '');
+        s.kind = getFieldValue(fields.kind, 'topic');
+        s.interaction_type = getFieldValue(fields.interaction_type, 'none');
+        s.question_prompt = getFieldValue(fields.question_prompt, '');
+        s.points = parseInt(getFieldValue(fields.points, '5') || '5', 10);
+        s.time_limit = parseInt(getFieldValue(fields.time_limit, '10') || '10', 10);
+        s.double_points = !!(fields.double_points && fields.double_points.checked);
         s.layout_meta = readLayoutMeta();
         s.question = readQuestionFromUI(s.interaction_type);
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + s.xp;
@@ -932,21 +1452,23 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadCurrent() {
         ensureSlide();
         const s = state.slides[active];
-        fields.title.value = s.title || '';
-        fields.layout.value = s.layout || 'auto';
-        fields.xp.value = Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0;
-        fields.content.value = s.content || '';
-        fields.instructions.value = s.instructions || '';
-        fields.code.value = s.code || '';
-        fields.kind.value = s.kind || 'topic';
-        fields.interaction_type.value = s.interaction_type || 'none';
-        fields.question_prompt.value = s.question_prompt || '';
-        fields.points.value = s.points || 5;
-        fields.time_limit.value = s.time_limit || 10;
-        fields.double_points.checked = !!s.double_points;
-        renderLayoutHelp(fields.layout.value);
-        renderLayoutEditor(fields.layout.value, s.layout_meta || {});
-        renderQuestionEditor(fields.interaction_type.value, s.question || {});
+        setFieldValue(fields.title, s.title || '');
+        setFieldValue(fields.layout, s.layout || 'auto');
+        setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
+        if (contentEditor) contentEditor.innerHTML = s.content || '';
+        if (fields.content) fields.content.value = s.content || '';
+        setFieldValue(fields.instructions, s.instructions || '');
+        setFieldValue(fields.code, s.code || '');
+        setFieldValue(fields.kind, s.kind || 'topic');
+        setFieldValue(fields.interaction_type, s.interaction_type || 'none');
+        setFieldValue(fields.question_prompt, s.question_prompt || '');
+        setFieldValue(fields.points, s.points || 5);
+        setFieldValue(fields.time_limit, s.time_limit || 10);
+        if (fields.double_points) fields.double_points.checked = !!s.double_points;
+        renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
+        renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
+        renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
+        setActiveTab(inferTabForSlide(s));
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
         if (lessonDescription) lessonDescription.value = state.lesson_description || '';
@@ -1035,23 +1557,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function layoutDefinition(layout) {
         const defs = {
-            auto: {
-                title: 'Auto',
-                badge: 'İçeriğe göre',
-                desc: 'Metin, görsel ve kodu okuyup en uygun yerleşimi seçer.',
-                wireframe: '<div style="height:16px;border-radius:8px;background:#dbeafe"></div><div style="height:14px;border-radius:8px;background:#eff6ff;width:78%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="height:58px;border-radius:12px;background:#eff6ff"></div><div style="height:58px;border-radius:12px;background:#eff6ff"></div></div>',
-            },
             split: {
                 title: 'Split',
                 badge: '2 alan',
                 desc: 'Ekran ikiye bölünür. Sol ve sağ alanlara ayrı ayrı metin, görsel, video veya kod yerleştirilir.',
                 wireframe: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div style="height:120px;border-radius:12px;background:#dbeafe"></div><div style="height:120px;border-radius:12px;background:#bfdbfe"></div></div>',
-            },
-            hero: {
-                title: 'Hero',
-                badge: 'Giriş',
-                desc: 'Kısa bir vurucu başlık, alt başlık ve büyük bir görsel veya arka plan ile açılış yapar.',
-                wireframe: '<div style="height:24px;border-radius:10px;background:#dbeafe;width:72%"></div><div style="height:18px;border-radius:8px;background:#eff6ff;width:48%;margin-top:8px"></div><div style="height:96px;border-radius:16px;background:#bfdbfe;margin-top:10px"></div>',
             },
             image: {
                 title: 'Image Focus',
@@ -1059,44 +1569,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 desc: 'Görsel ana öğedir. Yanında kısa metin ve açıklama kutuları bulunur.',
                 wireframe: '<div style="height:120px;border-radius:14px;background:#bfdbfe"></div><div style="height:14px;border-radius:8px;background:#eff6ff;width:60%;margin-top:10px"></div>',
             },
-            features: {
-                title: 'Feature Grid',
-                badge: 'Kartlar',
-                desc: 'Birden çok özeti kartlara böler. Maddeleri yan yana gösterir.',
-                wireframe: '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div><div style="height:68px;border-radius:12px;background:#dbeafe"></div></div>',
-            },
-            timeline: {
-                title: 'Timeline',
-                badge: 'Süreç',
-                desc: 'Bir süreci zaman çizgisi şeklinde adım adım gösterir.',
-                wireframe: '<div style="display:grid;gap:8px"><div style="height:16px;border-radius:8px;background:#dbeafe;width:86%"></div><div style="height:16px;border-radius:8px;background:#bfdbfe;width:72%"></div><div style="height:16px;border-radius:8px;background:#dbeafe;width:62%"></div></div>',
-            },
-            steps: {
-                title: 'Steps',
-                badge: 'Adım adım',
-                desc: 'Madde madde ilerleyen görev ya da anlatım şeması sunar.',
-                wireframe: '<div style="display:grid;gap:8px"><div style="height:20px;border-radius:10px;background:#dbeafe;width:95%"></div><div style="height:20px;border-radius:10px;background:#bfdbfe;width:88%"></div><div style="height:20px;border-radius:10px;background:#dbeafe;width:80%"></div></div>',
-            },
-            code: {
-                title: 'Code',
-                badge: 'Kod',
-                desc: 'Kod editörü ve canlı çıktı alanı birlikte görünür.',
-                wireframe: '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="height:110px;border-radius:12px;background:#1e293b"></div><div style="height:110px;border-radius:12px;background:#dbeafe"></div></div>',
-            },
-            interactive: {
-                title: 'Interactive',
-                badge: 'Soru',
-                desc: 'Soru ve etkileşim alanlarını merkezde gösterir.',
-                wireframe: '<div style="height:24px;border-radius:10px;background:#dbeafe;width:70%"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><div style="height:54px;border-radius:12px;background:#bfdbfe"></div><div style="height:54px;border-radius:12px;background:#bfdbfe"></div></div>',
-            },
-            summary: {
-                title: 'Summary',
-                badge: 'Özet',
-                desc: 'Dersin son durumunu ve kazanımları özetler.',
-                wireframe: '<div style="height:18px;border-radius:8px;background:#dbeafe;width:82%"></div><div style="height:86px;border-radius:14px;background:#eff6ff;margin-top:10px"></div>',
-            },
         };
-        return defs[layout] || defs.auto;
+        return defs[layout] || defs.split;
     }
     function renderLayoutHelp(layout) {
         const def = layoutDefinition(layout);
@@ -1109,6 +1583,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const layout = String(fields.layout?.value || 'auto');
         const meta = { kind: layout };
         if (layout === 'split') {
+            const splitRatio = String(document.getElementById('layout_split_ratio')?.value || '50-50');
             meta.left = {
                 type: document.getElementById('layout_left_type')?.value || 'text',
                 text: document.getElementById('layout_left_text')?.value || '',
@@ -1121,10 +1596,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 image_url: document.getElementById('layout_right_image')?.value || '',
                 video_url: document.getElementById('layout_right_video')?.value || '',
             };
+            meta.split_ratio = splitRatio;
         } else if (layout === 'hero' || layout === 'image') {
             meta.media = {
                 type: document.getElementById('layout_media_type')?.value || 'image',
+                order: document.getElementById('layout_media_order')?.value || 'image-text',
                 text: document.getElementById('layout_media_text')?.value || '',
+                html: document.getElementById('layout_media_html')?.value || '',
                 image_url: document.getElementById('layout_media_image')?.value || '',
                 video_url: document.getElementById('layout_media_video')?.value || '',
             };
@@ -1136,7 +1614,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!layoutEditorHint) return;
         if (layout !== 'split') {
             if (layout === 'hero' || layout === 'image') {
-                layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, metin için tek alan kullanabilirsiniz.';
+                layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
                 const media = meta?.media || {};
                 layoutEditorFields.innerHTML = `
                     <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
@@ -1147,8 +1625,42 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="video" ${media.type === 'video' ? 'selected' : ''}>Video</option>
                             <option value="text" ${media.type === 'text' ? 'selected' : ''}>Metin</option>
                         </select>
-                        <label style="margin-top:8px">Metin</label>
-                        <textarea id="layout_media_text" rows="4">${escapeHtml(media.text || '')}</textarea>
+                        <label style="margin-top:8px">Yerleşim Sırası</label>
+                        <select id="layout_media_order">
+                            <option value="image-text" ${String(media.order || 'image-text') === 'image-text' ? 'selected' : ''}>Görsel üstte, metin altta</option>
+                            <option value="text-image" ${String(media.order || 'image-text') === 'text-image' ? 'selected' : ''}>Metin üstte, görsel altta</option>
+                        </select>
+                        <div class="rich-toolbar" data-rich-toolbar="media" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#fff">
+                            <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
+                            <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                            <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
+                            <select id="layout_media_font" style="min-width:170px">
+                                <option value="inherit">Yazı Tipi</option>
+                                <option value="'Inter', sans-serif">Inter</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="Consolas, monospace">Consolas</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            </select>
+                            <select id="layout_media_size" style="min-width:120px">
+                                <option value="">Boyut</option>
+                                <option value="12px">12</option>
+                                <option value="14px">14</option>
+                                <option value="16px">16</option>
+                                <option value="18px">18</option>
+                                <option value="20px">20</option>
+                                <option value="24px">24</option>
+                                <option value="28px">28</option>
+                            </select>
+                            <input id="layout_media_color" type="color" value="#0f172a" title="Yazı rengi">
+                            <button type="button" class="btn" data-text-action="heading">H1</button>
+                            <button type="button" class="btn" data-text-action="subheading">H2</button>
+                            <button type="button" class="btn" data-text-action="bullet">•</button>
+                            <button type="button" class="btn" data-text-action="numbered">1.</button>
+                            <button type="button" class="btn" data-text-action="quote">“”</button>
+                        </div>
+                        <div id="layout_media_text" contenteditable="true" spellcheck="false" style="min-height:160px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${media.html || escapeHtml(media.text || '')}</div>
+                        <input id="layout_media_html" type="hidden" value="${escapeHtml(media.html || '')}">
                         <label style="margin-top:8px">Görsel Dosyası</label>
                         <input id="layout_media_image_file" type="file" accept="image/*">
                         <input id="layout_media_image" type="hidden" value="${escapeHtml(media.image_url || '')}">
@@ -1162,19 +1674,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 `;
                 bindLayoutMediaFiles();
+                bindRichTextToolbar('[data-rich-toolbar="media"]', 'layout_media_text', 'layout_media_html', {
+                    fontSelectId: 'layout_media_font',
+                    sizeSelectId: 'layout_media_size',
+                    colorInputId: 'layout_media_color',
+                });
                 return;
             }
             layoutEditorHint.textContent = def.desc + ' Bu düzen için özel alan açılmaz.';
             layoutEditorFields.innerHTML = '';
             return;
         }
-        layoutEditorHint.textContent = 'Split seçildiğinde her iki taraf ayrı blok olarak düzenlenir. Alt metin, görsel veya video alanları ile iki tarafı doldurabilirsiniz.';
+        layoutEditorHint.textContent = 'Split seçildiğinde her iki taraf ayrı blok olarak düzenlenir. Metin alanları için araç çubuğu, görsel alanları için kırpma desteği bulunur.';
         const left = meta?.left || {};
         const right = meta?.right || {};
+        const splitRatio = String(meta?.split_ratio || '50-50');
         layoutEditorFields.innerHTML = `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
-                    <strong style="display:block;margin-bottom:8px">Sol Alan</strong>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+                <label style="margin:0">Alan Oranı</label>
+                <select id="layout_split_ratio" style="max-width:240px">
+                    <option value="30-70" ${splitRatio === '30-70' ? 'selected' : ''}>Sol %30 - Sağ %70</option>
+                    <option value="50-50" ${splitRatio === '50-50' ? 'selected' : ''}>Sol %50 - Sağ %50</option>
+                    <option value="70-30" ${splitRatio === '70-30' ? 'selected' : ''}>Sol %70 - Sağ %30</option>
+                </select>
+            </div>
+            <div class="split-layout-editor" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch">
+                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:420px">
                     <label>Alan Tipi</label>
                     <select id="layout_left_type">
                         <option value="text" ${left.type === 'text' ? 'selected' : ''}>Metin</option>
@@ -1182,20 +1707,35 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${left.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${left.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <label style="margin-top:8px">Metin</label>
-                    <textarea id="layout_left_text" rows="4">${escapeHtml(left.text || '')}</textarea>
-                    <label style="margin-top:8px">Görsel Dosyası</label>
-                    <input id="layout_left_image_file" type="file" accept="image/*">
-                    <input id="layout_left_image" type="hidden" value="${escapeHtml(left.image_url || '')}">
-                    <div id="layout_left_image_preview" style="margin-top:8px;${left.image_url ? '' : 'display:none;'}">
-                        <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
+                    <div class="split-text-toolbar" data-split-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                        <button type="button" class="btn" data-text-action="heading">H1</button>
+                        <button type="button" class="btn" data-text-action="subheading">H2</button>
+                        <button type="button" class="btn" data-text-action="bullet">•</button>
+                        <button type="button" class="btn" data-text-action="numbered">1.</button>
+                        <button type="button" class="btn" data-text-action="quote">“”</button>
+                        <button type="button" class="btn" data-text-action="divider">---</button>
                     </div>
-                    <label style="margin-top:8px">Video Dosyası / URL</label>
-                    <input id="layout_left_video_file" type="file" accept="video/*">
+                    <label style="margin-top:8px">Metin</label>
+                    <textarea id="layout_left_text" rows="8" style="min-height:160px;flex:1">${escapeHtml(left.text || '')}</textarea>
+                    <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="image">Görsel Seç</button>
+                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="video">Video Seç</button>
+                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="clear">Temizle</button>
+                    </div>
+                    <input id="layout_left_image_file" type="file" accept="image/*" style="display:none">
+                    <input id="layout_left_video_file" type="file" accept="video/*" style="display:none">
+                    <input id="layout_left_image" type="hidden" value="${escapeHtml(left.image_url || '')}">
                     <input id="layout_left_video" type="hidden" value="${escapeHtml(left.video_url || '')}">
+                    <div id="layout_left_image_preview" style="margin-top:12px;${left.image_url ? '' : 'display:none;'}">
+                        <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
+                    </div>
+                    <div id="layout_left_video_preview" style="margin-top:12px;${left.video_url ? '' : 'display:none;'}">
+                        <video src="${escapeHtml(left.video_url || '')}" controls style="width:100%;max-height:240px;border-radius:16px;border:1px solid #dbe5f2;background:#000"></video>
+                    </div>
                 </div>
-                <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
-                    <strong style="display:block;margin-bottom:8px">Sağ Alan</strong>
+                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:420px">
                     <label>Alan Tipi</label>
                     <select id="layout_right_type">
                         <option value="text" ${right.type === 'text' ? 'selected' : ''}>Metin</option>
@@ -1203,57 +1743,106 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${right.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${right.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <label style="margin-top:8px">Metin</label>
-                    <textarea id="layout_right_text" rows="4">${escapeHtml(right.text || '')}</textarea>
-                    <label style="margin-top:8px">Görsel Dosyası</label>
-                    <input id="layout_right_image_file" type="file" accept="image/*">
-                    <input id="layout_right_image" type="hidden" value="${escapeHtml(right.image_url || '')}">
-                    <div id="layout_right_image_preview" style="margin-top:8px;${right.image_url ? '' : 'display:none;'}">
-                        <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
+                    <div class="split-text-toolbar" data-split-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                        <button type="button" class="btn" data-text-action="heading">H1</button>
+                        <button type="button" class="btn" data-text-action="subheading">H2</button>
+                        <button type="button" class="btn" data-text-action="bullet">•</button>
+                        <button type="button" class="btn" data-text-action="numbered">1.</button>
+                        <button type="button" class="btn" data-text-action="quote">“”</button>
+                        <button type="button" class="btn" data-text-action="divider">---</button>
                     </div>
-                    <label style="margin-top:8px">Video Dosyası / URL</label>
-                    <input id="layout_right_video_file" type="file" accept="video/*">
+                    <label style="margin-top:8px">Metin</label>
+                    <textarea id="layout_right_text" rows="8" style="min-height:160px;flex:1">${escapeHtml(right.text || '')}</textarea>
+                    <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+                        <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="image">Görsel Seç</button>
+                        <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="video">Video Seç</button>
+                        <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="clear">Temizle</button>
+                    </div>
+                    <input id="layout_right_image_file" type="file" accept="image/*" style="display:none">
+                    <input id="layout_right_video_file" type="file" accept="video/*" style="display:none">
+                    <input id="layout_right_image" type="hidden" value="${escapeHtml(right.image_url || '')}">
                     <input id="layout_right_video" type="hidden" value="${escapeHtml(right.video_url || '')}">
+                    <div id="layout_right_image_preview" style="margin-top:12px;${right.image_url ? '' : 'display:none;'}">
+                        <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
+                    </div>
+                    <div id="layout_right_video_preview" style="margin-top:12px;${right.video_url ? '' : 'display:none;'}">
+                        <video src="${escapeHtml(right.video_url || '')}" controls style="width:100%;max-height:240px;border-radius:16px;border:1px solid #dbe5f2;background:#000"></video>
+                    </div>
                 </div>
             </div>
         `;
         bindLayoutSplitFiles();
+        bindMarkdownToolbar('[data-split-toolbar="left"]', 'layout_left_text');
+        bindMarkdownToolbar('[data-split-toolbar="right"]', 'layout_right_text');
+        updateSplitPanelVisibility('left');
+        updateSplitPanelVisibility('right');
+        document.getElementById('layout_split_ratio')?.addEventListener('change', saveCurrent);
     }
-    textToolbar?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-text-action]');
-        if (!btn) return;
-        const action = String(btn.getAttribute('data-text-action') || '');
-        const ta = fields.content;
-        if (!ta) return;
-        const selStart = ta.selectionStart ?? ta.value.length;
-        const selEnd = ta.selectionEnd ?? ta.value.length;
-        const selected = ta.value.slice(selStart, selEnd);
-        const prefix = selected ? '' : 'Metin';
-        if (action === 'bold') return insertTextAtCursor(ta, '**', '**', '**Kalın metin**');
-        if (action === 'italic') return insertTextAtCursor(ta, '*', '*', '*Vurgulu metin*');
-        if (action === 'heading') return insertTextAtCursor(ta, '# ', '', '# Başlık');
-        if (action === 'bullet') return insertTextAtCursor(ta, '- ', '', '- Madde');
-        if (action === 'numbered') return insertTextAtCursor(ta, '1. ', '', '1. Madde');
-        if (action === 'quote') return insertTextAtCursor(ta, '> ', '', '> Alıntı');
-        if (action === 'code') return insertTextAtCursor(ta, '```\n', '\n```', '```\nkod\n```');
-        if (action === 'divider') return insertTextAtCursor(ta, '\n---\n', '', '\n---\n');
+    bindRichTextToolbar('[data-rich-toolbar="content"]', 'slide_content_editor', 'slide_content', {
+        fontSelectId: 'slide_content_font',
+        sizeSelectId: 'slide_content_size',
+        colorInputId: 'slide_content_color',
     });
-    function setImageFromFile(fileInputId, hiddenId, previewId) {
-        const input = document.getElementById(fileInputId);
+    function syncHiddenPreview(hiddenId, previewId, value) {
         const hidden = document.getElementById(hiddenId);
         const preview = document.getElementById(previewId);
+        if (hidden) hidden.value = value || '';
+        if (preview) {
+            if (value) {
+                preview.style.display = 'block';
+                preview.innerHTML = '<img src="' + String(value).replace(/"/g, '&quot;') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
+            } else {
+                preview.style.display = 'none';
+                preview.innerHTML = '';
+            }
+        }
+    }
+    function bindMarkdownToolbar(toolbarSelector, textareaId) {
+        const toolbar = typeof toolbarSelector === 'string' ? document.querySelector(toolbarSelector) : toolbarSelector;
+        const textarea = typeof textareaId === 'string' ? document.getElementById(textareaId) : textareaId;
+        if (!toolbar || !textarea) return;
+        toolbar.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-text-action]');
+            if (!btn) return;
+            e.preventDefault();
+            const action = String(btn.getAttribute('data-text-action') || '');
+            if (action === 'bold') return insertTextAtCursor(textarea, '**', '**', '**Kalın metin**');
+            if (action === 'italic') return insertTextAtCursor(textarea, '*', '*', '*Vurgulu metin*');
+            if (action === 'heading') return insertTextAtCursor(textarea, '# ', '', '# Başlık');
+            if (action === 'subheading') return insertTextAtCursor(textarea, '## ', '', '## Alt Başlık');
+            if (action === 'bullet') return insertTextAtCursor(textarea, '- ', '', '- Madde');
+            if (action === 'numbered') return insertTextAtCursor(textarea, '1. ', '', '1. Madde');
+            if (action === 'quote') return insertTextAtCursor(textarea, '> ', '', '> Alıntı');
+            if (action === 'code') return insertTextAtCursor(textarea, '```\n', '\n```', '```\nkod\n```');
+            if (action === 'divider') return insertTextAtCursor(textarea, '\n---\n', '', '\n---\n');
+        });
+    }
+    function setImageFromFile(fileInputId, hiddenId, previewId, options = {}) {
+        const input = document.getElementById(fileInputId);
         if (!input) return;
         input.addEventListener('change', () => {
             const file = input.files && input.files[0];
             if (!file) return;
+            if (options.crop) {
+                openCoverCropModal(file, {
+                    title: options.title || 'Görseli Kırp',
+                    aspectRatio: options.aspectRatio || 16 / 9,
+                    target: { hiddenId, previewId, sourceInputId: fileInputId },
+                    onApply: async (dataUrl) => {
+                        syncHiddenPreview(hiddenId, previewId, dataUrl);
+                        const uploadedUrl = await uploadImageDataUrl(dataUrl, file.name || 'media.png');
+                        syncHiddenPreview(hiddenId, previewId, uploadedUrl);
+                        saveCurrent();
+                    },
+                });
+                return;
+            }
             const reader = new FileReader();
             reader.onload = () => {
                 const data = String(reader.result || '');
-                if (hidden) hidden.value = data;
-                if (preview) {
-                    preview.style.display = 'block';
-                    preview.innerHTML = '<img src="' + data.replace(/"/g, '&quot;') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
-                }
+                syncHiddenPreview(hiddenId, previewId, data);
                 saveCurrent();
             };
             reader.readAsDataURL(file);
@@ -1271,14 +1860,59 @@ document.addEventListener('DOMContentLoaded', function () {
             saveCurrent();
         });
     }
+    function updateSplitPanelVisibility(prefix) {
+        const type = document.getElementById(`layout_${prefix}_type`)?.value || 'text';
+        const textWrap = document.querySelector(`[data-split-toolbar="${prefix}"]`);
+        const textArea = document.getElementById(`layout_${prefix}_text`);
+        const imagePreview = document.getElementById(`layout_${prefix}_image_preview`);
+        const videoPreview = document.getElementById(`layout_${prefix}_video_preview`);
+        if (textWrap) textWrap.style.display = type === 'text' ? 'flex' : 'none';
+        if (textArea) textArea.style.display = type === 'text' ? 'block' : 'none';
+        if (imagePreview) imagePreview.style.display = type === 'image' ? 'block' : 'none';
+        if (videoPreview) videoPreview.style.display = type === 'video' ? 'block' : 'none';
+    }
     function bindLayoutSplitFiles() {
-        setImageFromFile('layout_left_image_file', 'layout_left_image', 'layout_left_image_preview');
+        setImageFromFile('layout_left_image_file', 'layout_left_image', 'layout_left_image_preview', { crop: true, title: 'Sol Alan Görseli Kırp', aspectRatio: 1 });
         setVideoFromFile('layout_left_video_file', 'layout_left_video');
-        setImageFromFile('layout_right_image_file', 'layout_right_image', 'layout_right_image_preview');
+        setImageFromFile('layout_right_image_file', 'layout_right_image', 'layout_right_image_preview', { crop: true, title: 'Sağ Alan Görseli Kırp', aspectRatio: 1 });
         setVideoFromFile('layout_right_video_file', 'layout_right_video');
+        ['left', 'right'].forEach((prefix) => {
+            const select = document.getElementById(`layout_${prefix}_type`);
+            select?.addEventListener('change', () => {
+                updateSplitPanelVisibility(prefix);
+                saveCurrent();
+            });
+            const textArea = document.getElementById(`layout_${prefix}_text`);
+            textArea?.addEventListener('input', saveCurrent);
+            const imageBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="image"]`);
+            const videoBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="video"]`);
+            const clearBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="clear"]`);
+            imageBtn?.addEventListener('click', () => {
+                if (select) select.value = 'image';
+                updateSplitPanelVisibility(prefix);
+                document.getElementById(`layout_${prefix}_image_file`)?.click();
+            });
+            videoBtn?.addEventListener('click', () => {
+                if (select) select.value = 'video';
+                updateSplitPanelVisibility(prefix);
+                document.getElementById(`layout_${prefix}_video_file`)?.click();
+            });
+            clearBtn?.addEventListener('click', () => {
+                syncHiddenPreview(`layout_${prefix}_image`, `layout_${prefix}_image_preview`, '');
+                syncHiddenPreview(`layout_${prefix}_video`, `layout_${prefix}_video_preview`, '');
+                if (select) select.value = 'text';
+                const imageFile = document.getElementById(`layout_${prefix}_image_file`);
+                const videoFile = document.getElementById(`layout_${prefix}_video_file`);
+                if (imageFile) imageFile.value = '';
+                if (videoFile) videoFile.value = '';
+                updateSplitPanelVisibility(prefix);
+                saveCurrent();
+            });
+            updateSplitPanelVisibility(prefix);
+        });
     }
     function bindLayoutMediaFiles() {
-        setImageFromFile('layout_media_image_file', 'layout_media_image', 'layout_media_image_preview');
+        setImageFromFile('layout_media_image_file', 'layout_media_image', 'layout_media_image_preview', { crop: true, title: 'Ana Görseli Kırp', aspectRatio: 16 / 9 });
         setVideoFromFile('layout_media_video_file', 'layout_media_video');
     }
     function renderPreviewSlide() {
@@ -1287,28 +1921,50 @@ document.addEventListener('DOMContentLoaded', function () {
         const s = state.slides[previewIndex] || {};
         const layout = String(s.layout || 'auto');
         const meta = s.layout_meta || {};
+        const codeSrcdoc = s.code ? String(s.code) : '';
         const layoutPreview = (() => {
             if (layout === 'split') {
                 const left = meta.left || {};
                 const right = meta.right || {};
+                const splitRatio = String(meta.split_ratio || '50-50');
+                const splitColumns = splitRatio === '30-70'
+                    ? '30% 70%'
+                    : splitRatio === '70-30'
+                        ? '70% 30%'
+                        : '1fr 1fr';
+                const normalizeMediaUrl = (value) => {
+                    const raw = String(value || '').trim();
+                    if (!raw) return '';
+                    if (/^(?:data:|blob:|https?:\/\/)/i.test(raw)) return raw;
+                    return String(appBaseUrl || '').replace(/\/+$/, '') + '/' + raw.replace(/^\/+/, '').replace(/^storage\//i, '');
+                };
+                const renderSplitPanel = (panel, accent, label) => {
+                    const type = String(panel.type || 'text');
+                    const text = escapeHtml(String(panel.text || ''));
+                    const imageUrl = escapeHtml(normalizeMediaUrl(String(panel.image_url || '')));
+                    const videoUrl = escapeHtml(String(panel.video_url || ''));
+                    let body = '';
+                    if (type === 'image' && imageUrl) {
+                        body = `<div style="display:grid;gap:12px;align-content:center;width:100%;min-height:260px"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
+                    } else if (type === 'video' && videoUrl) {
+                        body = `<div style="display:grid;gap:12px;align-content:center;width:100%;min-height:260px"><video src="${videoUrl}" controls style="width:100%;max-height:56vh;border-radius:16px;border:1px solid ${accent}22;background:#000"></video></div>`;
+                    } else if (type === 'code' && codeSrcdoc !== '') {
+                        body = `<iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="${codeSrcdoc}" style="min-height:260px;height:100%;max-height:56vh"></iframe>`;
+                    } else {
+                        body = `<div style="display:grid;gap:10px;align-content:center;min-height:260px;padding:8px 2px">${text ? `<div style="white-space:pre-wrap;line-height:1.8">${text}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
+                    }
+                    return body;
+                };
                 return `
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0">
-                        <div style="min-height:160px;border:1px solid #dbe5f2;border-radius:14px;padding:12px;background:#f8fbff">
-                            <div style="font-size:12px;font-weight:800;color:#2563eb;margin-bottom:8px">SOL ALAN</div>
-                            <div style="font-size:12px;color:#64748b;margin-bottom:10px">${escapeHtml((left.type || 'text').toUpperCase())}</div>
-                            <div style="display:grid;gap:8px">
-                                <div style="height:12px;border-radius:999px;background:#dbeafe;width:82%"></div>
-                                <div style="height:12px;border-radius:999px;background:#eff6ff;width:66%"></div>
-                                <div style="height:74px;border-radius:12px;background:#bfdbfe"></div>
+                    <div class="lesson-split" style="display:grid;margin:14px auto 0;grid-template-columns:${splitColumns};gap:18px">
+                        <div class="lesson-card lesson-split-card" style="min-height:auto">
+                            <div class="lesson-split-body">
+                                ${renderSplitPanel(left, '#2563eb', 'Sol Alan')}
                             </div>
                         </div>
-                        <div style="min-height:160px;border:1px solid #dbe5f2;border-radius:14px;padding:12px;background:#f8fbff">
-                            <div style="font-size:12px;font-weight:800;color:#7c3aed;margin-bottom:8px">SAĞ ALAN</div>
-                            <div style="font-size:12px;color:#64748b;margin-bottom:10px">${escapeHtml((right.type || 'image').toUpperCase())}</div>
-                            <div style="display:grid;gap:8px">
-                                <div style="height:74px;border-radius:12px;background:#c4b5fd"></div>
-                                <div style="height:12px;border-radius:999px;background:#ede9fe;width:70%"></div>
-                                <div style="height:12px;border-radius:999px;background:#e9d5ff;width:54%"></div>
+                        <div class="lesson-card lesson-split-card" style="min-height:auto">
+                            <div class="lesson-split-body lesson-split-body--center">
+                                ${renderSplitPanel(right, '#7c3aed', 'Sağ Alan')}
                             </div>
                         </div>
                     </div>
@@ -1326,11 +1982,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (layout === 'image') {
                 const media = meta.media || {};
+                const mediaOrder = String(media.order || 'image-text');
+                const imageBlock = media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="width:100%;height:100%;background:#bfdbfe"></div>`;
+                const textBlock = media.html ? `<div style="max-width:1100px;text-align:center;line-height:1.7">${media.html}</div>` : (media.text ? `<div style="max-width:900px;text-align:center;line-height:1.7">${escapeHtml(media.text)}</div>` : '');
                 return `
-                    <div style="margin:14px 0;padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2">
-                        ${media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:180px;object-fit:cover;border-radius:16px;border:1px solid #bfdbfe">` : `<div style="height:180px;border-radius:16px;background:#bfdbfe"></div>`}
-                        <div style="height:12px;width:68%;border-radius:999px;background:#dbeafe;margin-top:12px"></div>
-                        <div style="height:12px;width:46%;border-radius:999px;background:#eff6ff;margin-top:8px"></div>
+                    <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
+                        ${mediaOrder === 'text-image' ? textBlock : ''}
+                        <div style="width:50%;aspect-ratio:16/6;overflow:hidden;border-radius:16px;border:1px solid #bfdbfe;background:#fff">
+                            ${imageBlock}
+                        </div>
+                        ${mediaOrder === 'image-text' ? textBlock : ''}
                     </div>
                 `;
             }
@@ -1437,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const minW = 120;
         const maxW = coverCropState.imgW;
         sel.w = Math.max(minW, Math.min(maxW, sel.w));
-        sel.h = sel.w * 9 / 16;
+        sel.h = sel.w / (coverCropState.aspectRatio || (16 / 9));
         const maxX = coverCropState.imgX + coverCropState.imgW - sel.w;
         const maxY = coverCropState.imgY + coverCropState.imgH - sel.h;
         sel.x = Math.max(coverCropState.imgX, Math.min(maxX, sel.x));
@@ -1456,7 +2117,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const s = coverCropState.selection;
         if (s.w <= 0 || s.h <= 0) {
             s.w = Math.min(coverCropState.imgW * 0.7, 520);
-            s.h = s.w * 9 / 16;
+            s.h = s.w / (coverCropState.aspectRatio || (16 / 9));
             s.x = coverCropState.imgX + (coverCropState.imgW - s.w) / 2;
             s.y = coverCropState.imgY + (coverCropState.imgH - s.h) / 2;
         }
@@ -1464,8 +2125,14 @@ document.addEventListener('DOMContentLoaded', function () {
         renderCropUi();
     }
 
-    function openCoverCropModal(file) {
+    function openCoverCropModal(file, options = {}) {
         if (!coverCropModal || !coverCropImage || !coverCropViewport) return;
+        coverCropState.title = options.title || 'Kapak Görseli Kırp';
+        coverCropState.aspectRatio = Number(options.aspectRatio) || (16 / 9);
+        coverCropState.onApply = typeof options.onApply === 'function' ? options.onApply : null;
+        coverCropState.target = options.target || { hiddenId: '', previewId: '', sourceInputId: '' };
+        const modalTitle = coverCropModal.querySelector('.modal-head strong');
+        if (modalTitle) modalTitle.textContent = coverCropState.title;
         if (coverCropState.objectUrl) URL.revokeObjectURL(coverCropState.objectUrl);
         coverCropState.objectUrl = URL.createObjectURL(file);
         coverCropState.zoom = 1;
@@ -1482,7 +2149,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function applyCoverCrop() {
         const outW = 1600;
-        const outH = 900;
+        const outH = Math.round(outW / (coverCropState.aspectRatio || (16 / 9)));
         const sx = (coverCropState.selection.x - coverCropState.imgX) * (coverCropState.imgNaturalW / coverCropState.imgW);
         const sy = (coverCropState.selection.y - coverCropState.imgY) * (coverCropState.imgNaturalH / coverCropState.imgH);
         const sw = coverCropState.selection.w * (coverCropState.imgNaturalW / coverCropState.imgW);
@@ -1497,38 +2164,52 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.fillRect(0, 0, outW, outH);
         ctx.drawImage(coverCropImage, sx, sy, sw, sh, 0, 0, outW, outH);
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 1));
+        let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
+        if (!blob) {
+            blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.84));
+        }
         if (!blob) return;
         const previewUrl = URL.createObjectURL(blob);
-        const coverFile = new File([blob], 'cover.png', { type: 'image/png' });
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Kırpılmış görsel okunamadı.'));
+            reader.readAsDataURL(blob);
+        });
+        const extension = blob.type === 'image/jpeg' ? 'jpg' : 'webp';
+        const coverFile = new File([blob], 'cover.' + extension, { type: blob.type || 'image/webp' });
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(coverFile);
 
-        state.cover_image = '';
-        if (coverImageData) {
-            coverImageData.value = '';
-        }
-        if (coverImageFile) {
-            coverImageFile.files = dataTransfer.files;
-        }
-        if (coverImagePreviewBox) {
-            coverImagePreviewBox.style.display = 'block';
-            coverImagePreviewBox.style.backgroundImage = 'none';
-        }
-        if (coverImagePreview) {
-            coverImagePreview.src = previewUrl;
-            coverImagePreview.style.display = 'block';
-            coverImagePreview.onerror = () => {
-                if (coverImagePreviewBox) {
-                    coverImagePreviewBox.style.display = 'none';
-                }
-            };
-        }
-        if (coverImagePathLabel) {
-            coverImagePathLabel.textContent = 'Kapak önizleme hazır. Kaydet dediğinde dosya yüklenecek.';
-        }
-        if (coverImageRemove) {
-            coverImageRemove.style.display = 'inline-flex';
+        if (coverCropState.onApply) {
+            await coverCropState.onApply(dataUrl, blob, dataTransfer.files);
+        } else {
+            state.cover_image = '';
+            if (coverImageData) {
+                coverImageData.value = '';
+            }
+            if (coverImageFile) {
+                coverImageFile.files = dataTransfer.files;
+            }
+            if (coverImagePreviewBox) {
+                coverImagePreviewBox.style.display = 'block';
+                coverImagePreviewBox.style.backgroundImage = 'none';
+            }
+            if (coverImagePreview) {
+                coverImagePreview.src = previewUrl;
+                coverImagePreview.style.display = 'block';
+                coverImagePreview.onerror = () => {
+                    if (coverImagePreviewBox) {
+                        coverImagePreviewBox.style.display = 'none';
+                    }
+                };
+            }
+            if (coverImagePathLabel) {
+                coverImagePathLabel.textContent = 'Kapak önizleme hazır. Kaydet dediğinde dosya yüklenecek.';
+            }
+            if (coverImageRemove) {
+                coverImageRemove.style.display = 'inline-flex';
+            }
         }
         coverCropModal.classList.remove('open');
         saveCurrent();
@@ -1556,7 +2237,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const dy = e.clientY - coverCropState.dragStartY;
         const s = { ...coverCropState.startSelection };
         const mode = coverCropState.dragMode;
-        const ratio = 16 / 9;
+        const ratio = coverCropState.aspectRatio || (16 / 9);
         if (mode === 'move') {
             s.x += dx;
             s.y += dy;
@@ -1591,7 +2272,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     addBtn.addEventListener('click', () => {
         saveCurrent();
-        state.slides.push({title: 'Yeni Slide', layout: 'auto', layout_meta: {}, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: {}, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
         active = state.slides.length - 1;
         loadCurrent(); renderList(); saveCurrent();
     });
@@ -1604,9 +2285,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     previewBtn.addEventListener('click', () => {
         saveCurrent();
-        const scrollY = window.scrollY || window.pageYOffset || 0;
-        document.body.dataset.builderScrollY = String(scrollY);
-        document.body.style.overflow = 'hidden';
         previewIndex = 0;
         renderPreviewSlide();
         previewModal.classList.add('open');
@@ -1618,8 +2296,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function restoreAfterPreviewClose() {
         if (previewModal.classList.contains('open')) return;
         document.body.style.overflow = '';
-        const y = Number(document.body.dataset.builderScrollY || 0);
-        if (Number.isFinite(y)) window.scrollTo(0, y);
     }
     previewModal.querySelectorAll('[data-close-modal]').forEach((btn) => {
         btn.addEventListener('click', () => setTimeout(restoreAfterPreviewClose, 0));
@@ -1627,8 +2303,9 @@ document.addEventListener('DOMContentLoaded', function () {
     previewModal.addEventListener('click', (e) => {
         if (e.target === previewModal) setTimeout(restoreAfterPreviewClose, 0);
     });
+    document.body.style.overflow = '';
 
-    Object.values(fields).forEach(el => el.addEventListener('input', () => { saveCurrent(); renderList(); }));
+    Object.values(fields).filter(Boolean).forEach(el => el.addEventListener('input', () => { saveCurrent(); renderList(); }));
     lessonTitle.addEventListener('input', () => { saveCurrent(); });
     topClassSelect.addEventListener('change', saveCurrent);
     lessonCategory?.addEventListener('change', saveCurrent);
@@ -1677,20 +2354,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
     const tabPanels = Array.from(document.querySelectorAll('.builder-panel'));
+    let activeTab = 'text';
+
+    function setActiveTab(tab) {
+        const targetTab = ['text', 'code', 'question'].includes(tab) ? tab : 'text';
+        activeTab = targetTab;
+        tabButtons.forEach((b) => {
+            b.classList.toggle('active', String(b.dataset.tab || '') === targetTab);
+        });
+        tabPanels.forEach((p) => {
+            p.style.display = (p.dataset.panel === targetTab ? 'block' : 'none');
+        });
+    }
+
+    function inferTabForSlide(slide) {
+        const s = slide || {};
+        if ((String(s.interaction_type || '') !== 'none') || String(s.question_prompt || '').trim() !== '') {
+            return 'question';
+        }
+        if (String(s.layout || '') === 'code' || String(s.code || '').trim() !== '') {
+            return 'code';
+        }
+        return 'text';
+    }
 
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            tabButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const tab = btn.dataset.tab;
-            tabPanels.forEach(p => p.style.display = (p.dataset.panel === tab ? 'block' : 'none'));
+            setActiveTab(btn.dataset.tab);
         });
     });
 
     if (!isEditMode) {
         const defaultTab = tabButtons.find((btn) => btn.dataset.tab === 'text');
         if (defaultTab) {
-            defaultTab.click();
+            setActiveTab('text');
         }
     }
 
@@ -1701,6 +2398,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {
         console.error('Builder init failed:', e);
     }
+
+    setActiveTab(inferTabForSlide(state.slides[active] || {}));
 
     if (!shouldPersistDraft) {
         try { localStorage.removeItem(draftKey); } catch (_) {}

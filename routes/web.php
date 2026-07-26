@@ -111,6 +111,7 @@ Route::get('/kapak-gorseli/{path}', [CourseController::class, 'cover'])
 Route::middleware('auth')->group(function () {
     Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -219,7 +220,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/students/all', [StudentController::class, 'destroyAll'])->name('students.destroyAll');
         Route::resource('students', StudentController::class);
         Route::resource('classes', SchoolClassController::class);
-        Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
+    Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
+    Route::post('/courses/upload-media', [CourseController::class, 'uploadMedia'])->name('courses.upload-media');
         Route::get('/courses/{course}/indir', [CourseController::class, 'export'])->name('courses.export');
         Route::get('/courses/indir/tumu', [CourseController::class, 'exportAll'])->name('courses.export-all');
         Route::post('/courses/yukle', [CourseController::class, 'import'])->name('courses.import');

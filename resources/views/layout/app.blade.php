@@ -6,6 +6,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Okul yonetim sistemi admin paneli">
     <title>@yield('title', 'School Management')</title>
+    @php
+        $pwaMeta = (array) (auth()->user()?->profile?->meta ?? []);
+        $pwaConfig = [
+            'enabled' => (bool) ($pwaMeta['pwa_enabled'] ?? false),
+            'title' => (string) ($pwaMeta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
+            'subtitle' => (string) ($pwaMeta['pwa_subtitle'] ?? 'Yukleniyor...'),
+            'logoUrl' => (string) ($pwaMeta['pwa_logo_url'] ?? url('/public/logo192.png')),
+        ];
+    @endphp
+    <script>
+        window.__APP_PWA_SETTINGS = @json($pwaConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    </script>
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     @if(auth()->user()?->hasRole('student'))

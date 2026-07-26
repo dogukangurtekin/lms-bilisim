@@ -45,8 +45,59 @@
 .slide-theme :where(.lesson-slide-title){margin:0;font-size:clamp(30px,3.6vw,54px);line-height:1.05}
 .slide-theme :where(.lesson-slide-subtitle){margin:0;font-size:20px;color:#475569}
 .slide-theme :where(.lesson-hero-card){padding:28px;border-radius:28px;background:linear-gradient(135deg,#eff6ff 0%,#ffffff 100%);border:1px solid rgba(37,99,235,.14);box-shadow:0 24px 48px rgba(37,99,235,.10)}
-.slide-theme :where(.lesson-split){display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:start}
-.slide-theme :where(.lesson-media-stack){display:grid;gap:14px}
+.slide-theme :where(.lesson-split){
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:18px;
+    align-items:center;
+    justify-items:stretch;
+    width:min(100%,82vw);
+    max-width:1800px;
+    margin:0 auto;
+    min-height:auto;
+    padding:clamp(12px,4vh,32px) 0;
+}
+.slide-theme :where(.lesson-split-card){
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    min-height:clamp(420px,66vh,760px);
+    padding:18px;
+}
+.slide-theme :where(.lesson-split-tag){
+    display:inline-flex;
+    align-self:flex-start;
+    margin-bottom:12px;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    background:rgba(37,99,235,.10);
+    color:#1d4ed8;
+    border:1px solid rgba(37,99,235,.12);
+}
+.slide-theme :where(.lesson-split-tag--right){
+    background:rgba(124,58,237,.10);
+    color:#6d28d9;
+    border-color:rgba(124,58,237,.14);
+}
+.slide-theme :where(.lesson-split-body){
+    display:grid;
+    gap:14px;
+    min-height:0;
+    align-content:center;
+}
+.slide-theme :where(.lesson-split-body--center){
+    justify-items:center;
+}
+.slide-theme :where(.lesson-split-media){
+    width:100%;
+    object-fit:cover;
+    min-height:280px;
+    max-height:min(56vh,600px);
+}
 .slide-theme :where(.lesson-image){width:100%;object-fit:cover;min-height:240px}
 .slide-theme :where(.lesson-code-frame){width:100%;min-height:420px;border:1px solid rgba(37,99,235,.14);border-radius:20px;background:#fff}
 .slide-theme :where(.lesson-grid-cards){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -70,6 +121,15 @@
     .slide-theme :where(.lesson-split),
     .slide-theme :where(.lesson-grid-cards){
         grid-template-columns:1fr;
+        width:100%;
+        max-width:none;
+        min-height:auto;
+    }
+    .slide-theme :where(.lesson-split-card){
+        min-height:auto;
+    }
+    .slide-theme :where(.lesson-split-body){
+        min-height:auto;
     }
     .slide-theme :where(.lesson-hero-card){
         padding:18px;
