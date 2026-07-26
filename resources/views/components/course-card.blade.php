@@ -98,7 +98,16 @@
                 <a href="{{ $deleteUrl }}" class="course-delete-link" data-delete-url="{{ $deleteUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#ef4444;color:#fff;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 12px 24px rgba(239,68,68,.18);transition:transform .15s ease,filter .15s ease;">Dersi Sil</a>
             @endif
             @if($assignEnabled && !empty($assignCourseId))
-                <button type="button" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#f97316;color:#fff;font-size:15px;font-weight:500;text-decoration:none;border:0;box-shadow:0 12px 24px rgba(249,115,22,.18);cursor:pointer;transition:transform .15s ease,filter .15s ease;" data-assign-course-id="{{ $assignCourseId }}" data-assign-course-name="{{ $assignCourseName }}" data-assign-current-teacher="{{ (int) $assignCurrentTeacher }}">Dersi Ata</button>
+                <button
+                    type="button"
+                    style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#f97316;color:#fff;font-size:15px;font-weight:500;text-decoration:none;border:0;box-shadow:0 12px 24px rgba(249,115,22,.18);cursor:pointer;transition:transform .15s ease,filter .15s ease;"
+                    data-assign-course-id="{{ $assignCourseId }}"
+                    data-assign-course-name="{{ $assignCourseName }}"
+                    data-assign-current-teacher="{{ (int) $assignCurrentTeacher }}"
+                    data-assign-teacher-url="{{ route('courses.assign-teacher', $assignCourseId) }}"
+                    data-assign-classes-url="{{ route('courses.assign-classes', $assignCourseId) }}"
+                    data-assign-level-url="{{ route('courses.assign-level', $assignCourseId) }}"
+                >Dersi Ata</button>
             @endif
         </div>
     </div>

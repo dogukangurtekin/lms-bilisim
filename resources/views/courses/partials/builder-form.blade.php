@@ -145,9 +145,18 @@
         border:1px solid var(--builder-border);
         border-radius:16px;
         color:var(--builder-text);
-        padding:13px 16px;
+        padding:14px 16px;
         box-shadow:0 1px 0 rgba(255,255,255,.8) inset;
         transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+    }
+    .lesson-builder select{
+        min-height:54px;
+        line-height:1.35;
+        padding-top:14px;
+        padding-bottom:14px;
+        appearance:none;
+        -webkit-appearance:none;
+        -moz-appearance:none;
     }
     .lesson-builder :where(input:not([type=checkbox]):not([type=radio]),select,textarea)::placeholder{
         color:#94a3b8;
@@ -216,6 +225,71 @@
         border-color:#fca5a5;
         box-shadow:0 14px 28px rgba(239,68,68,.12);
     }
+    .lesson-builder .btn.btn-primary{
+        background:linear-gradient(180deg,#3b82f6,#2563eb);
+        color:#fff;
+        border-color:#1d4ed8;
+        box-shadow:0 14px 28px rgba(37,99,235,.18);
+    }
+    .lesson-builder .btn.btn-primary:hover{
+        border-color:#1d4ed8;
+        box-shadow:0 18px 32px rgba(37,99,235,.24);
+    }
+    .lesson-builder .btn.btn-ghost{
+        background:linear-gradient(180deg,#ffffff,#f8fbff);
+        color:#1e3a8a;
+        border-color:#dbe5f2;
+    }
+    .lesson-builder .btn.btn-ghost:hover{
+        border-color:#bfdbfe;
+    }
+    .lesson-builder .btn.btn-outline-danger{
+        background:linear-gradient(180deg,#fff7f7,#ffeaea);
+        color:#b91c1c;
+        border-color:#fecaca;
+    }
+    .lesson-builder .btn.btn-outline-danger:hover{
+        border-color:#fca5a5;
+    }
+    .lesson-builder .bg-option-grid{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+    }
+    .lesson-builder .bg-option{
+        border:1px solid #dbe5f2;
+        border-radius:16px;
+        min-height:72px;
+        padding:12px;
+        cursor:pointer;
+        background:#fff;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+        gap:8px;
+        transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+    .lesson-builder .bg-option:hover{
+        transform:translateY(-1px);
+        border-color:#93c5fd;
+        box-shadow:0 12px 24px rgba(37,99,235,.08);
+    }
+    .lesson-builder .bg-option.is-active{
+        border-color:#2563eb;
+        box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+    .lesson-builder .bg-option__swatch{
+        width:100%;
+        height:26px;
+        border-radius:999px;
+        border:1px solid rgba(15,23,42,.08);
+    }
+    .lesson-builder .bg-option__title{
+        font-size:12px;
+        font-weight:800;
+        color:#1e293b;
+        line-height:1.2;
+    }
     .lesson-builder-top{
         display:grid;
         grid-template-columns:minmax(0,1fr) auto;
@@ -237,6 +311,14 @@
     }
     .lesson-builder-top .actions .btn{
         white-space:nowrap;
+        min-width:0;
+        height:48px;
+        padding:0 18px;
+        border-radius:16px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        flex:0 1 auto;
     }
     .lesson-builder-top > div:first-child{
         grid-template-columns:minmax(0,1fr) minmax(220px,300px) !important;
@@ -268,14 +350,129 @@
         display:flex;
         flex-direction:column;
         gap:12px;
+        align-self:start;
     }
     .builder-left #slide_list{
         display:grid;
-        gap:10px;
-        min-height:220px;
+        gap:12px;
+        min-height:0;
+        max-height:none;
+        overflow:visible;
     }
     .builder-left :where(button,#slide_list button){
         width:100%;
+    }
+    .lesson-builder .slide-list-item{
+        display:grid;
+        grid-template-columns:36px minmax(0,1fr);
+        gap:12px;
+        align-items:stretch;
+        text-align:left;
+        padding:12px;
+        border:1px solid #dbe5f2;
+        border-radius:20px;
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+        box-shadow:0 10px 24px rgba(37,99,235,.06);
+        transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .lesson-builder .slide-list-item:hover{
+        transform:translateY(-1px);
+        border-color:#bfdbfe;
+        box-shadow:0 14px 30px rgba(37,99,235,.10);
+    }
+    .lesson-builder .slide-list-item.active{
+        background:linear-gradient(180deg,#eff6ff 0%,#dbeafe 100%);
+        border-color:#93c5fd;
+        box-shadow:0 16px 34px rgba(37,99,235,.14);
+    }
+    .lesson-builder .slide-list-item .slide-thumb{
+        width:36px;
+        height:36px;
+        border-radius:12px;
+        background:linear-gradient(180deg,#eff6ff 0%,#dbeafe 100%);
+        border:1px solid #bfdbfe;
+        color:#2563eb;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:800;
+        font-size:11px;
+        flex-shrink:0;
+    }
+    .lesson-builder .slide-list-item .slide-thumb img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        display:block;
+    }
+    .lesson-builder .slide-list-item .slide-meta{
+        display:grid;
+        gap:8px;
+        min-width:0;
+    }
+    .lesson-builder .slide-list-item .slide-meta-top{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        min-width:0;
+    }
+    .lesson-builder .slide-list-item .slide-title{
+        font-size:13px;
+        font-weight:800;
+        color:#2563eb;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+    .lesson-builder .slide-list-item .slide-layout{
+        font-size:11px;
+        color:#64748b;
+        white-space:nowrap;
+    }
+    .lesson-builder .slide-list-item .slide-preview-wrap{
+        display:grid;
+        grid-template-columns:92px minmax(0,1fr);
+        gap:12px;
+        align-items:center;
+        min-width:0;
+    }
+    .lesson-builder .slide-list-item .slide-preview-box{
+        min-width:92px;
+        height:66px;
+        border-radius:14px;
+        overflow:hidden;
+        background:linear-gradient(135deg,#dbeafe,#eff6ff);
+        border:1px solid #dbe5f2;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#2563eb;
+        font-size:12px;
+        font-weight:800;
+    }
+    .lesson-builder .slide-list-item .slide-preview-box img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        display:block;
+    }
+    .lesson-builder .slide-list-item .slide-preview-title{
+        font-size:12px;
+        font-weight:700;
+        color:#0f172a;
+        line-height:1.35;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+    .lesson-builder .slide-list-item .slide-preview-text{
+        font-size:11px;
+        color:#64748b;
+        line-height:1.45;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
     }
     .builder-center{
         display:flex;
@@ -501,6 +698,10 @@
     .lesson-builder .builder-panel select{
         background:#fff;
     }
+    .lesson-builder .builder-panel select{
+        min-height:54px;
+        line-height:1.35;
+    }
     @media (max-width:1280px){
         .lesson-builder-grid{
             grid-template-columns:minmax(0,1fr);
@@ -589,10 +790,9 @@
             </select>
         </div>
         <div class="actions">
-            <a class="btn" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
-            <button class="btn" type="button" id="builder_preview_btn">Önizleme</button>
-            <button class="btn" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
-            <button class="btn btn-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
+            <a class="btn btn-ghost" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
+            <button class="btn btn-primary" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
+            <button class="btn btn-outline-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
         </div>
     </div>
 
@@ -638,8 +838,10 @@
                     <div id="layout_editor_hint" style="color:#64748b;font-size:13px;line-height:1.6;margin-bottom:10px">Seçtiğiniz layout’a göre aşağıdaki alanlar aktif olur.</div>
                     <div id="layout_editor_fields"></div>
                 </div>
-                <label>Sayfa XP</label>
-                <input type="number" id="slide_xp" min="0" max="500" value="0">
+                <div style="display:none" aria-hidden="true">
+                    <label>Sayfa XP</label>
+                    <input type="number" id="slide_xp" min="0" max="500" value="0">
+                </div>
                 <div style="display:none" aria-hidden="true">
                     <label>Öğrenci Yönlendirme Notu</label>
                     <textarea id="slide_instructions" rows="3" placeholder="Bu sayfada öğrenci ne yapmalı?"></textarea>
@@ -706,7 +908,6 @@
                     <option value="none">Yok</option>
                     <option value="multiple_choice">Çoktan Seçmeli</option>
                     <option value="true_false">Doğru Yanlış</option>
-                    <option value="matching">Eşleştirme</option>
                     <option value="drag_drop">Sürükle Bırak</option>
                     <option value="short_answer">Kısa Cevap</option>
                     <option value="checklist">Kontrol Listesi</option>
@@ -739,7 +940,7 @@
                 </div>
                 <div id="question_editor"></div>
             </div>
-            <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <div style="display:none;justify-content:flex-end;margin-top:10px" aria-hidden="true">
                 <div id="current_slide_xp_badge" class="badge">Slide XP: 0</div>
             </div>
         </section>
@@ -764,6 +965,39 @@
             </select>
             <label>Ders Açıklaması</label>
             <textarea id="lesson_description" rows="3" placeholder="Ders başlığı altında gösterilecek açıklama"></textarea>
+            <label>Slayt Arkaplanı</label>
+            <div id="slide_background_picker" class="bg-option-grid">
+                <button type="button" class="bg-option is-active" data-bg-type="none" data-bg-value="">
+                    <span class="bg-option__swatch" style="background:linear-gradient(135deg,#ffffff,#f8fbff)"></span>
+                    <span class="bg-option__title">Varsayılan</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="radial-gradient(circle at 16% 18%,rgba(255,255,255,.95) 0 10%,rgba(191,219,254,.92) 10% 26%,rgba(147,197,253,.82) 26% 44%,rgba(219,234,254,.9) 44% 58%,rgba(248,250,252,1) 58% 100%)">
+                    <span class="bg-option__swatch" style="background:radial-gradient(circle at 16% 18%,#ffffff 0 10%,#bfdbfe 10% 26%,#93c5fd 26% 44%,#dbeafe 44% 58%,#f8fafc 58% 100%)"></span>
+                    <span class="bg-option__title">Soft Mavi</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="linear-gradient(135deg,#f8fafc 0%,#eef2ff 18%,#f5f3ff 42%,#e0f2fe 72%,#ffffff 100%)">
+                    <span class="bg-option__swatch" style="background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 18%,#f5f3ff 42%,#e0f2fe 72%,#ffffff 100%)"></span>
+                    <span class="bg-option__title">Soft Karma</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="radial-gradient(circle at 22% 18%,rgba(251,191,36,.35) 0 12%,rgba(251,191,36,.18) 12% 26%,rgba(254,249,195,.34) 26% 38%,rgba(255,251,235,.96) 38% 100%)">
+                    <span class="bg-option__swatch" style="background:radial-gradient(circle at 22% 18%,rgba(251,191,36,.35) 0 12%,rgba(251,191,36,.18) 12% 26%,rgba(254,249,195,.34) 26% 38%,rgba(255,251,235,.96) 38% 100%)"></span>
+                    <span class="bg-option__title">Soft Sıcak</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="radial-gradient(circle at 20% 18%,rgba(248,113,113,.24) 0 12%,rgba(248,113,113,.12) 12% 26%,rgba(254,202,202,.28) 26% 42%,rgba(255,255,255,.96) 42% 100%)">
+                    <span class="bg-option__swatch" style="background:radial-gradient(circle at 20% 18%,rgba(248,113,113,.24) 0 12%,rgba(248,113,113,.12) 12% 26%,rgba(254,202,202,.28) 26% 42%,rgba(255,255,255,.96) 42% 100%)"></span>
+                    <span class="bg-option__title">Soft Kırmızı</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="linear-gradient(135deg,#f8fafc 0%,#ecfeff 20%,#dbeafe 48%,#e0e7ff 72%,#ffffff 100%)">
+                    <span class="bg-option__swatch" style="background:linear-gradient(135deg,#f8fafc 0%,#ecfeff 20%,#dbeafe 48%,#e0e7ff 72%,#ffffff 100%)"></span>
+                    <span class="bg-option__title">Mavi Sis</span>
+                </button>
+                <button type="button" class="bg-option" data-bg-type="gradient" data-bg-value="linear-gradient(135deg,#ffffff 0%,#fdf2f8 20%,#f5f3ff 46%,#e0f2fe 76%,#ffffff 100%)">
+                    <span class="bg-option__swatch" style="background:linear-gradient(135deg,#ffffff 0%,#fdf2f8 20%,#f5f3ff 46%,#e0f2fe 76%,#ffffff 100%)"></span>
+                    <span class="bg-option__title">Pastel Akış</span>
+                </button>
+            </div>
+            <input type="hidden" id="slide_background_type" value="{{ old('slide_background_type', 'none') }}">
+            <input type="hidden" id="slide_background_value" value="{{ old('slide_background_value', '') }}">
             <label>Kapak Görseli Yükle</label>
             <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
             <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
@@ -908,6 +1142,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const currentSlideXpBadge = document.getElementById('current_slide_xp_badge');
     const globalThemeCss = document.getElementById('global_theme_css');
     const themeTemplateSelect = document.getElementById('theme_template_select');
+    const slideBackgroundPicker = document.getElementById('slide_background_picker');
+    const slideBackgroundType = document.getElementById('slide_background_type');
+    const slideBackgroundValue = document.getElementById('slide_background_value');
 
     const themeTemplates = {
         default: `
@@ -1127,6 +1364,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function escapeHtml(v) {
         return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
     }
+    function decodeHtmlEntities(value) {
+        const raw = String(value || '');
+        if (!raw) return '';
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = raw;
+        return textarea.value;
+    }
     function insertTextAtCursor(textarea, before, after = '', fallback = '') {
         if (!textarea) return;
         const value = textarea.value || '';
@@ -1169,6 +1413,18 @@ document.addEventListener('DOMContentLoaded', function () {
             if (action === 'numbered') return applyStyle('insertOrderedList');
             if (action === 'quote') return applyStyle('formatBlock', 'blockquote');
             if (action === 'divider') return applyStyle('insertHorizontalRule');
+            if (action === 'clear-format') {
+                document.execCommand('removeFormat', false, null);
+                document.execCommand('unlink', false, null);
+                sync();
+                return;
+            }
+            if (action === 'justify-left') return applyStyle('justifyLeft');
+            if (action === 'justify-center') return applyStyle('justifyCenter');
+            if (action === 'justify-right') return applyStyle('justifyRight');
+            if (action === 'justify-full') return applyStyle('justifyFull');
+            if (action === 'indent') return applyStyle('indent');
+            if (action === 'outdent') return applyStyle('outdent');
         });
         const fontSelect = options.fontSelectId ? document.getElementById(options.fontSelectId) : null;
         const sizeSelect = options.sizeSelectId ? document.getElementById(options.sizeSelectId) : null;
@@ -1189,6 +1445,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.execCommand('foreColor', false, colorInput.value);
             sync();
         });
+        editor.addEventListener('keyup', sync);
+        editor.addEventListener('mouseup', sync);
         editor.addEventListener('input', sync);
         editor.addEventListener('blur', sync);
     }
@@ -1256,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!questionEditor) return { options: [] };
         if (type === 'true_false') {
             const val = questionEditor.querySelector('input[name="q_tf_correct"]:checked')?.value || 'true';
-            return { options: [{ text: 'Dogru', correct: val === 'true' }, { text: 'Yanlis', correct: val === 'false' }] };
+            return { options: [{ text: 'Doğru', correct: val === 'true' }, { text: 'Yanlış', correct: val === 'false' }] };
         }
         if (type === 'multiple_choice') {
             const rows = Array.from(questionEditor.querySelectorAll('[data-q-row="mc"]'));
@@ -1268,14 +1526,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         index: i,
                     }))
                     .filter((r) => r.text !== ''),
-            };
-        }
-        if (type === 'matching') {
-            return {
-                pairs: Array.from(questionEditor.querySelectorAll('[data-q-row="match"]')).map((row) => ({
-                    left: row.querySelector('input[data-role="left"]')?.value?.trim() || '',
-                    right: row.querySelector('input[data-role="right"]')?.value?.trim() || '',
-                })).filter((p) => p.left && p.right),
             };
         }
         if (type === 'drag_drop') {
@@ -1317,7 +1567,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         if (type === 'true_false') {
-            const correctTrue = (question.options || []).find((o) => o.text === 'Dogru')?.correct ?? true;
+            const correctTrue = (question.options || []).find((o) => o.text === 'Doğru')?.correct ?? true;
             questionEditor.innerHTML = box(`
                 <div class="sq-answers">
                     <label class="sq-answer-card" style="cursor:pointer">
@@ -1334,16 +1584,6 @@ document.addEventListener('DOMContentLoaded', function () {
             `);
             return;
         }
-        if (type === 'matching') {
-            const pairs = (question.pairs && question.pairs.length ? question.pairs : [{ left: '', right: '' }, { left: '', right: '' }, { left: '', right: '' }]).slice(0, 6);
-            questionEditor.innerHTML = box(pairs.map((p, i) => `
-                <div data-q-row="match" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
-                    <input data-role="left" type="text" placeholder="Sol ${i + 1}" value="${escapeHtml(p.left || '')}">
-                    <input data-role="right" type="text" placeholder="Sag ${i + 1}" value="${escapeHtml(p.right || '')}">
-                </div>
-            `).join(''));
-            return;
-        }
         if (type === 'drag_drop') {
             const items = (question.items && question.items.length ? question.items : [{ text: '', target: '' }, { text: '', target: '' }, { text: '', target: '' }]).slice(0, 6);
             questionEditor.innerHTML = box(items.map((item, i) => `
@@ -1355,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         if (type === 'short_answer') {
-            questionEditor.innerHTML = box(`<input id="q_short_answer" type="text" placeholder="Dogru cevap" value="${escapeHtml(question.answer || '')}">`);
+            questionEditor.innerHTML = box(`<input id="q_short_answer" type="text" placeholder="Doğru cevap" value="${escapeHtml(question.answer || '')}">`);
             return;
         }
         if (type === 'checklist') {
@@ -1421,13 +1661,26 @@ document.addEventListener('DOMContentLoaded', function () {
         s.points = parseInt(getFieldValue(fields.points, '5') || '5', 10);
         s.time_limit = parseInt(getFieldValue(fields.time_limit, '10') || '10', 10);
         s.double_points = !!(fields.double_points && fields.double_points.checked);
+        s.slide_background = readSlideBackground();
         s.layout_meta = readLayoutMeta();
+        if (s.layout_meta && typeof s.layout_meta === 'object') {
+            s.layout_meta.background = s.slide_background;
+        }
         s.question = readQuestionFromUI(s.interaction_type);
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + s.xp;
         state.lesson_title = lessonTitle.value || '';
         state.category = lessonCategory.value || 'Kodlama';
         state.difficulty = lessonDifficulty.value || 'Kolay';
         state.lesson_description = lessonDescription?.value || '';
+        state.slide_background = readSlideBackground();
+        state.slides.forEach((slide) => {
+            if (slide && typeof slide === 'object') {
+                slide.slide_background = { ...state.slide_background };
+                if (slide.layout_meta && typeof slide.layout_meta === 'object') {
+                    slide.layout_meta.background = { ...state.slide_background };
+                }
+            }
+        });
         state.theme_template = themeTemplateSelect ? (themeTemplateSelect.value || 'default') : (state.theme_template || 'default');
         state.global_theme_css = globalThemeCss ? globalThemeCss.value || '' : (state.global_theme_css || '');
         state.cover_image = normalizeCoverStoragePath(state.cover_image || '');
@@ -1455,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setFieldValue(fields.title, s.title || '');
         setFieldValue(fields.layout, s.layout || 'auto');
         setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
-        if (contentEditor) contentEditor.innerHTML = s.content || '';
+        if (contentEditor) contentEditor.innerHTML = decodeHtmlEntities(s.content || '');
         if (fields.content) fields.content.value = s.content || '';
         setFieldValue(fields.instructions, s.instructions || '');
         setFieldValue(fields.code, s.code || '');
@@ -1465,9 +1718,17 @@ document.addEventListener('DOMContentLoaded', function () {
         setFieldValue(fields.points, s.points || 5);
         setFieldValue(fields.time_limit, s.time_limit || 10);
         if (fields.double_points) fields.double_points.checked = !!s.double_points;
+        if (slideBackgroundType) slideBackgroundType.value = s.slide_background?.type || s.layout_meta?.background?.type || state.slide_background?.type || 'none';
+        if (slideBackgroundValue) slideBackgroundValue.value = s.slide_background?.value || s.layout_meta?.background?.value || state.slide_background?.value || '';
+        applyBackgroundToPicker();
         renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
         renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
         renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
+        bindRichTextToolbar('[data-rich-toolbar="content"]', 'slide_content_editor', 'slide_content', {
+            fontSelectId: 'content_font_select',
+            sizeSelectId: 'content_size_select',
+            colorInputId: 'content_color_input',
+        });
         setActiveTab(inferTabForSlide(s));
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
@@ -1504,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function () {
         curriculum.title.value = c.title || '';
         curriculum.lessonNumber.value = Number.isFinite(Number(c.lesson_number)) ? Number(c.lesson_number) : 1;
         curriculum.topic.value = c.konu || '';
-        const outcomes = c.kazanimlar ?? c['kazanımlar'] ?? c['kazanÄ±mlar'] ?? [];
+        const outcomes = c.kazanimlar ?? c['kazanımlar'] ?? c['kazanımlar'] ?? [];
         curriculum.outcomes.value = Array.isArray(outcomes) ? outcomes.join('\n') : '';
         curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
         curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
@@ -1550,7 +1811,25 @@ document.addEventListener('DOMContentLoaded', function () {
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'slide-list-item' + (i === active ? ' active' : '');
-            b.textContent = (i + 1) + '. ' + (s.title || 'Basliksiz Slide');
+            const layout = String(s.layout || 'auto').replace(/[-_]/g, ' ');
+            const thumbImage = normalizeCoverUrl(s.image_url || s.cover_image || '');
+            b.innerHTML = `
+                <span style="display:block;min-width:0;grid-column:1 / -1">
+                    <span class="slide-meta-top">
+                        <strong class="slide-title">${i + 1}. ${escapeHtml(s.title || 'Basliksiz Slide')}</strong>
+                        <span class="slide-layout">${escapeHtml(layout)}</span>
+                    </span>
+                    <span class="slide-preview-wrap" style="margin-top:8px">
+                        <span class="slide-preview-box">
+                            ${thumbImage ? `<img src="${escapeHtml(thumbImage)}" alt="">` : '<span>Önizleme</span>'}
+                        </span>
+                        <span class="slide-meta">
+                            <span class="slide-preview-title">${escapeHtml(s.subtitle || s.instructions || s.kind || 'topic')}</span>
+                            <span class="slide-preview-text">${escapeHtml((String(s.content || s.question_prompt || s.code || '').replace(/<[^>]*>/g, '').trim().slice(0, 90) || 'İçerik önizlemesi'))}</span>
+                        </span>
+                    </span>
+                </span>
+            `;
             b.addEventListener('click', () => { saveCurrent(); active = i; loadCurrent(); renderList(); });
             list.appendChild(b);
         });
@@ -1586,13 +1865,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const splitRatio = String(document.getElementById('layout_split_ratio')?.value || '50-50');
             meta.left = {
                 type: document.getElementById('layout_left_type')?.value || 'text',
-                text: document.getElementById('layout_left_text')?.value || '',
+                text: document.getElementById('layout_left_text')?.innerHTML || '',
+                html: document.getElementById('layout_left_html')?.value || document.getElementById('layout_left_text')?.innerHTML || '',
                 image_url: document.getElementById('layout_left_image')?.value || '',
                 video_url: document.getElementById('layout_left_video')?.value || '',
             };
             meta.right = {
                 type: document.getElementById('layout_right_type')?.value || 'image',
-                text: document.getElementById('layout_right_text')?.value || '',
+                text: document.getElementById('layout_right_text')?.innerHTML || '',
+                html: document.getElementById('layout_right_html')?.value || document.getElementById('layout_right_text')?.innerHTML || '',
                 image_url: document.getElementById('layout_right_image')?.value || '',
                 video_url: document.getElementById('layout_right_video')?.value || '',
             };
@@ -1601,13 +1882,40 @@ document.addEventListener('DOMContentLoaded', function () {
             meta.media = {
                 type: document.getElementById('layout_media_type')?.value || 'image',
                 order: document.getElementById('layout_media_order')?.value || 'image-text',
-                text: document.getElementById('layout_media_text')?.value || '',
-                html: document.getElementById('layout_media_html')?.value || '',
+                text: document.getElementById('layout_media_text')?.innerHTML || '',
+                html: document.getElementById('layout_media_html')?.value || document.getElementById('layout_media_text')?.innerHTML || '',
                 image_url: document.getElementById('layout_media_image')?.value || '',
                 video_url: document.getElementById('layout_media_video')?.value || '',
             };
         }
         return meta;
+    }
+    function readSlideBackground() {
+        const type = String(slideBackgroundType?.value || 'none');
+        const value = String(slideBackgroundValue?.value || '');
+        if (type === 'none' || !value) return { type: 'none', value: '' };
+        return { type, value };
+    }
+    function applyBackgroundToPicker() {
+        if (!slideBackgroundPicker) return;
+        const current = readSlideBackground();
+        slideBackgroundPicker.querySelectorAll('.bg-option').forEach((btn) => {
+            const active = String(btn.getAttribute('data-bg-type') || '') === current.type
+                && String(btn.getAttribute('data-bg-value') || '') === current.value;
+            btn.classList.toggle('is-active', active);
+        });
+    }
+    function backgroundStyleFromMeta(meta) {
+        const bg = state?.slide_background || meta?.background || {};
+        const type = String(bg?.type || 'none');
+        const value = String(bg?.value || '');
+        if (!value || type === 'none') return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
+        if (type === 'color' || type === 'gradient') return 'background:' + value + ';';
+        if (type === 'image') {
+            const safe = String(value).replace(/"/g, '&quot;');
+            return 'background-image:url("' + safe + '");background-size:cover;background-position:center;background-repeat:no-repeat;';
+        }
+        return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
     }
     function renderLayoutEditor(layout, meta) {
         const def = layoutDefinition(layout);
@@ -1617,7 +1925,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
                 const media = meta?.media || {};
                 layoutEditorFields.innerHTML = `
-                    <div style="border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                    <div style="display:grid;gap:16px;border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
                         <strong style="display:block;margin-bottom:8px">Ana İçerik</strong>
                         <label>Alan Tipi</label>
                         <select id="layout_media_type">
@@ -1634,32 +1942,48 @@ document.addEventListener('DOMContentLoaded', function () {
                             <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
                             <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
                             <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
-                            <select id="layout_media_font" style="min-width:170px">
-                                <option value="inherit">Yazı Tipi</option>
-                                <option value="'Inter', sans-serif">Inter</option>
-                                <option value="Georgia, serif">Georgia</option>
-                                <option value="'Times New Roman', serif">Times New Roman</option>
-                                <option value="Consolas, monospace">Consolas</option>
-                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                            </select>
-                            <select id="layout_media_size" style="min-width:120px">
-                                <option value="">Boyut</option>
-                                <option value="12px">12</option>
+                            <button type="button" class="btn" data-text-action="heading">H1</button>
+                            <button type="button" class="btn" data-text-action="subheading">H2</button>
+                            <button type="button" class="btn" data-text-action="bullet">• Liste</button>
+                            <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
+                            <button type="button" class="btn" data-text-action="quote">“”</button>
+                            <button type="button" class="btn" data-text-action="divider">—</button>
+                            <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
+                            <button type="button" class="btn" data-text-action="justify-left">Sola</button>
+                            <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
+                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
+                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
+                        <button type="button" class="btn" data-text-action="indent">Gir</button>
+                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
+                        <select id="layout_media_font" style="min-width:170px">
+                            <option value="inherit">Yazı Tipi</option>
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Consolas, monospace">Consolas</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                        </select>
+                        <select id="layout_media_size" style="min-width:120px">
+                            <option value="">Boyut</option>
+                            <option value="12px">12</option>
                                 <option value="14px">14</option>
                                 <option value="16px">16</option>
                                 <option value="18px">18</option>
                                 <option value="20px">20</option>
                                 <option value="24px">24</option>
                                 <option value="28px">28</option>
+                                <option value="32px">32</option>
                             </select>
                             <input id="layout_media_color" type="color" value="#0f172a" title="Yazı rengi">
-                            <button type="button" class="btn" data-text-action="heading">H1</button>
-                            <button type="button" class="btn" data-text-action="subheading">H2</button>
-                            <button type="button" class="btn" data-text-action="bullet">•</button>
-                            <button type="button" class="btn" data-text-action="numbered">1.</button>
-                            <button type="button" class="btn" data-text-action="quote">“”</button>
                         </div>
-                        <div id="layout_media_text" contenteditable="true" spellcheck="false" style="min-height:160px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${media.html || escapeHtml(media.text || '')}</div>
+                        <div id="layout_media_text" contenteditable="true" spellcheck="false" style="min-height:240px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${media.html || escapeHtml(media.text || '')}</div>
                         <input id="layout_media_html" type="hidden" value="${escapeHtml(media.html || '')}">
                         <label style="margin-top:8px">Görsel Dosyası</label>
                         <input id="layout_media_image_file" type="file" accept="image/*">
@@ -1698,8 +2022,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <option value="70-30" ${splitRatio === '70-30' ? 'selected' : ''}>Sol %70 - Sağ %30</option>
                 </select>
             </div>
-            <div class="split-layout-editor" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch">
-                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:420px">
+            <div class="split-layout-editor" style="display:grid;grid-template-columns:1fr;gap:18px;align-items:start">
+                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:auto">
                     <label>Alan Tipi</label>
                     <select id="layout_left_type">
                         <option value="text" ${left.type === 'text' ? 'selected' : ''}>Metin</option>
@@ -1707,18 +2031,54 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${left.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${left.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-split-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                    <div class="split-text-toolbar" data-rich-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
                         <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
                         <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
                         <button type="button" class="btn" data-text-action="heading">H1</button>
                         <button type="button" class="btn" data-text-action="subheading">H2</button>
-                        <button type="button" class="btn" data-text-action="bullet">•</button>
-                        <button type="button" class="btn" data-text-action="numbered">1.</button>
+                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
+                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
                         <button type="button" class="btn" data-text-action="quote">“”</button>
-                        <button type="button" class="btn" data-text-action="divider">---</button>
+                        <button type="button" class="btn" data-text-action="divider">—</button>
+                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
+                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
+                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
+                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
+                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
+                        <button type="button" class="btn" data-text-action="indent">Gir</button>
+                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
+                        <select id="layout_left_font" style="min-width:170px">
+                            <option value="inherit">Yazı Tipi</option>
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Consolas, monospace">Consolas</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                        </select>
+                        <select id="layout_left_size" style="min-width:120px">
+                            <option value="">Boyut</option>
+                            <option value="12px">12</option>
+                            <option value="14px">14</option>
+                            <option value="16px">16</option>
+                            <option value="18px">18</option>
+                            <option value="20px">20</option>
+                            <option value="24px">24</option>
+                            <option value="28px">28</option>
+                            <option value="32px">32</option>
+                        </select>
+                        <input id="layout_left_color" type="color" value="#0f172a" title="Yazı rengi">
                     </div>
                     <label style="margin-top:8px">Metin</label>
-                    <textarea id="layout_left_text" rows="8" style="min-height:160px;flex:1">${escapeHtml(left.text || '')}</textarea>
+                    <div id="layout_left_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(left.html || left.text || '')}</div>
+                    <input id="layout_left_html" type="hidden" value="${escapeHtml(left.html || '')}">
                     <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
                         <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="image">Görsel Seç</button>
                         <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="video">Video Seç</button>
@@ -1735,7 +2095,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <video src="${escapeHtml(left.video_url || '')}" controls style="width:100%;max-height:240px;border-radius:16px;border:1px solid #dbe5f2;background:#000"></video>
                     </div>
                 </div>
-                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:420px">
+                <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:auto">
                     <label>Alan Tipi</label>
                     <select id="layout_right_type">
                         <option value="text" ${right.type === 'text' ? 'selected' : ''}>Metin</option>
@@ -1743,18 +2103,54 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${right.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${right.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-split-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                    <div class="split-text-toolbar" data-rich-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
                         <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
                         <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
                         <button type="button" class="btn" data-text-action="heading">H1</button>
                         <button type="button" class="btn" data-text-action="subheading">H2</button>
-                        <button type="button" class="btn" data-text-action="bullet">•</button>
-                        <button type="button" class="btn" data-text-action="numbered">1.</button>
+                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
+                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
                         <button type="button" class="btn" data-text-action="quote">“”</button>
-                        <button type="button" class="btn" data-text-action="divider">---</button>
+                        <button type="button" class="btn" data-text-action="divider">—</button>
+                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
+                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
+                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
+                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
+                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
+                        <button type="button" class="btn" data-text-action="indent">Gir</button>
+                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
+                        <select id="layout_right_font" style="min-width:170px">
+                            <option value="inherit">Yazı Tipi</option>
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Consolas, monospace">Consolas</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                        </select>
+                        <select id="layout_right_size" style="min-width:120px">
+                            <option value="">Boyut</option>
+                            <option value="12px">12</option>
+                            <option value="14px">14</option>
+                            <option value="16px">16</option>
+                            <option value="18px">18</option>
+                            <option value="20px">20</option>
+                            <option value="24px">24</option>
+                            <option value="28px">28</option>
+                            <option value="32px">32</option>
+                        </select>
+                        <input id="layout_right_color" type="color" value="#0f172a" title="Yazı rengi">
                     </div>
                     <label style="margin-top:8px">Metin</label>
-                    <textarea id="layout_right_text" rows="8" style="min-height:160px;flex:1">${escapeHtml(right.text || '')}</textarea>
+                    <div id="layout_right_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(right.html || right.text || '')}</div>
+                    <input id="layout_right_html" type="hidden" value="${escapeHtml(right.html || '')}">
                     <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
                         <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="image">Görsel Seç</button>
                         <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="video">Video Seç</button>
@@ -1774,8 +2170,16 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         `;
         bindLayoutSplitFiles();
-        bindMarkdownToolbar('[data-split-toolbar="left"]', 'layout_left_text');
-        bindMarkdownToolbar('[data-split-toolbar="right"]', 'layout_right_text');
+        bindRichTextToolbar('[data-rich-toolbar="left"]', 'layout_left_text', 'layout_left_html', {
+            fontSelectId: 'layout_left_font',
+            sizeSelectId: 'layout_left_size',
+            colorInputId: 'layout_left_color',
+        });
+        bindRichTextToolbar('[data-rich-toolbar="right"]', 'layout_right_text', 'layout_right_html', {
+            fontSelectId: 'layout_right_font',
+            sizeSelectId: 'layout_right_size',
+            colorInputId: 'layout_right_color',
+        });
         updateSplitPanelVisibility('left');
         updateSplitPanelVisibility('right');
         document.getElementById('layout_split_ratio')?.addEventListener('change', saveCurrent);
@@ -1862,12 +2266,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function updateSplitPanelVisibility(prefix) {
         const type = document.getElementById(`layout_${prefix}_type`)?.value || 'text';
-        const textWrap = document.querySelector(`[data-split-toolbar="${prefix}"]`);
+        const textWrap = document.querySelector(`[data-rich-toolbar="${prefix}"]`);
         const textArea = document.getElementById(`layout_${prefix}_text`);
+        const htmlField = document.getElementById(`layout_${prefix}_html`);
         const imagePreview = document.getElementById(`layout_${prefix}_image_preview`);
         const videoPreview = document.getElementById(`layout_${prefix}_video_preview`);
         if (textWrap) textWrap.style.display = type === 'text' ? 'flex' : 'none';
         if (textArea) textArea.style.display = type === 'text' ? 'block' : 'none';
+        if (htmlField) htmlField.style.display = 'none';
         if (imagePreview) imagePreview.style.display = type === 'image' ? 'block' : 'none';
         if (videoPreview) videoPreview.style.display = type === 'video' ? 'block' : 'none';
     }
@@ -2000,8 +2406,11 @@ document.addEventListener('DOMContentLoaded', function () {
         let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';
         html += '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;margin:6px 0 2px">' + escapeHtml((layout || 'auto').replace(/[-_]/g, ' ')) + '</div>';
         html += layoutPreview;
+        const bgStyle = backgroundStyleFromMeta(meta);
         if (themeCss) {
-            html = '<style>' + themeCss + '</style><div class="slide-theme">' + html;
+            html = '<style>' + themeCss + '</style><div class="slide-theme" style="' + bgStyle + '">' + html;
+        } else {
+            html = '<div class="slide-theme" style="' + bgStyle + '">' + html;
         }
         if (s.instructions) html += '<p><b>Yonlendirme:</b> ' + escapeHtml(s.instructions) + '</p>';
         if (s.content) html += '<p>' + escapeHtml(s.content) + '</p>';
@@ -2019,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (themeCss) {
             html += '</div>';
         }
-        previewStage.innerHTML = '<div id="preview-slide-fit" style="width:100%;height:100%;min-height:66vh;overflow:hidden;display:flex;align-items:flex-start;justify-content:center">' + html + '</div>';
+        previewStage.innerHTML = '<div id="preview-slide-fit" style="width:100%;height:100%;min-height:66vh;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;padding:16px;border-radius:24px;' + bgStyle + '">' + html + '</div>';
         fitPreviewContent();
         previewCounter.textContent = (previewIndex + 1) + ' / ' + state.slides.length;
         previewPrev.disabled = previewIndex <= 0;
@@ -2272,7 +2681,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     addBtn.addEventListener('click', () => {
         saveCurrent();
-        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: {}, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: { background: { ...readSlideBackground() } }, slide_background: { ...readSlideBackground() }, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
         active = state.slides.length - 1;
         loadCurrent(); renderList(); saveCurrent();
     });
@@ -2283,14 +2692,14 @@ document.addEventListener('DOMContentLoaded', function () {
         loadCurrent(); renderList(); saveCurrent();
     });
 
-    previewBtn.addEventListener('click', () => {
+    previewBtn?.addEventListener('click', () => {
         saveCurrent();
         previewIndex = 0;
         renderPreviewSlide();
         previewModal.classList.add('open');
     });
-    previewPrev.addEventListener('click', () => { previewIndex--; renderPreviewSlide(); });
-    previewNext.addEventListener('click', () => { previewIndex++; renderPreviewSlide(); });
+    previewPrev?.addEventListener('click', () => { previewIndex--; renderPreviewSlide(); });
+    previewNext?.addEventListener('click', () => { previewIndex++; renderPreviewSlide(); });
     window.addEventListener('resize', fitPreviewContent);
 
     function restoreAfterPreviewClose() {
@@ -2311,6 +2720,16 @@ document.addEventListener('DOMContentLoaded', function () {
     lessonCategory?.addEventListener('change', saveCurrent);
     lessonDifficulty?.addEventListener('change', saveCurrent);
     lessonDescription?.addEventListener('input', saveCurrent);
+    slideBackgroundPicker?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.bg-option');
+        if (!btn) return;
+        e.preventDefault();
+        slideBackgroundType.value = String(btn.getAttribute('data-bg-type') || 'none');
+        slideBackgroundValue.value = String(btn.getAttribute('data-bg-value') || '');
+        applyBackgroundToPicker();
+        saveCurrent();
+        renderList();
+    });
     themeTemplateSelect?.addEventListener('change', () => {
         applyThemePreset(themeTemplateSelect.value);
         saveCurrent();
@@ -2398,6 +2817,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {
         console.error('Builder init failed:', e);
     }
+
+    applyBackgroundToPicker();
 
     setActiveTab(inferTabForSlide(state.slides[active] || {}));
 

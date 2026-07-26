@@ -74,3 +74,31 @@
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width:768px){
+    .lesson-split{
+        grid-template-columns:1fr !important;
+        gap:12px !important;
+    }
+    .lesson-split-card{
+        width:100%;
+        min-width:0;
+    }
+    .lesson-split-body{
+        width:100%;
+        min-width:0;
+    }
+    .lesson-split-media{
+        width:100% !important;
+        max-width:100% !important;
+        height:auto !important;
+    }
+    .lesson-paragraph{
+        max-width:100% !important;
+        word-break:break-word;
+        overflow-wrap:anywhere;
+        hyphens:auto;
+    }
+}
+</style>

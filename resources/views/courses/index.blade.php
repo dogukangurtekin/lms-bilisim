@@ -265,6 +265,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const importOpenBtn = document.getElementById('course-import-open');
     const importForm = document.getElementById('course-import-form');
     const importFile = document.getElementById('course-import-file');
+    const assignModal = document.getElementById('course-assign-modal');
+    const assignTitle = document.getElementById('course-assign-title');
+    const assignForms = {
+        teacher: document.getElementById('course-assign-form-teacher'),
+        class: document.getElementById('course-assign-form-class'),
+        level: document.getElementById('course-assign-form-level'),
+    };
+    const assignTeacherSelect = document.getElementById('course-assign-teacher');
+    const assignLevelSelect = document.getElementById('course-assign-level');
+    const assignTabs = Array.from(document.querySelectorAll('[data-assign-tab]'));
+    const assignPanels = Array.from(document.querySelectorAll('[data-assign-panel]'));
+    let currentAssignCourse = null;
+
+    const openAssignModal = (btn) => {
+        if (!assignModal) return;
+        currentAssignCourse = {
+            id: btn.dataset.assignCourseId || '',
+            name: btn.dataset.assignCourseName || '',
+            teacherUrl: btn.dataset.assignTeacherUrl || '',
+            classesUrl: btn.dataset.assignClassesUrl || '',
+            levelUrl: btn.dataset.assignLevelUrl || '',
+            teacherId: btn.dataset.assignCurrentTeacher || '',
+        };
+        if (assignTitle) assignTitle.textContent = currentAssignCourse.name ? `"${currentAssignCourse.name}" dersini atayın.` : 'Dersi atayın.';
+        if (assignTeacherSelect) assignTeacherSelect.value = currentAssignCourse.teacherId || '';
+        if (assignLevelSelect) assignLevelSelect.value = '1';
+        if (assignForms.teacher) assignForms.teacher.action = currentAssignCourse.teacherUrl || '';
+        if (assignForms.class) assignForms.class.action = currentAssignCourse.classesUrl || '';
+        if (assignForms.level) assignForms.level.action = currentAssignCourse.levelUrl || '';
+        assignPanels.forEach((panel) => panel.style.display = panel.dataset.assignPanel === 'teacher' ? 'block' : 'none');
+        assignModal.style.display = 'flex';
+    };
+
+    const closeAssignModal = () => {
+        if (!assignModal) return;
+        assignModal.style.display = 'none';
+    };
 
     if (importOpenBtn && importForm && importFile) {
         importOpenBtn.addEventListener('click', () => {
@@ -279,6 +316,41 @@ document.addEventListener('DOMContentLoaded', () => {
             importForm.submit();
         });
     }
+
+    document.querySelectorAll('[data-assign-course-id]').forEach((btn) => {
+        btn.addEventListener('click', () => openAssignModal(btn));
+    });
+
+    assignTabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.assignTab;
+            assignPanels.forEach((panel) => {
+                panel.style.display = panel.dataset.assignPanel === target ? 'block' : 'none';
+            });
+        });
+    });
+
+    document.getElementById('course-assign-cancel')?.addEventListener('click', closeAssignModal);
+    document.querySelectorAll('.course-assign-cancel-x').forEach((btn) => btn.addEventListener('click', closeAssignModal));
+    assignModal?.addEventListener('click', (event) => {
+        if (event.target === assignModal) closeAssignModal();
+    });
+
+    assignForms.teacher?.addEventListener('submit', (event) => {
+        if (!currentAssignCourse?.teacherUrl) {
+            event.preventDefault();
+        }
+    });
+    assignForms.class?.addEventListener('submit', (event) => {
+        if (!currentAssignCourse?.classesUrl) {
+            event.preventDefault();
+        }
+    });
+    assignForms.level?.addEventListener('submit', (event) => {
+        if (!currentAssignCourse?.levelUrl) {
+            event.preventDefault();
+        }
+    });
 });
 </script>
 @endsection

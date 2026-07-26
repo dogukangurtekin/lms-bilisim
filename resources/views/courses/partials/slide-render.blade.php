@@ -1,4 +1,4 @@
-@php
+﻿@php
     $slide = $slide ?? [];
     $question = is_array($slide['question'] ?? null) ? $slide['question'] : [];
     $hideSlideTitle = $hideSlideTitle ?? false;
@@ -54,6 +54,20 @@
     $slide['image_url'] = $normalizeMediaUrl($pickValue($slide, ['image_url', 'imageUrl', 'image', 'cover_image', 'media_url', 'mediaUrl']));
     $slide['video_url'] = $pickValue($slide, ['video_url', 'videoUrl', 'video', 'media_video', 'mediaVideo']);
     $slide['file_url'] = $pickValue($slide, ['file_url', 'fileUrl', 'file', 'attachment_url', 'attachmentUrl']);
+    $background = is_array($slide['slide_background'] ?? null) ? (array) $slide['slide_background'] : [];
+    if (empty($background) && is_array(data_get($slide, 'layout_meta.background', null))) {
+        $background = (array) data_get($slide, 'layout_meta.background');
+    }
+    $backgroundType = (string) ($background['type'] ?? 'none');
+    $backgroundValue = (string) ($background['value'] ?? '');
+    $backgroundStyle = 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
+    if ($backgroundType !== 'none' && $backgroundValue !== '') {
+        if ($backgroundType === 'color' || $backgroundType === 'gradient') {
+            $backgroundStyle = 'background:' . $backgroundValue . ';';
+        } elseif ($backgroundType === 'image') {
+            $backgroundStyle = 'background-image:url("' . e($backgroundValue) . '");background-size:cover;background-position:center;background-repeat:no-repeat;';
+        }
+    }
     $suspiciousText = implode(' ', [
         (string) ($slide['title'] ?? ''),
         (string) ($slide['subtitle'] ?? ''),
@@ -126,6 +140,25 @@ HTML;
     $interactionType = (string) ($slide['interaction_type'] ?? 'none');
 @endphp
 <style>
+.slide-render{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+}
+.lesson-slide-shell{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+}
+.lesson-slide-shell,
+.lesson-grid-cards,
+.lesson-card,
+.lesson-split,
+.lesson-split-card,
+.lesson-split-body,
+.lesson-image-focus{
+    min-width:0;
+}
 .lesson-layout-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:.01em;background:rgba(37,99,235,.08);color:#1d4ed8;border:1px solid rgba(37,99,235,.14)}
 .sqz-wrap{margin-top:10px;border-radius:18px;padding:14px;background:linear-gradient(160deg,#4c1d95,#6d28d9 42%,#7c3aed);color:#fff;border:1px solid rgba(255,255,255,.18)}
 .sqz-qcard{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:14px;margin-bottom:12px}
@@ -144,9 +177,67 @@ HTML;
 .sqz-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sqz-stack{display:grid;gap:8px}
 .sqz-row .form-control,.sqz-row select,.sqz-row input{margin:0;border-radius:10px}
-@media (max-width:900px){.sqz-grid{grid-template-columns:1fr}.sqz-q{font-size:24px}.sqz-opt{font-size:20px}}
+@media (max-width:900px){
+    .sqz-grid{grid-template-columns:1fr}
+    .sqz-q{font-size:24px}
+    .sqz-opt{font-size:20px}
+}
+@media (max-width:768px){
+    .lesson-slide{
+        padding-inline:0;
+    }
+    .lesson-slide-shell{
+        padding-inline:0;
+    }
+    .lesson-slide-shell > *{
+        max-width:100%;
+    }
+    .lesson-split{
+        grid-template-columns:1fr !important;
+        gap:12px !important;
+    }
+    .lesson-split-card{
+        width:100%;
+    }
+    .lesson-split-body{
+        width:100%;
+    }
+    .lesson-split-media,
+    .lesson-image,
+    .lesson-code-frame,
+    .lesson-media-figure,
+    .lesson-image-focus img{
+        width:100% !important;
+        max-width:100% !important;
+    }
+    .lesson-image-focus{
+        gap:12px !important;
+        min-height:auto !important;
+        padding-inline:0;
+    }
+    .lesson-image-focus figure{
+        width:100% !important;
+        min-width:0 !important;
+    }
+    .lesson-image-focus figure > div{
+        width:100% !important;
+        aspect-ratio:16/9 !important;
+    }
+    .lesson-paragraph{
+        max-width:100% !important;
+        word-break:break-word;
+        overflow-wrap:anywhere;
+        hyphens:auto;
+    }
+    .lesson-grid-cards{
+        grid-template-columns:1fr !important;
+    }
+    .sqz-row{
+        grid-template-columns:1fr !important;
+    }
+}
 </style>
-<div class="slide-render lesson-slide lesson-slide--{{ $layout }}">
+<div class="slide-render lesson-slide lesson-slide--{{ $layout }}" style="{{ $backgroundStyle }}">
     @if($isSummarySlide)
         @include('courses.partials.slides.summary', ['summary' => (array) ($slide['summary'] ?? [])])
     @else
@@ -260,7 +351,7 @@ HTML;
                     $dragTargets = array_values(array_unique(array_filter($dragTargets, fn ($v) => trim($v) !== '')));
                     $inputName = 'sqz-opt-' . md5((string) ($slide['title'] ?? '') . '|' . (string) ($slide['question_prompt'] ?? ''));
                 @endphp
-                <div class="sqz-wrap lesson-interactive-panel" data-sqz-question data-sqz-type="{{ $interactionType }}">
+                <div class="sqz-wrap lesson-interactive-panel" data-sqz-question data-sqz-type="{{ $interactionType }}" @if($interactionType === 'short_answer' && !empty($question['answer'])) data-sqz-answer="{{ $question['answer'] }}" @endif>
                     @if($interactionType === 'short_answer' && !empty($question['answer']))
                         <input type="hidden" data-sqz-answer value="{{ $question['answer'] }}">
                     @endif
@@ -302,8 +393,11 @@ HTML;
                     @elseif($interactionType === 'drag_drop')
                         <div class="sqz-stack">
                             @foreach($items as $it)
-                                @php $txt = is_array($it) ? (string) ($it['text'] ?? '') : (string) $it; @endphp
-                                <div class="sqz-row">
+                                @php
+                                    $txt = is_array($it) ? (string) ($it['text'] ?? '') : (string) $it;
+                                    $expected = is_array($it) ? (string) ($it['target'] ?? ($it['answer'] ?? '')) : '';
+                                @endphp
+                                <div class="sqz-row" data-sqz-row data-sqz-answer="{{ $expected }}">
                                     <input class="form-control" type="text" readonly value="{{ $txt }}">
                                     <select class="form-control" data-sqz-input>
                                         <option value="">Eşleştir...</option>
@@ -317,7 +411,8 @@ HTML;
                     @elseif($interactionType === 'matching')
                         <div class="sqz-stack">
                             @foreach($pairs as $pair)
-                                <div class="sqz-row">
+                                @php $expected = (string) ($pair['right'] ?? ($pair['answer'] ?? '')); @endphp
+                                <div class="sqz-row" data-sqz-row data-sqz-answer="{{ $expected }}">
                                     <input class="form-control" type="text" readonly value="{{ (string) ($pair['left'] ?? '') }}">
                                     <input class="form-control" type="text" value="{{ (string) ($pair['right'] ?? '') }}" data-sqz-input>
                                 </div>
@@ -330,8 +425,12 @@ HTML;
                     @elseif($interactionType === 'checklist')
                         <div class="sqz-grid">
                             @foreach($items as $i => $it)
-                                @php $txt = is_array($it) ? (string) ($it['text'] ?? '') : (string) $it; $style = $palette[$i % 4]; @endphp
-                                <label class="sqz-opt {{ $style['cls'] }}" style="font-size:18px" data-sqz-option>
+                                @php
+                                    $txt = is_array($it) ? (string) ($it['text'] ?? '') : (string) $it;
+                                    $style = $palette[$i % 4];
+                                    $isCorrect = is_array($it) ? $isTruthyCorrect($it) : false;
+                                @endphp
+                                <label class="sqz-opt {{ $style['cls'] }}" style="font-size:18px" data-sqz-option data-sqz-correct="{{ $isCorrect ? '1' : '0' }}">
                                     <input type="checkbox" data-sqz-input>
                                     <span class="sqz-shape">{{ $style['shape'] }}</span>
                                     <span>{{ $txt }}</span>

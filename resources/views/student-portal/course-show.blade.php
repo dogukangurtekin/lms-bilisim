@@ -11,7 +11,41 @@
     }
 @endphp
 
-<div class="card" style="padding:16px">
+<style>
+    .course-show-shell{overflow-x:hidden;max-width:100vw}
+    .course-show-shell *{box-sizing:border-box}
+    .course-show-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:12px;margin:0 0 12px;min-width:0}
+    .course-show-title{margin:0;font-size:16px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .course-show-stage{min-height:80vh;overflow:hidden;margin:0 0 12px;background:#fff;max-width:100%}
+    .course-show-shell img,.course-show-shell video,.course-show-shell iframe,.course-show-shell table{max-width:100%}
+    .course-show-shell .lesson-slide,.course-show-shell .lesson-slide-shell,.course-show-shell .lesson-card,.course-show-shell .lesson-split,.course-show-shell .lesson-split-card,.course-show-shell .lesson-split-body,.course-show-shell .lesson-image-focus,.course-show-shell .lesson-grid-cards,.course-show-shell .sqz-wrap{min-width:0;max-width:100%}
+    .course-show-shell .sqz-opt.is-correct{outline:3px solid rgba(34,197,94,.95) !important;box-shadow:0 0 0 4px rgba(34,197,94,.12),inset 0 -4px 0 rgba(0,0,0,.16) !important}
+    .course-show-shell .sqz-opt.is-wrong{outline:3px solid rgba(239,68,68,.95) !important;box-shadow:0 0 0 4px rgba(239,68,68,.12),inset 0 -4px 0 rgba(0,0,0,.16) !important}
+    .course-show-shell .sqz-row.is-correct input,.course-show-shell .sqz-row.is-correct select{border-color:#22c55e !important;box-shadow:0 0 0 3px rgba(34,197,94,.12) !important}
+    .course-show-shell .sqz-row.is-wrong input,.course-show-shell .sqz-row.is-wrong select{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.12) !important}
+    @media (max-width:768px){
+        .course-show-shell{padding:10px !important}
+        .course-show-header{grid-template-columns:1fr;gap:10px}
+        .course-show-header > *{width:100%}
+        .course-show-header .btn,.course-show-header .badge{justify-self:stretch}
+        .course-show-title{white-space:normal;overflow:visible;text-overflow:clip;font-size:14px;line-height:1.4}
+        .course-show-stage{min-height:auto}
+        .course-show-shell .lesson-slide-title{font-size:clamp(22px,6vw,34px);line-height:1.1;word-break:break-word;overflow-wrap:anywhere}
+        .course-show-shell .lesson-slide-subtitle,.course-show-shell .lesson-paragraph{font-size:clamp(14px,3.8vw,17px);line-height:1.6;word-break:break-word;overflow-wrap:anywhere;hyphens:auto}
+        .course-show-shell .lesson-grid-cards,.course-show-shell .lesson-split{grid-template-columns:1fr !important}
+        .course-show-shell .lesson-split-media,.course-show-shell .lesson-image,.course-show-shell .lesson-code-frame,.course-show-shell .lesson-media-figure,.course-show-shell .lesson-image-focus img,.course-show-shell .lesson-image-focus iframe{width:100% !important;max-width:100% !important}
+        .course-show-shell .lesson-image-focus{gap:12px !important;min-height:auto !important}
+        .course-show-shell .lesson-image-focus figure{width:100% !important;min-width:0 !important}
+        .course-show-shell .lesson-image-focus figure > div{width:100% !important}
+        .course-show-shell .sqz-q{font-size:clamp(20px,5vw,26px) !important;line-height:1.25}
+        .course-show-shell .sqz-opt{font-size:clamp(15px,4vw,18px) !important;padding:14px 12px !important}
+        .course-show-shell .sqz-grid,.course-show-shell .sqz-row{grid-template-columns:1fr !important}
+        .course-show-shell .lesson-split-card,.course-show-shell .lesson-card{width:100%}
+        .course-show-shell .lesson-split-body{width:100%}
+    }
+</style>
+
+<div class="card course-show-shell" style="padding:16px">
     @include('courses.partials.theme-css')
 
     @if(empty($slides))
@@ -19,13 +53,13 @@
             <strong>Bu ders için henüz slide paylaşılmadı.</strong>
         </div>
     @else
-        <div style="display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:12px;margin:0 0 12px">
+        <div class="course-show-header">
             <a class="btn" href="{{ url('/courses') }}" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-size:15px;font-weight:700">
                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
                 Derslerime Dön
             </a>
 
-            <p style="margin:0;font-size:16px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <p class="course-show-title">
                 Ders: {{ $course->name }}
             </p>
 
@@ -42,7 +76,7 @@
             </button>
         </div>
 
-        <div id="student-course-slide-stage" class="card slide-theme" style="min-height:80vh;overflow:hidden;margin:0 0 12px;background:#fff"></div>
+        <div id="student-course-slide-stage" class="card slide-theme course-show-stage"></div>
 
         @if(empty($previewMode))
             <form id="student-course-complete-form" method="POST" action="{{ route('student.portal.course.complete', $course) }}" style="display:none">
@@ -199,6 +233,26 @@
                     const optionLabels = qRoot.querySelectorAll('[data-sqz-option]');
                     const currentXp = Math.max(0, Number(slides[idx]?.dataset?.slideXp || 0));
                     const isSummary = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
+                    const normalize = (value) => String(value || '')
+                        .replace(/<[^>]*>/g, ' ')
+                        .replace(/&nbsp;/gi, ' ')
+                        .replace(/&amp;/gi, '&')
+                        .replace(/&lt;/gi, '<')
+                        .replace(/&gt;/gi, '>')
+                        .replace(/&quot;/gi, '"')
+                        .replace(/&#39;/gi, '\'')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .toLowerCase();
+                    const setOptionState = (label, state) => {
+                        if (!label) return;
+                        label.classList.remove('is-correct', 'is-wrong');
+                        if (state) label.classList.add(state);
+                    };
+                    const correctMessage = (baseMessage) => {
+                        const xpText = currentXp > 0 ? ` +${currentXp} XP` : '';
+                        return `${baseMessage}${xpText}`;
+                    };
                     const showFeedback = (isCorrect, message, autoAdvance = false) => {
                         if (!feedbackEl) return;
                         feedbackEl.classList.remove('is-correct', 'is-wrong');
@@ -233,6 +287,50 @@
                         }
                     };
 
+                    const evaluateSelectedOption = () => {
+                        const selected = Array.from(optionLabels).find((x) => {
+                            const i = x.querySelector('input[type="radio"], input[type="checkbox"]');
+                            return i && i.checked;
+                        });
+                        optionLabels.forEach((label) => setOptionState(label, null));
+                        if (!selected) {
+                            showFeedback(null, '');
+                            return;
+                        }
+                        const isCorrect = String(selected.getAttribute('data-sqz-correct') || '0') === '1';
+                        setOptionState(selected, isCorrect ? 'is-correct' : 'is-wrong');
+                        showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
+                    };
+
+                    const evaluateRowInputs = () => {
+                        const rows = Array.from(qRoot.querySelectorAll('[data-sqz-row]'));
+                        if (!rows.length) return false;
+                        let allCorrect = true;
+                        let hasAnyValue = false;
+                        let allAnswered = true;
+                        rows.forEach((row) => {
+                            row.classList.remove('is-correct', 'is-wrong');
+                            const expected = normalize(row.getAttribute('data-sqz-answer'));
+                            const input = row.querySelector('input[data-sqz-input], select[data-sqz-input]');
+                            if (!input) return;
+                            const value = normalize(input.value);
+                            if (!value) {
+                                allAnswered = false;
+                                return;
+                            }
+                            hasAnyValue = true;
+                            const isCorrect = expected !== '' && value === expected;
+                            row.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
+                            if (!isCorrect) allCorrect = false;
+                        });
+                        if (!hasAnyValue || !allAnswered) {
+                            showFeedback(null, '');
+                            return true;
+                        }
+                        showFeedback(allCorrect, allCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', allCorrect);
+                        return true;
+                    };
+
                     optionLabels.forEach((label) => {
                         const input = label.querySelector('input[type="radio"], input[type="checkbox"]');
                         if (!input) return;
@@ -245,16 +343,7 @@
                             }
                             const type = String(qRoot.getAttribute('data-sqz-type') || 'none');
                             if (type === 'multiple_choice' || type === 'true_false') {
-                                const selected = Array.from(optionLabels).find((x) => {
-                                    const i = x.querySelector('input[type="radio"], input[type="checkbox"]');
-                                    return i && i.checked;
-                                });
-                                if (!selected) {
-                                    showFeedback(null, '');
-                                    return;
-                                }
-                                const isCorrect = String(selected.getAttribute('data-sqz-correct') || '0') === '1';
-                                showFeedback(isCorrect, isCorrect ? 'Doğru cevap.' : 'Yanlış cevap.', isCorrect);
+                                evaluateSelectedOption();
                             }
                         };
                         input.addEventListener('change', sync);
@@ -263,15 +352,15 @@
 
                     if (String(qRoot.getAttribute('data-sqz-type') || 'none') === 'short_answer') {
                         const input = qRoot.querySelector('input[data-sqz-input]');
-                        const correctAnswer = String(qRoot.getAttribute('data-sqz-answer') || '').trim().toLowerCase();
+                        const correctAnswer = normalize(qRoot.getAttribute('data-sqz-answer') || qRoot.querySelector('input[data-sqz-answer]')?.value || '');
                         const onInput = () => {
-                            const value = String(input?.value || '').trim().toLowerCase();
+                            const value = normalize(input?.value || '');
                             if (!value) {
                                 showFeedback(null, '');
                                 return;
                             }
                             const isCorrect = correctAnswer !== '' && value === correctAnswer;
-                            showFeedback(isCorrect, isCorrect ? 'Doğru cevap.' : 'Yanlış cevap.', isCorrect);
+                            showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
                         };
                         input?.addEventListener('input', onInput);
                         onInput();
@@ -280,10 +369,41 @@
                     if (String(qRoot.getAttribute('data-sqz-type') || 'none') === 'checklist') {
                         const inputs = Array.from(qRoot.querySelectorAll('input[type="checkbox"][data-sqz-input]'));
                         const onChange = () => {
-                            const allChecked = inputs.length > 0 && inputs.every((el) => el.checked);
-                            showFeedback(allChecked, allChecked ? 'Doğru cevap.' : 'Yanlış cevap.', allChecked);
+                            const optionLabels = Array.from(qRoot.querySelectorAll('[data-sqz-option]'));
+                            let hasAnswered = false;
+                            let allCorrect = true;
+                            optionLabels.forEach((label) => {
+                                const input = label.querySelector('input[type="checkbox"][data-sqz-input]');
+                                if (!input) return;
+                                const shouldBeChecked = String(label.getAttribute('data-sqz-correct') || '0') === '1';
+                                const isChecked = !!input.checked;
+                                label.classList.remove('is-correct', 'is-wrong');
+                                if (isChecked) hasAnswered = true;
+                                if (isChecked === shouldBeChecked) {
+                                    if (shouldBeChecked) label.classList.add('is-correct');
+                                } else {
+                                    if (isChecked) label.classList.add('is-wrong');
+                                    allCorrect = false;
+                                }
+                            });
+                            if (!hasAnswered) {
+                                showFeedback(null, '');
+                                return;
+                            }
+                            showFeedback(allCorrect, allCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', allCorrect);
                         };
                         inputs.forEach((input) => input.addEventListener('change', onChange));
+                        onChange();
+                    }
+
+                    if (String(qRoot.getAttribute('data-sqz-type') || 'none') === 'drag_drop' || String(qRoot.getAttribute('data-sqz-type') || 'none') === 'matching') {
+                        const inputs = Array.from(qRoot.querySelectorAll('[data-sqz-row] input[data-sqz-input], [data-sqz-row] select[data-sqz-input]'));
+                        const onChange = () => {
+                            evaluateRowInputs();
+                        };
+                        inputs.forEach((input) => input.addEventListener('change', onChange));
+                        inputs.forEach((input) => input.addEventListener('input', onChange));
+                        onChange();
                     }
                 }
 

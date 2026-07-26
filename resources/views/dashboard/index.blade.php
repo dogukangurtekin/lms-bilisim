@@ -12,6 +12,23 @@
         }
     }
 @endphp
+<style>
+    .dashboard-sidebar-stack{
+        display:flex;
+        flex-direction:column;
+        gap:1.35rem;
+    }
+    .dashboard-widget-sidebar-grid{
+        display:grid;
+        gap:1.35rem;
+    }
+    .dashboard-widget-sidebar-grid .dashboard-widget{
+        width:100%;
+    }
+    .dashboard-leaderboard-panel{
+        margin-top:0;
+    }
+</style>
 <div class="dashboard-shell" data-dashboard-shell>
     <section class="class-tabs-strip" aria-label="Sınıf sekmeleri">
         <a class="class-tab {{ $selectedClassId === 0 ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
@@ -57,26 +74,29 @@
 
                 <article class="dashboard-widget widget-span-4" data-widget-key="active_students" draggable="true">
                     <div class="widget-head">
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <strong>Aktif Öğrenci</strong>
-                            <span style="min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:#f8fbff;border:1px solid #dbeafe;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#0f172a;box-shadow:0 6px 16px rgba(15,23,42,.06);">{{ $dashboard['summary']['active_students'] }}</span>
-                        </div>
+                        <div><strong>Aktif Öğrenci</strong><span>Son 1 gün</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
                         <button type="button" class="widget-toggle" data-widget-toggle="active_students" aria-label="Gizle" title="Gizle">−</button>
                     </div>
                     @php
                         $activeTop3 = array_slice($dashboard['summary']['active_students_top3'] ?? [], 0, 3);
                     @endphp
                     @if($activeTop3 !== [])
-                        <div style="margin-top:10px;padding:10px 12px;border-radius:16px;background:#f8fbff;border:1px solid #dbeafe">
-                            <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">{{ count($activeTop3) }} öğrenci</div>
-                            <div style="display:grid;gap:4px;">
+                        <div class="metric-card metric-card--stacked">
+                            <strong>{{ $dashboard['summary']['active_students'] }}</strong>
+                            <span>Çevrimiçi</span>
+                            <div class="active-top3-list">
                                 @foreach($activeTop3 as $studentRow)
-                                    <div style="font-size:12px;line-height:1.35;color:#334155;">
-                                        <strong style="font-size:12px;color:#0f172a;">{{ $loop->iteration }}.</strong>
+                                    <div class="active-top3-item">
+                                        <strong>{{ $loop->iteration }}.</strong>
                                         <span>{{ $studentRow['name'] ?? '-' }}</span>
                                     </div>
                                 @endforeach
                             </div>
+                        </div>
+                    @else
+                        <div class="metric-card">
+                            <strong>{{ $dashboard['summary']['active_students'] }}</strong>
+                            <span>Çevrimiçi</span>
                         </div>
                     @endif
                     <span class="widget-resize-handle" aria-hidden="true"></span>
@@ -145,6 +165,12 @@
                 </article>
 
                 @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
+                    @php
+                        $chartItems = (array) ($chart['items'] ?? []);
+                        if (($chart['type'] ?? '') === 'column' || in_array($key, ['chart_student_lesson_completion'], true)) {
+                            $chartItems = array_slice($chartItems, 0, 5);
+                        }
+                    @endphp
                     <article
                         class="dashboard-widget widget-span-4 dashboard-chart-widget"
                         data-widget-key="chart_{{ $key }}"
@@ -165,7 +191,7 @@
                                     <div class="chart-donut-hole"></div>
                                 </div>
                                 <div class="chart-legend">
-                                    @foreach((array) ($chart['items'] ?? []) as $item)
+                                    @foreach($chartItems as $item)
                                         <div class="chart-legend-item">
                                             <span class="chart-dot chart-dot-{{ $loop->index + 1 }}"></span>
                                             <strong>{{ $item['label'] ?? '-' }}</strong>
@@ -175,7 +201,7 @@
                                 </div>
                             @elseif(($chart['type'] ?? '') === 'radial')
                                 <div class="chart-radial">
-                                    @foreach((array) ($chart['items'] ?? []) as $item)
+                                    @foreach($chartItems as $item)
                                         <div class="chart-radial-row">
                                             <div class="chart-radial-label">{{ $item['label'] ?? '-' }}</div>
                                             <div class="chart-radial-bar"><i style="width:{{ (int) ($item['percent'] ?? 0) }}%"></i></div>
@@ -185,7 +211,7 @@
                                 </div>
                             @elseif(($chart['type'] ?? '') === 'column')
                                 @php
-                                    $columnItems = (array) ($chart['items'] ?? []);
+                                    $columnItems = $chartItems;
                                     $columnMax = max(1, max(array_map(fn ($item) => (int) ($item['value'] ?? $item['percent'] ?? 0), $columnItems ?: [[ 'value' => 0 ]])));
                                 @endphp
                                 <div class="chart-column">
@@ -232,7 +258,7 @@
                         <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">−</button>
                     </div>
                     <div class="teacher-top10-list">
-                        @forelse(($dashboard['top_students'] ?? []) as $row)
+                        @forelse(array_slice(($dashboard['top_students'] ?? []), 0, 5) as $row)
                             <div class="teacher-top10-item">
                                 <div class="teacher-top10-rank rank-{{ (int) ($row['rank'] ?? 0) }}">{{ $row['rank'] }}</div>
                                 <div class="teacher-top10-main">
@@ -301,6 +327,7 @@
         avg_completion: { title: 'Ortalama Not', span: 3, order: 70 },
         xp: { title: 'Toplam XP', span: 3, order: 80 },
         chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
+        chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 4, order: 95, zone: 'sidebar' },
         leaderboard: { title: 'Başarı Listesi', span: 6, order: 100 },
     };
 
