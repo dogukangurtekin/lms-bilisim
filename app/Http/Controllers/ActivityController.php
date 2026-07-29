@@ -2,8 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Teacher;
+use App\Models\TeacherGameAssignment;
+use App\Models\Student;
+use App\Services\StudentGameAccessService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+
 class ActivityController extends Controller
 {
+    public function __construct(
+        private StudentGameAccessService $gameAccess
+    ) {
+    }
+
     public static function games(): array
     {
         return [
@@ -21,6 +33,107 @@ class ActivityController extends Controller
 
     public function index()
     {
-        return view('activities.index', ['games' => self::games()]);
+        $user = auth()->user();
+        $isAdmin = (bool) $user?->hasRole('admin');
+        $isTeacher = (bool) $user?->hasRole('teacher');
+        $isStudent = (bool) ($user?->student);
+        $assignedGameActivities = collect();
+        $teacherGameAssignmentsByTeacher = collect();
+        $visibleGames = self::games();
+        if ($isStudent && $user?->student instanceof Student) {
+            $allowedSlugs = $this->gameAccess->allowedSlugsForStudent($user->student);
+            $visibleGames = array_intersect_key(self::games(), array_flip($allowedSlugs));
+        }
+        if ($isTeacher && $user?->teacher) {
+            $assignedGameActivities = TeacherGameAssignment::query()
+                ->where('teacher_id', $user->teacher->id)
+                ->orderByDesc('id')
+                ->get();
+        }
+        if ($isAdmin) {
+            $teacherGameAssignmentsByTeacher = TeacherGameAssignment::query()
+                ->orderBy('teacher_id')
+                ->orderBy('game_slug')
+                ->get(['teacher_id', 'game_slug'])
+                ->groupBy('teacher_id')
+                ->map(fn ($rows) => $rows->pluck('game_slug')->values()->all());
+        }
+
+        return view('activities.index', [
+            'games' => $visibleGames,
+            'isAdmin' => $isAdmin,
+            'isTeacher' => $isTeacher,
+            'isStudent' => $isStudent,
+            'assignedGameActivities' => $assignedGameActivities,
+            'teacherGameAssignmentsByTeacher' => $teacherGameAssignmentsByTeacher,
+            'teachers' => Teacher::query()->with('user:id,name')->orderBy('id')->get(['id', 'user_id']),
+        ]);
+    }
+
+    public function assignTeacherBulk(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $games = self::games();
+        $validated = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'game_slugs' => ['required', 'array', 'min:1'],
+            'game_slugs.*' => ['string', 'max:100'],
+        ]);
+
+        $teacherId = (int) $validated['teacher_id'];
+        $slugs = collect($validated['game_slugs'])
+            ->map(fn ($slug) => trim((string) $slug))
+            ->filter(fn ($slug) => $slug !== '' && isset($games[$slug]))
+            ->unique()
+            ->values();
+
+        if ($slugs->isEmpty()) {
+            return back()->with('error', 'Gecerli oyun secimi bulunamadi.');
+        }
+
+        foreach ($slugs as $slug) {
+            TeacherGameAssignment::query()->updateOrCreate(
+                ['teacher_id' => $teacherId, 'game_slug' => $slug],
+                [
+                    'game_name' => $games[$slug]['name'],
+                    'assigned_by' => auth()->id(),
+                ]
+            );
+        }
+
+        return back()->with('ok', count($slugs) . ' oyun/etkinlik ogretmene atandi.');
+    }
+
+    public function unassignTeacherBulk(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $data = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+        ]);
+
+        $deleted = TeacherGameAssignment::query()
+            ->where('teacher_id', (int) $data['teacher_id'])
+            ->delete();
+
+        return back()->with('ok', $deleted > 0
+            ? 'Seçili öğretmenden tüm atamalar kaldırıldı.'
+            : 'Seçili öğretmende atanmış oyun/etkinlik bulunamadı.');
+    }
+
+    public function studentAllowedSlug(string $slug): bool
+    {
+        $user = auth()->user();
+        if (! $user?->student) {
+            return true;
+        }
+
+        $student = $user->student;
+        if (! $student) {
+            return false;
+        }
+
+        return $this->gameAccess->canPlay($student, $slug);
     }
 }

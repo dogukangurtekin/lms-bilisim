@@ -39,16 +39,17 @@
     }
     .course-search-layout {
         display: grid;
-        gap: .75rem;
+        gap: .6rem;
         grid-template-columns: minmax(0, 1fr);
+        align-items: start;
     }
     .course-search-layout input[type="text"] {
-        height: 3.5rem;
+        height: 3.25rem;
         border-radius: 14px;
         border: 1px solid #d1d5db;
         background: #fff;
-        padding: 0 1rem;
-        font-size: 1.05rem;
+        padding: 0 .9rem;
+        font-size: .98rem;
         color: #1f2937;
         outline: none;
     }
@@ -58,22 +59,27 @@
     }
     .course-action-grid {
         display: grid;
-        gap: .75rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .55rem;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        align-items: stretch;
     }
     .course-action-grid a,
     .course-action-grid button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 3.5rem;
+        width: 100%;
+        min-height: 3.25rem;
+        padding: .45rem .85rem;
         border-radius: 14px;
-        font-size: 1.05rem;
+        font-size: .98rem;
         font-weight: 700;
         color: #fff;
         text-decoration: none;
         border: 0;
         cursor: pointer;
+        text-align: center;
+        white-space: nowrap;
     }
     .btn-create { background: #5b21b6; }
     .btn-upload { background: #0f766e; }
@@ -86,10 +92,15 @@
     }
     @media (min-width: 768px) {
         .course-search-layout {
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 760px);
         }
         .course-action-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+    }
+    @media (min-width: 1200px) {
+        .course-search-layout {
+            grid-template-columns: minmax(0, 1fr) minmax(480px, 820px);
         }
     }
     @media (min-width: 640px) {
@@ -131,6 +142,9 @@
                 <a href="{{ route('courses.create') }}" class="btn-create">Ders Oluştur</a>
                 <button id="course-import-open" type="button" class="btn-upload">Yükle</button>
                 <a href="{{ route('courses.export-all') }}" class="btn-download">İndir</a>
+                @if(auth()->user()?->hasRole('admin','teacher'))
+                    <button type="button" id="course-bulk-assign-open" class="btn" style="background:#f97316;color:#fff">Ders Ata</button>
+                @endif
                 @if(auth()->user()?->hasRole('admin'))
                     <button type="submit" form="course-destroy-all-form" class="btn-delete">Tüm Dersleri Sil</button>
                 @endif
@@ -260,13 +274,67 @@
     </div>
 </div>
 
+<div id="course-bulk-assign-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:3050;padding:16px;">
+    <div style="width:min(96vw,920px);max-height:88vh;overflow:hidden;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);display:grid;grid-template-rows:auto auto 1fr auto;gap:14px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+                <h3 style="margin:0;font-size:22px;font-weight:800;color:#111827;">Toplu Ders Atama</h3>
+                <p id="course-bulk-assign-title" style="margin:6px 0 0;color:#475569;">Bir öğretmen seçin ve dersleri topluca atayın.</p>
+            </div>
+            <button type="button" id="course-bulk-assign-close" style="height:40px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Kapat</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;">
+            <div>
+                <label for="bulk-course-teacher" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Öğretmen Seç</label>
+                <select id="bulk-course-teacher" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:12px;padding:0 12px;">
+                    <option value="">Öğretmen seçiniz</option>
+                    @foreach(($teachers ?? collect()) as $teacher)
+                        <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Öğretmen #' . $teacher->id) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff;white-space:nowrap;">
+                <input type="checkbox" id="bulk-course-select-all" style="width:auto;margin:0">
+                <span>Tümünü seç</span>
+            </label>
+        </div>
+        <div id="bulk-course-list" style="overflow:auto;border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#f8fafc;">
+            <div style="display:grid;gap:10px;">
+                @foreach(($assignableCourses ?? collect()) as $course)
+                    <label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
+                        <input type="checkbox" class="bulk-course-checkbox" value="{{ $course->id }}" data-course-teacher="{{ (int) ($course->teacher_id ?? 0) }}" style="width:auto;margin:0;">
+                        <span style="flex:1 1 auto;font-weight:700;color:#111827;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">{{ $course->name }}</span>
+                        <span style="flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;">{{ (int) ($course->teacher_id ?? 0) > 0 ? 'Atanmış' : 'Boş' }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+        <form id="course-bulk-assign-form" method="POST" action="{{ route('courses.assign-teacher.bulk') }}" style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">
+            @csrf
+            <input type="hidden" name="teacher_id" id="bulk-course-teacher-input">
+            <div id="bulk-course-hidden-inputs"></div>
+            <button type="button" id="course-bulk-assign-cancel" style="height:44px;padding:0 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">İptal</button>
+            <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaydet</button>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const importOpenBtn = document.getElementById('course-import-open');
     const importForm = document.getElementById('course-import-form');
     const importFile = document.getElementById('course-import-file');
     const assignModal = document.getElementById('course-assign-modal');
+    const bulkAssignModal = document.getElementById('course-bulk-assign-modal');
     const assignTitle = document.getElementById('course-assign-title');
+    const bulkAssignOpen = document.getElementById('course-bulk-assign-open');
+    const bulkAssignClose = document.getElementById('course-bulk-assign-close');
+    const bulkAssignCancel = document.getElementById('course-bulk-assign-cancel');
+    const bulkAssignTeacher = document.getElementById('bulk-course-teacher');
+    const bulkAssignTeacherInput = document.getElementById('bulk-course-teacher-input');
+    const bulkAssignList = document.getElementById('bulk-course-list');
+    const bulkCourseHiddenInputs = document.getElementById('bulk-course-hidden-inputs');
+    const bulkSelectAll = document.getElementById('bulk-course-select-all');
     const assignForms = {
         teacher: document.getElementById('course-assign-form-teacher'),
         class: document.getElementById('course-assign-form-class'),
@@ -303,6 +371,32 @@ document.addEventListener('DOMContentLoaded', () => {
         assignModal.style.display = 'none';
     };
 
+    const openBulkAssignModal = () => {
+        if (!bulkAssignModal) return;
+        bulkAssignModal.style.display = 'flex';
+    };
+
+    const closeBulkAssignModal = () => {
+        if (!bulkAssignModal) return;
+        bulkAssignModal.style.display = 'none';
+    };
+
+    const syncBulkHiddenInputs = () => {
+        if (!bulkCourseHiddenInputs) return;
+        bulkCourseHiddenInputs.innerHTML = '';
+        const selectedTeacherId = bulkAssignTeacher?.value || '';
+        if (bulkAssignTeacherInput) {
+            bulkAssignTeacherInput.value = selectedTeacherId;
+        }
+        Array.from(document.querySelectorAll('.bulk-course-checkbox:checked')).forEach((checkbox) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'course_ids[]';
+            input.value = checkbox.value;
+            bulkCourseHiddenInputs.appendChild(input);
+        });
+    };
+
     if (importOpenBtn && importForm && importFile) {
         importOpenBtn.addEventListener('click', () => {
             importFile.value = '';
@@ -319,6 +413,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-assign-course-id]').forEach((btn) => {
         btn.addEventListener('click', () => openAssignModal(btn));
+    });
+
+    bulkAssignOpen?.addEventListener('click', openBulkAssignModal);
+    bulkAssignClose?.addEventListener('click', closeBulkAssignModal);
+    bulkAssignCancel?.addEventListener('click', closeBulkAssignModal);
+    bulkAssignModal?.addEventListener('click', (event) => {
+        if (event.target === bulkAssignModal) closeBulkAssignModal();
+    });
+
+    bulkAssignTeacher?.addEventListener('change', syncBulkHiddenInputs);
+    bulkSelectAll?.addEventListener('change', () => {
+        const checked = bulkSelectAll.checked;
+        document.querySelectorAll('.bulk-course-checkbox').forEach((checkbox) => {
+            checkbox.checked = checked;
+        });
+        syncBulkHiddenInputs();
+    });
+    bulkAssignList?.addEventListener('change', (event) => {
+        if (event.target.closest('.bulk-course-checkbox')) {
+            syncBulkHiddenInputs();
+            const total = document.querySelectorAll('.bulk-course-checkbox').length;
+            const checked = document.querySelectorAll('.bulk-course-checkbox:checked').length;
+            if (bulkSelectAll) bulkSelectAll.checked = total > 0 && total === checked;
+        }
+    });
+    document.getElementById('course-bulk-assign-form')?.addEventListener('submit', (event) => {
+        syncBulkHiddenInputs();
+        if (!bulkAssignTeacher?.value || document.querySelectorAll('.bulk-course-checkbox:checked').length === 0) {
+            event.preventDefault();
+            alert('Lütfen bir öğretmen ve en az bir ders seçin.');
+        }
     });
 
     assignTabs.forEach((tab) => {

@@ -1,4 +1,4 @@
-@php
+﻿@php
     $isEdit = isset($course);
     $initialPayload = old('lesson_payload');
     if ($initialPayload === null) {
@@ -132,6 +132,7 @@
         position:relative;
         color:var(--builder-text);
         padding:6px 0 24px;
+        transition:padding .18s ease, margin .18s ease;
     }
     .lesson-builder *{
         box-sizing:border-box;
@@ -320,6 +321,20 @@
         justify-content:center;
         flex:0 1 auto;
     }
+    .lesson-builder-top .actions .builder-fullscreen-btn{
+        background:linear-gradient(180deg,#2563eb 0%,#1d4ed8 100%);
+        color:#fff;
+        border-color:#1d4ed8;
+        box-shadow:0 12px 28px rgba(37,99,235,.22);
+        font-weight:800;
+        letter-spacing:.01em;
+        gap:8px;
+    }
+    .lesson-builder-top .actions .builder-fullscreen-btn:hover{
+        background:linear-gradient(180deg,#1d4ed8 0%,#1e40af 100%);
+        box-shadow:0 14px 32px rgba(37,99,235,.28);
+        transform:translateY(-1px);
+    }
     .lesson-builder-top > div:first-child{
         grid-template-columns:minmax(0,1fr) minmax(220px,300px) !important;
         gap:12px !important;
@@ -329,6 +344,87 @@
         grid-template-columns:minmax(250px,.9fr) minmax(0,1.8fr) minmax(240px,.95fr);
         gap:18px;
         align-items:start;
+    }
+    .lesson-builder.is-fullscreen{
+        position:fixed;
+        inset:0;
+        z-index:9990;
+        padding:14px;
+        background:linear-gradient(180deg,#eef5ff 0%,#f7fbff 42%,#edf3fb 100%);
+        overflow:auto;
+    }
+    .lesson-builder.is-fullscreen .lesson-builder-top{
+        position:sticky;
+        top:0;
+        z-index:30;
+        backdrop-filter:blur(14px);
+        -webkit-backdrop-filter:blur(14px);
+    }
+    .lesson-builder.is-fullscreen .lesson-builder-grid{
+        grid-template-columns:84px minmax(0,2.15fr) minmax(280px,.9fr);
+    }
+    .lesson-builder.is-fullscreen .builder-left{
+        padding:12px 8px;
+        min-height:calc(100vh - 100px);
+    }
+    .lesson-builder.is-fullscreen .builder-left h4,
+    .lesson-builder.is-fullscreen .builder-left .btn{
+        text-align:center;
+    }
+    .lesson-builder.is-fullscreen .builder-left h4{
+        font-size:11px;
+        line-height:1.2;
+        margin-bottom:10px;
+        letter-spacing:.02em;
+    }
+    .lesson-builder.is-fullscreen .builder-left .btn{
+        min-height:42px;
+        padding:0 8px;
+        border-radius:14px;
+        font-size:12px;
+    }
+    .lesson-builder.is-fullscreen .builder-left #slide_list{
+        gap:10px;
+        max-height:none;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-list-item{
+        grid-template-columns:1fr;
+        gap:8px;
+        padding:8px;
+        border-radius:16px;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-thumb{
+        width:100%;
+        height:44px;
+        border-radius:12px;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-meta-top,
+    .lesson-builder.is-fullscreen .builder-left .slide-preview-wrap{
+        display:block;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-preview-box{
+        display:none;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-layout,
+    .lesson-builder.is-fullscreen .builder-left .slide-preview-title,
+    .lesson-builder.is-fullscreen .builder-left .slide-preview-text{
+        display:none;
+    }
+    .lesson-builder.is-fullscreen .builder-left .slide-title{
+        font-size:12px;
+        white-space:normal;
+        line-height:1.25;
+    }
+    .lesson-builder.is-fullscreen .builder-center{
+        min-height:calc(100vh - 100px);
+    }
+    .lesson-builder.is-fullscreen .builder-right{
+        min-height:calc(100vh - 100px);
+    }
+    .lesson-builder.is-fullscreen .builder-tabs{
+        position:sticky;
+        top:76px;
+        z-index:20;
     }
     .lesson-builder-grid > :where(.builder-left,.builder-center,.builder-right){
         position:relative;
@@ -528,12 +624,13 @@
     .builder-panel [style*="layout_help_panel"],
     #layout_help_panel,
     #layout_editor_panel{
-        border-radius:18px !important;
+        border-radius:22px !important;
         border-color:var(--builder-border) !important;
-        background:linear-gradient(180deg,#f8fbff,#ffffff) !important;
+        background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%) !important;
+        box-shadow:0 18px 40px rgba(15,23,42,.06);
     }
     #layout_editor_fields > *{
-        margin-bottom:12px;
+        margin-bottom:14px;
     }
     .builder-right{
         display:flex;
@@ -547,6 +644,28 @@
     }
     .builder-right #cover_image_preview{
         object-fit:cover;
+    }
+    .lesson-builder .modal{
+        position:fixed;
+        inset:0;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        background:rgba(15,23,42,.48);
+        z-index:10050;
+        padding:18px;
+    }
+    .lesson-builder .modal.open{
+        display:flex;
+    }
+    .lesson-builder .modal-card{
+        width:min(92vw,980px);
+        max-width:980px;
+        max-height:90vh;
+        overflow:auto;
+    }
+    #cover-crop-modal{
+        z-index:10060;
     }
     #course-upload-progress{
         border-color:#d8e3f2 !important;
@@ -624,10 +743,11 @@
         padding:0 14px;
         border:1px solid #d7e4f6;
         border-radius:14px;
-        background:linear-gradient(180deg,#ffffff,#f7fbff);
+        background:linear-gradient(180deg,#ffffff 0%,#f7fbff 100%);
         color:#0f172a;
         font-weight:800;
         cursor:pointer;
+        box-shadow:0 8px 18px rgba(15,23,42,.04);
         transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
     .text-toolbar button:hover,
@@ -640,37 +760,53 @@
     .lesson-builder [data-rich-toolbar]{
         display:flex;
         flex-wrap:wrap;
-        gap:8px;
-        margin:10px 0 12px;
-        padding:10px;
+        gap:10px;
+        margin:12px 0 14px;
+        padding:14px;
         border:1px solid var(--builder-border);
-        border-radius:18px;
-        background:linear-gradient(180deg,#ffffff,#f8fbff);
+        border-radius:20px;
+        background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%);
+        box-shadow:0 12px 28px rgba(15,23,42,.05);
     }
     .lesson-builder [data-rich-toolbar] select,
     .lesson-builder [data-rich-toolbar] input[type="color"]{
         height:42px;
-        min-width:110px;
+        min-width:130px;
         border-radius:12px;
     }
     .lesson-builder [data-rich-toolbar] input[type="color"]{
         padding:3px;
     }
     .lesson-builder [contenteditable="true"]{
-        min-height:180px;
-        padding:16px;
+        min-height:220px;
+        padding:20px 22px;
         border:1px solid var(--builder-border);
-        border-radius:18px;
+        border-radius:20px;
         background:#fff;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.8), 0 18px 34px rgba(15,23,42,.05);
+        line-height:1.75;
+        font-size:16px;
     }
     .lesson-builder [contenteditable="true"]:focus{
         outline:none;
         border-color:var(--builder-primary);
-        box-shadow:0 0 0 4px rgba(37,99,235,.12);
+        box-shadow:0 0 0 4px rgba(37,99,235,.12), 0 18px 34px rgba(15,23,42,.05);
     }
     .lesson-builder #question_editor{
-        padding:10px 0 0;
+        padding:12px 0 0;
+    }
+    .lesson-builder .builder-panel h4,
+    .lesson-builder #layout_editor_panel strong{
+        letter-spacing:-.02em;
+    }
+    .lesson-builder .builder-panel label{
+        font-weight:800;
+        color:#1e293b;
+    }
+    .lesson-builder .builder-panel small,
+    .lesson-builder #layout_editor_hint{
+        color:#64748b;
+        line-height:1.6;
     }
     .lesson-builder .card,
     .lesson-builder .badge{
@@ -701,6 +837,9 @@
     .lesson-builder .builder-panel select{
         min-height:54px;
         line-height:1.35;
+    }
+    .lesson-builder .builder-panel :where(input:not([type=checkbox]):not([type=radio]),select,textarea){
+        box-shadow:none;
     }
     @media (max-width:1280px){
         .lesson-builder-grid{
@@ -791,6 +930,7 @@
         </div>
         <div class="actions">
             <a class="btn btn-ghost" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
+            <button class="btn builder-fullscreen-btn" type="button" id="builder_fullscreen_btn" aria-pressed="false" aria-label="Tam ekran düzenini aç"><span aria-hidden="true" style="font-size:18px;line-height:1">⤢</span><span>Tam Ekran</span></button>
             <button class="btn btn-primary" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
             <button class="btn btn-outline-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
         </div>
@@ -815,7 +955,8 @@
                 <input type="text" id="slide_title">
                 <label>Slide Layout</label>
                 <select id="slide_layout">
-                    <option value="split">Split Content - İki sütun</option>
+                    <option value="split" selected>Split Content - İki sütun</option>
+                    <option value="text">Text Only - Sadece metin</option>
                     <option value="image">Image Focus - Görsel odaklı</option>
                 </select>
                 <div id="layout_help_panel" style="margin:12px 0 14px;padding:14px;border:1px solid #dbe5f2;border-radius:14px;background:linear-gradient(180deg,#f8fbff,#ffffff)">
@@ -852,29 +993,6 @@
                 <label>HTML/CSS/JS Kodu</label>
                 <textarea id="slide_code" rows="9" placeholder="<div>...</div> <style>...</style> <script>...</script>"></textarea>
                 <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dbe5f2">
-                    <h4 style="margin:0 0 12px">Müfredat Bilgileri</h4>
-                    <label>Müfredat Başlığı</label>
-                    <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                        <div style="display:none" aria-hidden="true">
-                            <label>Ders No</label>
-                            <input type="number" id="curriculum_lesson_number" min="1" value="1" style="display:none" aria-hidden="true">
-                        </div>
-                        <div style="display:none" aria-hidden="true">
-                            <label>İlerleme (0-100)</label>
-                            <input type="number" id="curriculum_progress" min="0" max="100" value="0" style="display:none" aria-hidden="true">
-                        </div>
-                    </div>
-                    <label>Konu</label>
-                    <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
-                    <label>Kazanımlar (Her satır bir madde)</label>
-                    <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-                    <div style="display:none" aria-hidden="true">
-                    <div style="display:none" aria-hidden="true">
-                        <label>Etkinlikler (Her satır bir madde)</label>
-                        <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
-                    </div>
-                    </div>
                 </div>
                 <h4 style="margin:16px 0 10px;display:none">Tema Şablonları</h4>
                 <div style="display:none" aria-hidden="true">
@@ -896,13 +1014,15 @@
             </div>
 
             <div class="builder-panel" data-panel="question" style="display:none">
-                <label>İçerik Tipi</label>
-                <select id="slide_kind">
-                    <option value="topic">Konu Anlatımı</option>
-                    <option value="question">Soru Sayfası</option>
-                    <option value="task">Görev Sayfası</option>
-                    <option value="summary">Özet Sayfası</option>
-                </select>
+                <div style="display:none" aria-hidden="true">
+                    <label>İçerik Tipi</label>
+                    <select id="slide_kind">
+                        <option value="topic">Konu Anlatımı</option>
+                        <option value="question">Soru Sayfası</option>
+                        <option value="task">Görev Sayfası</option>
+                        <option value="summary">Özet Sayfası</option>
+                    </select>
+                </div>
                 <label>Etkilesim Tipi</label>
                 <select id="slide_interaction_type">
                     <option value="none">Yok</option>
@@ -923,7 +1043,7 @@
                             @endfor
                         </select>
                     </div>
-                    <div>
+                    <div style="display:none" aria-hidden="true">
                         <label>Süre</label>
                         <select id="slide_time_limit">
                             @for($s=10;$s<=60;$s+=5)
@@ -965,6 +1085,31 @@
             </select>
             <label>Ders Açıklaması</label>
             <textarea id="lesson_description" rows="3" placeholder="Ders başlığı altında gösterilecek açıklama"></textarea>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dbe5f2">
+                <h4 style="margin:0 0 12px">Müfredat Bilgileri</h4>
+                <label>Müfredat Başlığı</label>
+                <input type="text" id="curriculum_title" placeholder="Mobil Dünyaya İlk Adım: Arayüzü Keşfediyorum">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="display:none" aria-hidden="true">
+                        <label>Ders No</label>
+                        <input type="number" id="curriculum_lesson_number" min="1" value="1" style="display:none" aria-hidden="true">
+                    </div>
+                    <div style="display:none" aria-hidden="true">
+                        <label>İlerleme (0-100)</label>
+                        <input type="number" id="curriculum_progress" min="0" max="100" value="0" style="display:none" aria-hidden="true">
+                    </div>
+                </div>
+                <label>Konu</label>
+                <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
+                <label>Kazanımlar (Her satır bir madde)</label>
+                <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
+                <div style="display:none" aria-hidden="true">
+                <div style="display:none" aria-hidden="true">
+                    <label>Etkinlikler (Her satır bir madde)</label>
+                    <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                </div>
+                </div>
+            </div>
             <label>Slayt Arkaplanı</label>
             <div id="slide_background_picker" class="bg-option-grid">
                 <button type="button" class="bg-option is-active" data-bg-type="none" data-bg-value="">
@@ -1071,6 +1216,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const list = document.getElementById('slide_list');
     const addBtn = document.getElementById('add_slide_btn');
     const removeBtn = document.getElementById('remove_slide_btn');
+    const fullscreenBtn = document.getElementById('builder_fullscreen_btn');
     const previewBtn = document.getElementById('builder_preview_btn');
     const previewModal = document.getElementById('builder-preview-modal');
     const previewStage = document.getElementById('preview_slide_stage');
@@ -1122,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', function () {
         time_limit: document.getElementById('slide_time_limit'),
         double_points: document.getElementById('slide_double_points'),
     };
+    const builderShell = document.querySelector('.lesson-builder');
     const contentEditor = document.getElementById('slide_content_editor');
     const layoutHelpTitle = document.getElementById('layout_help_title');
     const layoutHelpBadge = document.getElementById('layout_help_badge');
@@ -1342,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (state.slides.length === 0) {
             state.slides.push({
                 title: 'Basliksiz Slide',
-                layout: 'auto',
+                layout: 'split',
                 xp: 0,
                 kind: 'topic',
                 interaction_type: 'none',
@@ -1554,7 +1701,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const question = q || {};
         const box = (inner) => `<div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-top:8px">${inner}</div>`;
         if (type === 'multiple_choice') {
-            const options = (question.options && question.options.length ? question.options : [{ text: '' }, { text: '' }, { text: '' }, { text: '' }]).slice(0, 6);
+            const options = Array.isArray(question.options) && question.options.length
+                ? question.options.slice(0, 6)
+                : [{ text: '' }, { text: '' }, { text: '' }, { text: '' }];
+            while (options.length < 4) options.push({ text: '' });
             const shapes = ['▲','◆','●','■','⬟','•'];
             const colors = ['sq-red','sq-blue','sq-yellow','sq-green','sq-blue','sq-red'];
             questionEditor.innerHTML = box(`<div class="sq-answers">${options.map((opt, i) => `
@@ -1770,6 +1920,7 @@ document.addEventListener('DOMContentLoaded', function () {
         curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
         curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + Number(s.xp || 0);
+        renderQuestionEditor(String(s.interaction_type || 'none'), s.question || {});
     }
     function normalizeCoverUrl(url) {
         const raw = String(url || '').trim();
@@ -1836,6 +1987,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function layoutDefinition(layout) {
         const defs = {
+            text: {
+                title: 'Text Only',
+                badge: 'Metin',
+                desc: 'Tek bir metin alanı kullanılır. Sayfa sade bir konu anlatımı veya açıklama slaydı olarak düzenlenir.',
+                wireframe: '<div style="height:160px;border-radius:14px;background:linear-gradient(180deg,#dbeafe,#eff6ff)"></div><div style="height:12px;border-radius:8px;background:#bfdbfe;width:72%;margin-top:10px"></div>',
+            },
             split: {
                 title: 'Split',
                 badge: '2 alan',
@@ -1861,7 +2018,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function readLayoutMeta() {
         const layout = String(fields.layout?.value || 'auto');
         const meta = { kind: layout };
-        if (layout === 'split') {
+        if (layout === 'text') {
+            meta.text = {
+                text: document.getElementById('layout_text_text')?.innerHTML || '',
+                html: document.getElementById('layout_text_html')?.value || document.getElementById('layout_text_text')?.innerHTML || '',
+            };
+        } else if (layout === 'split') {
             const splitRatio = String(document.getElementById('layout_split_ratio')?.value || '50-50');
             meta.left = {
                 type: document.getElementById('layout_left_type')?.value || 'text',
@@ -1920,6 +2082,69 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderLayoutEditor(layout, meta) {
         const def = layoutDefinition(layout);
         if (!layoutEditorHint) return;
+        if (layout === 'text') {
+            layoutEditorHint.textContent = def.desc + ' Zengin metin araçlarını kullanabilirsiniz.';
+            const text = meta?.text || {};
+            layoutEditorFields.innerHTML = `
+                <div style="display:grid;gap:16px;border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                    <strong style="display:block;margin-bottom:8px">Metin İçeriği</strong>
+                    <div class="split-text-toolbar" data-rich-toolbar="text" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#fff">
+                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
+                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
+                        <button type="button" class="btn" data-text-action="heading">H1</button>
+                        <button type="button" class="btn" data-text-action="subheading">H2</button>
+                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
+                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
+                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
+                        <button type="button" class="btn" data-text-action="divider">—</button>
+                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
+                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
+                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
+                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
+                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
+                        <button type="button" class="btn" data-text-action="indent">Gir</button>
+                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
+                        <select id="layout_text_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
+                            <option value="inherit">Yazı Tipi</option>
+                            <option value="'Inter', sans-serif">Inter</option>
+                            <option value="'Roboto', sans-serif">Roboto</option>
+                            <option value="'Open Sans', sans-serif">Open Sans</option>
+                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Consolas, monospace">Consolas</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                        </select>
+                        <select id="layout_text_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
+                            <option value="">Boyut</option>
+                            <option value="12px">12</option>
+                            <option value="14px">14</option>
+                            <option value="16px">16</option>
+                            <option value="18px">18</option>
+                            <option value="20px">20</option>
+                            <option value="24px">24</option>
+                            <option value="28px">28</option>
+                            <option value="32px">32</option>
+                        </select>
+                        <input id="layout_text_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
+                    </div>
+                    <label>Metin</label>
+                    <div id="layout_text_text" contenteditable="true" spellcheck="false" style="min-height:320px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(text.html || text.text || '')}</div>
+                    <input id="layout_text_html" type="hidden" value="${escapeHtml(text.html || '')}">
+                </div>
+            `;
+            bindRichTextToolbar('[data-rich-toolbar="text"]', 'layout_text_text', 'layout_text_html', {
+                fontSelectId: 'layout_text_font',
+                sizeSelectId: 'layout_text_size',
+                colorInputId: 'layout_text_color',
+            });
+            return;
+        }
         if (layout !== 'split') {
             if (layout === 'hero' || layout === 'image') {
                 layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
@@ -1946,7 +2171,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <button type="button" class="btn" data-text-action="subheading">H2</button>
                             <button type="button" class="btn" data-text-action="bullet">• Liste</button>
                             <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                            <button type="button" class="btn" data-text-action="quote">“”</button>
+                            <button type="button" class="btn" data-text-action="quote">“ ”</button>
                             <button type="button" class="btn" data-text-action="divider">—</button>
                             <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
                             <button type="button" class="btn" data-text-action="justify-left">Sola</button>
@@ -1955,7 +2180,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
                         <button type="button" class="btn" data-text-action="indent">Gir</button>
                         <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_media_font" style="min-width:170px">
+                        <select id="layout_media_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="inherit">Yazı Tipi</option>
                             <option value="'Inter', sans-serif">Inter</option>
                             <option value="'Roboto', sans-serif">Roboto</option>
@@ -1970,7 +2195,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
                             <option value="'Playfair Display', serif">Playfair Display</option>
                         </select>
-                        <select id="layout_media_size" style="min-width:120px">
+                        <select id="layout_media_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="">Boyut</option>
                             <option value="12px">12</option>
                                 <option value="14px">14</option>
@@ -1981,7 +2206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <option value="28px">28</option>
                                 <option value="32px">32</option>
                             </select>
-                            <input id="layout_media_color" type="color" value="#0f172a" title="Yazı rengi">
+                            <input id="layout_media_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
                         </div>
                         <div id="layout_media_text" contenteditable="true" spellcheck="false" style="min-height:240px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${media.html || escapeHtml(media.text || '')}</div>
                         <input id="layout_media_html" type="hidden" value="${escapeHtml(media.html || '')}">
@@ -2031,7 +2256,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${left.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${left.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-rich-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                    <div class="split-text-toolbar" data-rich-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:6px;margin:8px 0 6px;padding:8px;border:1px solid #dbe5f2;border-radius:12px;background:#f8fbff">
                         <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
                         <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
                         <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
@@ -2039,7 +2264,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn" data-text-action="subheading">H2</button>
                         <button type="button" class="btn" data-text-action="bullet">• Liste</button>
                         <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                        <button type="button" class="btn" data-text-action="quote">“”</button>
+                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
                         <button type="button" class="btn" data-text-action="divider">—</button>
                         <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
                         <button type="button" class="btn" data-text-action="justify-left">Sola</button>
@@ -2048,7 +2273,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
                         <button type="button" class="btn" data-text-action="indent">Gir</button>
                         <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_left_font" style="min-width:170px">
+                        <select id="layout_left_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="inherit">Yazı Tipi</option>
                             <option value="'Inter', sans-serif">Inter</option>
                             <option value="'Roboto', sans-serif">Roboto</option>
@@ -2063,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
                             <option value="'Playfair Display', serif">Playfair Display</option>
                         </select>
-                        <select id="layout_left_size" style="min-width:120px">
+                        <select id="layout_left_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="">Boyut</option>
                             <option value="12px">12</option>
                             <option value="14px">14</option>
@@ -2074,16 +2299,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="28px">28</option>
                             <option value="32px">32</option>
                         </select>
-                        <input id="layout_left_color" type="color" value="#0f172a" title="Yazı rengi">
+                        <input id="layout_left_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
                     </div>
                     <label style="margin-top:8px">Metin</label>
                     <div id="layout_left_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(left.html || left.text || '')}</div>
                     <input id="layout_left_html" type="hidden" value="${escapeHtml(left.html || '')}">
-                    <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
-                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="image">Görsel Seç</button>
-                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="video">Video Seç</button>
-                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="clear">Temizle</button>
-                    </div>
                     <input id="layout_left_image_file" type="file" accept="image/*" style="display:none">
                     <input id="layout_left_video_file" type="file" accept="video/*" style="display:none">
                     <input id="layout_left_image" type="hidden" value="${escapeHtml(left.image_url || '')}">
@@ -2103,15 +2323,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         <option value="video" ${right.type === 'video' ? 'selected' : ''}>Video</option>
                         <option value="code" ${right.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-rich-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#f8fbff">
+                    <div class="split-text-toolbar" data-rich-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:6px;margin:8px 0 6px;padding:8px;border:1px solid #dbe5f2;border-radius:12px;background:#f8fbff">
                         <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
                         <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
                         <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
                         <button type="button" class="btn" data-text-action="heading">H1</button>
-                        <button type="button" class="btn" data-text-action="subheading">H2</button>
                         <button type="button" class="btn" data-text-action="bullet">• Liste</button>
-                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                        <button type="button" class="btn" data-text-action="quote">“”</button>
+                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
                         <button type="button" class="btn" data-text-action="divider">—</button>
                         <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
                         <button type="button" class="btn" data-text-action="justify-left">Sola</button>
@@ -2120,7 +2338,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
                         <button type="button" class="btn" data-text-action="indent">Gir</button>
                         <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_right_font" style="min-width:170px">
+                        <select id="layout_right_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="inherit">Yazı Tipi</option>
                             <option value="'Inter', sans-serif">Inter</option>
                             <option value="'Roboto', sans-serif">Roboto</option>
@@ -2135,7 +2353,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
                             <option value="'Playfair Display', serif">Playfair Display</option>
                         </select>
-                        <select id="layout_right_size" style="min-width:120px">
+                        <select id="layout_right_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
                             <option value="">Boyut</option>
                             <option value="12px">12</option>
                             <option value="14px">14</option>
@@ -2146,7 +2364,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="28px">28</option>
                             <option value="32px">32</option>
                         </select>
-                        <input id="layout_right_color" type="color" value="#0f172a" title="Yazı rengi">
+                        <input id="layout_right_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
                     </div>
                     <label style="margin-top:8px">Metin</label>
                     <div id="layout_right_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(right.html || right.text || '')}</div>
@@ -2329,6 +2547,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const meta = s.layout_meta || {};
         const codeSrcdoc = s.code ? String(s.code) : '';
         const layoutPreview = (() => {
+            if (layout === 'text') {
+                const text = meta.text || {};
+                const textHtml = String(text.html || text.text || s.content || '').trim();
+                const textBlock = textHtml
+                    ? `<div style="max-width:min(92vw,1180px);margin:0 auto;text-align:left;line-height:1.8;font-size:clamp(18px,2vw,24px)">${textHtml}</div>`
+                    : `<div style="height:18px;border-radius:999px;background:#dbeafe;width:72%;margin:0 auto 10px"></div><div style="height:14px;border-radius:999px;background:#eff6ff;width:56%;margin:0 auto"></div>`;
+                return `
+                    <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:28px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;align-items:center;justify-content:center">
+                        ${textBlock}
+                    </div>
+                `;
+            }
             if (layout === 'split') {
                 const left = meta.left || {};
                 const right = meta.right || {};
@@ -2713,10 +2943,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === previewModal) setTimeout(restoreAfterPreviewClose, 0);
     });
     document.body.style.overflow = '';
-
-    Object.values(fields).filter(Boolean).forEach(el => el.addEventListener('input', () => { saveCurrent(); renderList(); }));
-    lessonTitle.addEventListener('input', () => { saveCurrent(); });
-    topClassSelect.addEventListener('change', saveCurrent);
+    fullscreenBtn?.addEventListener('click', () => {
+        if (!builderShell) return;
+        const isFullscreen = builderShell.classList.toggle('is-fullscreen');
+        fullscreenBtn.setAttribute('aria-pressed', isFullscreen ? 'true' : 'false');
+        fullscreenBtn.innerHTML = isFullscreen
+            ? '<span aria-hidden="true" style="font-size:18px;line-height:1">⤡</span><span>Normal Görünüm</span>'
+            : '<span aria-hidden="true" style="font-size:18px;line-height:1">⤢</span><span>Tam Ekran</span>';
+        document.body.style.overflow = isFullscreen ? 'hidden' : '';
+        builderShell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 120);
+    });
     lessonCategory?.addEventListener('change', saveCurrent);
     lessonDifficulty?.addEventListener('change', saveCurrent);
     lessonDescription?.addEventListener('input', saveCurrent);
@@ -2912,3 +3149,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+
+
+

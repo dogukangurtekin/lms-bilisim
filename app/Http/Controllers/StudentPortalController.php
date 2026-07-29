@@ -356,6 +356,12 @@ class StudentPortalController extends Controller
         $slides = $this->presentation->prepareCourseSlides($course, false);
         $payload = (array) ($course->lesson_payload ?? []);
         $curriculum = (array) data_get($payload, 'curriculum', []);
+        $questionTotal = collect($slides)->filter(function ($slide) {
+            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+        })->count();
+        $questionTotal = collect($slides)->filter(function ($slide) {
+            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+        })->count();
         $summarySlide = [
             '__summary' => true,
             'title' => 'Ders Özeti',
@@ -371,6 +377,8 @@ class StudentPortalController extends Controller
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
                 'slide_count' => count((array) $slides),
                 'lesson_total_xp' => collect((array) $slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0))),
+                'question_total' => $questionTotal,
+                'solved_questions' => 0,
             ],
         ];
 
@@ -404,6 +412,8 @@ class StudentPortalController extends Controller
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
                 'slide_count' => count((array) $slides),
                 'lesson_total_xp' => collect((array) $slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0))),
+                'question_total' => $questionTotal,
+                'solved_questions' => 0,
             ],
         ];
 
@@ -424,6 +434,7 @@ class StudentPortalController extends Controller
         $validated = request()->validate([
             'earned_xp' => ['nullable', 'integer', 'min:0'],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
+            'solved_questions' => ['nullable', 'integer', 'min:0'],
         ]);
         $existing = ContentProgress::where('content_id', 'course-' . $course->id)
             ->where('user_id', $student->user_id)
@@ -433,6 +444,9 @@ class StudentPortalController extends Controller
         }
 
         $slides = $this->presentation->prepareCourseSlides($course, false);
+        $questionTotal = collect($slides)->filter(function ($slide) {
+            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+        })->count();
         $slideXp = collect($slides)->sum(function ($s) {
             $xp = (int) data_get($s, 'xp', 0);
             if ($xp > 0) {
@@ -450,6 +464,10 @@ class StudentPortalController extends Controller
             : 0;
         $earnedXp = max($earnedXp, max(0, (int) $slideXp));
         $durationSeconds = max(0, (int) ($validated['duration_seconds'] ?? 0));
+        $solvedQuestions = isset($validated['solved_questions'])
+            ? max(0, (int) $validated['solved_questions'])
+            : 0;
+        $solvedQuestions = min($solvedQuestions, $questionTotal);
 
         ContentProgress::updateOrCreate(
             ['content_id' => 'course-' . $course->id, 'user_id' => $student->user_id],
@@ -461,6 +479,8 @@ class StudentPortalController extends Controller
                     'course_name' => $course->name,
                     'duration_seconds' => $durationSeconds,
                     'slide_count' => count($slides),
+                    'question_total' => $questionTotal,
+                    'solved_questions' => $solvedQuestions,
                 ],
             ]
         );

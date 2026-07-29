@@ -88,7 +88,9 @@ class StudentProgressReportService
         $courseProgressRows = ContentProgress::where('user_id', $student->user_id)
             ->where('content_id', 'like', 'course-%')
             ->latest()
-            ->get();
+            ->get()
+            ->unique('content_id')
+            ->values();
 
         $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
@@ -126,15 +128,20 @@ class StudentProgressReportService
         $totalXp = max(0, $gradeXp + $contentXp);
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
-        $completedSlides = ContentProgress::where('user_id', $student->user_id)
+        $completedLessonRows = ContentProgress::where('user_id', $student->user_id)
             ->where('content_id', 'like', 'course-%')
             ->where('completed', true)
-            ->count();
+            ->latest()
+            ->get()
+            ->unique('content_id')
+            ->values();
+        $completedSlides = $completedLessonRows->count();
 
-        $totalAssignments = $courseHomeworks->count() + $gameAssignments->count();
+        $lessonCourseAssignmentsTotal = $courseProgressRows->count();
+        $totalAssignments = $courseHomeworks->count() + $gameAssignments->count() + $lessonCourseAssignmentsTotal;
         $completedHomework = $homeworkProgress->filter(fn ($p) => !empty($p->completed_at))->count();
         $completedGames = $gameProgress->filter(fn ($p) => !empty($p->completed_at))->count();
-        $completedTotal = $completedHomework + $completedGames;
+        $completedTotal = $completedHomework + $completedGames + $completedSlides;
         $overallProgress = $totalAssignments > 0 ? (int) round(($completedTotal / $totalAssignments) * 100) : 0;
 
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();
@@ -288,7 +295,9 @@ class StudentProgressReportService
             $courseItems[] = [
                 'course_name' => $h->course?->name ?? '-',
                 'title' => $h->title,
+                'display_title' => $h->title ?: ($h->course?->name ?? '-'),
                 'due_date' => $h->due_date,
+                'assignment_type' => (string) ($h->assignment_type ?? 'lesson'),
                 'status' => $p?->completed_at ? 'Tamamlandı' : ($p?->started_at ? 'Devam Ediyor' : 'Bekliyor'),
                 'xp' => (int) ($p?->xp_awarded ?? 0),
                 'sort_date' => $p?->completed_at ?? $p?->started_at ?? $h->created_at,
@@ -296,25 +305,50 @@ class StudentProgressReportService
         }
 
         $courseMap = $courses->keyBy('id');
+        $progressCourseIds = $courseProgressRows
+            ->map(function ($row) {
+                if (!preg_match('/^course-(\d+)$/', (string) $row->content_id, $m)) {
+                    return 0;
+                }
+
+                return (int) $m[1];
+            })
+            ->filter(fn ($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($progressCourseIds->isNotEmpty()) {
+            $progressCourses = Course::with(['teacher.user', 'schoolClass'])
+                ->whereIn('id', $progressCourseIds)
+                ->get()
+                ->keyBy('id');
+            $courseMap = $courseMap->concat($progressCourses)->keyBy('id');
+        }
+
         foreach ($courseProgressRows as $row) {
             if (!preg_match('/^course-(\d+)$/', (string) $row->content_id, $m)) {
                 continue;
             }
-            $course = $courseMap->get((int) $m[1]);
-            if (!$course) {
-                continue;
-            }
+            $courseId = (int) $m[1];
+            $course = $courseMap->get($courseId);
+            $payload = (array) ($row->payload ?? []);
+            $fallbackCourseName = (string) ($payload['course_name'] ?? $payload['lesson_title'] ?? ('Ders #' . $courseId));
             $courseItems[] = [
-                'course_name' => $course->name,
-                'title' => 'Ders Slayt Görevi',
+                'course_name' => $course?->name ?? $fallbackCourseName,
+                'title' => $course?->name ?? $fallbackCourseName,
+                'display_title' => $course?->name ?? $fallbackCourseName,
                 'due_date' => null,
-                'status' => $row->completed ? 'Tamamlandı' : 'Devam Ediyor',
+                'assignment_type' => 'lesson_slide',
+                'status' => $row->completed ? 'Tamamland?' : 'Devam Ediyor',
                 'xp' => (int) ($row->xp_awarded ?? 0),
+                'solved_questions' => (int) ($payload['solved_questions'] ?? 0),
+                'question_total' => (int) ($payload['question_total'] ?? 0),
                 'sort_date' => $row->updated_at ?? $row->created_at,
             ];
         }
 
         $courseItems = collect($courseItems)
+
             ->sortByDesc('sort_date')
             ->values();
 

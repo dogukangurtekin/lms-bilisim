@@ -1,6 +1,6 @@
 @php
-    $completed = (int) ($report['kpi']['completed_total'] ?? 0);
-    $total = max(1, (int) ($report['kpi']['total_assignments'] ?? 0));
+    $completed = (int) data_get($report, 'kpi.completed_total', 0);
+    $total = max(1, (int) data_get($report, 'kpi.total_assignments', 0));
     $donePct = (int) round(($completed / $total) * 100);
     $fmtDate = function ($value): string {
         if (! $value) {
@@ -32,22 +32,22 @@
     </div>
 
     <div class="kpi-grid">
-        <article class="kpi-card"><span>Toplam XP</span><strong>{{ $report['kpi']['total_xp'] ?? 0 }}</strong></article>
+        <article class="kpi-card"><span>Toplam XP</span><strong>{{ data_get($report, 'kpi.total_xp', 0) }}</strong></article>
         <article class="kpi-card"><span>Tamamlanan Görev</span><strong>{{ $completed }}</strong></article>
         <article class="kpi-card">
             <span>Okul / Sınıf Sırası</span>
-            <strong>{{ $report['kpi']['school_rank'] ?? '-' }} / {{ $report['kpi']['class_rank'] ?? '-' }}</strong>
+            <strong>{{ data_get($report, 'kpi.school_rank', '-') }} / {{ data_get($report, 'kpi.class_rank', '-') }}</strong>
         </article>
         <article class="kpi-card">
             <span>Quiz Verisi</span>
-            <strong class="small">Katıldığı Quiz: {{ (int) ($report['kpi']['quiz_joined_count'] ?? 0) }}</strong>
-            <strong class="small">Quiz Puanı: {{ (int) ($report['kpi']['quiz_total_xp'] ?? 0) }}</strong>
+            <strong class="small">Katıldığı Quiz: {{ data_get($report, 'kpi.quiz_joined_count', 0) }}</strong>
+            <strong class="small">Quiz Puanı: {{ data_get($report, 'kpi.quiz_total_xp', 0) }}</strong>
         </article>
         <article class="kpi-card">
             <span>Başarı Oranı</span>
             <strong>{{ $donePct }}%</strong>
         </article>
-        <article class="kpi-card"><span>Sistemde Geçen Süre</span><strong class="small">{{ $report['kpi']['time_text'] ?? '-' }}</strong></article>
+        <article class="kpi-card"><span>Sistemde Geçen Süre</span><strong class="small">{{ data_get($report, 'kpi.time_text', '-') }}</strong></article>
     </div>
 
     <div class="content-grid">
@@ -56,7 +56,7 @@
             <div class="donut-wrap" style="align-items:flex-start">
                 <div>
                     <p><b>{{ $completed }}</b> görev tamamlandı</p>
-                    <p><b>{{ $report['kpi']['badge_count'] ?? 0 }}</b> rozet kazanıldı</p>
+                    <p><b>{{ data_get($report, 'kpi.badge_count', 0) }}</b> rozet kazanıldı</p>
                 </div>
             </div>
         </article>
@@ -64,7 +64,7 @@
         <article class="panel">
             <h3>Analiz Özeti</h3>
             <ul class="bullet-list">
-                @foreach(($report['analysis'] ?? []) as $line)
+                @foreach((array) data_get($report, 'analysis', []) as $line)
                     <li>{{ $line }}</li>
                 @endforeach
             </ul>
@@ -74,8 +74,8 @@
     <div class="panel">
         <h3>Kategori Bazlı Tamamlama Oranı</h3>
         @php
-            $categoryItems = collect($report['category_chart'] ?? []);
-            $fullCount = $categoryItems->filter(fn ($item) => (int) ($item['value'] ?? 0) >= 100)->count();
+            $categoryItems = collect(data_get($report, 'category_chart', []));
+            $fullCount = $categoryItems->filter(fn ($item) => (int) data_get($item, 'value', 0) >= 100)->count();
         @endphp
         <div class="category-chart">
             <div class="category-grid">
@@ -89,12 +89,12 @@
                 @endfor
             </div>
             <div class="category-bars">
-                @foreach(($report['category_chart'] ?? []) as $item)
+                @foreach((array) data_get($report, 'category_chart', []) as $item)
                     <div class="category-col">
                         <div class="category-bar-wrap">
-                            <span class="category-bar" style="height: {{ max(2, (int) ($item['value'] ?? 0)) }}%; background: {{ $item['color'] ?? '#3b82f6' }};"></span>
+                            <span class="category-bar" style="height: {{ max(2, (int) data_get($item, 'value', 0)) }}%; background: {{ data_get($item, 'color', '#3b82f6') }};"></span>
                         </div>
-                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;word-break:break-word;">{{ $item['label'] ?? '-' }}</small>
+                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;word-break:break-word;">{{ data_get($item, 'label', '-') }}</small>
                     </div>
                 @endforeach
             </div>
@@ -111,7 +111,7 @@
             <img src="{{ url('/public/logo.png') }}" alt="Logo" class="brand-logo small">
             <div>
                 <h2>Detaylı Görev Raporu</h2>
-                <p class="subtitle">Ödevler, oyunlar, teslim tarihleri ve kazanımlar</p>
+                <p class="subtitle">Ödevler, oyunlar, kazanımlar ve tarihler</p>
             </div>
         </div>
     </div>
@@ -119,15 +119,23 @@
     <article class="panel">
         <h3>Ders Ödevleri / Slayt Görevleri</h3>
         <table class="report-table">
-            <thead><tr><th>Ders</th><th>Ödev</th><th>Teslim</th><th>Durum</th><th>XP</th></tr></thead>
-            <tbody>
-            @forelse(($report['course_items'] ?? []) as $item)
+            <thead>
                 <tr>
-                    <td>{{ $item['course_name'] ?? '-' }}</td>
-                    <td>{{ $item['title'] ?? '-' }}</td>
-                    <td>{{ isset($item['due_date']) && $item['due_date'] ? $fmtDate($item['due_date']) : '-' }}</td>
-                    <td>{{ $item['status'] ?? '-' }}</td>
-                    <td>{{ (int) ($item['xp'] ?? 0) }}</td>
+                    <th>Ders</th>
+                    <th>Ödev</th>
+                    <th>Tarih</th>
+                    <th>Çözülen Soru</th>
+                    <th>XP</th>
+                </tr>
+            </thead>
+            <tbody>
+            @forelse((array) data_get($report, 'course_items', []) as $item)
+                <tr>
+                    <td>{{ data_get($item, 'course_name', '-') }}</td>
+                    <td>{{ data_get($item, 'display_title', data_get($item, 'title', data_get($item, 'course_name', '-'))) }}</td>
+                    <td>{{ $fmtDate(data_get($item, 'sort_date')) }}</td>
+                    <td>{{ (int) data_get($item, 'solved_questions', 0) > 0 ? (int) data_get($item, 'solved_questions', 0) : '-' }}</td>
+                    <td>{{ (int) data_get($item, 'xp', 0) }}</td>
                 </tr>
             @empty
                 <tr><td colspan="5">Ders ödevi bulunmuyor.</td></tr>
@@ -139,9 +147,17 @@
     <article class="panel">
         <h3>Oyun / Uygulama Ödevleri</h3>
         <table class="report-table">
-            <thead><tr><th>İçerik</th><th>Ödev</th><th>Seviye</th><th>Teslim</th><th>Durum</th><th>XP</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>İçerik</th>
+                    <th>Ödev</th>
+                    <th>Seviye</th>
+                    <th>Durum</th>
+                    <th>XP</th>
+                </tr>
+            </thead>
             <tbody>
-            @forelse(($report['game_assignments'] ?? []) as $a)
+            @forelse((array) data_get($report, 'game_assignments', []) as $a)
                 @php
                     $aid = data_get($a, 'id');
                     $p = data_get($report, 'game_progress.' . $aid);
@@ -150,12 +166,11 @@
                     <td>{{ data_get($a, 'game_name', '-') }}</td>
                     <td>{{ data_get($a, 'title', '-') }}</td>
                     <td>{{ data_get($a, 'level_from', '-') }} - {{ data_get($a, 'level_to', '-') }}</td>
-                    <td>{{ $fmtDate(data_get($a, 'due_date')) }}</td>
                     <td>{{ data_get($p, 'completed_at') ? 'Tamamlandı' : (data_get($p, 'started_at') ? 'Devam Ediyor' : 'Bekliyor') }}</td>
                     <td>{{ (int) data_get($p, 'xp_awarded', 0) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6">Oyun/uygulama ödevi bulunmuyor.</td></tr>
+                <tr><td colspan="5">Oyun/uygulama ödevi bulunmuyor.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -177,7 +192,7 @@
                         'Maratoncu' => '⏱️',
                         'Sinif Birincisi' => '🥇',
                         'Okul Birincisi' => '🏆',
-                        'Efsane Tamamlayici' => '👑',
+                        'Efsane Tamamlayici' => '🌟',
                         'Gorev Serisi 10' => '🔥',
                         'Gorev Serisi 25' => '🏅',
                         'Ders Ustasi' => '🧠',
@@ -197,45 +212,6 @@
             @empty
                 <span class="badge-item">Henüz rozet kazanılmadı</span>
             @endforelse
-        </div>
-    </article>
-
-    <article class="panel">
-        <h3>Gelişim Önerileri</h3>
-        <ul class="bullet-list">
-            @foreach(($report['recommendations'] ?? []) as $item)
-                <li>{{ $item }}</li>
-            @endforeach
-        </ul>
-    </article>
-
-    <article class="panel">
-        <h3>Günlük Egzersiz Özeti</h3>
-        @php
-            $dailyAttemptCount = (int) ($report['kpi']['daily_attempt_count'] ?? 0);
-            $dailyCorrectCount = (int) ($report['kpi']['daily_correct_count'] ?? 0);
-            $dailyWrongCount = (int) ($report['kpi']['daily_wrong_count'] ?? 0);
-            $dailyFullCorrectCount = (int) ($report['kpi']['daily_full_correct_count'] ?? 0);
-            $dailySuccessRate = (int) ($report['kpi']['daily_success_rate'] ?? 0);
-            $dailyQuestionTotal = max(1, $dailyCorrectCount + $dailyWrongCount);
-        @endphp
-        <div class="kpi-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 0;">
-            <article class="kpi-card">
-                <span>Yapılan Toplam Günlük Egzersiz</span>
-                <strong>{{ $dailyAttemptCount }}</strong>
-            </article>
-            <article class="kpi-card">
-                <span>Tam Doğru Tamamlanan Egzersiz</span>
-                <strong>{{ $dailyFullCorrectCount }}</strong>
-            </article>
-            <article class="kpi-card">
-                <span>Doğru Cevaplanan Soru</span>
-                <strong>{{ $dailyCorrectCount }}</strong>
-            </article>
-            <article class="kpi-card">
-                <span>Yanlış Cevaplanan Soru</span>
-                <strong>{{ $dailyWrongCount }}</strong>
-            </article>
         </div>
     </article>
 

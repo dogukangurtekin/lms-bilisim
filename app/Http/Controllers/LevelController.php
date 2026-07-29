@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Level;
+use App\Services\StudentGameAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class LevelController extends Controller
 {
+    public function __construct(
+        private StudentGameAccessService $gameAccess
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $this->ensureSystemLevels();
@@ -18,7 +24,15 @@ class LevelController extends Controller
             ->orderBy('id');
 
         $user = auth()->user();
-        if ($user?->hasRole('student')) {
+        if ($user?->student) {
+            $student = $user->student;
+            if (! $student || ! $this->gameAccess->canPlay($student, 'flamestone-game')) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Bu oyun size atanmadı.',
+                ], 403);
+            }
+
             $grant = session('runner_grant');
             $isGrantValid = is_array($grant)
                 && ($grant['slug'] ?? null) === 'flamestone-game'
@@ -35,9 +49,9 @@ class LevelController extends Controller
                         });
                 });
             } else {
-                $query->where(function ($q) {
-                    $q->whereNotNull('user_id')
-                        ->orWhere(function ($sys) {
+            $query->where(function ($q) {
+                $q->whereNotNull('user_id')
+                    ->orWhere(function ($sys) {
                             $sys->whereNull('user_id')->whereRaw('id BETWEEN 1 AND 2');
                         });
                 });

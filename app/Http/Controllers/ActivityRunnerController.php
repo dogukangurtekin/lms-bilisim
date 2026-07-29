@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\StudentGameAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\File;
 
 class ActivityRunnerController extends Controller
 {
+    public function __construct(
+        private StudentGameAccessService $gameAccess
+    ) {
+    }
+
     public function block3d()
     {
         return $this->serveRunner('block-3d-runner');
@@ -46,8 +52,17 @@ class ActivityRunnerController extends Controller
         }
 
         $user = auth()->user();
-        if (! $user || ! $user->hasRole('student')) {
+        if (! $user || ! $user->student) {
             return redirect(url("/{$slug}"));
+        }
+
+        $student = $user->student;
+        if (! $student) {
+            abort(403);
+        }
+
+        if (! $this->gameAccess->canPlay($student, $slug)) {
+            return redirect()->route('activities.index')->with('error', 'Bu oyun size atanmadı.');
         }
 
         $from = max(1, (int) $request->query('from', 1));
@@ -72,7 +87,7 @@ class ActivityRunnerController extends Controller
             return response()->json(['ok' => false], 401);
         }
 
-        if (! $user->hasRole('student')) {
+        if (! $user->student) {
             return response()->json([
                 'ok' => true,
                 'role' => 'staff',
@@ -90,6 +105,14 @@ class ActivityRunnerController extends Controller
             && (($grant['expires_at'] ?? 0) >= time());
 
         if (! $valid) {
+            $student = $user->student;
+            if (! $student || ! $this->gameAccess->canPlay($student, $slug)) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Bu oyun size atanmadı.',
+                ], 403);
+            }
+
             return response()->json([
                 'ok' => true,
                 'role' => 'student',
@@ -129,7 +152,7 @@ class ActivityRunnerController extends Controller
         }
 
         $user = auth()->user();
-        if ($user && ! $user->hasRole('student')) {
+        if ($user && ! $user->student) {
             $role = (string) $request->query('role', '');
             $targetRole = $user->hasRole('admin') ? 'admin' : 'teacher';
             $hasRangeParams = $request->query('from') !== null
@@ -144,7 +167,7 @@ class ActivityRunnerController extends Controller
             }
         }
 
-        if ($user?->hasRole('student')) {
+        if ($user?->student) {
             $grant = session('runner_grant');
             $from = (int) request('from', 0);
             $to = (int) request('to', 0);
@@ -153,6 +176,13 @@ class ActivityRunnerController extends Controller
                 && ($grant['from'] ?? null) === $from
                 && ($grant['to'] ?? null) === $to
                 && (($grant['expires_at'] ?? 0) >= time());
+
+            if (! $valid) {
+                $student = $user->student;
+                if (! $student || ! $this->gameAccess->canPlay($student, $slug)) {
+                    return redirect()->route('activities.index')->with('error', 'Bu oyun size atanmadı.');
+                }
+            }
 
             if (! $valid) {
                 request()->session()->put('runner_grant', [
@@ -174,7 +204,7 @@ class ActivityRunnerController extends Controller
             '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';</script>';
         $html = preg_replace('/<head>/i', '<head>' . $inject, $html, 1) ?? $html;
         $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
-        $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo192.png') . '"', $html);
+        $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo.png') . '"', $html);
         $html = str_replace('src="../pwa-init.js"', 'src="' . e($appBase . '/pwa-init.js') . '"', $html);
         $html = str_replace('src="./app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);
         $html = str_replace('src="app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);

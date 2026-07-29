@@ -2,6 +2,8 @@
     $summary = (array) ($summary ?? []);
     $outcomes = array_values(array_filter((array) ($summary['outcomes'] ?? []), fn ($item) => trim((string) $item) !== ''));
     $activities = array_values(array_filter((array) ($summary['activities'] ?? []), fn ($item) => trim((string) $item) !== ''));
+    $questionTotal = max(0, (int) ($summary['question_total'] ?? 0));
+    $solvedQuestions = max(0, (int) ($summary['solved_questions'] ?? 0));
 @endphp
 <div class="lesson-summary-shell" style="min-height:72vh;display:flex;align-items:center;justify-content:center;padding:20px;max-width:100%;overflow:hidden;background:transparent">
     <div style="width:min(100%,980px);max-width:100%;border-radius:28px;padding:28px;background:rgba(255,255,255,.58);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(191,219,254,.9);box-shadow:0 22px 50px rgba(37,99,235,.12);overflow:hidden">
@@ -11,6 +13,9 @@
             </div>
             <div style="display:grid;gap:8px;justify-items:end">
                 <span data-summary-earned-xp style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:900">Kazanılan XP: {{ (int) ($summary['lesson_total_xp'] ?? 0) }}</span>
+                @if($questionTotal > 0)
+                    <span data-summary-solved-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900">Çözülen soru sayısı: {{ $solvedQuestions }} / {{ $questionTotal }}</span>
+                @endif
             </div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.95fr);gap:16px;max-width:100%">

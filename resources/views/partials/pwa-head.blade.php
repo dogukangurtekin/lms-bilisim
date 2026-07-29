@@ -5,4 +5,4 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
-<link rel="apple-touch-icon" href="{{ url('/logo192.png') }}">
+<link rel="apple-touch-icon" href="{{ url('/public/logo.png') }}">

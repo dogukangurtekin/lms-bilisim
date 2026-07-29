@@ -26,15 +26,8 @@ class NotificationController extends Controller
     public function index()
     {
         $user = auth()->user();
-        abort_unless($user?->hasRole('admin', 'teacher'), 403);
+        abort_unless($user?->hasRole('admin'), 403);
         $isAdmin = $user?->hasRole('admin') === true;
-        $teacherClassIds = [];
-        if (! $isAdmin && $user) {
-            $teacher = Teacher::query()->where('user_id', $user->id)->first();
-            $teacherClassIds = $teacher
-                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
-                : [];
-        }
 
         $types = (array) config('notification-preferences.types', []);
         $prefs = NotificationPreference::query()
@@ -54,7 +47,6 @@ class NotificationController extends Controller
 
         $recentLogs = NotificationLog::query()
             ->with('user:id,name')
-            ->when(! $isAdmin, fn ($q) => $q->where('user_id', (int) $user->id))
             ->latest('id')
             ->limit(30)
             ->get();
@@ -64,7 +56,6 @@ class NotificationController extends Controller
                 'teacher.user:id,name',
                 'students.user:id,name',
             ])
-            ->when(! $isAdmin, fn ($q) => $q->whereIn('id', $teacherClassIds))
             ->orderBy('name')
             ->orderBy('section')
             ->get(['id', 'name', 'section', 'teacher_id']);

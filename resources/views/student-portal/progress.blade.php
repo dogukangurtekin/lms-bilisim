@@ -13,11 +13,29 @@
 </div>
 <div class="card">
     <table>
-        <thead><tr><th>İçerik</th><th>Tamamlandı</th><th>Kazanılan XP</th><th>Tarih</th></tr></thead>
+        <thead>
+            <tr>
+                <th>İçerik</th>
+                <th>Tamamlandı</th>
+                <th>Kazanılan XP</th>
+                <th>Tarih</th>
+            </tr>
+        </thead>
         <tbody>
         @forelse($rows as $r)
+            @php
+                $solvedQuestions = (int) data_get($r->payload, 'solved_questions', 0);
+                $contentLabel = $contentLabels[$r->content_id] ?? $r->content_id;
+                $courseName = (string) data_get($r->payload, 'course_name', '');
+                if ($courseName !== '' && str_starts_with((string) $r->content_id, 'course-')) {
+                    $contentLabel = 'Ders: ' . $courseName;
+                    if ($solvedQuestions > 0) {
+                        $contentLabel .= ' • Çözülen soru: ' . $solvedQuestions;
+                    }
+                }
+            @endphp
             <tr>
-                <td>{{ $contentLabels[$r->content_id] ?? $r->content_id }}</td>
+                <td>{{ $contentLabel }}</td>
                 <td>{{ $r->completed ? 'Evet' : 'Hayır' }}</td>
                 <td>{{ $r->xp_awarded }}</td>
                 <td>{{ $r->created_at?->format('Y-m-d H:i') }}</td>

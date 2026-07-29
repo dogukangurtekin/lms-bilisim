@@ -235,7 +235,10 @@ class DashboardController extends Controller
                     'value' => (int) round(min(100, max(0, (int) $row['xp']))),
                 ])->all();
 
-            $studentLessonCompletion = $students
+            $studentLessonBase = $students
+                ->when($activeClassId > 0, fn ($rows) => $rows->where('school_class_id', $activeClassId));
+
+            $studentLessonCompletion = $studentLessonBase
                 ->map(function (Student $student) use ($completedContentCountByUser) {
                     return [
                         'label' => $student->user?->name ?? ('user_' . $student->user_id),

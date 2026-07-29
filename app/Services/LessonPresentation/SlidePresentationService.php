@@ -201,6 +201,9 @@ class SlidePresentationService
     private function buildSummarySlide(Course $course, array $payload, array $slides): array
     {
         $curriculum = (array) data_get($payload, 'curriculum', []);
+        $questionTotal = collect($slides)->filter(function (array $slide): bool {
+            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+        })->count();
 
         return [
             '__summary' => true,
@@ -215,6 +218,8 @@ class SlidePresentationService
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
                 'slide_count' => count($slides),
                 'lesson_total_xp' => collect($slides)->sum(fn ($s) => max(0, (int) data_get($s, 'xp', 0))),
+                'question_total' => $questionTotal,
+                'solved_questions' => 0,
             ],
         ];
     }

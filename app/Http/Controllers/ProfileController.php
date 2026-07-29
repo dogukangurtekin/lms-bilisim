@@ -25,7 +25,7 @@ class ProfileController extends Controller
                 'enabled' => (bool) ($meta['pwa_enabled'] ?? false),
                 'title' => (string) ($meta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
                 'subtitle' => (string) ($meta['pwa_subtitle'] ?? 'Yukleniyor...'),
-                'logo_url' => (string) ($meta['pwa_logo_url'] ?? url('/public/logo192.png')),
+                'logo_url' => (string) ($meta['pwa_logo_url'] ?? url('/public/logo.png')),
             ],
         ]);
     }
@@ -74,7 +74,7 @@ class ProfileController extends Controller
         $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
-        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo192.png');
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
         $profile->meta = $meta;
         $profile->save();
 
@@ -96,7 +96,7 @@ class ProfileController extends Controller
         $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
-        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo192.png');
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
         $profile->meta = $meta;
         $profile->save();
 

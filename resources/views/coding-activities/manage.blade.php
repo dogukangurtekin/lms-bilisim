@@ -1,4 +1,4 @@
-@extends('layout.app')
+﻿@extends('layout.app')
 @section('title','Günlük Çalışmalar Yönetimi')
 @section('content')
 <style>
@@ -19,18 +19,29 @@
     );
 @endphp
 <div class="cam-wrap" data-question-builder data-initial-questions='@json($initialQuestions)'>
-<div class="cam-hero"><div style="font-size:13px">Admin / Öğretmen Paneli</div><h1 style="margin:4px 0 0;font-size:30px">Günlük Çalışmalar Yönetimi</h1></div>
+<div class="cam-hero" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div>
+        <div style="font-size:13px">Admin / Öğretmen Paneli</div>
+        <h1 style="margin:4px 0 0;font-size:30px">Günlük Çalışmalar Yönetimi</h1>
+    </div>
+    @if(auth()->user()?->hasRole('admin'))
+    <button type="button" id="activity-bulk-assign-open" class="btn-lite" style="height:44px;padding:0 16px;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;font-weight:800;">Öğretmene Ata</button>
+    @endif
+</div>
 <div class="cam-grid">
 <section class="cam-card">
 <div class="cam-title">{{ $editingActivity ? 'Etkinlik Düzenle' : 'Yeni Etkinlik Oluştur' }}</div>
 @if($editingActivity)
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0">
     <a class="btn-lite" href="{{ route('coding.activities.manage') }}">Yeni Kayıt Moduna Dön</a>
-    <form method="POST" action="{{ route('coding.activities.destroy', $editingActivity) }}" data-confirm="Bu etkinliği silmek istiyor musunuz?">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="btn-lite" style="border-color:#fecaca;color:#991b1b">Sil</button>
-    </form>
+    @php($editingIsLocked = (bool) ($editingActivity->admin_locked ?? false))
+    @if(!auth()->user()?->hasRole('admin') || (empty($editingActivity->teacher_id) && ! $editingIsLocked))
+        <form method="POST" action="{{ route('coding.activities.destroy', $editingActivity) }}" data-confirm="Bu etkinliği silmek istiyor musunuz?">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn-lite" style="border-color:#fecaca;color:#991b1b">Sil</button>
+        </form>
+    @endif
 </div>
 @endif
 <form method="POST" action="{{ $editingActivity ? route('coding.activities.update',$editingActivity) : route('coding.activities.store') }}" class="space-y-3">
@@ -63,12 +74,70 @@
 <p>{{ $todayAssignment?->activity?->title ? 'Atanan içerik: '.$todayAssignment->activity->title : 'Henüz atama yok.' }}</p>
 <div style="display:grid;gap:10px">
 @foreach($activities as $activity)
-<div class="cam-item"><div><div style="font-weight:700">{{ $activity->title }}</div></div><div class="activity-actions"><a class="icon-btn edit" href="{{ route('coding.activities.manage',['edit'=>$activity->id]) }}" title="D?zenle" aria-label="D?zenle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a><form method="POST" action="{{ route('coding.activities.assign.today', $activity) }}">@csrf <button class="icon-btn play" type="submit" title="Bug?ne Ata" aria-label="Bug?ne Ata"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></form><form method="POST" action="{{ route('coding.activities.destroy', $activity) }}" data-confirm="Bu etkinli?i silmek istiyor musunuz?">@csrf @method('DELETE') <button class="icon-btn delete" type="submit" title="Sil" aria-label="Sil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></form></div></div>
+@php($activityLocked = (bool) ($activity->admin_locked ?? false))
+<div class="cam-item"><div><div style="font-weight:700">{{ $activity->title }}</div></div><div class="activity-actions"><a class="icon-btn edit" href="{{ route('coding.activities.manage',['edit'=>$activity->id]) }}" title="Düzenle" aria-label="Düzenle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></a><form method="POST" action="{{ route('coding.activities.assign.today', $activity) }}">@csrf <button class="icon-btn play" type="submit" title="Bugüne Ata" aria-label="Bugüne Ata"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></form>@if(!auth()->user()?->hasRole('admin') || (empty($activity->teacher_id) && ! $activityLocked))
+            <form method="POST" action="{{ route('coding.activities.destroy', $activity) }}" data-confirm="Bu etkinliği silmek istiyor musunuz?">@csrf @method('DELETE') <button class="icon-btn delete" type="submit" title="Sil" aria-label="Sil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button></form>
+        @endif</div></div>
 @endforeach
 </div>
 <div style="margin-top:10px">{{ $activities->links() }}</div>
 </section>
 </div></div>
+
+@if(auth()->user()?->hasRole('admin'))
+<div id="activity-bulk-assign-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:3200;padding:16px;">
+    <div style="width:min(96vw,920px);max-height:88vh;overflow:hidden;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);display:grid;grid-template-rows:auto auto 1fr auto;gap:14px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+                <h3 style="margin:0;font-size:22px;font-weight:800;color:#111827;">Toplu Öğretmen Atama</h3>
+                <p style="margin:6px 0 0;color:#475569;">Bir öğretmen seçin ve günlük çalışmaları topluca atayın.</p>
+            </div>
+            <button type="button" id="activity-bulk-assign-close" style="height:40px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Kapat</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;">
+            <div>
+                <label for="bulk-activity-teacher" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Öğretmen Seç</label>
+                <select id="bulk-activity-teacher" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:12px;padding:0 12px;">
+                    <option value="">Öğretmen seçiniz</option>
+                    @foreach(($teachers ?? collect()) as $teacher)
+                        <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Öğretmen #' . $teacher->id) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff;white-space:nowrap;">
+                <input type="checkbox" id="bulk-activity-select-all" style="width:auto;margin:0">
+                <span>Tümünü seç</span>
+            </label>
+        </div>
+        <div id="bulk-activity-list" style="overflow:auto;border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#f8fafc;">
+            <div style="display:grid;gap:10px;">
+                @foreach(($assignableActivities ?? collect()) as $activity)
+                    <label data-teacher-id="{{ (int) ($activity->teacher_id ?? 0) }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
+                        <input type="checkbox" class="bulk-activity-checkbox" value="{{ $activity->id }}" style="width:auto;margin:0;">
+                        <span style="flex:1 1 auto;font-weight:700;color:#111827;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">{{ $activity->title }}</span>
+                        <span style="flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;">{{ (int) ($activity->teacher_id ?? 0) > 0 ? 'Atanmış' : 'Boş' }}</span>
+                        @if((bool) ($activity->admin_locked ?? false))
+                            <span style="flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;">Kilitli</span>
+                        @endif
+                    </label>
+                @endforeach
+            </div>
+        </div>
+        <form id="activity-bulk-assign-form" method="POST" action="{{ route('coding.activities.assign.teacher.bulk') }}" style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">
+            @csrf
+            <input type="hidden" name="teacher_id" id="bulk-activity-teacher-input">
+            <div id="bulk-activity-hidden-inputs"></div>
+            <button type="button" id="activity-bulk-assign-cancel" style="height:44px;padding:0 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">İptal</button>
+            <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaydet</button>
+        </form>
+        <form id="activity-bulk-unassign-form" method="POST" action="{{ route('coding.activities.unassign.teacher.bulk') }}" style="display:none;">
+            @csrf
+            <input type="hidden" name="teacher_id" id="bulk-activity-unassign-teacher-input">
+        </form>
+    </div>
+</div>
+@endif
+
 <script>
 (() => {
   const root = document.querySelector('[data-question-builder]');
@@ -258,7 +327,107 @@
     }
   });
 
+  @if(auth()->user()?->hasRole('admin'))
+  const bulkOpenBtn = document.getElementById('activity-bulk-assign-open');
+  const bulkModal = document.getElementById('activity-bulk-assign-modal');
+  const bulkCloseBtn = document.getElementById('activity-bulk-assign-close');
+  const bulkCancelBtn = document.getElementById('activity-bulk-assign-cancel');
+  const bulkTeacherSelect = document.getElementById('bulk-activity-teacher');
+  const bulkTeacherInput = document.getElementById('bulk-activity-teacher-input');
+  const bulkList = document.getElementById('bulk-activity-list');
+  const bulkHiddenInputs = document.getElementById('bulk-activity-hidden-inputs');
+  const bulkSelectAll = document.getElementById('bulk-activity-select-all');
+  const bulkForm = document.getElementById('activity-bulk-assign-form');
+  const bulkUnassignForm = document.getElementById('activity-bulk-unassign-form');
+  const bulkUnassignTeacherInput = document.getElementById('bulk-activity-unassign-teacher-input');
+  const bulkUnassignOpenBtn = document.getElementById('activity-bulk-unassign-open');
+
+  const syncBulkHiddenInputs = () => {
+    if (bulkTeacherInput) {
+      bulkTeacherInput.value = bulkTeacherSelect?.value || '';
+    }
+    if (bulkHiddenInputs) {
+      bulkHiddenInputs.innerHTML = '';
+      document.querySelectorAll('.bulk-activity-checkbox:checked').forEach((checkbox) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'activity_ids[]';
+        input.value = checkbox.value;
+        bulkHiddenInputs.appendChild(input);
+      });
+    }
+  };
+
+  const syncBulkSelectionFromTeacher = () => {
+    const teacherId = bulkTeacherSelect?.value || '';
+    document.querySelectorAll('.bulk-activity-checkbox').forEach((checkbox) => {
+      const label = checkbox.closest('label');
+      const assignedTeacherId = label ? String(label.dataset.teacherId || '') : '';
+      checkbox.checked = teacherId !== '' && assignedTeacherId === teacherId;
+    });
+    if (bulkSelectAll) {
+      const total = document.querySelectorAll('.bulk-activity-checkbox').length;
+      const checked = document.querySelectorAll('.bulk-activity-checkbox:checked').length;
+      bulkSelectAll.checked = total > 0 && total === checked;
+    }
+    syncBulkHiddenInputs();
+  };
+
+  bulkOpenBtn?.addEventListener('click', () => {
+    bulkModal.style.display = 'flex';
+  });
+  const closeBulkModal = () => {
+    if (bulkModal) bulkModal.style.display = 'none';
+  };
+  bulkCloseBtn?.addEventListener('click', closeBulkModal);
+  bulkCancelBtn?.addEventListener('click', closeBulkModal);
+  bulkModal?.addEventListener('click', (event) => {
+    if (event.target === bulkModal) closeBulkModal();
+  });
+  bulkTeacherSelect?.addEventListener('change', syncBulkHiddenInputs);
+  bulkTeacherSelect?.addEventListener('change', syncBulkSelectionFromTeacher);
+  syncBulkSelectionFromTeacher();
+  bulkSelectAll?.addEventListener('change', () => {
+    const checked = !!bulkSelectAll.checked;
+    document.querySelectorAll('.bulk-activity-checkbox').forEach((checkbox) => {
+      checkbox.checked = checked;
+    });
+    syncBulkHiddenInputs();
+  });
+  bulkList?.addEventListener('change', (event) => {
+    if (event.target.closest('.bulk-activity-checkbox')) {
+      syncBulkHiddenInputs();
+      const total = document.querySelectorAll('.bulk-activity-checkbox').length;
+      const checked = document.querySelectorAll('.bulk-activity-checkbox:checked').length;
+      if (bulkSelectAll) bulkSelectAll.checked = total > 0 && total === checked;
+    }
+  });
+  bulkForm?.addEventListener('submit', (event) => {
+    syncBulkHiddenInputs();
+    if (!bulkTeacherSelect?.value || document.querySelectorAll('.bulk-activity-checkbox:checked').length === 0) {
+      event.preventDefault();
+      alert('Lütfen bir öğretmen ve en az bir günlük çalışma seçin.');
+    }
+  });
+
+  bulkUnassignOpenBtn?.addEventListener('click', () => {
+    const teacherId = bulkTeacherSelect?.value || '';
+    if (!teacherId) {
+      alert('Lütfen önce bir öğretmen seçin.');
+      return;
+    }
+    if (!confirm('Seçili öğretmenden tüm atanmış günlük çalışmalar kaldırılacak. Devam edilsin mi?')) {
+      return;
+    }
+    if (bulkUnassignTeacherInput) {
+      bulkUnassignTeacherInput.value = teacherId;
+    }
+    bulkUnassignForm?.submit();
+  });
+  @endif
+
   render();
 })();
 </script>
 @endsection
+

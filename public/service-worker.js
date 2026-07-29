@@ -12,7 +12,7 @@ const PRECACHE = [
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/manifest.json",
-  "/logo192.png",
+  "/public/logo.png",
   "/logo512.png",
   "/logo.png",
   "/favicon.ico",
@@ -215,8 +215,8 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "Yeni Bildirim";
   const options = {
     body: payload.body || "",
-    icon: "/logo192.png",
-    badge: "/logo192.png",
+    icon: "/public/logo.png",
+    badge: "/public/logo.png",
     data: {
       url: payload.url || "/bildirimler",
       log_id: payload.log_id || null,

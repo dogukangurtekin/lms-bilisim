@@ -15,7 +15,15 @@
   }
 
   function setRootState() {
-    document.documentElement.classList.toggle("pwa-standalone", supportsPwaContext());
+    const standalone = supportsPwaContext();
+    document.documentElement.classList.toggle("pwa-standalone", standalone);
+    document.documentElement.style.overflowY = "auto";
+    document.documentElement.style.height = "auto";
+    if (document.body) {
+      document.body.classList.toggle("pwa-standalone", standalone);
+      document.body.style.overflowY = "auto";
+      document.body.style.height = "auto";
+    }
   }
 
   function getPwaSettings() {
@@ -23,7 +31,7 @@
       enabled: false,
       title: "Egitim Portali",
       subtitle: "Yukleniyor...",
-      logoUrl: "/public/logo192.png",
+      logoUrl: "/public/logo.png",
     };
     const source = window.__APP_PWA_SETTINGS || {};
     return {
@@ -239,21 +247,9 @@
   }
 
   function lockZoomGestures() {
+    if (!supportsPwaContext()) return;
+
     let lastTouchEnd = 0;
-
-    document.addEventListener("touchstart", function (event) {
-      if (event.touches && event.touches.length > 1) event.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener("touchmove", function (event) {
-      if (event.touches && event.touches.length > 1) event.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener("touchend", function (event) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) event.preventDefault();
-      lastTouchEnd = now;
-    }, { passive: false });
 
     document.addEventListener("wheel", function (event) {
       if (event.ctrlKey) event.preventDefault();
@@ -262,6 +258,11 @@
     document.addEventListener("dblclick", function (event) {
       event.preventDefault();
     }, { passive: false });
+
+    document.addEventListener("touchend", function () {
+      const now = Date.now();
+      lastTouchEnd = now;
+    }, { passive: true });
   }
 
   function setupNetworkSignals() {

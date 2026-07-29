@@ -75,6 +75,7 @@
                 :content-url="route('course.detail', ['id' => $c->id])"
                 :primary-url="route('student.portal.course-show', $c)"
                 :primary-label="$cp?->completed ? 'Tamamlandı' : 'Derse Başla'"
+                primary-variant="success"
             />
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">

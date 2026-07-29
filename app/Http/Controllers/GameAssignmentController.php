@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TeacherGameAssignment;
 use App\Models\GameAssignment;
 use App\Models\SchoolClass;
 use Illuminate\Http\Request;
@@ -12,6 +13,20 @@ class GameAssignmentController extends Controller
 {
     public function create(string $gameSlug)
     {
+        $user = auth()->user();
+        $isAdmin = (bool) $user?->hasRole('admin');
+        $isTeacher = (bool) $user?->hasRole('teacher');
+        if (! $isAdmin) {
+            abort_unless(
+                $isTeacher
+                && $user?->teacher
+                && TeacherGameAssignment::query()
+                    ->where('teacher_id', $user->teacher->id)
+                    ->where('game_slug', $gameSlug)
+                    ->exists(),
+                403
+            );
+        }
         $games = ActivityController::games();
         abort_unless(isset($games[$gameSlug]), 404);
 
@@ -32,6 +47,20 @@ class GameAssignmentController extends Controller
 
     public function store(Request $request, string $gameSlug)
     {
+        $user = auth()->user();
+        $isAdmin = (bool) $user?->hasRole('admin');
+        $isTeacher = (bool) $user?->hasRole('teacher');
+        if (! $isAdmin) {
+            abort_unless(
+                $isTeacher
+                && $user?->teacher
+                && TeacherGameAssignment::query()
+                    ->where('teacher_id', $user->teacher->id)
+                    ->where('game_slug', $gameSlug)
+                    ->exists(),
+                403
+            );
+        }
         $games = ActivityController::games();
         abort_unless(isset($games[$gameSlug]), 404);
 
@@ -77,4 +106,3 @@ class GameAssignmentController extends Controller
             ->with('ok', 'Odev basariyla olusturuldu.');
     }
 }
-

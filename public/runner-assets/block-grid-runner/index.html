@@ -1,4 +1,4 @@
-ï»¿<!doctype html>
+<!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8">
@@ -7,28 +7,28 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="../manifest.webmanifest">
-  <link rel="apple-touch-icon" href="../logo192.png">
+  <link rel="apple-touch-icon" href="../logo.png">
   <title>Block Coding - Grid Runner</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <div class="brand">
-      <button id="menuToggle" class="menu-toggle" aria-label="Menu">â˜°</button>
-      <h1>Ã–zelsin Blok Kodlama UygulamasÄ±</h1>
+      <button id="menuToggle" class="menu-toggle" aria-label="Menu">?</button>
+      <h1>Özelsin Blok Kodlama Uygulamasý</h1>
     </div>
     <div class="header-center">
       <div class="level-nav-wrap">
-        <button id="levelMoveUpBtn" class="level-shift-btn" title="Seviyeyi yukarÄ± taÅŸÄ±" aria-label="Seviyeyi yukarÄ± taÅŸÄ±">â†‘ YukarÄ±</button>
+        <button id="levelMoveUpBtn" class="level-shift-btn" title="Seviyeyi yukarý taþý" aria-label="Seviyeyi yukarý taþý">^ Yukarý</button>
         <div class="level-select-wrap">
-          <select id="levelSelect" aria-label="Seviye seÃ§in"></select>
+          <select id="levelSelect" aria-label="Seviye seçin"></select>
           <div class="level-progress" aria-hidden="true"></div>
         </div>
-        <button id="levelMoveDownBtn" class="level-shift-btn" title="Seviyeyi aÅŸaÄŸÄ± taÅŸÄ±" aria-label="Seviyeyi aÅŸaÄŸÄ± taÅŸÄ±">â†“ AÅŸaÄŸÄ±</button>
+        <button id="levelMoveDownBtn" class="level-shift-btn" title="Seviyeyi aþaðý taþý" aria-label="Seviyeyi aþaðý taþý">v Aþaðý</button>
       </div>
     </div>
     <div class="header-actions">
-      <button id="darkToggle" class="dark-toggle" aria-label="Tema deÄŸiÅŸtir">ðŸŒ™</button>
+      <button id="darkToggle" class="dark-toggle" aria-label="Tema deðiþtir">??</button>
     </div>
   </header>
 
@@ -36,14 +36,14 @@
   <nav id="sideMenu" class="side-menu hidden" aria-hidden="true">
     <div class="side-menu-inner">
       <div class="side-header">
-        <div class="brand-sm">Ã–</div>
-        <div class="side-title">MenÃ¼</div>
+        <div class="brand-sm">Ö</div>
+        <div class="side-title">Menü</div>
       </div>
-      <button id="sideClose" class="side-close" aria-label="Kapat">âœ•</button>
+      <button id="sideClose" class="side-close" aria-label="Kapat">?</button>
       <div class="menu-list buttons">
         <button id="addLevelBtn" class="menu-btn">Seviye Ekle</button>
         <button id="deleteLevelBtn" class="menu-btn danger">Seviye Sil</button>
-        <div class="small-desc">Yeni seviye tasarla veya var olanÄ± kopyala.</div>
+        <div class="small-desc">Yeni seviye tasarla veya var olaný kopyala.</div>
       </div>
     </div>
   </nav>
@@ -58,14 +58,14 @@
       <div class="designer-body">
         <div class="designer-layout-grid">
           <aside class="designer-sidebar">
-            <label for="designerLevelName">Seviye AdÄ±</label>
-            <input id="designerLevelName" type="text" placeholder="Ã–rn. Ã–zel Seviye 1" />
-            <label for="designerGroup">BaÅŸlÄ±k / Kategori</label>
-            <input id="designerGroup" type="text" placeholder="Ã–rn. Kolay, Orta, Zor, Ã–zel" />
-            <label for="designerLevelOrder">Seviye SÄ±rasÄ±</label>
-            <input id="designerLevelOrder" type="number" min="1" step="1" placeholder="Ã–rn. 1" />
+            <label for="designerLevelName">Seviye Adý</label>
+            <input id="designerLevelName" type="text" placeholder="Örn. Özel Seviye 1" />
+            <label for="designerGroup">Baþlýk / Kategori</label>
+            <input id="designerGroup" type="text" placeholder="Örn. Kolay, Orta, Zor, Özel" />
+            <label for="designerLevelOrder">Seviye Sýrasý</label>
+            <input id="designerLevelOrder" type="number" min="1" step="1" placeholder="Örn. 1" />
             <label for="designerLevelXp">Seviye XP</label>
-            <input id="designerLevelXp" type="number" min="1" max="500" step="1" placeholder="Ã–rn. 100" />
+            <input id="designerLevelXp" type="number" min="1" max="500" step="1" placeholder="Örn. 100" />
             <label>Grid Boyutu</label>
             <div class="designer-grid-size">
               <select id="designerGridWidth">
@@ -81,9 +81,9 @@
                 <option value="12">12</option>
               </select>
             </div>
-            <label>Nesneler (SÃ¼rÃ¼kle-BÄ±rak)</label>
+            <label>Nesneler (Sürükle-Býrak)</label>
             <div id="designerPalette" class="designer-palette">
-              <button class="palette-tile active" data-item="start" draggable="true" title="BaÅŸlangÄ±Ã§" aria-label="BaÅŸlangÄ±Ã§">
+              <button class="palette-tile active" data-item="start" draggable="true" title="Baþlangýç" aria-label="Baþlangýç">
                 <span class="palette-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none">
                     <path d="M6 3v18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -117,8 +117,8 @@
             </div>
             <div class="designer-actions">
               <button id="designerSaveBtn">Kaydet</button>
-              <button id="designerResetBtn" class="ghost">SÄ±fÄ±rla</button>
-              <button id="designerCancelBtn" class="ghost">Ä°ptal</button>
+              <button id="designerResetBtn" class="ghost">Sýfýrla</button>
+              <button id="designerCancelBtn" class="ghost">Ýptal</button>
             </div>
           </aside>
           <section class="designer-board-wrap">
@@ -142,7 +142,7 @@
       </div>
       <div class="confirm-actions">
         <button id="confirmDeleteLevelBtn" class="danger-btn">Evet, Sil</button>
-        <button id="cancelDeleteLevelBtn" class="ghost-btn">VazgeÃ§</button>
+        <button id="cancelDeleteLevelBtn" class="ghost-btn">Vazgeç</button>
       </div>
     </div>
   </div>
@@ -152,17 +152,17 @@
       <canvas id="gridCanvas" width="480" height="480"></canvas>
       <div class="canvas-controls controls">
         <!-- levelSelect moved to header -->
-        <button id="resetBtn" class="reset-btn" title="SÄ±fÄ±rla">
+        <button id="resetBtn" class="reset-btn" title="Sýfýrla">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-3.2 6.4L21 12z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="btn-label">SÄ±fÄ±rla</span>
+          <span class="btn-label">Sýfýrla</span>
         </button>
-        <button id="runBtn" class="run-btn" title="Ã‡alÄ±ÅŸtÄ±r">
+        <button id="runBtn" class="run-btn" title="Çalýþtýr">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3v18l15-9L5 3z" fill="#fff"/></svg>
-          <span class="btn-label">Ã‡alÄ±ÅŸtÄ±r</span>
+          <span class="btn-label">Çalýþtýr</span>
         </button>
-        <button id="stepBtn" class="step-btn" title="AdÄ±m">
+        <button id="stepBtn" class="step-btn" title="Adým">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span class="btn-label">AdÄ±m</span>
+          <span class="btn-label">Adým</span>
         </button>
         <span id="status"></span>
       </div>
@@ -171,8 +171,8 @@
 
     <section class="center">
       <div class="blockly-note">
-        <h4>AÃ§Ä±klama</h4>
-        <p>BloklarÄ± sola sÃ¼rÃ¼kleyip birleÅŸtirerek karakteri yÄ±ldÄ±z'a ulaÅŸtÄ±r.</p>
+        <h4>Açýklama</h4>
+        <p>Bloklarý sola sürükleyip birleþtirerek karakteri yýldýz'a ulaþtýr.</p>
       </div>
       <div id="blocklyDiv"></div>
     </section>
@@ -205,18 +205,18 @@
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-icon">ðŸŽ‰</div>
+        <div class="modal-icon">??</div>
         <div>
-          <h3 id="modalTitle">Harika! Seviye TamamlandÄ±</h3>
-          <p id="modalSubtitle">Aferin â€” harika bir iÅŸ Ã§Ä±kardÄ±n. AÅŸaÄŸÄ±da bloklardan Ã¼retilen JavaScript gÃ¶rÃ¼nÃ¼yor.</p>
+          <h3 id="modalTitle">Harika! Seviye Tamamlandý</h3>
+          <p id="modalSubtitle">Aferin — harika bir iþ çýkardýn. Aþaðýda bloklardan üretilen JavaScript görünüyor.</p>
         </div>
       </div>
       <canvas id="confettiCanvas" class="confetti-canvas" width="800" height="300"></canvas>
-      <pre id="modalCodePre">// Kod burada gÃ¶rÃ¼ntÃ¼lenecek</pre>
+      <pre id="modalCodePre">// Kod burada görüntülenecek</pre>
       <div class="modal-actions">
         <button id="modalNextBtn" class="icon-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12l7 7 13-13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Sonraki BÃ¶lÃ¼m</span>
+          <span>Sonraki Bölüm</span>
         </button>
         <button id="modalRetryBtn" class="icon-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 12a9 9 0 10-3.2 6.4L21 12z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>

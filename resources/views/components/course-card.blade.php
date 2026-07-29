@@ -9,6 +9,7 @@
     'previewUrl' => null,
     'primaryUrl' => '#',
     'primaryLabel' => 'Derse Başla',
+    'primaryVariant' => 'default',
     'previewLabel' => 'Önizle',
     'deleteUrl' => null,
     'assignEnabled' => false,
@@ -30,6 +31,12 @@
         default => 'background:#6d28d9;color:#fff;',
     };
     $hasPreview = filled($previewUrl);
+    $primaryVariant = (string) $primaryVariant;
+    $primaryStyle = match ($primaryVariant) {
+        'success' => 'background:#16a34a;color:#fff;box-shadow:0 12px 24px rgba(22,163,74,.18);',
+        'blue' => 'background:#2563eb;color:#fff;box-shadow:0 12px 24px rgba(37,99,235,.18);',
+        default => 'background:#5b21b6;color:#fff;box-shadow:0 12px 24px rgba(91,33,182,.18);',
+    };
 @endphp
 
 <article class="group relative flex h-full flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
@@ -85,15 +92,15 @@
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
         </div>
 
-        <p class="min-h-[5rem] text-[17px] leading-8 text-slate-600">{{ $normalizedDescription }}</p>
+        <p class="text-[17px] leading-8 text-slate-600">{{ $normalizedDescription }}</p>
 
         @php
-            $btnCount = 3 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
-            $btnCols = max(3, min(4, $btnCount));
+            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCols = max(2, min(4, $btnCount));
         @endphp
         <div class="mt-auto grid gap-2.5" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
             <a href="{{ $contentUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;border:1px solid #7c3aed;background:#fff;color:#5b21b6;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 10px 20px rgba(15,23,42,.06);transition:transform .15s ease,filter .15s ease;">İçerik</a>
-            <a href="{{ $primaryUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#5b21b6;color:#fff;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 12px 24px rgba(91,33,182,.18);transition:transform .15s ease,filter .15s ease;">{{ $primaryLabel }}</a>
+            <a href="{{ $primaryUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;{{ $primaryStyle }}font-size:15px;font-weight:500;text-decoration:none;transition:transform .15s ease,filter .15s ease;">{{ $primaryLabel }}</a>
             @if(!empty($deleteUrl))
                 <a href="{{ $deleteUrl }}" class="course-delete-link" data-delete-url="{{ $deleteUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#ef4444;color:#fff;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 12px 24px rgba(239,68,68,.18);transition:transform .15s ease,filter .15s ease;">Dersi Sil</a>
             @endif

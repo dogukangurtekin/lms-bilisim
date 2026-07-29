@@ -162,11 +162,13 @@ HTML;
 .lesson-layout-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:.01em;background:rgba(37,99,235,.08);color:#1d4ed8;border:1px solid rgba(37,99,235,.14)}
 .sqz-wrap{margin-top:10px;border-radius:18px;padding:14px;background:linear-gradient(160deg,#4c1d95,#6d28d9 42%,#7c3aed);color:#fff;border:1px solid rgba(255,255,255,.18)}
 .sqz-qcard{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:14px;margin-bottom:12px}
-.sqz-q{margin:0;font-size:34px;line-height:1.2;font-weight:900;color:#fff;text-align:center}
+ .sqz-q{margin:0;font-size:34px;line-height:1.2;font-weight:900;color:#fff;text-align:center}
+ .sqz-q, .sqz-q *{color:#fff !important}
 .sqz-meta{margin:10px 0 0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
 .sqz-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
 .sqz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sqz-opt{border:0;border-radius:12px;padding:18px 14px;color:#fff;font-weight:900;font-size:24px;line-height:1.1;display:grid;grid-template-columns:34px 1fr;align-items:center;gap:10px;cursor:pointer;text-align:left;box-shadow:inset 0 -4px 0 rgba(0,0,0,.16)}
+ .sqz-opt{border:0;border-radius:12px;padding:18px 14px;color:#fff;font-weight:900;font-size:24px;line-height:1.1;display:grid;grid-template-columns:34px 1fr;align-items:center;gap:10px;cursor:pointer;text-align:left;box-shadow:inset 0 -4px 0 rgba(0,0,0,.16)}
+ .sqz-opt, .sqz-opt *{color:#fff !important}
 .sqz-opt input{display:none}
 .sqz-shape{font-size:28px;text-align:center}
 .sqz-red{background:#ef4444}.sqz-blue{background:#2563eb}.sqz-yellow{background:#eab308}.sqz-green{background:#16a34a}
@@ -251,7 +253,17 @@ HTML;
                 <p class="lesson-slide-subtitle">{{ $heroText }}</p>
             @endif
 
-            @if($layout === 'hero' || $layout === 'section')
+            @if($layout === 'text')
+                <div class="lesson-card lesson-text-only">
+                    @if(!empty($slide['content']))
+                        <p class="lesson-paragraph">{!! nl2br(e($slide['content'])) !!}</p>
+                    @elseif(!empty(data_get($slide, 'layout_meta.text.html')))
+                        <div class="lesson-paragraph">{!! data_get($slide, 'layout_meta.text.html') !!}</div>
+                    @elseif(!empty(data_get($slide, 'layout_meta.text.text')))
+                        <p class="lesson-paragraph">{!! nl2br(e((string) data_get($slide, 'layout_meta.text.text'))) !!}</p>
+                    @endif
+                </div>
+            @elseif($layout === 'hero' || $layout === 'section')
                 @include('courses.partials.slides.hero', ['slide' => $slide])
             @elseif($layout === 'split')
                 @include('courses.partials.slides.split', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
@@ -316,6 +328,11 @@ HTML;
                         }
                     }
                     $opts = array_values(array_filter($opts, fn ($v) => trim((string) ($v['text'] ?? '')) !== ''));
+                    if ($interactionType === 'multiple_choice') {
+                        while (count($opts) < 4) {
+                            $opts[] = ['text' => 'Seçenek ' . (count($opts) + 1), 'correct' => false];
+                        }
+                    }
                     if ($opts !== [] && !collect($opts)->contains(fn ($opt) => !empty($opt['correct'])) && isset($question['correct_index'])) {
                         $correctIndex = max(0, (int) $question['correct_index']);
                         if (isset($opts[$correctIndex])) {
@@ -359,7 +376,6 @@ HTML;
                         <p class="sqz-q">{{ $slide['question_prompt'] }}</p>
                         <div class="sqz-meta">
                             <span class="sqz-badge">Puan: {{ (int) ($slide['points'] ?? 5) }}</span>
-                            <span class="sqz-badge">Süre: {{ (int) ($slide['time_limit'] ?? 10) }} sn</span>
                         </div>
                     </div>
                     @if($interactionType === 'multiple_choice')

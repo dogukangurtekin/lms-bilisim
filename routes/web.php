@@ -116,8 +116,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
-    Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
-    Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
+      Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
+      Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');
+      Route::post('/etkinlikler/ogretmenden-kaldir/toplu', [ActivityController::class, 'unassignTeacherBulk'])->name('activities.unassign.teacher.bulk');
+      Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
     Route::get('/qr-okut/{student}', [QrLoginController::class, 'scannerPage'])->middleware('role:admin,teacher')->name('qr.login.scanner');
     Route::post('/qr/verify', [QrLoginController::class, 'verify'])->middleware('role:admin,teacher')->name('qr.verify');
 
@@ -153,6 +155,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata', [TeacherClassAssignmentController::class, 'edit'])->name('users.teachers.classes.edit');
             Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevel'])->name('users.teachers.classes.assign-level');
             Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClasses'])->name('users.teachers.classes.assign-classes');
+            Route::get('/kullanici-yonetimi/kullanici/{user}/sinif-ata', [TeacherClassAssignmentController::class, 'editUser'])->name('users.classes.edit');
+            Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevelUser'])->name('users.classes.assign-level');
+            Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClassesUser'])->name('users.classes.assign-classes');
         });
         Route::get('/bildirimler', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('/app-notifications/send', [NotificationController::class, 'sendMessage'])->name('notifications.send');
@@ -177,6 +182,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/kodlama-etkinlikleri/{activity}/indir', [CodingActivityManagementController::class, 'export'])->name('coding.activities.export');
         Route::post('/kodlama-etkinlikleri/yukle', [CodingActivityManagementController::class, 'import'])->name('coding.activities.import');
         Route::delete('/kodlama-etkinlikleri/tumu', [CodingActivityManagementController::class, 'destroyAll'])->name('coding.activities.destroy.all');
+        Route::post('/kodlama-etkinlikleri/ogretmene-ata/toplu', [CodingActivityManagementController::class, 'assignTeacherBulk'])->name('coding.activities.assign.teacher.bulk');
+        Route::post('/kodlama-etkinlikleri/ogretmenden-kaldir/toplu', [CodingActivityManagementController::class, 'unassignTeacherBulk'])->name('coding.activities.unassign.teacher.bulk');
         Route::post('/kodlama-etkinlikleri', [CodingActivityManagementController::class, 'store'])->name('coding.activities.store');
         Route::put('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'update'])->name('coding.activities.update');
         Route::delete('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'destroy'])->name('coding.activities.destroy');
@@ -221,10 +228,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('students', StudentController::class);
         Route::resource('classes', SchoolClassController::class);
     Route::post('/courses/upload-cover', [CourseController::class, 'uploadCover'])->name('courses.upload-cover');
-    Route::post('/courses/upload-media', [CourseController::class, 'uploadMedia'])->name('courses.upload-media');
+        Route::post('/courses/upload-media', [CourseController::class, 'uploadMedia'])->name('courses.upload-media');
         Route::get('/courses/{course}/indir', [CourseController::class, 'export'])->name('courses.export');
         Route::get('/courses/indir/tumu', [CourseController::class, 'exportAll'])->name('courses.export-all');
         Route::post('/courses/yukle', [CourseController::class, 'import'])->name('courses.import');
+        Route::post('/courses/ogretmene-ata/toplu', [CourseController::class, 'assignTeacherBulk'])->name('courses.assign-teacher.bulk');
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
         Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');

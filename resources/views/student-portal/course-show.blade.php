@@ -1,4 +1,4 @@
-@extends('layout.app')
+﻿@extends('layout.app')
 @section('title', 'Ders İçeriği')
 @section('body_class', 'play-compact')
 
@@ -19,10 +19,19 @@
     .course-show-stage{min-height:80vh;overflow:hidden;margin:0 0 12px;background:#fff;max-width:100%}
     .course-show-shell img,.course-show-shell video,.course-show-shell iframe,.course-show-shell table{max-width:100%}
     .course-show-shell .lesson-slide,.course-show-shell .lesson-slide-shell,.course-show-shell .lesson-card,.course-show-shell .lesson-split,.course-show-shell .lesson-split-card,.course-show-shell .lesson-split-body,.course-show-shell .lesson-image-focus,.course-show-shell .lesson-grid-cards,.course-show-shell .sqz-wrap{min-width:0;max-width:100%}
-    .course-show-shell .sqz-opt.is-correct{outline:3px solid rgba(34,197,94,.95) !important;box-shadow:0 0 0 4px rgba(34,197,94,.12),inset 0 -4px 0 rgba(0,0,0,.16) !important}
-    .course-show-shell .sqz-opt.is-wrong{outline:3px solid rgba(239,68,68,.95) !important;box-shadow:0 0 0 4px rgba(239,68,68,.12),inset 0 -4px 0 rgba(0,0,0,.16) !important}
-    .course-show-shell .sqz-row.is-correct input,.course-show-shell .sqz-row.is-correct select{border-color:#22c55e !important;box-shadow:0 0 0 3px rgba(34,197,94,.12) !important}
-    .course-show-shell .sqz-row.is-wrong input,.course-show-shell .sqz-row.is-wrong select{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.12) !important}
+    .course-show-shell .sqz-opt.is-correct{outline:3px solid rgba(34,197,94,.98) !important;box-shadow:0 0 0 5px rgba(34,197,94,.18),inset 0 -4px 0 rgba(0,0,0,.16) !important}
+    .course-show-shell .sqz-opt.is-wrong{outline:3px solid rgba(239,68,68,.98) !important;box-shadow:0 0 0 5px rgba(239,68,68,.18),inset 0 -4px 0 rgba(0,0,0,.16) !important}
+    .course-show-shell .sqz-row.is-correct input,.course-show-shell .sqz-row.is-correct select{border-color:#22c55e !important;box-shadow:0 0 0 3px rgba(34,197,94,.16) !important}
+    .course-show-shell .sqz-row.is-wrong input,.course-show-shell .sqz-row.is-wrong select{border-color:#ef4444 !important;box-shadow:0 0 0 3px rgba(239,68,68,.16) !important}
+    .course-show-shell .sqz-feedback{margin-top:14px;padding:14px 16px;border-radius:16px;font-weight:900;font-size:16px;display:none;letter-spacing:-.01em;transform-origin:top center;animation:none;transition:transform .28s ease,opacity .28s ease,filter .28s ease;overflow:hidden}
+    .course-show-shell .sqz-feedback.is-correct{display:block;background:linear-gradient(135deg,#0f9d58 0%,#22c55e 55%,#86efac 100%);border:1px solid rgba(16,185,129,.88);color:#fff;box-shadow:0 16px 34px rgba(34,197,94,.24)}
+    .course-show-shell .sqz-feedback.is-wrong{display:block;background:linear-gradient(135deg,#ef4444 0%,#fb7185 54%,#fecaca 100%);border:1px solid rgba(239,68,68,.9);color:#fff;box-shadow:0 16px 34px rgba(239,68,68,.24)}
+    .course-show-shell .sqz-feedback.is-animate{animation:sqzFeedbackIn .38s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes sqzFeedbackIn{
+        0%{opacity:0;transform:translateY(10px) scale(.96);filter:blur(3px)}
+        70%{opacity:1;transform:translateY(-2px) scale(1.01);filter:blur(0)}
+        100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+    }
     @media (max-width:768px){
         .course-show-shell{padding:10px !important}
         .course-show-header{grid-template-columns:1fr;gap:10px}
@@ -83,6 +92,7 @@
                 @csrf
                 <input type="hidden" name="earned_xp" id="student-course-earned-xp" value="0">
                 <input type="hidden" name="duration_seconds" id="student-course-duration-seconds" value="0">
+                <input type="hidden" name="solved_questions" id="student-course-solved-questions" value="0">
             </form>
         @endif
 
@@ -119,6 +129,7 @@
                 const previewMode = {{ !empty($previewMode) ? 'true' : 'false' }};
                 const earnedXpInput = document.getElementById('student-course-earned-xp');
                 const durationInput = document.getElementById('student-course-duration-seconds');
+                const solvedQuestionsInput = document.getElementById('student-course-solved-questions');
                 const tmpl = document.getElementById('student-course-slide-templates');
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
 
@@ -132,9 +143,12 @@
                 let touchStartY = 0;
                 const startedAt = Date.now();
                 let earnedXpTotal = 0;
+                let solvedQuestionsTotal = 0;
                 const awardedSlideIndexes = new Set();
+                const solvedQuestionIndexes = new Set();
                 let nextAdvanceTimer = null;
                 const totalXp = slides.reduce((sum, node) => sum + Math.max(0, Number(node?.dataset?.slideXp || 0)), 0);
+                const totalQuestions = slides.reduce((sum, node) => sum + ((String(node?.dataset?.slideSummary || '0') === '1') ? 0 : ((node.querySelector('[data-sqz-question]') ? 1 : 0))), 0);
 
                 function awardCurrentSlideXp() {
                     const current = slides[idx];
@@ -145,6 +159,17 @@
                     awardedSlideIndexes.add(idx);
                     earnedXpTotal += xp;
                     return xp;
+                }
+
+                function markSolvedCurrentSlide() {
+                    const current = slides[idx];
+                    if (!current) return;
+                    const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
+                    if (isSummary || solvedQuestionIndexes.has(idx)) return;
+                    const qRoot = current.querySelector('[data-sqz-question]');
+                    if (!qRoot) return;
+                    solvedQuestionIndexes.add(idx);
+                    solvedQuestionsTotal += 1;
                 }
 
                 function fitIframeToHolder(iframe, holder) {
@@ -217,6 +242,12 @@
                     if (String(current?.dataset?.slideSummary || '0') === '1') {
                         const earnedEl = stage.querySelector('[data-summary-earned-xp]');
                         if (earnedEl) earnedEl.textContent = 'Kazanılan XP: ' + Math.max(earnedXpTotal, totalXp);
+                        const solvedEl = stage.querySelector('[data-summary-solved-questions]');
+                        if (solvedEl) {
+                            solvedEl.textContent = totalQuestions > 0
+                                ? 'Çözülen soru sayısı: ' + solvedQuestionsTotal + ' / ' + totalQuestions
+                                : 'Çözülen soru sayısı: 0';
+                        }
                     }
                     counter.textContent = (idx + 1) + ' / ' + slides.length;
                     prevBtn.disabled = idx <= 0;
@@ -256,6 +287,7 @@
                     const showFeedback = (isCorrect, message, autoAdvance = false) => {
                         if (!feedbackEl) return;
                         feedbackEl.classList.remove('is-correct', 'is-wrong');
+                        feedbackEl.classList.remove('is-animate');
                         feedbackEl.textContent = message || '';
                         if (!message) {
                             feedbackEl.style.display = 'none';
@@ -263,14 +295,10 @@
                         }
                         feedbackEl.classList.add(isCorrect ? 'is-correct' : 'is-wrong');
                         feedbackEl.style.display = 'block';
+                        void feedbackEl.offsetWidth;
+                        feedbackEl.classList.add('is-animate');
                         if (isCorrect && autoAdvance) {
-                            const existing = stage.querySelector('[data-sqz-celebrate]');
-                            if (existing) existing.remove();
-                            const celebrate = document.createElement('div');
-                            celebrate.setAttribute('data-sqz-celebrate', '1');
-                            celebrate.style.cssText = 'margin-top:12px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-weight:900;box-shadow:0 16px 32px rgba(22,163,74,.28);animation:sqzPop .55s ease-out both;';
-                            celebrate.innerHTML = 'Doğru cevap! <span style="opacity:.92">+' + currentXp + ' XP</span>';
-                            feedbackEl.insertAdjacentElement('afterend', celebrate);
+                            markSolvedCurrentSlide();
                             if (nextAdvanceTimer) clearTimeout(nextAdvanceTimer);
                             nextAdvanceTimer = setTimeout(() => {
                                 awardCurrentSlideXp();
@@ -278,6 +306,7 @@
                                     if (previewMode || !completeForm) return;
                                     if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                                     if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+                                    if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(solvedQuestionsTotal, totalQuestions));
                                     completeForm.submit();
                                     return;
                                 }
@@ -300,6 +329,7 @@
                         const isCorrect = String(selected.getAttribute('data-sqz-correct') || '0') === '1';
                         setOptionState(selected, isCorrect ? 'is-correct' : 'is-wrong');
                         showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
+                        if (isCorrect) markSolvedCurrentSlide();
                     };
 
                     const evaluateRowInputs = () => {
@@ -328,6 +358,7 @@
                             return true;
                         }
                         showFeedback(allCorrect, allCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', allCorrect);
+                        if (allCorrect) markSolvedCurrentSlide();
                         return true;
                     };
 
@@ -361,6 +392,7 @@
                             }
                             const isCorrect = correctAnswer !== '' && value === correctAnswer;
                             showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
+                            if (isCorrect) markSolvedCurrentSlide();
                         };
                         input?.addEventListener('input', onInput);
                         onInput();
@@ -391,6 +423,7 @@
                                 return;
                             }
                             showFeedback(allCorrect, allCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', allCorrect);
+                            if (allCorrect) markSolvedCurrentSlide();
                         };
                         inputs.forEach((input) => input.addEventListener('change', onChange));
                         onChange();
@@ -443,6 +476,7 @@
                         if (!completeForm) return;
                         if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                         if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+                        if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(solvedQuestionsTotal, totalQuestions));
                         completeForm.submit();
                         return;
                     }
@@ -452,6 +486,16 @@
                     render();
                 });
 
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        if (idx > 0) prevBtn.click();
+                    }
+                    if (event.key === 'ArrowRight') {
+                        event.preventDefault();
+                        nextBtn.click();
+                    }
+                });
                 stage.addEventListener('touchstart', (e) => {
                     const t = e.changedTouches && e.changedTouches[0];
                     if (!t) return;
@@ -482,3 +526,7 @@
     @endif
 </div>
 @endsection
+
+
+
+

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolClass;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TeacherClassAssignmentController extends Controller
@@ -34,5 +35,38 @@ class TeacherClassAssignmentController extends Controller
         }
         return back()->with('ok', 'Sinif bazli atama guncellendi.');
     }
-}
 
+    public function editUser(User $user)
+    {
+        $teacher = $this->resolveTeacherForUser($user);
+        return $this->edit($teacher);
+    }
+
+    public function assignByLevelUser(Request $request, User $user)
+    {
+        $teacher = $this->resolveTeacherForUser($user);
+        return $this->assignByLevel($request, $teacher);
+    }
+
+    public function assignByClassesUser(Request $request, User $user)
+    {
+        $teacher = $this->resolveTeacherForUser($user);
+        return $this->assignByClasses($request, $teacher);
+    }
+
+    private function resolveTeacherForUser(User $user): Teacher
+    {
+        if ($user->teacher) {
+            return $user->teacher;
+        }
+
+        return Teacher::query()->firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'branch' => null,
+                'phone' => null,
+                'hire_date' => null,
+            ]
+        );
+    }
+}

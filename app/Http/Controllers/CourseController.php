@@ -67,10 +67,21 @@ class CourseController extends Controller
             ]);
             $teachers = collect();
         }
+        try {
+            $assignableCourses = Course::query()
+                ->select(['id', 'name', 'teacher_id'])
+                ->orderByDesc('id')
+                ->get();
+        } catch (\Throwable $e) {
+            Log::warning('Course assignable courses fallback triggered', [
+                'message' => $e->getMessage(),
+            ]);
+            $assignableCourses = collect();
+        }
         $canManageCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
         $canAssignCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
 
-        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'canManageCourses', 'canAssignCourses'));
+        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'assignableCourses', 'canManageCourses', 'canAssignCourses'));
     }
 
     public function create()
@@ -88,6 +99,22 @@ class CourseController extends Controller
         $course->teacher_id = (int) $data['teacher_id'];
         $course->save();
         return redirect()->route('courses.index')->with('ok', 'Ders ogretmene atandi.');
+    }
+
+    public function assignTeacherBulk(Request $request)
+    {
+        $data = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'course_ids' => ['required', 'array', 'min:1'],
+            'course_ids.*' => ['integer', 'exists:courses,id'],
+        ]);
+
+        $courseIds = collect($data['course_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        Course::query()
+            ->whereIn('id', $courseIds)
+            ->update(['teacher_id' => (int) $data['teacher_id']]);
+
+        return redirect()->route('courses.index')->with('ok', count($courseIds) . ' ders öğretmene atandı.');
     }
     public function assignClasses(Request $request, Course $course)
     {

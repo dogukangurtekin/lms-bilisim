@@ -22,7 +22,18 @@ class TeacherAssignmentController extends Controller
 
     public function index()
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
         $courseHomeworks = CourseHomework::with(['course', 'schoolClass'])
+            ->when($user?->hasRole('teacher'), function ($query) use ($teacherId) {
+                $query->where(function ($sub) use ($teacherId) {
+                    $sub->where('assignment_type', '!=', 'lesson')
+                        ->orWhere(function ($lessonQuery) use ($teacherId) {
+                            $lessonQuery->where('assignment_type', 'lesson')
+                                ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
+                        });
+                });
+            })
             ->latest()
             ->paginate(20, ['*'], 'course_page');
         $gameAssignments = GameAssignment::with(['classes', 'levels'])
@@ -102,6 +113,12 @@ class TeacherAssignmentController extends Controller
 
     public function showCourseHomework(CourseHomework $homework)
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($user?->hasRole('teacher') && (string) $homework->assignment_type === 'lesson') {
+            abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
+        }
+
         $homework->load(['course', 'schoolClass']);
         $gameUrl = null;
         $gameSlug = null;
@@ -136,6 +153,12 @@ class TeacherAssignmentController extends Controller
 
     public function editCourseHomework(CourseHomework $homework)
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($user?->hasRole('teacher') && (string) $homework->assignment_type === 'lesson') {
+            abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
+        }
+
         $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
         $games = ActivityController::games();
         return view('teacher-assignments.edit-course-homework', compact('homework', 'classes', 'games'));
@@ -143,6 +166,12 @@ class TeacherAssignmentController extends Controller
 
     public function updateCourseHomework(Request $request, CourseHomework $homework)
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($user?->hasRole('teacher') && (string) $homework->assignment_type === 'lesson') {
+            abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'details' => ['nullable', 'string'],
@@ -188,6 +217,12 @@ class TeacherAssignmentController extends Controller
 
     public function destroyCourseHomework(CourseHomework $homework)
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($user?->hasRole('teacher') && (string) $homework->assignment_type === 'lesson') {
+            abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
+        }
+
         $homework->delete();
         return redirect()->route('teacher.assignments.index')->with('ok', 'Ders odevi silindi. Ogrenci kayitlari korunur.');
     }

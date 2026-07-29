@@ -7,33 +7,78 @@ use App\Http\Requests\UpdateCodingActivityRequest;
 use App\Models\ActivityQuestion;
 use App\Models\CodingActivity;
 use App\Models\DailyActivityAssignment;
+use App\Models\Teacher;
 use App\Models\QuestionOption;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CodingActivityManagementController extends Controller
 {
+    private function canUseTeacherColumn(): bool
+    {
+        return Schema::hasColumn('coding_activities', 'teacher_id');
+    }
+
+    private function canUseAdminLockColumn(): bool
+    {
+        return Schema::hasColumn('coding_activities', 'admin_locked');
+    }
+
+    private function isAssignedToTeacher(CodingActivity $activity, ?int $teacherId): bool
+    {
+        if (! $this->canUseTeacherColumn()) {
+            return false;
+        }
+
+        return (int) ($activity->teacher_id ?? 0) > 0 && (int) $activity->teacher_id === (int) $teacherId;
+    }
+
     public function index()
     {
-        $activities = CodingActivity::withCount('questions')->latest()->paginate(20);
-        $todayAssignment = DailyActivityAssignment::with('activity')->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))->first();
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $hasTeacherColumn = $this->canUseTeacherColumn();
+        $hasAdminLockColumn = $this->canUseAdminLockColumn();
+        $activities = CodingActivity::query()
+            ->withCount('questions')
+            ->when($user?->hasRole('teacher') && $hasTeacherColumn, fn ($query) => $query->where('teacher_id', $teacherId))
+            ->latest()
+            ->paginate(20);
+        $todayAssignment = DailyActivityAssignment::with(['activity' => fn ($query) => $query->when($user?->hasRole('teacher'), fn ($q) => $q->where('teacher_id', $teacherId))])
+            ->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))
+            ->where('target_role', 'student')
+            ->when($user?->hasRole('teacher') && $hasTeacherColumn, fn ($query) => $query->whereHas('activity', fn ($q) => $q->where('teacher_id', $teacherId)))
+            ->first();
         $selectedId = (int) request()->integer('edit');
         $editingActivity = $selectedId > 0 ? CodingActivity::with('questions.options')->find($selectedId) : null;
         $isAdmin = (bool) auth()->user()?->hasRole('admin');
+        $teachers = Teacher::query()->with('user')->orderBy('id', 'desc')->get();
+        $assignableActivities = CodingActivity::query()
+            ->select(array_values(array_filter([
+                'id',
+                'title',
+                $hasTeacherColumn ? 'teacher_id' : null,
+                $hasAdminLockColumn ? 'admin_locked' : null,
+            ])))
+            ->orderByDesc('id')
+            ->get();
 
-        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin'));
+        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin', 'teachers', 'assignableActivities'));
     }
 
     public function store(StoreCodingActivityRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $hasTeacherColumn = $this->canUseTeacherColumn();
+        $hasAdminLockColumn = $this->canUseAdminLockColumn();
 
-        DB::transaction(function () use ($data): void {
-            $activity = CodingActivity::create([
+        DB::transaction(function () use ($data, $hasTeacherColumn, $hasAdminLockColumn): void {
+            $payload = [
                 'created_by' => auth()->id(),
                 'title' => $data['title'],
                 'type' => $data['type'],
@@ -42,7 +87,14 @@ class CodingActivityManagementController extends Controller
                 'base_xp' => $data['base_xp'] ?? 20,
                 'is_active' => true,
                 'is_random_pool' => (bool) ($data['is_random_pool'] ?? true),
-            ]);
+            ];
+            if ($hasTeacherColumn) {
+                $payload['teacher_id'] = auth()->user()?->hasRole('teacher') ? optional(auth()->user()?->teacher)->id : null;
+            }
+            if ($hasAdminLockColumn) {
+                $payload['admin_locked'] = false;
+            }
+            $activity = CodingActivity::create($payload);
 
             $this->syncQuestions($activity, $data['questions'] ?? []);
         });
@@ -53,16 +105,25 @@ class CodingActivityManagementController extends Controller
     public function update(UpdateCodingActivityRequest $request, CodingActivity $activity): RedirectResponse
     {
         $data = $request->validated();
+        $hasTeacherColumn = $this->canUseTeacherColumn();
+        $hasAdminLockColumn = $this->canUseAdminLockColumn();
 
-        DB::transaction(function () use ($activity, $data): void {
-            $activity->update([
+        DB::transaction(function () use ($activity, $data, $hasTeacherColumn, $hasAdminLockColumn): void {
+            $payload = [
                 'title' => $data['title'],
                 'type' => $data['type'],
                 'instruction' => $data['instruction'] ?? null,
                 'lesson_pages' => array_values(array_filter($data['lesson_pages'] ?? [])),
                 'base_xp' => $data['base_xp'] ?? 20,
                 'is_random_pool' => (bool) ($data['is_random_pool'] ?? false),
-            ]);
+            ];
+            if ($hasTeacherColumn) {
+                $payload['teacher_id'] = $activity->teacher_id ?: (auth()->user()?->hasRole('teacher') ? optional(auth()->user()?->teacher)->id : null);
+            }
+            if ($hasAdminLockColumn && ! array_key_exists('admin_locked', $payload)) {
+                $payload['admin_locked'] = (bool) ($activity->admin_locked ?? false);
+            }
+            $activity->update($payload);
 
             $activity->questions()->each(function (ActivityQuestion $question): void {
                 $question->options()->delete();
@@ -77,6 +138,31 @@ class CodingActivityManagementController extends Controller
 
     public function destroy(CodingActivity $activity): RedirectResponse
     {
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $hasTeacherColumn = $this->canUseTeacherColumn();
+        $hasAdminLockColumn = $this->canUseAdminLockColumn();
+        $isAssignedToTeacher = $hasTeacherColumn && $this->isAssignedToTeacher($activity, $teacherId);
+        $isLocked = $hasAdminLockColumn && (bool) ($activity->admin_locked ?? false);
+
+        if ($user?->hasRole('admin') && ($isAssignedToTeacher || $isLocked)) {
+            return redirect()->route('coding.activities.manage')->with('error', 'Ogretmene atanmis gunluk calisma admin tarafindan silinemez.');
+        }
+
+        if ($user?->hasRole('teacher') && $isAssignedToTeacher) {
+            $update = [];
+            if ($hasTeacherColumn) {
+                $update['teacher_id'] = null;
+            }
+            if ($hasAdminLockColumn) {
+                $update['admin_locked'] = true;
+            }
+            if ($update !== []) {
+                $activity->update($update);
+            }
+            return redirect()->route('coding.activities.manage')->with('ok', 'Etkinlik sadece hesabinizdan kaldirildi.');
+        }
+
         DB::transaction(function () use ($activity): void {
             DailyActivityAssignment::query()->where('coding_activity_id', $activity->id)->delete();
             $activity->questions()->each(function (ActivityQuestion $question): void {
@@ -95,6 +181,10 @@ class CodingActivityManagementController extends Controller
             ['assignment_date' => Carbon::today('Europe/Istanbul')->toDateString(), 'target_role' => 'student'],
             ['coding_activity_id' => $activity->id, 'assigned_by' => auth()->id()]
         );
+
+        if ($this->canUseTeacherColumn()) {
+            $activity->forceFill(['teacher_id' => $activity->teacher_id ?: null])->save();
+        }
 
         return back()->with('ok', 'Bugünün etkinliği atandı.');
     }
@@ -202,12 +292,72 @@ class CodingActivityManagementController extends Controller
         abort_unless(auth()->user()?->hasRole('admin'), 403);
 
         DB::transaction(function (): void {
-            DailyActivityAssignment::query()->delete();
-            ActivityQuestion::query()->delete();
-            CodingActivity::query()->delete();
+            $deletableIds = CodingActivity::query()
+                ->when($this->canUseTeacherColumn(), fn ($q) => $q->whereNull('teacher_id'))
+                ->when($this->canUseAdminLockColumn(), fn ($q) => $q->where(function ($inner): void {
+                    $inner->whereNull('admin_locked')->orWhere('admin_locked', false);
+                }))
+                ->pluck('id');
+
+            if ($deletableIds->isEmpty()) {
+                return;
+            }
+
+            DailyActivityAssignment::query()->whereIn('coding_activity_id', $deletableIds)->delete();
+            ActivityQuestion::query()->whereIn('coding_activity_id', $deletableIds)->delete();
+            CodingActivity::query()->whereIn('id', $deletableIds)->delete();
         });
 
         return redirect()->route('coding.activities.manage')->with('ok', 'Tum gunluk calismalar silindi.');
+    }
+
+    public function assignTeacherBulk(Request $request): RedirectResponse
+    {
+        abort_unless($this->canUseTeacherColumn(), 404);
+
+        $data = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'activity_ids' => ['required', 'array', 'min:1'],
+            'activity_ids.*' => ['integer', 'exists:coding_activities,id'],
+        ]);
+
+        $activityIds = collect($data['activity_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $update = [];
+        if ($this->canUseTeacherColumn()) {
+            $update['teacher_id'] = (int) $data['teacher_id'];
+        }
+        if ($this->canUseAdminLockColumn()) {
+            $update['admin_locked'] = true;
+        }
+        CodingActivity::query()->whereIn('id', $activityIds)->update($update);
+
+        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' günlük çalışma öğretmene atandı.');
+    }
+
+    public function unassignTeacherBulk(Request $request): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+        abort_unless($this->canUseTeacherColumn(), 404);
+
+        $data = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+        ]);
+
+        $teacherId = (int) $data['teacher_id'];
+        $updated = CodingActivity::query()
+            ->where('teacher_id', $teacherId)
+            ->update([
+                'teacher_id' => null,
+                'admin_locked' => false,
+            ]);
+
+        DailyActivityAssignment::query()
+            ->whereHas('activity', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->delete();
+
+        return redirect()->route('coding.activities.manage')->with('ok', $updated > 0
+            ? 'Seçili öğretmenden tüm günlük çalışmalar kaldırıldı.'
+            : 'Seçili öğretmende atanmış günlük çalışma bulunamadı.');
     }
 
     private function serializeActivity(CodingActivity $activity): array
