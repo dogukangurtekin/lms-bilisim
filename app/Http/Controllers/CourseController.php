@@ -8,6 +8,8 @@ use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\CourseHomework;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\User;
 use App\Models\Teacher;
 use App\Services\Domain\CourseService;
 use App\Services\LessonPresentation\SlidePresentationService;
@@ -38,13 +40,48 @@ class CourseController extends Controller
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
         $user = $request->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $isAdmin = (bool) $user?->hasRole('admin');
+        $isTeacher = (bool) $user?->hasRole('teacher');
+        $ownerFilter = trim((string) $request->string('owner')->toString());
+        $ownerFilter = $isAdmin ? $ownerFilter : ($isTeacher ? (string) $user?->id : '');
+        $applyOwnerFilter = function ($query) use ($isAdmin, $isTeacher, $ownerFilter): void {
+            if ($isTeacher && $ownerFilter !== '') {
+                $query->where('created_by', (int) $ownerFilter);
+                return;
+            }
+
+            if (! $isAdmin || $ownerFilter === '' || $ownerFilter === 'all') {
+                return;
+            }
+
+            if ($ownerFilter === 'system_admin') {
+                $adminUserIds = User::query()->whereHas('role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'))->pluck('id');
+                $query->whereIn('created_by', $adminUserIds->all());
+                return;
+            }
+
+            if (is_numeric($ownerFilter)) {
+                $teacherUserId = (int) $ownerFilter;
+                $matchedTeacherId = Teacher::query()->where('user_id', $teacherUserId)->value('id');
+                $query->where(function ($sub) use ($teacherUserId, $matchedTeacherId): void {
+                    $sub->where('created_by', $teacherUserId);
+                    if ($matchedTeacherId) {
+                        $sub->orWhere('teacher_id', (int) $matchedTeacherId);
+                    }
+                });
+            }
+        };
 
         try {
-            $items = Course::query()
+            $itemsQuery = Course::query()
                 ->with(['schoolClass:id,name,section,grade_level'])
-                ->when($user?->hasRole('teacher'), fn ($query) => $query->where('teacher_id', $teacherId))
+                ->whereNull('parent_course_id')
                 ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
                 ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
+                ;
+            $applyOwnerFilter($itemsQuery);
+
+            $items = $itemsQuery
                 ->orderBy($sort, $dir)
                 ->paginate(20)
                 ->withQueryString();
@@ -52,8 +89,13 @@ class CourseController extends Controller
             Log::warning('Course index fallback triggered', [
                 'message' => $e->getMessage(),
             ]);
-            $items = Course::query()
+            $itemsQuery = Course::query()
                 ->with(['schoolClass:id,name,section,grade_level'])
+                ->whereNull('parent_course_id')
+                ;
+            $applyOwnerFilter($itemsQuery);
+
+            $items = $itemsQuery
                 ->orderByDesc('id')
                 ->paginate(20)
                 ->withQueryString();
@@ -69,8 +111,9 @@ class CourseController extends Controller
         }
         try {
             $assignableCourses = Course::query()
-                ->select(['id', 'name', 'teacher_id'])
+                ->select(['id', 'name', 'teacher_id', 'parent_course_id'])
                 ->orderByDesc('id')
+                ->whereNull('parent_course_id')
                 ->get();
         } catch (\Throwable $e) {
             Log::warning('Course assignable courses fallback triggered', [
@@ -78,18 +121,60 @@ class CourseController extends Controller
             ]);
             $assignableCourses = collect();
         }
+        $courseIdsByTeacher = Course::query()
+            ->select(['id', 'teacher_id'])
+            ->whereNotNull('teacher_id')
+            ->get()
+            ->groupBy(fn (Course $course) => (int) ($course->teacher_id ?? 0))
+            ->map(fn ($group) => $group->pluck('id')->map(fn ($id) => (int) $id)->values()->all())
+            ->all();
         $canManageCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
         $canAssignCourses = (bool) ($user?->hasRole('admin') || $user?->hasRole('teacher'));
+        $courseOwners = collect();
+        if ($isAdmin) {
+            $teacherOwners = Teacher::query()
+                ->with('user')
+                ->orderBy('id')
+                ->get()
+                ->map(function (Teacher $teacher): array {
+                    return [
+                        'value' => (string) ($teacher->user?->id ?? ''),
+                        'label' => $teacher->user?->name ? ($teacher->user->name . ' Öğretmeni') : ('Öğretmen #' . $teacher->id),
+                    ];
+                })
+                ->filter(fn ($item) => $item['value'] !== '')
+                ->values();
 
-        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'assignableCourses', 'canManageCourses', 'canAssignCourses'));
+            $adminOwners = User::query()
+                ->whereHas('role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'))
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $admin): array => [
+                    'value' => (string) $admin->id,
+                    'label' => $admin->name ? ($admin->name . ' (System Admin)') : 'System Admin',
+                ])
+                ->values();
+
+            $courseOwners = collect([
+                ['value' => 'all', 'label' => 'Öğretmen Seçiniz'],
+            ])->concat($teacherOwners)->concat([
+                ['value' => 'system_admin', 'label' => 'System Admin'],
+            ])->values();
+        }
+
+        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'assignableCourses', 'courseIdsByTeacher', 'canManageCourses', 'canAssignCourses', 'courseOwners', 'ownerFilter', 'isAdmin', 'isTeacher'));
     }
 
     public function create()
     {
         $teachers = Teacher::with('user')->orderByDesc('id')->get();
         $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $parentCourse = null;
+        if (request()->filled('parent_course_id')) {
+            $parentCourse = Course::query()->find(request()->integer('parent_course_id'));
+        }
 
-        return view('courses.create', compact('teachers', 'classes'));
+        return view('courses.create', compact('teachers', 'classes', 'parentCourse'));
     }
     public function assignTeacher(Request $request, Course $course)
     {
@@ -99,6 +184,20 @@ class CourseController extends Controller
         $course->teacher_id = (int) $data['teacher_id'];
         $course->save();
         return redirect()->route('courses.index')->with('ok', 'Ders ogretmene atandi.');
+    }
+
+    public function unassignTeacher(Request $request, Course $course)
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        if ((int) ($course->teacher_id ?? 0) <= 0) {
+            return redirect()->route('courses.index')->with('error', 'Bu ders zaten herhangi bir ogretmene atanmis degil.');
+        }
+
+        $course->teacher_id = null;
+        $course->save();
+
+        return redirect()->route('courses.index')->with('ok', 'Ders atamasi kaldirildi.');
     }
 
     public function assignTeacherBulk(Request $request)
@@ -115,6 +214,23 @@ class CourseController extends Controller
             ->update(['teacher_id' => (int) $data['teacher_id']]);
 
         return redirect()->route('courses.index')->with('ok', count($courseIds) . ' ders öğretmene atandı.');
+    }
+
+    public function unassignTeacherBulk(Request $request)
+    {
+        $data = $request->validate([
+            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'course_ids' => ['required', 'array', 'min:1'],
+            'course_ids.*' => ['integer', 'exists:courses,id'],
+        ]);
+
+        $courseIds = collect($data['course_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $updated = Course::query()
+            ->whereIn('id', $courseIds)
+            ->where('teacher_id', (int) $data['teacher_id'])
+            ->update(['teacher_id' => null]);
+
+        return redirect()->route('courses.index')->with('ok', $updated . ' dersin öğretmen ataması kaldırıldı.');
     }
     public function assignClasses(Request $request, Course $course)
     {
@@ -136,6 +252,41 @@ class CourseController extends Controller
             ]);
         }
         return redirect()->route('courses.index')->with('ok', 'Ders secilen siniflara atandi.');
+    }
+
+    public function assignClassesBulk(Request $request)
+    {
+        $data = $request->validate([
+            'course_ids' => ['required', 'array', 'min:1'],
+            'course_ids.*' => ['integer', 'exists:courses,id'],
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+
+        $courseIds = collect($data['course_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $classIds = collect($data['class_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+
+        foreach ($courseIds as $courseId) {
+            $course = Course::query()->find($courseId);
+            if (! $course) {
+                continue;
+            }
+
+            foreach ($classIds as $classId) {
+                CourseHomework::query()->firstOrCreate([
+                    'course_id' => $course->id,
+                    'school_class_id' => $classId,
+                    'assignment_type' => 'lesson',
+                    'title' => $course->name,
+                ], [
+                    'details' => null,
+                    'due_date' => null,
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        return redirect()->route('courses.index')->with('ok', count($courseIds) . ' ders secilen siniflara atandi.');
     }
     public function assignByLevel(Request $request, Course $course)
     {
@@ -239,6 +390,9 @@ class CourseController extends Controller
     public function store(StoreCourseRequest $request)
     {
         $data = $request->validated();
+        $data['parent_course_id'] = !empty($data['parent_course_id']) ? (int) $data['parent_course_id'] : null;
+        $data['sort_order'] = isset($data['sort_order']) ? (int) $data['sort_order'] : 0;
+        $data['is_active'] = array_key_exists('is_active', $data) ? (bool) $data['is_active'] : true;
         $data = $this->attachCoverImageToPayload($request, $data);
         $data['created_by'] = auth()->id();
         $model = $this->service->create($data);
@@ -262,7 +416,7 @@ class CourseController extends Controller
 
     public function show($id)
     {
-        $course = Course::with(['teacher.user', 'schoolClass'])->find($id);
+        $course = Course::with(['teacher.user', 'schoolClass', 'subCourses.teacher.user', 'subCourses.schoolClass'])->find($id);
 
         $payload = (array) ($course?->lesson_payload ?? []);
         $curriculum = (array) ($payload['curriculum'] ?? []);
@@ -292,6 +446,16 @@ class CourseController extends Controller
         }
 
         $slides = $course ? $this->presentation->prepareCourseSlides($course, true) : [];
+        $subCourses = $course?->subCourses ?? collect();
+        $subCourseProgress = collect();
+        if (auth()->check() && auth()->user()?->hasRole('student') && $course) {
+            $student = $this->getStudent();
+            $subCourseProgress = ContentProgress::query()
+                ->where('user_id', $student->user_id)
+                ->whereIn('content_id', $subCourses->map(fn ($sub) => 'course-' . $sub->id)->values())
+                ->get()
+                ->keyBy('content_id');
+        }
 
         return view('course-detail', compact(
             'course',
@@ -304,7 +468,9 @@ class CourseController extends Controller
             'progress',
             'isCompleted',
             'startUrl',
-            'slides'
+            'slides',
+            'subCourses',
+            'subCourseProgress'
         ));
     }
     public function edit(Course $course)
@@ -317,6 +483,9 @@ class CourseController extends Controller
     public function update(UpdateCourseRequest $request, Course $course)
     {
         $data = $request->validated();
+        $data['parent_course_id'] = !empty($data['parent_course_id']) ? (int) $data['parent_course_id'] : null;
+        $data['sort_order'] = isset($data['sort_order']) ? (int) $data['sort_order'] : 0;
+        $data['is_active'] = array_key_exists('is_active', $data) ? (bool) $data['is_active'] : true;
         $data = $this->attachCoverImageToPayload($request, $data, $course);
         $this->service->update($course, $data);
 
@@ -346,6 +515,21 @@ class CourseController extends Controller
     {
         $this->performDestroyById($id);
         return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+    }
+
+    private function getStudent(): Student
+    {
+        $user = auth()->user();
+        abort_unless($user, 403);
+
+        $student = Student::query()
+            ->with(['user', 'schoolClass', 'currentAvatar'])
+            ->where('user_id', $user->id)
+            ->first();
+
+        abort_unless($student, 403);
+
+        return $student;
     }
 
     public function destroyAll(Request $request)
@@ -378,6 +562,7 @@ class CourseController extends Controller
             abort(403);
         }
 
+        $subCourses = $course->subCourses()->orderBy('sort_order')->orderBy('id')->get();
         $package = $this->buildCoursePackage([
             'exported_at' => now()->toIso8601String(),
             'course' => [
@@ -387,6 +572,9 @@ class CourseController extends Controller
                 'teacher_id' => (int) $course->teacher_id,
                 'school_class_id' => $course->school_class_id !== null ? (int) $course->school_class_id : null,
                 'weekly_hours' => (int) $course->weekly_hours,
+                'parent_course_id' => $course->parent_course_id !== null ? (int) $course->parent_course_id : null,
+                'sort_order' => (int) ($course->sort_order ?? 0),
+                'is_active' => (bool) ($course->is_active ?? true),
                 'lesson_payload' => (array) ($course->lesson_payload ?? []),
                 'created_by' => $course->created_by !== null ? (int) $course->created_by : null,
                 'slides' => (array) data_get($course->lesson_payload, 'slides', []),
@@ -398,6 +586,26 @@ class CourseController extends Controller
                 'cover_image_data' => $this->exportCoverDataUrl($course),
                 'cover_image_mime' => $this->exportCoverMime($course),
             ],
+            'sub_courses' => $subCourses->map(function (Course $sub) {
+                return [
+                    'name' => (string) $sub->name,
+                    'code' => (string) $sub->code,
+                    'teacher_id' => $sub->teacher_id !== null ? (int) $sub->teacher_id : null,
+                    'school_class_id' => $sub->school_class_id !== null ? (int) $sub->school_class_id : null,
+                    'weekly_hours' => (int) $sub->weekly_hours,
+                    'parent_course_id' => (int) $sub->parent_course_id,
+                    'sort_order' => (int) ($sub->sort_order ?? 0),
+                    'is_active' => (bool) ($sub->is_active ?? true),
+                    'lesson_payload' => (array) ($sub->lesson_payload ?? []),
+                    'created_by' => $sub->created_by !== null ? (int) $sub->created_by : null,
+                    'slides' => (array) data_get($sub->lesson_payload, 'slides', []),
+                    'curriculum' => (array) data_get($sub->lesson_payload, 'curriculum', []),
+                    'lesson_description' => (string) data_get($sub->lesson_payload, 'lesson_description', ''),
+                    'category' => (string) data_get($sub->lesson_payload, 'category', ''),
+                    'difficulty' => (string) data_get($sub->lesson_payload, 'difficulty', ''),
+                    'cover_image' => (string) data_get($sub->lesson_payload, 'cover_image', ''),
+                ];
+            })->values()->all(),
         ], $this->exportCoverBinary($course), $this->exportCoverMime($course));
 
         $filename = 'ders-' . Str::slug((string) $course->name ?: 'course') . '-' . $course->id . '.coursepkg';
@@ -460,17 +668,14 @@ class CourseController extends Controller
 
         $user = auth()->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
-        if ($teacherId <= 0 && $user?->hasRole('admin')) {
+        if ($teacherId <= 0 && $user?->hasRole('teacher')) {
             $teacher = Teacher::query()->firstOrCreate(
                 ['user_id' => $user->id],
                 ['branch' => null, 'phone' => null, 'hire_date' => null]
             );
             $teacherId = (int) $teacher->id;
         }
-        if ($teacherId <= 0) {
-            $teacherId = (int) Teacher::query()->value('id');
-        }
-        if ($teacherId <= 0) {
+        if ($teacherId <= 0 && $user?->hasRole('teacher')) {
             return redirect()->route('courses.index')->with('error', 'Ogretmen kaydi bulunamadi.');
         }
 
@@ -633,7 +838,7 @@ class CourseController extends Controller
                 }
                 $importTeacherId = (int) ($courseData['teacher_id'] ?? 0);
                 if ($importTeacherId <= 0 || !Teacher::query()->whereKey($importTeacherId)->exists()) {
-                    $importTeacherId = $teacherId;
+                    $importTeacherId = $teacherId > 0 && $user?->hasRole('teacher') ? $teacherId : null;
                 }
 
                 $importClassId = $courseData['school_class_id'] ?? null;
@@ -651,15 +856,67 @@ class CourseController extends Controller
                     $importCreatedBy = auth()->id();
                 }
 
-                $created[] = Course::query()->create([
+                $parentCourse = Course::query()->create([
                     'name' => $name,
                     'code' => $finalCode,
                     'teacher_id' => $importTeacherId,
                     'school_class_id' => $importClassId,
                     'weekly_hours' => max(1, min(20, (int) ($courseData['weekly_hours'] ?? 2))),
+                    'parent_course_id' => !empty($courseData['parent_course_id']) ? (int) $courseData['parent_course_id'] : null,
+                    'sort_order' => (int) ($courseData['sort_order'] ?? 0),
+                    'is_active' => array_key_exists('is_active', $courseData) ? (bool) $courseData['is_active'] : true,
                     'lesson_payload' => $lessonPayload,
                     'created_by' => $importCreatedBy,
                 ]);
+                $created[] = $parentCourse;
+
+                $subCoursesData = array_values(array_filter((array) ($decoded['sub_courses'] ?? []), fn ($x) => is_array($x)));
+                foreach ($subCoursesData as $subData) {
+                    $subName = trim((string) ($subData['name'] ?? $subData['title'] ?? ''));
+                    if ($subName === '') {
+                        continue;
+                    }
+                    $subCodeBase = strtoupper(preg_replace('/[^A-Z0-9]/', '', (string) ($subData['code'] ?? $subName)));
+                    $subCodeBase = substr($subCodeBase !== '' ? $subCodeBase : 'SUB', 0, 20);
+                    $subFinalCode = $subCodeBase . '-' . strtoupper(Str::random(6));
+                    $subPayloadRaw = $subData['lesson_payload'] ?? $subData['payload'] ?? [];
+                    $subPayload = is_string($subPayloadRaw) ? (json_decode($subPayloadRaw, true) ?: []) : (array) $subPayloadRaw;
+                    $subPayload = array_replace_recursive($subPayload, array_filter([
+                        'slides' => $subData['slides'] ?? null,
+                        'curriculum' => $subData['curriculum'] ?? null,
+                        'lesson_description' => $subData['lesson_description'] ?? null,
+                        'difficulty' => $subData['difficulty'] ?? null,
+                        'category' => $subData['category'] ?? null,
+                        'cover_image' => $subData['cover_image'] ?? null,
+                    ], fn ($v) => $v !== null && $v !== ''));
+                    if (! isset($subPayload['slides']) || ! is_array($subPayload['slides'])) {
+                        $subPayload['slides'] = [];
+                    }
+                    if (! isset($subPayload['curriculum']) || ! is_array($subPayload['curriculum'])) {
+                        $subPayload['curriculum'] = [];
+                    }
+                    $subCourseTeacherId = (int) ($subData['teacher_id'] ?? 0);
+                    if ($subCourseTeacherId <= 0 || !Teacher::query()->whereKey($subCourseTeacherId)->exists()) {
+                        $subCourseTeacherId = $importTeacherId;
+                    }
+                    $subCourseClassId = $subData['school_class_id'] ?? $parentCourse->school_class_id;
+                    $subCourseClassId = is_numeric($subCourseClassId) ? (int) $subCourseClassId : null;
+                    if ($subCourseClassId !== null && !SchoolClass::query()->whereKey($subCourseClassId)->exists()) {
+                        $subCourseClassId = $parentCourse->school_class_id;
+                    }
+                    Course::query()->create([
+                        'name' => $subName,
+                        'code' => $subFinalCode,
+                        'teacher_id' => $subCourseTeacherId,
+                        'school_class_id' => $subCourseClassId,
+                        'weekly_hours' => max(1, min(20, (int) ($subData['weekly_hours'] ?? $parentCourse->weekly_hours ?? 2))),
+                        'parent_course_id' => $parentCourse->id,
+                        'sort_order' => (int) ($subData['sort_order'] ?? 0),
+                        'is_active' => array_key_exists('is_active', $subData) ? (bool) $subData['is_active'] : true,
+                        'lesson_payload' => $subPayload,
+                        'created_by' => $importCreatedBy,
+                    ]);
+                }
             }
         }
 
