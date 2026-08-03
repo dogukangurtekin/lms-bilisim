@@ -244,13 +244,28 @@ class StudentDataController extends Controller
     {
         $xp = $this->calculateXp($student);
         $this->safeSyncRewardsAndCredentials($student, $xp);
-        $student->refresh()->load(['user', 'schoolClass']);
+        $student->refresh()->load(['user', 'schoolClass.teacher.user']);
+        $gradeLevel = (int) ($student->schoolClass?->grade_level ?? 0);
+        $certificateStyle = match (true) {
+            in_array($gradeLevel, [3, 4], true) => 'primary',
+            in_array($gradeLevel, [5, 6, 7], true) => 'secondary',
+            in_array($gradeLevel, [9, 10], true) => 'highschool',
+            default => 'secondary',
+        };
+        $profile = \App\Models\UserProfile::query()->firstOrNew(['user_id' => $student->user_id]);
+        $meta = (array) ($profile->meta ?? []);
+        $principalName = trim((string) ($meta['principal_name'] ?? ''));
 
         return view('student-data.certificate', [
             'student' => $student,
             'xp' => $xp,
-            'teacherName' => env('SCHOOL_TEACHER_NAME', 'Ders Ogretmeni'),
-            'principalName' => env('SCHOOL_PRINCIPAL_NAME', 'Okul Muduru'),
+            'teacherName' => (string) ($student->schoolClass?->teacher?->user?->name ?? 'Ders Öğretmeni'),
+            'principalName' => $principalName !== '' ? $principalName : 'Okul Müdürü',
+            'schoolName' => env('SCHOOL_NAME', env('APP_NAME', 'Okul')),
+            'certificateStyle' => $certificateStyle,
+            'certificateNo' => 'CERT-' . str_pad((string) $student->id, 6, '0', STR_PAD_LEFT),
+            'certificateDate' => now()->timezone('Europe/Istanbul')->format('d.m.Y'),
+            'logoUrl' => url('/public/logo.png'),
         ]);
     }
 

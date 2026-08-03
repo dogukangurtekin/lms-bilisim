@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SubmitActivityAttemptRequest;
 use App\Models\CodingActivity;
+use App\Models\Student;
 use App\Models\UserStreak;
 use App\Models\UserXpLog;
 use App\Services\CodingActivityService;
@@ -16,15 +17,11 @@ class StudentCodingActivityController extends Controller
     public function index(CodingActivityService $service): View
     {
         $today = Carbon::today('Europe/Istanbul');
-        $activity = $service->resolveTodayActivityForStudent();
-        $activities = collect(array_filter([$activity]));
+        $student = Student::with(['user', 'schoolClass'])->where('user_id', auth()->id())->first();
+        abort_if(! $student, 403, 'Bu hesap icin ogrenci kaydi bulunamadi.');
 
-        if ($activities->isEmpty()) {
-            $fallback = CodingActivity::with('questions.options')->where('is_active', true)->whereHas('questions')->first();
-            if ($fallback) {
-                $activities = collect([$fallback]);
-            }
-        }
+        $activity = $service->resolveTodayActivityForStudent($student);
+        $activities = collect(array_filter([$activity]));
 
         $streak = UserStreak::firstWhere('user_id', auth()->id());
         $todayXp = (int) UserXpLog::where('user_id', auth()->id())->whereDate('awarded_on', $today)->sum('xp_delta');

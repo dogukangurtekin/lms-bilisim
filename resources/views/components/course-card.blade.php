@@ -6,23 +6,26 @@
     'age' => '11+',
     'difficulty' => 'Orta',
     'contentUrl' => '#',
+    'contentLabel' => 'İçerik',
     'previewUrl' => null,
     'primaryUrl' => '#',
     'primaryLabel' => 'Derse Başla',
     'primaryVariant' => 'default',
     'previewLabel' => 'Önizle',
     'deleteUrl' => null,
+    'subCourseUrl' => null,
     'assignEnabled' => false,
     'assignCourseId' => null,
     'assignCourseName' => '',
     'assignCurrentTeacher' => 0,
+    'assignCurrentClass' => 0,
     'isFavorite' => false,
     'downloadUrl' => null,
 ])
 
 @php
     $hasCover = filled($image);
-    $normalizedDescription = str_replace(["\r\n", "\n", "\r"], "\n", (string) $description);
+    $normalizedDescription = trim(strip_tags(html_entity_decode(str_replace(["\r\n", "\n", "\r"], "\n", (string) $description), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
     $difficultyValue = trim((string) $difficulty);
     $difficultyStyle = match (mb_strtolower($difficultyValue)) {
         'kolay' => 'background:#16a34a;color:#fff;',
@@ -88,19 +91,28 @@
 
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
         <div class="flex items-start justify-between gap-4">
-            <h4 class="text-[32px] font-black leading-tight tracking-tight text-slate-900">{{ $title }}</h4>
+            <div class="min-w-0">
+                <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $title }}</h4>
+                @if($normalizedDescription !== '')
+                    <p class="mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
+                @endif
+            </div>
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
         </div>
 
-        <p class="text-[17px] leading-8 text-slate-600">{{ $normalizedDescription }}</p>
-
         @php
-            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0) + (!empty($subCourseUrl) ? 1 : 0);
             $btnCols = max(2, min(4, $btnCount));
         @endphp
+        @php
+            $visibleButtons = 1 + (!empty($subCourseUrl) ? 1 : 0) + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
+            $btnCols = max(1, min(4, $visibleButtons));
+        @endphp
         <div class="mt-auto grid gap-2.5" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
-            <a href="{{ $contentUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;border:1px solid #7c3aed;background:#fff;color:#5b21b6;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 10px 20px rgba(15,23,42,.06);transition:transform .15s ease,filter .15s ease;">İçerik</a>
-            <a href="{{ $primaryUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;{{ $primaryStyle }}font-size:15px;font-weight:500;text-decoration:none;transition:transform .15s ease,filter .15s ease;">{{ $primaryLabel }}</a>
+            <a href="{{ $contentUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;border:1px solid #7c3aed;background:#fff;color:#5b21b6;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 10px 20px rgba(15,23,42,.06);transition:transform .15s ease,filter .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease;" onmouseover="this.style.background='#7c3aed';this.style.color='#fff';this.style.boxShadow='0 14px 26px rgba(124,58,237,.24)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#fff';this.style.color='#5b21b6';this.style.boxShadow='0 10px 20px rgba(15,23,42,.06)';this.style.transform='translateY(0)'">{{ $contentLabel }}</a>
+            @if(!empty($subCourseUrl))
+                <a href="{{ $subCourseUrl }}" style="display:flex;align-items:center;justify-content:center;text-align:center;height:50px;border-radius:999px;background:#0f766e;color:#fff;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 12px 24px rgba(15,118,110,.18);transition:transform .15s ease,filter .15s ease;">Alt Ders Oluştur</a>
+            @endif
             @if(!empty($deleteUrl))
                 <a href="{{ $deleteUrl }}" class="course-delete-link" data-delete-url="{{ $deleteUrl }}" style="display:inline-flex;align-items:center;justify-content:center;height:50px;border-radius:999px;background:#ef4444;color:#fff;font-size:15px;font-weight:500;text-decoration:none;box-shadow:0 12px 24px rgba(239,68,68,.18);transition:transform .15s ease,filter .15s ease;">Dersi Sil</a>
             @endif
@@ -111,6 +123,7 @@
                     data-assign-course-id="{{ $assignCourseId }}"
                     data-assign-course-name="{{ $assignCourseName }}"
                     data-assign-current-teacher="{{ (int) $assignCurrentTeacher }}"
+                    data-assign-current-class="{{ (int) $assignCurrentClass }}"
                     data-assign-teacher-url="{{ route('courses.assign-teacher', $assignCourseId) }}"
                     data-assign-classes-url="{{ route('courses.assign-classes', $assignCourseId) }}"
                     data-assign-level-url="{{ route('courses.assign-level', $assignCourseId) }}"

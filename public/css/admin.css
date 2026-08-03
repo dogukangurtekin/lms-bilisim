@@ -39,6 +39,7 @@ input,select,textarea{font-size:16px}
   font-weight:700;
 }
 .main{padding:20px;margin-left:240px}
+.dashboard-page .main{padding-top:8px}
 .navbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:nowrap;background:var(--card);padding:12px 16px;border-radius:12px;margin-bottom:16px}
 .navbar-user{display:flex;align-items:center;gap:10px;min-height:36px}
 .navbar-actions{display:inline-flex;align-items:center;gap:10px;margin-left:auto;flex:0 0 auto}

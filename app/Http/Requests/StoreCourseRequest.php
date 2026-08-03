@@ -18,9 +18,12 @@ class StoreCourseRequest extends FormRequest
         return [
             'name' => ['required','string','max:255'],
             'code' => ['required','string','max:30','unique:courses,code'],
-            'teacher_id' => ['required','integer','exists:teachers,id'],
+            'teacher_id' => ['nullable','integer','exists:teachers,id'],
             'school_class_id' => ['nullable','integer','exists:school_classes,id'],
             'weekly_hours' => ['required','integer','between:1,20'],
+            'parent_course_id' => ['nullable','integer','exists:courses,id'],
+            'sort_order' => ['nullable','integer','min:0'],
+            'is_active' => ['nullable','boolean'],
             'lesson_payload' => ['nullable', 'string'],
             'cover_image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
@@ -29,6 +32,11 @@ class StoreCourseRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->filled('teacher_id')) {
+            return;
+        }
+
+        $user = Auth::user();
+        if (! $user?->hasRole('teacher')) {
             return;
         }
 
@@ -43,18 +51,8 @@ class StoreCourseRequest extends FormRequest
             $teacherId = $teacher->id;
         }
 
-        if (! $teacherId) {
-            $teacherId = Teacher::query()->value('id');
-        }
-
         if ($teacherId) {
             $this->merge(['teacher_id' => $teacherId]);
-            return;
-        }
-
-        $fallbackTeacherId = Teacher::query()->value('id');
-        if ($fallbackTeacherId) {
-            $this->merge(['teacher_id' => $fallbackTeacherId]);
         }
     }
 }

@@ -12,11 +12,12 @@
                         <h3>{{ $pendingAssignments }} adet bekleyen ödevin var</h3>
                         <p>
                             Ders/Slayt: <strong>{{ $pendingCourses }}</strong> •
-                            Oyun/Uygulama: <strong>{{ $pendingGameApps }}</strong>
+                            Oyun/Uygulama: <strong>{{ $pendingGameApps }}</strong> •
+                            Ödev: <strong>{{ $pendingHomeworkAssignments }}</strong>
                         </p>
                     </div>
                     <div class="student-assignment-alert-action">
-                        @if($pendingGameApps > 0)
+                        @if($pendingHomeworkAssignments > 0 || $pendingGameApps > 0)
                             <a class="btn" href="{{ route('student.portal.assignments') }}">Ödevlerime Git</a>
                         @endif
                         @if($pendingCourses > 0)

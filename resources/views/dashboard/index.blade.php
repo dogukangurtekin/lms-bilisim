@@ -1,5 +1,6 @@
 ﻿@extends('layout.app')
 @section('title','Öğretmen Paneli')
+@section('body_class','dashboard-page')
 @section('content')
 @php
     $layout = $dashboardLayout ?? [];
@@ -27,6 +28,41 @@
     }
     .dashboard-leaderboard-panel{
         margin-top:0;
+        max-height: 340px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    /* reverted widget sizing */
+    .dashboard-leaderboard-panel .teacher-top10-list{
+        display: grid;
+        gap: .55rem;
+        overflow: auto;
+        padding-right: .15rem;
+        max-height: 240px;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-item{
+        padding: .45rem .6rem;
+        border-radius: 14px;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-rank{
+        width: 30px;
+        height: 30px;
+        font-size: .95rem;
+        flex: 0 0 30px;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-main strong{
+        font-size: .95rem;
+        line-height: 1.15;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-main span{
+        font-size: .8rem;
+        line-height: 1.1;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-xp{
+        font-size: .82rem;
+        padding: .32rem .5rem;
+        white-space: nowrap;
     }
 </style>
 <div class="dashboard-shell" data-dashboard-shell>
@@ -47,7 +83,7 @@
                             <span>Mobilde sabit</span>
                             <small class="widget-class-tag">{{ $selectedClassLabel }}</small>
                         </div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="quick_qr" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="quick_qr" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="qr-widget-body">
                         <div>
@@ -63,7 +99,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="students" draggable="true">
                     <div class="widget-head">
                         <div><strong>Toplam Öğrenci</strong><span>Aktif havuz</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="students" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="students" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="metric-card">
                         <strong>{{ $dashboard['summary']['total_students'] }}</strong>
@@ -75,7 +111,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="active_students" draggable="true">
                     <div class="widget-head">
                         <div><strong>Aktif Öğrenci</strong><span>Son 1 gün</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="active_students" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="active_students" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     @php
                         $activeTop3 = array_slice($dashboard['summary']['active_students_top3'] ?? [], 0, 3);
@@ -105,7 +141,7 @@
                 <article class="dashboard-widget widget-span-4 dashboard-notes-widget" data-widget-key="notes" draggable="true">
                     <div class="widget-head">
                         <div><strong>Öğretmen Notları</strong><span>Hızlı öneriler</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="notes" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="notes" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="note-list">
                         <article><span>Odak</span><p>{{ $dashboard['highlights']['focus_title'] }}: {{ $dashboard['highlights']['focus_desc'] }}</p></article>
@@ -119,7 +155,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="classes" draggable="true">
                     <div class="widget-head">
                         <div><strong>Sınıf Sayısı</strong><span>İzlenen sınıflar</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="classes" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="classes" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="metric-card">
                         <strong>{{ $dashboard['summary']['total_classes'] }}</strong>
@@ -131,7 +167,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="courses" draggable="true">
                     <div class="widget-head">
                         <div><strong>Ders Sayısı</strong><span>Aktif içerik</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="courses" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="courses" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="metric-card">
                         <strong>{{ $dashboard['summary']['total_courses'] }}</strong>
@@ -143,7 +179,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="avg_completion" draggable="true">
                     <div class="widget-head">
                         <div><strong>Ortalama Not</strong><span>Genel başarı</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="avg_completion" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="avg_completion" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="metric-card">
                         <strong>%{{ $dashboard['summary']['avg_completion'] }}</strong>
@@ -155,7 +191,7 @@
                 <article class="dashboard-widget widget-span-4" data-widget-key="xp" draggable="true">
                     <div class="widget-head">
                         <div><strong>Toplam XP</strong><span>Biriken puan</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="xp" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="xp" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="metric-card">
                         <strong>{{ $dashboard['summary']['total_xp'] }}</strong>
@@ -183,7 +219,7 @@
                                 <span>{{ $chart['subtitle'] ?? '' }}</span>
                                 <small class="widget-class-tag">{{ $selectedClassLabel }}</small>
                             </div>
-                            <button type="button" class="widget-toggle" data-widget-toggle="chart_{{ $key }}" aria-label="Gizle" title="Gizle">−</button>
+                            <button type="button" class="widget-toggle" data-widget-toggle="chart_{{ $key }}" aria-label="Gizle" title="Gizle">-</button>
                         </div>
                         <div class="chart-widget-body">
                             @if(($chart['type'] ?? '') === 'donut')
@@ -255,7 +291,7 @@
                 <article class="dashboard-widget dashboard-widget-wide widget-span-12 dashboard-leaderboard-panel" data-widget-key="leaderboard" draggable="true">
                     <div class="widget-head">
                         <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf' }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">−</button>
+                        <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">-</button>
                     </div>
                     <div class="teacher-top10-list">
                         @forelse(array_slice(($dashboard['top_students'] ?? []), 0, 5) as $row)
@@ -290,12 +326,12 @@
                 <span>Gizlenen widgetleri geri ekleyin</span>
             </div>
             <div class="widget-library-actions">
-                <button type="button" class="widget-library-minimize" id="widget-library-minimize" aria-label="Küçült" title="Küçült">▁</button>
+                <button type="button" class="widget-library-minimize" id="widget-library-minimize" aria-label="Küçült" title="Küçült">â–</button>
                 <button type="button" class="widget-library-close" id="widget-library-close" aria-label="Kapat" title="Kapat">×</button>
             </div>
         </div>
         <div class="widget-library-list" id="dashboard-widget-library"></div>
-        <button type="button" class="widget-library-fab" id="widget-library-fab" aria-label="Widget kütüphanesini aç" title="Widget kütüphanesini aç">⊞</button>
+        <button type="button" class="widget-library-fab" id="widget-library-fab" aria-label="Widget kütüphanesini aç" title="Widget kütüphanesini aç">âŠ</button>
     </aside>
 </div>
 
@@ -327,7 +363,7 @@
         avg_completion: { title: 'Ortalama Not', span: 3, order: 70 },
         xp: { title: 'Toplam XP', span: 3, order: 80 },
         chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
-        chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 4, order: 95, zone: 'sidebar' },
+        chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 3, order: 95, zone: 'grid' },
         leaderboard: { title: 'Başarı Listesi', span: 6, order: 100 },
     };
 
@@ -633,3 +669,7 @@
 </script>
 @endpush
 @endsection
+
+
+
+

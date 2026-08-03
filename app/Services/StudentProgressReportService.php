@@ -22,7 +22,17 @@ class StudentProgressReportService
         $student->loadMissing(['user', 'schoolClass', 'currentAvatar', 'badges', 'avatars']);
 
         $courses = Course::with(['teacher.user', 'schoolClass'])
-            ->where('school_class_id', $student->school_class_id)
+            ->where(function ($q) use ($student) {
+                $q->where('school_class_id', $student->school_class_id)
+                    ->orWhereExists(function ($sq) use ($student) {
+                        $sq->selectRaw('1')
+                            ->from('course_homeworks')
+                            ->whereColumn('course_homeworks.course_id', 'courses.id')
+                            ->where('course_homeworks.school_class_id', $student->school_class_id)
+                            ->where('course_homeworks.assignment_type', 'lesson')
+                            ->whereNull('course_homeworks.deleted_at');
+                    });
+            })
             ->orderBy('name')
             ->get();
 
@@ -250,13 +260,55 @@ class StudentProgressReportService
         };
 
         $categoryChart = [
-            ['label' => 'Ödev', 'value' => $pct($lessonHomeworkCompleted, $lessonHomeworkTotal), 'color' => '#3b82f6'],
-            ['label' => 'Etkinlik', 'value' => $pct($activityCompleted, $activityTotal), 'color' => '#14b8a6'],
-            ['label' => 'Blok', 'value' => $pct($blockCompleted, $blockTotal), 'color' => '#6366f1'],
-            ['label' => '3D Blok', 'value' => $pct($block3dCompleted, $block3dTotal), 'color' => '#8b5cf6'],
-            ['label' => 'Compute', 'value' => $pct($computeCompleted, $computeTotal), 'color' => '#7c3aed'],
-            ['label' => 'Derslerim', 'value' => $completedSlides > 0 ? 100 : 0, 'color' => '#10b981'],
-            ['label' => 'Günlük Egzersiz', 'value' => $dailySuccessRate, 'color' => '#f59e0b'],
+            [
+                'label' => 'Ödev',
+                'value' => $pct($lessonHomeworkCompleted, $lessonHomeworkTotal),
+                'done' => $lessonHomeworkCompleted,
+                'total' => $lessonHomeworkTotal,
+                'color' => '#3b82f6',
+            ],
+            [
+                'label' => 'Etkinlik',
+                'value' => $pct($activityCompleted, $activityTotal),
+                'done' => $activityCompleted,
+                'total' => $activityTotal,
+                'color' => '#14b8a6',
+            ],
+            [
+                'label' => 'Blok',
+                'value' => $pct($blockCompleted, $blockTotal),
+                'done' => $blockCompleted,
+                'total' => $blockTotal,
+                'color' => '#6366f1',
+            ],
+            [
+                'label' => '3D Blok',
+                'value' => $pct($block3dCompleted, $block3dTotal),
+                'done' => $block3dCompleted,
+                'total' => $block3dTotal,
+                'color' => '#8b5cf6',
+            ],
+            [
+                'label' => 'Compute',
+                'value' => $pct($computeCompleted, $computeTotal),
+                'done' => $computeCompleted,
+                'total' => $computeTotal,
+                'color' => '#7c3aed',
+            ],
+            [
+                'label' => 'Derslerim',
+                'value' => $completedSlides > 0 ? 100 : 0,
+                'done' => $completedSlides,
+                'total' => $courseProgressRows->count(),
+                'color' => '#10b981',
+            ],
+            [
+                'label' => 'Günlük Egzersiz',
+                'value' => $dailySuccessRate,
+                'done' => $dailyFullCorrectCount,
+                'total' => $dailyAttemptCount,
+                'color' => '#f59e0b',
+            ],
         ];
 
         $analysis = [];
@@ -290,65 +342,47 @@ class StudentProgressReportService
         }
 
         $courseItems = [];
-        foreach ($courseHomeworks as $h) {
-            $p = $homeworkProgress->get($h->id);
-            $courseItems[] = [
-                'course_name' => $h->course?->name ?? '-',
-                'title' => $h->title,
-                'display_title' => $h->title ?: ($h->course?->name ?? '-'),
-                'due_date' => $h->due_date,
-                'assignment_type' => (string) ($h->assignment_type ?? 'lesson'),
-                'status' => $p?->completed_at ? 'Tamamlandı' : ($p?->started_at ? 'Devam Ediyor' : 'Bekliyor'),
-                'xp' => (int) ($p?->xp_awarded ?? 0),
-                'sort_date' => $p?->completed_at ?? $p?->started_at ?? $h->created_at,
-            ];
-        }
+        $courseRows = $contentRows
+            ->filter(function ($row) {
+                $contentId = (string) $row->content_id;
+                $payload = (array) ($row->payload ?? []);
+                $source = (string) data_get($payload, 'source', '');
 
-        $courseMap = $courses->keyBy('id');
-        $progressCourseIds = $courseProgressRows
-            ->map(function ($row) {
-                if (!preg_match('/^course-(\d+)$/', (string) $row->content_id, $m)) {
-                    return 0;
-                }
-
-                return (int) $m[1];
+                return str_starts_with($contentId, 'course-')
+                    || str_starts_with($contentId, 'homework-')
+                    || $source === 'course_slide'
+                    || $source === 'course_homework'
+                    || filled(data_get($payload, 'course_name'))
+                    || filled(data_get($payload, 'lesson_title'));
             })
-            ->filter(fn ($id) => $id > 0)
-            ->unique()
+            ->unique('content_id')
             ->values();
 
-        if ($progressCourseIds->isNotEmpty()) {
-            $progressCourses = Course::with(['teacher.user', 'schoolClass'])
-                ->whereIn('id', $progressCourseIds)
-                ->get()
-                ->keyBy('id');
-            $courseMap = $courseMap->concat($progressCourses)->keyBy('id');
-        }
-
-        foreach ($courseProgressRows as $row) {
-            if (!preg_match('/^course-(\d+)$/', (string) $row->content_id, $m)) {
-                continue;
-            }
-            $courseId = (int) $m[1];
-            $course = $courseMap->get($courseId);
+        foreach ($courseRows as $row) {
             $payload = (array) ($row->payload ?? []);
-            $fallbackCourseName = (string) ($payload['course_name'] ?? $payload['lesson_title'] ?? ('Ders #' . $courseId));
+            $courseName = trim((string) data_get($payload, 'course_name', ''));
+            $lessonTitle = trim((string) data_get($payload, 'lesson_title', ''));
+            $courseId = 0;
+            if (preg_match('/^(?:course|homework)-(\d+)$/', (string) $row->content_id, $m)) {
+                $courseId = (int) $m[1];
+            }
+            $fallbackCourseName = $courseName !== '' ? $courseName : ($lessonTitle !== '' ? $lessonTitle : 'Ders #' . ($courseId > 0 ? $courseId : substr((string) $row->content_id, -6)));
+
             $courseItems[] = [
-                'course_name' => $course?->name ?? $fallbackCourseName,
-                'title' => $course?->name ?? $fallbackCourseName,
-                'display_title' => $course?->name ?? $fallbackCourseName,
+                'course_name' => $fallbackCourseName,
+                'title' => $lessonTitle !== '' ? $lessonTitle : $fallbackCourseName,
+                'display_title' => $lessonTitle !== '' ? $lessonTitle : $fallbackCourseName,
                 'due_date' => null,
                 'assignment_type' => 'lesson_slide',
-                'status' => $row->completed ? 'Tamamland?' : 'Devam Ediyor',
+                'status' => 'Tamamlandı',
                 'xp' => (int) ($row->xp_awarded ?? 0),
-                'solved_questions' => (int) ($payload['solved_questions'] ?? 0),
-                'question_total' => (int) ($payload['question_total'] ?? 0),
+                'solved_questions' => (int) data_get($payload, 'solved_questions', 0),
+                'question_total' => (int) data_get($payload, 'question_total', 0),
                 'sort_date' => $row->updated_at ?? $row->created_at,
             ];
         }
 
         $courseItems = collect($courseItems)
-
             ->sortByDesc('sort_date')
             ->values();
 

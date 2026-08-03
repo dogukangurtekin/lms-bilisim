@@ -9,14 +9,201 @@
     if (!empty($summarySlide) && is_array($summarySlide)) {
         $slides[] = $summarySlide;
     }
+    $courseName = trim((string) ($course->name ?? 'Ders İçeriği'));
+    $courseLogo = url('/public/logo.png');
+    $slideCount = count($slides);
+    $totalXpPreview = array_sum(array_map(static fn ($slide) => max(0, (int) ($slide['xp'] ?? 0)), $slides));
+    $questionCountPreview = 0;
+    foreach ($slides as $slideItem) {
+        if (!empty($slideItem['__summary'])) {
+            continue;
+        }
+        if (!empty($slideItem['question_prompt'])) {
+            $questionCountPreview++;
+        }
+    }
 @endphp
 
 <style>
-    .course-show-shell{overflow-x:hidden;max-width:100vw}
+    .course-show-shell{
+        --shell-border:rgba(37,99,235,.12);
+        --shell-surface:rgba(255,255,255,.84);
+        --shell-text:#0f172a;
+        overflow:hidden;
+        max-width:100vw;
+        padding:12px !important;
+        position:relative;
+        background:
+            radial-gradient(circle at 10% 10%, rgba(255, 209, 102, .18), transparent 18%),
+            radial-gradient(circle at 90% 18%, rgba(59, 130, 246, .12), transparent 22%),
+            linear-gradient(180deg, #f7fbff 0%, #edf4ff 100%);
+    }
+    .course-show-shell::before,
+    .course-show-shell::after{
+        content:"";
+        position:absolute;
+        inset:auto;
+        pointer-events:none;
+        opacity:.5;
+        border-radius:999px;
+        filter:blur(1px);
+    }
+    .course-show-shell::before{
+        width:260px;height:260px;left:-120px;top:88px;
+        background:radial-gradient(circle, rgba(147,197,253,.18), transparent 70%);
+    }
+    .course-show-shell::after{
+        width:220px;height:220px;right:-100px;bottom:42px;
+        background:radial-gradient(circle, rgba(196,181,253,.16), transparent 70%);
+    }
     .course-show-shell *{box-sizing:border-box}
-    .course-show-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;align-items:center;gap:12px;margin:0 0 12px;min-width:0}
-    .course-show-title{margin:0;font-size:16px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .course-show-stage{min-height:80vh;overflow:hidden;margin:0 0 12px;background:#fff;max-width:100%}
+    .course-show-page{position:relative;z-index:1;display:grid;gap:14px}
+    .course-show-topbar{
+        display:grid;
+        grid-template-columns:auto minmax(0,1fr) auto;
+        align-items:center;
+        gap:14px;
+        padding:14px 16px;
+        border-radius:24px;
+        background:rgba(255,255,255,.84);
+        border:1px solid var(--shell-border);
+        box-shadow:0 18px 40px rgba(15,23,42,.06);
+        backdrop-filter:blur(14px);
+    }
+    .course-show-brand{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        min-width:0;
+    }
+    .course-show-brand img{
+        width:54px;
+        height:54px;
+        object-fit:contain;
+        flex:0 0 auto;
+        filter:drop-shadow(0 10px 20px rgba(37,99,235,.12));
+    }
+    .course-show-brand-text{
+        display:grid;
+        gap:2px;
+        min-width:0;
+    }
+    .course-show-kicker{
+        margin:0;
+        font-size:12px;
+        font-weight:900;
+        letter-spacing:.18em;
+        text-transform:uppercase;
+        color:#3b82f6;
+    }
+    .course-show-title{
+        margin:0;
+        font-size:18px;
+        font-weight:900;
+        color:var(--shell-text);
+        min-width:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .course-show-metrics{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap:10px;
+        flex-wrap:wrap;
+    }
+    .course-show-metric{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:10px 14px;
+        border-radius:999px;
+        background:#fff;
+        border:1px solid rgba(37,99,235,.12);
+        color:#0f172a;
+        font-size:13px;
+        font-weight:800;
+        box-shadow:0 8px 18px rgba(15,23,42,.04);
+        white-space:nowrap;
+    }
+    .course-show-metric strong{
+        color:#1d4ed8;
+        font-size:14px;
+    }
+    .course-show-stage{
+        min-height:clamp(62vh,72vh,78vh);
+        overflow:hidden;
+        margin:0;
+        background:transparent;
+        max-width:100%;
+        border:0;
+        box-shadow:none;
+    }
+    .course-show-stage-frame{
+        position:relative;
+        height:100%;
+        min-height:inherit;
+        border-radius:30px;
+        padding:14px;
+        background:linear-gradient(135deg, rgba(255,255,255,.92), rgba(248,251,255,.82));
+        border:1px solid rgba(37,99,235,.10);
+        box-shadow:0 26px 56px rgba(15,23,42,.08);
+        overflow:hidden;
+    }
+    .course-show-stage-frame::before,
+    .course-show-stage-frame::after{
+        content:"";
+        position:absolute;
+        inset:auto;
+        pointer-events:none;
+        border-radius:999px;
+    }
+    .course-show-stage-frame::before{
+        width:160px;height:160px;left:-54px;top:-54px;
+        background:radial-gradient(circle, rgba(255,255,255,.95), rgba(191,219,254,.22), transparent 70%);
+    }
+    .course-show-stage-frame::after{
+        width:180px;height:180px;right:-72px;bottom:-72px;
+        background:radial-gradient(circle, rgba(191,219,254,.18), transparent 68%);
+    }
+    .course-show-stage-inner{
+        position:relative;
+        z-index:1;
+        height:100%;
+        min-height:inherit;
+        border-radius:24px;
+        overflow:hidden;
+        background:rgba(255,255,255,.72);
+    }
+    .course-show-bottom{
+        display:grid;
+        grid-template-columns:1fr auto;
+        align-items:end;
+        gap:12px;
+    }
+    .course-show-bottom-note{
+        min-height:54px;
+    }
+    .course-show-bottom-note .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:10px 14px;
+        border-radius:999px;
+        background:#fff;
+        border:1px solid rgba(37,99,235,.12);
+        box-shadow:0 10px 22px rgba(15,23,42,.04);
+        font-size:13px;
+        font-weight:800;
+    }
+    .course-show-nav{
+        display:flex;
+        justify-content:flex-end;
+        align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
+    }
     .course-show-shell img,.course-show-shell video,.course-show-shell iframe,.course-show-shell table{max-width:100%}
     .course-show-shell .lesson-slide,.course-show-shell .lesson-slide-shell,.course-show-shell .lesson-card,.course-show-shell .lesson-split,.course-show-shell .lesson-split-card,.course-show-shell .lesson-split-body,.course-show-shell .lesson-image-focus,.course-show-shell .lesson-grid-cards,.course-show-shell .sqz-wrap{min-width:0;max-width:100%}
     .course-show-shell .sqz-opt.is-correct{outline:3px solid rgba(34,197,94,.98) !important;box-shadow:0 0 0 5px rgba(34,197,94,.18),inset 0 -4px 0 rgba(0,0,0,.16) !important}
@@ -34,11 +221,15 @@
     }
     @media (max-width:768px){
         .course-show-shell{padding:10px !important}
-        .course-show-header{grid-template-columns:1fr;gap:10px}
-        .course-show-header > *{width:100%}
-        .course-show-header .btn,.course-show-header .badge{justify-self:stretch}
-        .course-show-title{white-space:normal;overflow:visible;text-overflow:clip;font-size:14px;line-height:1.4}
+        .course-show-topbar{grid-template-columns:1fr;gap:12px;padding:12px}
+        .course-show-brand{width:100%}
+        .course-show-brand img{width:46px;height:46px}
+        .course-show-title{white-space:normal;overflow:visible;text-overflow:clip;font-size:15px;line-height:1.35}
+        .course-show-metrics{justify-content:flex-start}
         .course-show-stage{min-height:auto}
+        .course-show-stage-frame{padding:10px;border-radius:22px}
+        .course-show-bottom{grid-template-columns:1fr;align-items:start}
+        .course-show-nav{justify-content:space-between}
         .course-show-shell .lesson-slide-title{font-size:clamp(22px,6vw,34px);line-height:1.1;word-break:break-word;overflow-wrap:anywhere}
         .course-show-shell .lesson-slide-subtitle,.course-show-shell .lesson-paragraph{font-size:clamp(14px,3.8vw,17px);line-height:1.6;word-break:break-word;overflow-wrap:anywhere;hyphens:auto}
         .course-show-shell .lesson-grid-cards,.course-show-shell .lesson-split{grid-template-columns:1fr !important}
@@ -62,30 +253,48 @@
             <strong>Bu ders için henüz slide paylaşılmadı.</strong>
         </div>
     @else
-        <div class="course-show-header">
-            <a class="btn" href="{{ url('/courses') }}" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-size:15px;font-weight:700">
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                Derslerime Dön
-            </a>
+        <div class="course-show-page">
+            <div class="course-show-topbar">
+                <a class="course-show-brand" href="{{ url('/courses') }}" aria-label="Derslerime dön">
+                    <img src="{{ $courseLogo }}" alt="Logo">
+                    <div class="course-show-brand-text">
+                        <p class="course-show-kicker">{{ $previewMode ? 'Önizleme' : 'Ders İçeriği' }}</p>
+                        <h1 class="course-show-title">{{ $courseName }}</h1>
+                    </div>
+                </a>
 
-            <p class="course-show-title">
-                Ders: {{ $course->name }}
-            </p>
+                <div></div>
 
-            <span id="student-course-counter" class="badge" style="justify-self:end;font-size:14px;padding:8px 14px">1 / {{ count($slides) }}</span>
+                <div class="course-show-metrics">
+                    <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
+                    <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
+                    <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
+                </div>
+            </div>
 
-            <button class="btn" type="button" id="student-course-prev" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px">
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                Geri
-            </button>
+            <div class="course-show-stage">
+                <div class="course-show-stage-frame">
+                    <div id="student-course-slide-stage" class="course-show-stage-inner slide-theme"></div>
+                </div>
+            </div>
 
-            <button class="btn" type="button" id="student-course-next" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px">
-                <span id="student-course-next-label">İleri</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
-            </button>
+            <div class="course-show-bottom">
+                <div class="course-show-bottom-note">
+                    <span id="student-course-counter" class="badge">1 / {{ count($slides) }}</span>
+                </div>
+                <div class="course-show-nav">
+                    <button class="btn" type="button" id="student-course-prev" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px;border-radius:16px">
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                        Geri
+                    </button>
+
+                    <button class="btn" type="button" id="student-course-next" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px;border-radius:16px">
+                        <span id="student-course-next-label">İleri</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <div id="student-course-slide-stage" class="card slide-theme course-show-stage"></div>
 
         @if(empty($previewMode))
             <form id="student-course-complete-form" method="POST" action="{{ route('student.portal.course.complete', $course) }}" style="display:none">
@@ -222,7 +431,7 @@
                         setTimeout(() => previous.remove(), 180);
                     }
 
-                    stage.innerHTML = '<div id="student-course-fit" style="width:100%;height:100%;min-height:72vh;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch"></div>';
+                    stage.innerHTML = '<div id="student-course-fit" style="width:100%;height:100%;min-height:62vh;overflow:hidden;display:flex;align-items:stretch;justify-content:stretch"></div>';
                     const fit = document.getElementById('student-course-fit');
                     fit.style.opacity = '0';
                     fit.style.transform = 'translateX(' + (lastDirection > 0 ? '18px' : '-18px') + ') scale(.985)';
@@ -521,6 +730,28 @@
             @keyframes sqzPop {
                 0% { transform: scale(.82); opacity: 0; }
                 100% { transform: scale(1); opacity: 1; }
+            }
+            .course-show-stage-inner .lesson-slide{
+                height:100%;
+            }
+            .course-show-stage-inner .lesson-slide-shell{
+                min-height:100%;
+                padding:clamp(14px,2.4vw,28px);
+                display:grid;
+                align-content:start;
+                gap:14px;
+            }
+            .course-show-stage-inner .lesson-slide-title{
+                font-size:clamp(26px,3.5vw,52px);
+            }
+            .course-show-stage-inner .lesson-slide-subtitle{
+                font-size:clamp(16px,1.55vw,22px);
+            }
+            .course-show-stage-inner .lesson-card,
+            .course-show-stage-inner .lesson-split-card,
+            .course-show-stage-inner .lesson-hero-card,
+            .course-show-stage-inner .sqz-wrap{
+                box-shadow:0 14px 34px rgba(15,23,42,.08);
             }
         </style>
     @endif

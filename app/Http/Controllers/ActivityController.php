@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Teacher;
 use App\Models\TeacherGameAssignment;
+use App\Models\GameAssignment;
 use App\Models\Student;
 use App\Services\StudentGameAccessService;
 use Illuminate\Http\RedirectResponse;
@@ -46,8 +47,9 @@ class ActivityController extends Controller
         }
         if ($isTeacher && $user?->teacher) {
             $assignedGameActivities = TeacherGameAssignment::query()
+                ->with(['assignedBy'])
                 ->where('teacher_id', $user->teacher->id)
-                ->orderByDesc('id')
+                ->orderBy('game_name')
                 ->get();
         }
         if ($isAdmin) {

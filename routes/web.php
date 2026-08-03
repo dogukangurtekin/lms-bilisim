@@ -188,6 +188,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'update'])->name('coding.activities.update');
         Route::delete('/kodlama-etkinlikleri/{activity}', [CodingActivityManagementController::class, 'destroy'])->name('coding.activities.destroy');
         Route::post('/kodlama-etkinlikleri/{activity}/bugune-ata', [CodingActivityManagementController::class, 'assignToday'])->name('coding.activities.assign.today');
+        Route::post('/kodlama-etkinlikleri/{activity}/ogrenciden-kaldir', [CodingActivityManagementController::class, 'unassignToday'])->name('coding.activities.unassign.today');
         Route::post('/canli-quiz', [LiveQuizController::class, 'store'])->name('live-quiz.store');
         Route::post('/canli-quiz/{quiz}/baslat', [LiveQuizController::class, 'start'])->name('live-quiz.start');
         Route::get('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'showSession'])->name('live-quiz.session.show');
@@ -233,7 +234,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/courses/indir/tumu', [CourseController::class, 'exportAll'])->name('courses.export-all');
         Route::post('/courses/yukle', [CourseController::class, 'import'])->name('courses.import');
         Route::post('/courses/ogretmene-ata/toplu', [CourseController::class, 'assignTeacherBulk'])->name('courses.assign-teacher.bulk');
+        Route::post('/courses/ogretmenden-kaldir/toplu', [CourseController::class, 'unassignTeacherBulk'])->name('courses.unassign-teacher.bulk');
+        Route::post('/courses/siniflara-ata/toplu', [CourseController::class, 'assignClassesBulk'])->name('courses.assign-classes.bulk');
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
+        Route::post('/courses/{course}/unassign-teacher', [CourseController::class, 'unassignTeacher'])->name('courses.unassign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
         Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');
         Route::delete('/courses/delete-all', [CourseController::class, 'destroyAll'])->name('courses.destroy-all');

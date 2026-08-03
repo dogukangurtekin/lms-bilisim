@@ -69,8 +69,24 @@
 
 <div class="card">
     <h3>Oyun ve Uygulama Ödevleri</h3>
+    @php
+        $ownerFilter = $ownerFilter ?? (auth()->user()?->hasRole('admin') ? 'admin' : 'teacher');
+        $isAdmin = auth()->user()?->hasRole('admin') === true;
+    @endphp
+    @if($isAdmin)
+        <form method="GET" action="{{ route('teacher.assignments.index') }}" style="margin:0 0 12px;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+            <div>
+                <label style="display:block;margin-bottom:6px;font-weight:700;">Gösterim Filtresi</label>
+                <select name="owner" onchange="this.form.submit()" style="min-width:240px;height:42px;padding:0 12px;border:1px solid #cfd8e3;border-radius:12px;background:#fff;">
+                    <option value="admin" @selected($ownerFilter === 'admin')>Admin ödevleri</option>
+                    <option value="teacher" @selected($ownerFilter === 'teacher')>Öğretmen ödevleri</option>
+                    <option value="all" @selected($ownerFilter === 'all')>Tüm ödevler</option>
+                </select>
+            </div>
+        </form>
+    @endif
     <table>
-        <thead><tr><th>İçerik</th><th>Başlık</th><th>Teslim</th><th>Level</th><th>İşlemler</th></tr></thead>
+        <thead><tr><th>İçerik</th><th>Başlık</th><th>Teslim</th><th>Level</th><th>Veren</th><th>İşlemler</th></tr></thead>
         <tbody>
         @forelse($gameAssignments as $a)
             <tr>
@@ -78,6 +94,7 @@
                 <td>{{ $a->title }}</td>
                 <td>{{ $a->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td>{{ $a->level_from ?? '-' }} - {{ $a->level_to ?? '-' }}</td>
+                <td>{{ $a->creator?->name ?? '-' }}</td>
                 <td class="actions">
                     <a class="btn" href="{{ route('teacher.assignments.game.show', $a) }}">Önizle</a>
                     <a class="btn" href="{{ route('teacher.assignments.game.edit', $a) }}">Güncelle</a>
@@ -89,7 +106,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="5">Oyun/uygulama ödevi yok.</td></tr>
+            <tr><td colspan="6">Oyun/uygulama ödevi yok.</td></tr>
         @endforelse
         </tbody>
     </table>

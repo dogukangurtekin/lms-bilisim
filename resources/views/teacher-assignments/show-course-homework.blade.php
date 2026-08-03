@@ -60,6 +60,42 @@
     </div>
 @endif
 
+@if(($progressItems ?? collect())->isNotEmpty())
+    <div class="card" style="margin-top:12px">
+        <h3>Ogrenci Gonderimleri</h3>
+        <div style="display:grid;gap:12px">
+            @foreach($progressItems as $item)
+                @php
+                    $payload = (array) ($item->completion_payload ?? []);
+                    $studentName = $item->homework?->student?->user?->name ?? 'Ogrenci';
+                    $studentClass = trim(($item->homework?->student?->schoolClass?->name ?? '-') . '/' . ($item->homework?->student?->schoolClass?->section ?? '-'));
+                    $studentNote = trim((string) ($payload['student_note'] ?? ''));
+                @endphp
+                <div style="border:1px solid #dbe5f2;border-radius:12px;padding:14px;background:#fff">
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+                        <div>
+                            <strong>{{ $studentName }}</strong>
+                            <div style="color:#64748b">{{ $studentClass }}</div>
+                        </div>
+                        <span class="badge">Tamamlandi</span>
+                    </div>
+                    <div style="margin-top:10px">
+                        <div><b>XP:</b> {{ (int) ($item->xp_awarded ?? 0) }}</div>
+                        <div><b>Tamamlanma:</b> {{ optional($item->completed_at)->format('d.m.Y H:i') ?? '-' }}</div>
+                        <div><b>Not:</b> {{ $studentNote !== '' ? $studentNote : '-' }}</div>
+                    </div>
+                    @if(!empty($homework->attachment_path))
+                        <div style="margin-top:10px">
+                            <b>Ek/Gorsel:</b>
+                            <a href="{{ asset('storage/'.$homework->attachment_path) }}" target="_blank">{{ $homework->attachment_original_name ?? 'Dosyayi Ac' }}</a>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+@endif
+
 @if(!empty($gameUrl))
     <div class="card" style="padding:10px">
         <p><b>Ogretmen Onizleme:</b> Oyunu/uygulamayi ogrencideki gibi burada test edebilirsiniz.</p>

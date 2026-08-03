@@ -21,7 +21,7 @@
 .slide-theme h2{font-size:clamp(28px,3vw,44px)}
 .slide-theme h3{font-size:clamp(22px,2.2vw,32px)}
 .slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}
-.slide-theme :where(strong,b){color:#0f172a;font-weight:800}
+.slide-theme :where(strong,b){color:inherit;font-weight:800}
 .slide-theme :where(a){color:#2563eb;text-decoration:none;border-bottom:1px solid rgba(37,99,235,.24)}
 .slide-theme :where(code,pre,kbd,samp){background:#0f172a;color:#f8fafc;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .slide-theme pre{padding:16px 18px;overflow:auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
@@ -35,7 +35,47 @@
 .slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right,.sqz-qcard){border-radius:20px;border:1px solid var(--theme-border);box-shadow:0 16px 34px rgba(37,99,235,.08);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,251,255,.88))}
 .slide-theme :where(.highlight,.badge,.pill,.callout){background:#dbeafe;color:#0f172a;border-radius:999px;padding:.15rem .55rem;font-weight:800}
 .slide-theme :where(.slide-title,.lesson-title,.lesson-subtitle){letter-spacing:-.03em}
-.slide-theme :where(.lesson-paragraph,.slide-render p){line-height:1.88}
+.slide-theme :where(.lesson-paragraph,.slide-render p){line-height:1.55}
+.slide-theme :where(.lesson-rich-text){
+    display:grid;
+    gap:14px;
+}
+.slide-theme :where(.lesson-rich-text h1,.lesson-rich-text h2,.lesson-rich-text h3,.lesson-rich-text h4){
+    margin:0;
+    font-weight:900;
+    color:#0f172a;
+}
+.slide-theme :where(.lesson-rich-text h1){font-size:clamp(28px,3vw,46px)}
+.slide-theme :where(.lesson-rich-text h2){font-size:clamp(24px,2.4vw,36px)}
+.slide-theme :where(.lesson-rich-text h3){font-size:clamp(20px,2vw,28px)}
+.slide-theme :where(.lesson-rich-text p){
+    margin:0;
+    font-size:18px;
+    line-height:1.5;
+    color:#334155;
+}
+.slide-theme :where(.lesson-rich-text ul,.lesson-rich-text ol){
+    margin:0;
+    padding-left:1.2rem;
+    display:grid;
+    gap:6px;
+}
+.slide-theme :where(.lesson-rich-text li){
+    font-size:18px;
+    line-height:1.45;
+    color:#334155;
+}
+.slide-theme :where(.lesson-rich-text li::marker){
+    color:#2563eb;
+    font-weight:900;
+}
+.slide-theme :where(.lesson-rich-text blockquote){
+    margin:0;
+    padding:14px 16px;
+    border-left:5px solid #2563eb;
+    background:rgba(37,99,235,.08);
+    border-radius:0 16px 16px 0;
+}
 .slide-theme :where(.lesson-list,ul,ol){padding-left:1.2rem}
 .slide-theme :where(.lesson-divider,hr){border:0;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.22),transparent);margin:18px 0}
 .slide-theme :where(.lesson-image){border-radius:20px;overflow:hidden;box-shadow:0 18px 34px rgba(15,23,42,.08)}
@@ -61,8 +101,8 @@
     display:flex;
     flex-direction:column;
     justify-content:center;
-    min-height:clamp(420px,66vh,760px);
-    padding:18px;
+    min-height:clamp(300px,48vh,560px);
+    padding:12px;
 }
 .slide-theme :where(.lesson-split-tag){
     display:inline-flex;
@@ -85,7 +125,7 @@
 }
 .slide-theme :where(.lesson-split-body){
     display:grid;
-    gap:14px;
+    gap:10px;
     min-height:0;
     align-content:center;
 }
@@ -95,10 +135,10 @@
 .slide-theme :where(.lesson-split-media){
     width:100%;
     object-fit:cover;
-    min-height:280px;
-    max-height:min(56vh,600px);
+    min-height:180px;
+    max-height:min(38vh,420px);
 }
-.slide-theme :where(.lesson-image){width:100%;object-fit:cover;min-height:240px}
+.slide-theme :where(.lesson-image){width:100%;object-fit:cover;min-height:180px;max-height:min(38vh,420px)}
 .slide-theme :where(.lesson-code-frame){width:100%;min-height:420px;border:1px solid rgba(37,99,235,.14);border-radius:20px;background:#fff}
 .slide-theme :where(.lesson-grid-cards){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .slide-theme :where(.lesson-list){margin:0}
@@ -127,6 +167,7 @@
     }
     .slide-theme :where(.lesson-split-card){
         min-height:auto;
+        padding:10px;
     }
     .slide-theme :where(.lesson-split-body){
         min-height:auto;
@@ -166,7 +207,7 @@
     }
     .slide-theme :where(h1,h2,h3,h4,h5,h6){color:#f8fafc}
     .slide-theme :where(p,li,div,span){color:#cbd5e1}
-    .slide-theme :where(strong,b){color:#f8fafc}
+    .slide-theme :where(strong,b){color:inherit}
     .slide-theme :where(code,pre,kbd,samp){background:#020617;color:#f8fafc}
     .slide-theme :where(table){background:rgba(15,23,42,.88)}
     .slide-theme :where(th){background:linear-gradient(180deg,#1e293b,#0f172a);color:#f8fafc}

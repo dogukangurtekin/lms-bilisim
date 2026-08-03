@@ -18,9 +18,12 @@ class UpdateCourseRequest extends FormRequest
         return [
             'name' => ['required','string','max:255'],
             'code' => ['required','string','max:30','unique:courses,code,'.$this->route('course')->id],
-            'teacher_id' => ['required','integer','exists:teachers,id'],
+            'teacher_id' => ['nullable','integer','exists:teachers,id'],
             'school_class_id' => ['nullable','integer','exists:school_classes,id'],
             'weekly_hours' => ['required','integer','between:1,20'],
+            'parent_course_id' => ['nullable','integer','exists:courses,id'],
+            'sort_order' => ['nullable','integer','min:0'],
+            'is_active' => ['nullable','boolean'],
             'lesson_payload' => ['nullable', 'string'],
             'cover_image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ];
@@ -38,6 +41,11 @@ class UpdateCourseRequest extends FormRequest
             return;
         }
 
+        $user = Auth::user();
+        if (! $user?->hasRole('teacher')) {
+            return;
+        }
+
         $userId = Auth::id();
         $teacherId = null;
 
@@ -47,10 +55,6 @@ class UpdateCourseRequest extends FormRequest
                 ['branch' => 'Genel', 'phone' => null, 'hire_date' => now()->toDateString()]
             );
             $teacherId = $teacher->id;
-        }
-
-        if (! $teacherId) {
-            $teacherId = Teacher::query()->value('id');
         }
 
         if ($teacherId) {

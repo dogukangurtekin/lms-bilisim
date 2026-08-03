@@ -8,7 +8,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BjpTmQAD.css",
+    "file": "assets/app-CUXYRK7E.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -17,7 +17,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-g9c-gDrE.js",
+    "file": "assets/app-BZNhaFO2.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

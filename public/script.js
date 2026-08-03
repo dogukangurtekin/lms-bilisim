@@ -19007,8 +19007,8 @@ function renderLessonPlayer() {
     };
     const qTypeLabel = qTypeLabelMap[qType] || "Soru";
     const questionImageHtml = cur.imageUrl
-      ? `<div style="margin:8px 0 10px;display:flex;justify-content:center;">
-          <img src="${cur.imageUrl}" alt="" class="lesson-question-image-thumb" data-lesson-image="${cur.imageUrl}">
+      ? `<div style="margin:4px 0 6px;display:flex;justify-content:center;">
+          <img src="${cur.imageUrl}" alt="" class="lesson-question-image-thumb" data-lesson-image="${cur.imageUrl}" style="max-width:min(320px,100%);max-height:140px;width:auto;height:auto;object-fit:contain;border-radius:10px;border:1px solid rgba(148,163,184,.25);box-shadow:0 2px 10px rgba(15,23,42,.08);cursor:zoom-in;background:#fff;">
         </div>`
       : "";
     const hasAnswered = (qType === "fill")
@@ -19101,7 +19101,7 @@ function renderLessonPlayer() {
     const questionBody = hasChoiceGrid
       ? `
         <div class="lesson-question-layout">
-          <div class="lesson-question-prompt">
+          <div class="lesson-question-prompt" style="margin-bottom:6px;">
             <p class="lesson-question-text">${escapeHtmlBasic(cur.question || "")}</p>
           </div>
           ${questionImageHtml}
@@ -19113,14 +19113,14 @@ function renderLessonPlayer() {
         </div>
       `
       : `
-        <p class="lesson-question-text" style="font-size:20px;font-weight:700;">${escapeHtmlBasic(cur.question || "")}</p>
+        <p class="lesson-question-text" style="font-size:18px;font-weight:700;margin-bottom:6px;">${escapeHtmlBasic(cur.question || "")}</p>
         ${questionImageHtml}
         ${opts}
         ${saveBtn}
         ${statusHtml}
       `;
     questionBlock = `
-      <div class="lesson-question-card" style="background:${cardBg};color:${cardText};border-color:${cardBorder};margin-top:${hasContent ? "10px" : "0"};">
+      <div class="lesson-question-card" style="background:${cardBg};color:${cardText};border-color:${cardBorder};margin-top:${hasContent ? "6px" : "0"};padding:12px 14px;">
         <div class="lesson-question-head">
           <span class="lesson-question-tag">${qTypeLabel}</span>
           <span class="lesson-question-xp">+${questionXP} XP</span>
@@ -19173,6 +19173,10 @@ function renderLessonPlayer() {
         const src = imgEl.getAttribute("data-lesson-image") || "";
         if (!src || !imageModal || !imageModalImg) return;
         imageModalImg.src = src;
+        imageModalImg.style.maxWidth = "92vw";
+        imageModalImg.style.maxHeight = "85vh";
+        imageModalImg.style.width = "auto";
+        imageModalImg.style.height = "auto";
         imageModal.style.display = "flex";
       });
     });
@@ -25953,7 +25957,6 @@ async function loadMyStatsModal() {
     showNotice("�statistikler y�klenemedi. L�tfen tekrar deneyin.", "#e74c3c");
   }
 }
-
 
 
 

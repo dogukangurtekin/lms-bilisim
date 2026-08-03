@@ -24,6 +24,8 @@ class TeacherAssignmentController extends Controller
     {
         $user = auth()->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $ownerFilter = (string) request()->query('owner', $user?->hasRole('admin') ? 'admin' : 'teacher');
+        $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($user?->hasRole('admin') ? 'admin' : 'teacher');
         $courseHomeworks = CourseHomework::with(['course', 'schoolClass'])
             ->when($user?->hasRole('teacher'), function ($query) use ($teacherId) {
                 $query->where(function ($sub) use ($teacherId) {
@@ -36,12 +38,21 @@ class TeacherAssignmentController extends Controller
             })
             ->latest()
             ->paginate(20, ['*'], 'course_page');
-        $gameAssignments = GameAssignment::with(['classes', 'levels'])
+        $gameAssignments = GameAssignment::with(['classes', 'levels', 'creator.role'])
+            ->when(! $user?->hasRole('admin'), function ($query) use ($user) {
+                $query->where('created_by', $user?->id);
+            })
+            ->when($user?->hasRole('admin') && $ownerFilter === 'admin', function ($query) {
+                $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'));
+            })
+            ->when($user?->hasRole('admin') && $ownerFilter === 'teacher', function ($query) {
+                $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'teacher'));
+            })
             ->latest()
             ->paginate(20, ['*'], 'game_page');
         $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
 
-        return view('teacher-assignments.index', compact('courseHomeworks', 'gameAssignments', 'classes'));
+        return view('teacher-assignments.index', compact('courseHomeworks', 'gameAssignments', 'classes', 'ownerFilter'));
     }
 
     public function storeHomework(Request $request)
@@ -119,6 +130,12 @@ class TeacherAssignmentController extends Controller
             abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
         }
 
+        $progressItems = \App\Models\StudentHomeworkProgress::query()
+            ->with(['student.user', 'student.schoolClass'])
+            ->where('course_homework_id', $homework->id)
+            ->latest('completed_at')
+            ->get();
+
         $homework->load(['course', 'schoolClass']);
         $gameUrl = null;
         $gameSlug = null;
@@ -148,7 +165,7 @@ class TeacherAssignmentController extends Controller
 
         $slides = $homework->course ? $this->presentation->prepareCourseSlides($homework->course, false) : [];
 
-        return view('teacher-assignments.show-course-homework', compact('homework', 'gameUrl', 'gameSlug', 'slides'));
+        return view('teacher-assignments.show-course-homework', compact('homework', 'gameUrl', 'gameSlug', 'slides', 'progressItems'));
     }
 
     public function editCourseHomework(CourseHomework $homework)

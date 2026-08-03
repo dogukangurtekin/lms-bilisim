@@ -36,6 +36,13 @@
     $rightVideo = (string) ($right['video_url'] ?? '');
     $splitRatio = (string) ($meta['split_ratio'] ?? '50-50');
     $splitColumns = $splitRatio === '30-70' ? '30% 70%' : ($splitRatio === '70-30' ? '70% 30%' : '1fr 1fr');
+    $renderRichText = static function ($value): string {
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    };
 @endphp
 
 <div class="lesson-split" style="display:grid;grid-template-columns:{{ $splitColumns }};gap:18px">
@@ -49,7 +56,7 @@
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
             @else
                 @if($leftText !== '')
-                    <p class="lesson-paragraph">{!! nl2br(e($leftText)) !!}</p>
+                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($leftText) !!}</div>
                 @endif
             @endif
         </div>
@@ -65,7 +72,7 @@
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
             @else
                 @if($rightText !== '')
-                    <p class="lesson-paragraph">{!! nl2br(e($rightText)) !!}</p>
+                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($rightText) !!}</div>
                 @endif
             @endif
             @if($rightType !== 'code' && !empty($slide['file_url']))

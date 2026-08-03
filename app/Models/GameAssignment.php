@@ -19,6 +19,7 @@ class GameAssignment extends Model
         'due_date',
         'level_from',
         'level_to',
+        'grade_level_group',
         'created_by',
     ];
 

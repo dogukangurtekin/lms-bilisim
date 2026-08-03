@@ -106,6 +106,8 @@
     $defaultWeeklyHours = old('weekly_hours', $isEdit ? $course->weekly_hours : 2);
     $defaultCode = old('code', $isEdit ? $course->code : '');
     $defaultLessonTitle = old('name', $isEdit ? $course->name : 'Örnek Ders: Layout Galerisi');
+    $parentCourseId = old('parent_course_id', $isEdit ? ($course->parent_course_id ?? '') : ($parentCourse->id ?? ''));
+    $isSubCourse = (int) ($parentCourseId ?: 0) > 0;
 @endphp
 
 <style>
@@ -795,6 +797,82 @@
     .lesson-builder #question_editor{
         padding:12px 0 0;
     }
+    .lesson-builder .tiptap-shell{
+        border:1px solid #dbe5f2;
+        border-radius:18px;
+        background:#fff;
+        overflow:hidden;
+    }
+    .lesson-builder .tiptap-toolbar{
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        padding:12px;
+        border-bottom:1px solid #e2e8f0;
+        background:linear-gradient(180deg,#f8fbff,#ffffff);
+    }
+    .lesson-builder .tiptap-toolbar button,
+    .lesson-builder .tiptap-toolbar select,
+    .lesson-builder .tiptap-toolbar input[type="color"]{
+        min-height:40px;
+        border-radius:12px;
+    }
+    .lesson-builder .tiptap-toolbar button{
+        padding:0 14px;
+        border:1px solid #dbe5f2;
+        background:#fff;
+        color:#0f172a;
+        font-weight:700;
+        cursor:pointer;
+    }
+    .lesson-builder .tiptap-toolbar button.is-active{
+        background:#2563eb;
+        color:#fff;
+        border-color:#2563eb;
+    }
+    .lesson-builder .tiptap-editor{
+        min-height:320px;
+        border:1px solid #dbe5f2;
+        border-radius:16px;
+        background:#fff;
+        color:#0f172a;
+        font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror{
+        min-height:320px;
+        padding:24px 28px;
+        outline:none;
+        font-size:18px;
+        line-height:1.6;
+        color:#334155;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror,
+    .lesson-builder .tiptap-editor .ProseMirror *{
+        font-family:inherit;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror p{
+        margin:0 0 1rem;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror h1,
+    .lesson-builder .tiptap-editor .ProseMirror h2,
+    .lesson-builder .tiptap-editor .ProseMirror h3{
+        margin:0 0 .9rem;
+        color:#0f172a;
+        letter-spacing:-.03em;
+        line-height:1.12;
+        font-weight:900;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror h1{ font-size:clamp(28px,3vw,44px); }
+    .lesson-builder .tiptap-editor .ProseMirror h2{ font-size:clamp(22px,2.4vw,32px); }
+    .lesson-builder .tiptap-editor .ProseMirror ul,
+    .lesson-builder .tiptap-editor .ProseMirror ol{
+        margin:0 0 1rem 1.25rem;
+        padding-left:1rem;
+    }
+    .lesson-builder .tiptap-editor .ProseMirror li{
+        margin:0 0 .45rem;
+        line-height:1.55;
+    }
     .lesson-builder .builder-panel h4,
     .lesson-builder #layout_editor_panel strong{
         letter-spacing:-.02em;
@@ -840,6 +918,68 @@
     }
     .lesson-builder .builder-panel :where(input:not([type=checkbox]):not([type=radio]),select,textarea){
         box-shadow:none;
+    }
+    .tiptap-shell{
+        border:1px solid #dbe5f2;
+        border-radius:14px;
+        background:#fff;
+        overflow:hidden;
+    }
+    .tiptap-toolbar{
+        display:flex;
+        flex-wrap:wrap;
+        gap:6px;
+        padding:10px;
+        border-bottom:1px solid #e2e8f0;
+        background:linear-gradient(180deg,#f8fbff,#ffffff);
+    }
+    .tiptap-toolbar button{
+        min-height:36px;
+        padding:0 12px;
+        border-radius:10px;
+        border:1px solid #dbe5f2;
+        background:#fff;
+        color:#0f172a;
+        font-weight:700;
+        cursor:pointer;
+    }
+    .tiptap-toolbar button.is-active{
+        background:#2563eb;
+        color:#fff;
+        border-color:#2563eb;
+    }
+    .tiptap-editor,
+    .ckeditor-shell{
+        min-height:140px;
+        padding:14px;
+        outline:none;
+        font-size:15px;
+        line-height:1.35;
+        color:#0f172a;
+    }
+    .tiptap-editor p,
+    .ckeditor-shell p{
+        margin:0 0 .45rem;
+    }
+    .tiptap-editor p + p,
+    .ckeditor-shell p + p{
+        margin-top:0;
+    }
+    .tiptap-editor ul,
+    .tiptap-editor ol,
+    .ckeditor-shell ul,
+    .ckeditor-shell ol{
+        margin:0 0 .6rem 1.25rem;
+        padding-left:1rem;
+    }
+    .tiptap-editor h1,
+    .tiptap-editor h2,
+    .tiptap-editor h3,
+    .ckeditor-shell h1,
+    .ckeditor-shell h2,
+    .ckeditor-shell h3{
+        margin:0 0 .65rem;
+        line-height:1.25;
     }
     @media (max-width:1280px){
         .lesson-builder-grid{
@@ -979,6 +1119,7 @@
                     <div id="layout_editor_hint" style="color:#64748b;font-size:13px;line-height:1.6;margin-bottom:10px">Seçtiğiniz layout’a göre aşağıdaki alanlar aktif olur.</div>
                     <div id="layout_editor_fields"></div>
                 </div>
+                <textarea id="slide_content" rows="8" style="display:none"></textarea>
                 <div style="display:none" aria-hidden="true">
                     <label>Sayfa XP</label>
                     <input type="number" id="slide_xp" min="0" max="500" value="0">
@@ -1083,6 +1224,21 @@
                 <option value="Orta">Orta</option>
                 <option value="Zor">Zor</option>
             </select>
+            <label>Sınıf Düzeyi</label>
+            <div id="lesson_grade_levels" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+                @foreach([3,4,5,6,7,9,10] as $gradeLevel)
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;cursor:pointer">
+                        <input type="checkbox" class="lesson-grade-level" value="{{ $gradeLevel }}" style="width:auto;margin:0">
+                        <span style="font-weight:700;color:#0f172a">{{ $gradeLevel }}. sınıf</span>
+                    </label>
+                @endforeach
+            </div>
+            <label>Kademe</label>
+            <select id="lesson_education_stage">
+                <option value="ilkokul">İlkokul</option>
+                <option value="ortaokul">Ortaokul</option>
+                <option value="lise">Lise</option>
+            </select>
             <label>Ders Açıklaması</label>
             <textarea id="lesson_description" rows="3" placeholder="Ders başlığı altında gösterilecek açıklama"></textarea>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dbe5f2">
@@ -1103,12 +1259,8 @@
                 <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
                 <label>Kazanımlar (Her satır bir madde)</label>
                 <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
-                <div style="display:none" aria-hidden="true">
-                <div style="display:none" aria-hidden="true">
-                    <label>Etkinlikler (Her satır bir madde)</label>
-                    <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
-                </div>
-                </div>
+                <label>Etkinlikler (Her satır bir madde)</label>
+                <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
             </div>
             <label>Slayt Arkaplanı</label>
             <div id="slide_background_picker" class="bg-option-grid">
@@ -1143,14 +1295,20 @@
             </div>
             <input type="hidden" id="slide_background_type" value="{{ old('slide_background_type', 'none') }}">
             <input type="hidden" id="slide_background_value" value="{{ old('slide_background_value', '') }}">
-            <label>Kapak Görseli Yükle</label>
-            <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
-            <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
-            <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
-            <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
-                <img id="cover_image_preview" alt="Kapak önizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
-            </div>
-            <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapağı Sil</button>
+            @if(! $isSubCourse)
+                <label>Kapak Görseli Yükle</label>
+                <input type="file" id="cover_image_file" name="cover_image_file" accept="image/*">
+                <small style="color:#64748b">Maksimum 3 MB (jpg, jpeg, png, webp)</small>
+                <div id="cover_image_path_label" style="font-size:12px;color:#475569;line-height:1.5;word-break:break-all"></div>
+                <div id="cover_image_preview_box" data-cover-url="{{ $existingCoverUrl }}" style="display:{{ $existingCoverUrl ? 'block' : 'none' }};width:100%;aspect-ratio:16/9;border-radius:10px;border:1px solid #e2e8f0;margin-top:6px;background:#f1f5f9;overflow:hidden">
+                    <img id="cover_image_preview" alt="Kapak önizleme" src="{{ $existingCoverUrl }}" style="width:100%;height:100%;object-fit:cover;display:block;background:#f1f5f9">
+                </div>
+                <button class="btn btn-danger" type="button" id="cover_image_remove" style="margin-top:8px;display:none">Kapağı Sil</button>
+            @else
+                <div style="padding:14px;border:1px dashed #cbd5e1;border-radius:16px;background:#f8fbff;color:#475569">
+                    Alt ders oluşturuyorsunuz. Kapak görseli bu formda yoktur.
+                </div>
+            @endif
         </aside>
     </div>
 </div>
@@ -1161,6 +1319,9 @@
 <input type="hidden" id="teacher_id_hidden" name="teacher_id" value="{{ $defaultTeacherId }}">
 <input type="hidden" id="school_class_id_hidden" name="school_class_id" value="{{ old('school_class_id', $isEdit ? $course->school_class_id : '') }}">
 <input type="hidden" id="weekly_hours_hidden" name="weekly_hours" value="{{ $defaultWeeklyHours }}">
+<input type="hidden" id="parent_course_id_hidden" name="parent_course_id" value="{{ $parentCourseId }}">
+<input type="hidden" id="sort_order_hidden" name="sort_order" value="{{ old('sort_order', $isEdit ? ($course->sort_order ?? 0) : 0) }}">
+<input type="hidden" id="is_active_hidden" name="is_active" value="{{ old('is_active', $isEdit ? (int) ($course->is_active ?? 1) : 1) }}">
 <input type="hidden" id="cover_image_data" name="cover_image_data" value="">
 
 <div id="builder-preview-modal" class="modal">
@@ -1228,6 +1389,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const topClassSelect = document.getElementById('top_class_select');
     const lessonCategory = document.getElementById('lesson_category');
     const lessonDifficulty = document.getElementById('lesson_difficulty');
+    const lessonEducationStage = document.getElementById('lesson_education_stage');
+    const lessonGradeLevelChecks = Array.from(document.querySelectorAll('.lesson-grade-level'));
     const lessonDescription = document.getElementById('lesson_description');
     const coverImageFile = document.getElementById('cover_image_file');
     const coverImagePreview = document.getElementById('cover_image_preview');
@@ -1269,7 +1432,6 @@ document.addEventListener('DOMContentLoaded', function () {
         double_points: document.getElementById('slide_double_points'),
     };
     const builderShell = document.querySelector('.lesson-builder');
-    const contentEditor = document.getElementById('slide_content_editor');
     const layoutHelpTitle = document.getElementById('layout_help_title');
     const layoutHelpBadge = document.getElementById('layout_help_badge');
     const layoutHelpDesc = document.getElementById('layout_help_desc');
@@ -1299,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function () {
 .slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#f8fafc 0%,#eef6ff 100%);color:#0f172a;--theme-accent:#0f766e;--theme-accent-2:#2563eb;--theme-bg:#f8fbff;--theme-panel:#ffffff;--theme-border:#bfdbfe}
 .slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.025em;line-height:1.12;font-weight:900;margin:0 0 .75rem}
 .slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}
-.slide-theme :where(strong,b){color:#0f172a;font-weight:800}
+.slide-theme :where(strong,b){color:inherit;font-weight:800}
 .slide-theme :where(a){color:#0f766e;text-decoration:none;border-bottom:1px solid rgba(15,118,110,.2)}
 .slide-theme :where(code,pre,kbd,samp){background:#dbeafe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .slide-theme pre{padding:14px 16px;overflow:auto}
@@ -1320,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', function () {
 .slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#f0f9ff 0%,#eef2ff 48%,#f5f3ff 100%);color:#1e293b;--theme-accent:#2563eb;--theme-accent-2:#7c3aed;--theme-bg:rgba(255,255,255,.58);--theme-panel:#ffffff;--theme-border:rgba(37,99,235,.16)}
 .slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.02em;line-height:1.15;font-weight:800;margin:0 0 .75rem}
 .slide-theme :where(p,li,div,span){font-size:18px;line-height:1.8;color:#334155}
-.slide-theme :where(strong,b){color:#111827;font-weight:800}
+.slide-theme :where(strong,b){color:inherit;font-weight:800}
 .slide-theme :where(a){color:#1d4ed8;text-decoration:none;border-bottom:1px solid rgba(29,78,216,.25)}
 .slide-theme :where(code,pre,kbd,samp){background:#e0f2fe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
 .slide-theme pre{padding:14px 16px;overflow:auto}
@@ -1535,67 +1697,261 @@ document.addEventListener('DOMContentLoaded', function () {
         const editor = typeof editorId === 'string' ? document.getElementById(editorId) : editorId;
         const hidden = hiddenId ? document.getElementById(hiddenId) : null;
         if (!toolbar || !editor) return;
+        let savedRange = null;
+        const blockTags = new Set(['P', 'DIV', 'LI', 'BLOCKQUOTE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
+        const currentBlock = () => {
+            const sel = window.getSelection();
+            const node = sel && sel.anchorNode ? (sel.anchorNode.nodeType === Node.ELEMENT_NODE ? sel.anchorNode : sel.anchorNode.parentElement) : null;
+            const block = node ? node.closest('p,div,li,blockquote,h1,h2,h3,h4,h5,h6') : null;
+            return block || editor;
+        };
+        const saveSelection = () => {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+                savedRange = sel.getRangeAt(0).cloneRange();
+            }
+        };
+        const restoreSelection = () => {
+            const sel = window.getSelection();
+            if (!sel || !savedRange) return;
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+        };
         const sync = () => {
             if (hidden) hidden.value = editor.innerHTML || '';
             saveCurrent();
+            if (previewModal && previewModal.classList.contains('open')) {
+                renderPreviewSlide();
+            }
         };
-        const applyStyle = (tag, value) => {
+        const applyStyleToEditorBlocks = (styleKey, styleValue) => {
+            editor.querySelectorAll(':scope > *').forEach((node) => {
+                if (!(node instanceof HTMLElement)) return;
+                node.style[styleKey] = styleValue;
+            });
+            editor.style[styleKey] = styleValue;
+        };
+        const normalizeEditorHtml = () => {
+            editor.querySelectorAll('span[data-rich-style="1"]').forEach((span) => {
+                if (!span.innerHTML.trim()) return;
+                const parent = span.parentElement;
+                if (!parent) return;
+                const text = span.innerHTML;
+                if (span.style.fontFamily || span.style.fontSize || span.style.color || span.style.fontWeight || span.style.fontStyle || span.style.textDecoration || span.style.textAlign || span.style.marginLeft) {
+                    return;
+                }
+                span.outerHTML = text;
+            });
+        };
+        const applyRichStyle = (styleKey, styleValue) => {
+            restoreSelection();
+            editor.focus();
             const sel = window.getSelection();
-            if (!sel || sel.rangeCount === 0) return;
-            document.execCommand(tag, false, value || null);
+            if (!sel || !sel.rangeCount || !editor.contains(sel.anchorNode)) {
+                applyStyleToEditorBlocks(styleKey, styleValue);
+                sync();
+                return;
+            }
+            const range = sel.getRangeAt(0);
+            const span = document.createElement('span');
+            span.dataset.richStyle = '1';
+            span.style[styleKey] = styleValue;
+            try {
+                const contents = range.extractContents();
+                span.appendChild(contents);
+                range.insertNode(span);
+                sel.removeAllRanges();
+                const nextRange = document.createRange();
+                nextRange.selectNodeContents(span);
+                sel.addRange(nextRange);
+            } catch (_) {
+                applyStyleToEditorBlocks(styleKey, styleValue);
+            }
             sync();
         };
+        const updateToolbarState = () => {
+            const sel = window.getSelection();
+            const node = sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)
+                ? (sel.anchorNode.nodeType === Node.ELEMENT_NODE ? sel.anchorNode : sel.anchorNode.parentElement)
+                : null;
+            const activeBlock = node ? node.closest('p,div,li,blockquote,h1,h2,h3,h4,h5,h6') : null;
+            const activeRoot = activeBlock || editor;
+            toolbar.querySelectorAll('button[data-text-action]').forEach((btn) => {
+                const action = String(btn.getAttribute('data-text-action') || '');
+                const active = (
+                    (action === 'bold' && editor.isActive('bold')) ||
+                    (action === 'italic' && editor.isActive('italic')) ||
+                    (action === 'underline' && editor.isActive('underline')) ||
+                    (action === 'heading' && activeRoot?.matches?.('h1')) ||
+                    (action === 'subheading' && activeRoot?.matches?.('h2')) ||
+                    (action === 'bullet' && activeRoot?.closest?.('ul')) ||
+                    (action === 'numbered' && activeRoot?.closest?.('ol')) ||
+                    (action === 'quote' && activeRoot?.closest?.('blockquote')) ||
+                    (action === 'justify-left' && editor.isActive({ textAlign: 'left' })) ||
+                    (action === 'justify-center' && editor.isActive({ textAlign: 'center' })) ||
+                    (action === 'justify-right' && editor.isActive({ textAlign: 'right' })) ||
+                    (action === 'justify-full' && editor.isActive({ textAlign: 'justify' }))
+                );
+                btn.classList.toggle('is-active', !!active);
+            });
+            const fontFamilyInput = toolbar.querySelector('input[data-text-action="font-family"]');
+            const fontSizeSelect = toolbar.querySelector('select[data-text-action="font-size"]');
+            const colorInput = toolbar.querySelector('input[data-text-action="foreColor"]');
+            if (activeBlock && window.getComputedStyle) {
+                const computed = window.getComputedStyle(activeBlock);
+                if (fontFamilyInput) fontFamilyInput.value = computed.fontFamily || fontFamilyInput.value || 'inherit';
+                if (fontSizeSelect) fontSizeSelect.value = computed.fontSize || fontSizeSelect.value || '';
+                if (colorInput) colorInput.value = computed.color || colorInput.value || '#0f172a';
+            }
+        };
+        const wrapSelection = (tagName, attrs = {}) => {
+            restoreSelection();
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) {
+                const block = currentBlock();
+                if (block && block !== editor) {
+                    const wrapper = document.createElement(tagName);
+                    Object.entries(attrs).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && String(value).trim() !== '') {
+                            wrapper.setAttribute(key, String(value));
+                        }
+                    });
+                    wrapper.innerHTML = block.innerHTML;
+                    block.innerHTML = '';
+                    block.appendChild(wrapper);
+                    sync();
+                }
+                return;
+            }
+            const range = sel.getRangeAt(0);
+            if (range.collapsed) {
+                const block = currentBlock();
+                if (block && block !== editor) {
+                    const wrapper = document.createElement(tagName);
+                    Object.entries(attrs).forEach(([key, value]) => {
+                        if (value !== undefined && value !== null && String(value).trim() !== '') {
+                            wrapper.setAttribute(key, String(value));
+                        }
+                    });
+                    wrapper.innerHTML = block.innerHTML;
+                    block.innerHTML = '';
+                    block.appendChild(wrapper);
+                    sync();
+                }
+                return;
+            }
+            const wrapper = document.createElement(tagName);
+            Object.entries(attrs).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && String(value).trim() !== '') {
+                    wrapper.setAttribute(key, String(value));
+                }
+            });
+            try {
+                const contents = range.extractContents();
+                wrapper.appendChild(contents);
+                range.insertNode(wrapper);
+                sel.removeAllRanges();
+                const nextRange = document.createRange();
+                nextRange.selectNodeContents(wrapper);
+                sel.addRange(nextRange);
+            } catch (_) {
+                return;
+            }
+            sync();
+        };
+        const rememberSelectionFromToolbar = (e) => {
+            if (e.target.closest('button[data-text-action], select[data-text-action], input[data-text-action]')) {
+                saveSelection();
+            }
+        };
+        toolbar.addEventListener('mousedown', rememberSelectionFromToolbar);
+        toolbar.addEventListener('pointerdown', rememberSelectionFromToolbar);
+        editor.addEventListener('mouseup', saveSelection);
+        editor.addEventListener('keyup', saveSelection);
+        editor.addEventListener('focus', saveSelection);
+        editor.addEventListener('mouseup', updateToolbarState);
+        editor.addEventListener('keyup', updateToolbarState);
+        editor.addEventListener('focus', updateToolbarState);
+        editor.addEventListener('input', updateToolbarState);
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === editor || editor.contains(document.activeElement)) {
+                updateToolbarState();
+            }
+        });
         toolbar.addEventListener('click', (e) => {
             const btn = e.target.closest('button[data-text-action]');
             if (!btn) return;
             e.preventDefault();
             const action = String(btn.getAttribute('data-text-action') || '');
             editor.focus();
-            if (action === 'bold') return applyStyle('bold');
-            if (action === 'italic') return applyStyle('italic');
-            if (action === 'underline') return applyStyle('underline');
-            if (action === 'heading') return applyStyle('formatBlock', 'h1');
-            if (action === 'subheading') return applyStyle('formatBlock', 'h2');
-            if (action === 'bullet') return applyStyle('insertUnorderedList');
-            if (action === 'numbered') return applyStyle('insertOrderedList');
-            if (action === 'quote') return applyStyle('formatBlock', 'blockquote');
-            if (action === 'divider') return applyStyle('insertHorizontalRule');
-            if (action === 'clear-format') {
-                document.execCommand('removeFormat', false, null);
-                document.execCommand('unlink', false, null);
+            if (action === 'bold') return wrapSelection('strong');
+            if (action === 'italic') return wrapSelection('em');
+            if (action === 'underline') return wrapSelection('u');
+            if (action === 'heading') return wrapSelection('h1');
+            if (action === 'subheading') return wrapSelection('h2');
+            if (action === 'bullet') return wrapSelection('ul');
+            if (action === 'numbered') return wrapSelection('ol');
+            if (action === 'quote') return wrapSelection('blockquote');
+            if (action === 'divider') {
+                restoreSelection();
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) return;
+                const range = sel.getRangeAt(0);
+                const hr = document.createElement('hr');
+                range.insertNode(hr);
                 sync();
                 return;
             }
-            if (action === 'justify-left') return applyStyle('justifyLeft');
-            if (action === 'justify-center') return applyStyle('justifyCenter');
-            if (action === 'justify-right') return applyStyle('justifyRight');
-            if (action === 'justify-full') return applyStyle('justifyFull');
-            if (action === 'indent') return applyStyle('indent');
-            if (action === 'outdent') return applyStyle('outdent');
+            if (action === 'clear-format') {
+                restoreSelection();
+                const sel = window.getSelection();
+                if (!sel || sel.rangeCount === 0) return;
+                const range = sel.getRangeAt(0);
+                const frag = range.extractContents();
+                const div = document.createElement('div');
+                div.appendChild(frag);
+                div.querySelectorAll('*').forEach((node) => {
+                    const clean = document.createTextNode(node.textContent || '');
+                    node.replaceWith(clean);
+                });
+                range.insertNode(div);
+                sel.removeAllRanges();
+                const nextRange = document.createRange();
+                nextRange.selectNodeContents(div);
+                sel.addRange(nextRange);
+                sync();
+                return;
+            }
+            if (action === 'justify-left') return applyRichStyle('textAlign', 'left');
+            if (action === 'justify-center') return applyRichStyle('textAlign', 'center');
+            if (action === 'justify-right') return applyRichStyle('textAlign', 'right');
+            if (action === 'justify-full') return applyRichStyle('textAlign', 'justify');
+            if (action === 'indent') return applyRichStyle('marginLeft', '2em');
+            if (action === 'outdent') return applyRichStyle('marginLeft', '0');
         });
         const fontSelect = options.fontSelectId ? document.getElementById(options.fontSelectId) : null;
         const sizeSelect = options.sizeSelectId ? document.getElementById(options.sizeSelectId) : null;
         const colorInput = options.colorInputId ? document.getElementById(options.colorInputId) : null;
+        fontSelect?.addEventListener('mousedown', saveSelection);
+        sizeSelect?.addEventListener('mousedown', saveSelection);
+        colorInput?.addEventListener('mousedown', saveSelection);
         fontSelect?.addEventListener('change', () => {
             editor.focus();
-            document.execCommand('fontName', false, fontSelect.value);
-            sync();
+            applyRichStyle('fontFamily', fontSelect.value || 'inherit');
         });
         sizeSelect?.addEventListener('change', () => {
             editor.focus();
-            const sizeMap = { '12px': '2', '14px': '3', '16px': '4', '18px': '5', '20px': '6', '24px': '7', '28px': '7' };
-            document.execCommand('fontSize', false, sizeMap[sizeSelect.value] || '3');
-            sync();
+            applyRichStyle('fontSize', sizeSelect.value || '16px');
         });
         colorInput?.addEventListener('input', () => {
             editor.focus();
-            document.execCommand('foreColor', false, colorInput.value);
-            sync();
+            applyRichStyle('color', colorInput.value || '#0f172a');
         });
         editor.addEventListener('keyup', sync);
         editor.addEventListener('mouseup', sync);
         editor.addEventListener('input', sync);
         editor.addEventListener('blur', sync);
+        updateToolbarState();
     }
     function sanitizeForSave(value) {
         if (Array.isArray(value)) {
@@ -1799,10 +2155,14 @@ document.addEventListener('DOMContentLoaded', function () {
     function saveCurrent() {
         ensureSlide();
         const s = state.slides[active];
+        syncTiptapField('lesson_description');
+        syncTiptapField('curriculum_topic');
+        syncTiptapField('curriculum_outcomes');
+        syncTiptapField('curriculum_activities');
         s.title = getFieldValue(fields.title, 'Basliksiz Slide');
         s.layout = getFieldValue(fields.layout, 'auto');
         s.xp = Math.max(0, Math.min(500, parseInt(getFieldValue(fields.xp, '0') || '0', 10) || 0));
-        s.content = contentEditor ? contentEditor.innerHTML || '' : getFieldValue(fields.content, '');
+        s.content = getFieldValue(fields.content, '');
         s.instructions = getFieldValue(fields.instructions, '');
         s.code = getFieldValue(fields.code, '');
         s.kind = getFieldValue(fields.kind, 'topic');
@@ -1821,6 +2181,11 @@ document.addEventListener('DOMContentLoaded', function () {
         state.lesson_title = lessonTitle.value || '';
         state.category = lessonCategory.value || 'Kodlama';
         state.difficulty = lessonDifficulty.value || 'Kolay';
+        state.education_stage = lessonEducationStage?.value || 'ortaokul';
+        state.target_grade_levels = lessonGradeLevelChecks
+            .filter((el) => el.checked)
+            .map((el) => Number(el.value))
+            .filter((v) => Number.isFinite(v));
         state.lesson_description = lessonDescription?.value || '';
         state.slide_background = readSlideBackground();
         state.slides.forEach((slide) => {
@@ -1851,6 +2216,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem(draftKey, payloadInput.value);
             } catch (_) {}
         }
+        if (previewModal && previewModal.classList.contains('open')) {
+            renderPreviewSlide();
+        }
     }
     function loadCurrent() {
         ensureSlide();
@@ -1858,7 +2226,6 @@ document.addEventListener('DOMContentLoaded', function () {
         setFieldValue(fields.title, s.title || '');
         setFieldValue(fields.layout, s.layout || 'auto');
         setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
-        if (contentEditor) contentEditor.innerHTML = decodeHtmlEntities(s.content || '');
         if (fields.content) fields.content.value = s.content || '';
         setFieldValue(fields.instructions, s.instructions || '');
         setFieldValue(fields.code, s.code || '');
@@ -1874,14 +2241,13 @@ document.addEventListener('DOMContentLoaded', function () {
         renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
         renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
         renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
-        bindRichTextToolbar('[data-rich-toolbar="content"]', 'slide_content_editor', 'slide_content', {
-            fontSelectId: 'content_font_select',
-            sizeSelectId: 'content_size_select',
-            colorInputId: 'content_color_input',
-        });
         setActiveTab(inferTabForSlide(s));
         lessonCategory.value = state.category || 'Kodlama';
         lessonDifficulty.value = state.difficulty || 'Kolay';
+        if (lessonEducationStage) lessonEducationStage.value = state.education_stage || 'ortaokul';
+        lessonGradeLevelChecks.forEach((el) => {
+            el.checked = Array.isArray(state.target_grade_levels) && state.target_grade_levels.includes(Number(el.value));
+        });
         if (lessonDescription) lessonDescription.value = state.lesson_description || '';
         if (themeTemplateSelect) {
             const templateKey = state.theme_template || 'default';
@@ -1920,6 +2286,10 @@ document.addEventListener('DOMContentLoaded', function () {
         curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
         curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + Number(s.xp || 0);
+        setTiptapContent('lesson_description', lessonDescription?.value || '');
+        setTiptapContent('curriculum_topic', curriculum.topic.value || '');
+        setTiptapContent('curriculum_outcomes', curriculum.outcomes.value || '');
+        setTiptapContent('curriculum_activities', curriculum.activities.value || '');
         renderQuestionEditor(String(s.interaction_type || 'none'), s.question || {});
     }
     function normalizeCoverUrl(url) {
@@ -2020,34 +2390,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const meta = { kind: layout };
         if (layout === 'text') {
             meta.text = {
-                text: document.getElementById('layout_text_text')?.innerHTML || '',
-                html: document.getElementById('layout_text_html')?.value || document.getElementById('layout_text_text')?.innerHTML || '',
+                text: getLiveEditorHtml('layout_text_html', 'layout_text_editor'),
+                html: getLiveEditorHtml('layout_text_html', 'layout_text_editor'),
             };
         } else if (layout === 'split') {
             const splitRatio = String(document.getElementById('layout_split_ratio')?.value || '50-50');
             meta.left = {
                 type: document.getElementById('layout_left_type')?.value || 'text',
-                text: document.getElementById('layout_left_text')?.innerHTML || '',
-                html: document.getElementById('layout_left_html')?.value || document.getElementById('layout_left_text')?.innerHTML || '',
+                text: getLiveEditorHtml('layout_left_html', 'layout_left_editor'),
+                html: getLiveEditorHtml('layout_left_html', 'layout_left_editor'),
                 image_url: document.getElementById('layout_left_image')?.value || '',
-                video_url: document.getElementById('layout_left_video')?.value || '',
             };
             meta.right = {
                 type: document.getElementById('layout_right_type')?.value || 'image',
-                text: document.getElementById('layout_right_text')?.innerHTML || '',
-                html: document.getElementById('layout_right_html')?.value || document.getElementById('layout_right_text')?.innerHTML || '',
+                text: getLiveEditorHtml('layout_right_html', 'layout_right_editor'),
+                html: getLiveEditorHtml('layout_right_html', 'layout_right_editor'),
                 image_url: document.getElementById('layout_right_image')?.value || '',
-                video_url: document.getElementById('layout_right_video')?.value || '',
             };
             meta.split_ratio = splitRatio;
         } else if (layout === 'hero' || layout === 'image') {
             meta.media = {
                 type: document.getElementById('layout_media_type')?.value || 'image',
                 order: document.getElementById('layout_media_order')?.value || 'image-text',
-                text: document.getElementById('layout_media_text')?.innerHTML || '',
-                html: document.getElementById('layout_media_html')?.value || document.getElementById('layout_media_text')?.innerHTML || '',
+                text: getLiveEditorHtml('layout_media_html', 'layout_media_editor'),
+                html: getLiveEditorHtml('layout_media_html', 'layout_media_editor'),
                 image_url: document.getElementById('layout_media_image')?.value || '',
-                video_url: document.getElementById('layout_media_video')?.value || '',
             };
         }
         return meta;
@@ -2085,44 +2452,22 @@ document.addEventListener('DOMContentLoaded', function () {
         if (layout === 'text') {
             layoutEditorHint.textContent = def.desc + ' Zengin metin araçlarını kullanabilirsiniz.';
             const text = meta?.text || {};
+            const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
+            const initialTextHtml = String(liveTextHtml || text.html || text.text || '').trim();
             layoutEditorFields.innerHTML = `
-                <div style="display:grid;gap:16px;border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
                     <strong style="display:block;margin-bottom:8px">Metin İçeriği</strong>
-                    <div class="split-text-toolbar" data-rich-toolbar="text" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#fff">
-                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
-                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
-                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
-                        <button type="button" class="btn" data-text-action="heading">H1</button>
-                        <button type="button" class="btn" data-text-action="subheading">H2</button>
-                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
-                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
-                        <button type="button" class="btn" data-text-action="divider">—</button>
-                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
-                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
-                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
-                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
-                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
-                        <button type="button" class="btn" data-text-action="indent">Gir</button>
-                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_text_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
+                    <div class="tiptap-toolbar" data-tiptap-toolbar="layout_text">
+                        <select data-text-action="font-family" style="min-width:160px">
                             <option value="inherit">Yazı Tipi</option>
-                            <option value="'Inter', sans-serif">Inter</option>
-                            <option value="'Roboto', sans-serif">Roboto</option>
-                            <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
                             <option value="Arial, sans-serif">Arial</option>
-                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
                             <option value="Georgia, serif">Georgia</option>
-                            <option value="'Merriweather', serif">Merriweather</option>
-                            <option value="'Times New Roman', serif">Times New Roman</option>
-                            <option value="Consolas, monospace">Consolas</option>
-                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                            <option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                            <option value="'Times New Roman', serif">Times</option>
                         </select>
-                        <select id="layout_text_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
+                        <select data-text-action="font-size" style="min-width:120px">
                             <option value="">Boyut</option>
-                            <option value="12px">12</option>
                             <option value="14px">14</option>
                             <option value="16px">16</option>
                             <option value="18px">18</option>
@@ -2131,31 +2476,42 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="28px">28</option>
                             <option value="32px">32</option>
                         </select>
-                        <input id="layout_text_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
+                        <input type="color" data-text-action="foreColor" value="#0f172a" title="Yazı Rengi" style="height:38px;width:52px;padding:2px">
+                        <button type="button" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" data-text-action="italic"><em>I</em></button>
+                        <button type="button" data-text-action="underline"><u>U</u></button>
+                        <button type="button" data-text-action="heading">H1</button>
+                        <button type="button" data-text-action="subheading">H2</button>
+                        <button type="button" data-text-action="bullet">• Liste</button>
+                        <button type="button" data-text-action="numbered">1. Liste</button>
+                        <button type="button" data-text-action="quote">“ ”</button>
+                        <button type="button" data-text-action="justify-left">Sola</button>
+                        <button type="button" data-text-action="justify-center">Orta</button>
+                        <button type="button" data-text-action="justify-right">Sağa</button>
+                        <button type="button" data-text-action="justify-full">Yasla</button>
+                        <button type="button" data-text-action="clear">Temizle</button>
                     </div>
                     <label>Metin</label>
-                    <div id="layout_text_text" contenteditable="true" spellcheck="false" style="min-height:320px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(text.html || text.text || '')}</div>
-                    <input id="layout_text_html" type="hidden" value="${escapeHtml(text.html || '')}">
+                    <div id="layout_text_editor" class="tiptap-editor slide-theme"></div>
+                    <input id="layout_text_html" type="hidden" value="${escapeHtml(initialTextHtml)}">
                 </div>
             `;
-            bindRichTextToolbar('[data-rich-toolbar="text"]', 'layout_text_text', 'layout_text_html', {
-                fontSelectId: 'layout_text_font',
-                sizeSelectId: 'layout_text_size',
-                colorInputId: 'layout_text_color',
-            });
+            initTiptapMountedEditor('layout_text_editor', 'layout_text_html', '[data-tiptap-toolbar="layout_text"]', initialTextHtml || '<p></p>', { placeholder: 'Metin yazın...' });
+            bindLivePreviewSync('layout_text_editor', 'layout_text_html');
             return;
         }
         if (layout !== 'split') {
             if (layout === 'hero' || layout === 'image') {
                 layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
                 const media = meta?.media || {};
+                const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
+                const initialMediaHtml = String(liveMediaHtml || media.html || media.text || '').trim();
                 layoutEditorFields.innerHTML = `
-                    <div style="display:grid;gap:16px;border:1px solid #dbe5f2;border-radius:12px;padding:12px;background:#f8fbff">
+                    <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
                         <strong style="display:block;margin-bottom:8px">Ana İçerik</strong>
                         <label>Alan Tipi</label>
                         <select id="layout_media_type">
                             <option value="image" ${media.type === 'image' ? 'selected' : ''}>Görsel</option>
-                            <option value="video" ${media.type === 'video' ? 'selected' : ''}>Video</option>
                             <option value="text" ${media.type === 'text' ? 'selected' : ''}>Metin</option>
                         </select>
                         <label style="margin-top:8px">Yerleşim Sırası</label>
@@ -2163,71 +2519,48 @@ document.addEventListener('DOMContentLoaded', function () {
                             <option value="image-text" ${String(media.order || 'image-text') === 'image-text' ? 'selected' : ''}>Görsel üstte, metin altta</option>
                             <option value="text-image" ${String(media.order || 'image-text') === 'text-image' ? 'selected' : ''}>Metin üstte, görsel altta</option>
                         </select>
-                        <div class="rich-toolbar" data-rich-toolbar="media" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 8px;padding:10px;border:1px solid #dbe5f2;border-radius:14px;background:#fff">
-                            <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
-                            <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
-                            <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
-                            <button type="button" class="btn" data-text-action="heading">H1</button>
-                            <button type="button" class="btn" data-text-action="subheading">H2</button>
-                            <button type="button" class="btn" data-text-action="bullet">• Liste</button>
-                            <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                            <button type="button" class="btn" data-text-action="quote">“ ”</button>
-                            <button type="button" class="btn" data-text-action="divider">—</button>
-                            <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
-                            <button type="button" class="btn" data-text-action="justify-left">Sola</button>
-                            <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
-                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
-                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
-                        <button type="button" class="btn" data-text-action="indent">Gir</button>
-                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_media_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
-                            <option value="inherit">Yazı Tipi</option>
-                            <option value="'Inter', sans-serif">Inter</option>
-                            <option value="'Roboto', sans-serif">Roboto</option>
-                            <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
-                            <option value="Arial, sans-serif">Arial</option>
-                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
-                            <option value="Georgia, serif">Georgia</option>
-                            <option value="'Merriweather', serif">Merriweather</option>
-                            <option value="'Times New Roman', serif">Times New Roman</option>
-                            <option value="Consolas, monospace">Consolas</option>
-                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                            <option value="'Playfair Display', serif">Playfair Display</option>
-                        </select>
-                        <select id="layout_media_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
-                            <option value="">Boyut</option>
-                            <option value="12px">12</option>
+                        <div class="tiptap-toolbar" data-tiptap-toolbar="layout_media">
+                            <select data-text-action="font-family" style="min-width:160px">
+                                <option value="inherit">Yazı Tipi</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
+                                <option value="'Times New Roman', serif">Times</option>
+                            </select>
+                            <select data-text-action="font-size" style="min-width:120px">
+                                <option value="">Boyut</option>
                                 <option value="14px">14</option>
                                 <option value="16px">16</option>
                                 <option value="18px">18</option>
                                 <option value="20px">20</option>
                                 <option value="24px">24</option>
                                 <option value="28px">28</option>
-                                <option value="32px">32</option>
                             </select>
-                            <input id="layout_media_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
+                            <input type="color" data-text-action="foreColor" value="#0f172a" title="Yazı Rengi" style="height:38px;width:52px;padding:2px">
+                            <button type="button" data-text-action="bold"><strong>B</strong></button>
+                            <button type="button" data-text-action="italic"><em>I</em></button>
+                            <button type="button" data-text-action="underline"><u>U</u></button>
+                            <button type="button" data-text-action="heading">H1</button>
+                            <button type="button" data-text-action="subheading">H2</button>
+                            <button type="button" data-text-action="bullet">• Liste</button>
+                            <button type="button" data-text-action="numbered">1. Liste</button>
+                            <button type="button" data-text-action="quote">“ ”</button>
+                            <button type="button" data-text-action="clear">Temizle</button>
                         </div>
-                        <div id="layout_media_text" contenteditable="true" spellcheck="false" style="min-height:240px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${media.html || escapeHtml(media.text || '')}</div>
-                        <input id="layout_media_html" type="hidden" value="${escapeHtml(media.html || '')}">
+                        <div id="layout_media_editor" class="tiptap-editor slide-theme" tabindex="0" spellcheck="false"></div>
+                        <input id="layout_media_html" type="hidden" value="${escapeHtml(initialMediaHtml)}">
                         <label style="margin-top:8px">Görsel Dosyası</label>
                         <input id="layout_media_image_file" type="file" accept="image/*">
                         <input id="layout_media_image" type="hidden" value="${escapeHtml(media.image_url || '')}">
                         <div id="layout_media_image_preview" style="margin-top:8px;${media.image_url ? '' : 'display:none;'}">
                             <img src="${escapeHtml(media.image_url || '')}" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">
                         </div>
-                        <label style="margin-top:8px">Video Dosyası / URL</label>
-                        <input id="layout_media_video_file" type="file" accept="video/*">
-                        <input id="layout_media_video" type="hidden" value="${escapeHtml(media.video_url || '')}">
-                        <small style="display:block;color:#64748b;margin-top:6px">Video seçildiğinde dosya yüklenir; URL girmenize gerek yoktur.</small>
                     </div>
                 `;
                 bindLayoutMediaFiles();
-                bindRichTextToolbar('[data-rich-toolbar="media"]', 'layout_media_text', 'layout_media_html', {
-                    fontSelectId: 'layout_media_font',
-                    sizeSelectId: 'layout_media_size',
-                    colorInputId: 'layout_media_color',
-                });
+                initTiptapMountedEditor('layout_media_editor', 'layout_media_html', '[data-tiptap-toolbar="layout_media"]', initialMediaHtml || '<p></p>', { placeholder: 'Metin yazın...' });
+                bindLivePreviewSync('layout_media_editor', 'layout_media_html');
                 return;
             }
             layoutEditorHint.textContent = def.desc + ' Bu düzen için özel alan açılmaz.';
@@ -2238,7 +2571,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const left = meta?.left || {};
         const right = meta?.right || {};
         const splitRatio = String(meta?.split_ratio || '50-50');
+        const liveLeftHtml = getLiveEditorHtml('layout_left_html', 'layout_left_editor');
+        const liveRightHtml = getLiveEditorHtml('layout_right_html', 'layout_right_editor');
+        const initialLeftHtml = String(liveLeftHtml || left.html || left.text || '').trim();
+        const initialRightHtml = String(liveRightHtml || right.html || right.text || '').trim();
         layoutEditorFields.innerHTML = `
+            <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
                 <label style="margin:0">Alan Oranı</label>
                 <select id="layout_split_ratio" style="max-width:240px">
@@ -2253,66 +2591,47 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="layout_left_type">
                         <option value="text" ${left.type === 'text' ? 'selected' : ''}>Metin</option>
                         <option value="image" ${left.type === 'image' ? 'selected' : ''}>Görsel</option>
-                        <option value="video" ${left.type === 'video' ? 'selected' : ''}>Video</option>
-                        <option value="code" ${left.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-rich-toolbar="left" style="display:${left.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:6px;margin:8px 0 6px;padding:8px;border:1px solid #dbe5f2;border-radius:12px;background:#f8fbff">
-                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
-                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
-                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
-                        <button type="button" class="btn" data-text-action="heading">H1</button>
-                        <button type="button" class="btn" data-text-action="subheading">H2</button>
-                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
-                        <button type="button" class="btn" data-text-action="numbered">1. Liste</button>
-                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
-                        <button type="button" class="btn" data-text-action="divider">—</button>
-                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
-                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
-                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
-                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
-                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
-                        <button type="button" class="btn" data-text-action="indent">Gir</button>
-                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_left_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
+                    <div class="tiptap-toolbar" data-tiptap-toolbar="layout_left" style="display:${left.type === 'text' ? 'flex' : 'none'}">
+                        <select data-text-action="font-family" style="min-width:150px">
                             <option value="inherit">Yazı Tipi</option>
-                            <option value="'Inter', sans-serif">Inter</option>
-                            <option value="'Roboto', sans-serif">Roboto</option>
-                            <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
                             <option value="Arial, sans-serif">Arial</option>
-                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
                             <option value="Georgia, serif">Georgia</option>
-                            <option value="'Merriweather', serif">Merriweather</option>
-                            <option value="'Times New Roman', serif">Times New Roman</option>
-                            <option value="Consolas, monospace">Consolas</option>
-                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                            <option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                            <option value="'Times New Roman', serif">Times</option>
                         </select>
-                        <select id="layout_left_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
+                        <select data-text-action="font-size" style="min-width:110px">
                             <option value="">Boyut</option>
-                            <option value="12px">12</option>
                             <option value="14px">14</option>
                             <option value="16px">16</option>
                             <option value="18px">18</option>
                             <option value="20px">20</option>
                             <option value="24px">24</option>
                             <option value="28px">28</option>
-                            <option value="32px">32</option>
                         </select>
-                        <input id="layout_left_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
+                        <input type="color" data-text-action="foreColor" value="#0f172a" title="Yazı Rengi" style="height:34px;width:48px;padding:2px">
+                        <button type="button" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" data-text-action="italic"><em>I</em></button>
+                        <button type="button" data-text-action="underline"><u>U</u></button>
+                        <button type="button" data-text-action="heading">H1</button>
+                        <button type="button" data-text-action="subheading">H2</button>
+                        <button type="button" data-text-action="bullet">• Liste</button>
+                        <button type="button" data-text-action="numbered">1. Liste</button>
+                        <button type="button" data-text-action="quote">“ ”</button>
+                        <button type="button" data-text-action="clear">Temizle</button>
                     </div>
                     <label style="margin-top:8px">Metin</label>
-                    <div id="layout_left_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(left.html || left.text || '')}</div>
-                    <input id="layout_left_html" type="hidden" value="${escapeHtml(left.html || '')}">
+                    <div id="layout_left_editor" class="tiptap-editor slide-theme" tabindex="0" spellcheck="false"></div>
+                    <input id="layout_left_html" type="hidden" value="${escapeHtml(initialLeftHtml)}">
                     <input id="layout_left_image_file" type="file" accept="image/*" style="display:none">
-                    <input id="layout_left_video_file" type="file" accept="video/*" style="display:none">
                     <input id="layout_left_image" type="hidden" value="${escapeHtml(left.image_url || '')}">
-                    <input id="layout_left_video" type="hidden" value="${escapeHtml(left.video_url || '')}">
+                    <div class="split-media-actions" id="layout_left_media_actions" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="image">Görsel Seç</button>
+                        <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="clear">Temizle</button>
+                    </div>
                     <div id="layout_left_image_preview" style="margin-top:12px;${left.image_url ? '' : 'display:none;'}">
                         <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
-                    </div>
-                    <div id="layout_left_video_preview" style="margin-top:12px;${left.video_url ? '' : 'display:none;'}">
-                        <video src="${escapeHtml(left.video_url || '')}" controls style="width:100%;max-height:240px;border-radius:16px;border:1px solid #dbe5f2;background:#000"></video>
                     </div>
                 </div>
                 <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:auto">
@@ -2320,93 +2639,61 @@ document.addEventListener('DOMContentLoaded', function () {
                     <select id="layout_right_type">
                         <option value="text" ${right.type === 'text' ? 'selected' : ''}>Metin</option>
                         <option value="image" ${right.type === 'image' ? 'selected' : ''}>Görsel</option>
-                        <option value="video" ${right.type === 'video' ? 'selected' : ''}>Video</option>
-                        <option value="code" ${right.type === 'code' ? 'selected' : ''}>Kod</option>
                     </select>
-                    <div class="split-text-toolbar" data-rich-toolbar="right" style="display:${right.type === 'text' ? 'flex' : 'none'};flex-wrap:wrap;gap:6px;margin:8px 0 6px;padding:8px;border:1px solid #dbe5f2;border-radius:12px;background:#f8fbff">
-                        <button type="button" class="btn" data-text-action="bold"><strong>B</strong></button>
-                        <button type="button" class="btn" data-text-action="italic"><em>I</em></button>
-                        <button type="button" class="btn" data-text-action="underline"><u>U</u></button>
-                        <button type="button" class="btn" data-text-action="heading">H1</button>
-                        <button type="button" class="btn" data-text-action="bullet">• Liste</button>
-                        <button type="button" class="btn" data-text-action="quote">“ ”</button>
-                        <button type="button" class="btn" data-text-action="divider">—</button>
-                        <button type="button" class="btn" data-text-action="clear-format">Temizle</button>
-                        <button type="button" class="btn" data-text-action="justify-left">Sola</button>
-                        <button type="button" class="btn" data-text-action="justify-center">Ortala</button>
-                        <button type="button" class="btn" data-text-action="justify-right">Sağa</button>
-                        <button type="button" class="btn" data-text-action="justify-full">İki Yana</button>
-                        <button type="button" class="btn" data-text-action="indent">Gir</button>
-                        <button type="button" class="btn" data-text-action="outdent">Çık</button>
-                        <select id="layout_right_font" style="min-width:150px;max-width:170px;padding:8px 10px;height:42px;font-size:14px">
+                    <div class="tiptap-toolbar" data-tiptap-toolbar="layout_right" style="display:${right.type === 'text' ? 'flex' : 'none'}">
+                        <select data-text-action="font-family" style="min-width:150px">
                             <option value="inherit">Yazı Tipi</option>
-                            <option value="'Inter', sans-serif">Inter</option>
-                            <option value="'Roboto', sans-serif">Roboto</option>
-                            <option value="'Open Sans', sans-serif">Open Sans</option>
-                            <option value="'Helvetica Neue', Arial, sans-serif">Helvetica Neue</option>
                             <option value="Arial, sans-serif">Arial</option>
-                            <option value="'Segoe UI', sans-serif">Segoe UI</option>
                             <option value="Georgia, serif">Georgia</option>
-                            <option value="'Merriweather', serif">Merriweather</option>
-                            <option value="'Times New Roman', serif">Times New Roman</option>
-                            <option value="Consolas, monospace">Consolas</option>
-                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                            <option value="'Playfair Display', serif">Playfair Display</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                            <option value="Verdana, sans-serif">Verdana</option>
+                            <option value="'Times New Roman', serif">Times</option>
                         </select>
-                        <select id="layout_right_size" style="min-width:96px;max-width:120px;padding:8px 10px;height:42px;font-size:14px">
+                        <select data-text-action="font-size" style="min-width:110px">
                             <option value="">Boyut</option>
-                            <option value="12px">12</option>
                             <option value="14px">14</option>
                             <option value="16px">16</option>
                             <option value="18px">18</option>
                             <option value="20px">20</option>
                             <option value="24px">24</option>
                             <option value="28px">28</option>
-                            <option value="32px">32</option>
                         </select>
-                        <input id="layout_right_color" type="color" value="#0f172a" title="Yazı rengi" style="width:42px;height:42px;padding:2px">
+                        <input type="color" data-text-action="foreColor" value="#0f172a" title="Yazı Rengi" style="height:34px;width:48px;padding:2px">
+                        <button type="button" data-text-action="bold"><strong>B</strong></button>
+                        <button type="button" data-text-action="italic"><em>I</em></button>
+                        <button type="button" data-text-action="underline"><u>U</u></button>
+                        <button type="button" data-text-action="heading">H1</button>
+                        <button type="button" data-text-action="subheading">H2</button>
+                        <button type="button" data-text-action="bullet">• Liste</button>
+                        <button type="button" data-text-action="numbered">1. Liste</button>
+                        <button type="button" data-text-action="quote">“ ”</button>
+                        <button type="button" data-text-action="clear">Temizle</button>
                     </div>
                     <label style="margin-top:8px">Metin</label>
-                    <div id="layout_right_text" contenteditable="true" spellcheck="false" style="min-height:260px;padding:14px;border:1px solid #dbe5f2;border-radius:12px;background:#fff;line-height:1.7;color:#0f172a;font-family:inherit">${escapeHtml(right.html || right.text || '')}</div>
-                    <input id="layout_right_html" type="hidden" value="${escapeHtml(right.html || '')}">
-                    <div class="split-media-actions" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
+                    <div id="layout_right_editor" class="tiptap-editor slide-theme" tabindex="0" spellcheck="false"></div>
+                    <input id="layout_right_html" type="hidden" value="${escapeHtml(initialRightHtml)}">
+                    <div class="split-media-actions" id="layout_right_media_actions" style="display:none;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px">
                         <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="image">Görsel Seç</button>
-                        <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="video">Video Seç</button>
                         <button type="button" class="btn" data-split-media-target="right" data-split-media-kind="clear">Temizle</button>
                     </div>
                     <input id="layout_right_image_file" type="file" accept="image/*" style="display:none">
-                    <input id="layout_right_video_file" type="file" accept="video/*" style="display:none">
                     <input id="layout_right_image" type="hidden" value="${escapeHtml(right.image_url || '')}">
-                    <input id="layout_right_video" type="hidden" value="${escapeHtml(right.video_url || '')}">
                     <div id="layout_right_image_preview" style="margin-top:12px;${right.image_url ? '' : 'display:none;'}">
                         <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
                     </div>
-                    <div id="layout_right_video_preview" style="margin-top:12px;${right.video_url ? '' : 'display:none;'}">
-                        <video src="${escapeHtml(right.video_url || '')}" controls style="width:100%;max-height:240px;border-radius:16px;border:1px solid #dbe5f2;background:#000"></video>
-                    </div>
                 </div>
             </div>
-        `;
-        bindLayoutSplitFiles();
-        bindRichTextToolbar('[data-rich-toolbar="left"]', 'layout_left_text', 'layout_left_html', {
-            fontSelectId: 'layout_left_font',
-            sizeSelectId: 'layout_left_size',
-            colorInputId: 'layout_left_color',
-        });
-        bindRichTextToolbar('[data-rich-toolbar="right"]', 'layout_right_text', 'layout_right_html', {
-            fontSelectId: 'layout_right_font',
-            sizeSelectId: 'layout_right_size',
-            colorInputId: 'layout_right_color',
-        });
-        updateSplitPanelVisibility('left');
-        updateSplitPanelVisibility('right');
-        document.getElementById('layout_split_ratio')?.addEventListener('change', saveCurrent);
-    }
-    bindRichTextToolbar('[data-rich-toolbar="content"]', 'slide_content_editor', 'slide_content', {
-        fontSelectId: 'slide_content_font',
-        sizeSelectId: 'slide_content_size',
-        colorInputId: 'slide_content_color',
-    });
+            </div>
+                `;
+                bindLayoutSplitFiles();
+                initTiptapMountedEditor('layout_left_editor', 'layout_left_html', '[data-tiptap-toolbar="layout_left"]', initialLeftHtml || '<p></p>', { placeholder: 'Metin yazın...' });
+                initTiptapMountedEditor('layout_right_editor', 'layout_right_html', '[data-tiptap-toolbar="layout_right"]', initialRightHtml || '<p></p>', { placeholder: 'Metin yazın...' });
+                bindLivePreviewSync('layout_left_editor', 'layout_left_html');
+                bindLivePreviewSync('layout_right_editor', 'layout_right_html');
+                updateSplitPanelVisibility('left');
+                updateSplitPanelVisibility('right');
+                document.getElementById('layout_split_ratio')?.addEventListener('change', saveCurrent);
+            }
     function syncHiddenPreview(hiddenId, previewId, value) {
         const hidden = document.getElementById(hiddenId);
         const preview = document.getElementById(previewId);
@@ -2440,6 +2727,369 @@ document.addEventListener('DOMContentLoaded', function () {
             if (action === 'code') return insertTextAtCursor(textarea, '```\n', '\n```', '```\nkod\n```');
             if (action === 'divider') return insertTextAtCursor(textarea, '\n---\n', '', '\n---\n');
         });
+    }
+    const tiptapEditors = {};
+    function stripHtmlToText(value) {
+        const raw = String(value || '');
+        if (!raw) return '';
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = raw;
+        return (wrapper.innerText || wrapper.textContent || '').replace(/\u00a0/g, ' ').trim();
+    }
+    function tiptapTextToHtml(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '<p></p>';
+        if (/[<>]/.test(raw)) return raw;
+        return raw
+            .split(/\r?\n/)
+            .map((line) => `<p>${escapeHtml(line.trim()).replace(/\n/g, '<br>')}</p>`)
+            .join('');
+    }
+    function tiptapLinesToHtml(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '<p></p>';
+        const lines = raw.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+        if (!lines.length) return '<p></p>';
+        return `<ul>${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`;
+    }
+    function tiptapHtmlToLines(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        return stripHtmlToText(raw).replace(/\n{3,}/g, '\n\n');
+    }
+    function colorToHex(value) {
+        const raw = String(value || '').trim();
+        if (!raw) return '#0f172a';
+        if (/^#[0-9a-f]{3}$/i.test(raw)) {
+            return '#' + raw.slice(1).split('').map((c) => c + c).join('');
+        }
+        if (/^#[0-9a-f]{6}$/i.test(raw)) return raw;
+        const rgb = raw.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (!rgb) return '#0f172a';
+        const toHex = (n) => Number(n).toString(16).padStart(2, '0');
+        return `#${toHex(rgb[1])}${toHex(rgb[2])}${toHex(rgb[3])}`;
+    }
+    function getLiveEditorHtml(hiddenId, mountId) {
+        const mount = document.getElementById(mountId);
+        const domHtml = String(mount?.querySelector('.ProseMirror')?.innerHTML || '').trim();
+        if (domHtml) return domHtml;
+        const editor = tiptapEditors[mountId];
+        if (editor && typeof editor.getHTML === 'function') {
+            const editorValue = String(editor.getHTML() || '').trim();
+            if (editorValue) return editorValue;
+        }
+        const hidden = document.getElementById(hiddenId);
+        const hiddenValue = String(hidden?.value || '').trim();
+        if (hiddenValue) return hiddenValue;
+        const mountValue = String(mount?.innerHTML || '').trim();
+        if (mountValue) return mountValue;
+        return '';
+    }
+    function refreshPreviewIfOpen() {
+        if (previewModal && previewModal.classList.contains('open')) {
+            previewIndex = active;
+            renderPreviewSlide();
+        }
+    }
+    function bindLivePreviewSync(mountId, hiddenId) {
+        const mount = document.getElementById(mountId);
+        const hidden = document.getElementById(hiddenId);
+        if (!mount) return;
+        const sync = () => {
+            const editor = tiptapEditors[mountId];
+            if (editor && typeof editor.getHTML === 'function' && hidden) {
+                hidden.value = editor.getHTML();
+            }
+            refreshPreviewIfOpen();
+        };
+        mount.addEventListener('input', sync);
+        mount.addEventListener('keyup', sync);
+        mount.addEventListener('mouseup', sync);
+        if (mount._previewObserver) {
+            try { mount._previewObserver.disconnect(); } catch (_) {}
+        }
+        const observer = new MutationObserver(sync);
+        observer.observe(mount, { subtree: true, childList: true, characterData: true, attributes: true });
+        mount._previewObserver = observer;
+    }
+    function setTiptapContent(name, value) {
+        const editor = tiptapEditors[name];
+        if (!editor) return;
+        const html = name === 'curriculum_outcomes' || name === 'curriculum_activities'
+            ? tiptapLinesToHtml(value)
+            : tiptapTextToHtml(value);
+        const current = editor.getHTML();
+        if (current !== html) editor.commands.setContent(html, false);
+    }
+    function syncTiptapField(name) {
+        const editor = tiptapEditors[name];
+        const textarea = document.getElementById(name);
+        if (!editor || !textarea) return;
+        const value = name === 'curriculum_outcomes' || name === 'curriculum_activities'
+            ? tiptapHtmlToLines(editor.getHTML())
+            : editor.getHTML();
+        textarea.value = value;
+    }
+    function initTiptapField(name, options = {}) {
+        const mount = document.getElementById(`${name}_editor`);
+        const textarea = document.getElementById(name);
+        const toolbar = document.querySelector(`[data-tiptap-toolbar="${name}"]`);
+        if (!mount || !textarea || !window.__TiptapBundle?.Editor) return;
+        if (tiptapEditors[name]) return;
+        const editor = new window.__TiptapBundle.Editor({
+            element: mount,
+            extensions: [
+                window.__TiptapBundle.StarterKit.configure({
+                    heading: options.heading === false ? false : { levels: [1, 2, 3] },
+                }),
+            ],
+            content: textarea.value && String(textarea.value).trim()
+                ? (name === 'curriculum_outcomes' || name === 'curriculum_activities'
+                    ? tiptapLinesToHtml(textarea.value)
+                    : tiptapTextToHtml(textarea.value))
+                : '<p></p>',
+            autofocus: false,
+            editorProps: {
+                attributes: {
+                    class: 'tiptap-editor__content',
+                },
+            },
+            onUpdate: ({ editor: instance }) => {
+                tiptapEditors[name] = instance;
+                syncTiptapField(name);
+                if (name === 'lesson_description') {
+                    state.lesson_description = instance.getHTML();
+                }
+                if (name === 'curriculum_topic') {
+                    state.curriculum = state.curriculum || {};
+                    state.curriculum.konu = instance.getHTML();
+                }
+                if (name === 'curriculum_outcomes') {
+                    state.curriculum = state.curriculum || {};
+                    state.curriculum.kazanimlar = tiptapHtmlToLines(instance.getHTML()).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+                }
+                if (name === 'curriculum_activities') {
+                    state.curriculum = state.curriculum || {};
+                    state.curriculum.etkinlikler = tiptapHtmlToLines(instance.getHTML()).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+                }
+                saveCurrent();
+            },
+            onSelectionUpdate: ({ editor: instance }) => {
+                if (!toolbar) return;
+                toolbar.querySelectorAll('button[data-tiptap-action]').forEach((btn) => {
+                    const action = String(btn.getAttribute('data-tiptap-action') || '');
+                    const active = (
+                        (action === 'bold' && instance.isActive('bold')) ||
+                        (action === 'italic' && instance.isActive('italic')) ||
+                        (action === 'heading' && instance.isActive('heading', { level: 1 })) ||
+                        (action === 'bullet' && instance.isActive('bulletList')) ||
+                        (action === 'numbered' && instance.isActive('orderedList')) ||
+                        (action === 'quote' && instance.isActive('blockquote'))
+                    );
+                    btn.classList.toggle('is-active', !!active);
+                });
+            },
+        });
+        toolbar?.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-tiptap-action]');
+            if (!button) return;
+            event.preventDefault();
+            const action = String(button.getAttribute('data-tiptap-action') || '');
+            editor.chain().focus();
+            if (action === 'bold') editor.chain().toggleBold().run();
+            else if (action === 'italic') editor.chain().toggleItalic().run();
+            else if (action === 'heading') editor.chain().toggleHeading({ level: 1 }).run();
+            else if (action === 'bullet') editor.chain().toggleBulletList().run();
+            else if (action === 'numbered') editor.chain().toggleOrderedList().run();
+            else if (action === 'quote') editor.chain().toggleBlockquote().run();
+            else if (action === 'clear') editor.chain().clearNodes().unsetAllMarks().run();
+            editor.commands.focus();
+            syncTiptapField(name);
+            saveCurrent();
+        });
+        tiptapEditors[name] = editor;
+    }
+    function initTiptapMountedEditor(mountId, hiddenId, toolbarSelector, initialHtml = '', options = {}) {
+        const mount = document.getElementById(mountId);
+        const hidden = document.getElementById(hiddenId);
+        const toolbar = typeof toolbarSelector === 'string' ? document.querySelector(toolbarSelector) : toolbarSelector;
+        if (!mount || !hidden || !window.__TiptapBundle?.Editor) return null;
+        const key = mountId;
+        if (tiptapEditors[key] && typeof tiptapEditors[key].destroy === 'function') {
+            try { tiptapEditors[key].destroy(); } catch (_) {}
+        }
+        let lastSelection = null;
+        const editor = new window.__TiptapBundle.Editor({
+            element: mount,
+            extensions: [
+                window.__TiptapBundle.StarterKit.configure({
+                    heading: options.heading === false ? false : { levels: [1, 2, 3] },
+                }),
+                window.__TiptapBundle.TextStyle,
+                window.__TiptapBundle.Highlight,
+                window.__TiptapBundle.TextAlign.configure({ types: ['heading', 'paragraph'] }),
+                window.__TiptapBundle.Placeholder.configure({
+                    placeholder: options.placeholder || 'Metin yazın...',
+                }),
+            ],
+            content: initialHtml && String(initialHtml).trim() ? initialHtml : '<p></p>',
+            autofocus: false,
+            editorProps: { attributes: { class: 'tiptap-editor__content lesson-rich-text' } },
+            onUpdate: ({ editor: instance }) => {
+                tiptapEditors[key] = instance;
+                hidden.value = instance.getHTML();
+                if (toolbar) {
+                    const attrs = instance.getAttributes('textStyle') || {};
+                    const fontFamilySelect = toolbar.querySelector('select[data-text-action="font-family"]');
+                    const fontSizeSelect = toolbar.querySelector('select[data-text-action="font-size"]');
+                    const colorInput = toolbar.querySelector('input[data-text-action="foreColor"]');
+                    if (fontFamilySelect) fontFamilySelect.value = attrs.fontFamily || 'inherit';
+                    if (fontSizeSelect) fontSizeSelect.value = attrs.fontSize || '';
+                    if (colorInput) colorInput.value = colorToHex(attrs.color || '#0f172a');
+                }
+                if (toolbar) {
+                    const attrs = instance.getAttributes('textStyle') || {};
+                    const fontFamilySelect = toolbar.querySelector('select[data-text-action="font-family"]');
+                    const fontSizeSelect = toolbar.querySelector('select[data-text-action="font-size"]');
+                    const colorInput = toolbar.querySelector('input[data-text-action="foreColor"]');
+                    if (fontFamilySelect) fontFamilySelect.value = attrs.fontFamily || 'inherit';
+                    if (fontSizeSelect) fontSizeSelect.value = attrs.fontSize || '';
+                    if (colorInput) colorInput.value = colorToHex(attrs.color || '#0f172a');
+                    toolbar.querySelectorAll('button[data-text-action]').forEach((btn) => {
+                        const action = String(btn.getAttribute('data-text-action') || '');
+                        const active = (
+                            (action === 'bold' && instance.isActive('bold')) ||
+                            (action === 'italic' && instance.isActive('italic')) ||
+                            (action === 'heading' && instance.isActive('heading', { level: 1 })) ||
+                            (action === 'subheading' && instance.isActive('heading', { level: 2 })) ||
+                            (action === 'bullet' && instance.isActive('bulletList')) ||
+                            (action === 'numbered' && instance.isActive('orderedList')) ||
+                            (action === 'quote' && instance.isActive('blockquote')) ||
+                            (action === 'justify-left' && instance.isActive({ textAlign: 'left' })) ||
+                            (action === 'justify-center' && instance.isActive({ textAlign: 'center' })) ||
+                            (action === 'justify-right' && instance.isActive({ textAlign: 'right' })) ||
+                            (action === 'justify-full' && instance.isActive({ textAlign: 'justify' }))
+                        );
+                        btn.classList.toggle('is-active', !!active);
+                    });
+                }
+                if (previewModal && previewModal.classList.contains('open')) {
+                    renderPreviewSlide();
+                }
+                saveCurrent();
+            },
+            onSelectionUpdate: ({ editor: instance }) => {
+                lastSelection = {
+                    from: instance.state.selection.from,
+                    to: instance.state.selection.to,
+                };
+                if (!toolbar) return;
+                const attrs = instance.getAttributes('textStyle') || {};
+                const fontFamilySelect = toolbar.querySelector('select[data-text-action="font-family"]');
+                const fontSizeSelect = toolbar.querySelector('select[data-text-action="font-size"]');
+                const colorInput = toolbar.querySelector('input[data-text-action="foreColor"]');
+                if (fontFamilySelect) fontFamilySelect.value = attrs.fontFamily || 'inherit';
+                if (fontSizeSelect) fontSizeSelect.value = attrs.fontSize || '';
+                if (colorInput) colorInput.value = colorToHex(attrs.color || '#0f172a');
+                toolbar.querySelectorAll('button[data-text-action]').forEach((btn) => {
+                    const action = String(btn.getAttribute('data-text-action') || '');
+                    const active = (
+                        (action === 'bold' && instance.isActive('bold')) ||
+                        (action === 'italic' && instance.isActive('italic')) ||
+                        (action === 'heading' && instance.isActive('heading', { level: 1 })) ||
+                        (action === 'subheading' && instance.isActive('heading', { level: 2 })) ||
+                        (action === 'bullet' && instance.isActive('bulletList')) ||
+                        (action === 'numbered' && instance.isActive('orderedList')) ||
+                        (action === 'quote' && instance.isActive('blockquote'))
+                    );
+                    btn.classList.toggle('is-active', !!active);
+                });
+            },
+        });
+        const updateMountedToolbarState = () => {
+            if (!toolbar) return;
+            const attrs = editor.getAttributes('textStyle') || {};
+            const fontFamilySelect = toolbar.querySelector('select[data-text-action="font-family"]');
+            const fontSizeSelect = toolbar.querySelector('select[data-text-action="font-size"]');
+            const colorInput = toolbar.querySelector('input[data-text-action="foreColor"]');
+            if (fontFamilySelect) fontFamilySelect.value = attrs.fontFamily || 'inherit';
+            if (fontSizeSelect) fontSizeSelect.value = attrs.fontSize || '';
+            if (colorInput) colorInput.value = colorToHex(attrs.color || '#0f172a');
+            toolbar.querySelectorAll('button[data-text-action]').forEach((btn) => {
+                const action = String(btn.getAttribute('data-text-action') || '');
+                const active = (
+                    (action === 'bold' && editor.isActive('bold')) ||
+                    (action === 'italic' && editor.isActive('italic')) ||
+                    (action === 'heading' && editor.isActive('heading', { level: 1 })) ||
+                    (action === 'subheading' && editor.isActive('heading', { level: 2 })) ||
+                    (action === 'bullet' && editor.isActive('bulletList')) ||
+                    (action === 'numbered' && editor.isActive('orderedList')) ||
+                    (action === 'quote' && editor.isActive('blockquote')) ||
+                    (action === 'justify-left' && editor.isActive({ textAlign: 'left' })) ||
+                    (action === 'justify-center' && editor.isActive({ textAlign: 'center' })) ||
+                    (action === 'justify-right' && editor.isActive({ textAlign: 'right' })) ||
+                    (action === 'justify-full' && editor.isActive({ textAlign: 'justify' }))
+                );
+                btn.classList.toggle('is-active', !!active);
+            });
+        };
+        const runToolbarAction = (action, value = '') => {
+            const chain = editor.chain().focus();
+            if (lastSelection && Number.isFinite(lastSelection.from) && Number.isFinite(lastSelection.to)) {
+                try {
+                    chain.setTextSelection(lastSelection);
+                } catch (_) {}
+            }
+            if (action === 'bold') chain.toggleBold().run();
+            else if (action === 'italic') chain.toggleItalic().run();
+            else if (action === 'heading') chain.toggleHeading({ level: 1 }).run();
+            else if (action === 'subheading') chain.toggleHeading({ level: 2 }).run();
+            else if (action === 'bullet') chain.toggleBulletList().run();
+            else if (action === 'numbered') chain.toggleOrderedList().run();
+            else if (action === 'quote') chain.toggleBlockquote().run();
+            else if (action === 'clear') chain.clearNodes().unsetAllMarks().unsetTextAlign().setParagraph().run();
+            else if (action === 'justify-left') chain.setTextAlign('left').run();
+            else if (action === 'justify-center') chain.setTextAlign('center').run();
+            else if (action === 'justify-right') chain.setTextAlign('right').run();
+            else if (action === 'justify-full') chain.setTextAlign('justify').run();
+            else if (action === 'font-family') chain.setMark('textStyle', { fontFamily: value || 'inherit' }).run();
+            else if (action === 'font-size') chain.setMark('textStyle', { fontSize: value || '' }).run();
+            else if (action === 'foreColor') chain.setMark('textStyle', { color: colorToHex(value || '#0f172a') }).run();
+            editor.commands.focus();
+            hidden.value = editor.getHTML();
+            updateMountedToolbarState();
+            if (previewModal && previewModal.classList.contains('open')) {
+                renderPreviewSlide();
+            }
+            saveCurrent();
+        };
+        toolbar?.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-text-action]');
+            if (!button) return;
+            event.preventDefault();
+            runToolbarAction(String(button.getAttribute('data-text-action') || ''), button.value || button.getAttribute('data-value') || '');
+        });
+        toolbar?.addEventListener('mousedown', (event) => {
+            if (event.target.closest('button[data-text-action]')) {
+                event.preventDefault();
+            }
+        });
+        toolbar?.addEventListener('change', (event) => {
+            const field = event.target.closest('select[data-text-action],input[data-text-action]');
+            if (!field) return;
+            runToolbarAction(String(field.getAttribute('data-text-action') || ''), field.value || field.getAttribute('data-value') || '');
+        });
+        toolbar?.addEventListener('input', (event) => {
+            const field = event.target.closest('input[data-text-action]');
+            if (!field) return;
+            runToolbarAction(String(field.getAttribute('data-text-action') || ''), field.value || field.getAttribute('data-value') || '');
+        });
+        editor.on('selectionUpdate', () => updateMountedToolbarState());
+        editor.on('focus', () => updateMountedToolbarState());
+        editor.on('transaction', () => updateMountedToolbarState());
+        updateMountedToolbarState();
+        tiptapEditors[key] = editor;
+        return editor;
     }
     function setImageFromFile(fileInputId, hiddenId, previewId, options = {}) {
         const input = document.getElementById(fileInputId);
@@ -2484,51 +3134,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function updateSplitPanelVisibility(prefix) {
         const type = document.getElementById(`layout_${prefix}_type`)?.value || 'text';
-        const textWrap = document.querySelector(`[data-rich-toolbar="${prefix}"]`);
-        const textArea = document.getElementById(`layout_${prefix}_text`);
+        const textWrap = document.querySelector(`[data-tiptap-toolbar="layout_${prefix}"], [data-rich-toolbar="layout_${prefix}"]`);
+        const textArea = document.getElementById(`layout_${prefix}_editor`);
         const htmlField = document.getElementById(`layout_${prefix}_html`);
         const imagePreview = document.getElementById(`layout_${prefix}_image_preview`);
-        const videoPreview = document.getElementById(`layout_${prefix}_video_preview`);
+        const mediaActions = document.getElementById(`layout_${prefix}_media_actions`);
         if (textWrap) textWrap.style.display = type === 'text' ? 'flex' : 'none';
         if (textArea) textArea.style.display = type === 'text' ? 'block' : 'none';
         if (htmlField) htmlField.style.display = 'none';
         if (imagePreview) imagePreview.style.display = type === 'image' ? 'block' : 'none';
-        if (videoPreview) videoPreview.style.display = type === 'video' ? 'block' : 'none';
+        if (mediaActions) mediaActions.style.display = type === 'image' ? 'flex' : 'none';
     }
     function bindLayoutSplitFiles() {
         setImageFromFile('layout_left_image_file', 'layout_left_image', 'layout_left_image_preview', { crop: true, title: 'Sol Alan Görseli Kırp', aspectRatio: 1 });
-        setVideoFromFile('layout_left_video_file', 'layout_left_video');
         setImageFromFile('layout_right_image_file', 'layout_right_image', 'layout_right_image_preview', { crop: true, title: 'Sağ Alan Görseli Kırp', aspectRatio: 1 });
-        setVideoFromFile('layout_right_video_file', 'layout_right_video');
         ['left', 'right'].forEach((prefix) => {
             const select = document.getElementById(`layout_${prefix}_type`);
             select?.addEventListener('change', () => {
                 updateSplitPanelVisibility(prefix);
                 saveCurrent();
             });
-            const textArea = document.getElementById(`layout_${prefix}_text`);
+            const textArea = document.getElementById(`layout_${prefix}_editor`);
             textArea?.addEventListener('input', saveCurrent);
             const imageBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="image"]`);
-            const videoBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="video"]`);
             const clearBtn = document.querySelector(`[data-split-media-target="${prefix}"][data-split-media-kind="clear"]`);
             imageBtn?.addEventListener('click', () => {
                 if (select) select.value = 'image';
                 updateSplitPanelVisibility(prefix);
                 document.getElementById(`layout_${prefix}_image_file`)?.click();
             });
-            videoBtn?.addEventListener('click', () => {
-                if (select) select.value = 'video';
-                updateSplitPanelVisibility(prefix);
-                document.getElementById(`layout_${prefix}_video_file`)?.click();
-            });
             clearBtn?.addEventListener('click', () => {
                 syncHiddenPreview(`layout_${prefix}_image`, `layout_${prefix}_image_preview`, '');
-                syncHiddenPreview(`layout_${prefix}_video`, `layout_${prefix}_video_preview`, '');
                 if (select) select.value = 'text';
                 const imageFile = document.getElementById(`layout_${prefix}_image_file`);
-                const videoFile = document.getElementById(`layout_${prefix}_video_file`);
                 if (imageFile) imageFile.value = '';
-                if (videoFile) videoFile.value = '';
                 updateSplitPanelVisibility(prefix);
                 saveCurrent();
             });
@@ -2537,7 +3176,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     function bindLayoutMediaFiles() {
         setImageFromFile('layout_media_image_file', 'layout_media_image', 'layout_media_image_preview', { crop: true, title: 'Ana Görseli Kırp', aspectRatio: 16 / 9 });
-        setVideoFromFile('layout_media_video_file', 'layout_media_video');
     }
     function renderPreviewSlide() {
         ensureSlide();
@@ -2549,9 +3187,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const layoutPreview = (() => {
             if (layout === 'text') {
                 const text = meta.text || {};
-                const textHtml = String(text.html || text.text || s.content || '').trim();
+                const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
+                const textHtml = String(liveTextHtml || text.html || text.text || s.content || '').trim();
                 const textBlock = textHtml
-                    ? `<div style="max-width:min(92vw,1180px);margin:0 auto;text-align:left;line-height:1.8;font-size:clamp(18px,2vw,24px)">${textHtml}</div>`
+                    ? `<div class="lesson-rich-text" style="max-width:min(92vw,1180px);margin:0 auto;text-align:left;line-height:1.8;font-size:clamp(18px,2vw,24px)">${textHtml}</div>`
                     : `<div style="height:18px;border-radius:999px;background:#dbeafe;width:72%;margin:0 auto 10px"></div><div style="height:14px;border-radius:999px;background:#eff6ff;width:56%;margin:0 auto"></div>`;
                 return `
                     <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:28px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;align-items:center;justify-content:center">
@@ -2576,18 +3215,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
                 const renderSplitPanel = (panel, accent, label) => {
                     const type = String(panel.type || 'text');
-                    const text = escapeHtml(String(panel.text || ''));
+                    const liveLeftHtml = getLiveEditorHtml('layout_left_html', 'layout_left_editor');
+                    const liveRightHtml = getLiveEditorHtml('layout_right_html', 'layout_right_editor');
+                    const text = String(
+                        label === 'Sol Alan'
+                            ? (liveLeftHtml || panel.html || panel.text || '')
+                            : (liveRightHtml || panel.html || panel.text || '')
+                    );
                     const imageUrl = escapeHtml(normalizeMediaUrl(String(panel.image_url || '')));
-                    const videoUrl = escapeHtml(String(panel.video_url || ''));
                     let body = '';
                     if (type === 'image' && imageUrl) {
-                        body = `<div style="display:grid;gap:12px;align-content:center;width:100%;min-height:260px"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
-                    } else if (type === 'video' && videoUrl) {
-                        body = `<div style="display:grid;gap:12px;align-content:center;width:100%;min-height:260px"><video src="${videoUrl}" controls style="width:100%;max-height:56vh;border-radius:16px;border:1px solid ${accent}22;background:#000"></video></div>`;
-                    } else if (type === 'code' && codeSrcdoc !== '') {
-                        body = `<iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="${codeSrcdoc}" style="min-height:260px;height:100%;max-height:56vh"></iframe>`;
+                        body = `<div style="display:grid;gap:12px;align-content:start;justify-items:start;width:100%;min-height:260px"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
                     } else {
-                        body = `<div style="display:grid;gap:10px;align-content:center;min-height:260px;padding:8px 2px">${text ? `<div style="white-space:pre-wrap;line-height:1.8">${text}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
+                        body = `<div style="display:grid;gap:10px;align-content:start;justify-items:start;min-height:260px;padding:8px 2px;text-align:left">${text ? `<div class="lesson-rich-text" style="width:100%;text-align:left;line-height:1.8">${text}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
                     }
                     return body;
                 };
@@ -2620,7 +3260,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const media = meta.media || {};
                 const mediaOrder = String(media.order || 'image-text');
                 const imageBlock = media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="width:100%;height:100%;background:#bfdbfe"></div>`;
-                const textBlock = media.html ? `<div style="max-width:1100px;text-align:center;line-height:1.7">${media.html}</div>` : (media.text ? `<div style="max-width:900px;text-align:center;line-height:1.7">${escapeHtml(media.text)}</div>` : '');
+                const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
+                const textBlock = liveMediaHtml
+                    ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${liveMediaHtml}</div>`
+                    : (media.html ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${media.html}</div>` : (media.text ? `<div class="lesson-rich-text" style="max-width:900px;text-align:left;line-height:1.7">${media.text}</div>` : ''));
                 return `
                     <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
                         ${mediaOrder === 'text-image' ? textBlock : ''}
@@ -3050,7 +3693,8 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
         ensureSlide();
         loadCurrent();
-        renderList();        saveCurrent();
+        renderList();
+        saveCurrent();
     } catch (e) {
         console.error('Builder init failed:', e);
     }

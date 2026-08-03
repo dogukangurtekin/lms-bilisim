@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCodingActivityRequest;
 use App\Http\Requests\UpdateCodingActivityRequest;
+use App\Models\ActivityAttempt;
 use App\Models\ActivityQuestion;
 use App\Models\CodingActivity;
 use App\Models\DailyActivityAssignment;
+use App\Models\Student;
+use App\Models\StudentReport;
+use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Models\QuestionOption;
+use App\Models\UserXpLog;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,6 +49,7 @@ class CodingActivityManagementController extends Controller
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
         $hasTeacherColumn = $this->canUseTeacherColumn();
         $hasAdminLockColumn = $this->canUseAdminLockColumn();
+        $availableClasses = $this->availableClassesForCurrentUser($user);
         $activities = CodingActivity::query()
             ->withCount('questions')
             ->when($user?->hasRole('teacher') && $hasTeacherColumn, fn ($query) => $query->where('teacher_id', $teacherId))
@@ -68,7 +74,7 @@ class CodingActivityManagementController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin', 'teachers', 'assignableActivities'));
+        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin', 'teachers', 'assignableActivities', 'availableClasses'));
     }
 
     public function store(StoreCodingActivityRequest $request): RedirectResponse
@@ -99,7 +105,7 @@ class CodingActivityManagementController extends Controller
             $this->syncQuestions($activity, $data['questions'] ?? []);
         });
 
-        return back()->with('ok', 'Etkinlik oluşturuldu.');
+        return back()->with('ok', 'Etkinlik oluÅŸturuldu.');
     }
 
     public function update(UpdateCodingActivityRequest $request, CodingActivity $activity): RedirectResponse
@@ -150,20 +156,49 @@ class CodingActivityManagementController extends Controller
         }
 
         if ($user?->hasRole('teacher') && $isAssignedToTeacher) {
-            $update = [];
-            if ($hasTeacherColumn) {
-                $update['teacher_id'] = null;
-            }
-            if ($hasAdminLockColumn) {
-                $update['admin_locked'] = true;
-            }
-            if ($update !== []) {
-                $activity->update($update);
-            }
+            DB::transaction(function () use ($activity, $teacherId, $hasTeacherColumn, $hasAdminLockColumn): void {
+                $assignment = DailyActivityAssignment::query()
+                    ->where('coding_activity_id', $activity->id)
+                    ->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))
+                    ->where('target_role', 'student')
+                    ->first();
+
+                $this->purgeUnfinishedStudentDailyCodingTraces(
+                    [$activity->id],
+                    $this->studentUserIdsForAssignmentScope($activity, $assignment)
+                );
+
+                DailyActivityAssignment::query()
+                    ->where('coding_activity_id', $activity->id)
+                    ->delete();
+
+                $update = [];
+                if ($hasTeacherColumn) {
+                    $update['teacher_id'] = null;
+                }
+                if ($hasAdminLockColumn) {
+                    $update['admin_locked'] = true;
+                }
+                if ($update !== []) {
+                    $activity->update($update);
+                }
+            });
+
             return redirect()->route('coding.activities.manage')->with('ok', 'Etkinlik sadece hesabinizdan kaldirildi.');
         }
 
         DB::transaction(function () use ($activity): void {
+            $assignment = DailyActivityAssignment::query()
+                ->where('coding_activity_id', $activity->id)
+                ->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))
+                ->where('target_role', 'student')
+                ->first();
+
+            $this->purgeUnfinishedStudentDailyCodingTraces(
+                [$activity->id],
+                $this->studentUserIdsForAssignmentScope($activity, $assignment)
+            );
+
             DailyActivityAssignment::query()->where('coding_activity_id', $activity->id)->delete();
             $activity->questions()->each(function (ActivityQuestion $question): void {
                 $question->options()->delete();
@@ -177,16 +212,70 @@ class CodingActivityManagementController extends Controller
 
     public function assignToday(CodingActivity $activity): RedirectResponse
     {
+        $data = request()->validate([
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+        $classIds = $this->normalizeAssignableClassIds($data['class_ids'] ?? []);
+        if ($classIds === []) {
+            return back()->with('error', 'Lutfen en az bir sinif secin.');
+        }
+
+        if (! $this->classesAreAssignableByCurrentUser($classIds)) {
+            return back()->with('error', 'Secilen siniflar icin yetkiniz yok.');
+        }
+
         DailyActivityAssignment::updateOrCreate(
             ['assignment_date' => Carbon::today('Europe/Istanbul')->toDateString(), 'target_role' => 'student'],
-            ['coding_activity_id' => $activity->id, 'assigned_by' => auth()->id()]
+            [
+                'coding_activity_id' => $activity->id,
+                'assigned_by' => auth()->id(),
+                'target_class_ids' => $classIds,
+            ]
         );
 
         if ($this->canUseTeacherColumn()) {
             $activity->forceFill(['teacher_id' => $activity->teacher_id ?: null])->save();
         }
 
-        return back()->with('ok', 'Bugünün etkinliği atandı.');
+        return back()->with('ok', 'Bugunun etkinligi secilen siniflara atandi.');
+    }
+
+    public function unassignToday(CodingActivity $activity): RedirectResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher'), 403);
+
+        $user = auth()->user();
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $isTeacherOwned = $this->activityIsTeacherOwned($activity);
+
+        if ($user?->hasRole('admin') && $isTeacherOwned) {
+            return back()->with('error', '??retmene atanm?? g?nl?k ?al??ma sadece ilgili ??retmen taraf?ndan geri al?nabilir.');
+        }
+
+        if ($user?->hasRole('teacher') && $teacherId > 0 && (int) ($activity->teacher_id ?? 0) !== $teacherId) {
+            return back()->with('error', 'Bu g?nl?k ?al??may? geri alma yetkiniz yok.');
+        }
+
+        $today = Carbon::today('Europe/Istanbul')->toDateString();
+        $assignment = DailyActivityAssignment::query()
+            ->whereDate('assignment_date', $today)
+            ->where('target_role', 'student')
+            ->where('coding_activity_id', $activity->id)
+            ->first();
+
+        if (! $assignment) {
+            return back()->with('error', 'Bu etkinlik i?in aktif ??renci atamas? bulunamad?.');
+        }
+
+        $targetUserIds = $this->studentUserIdsForAssignmentScope($activity, $assignment);
+
+        DB::transaction(function () use ($activity, $assignment, $targetUserIds): void {
+            $this->purgeUnfinishedStudentDailyCodingTraces([$activity->id], $targetUserIds);
+            $assignment->delete();
+        });
+
+        return back()->with('ok', 'Etkinlik ??rencilerden geri al?nd?.');
     }
 
     public function exportAll(): StreamedResponse
@@ -225,7 +314,7 @@ class CodingActivityManagementController extends Controller
 
     public function import(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()?->hasRole('admin'), 403);
+        abort_unless(auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher'), 403);
 
         $request->validate([
             'activity_json' => ['required'],
@@ -264,6 +353,16 @@ class CodingActivityManagementController extends Controller
                     continue;
                 }
 
+                $importTeacherId = null;
+                if ($this->canUseTeacherColumn()) {
+                    $teacherId = (int) ($activityData['teacher_id'] ?? 0);
+                    if (auth()->user()?->hasRole('teacher')) {
+                        $importTeacherId = (int) (optional(auth()->user()?->teacher)->id ?? 0);
+                    } elseif ($teacherId > 0 && Teacher::query()->whereKey($teacherId)->exists()) {
+                        $importTeacherId = $teacherId;
+                    }
+                }
+
                 $activity = CodingActivity::create([
                     'created_by' => auth()->id(),
                     'title' => $title,
@@ -273,6 +372,8 @@ class CodingActivityManagementController extends Controller
                     'base_xp' => (int) ($activityData['base_xp'] ?? 20),
                     'is_active' => (bool) ($activityData['is_active'] ?? true),
                     'is_random_pool' => (bool) ($activityData['is_random_pool'] ?? true),
+                    'teacher_id' => $importTeacherId,
+                    'admin_locked' => (bool) ($activityData['admin_locked'] ?? false),
                 ]);
 
                 $this->syncQuestions($activity, (array) ($activityData['questions'] ?? []));
@@ -297,12 +398,16 @@ class CodingActivityManagementController extends Controller
                 ->when($this->canUseAdminLockColumn(), fn ($q) => $q->where(function ($inner): void {
                     $inner->whereNull('admin_locked')->orWhere('admin_locked', false);
                 }))
-                ->pluck('id');
+                ->pluck('id')
+                ->map(fn ($value) => (int) $value)
+                ->values()
+                ->all();
 
-            if ($deletableIds->isEmpty()) {
+            if ($deletableIds === []) {
                 return;
             }
 
+            $this->purgeUnfinishedStudentDailyCodingTraces($deletableIds);
             DailyActivityAssignment::query()->whereIn('coding_activity_id', $deletableIds)->delete();
             ActivityQuestion::query()->whereIn('coding_activity_id', $deletableIds)->delete();
             CodingActivity::query()->whereIn('id', $deletableIds)->delete();
@@ -331,7 +436,7 @@ class CodingActivityManagementController extends Controller
         }
         CodingActivity::query()->whereIn('id', $activityIds)->update($update);
 
-        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' günlük çalışma öğretmene atandı.');
+        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' g?nl?k ?al??ma ??retmene atand?.');
     }
 
     public function unassignTeacherBulk(Request $request): RedirectResponse
@@ -344,20 +449,201 @@ class CodingActivityManagementController extends Controller
         ]);
 
         $teacherId = (int) $data['teacher_id'];
-        $updated = CodingActivity::query()
+        $activityIds = CodingActivity::query()
             ->where('teacher_id', $teacherId)
-            ->update([
-                'teacher_id' => null,
-                'admin_locked' => false,
-            ]);
+            ->pluck('id')
+            ->map(fn ($value) => (int) $value)
+            ->values()
+            ->all();
 
-        DailyActivityAssignment::query()
-            ->whereHas('activity', fn ($q) => $q->where('teacher_id', $teacherId))
-            ->delete();
+        if ($activityIds === []) {
+            return redirect()->route('coding.activities.manage')->with('error', 'Se?ili ??retmende atanm?? g?nl?k ?al??ma bulunamad?.');
+        }
 
-        return redirect()->route('coding.activities.manage')->with('ok', $updated > 0
-            ? 'Seçili öğretmenden tüm günlük çalışmalar kaldırıldı.'
-            : 'Seçili öğretmende atanmış günlük çalışma bulunamadı.');
+        $hasTeacherOwned = CodingActivity::query()
+            ->whereIn('id', $activityIds)
+            ->whereNotNull('teacher_id')
+            ->exists();
+
+        if ($hasTeacherOwned) {
+            return redirect()->route('coding.activities.manage')->with('error', '??retmene atanm?? g?nl?k ?al??malar?n geri al?m? sadece ilgili ??retmen taraf?ndan yap?labilir.');
+        }
+
+        return redirect()->route('coding.activities.manage')->with('error', 'Bu ??retmende admin taraf?ndan geri al?nabilecek g?nl?k ?al??ma yok.');
+    }
+
+    private function purgeUnfinishedStudentDailyCodingTraces(array $activityIds, ?array $targetUserIds = null): void
+    {
+        $activityIds = array_values(array_unique(array_map('intval', $activityIds)));
+        if ($activityIds === []) {
+            return;
+        }
+
+        $targetUserIds = $targetUserIds !== null
+            ? array_values(array_unique(array_map('intval', $targetUserIds)))
+            : Student::query()
+                ->pluck('user_id')
+                ->map(fn ($value) => (int) $value)
+                ->filter(fn ($value) => $value > 0)
+                ->values()
+                ->all();
+
+        if ($targetUserIds === []) {
+            return;
+        }
+
+        $completedPairs = UserXpLog::query()
+            ->whereIn('coding_activity_id', $activityIds)
+            ->whereIn('user_id', $targetUserIds)
+            ->get(['user_id', 'coding_activity_id'])
+            ->map(fn (UserXpLog $log) => ((int) $log->user_id) . ':' . ((int) $log->coding_activity_id))
+            ->unique()
+            ->values()
+            ->all();
+
+        foreach ($activityIds as $activityId) {
+            foreach ($targetUserIds as $userId) {
+                if (in_array($userId . ':' . $activityId, $completedPairs, true)) {
+                    continue;
+                }
+
+                ActivityAttempt::query()
+                    ->where('coding_activity_id', $activityId)
+                    ->where('user_id', $userId)
+                    ->delete();
+
+                DB::table('leaderboards')
+                    ->where('coding_activity_id', $activityId)
+                    ->where('user_id', $userId)
+                    ->delete();
+
+                StudentReport::query()
+                    ->where('user_id', $userId)
+                    ->get()
+                    ->each(function (StudentReport $report) use ($activityId): void {
+                        $meta = (array) ($report->meta ?? []);
+                        $currentLogs = (array) ($meta['dailyCodingLogs'] ?? []);
+                        $filteredLogs = array_values(array_filter($currentLogs, function ($log) use ($activityId) {
+                            return (int) data_get($log, 'activity_id', 0) !== $activityId;
+                        }));
+
+                        if ($filteredLogs !== $currentLogs) {
+                            $meta['dailyCodingLogs'] = $filteredLogs;
+                            $report->meta = $meta;
+                            $report->save();
+                        }
+                    });
+            }
+        }
+    }
+
+    private function studentUserIdsForAssignmentScope(CodingActivity $activity, ?DailyActivityAssignment $assignment = null): array
+    {
+        $targetClassIds = collect((array) ($assignment?->target_class_ids ?? []))
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($targetClassIds !== []) {
+            return Student::query()
+                ->whereIn('school_class_id', $targetClassIds)
+                ->pluck('user_id')
+                ->map(fn ($value) => (int) $value)
+                ->filter(fn ($value) => $value > 0)
+                ->values()
+                ->all();
+        }
+
+        $teacherId = (int) ($activity->teacher_id ?? 0);
+        if ($teacherId <= 0) {
+            return Student::query()
+                ->pluck('user_id')
+                ->map(fn ($value) => (int) $value)
+                ->filter(fn ($value) => $value > 0)
+                ->values()
+                ->all();
+        }
+
+        $teacher = Teacher::query()->find($teacherId);
+        if (! $teacher) {
+            return [];
+        }
+
+        $classIds = $teacher->classes()
+            ->pluck('school_classes.id')
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->values()
+            ->all();
+
+        if ($classIds === []) {
+            return [];
+        }
+
+        return Student::query()
+            ->whereIn('school_class_id', $classIds)
+            ->pluck('user_id')
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->values()
+            ->all();
+    }
+
+    private function normalizeAssignableClassIds(array $classIds): array
+    {
+        return collect($classIds)
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function availableClassesForCurrentUser($user)
+    {
+        return SchoolClass::query()
+            ->with('teacher.user')
+            ->when($user?->hasRole('teacher') && ! $user?->hasRole('admin'), function ($query) use ($user): void {
+                $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+                if ($teacherId > 0) {
+                    $query->where('teacher_id', $teacherId);
+                }
+            })
+            ->orderByRaw('COALESCE(grade_level, 0) asc')
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
+    }
+
+    private function classesAreAssignableByCurrentUser(array $classIds): bool
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('admin')) {
+            return true;
+        }
+
+        if (! $user?->hasRole('teacher')) {
+            return false;
+        }
+
+        $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        if ($teacherId <= 0 || $classIds === []) {
+            return false;
+        }
+
+        $allowed = SchoolClass::query()
+            ->where('teacher_id', $teacherId)
+            ->whereIn('id', $classIds)
+            ->count();
+
+        return $allowed === count($classIds);
+    }
+
+    private function activityIsTeacherOwned(CodingActivity $activity): bool
+    {
+        return (int) ($activity->teacher_id ?? 0) > 0;
     }
 
     private function serializeActivity(CodingActivity $activity): array
@@ -381,6 +667,8 @@ class CodingActivityManagementController extends Controller
             'base_xp' => $activity->base_xp,
             'is_active' => $activity->is_active,
             'is_random_pool' => $activity->is_random_pool,
+            'teacher_id' => $activity->teacher_id,
+            'admin_locked' => $activity->admin_locked ?? false,
             'questions' => $questions,
         ];
     }
@@ -432,3 +720,5 @@ class CodingActivityManagementController extends Controller
         }
     }
 }
+
+

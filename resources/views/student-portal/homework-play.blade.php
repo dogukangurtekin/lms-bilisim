@@ -23,7 +23,16 @@
     @else
         <div class="card">
             <p>Bu odev ders icerigi uzerinden tamamlanacaktir.</p>
-            <a class="btn" href="{{ route('student.portal.course-show', $homework->course_id) }}">Ders Icerigine Git</a>
+            @if($homework->course_id)
+                <iframe
+                    src="{{ route('student.portal.course-show', $homework->course_id) }}"
+                    style="width:100%;min-height:78vh;border:1px solid #d1d5db;border-radius:12px;display:block"
+                    loading="lazy"
+                ></iframe>
+            @else
+                <p>Ders icerigi bulunamadi. Dersler sayfasindan tekrar deneyin.</p>
+                <a class="btn" href="{{ route('student.portal.courses') }}">Derslerime Git</a>
+            @endif
         </div>
     @endif
 
@@ -33,6 +42,8 @@
             <label>Ulastiginiz Son Level ({{ $homework->level_from }}-{{ $homework->level_to }})</label>
             <input type="number" name="reached_level" min="{{ $homework->level_from }}" max="{{ $homework->level_to }}" required>
         @endif
+        <label style="display:block;margin-top:10px;font-weight:700">Öğrenci Notu</label>
+        <textarea name="student_note" rows="4" placeholder="Ödevle ilgili notunuzu yazın..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:12px;resize:vertical"></textarea>
         <input type="hidden" name="earned_xp" id="earned-xp-input" value="0">
         <input type="hidden" name="duration_seconds" id="duration-seconds-input" value="0">
         <input type="hidden" name="completed_level_ids" id="completed-level-ids-input" value="">
@@ -82,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var modalXp = document.getElementById('modal-earned-xp');
     var modalDuration = document.getElementById('modal-duration');
     var saveExitBtn = document.getElementById('save-exit-btn');
+    var studentNoteInput = completeForm ? completeForm.querySelector('textarea[name="student_note"]') : null;
 
     function formatDuration(seconds) {
         var s = Math.max(0, Number(seconds || 0));
@@ -103,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (durationInput) durationInput.value = String(sec);
         if (completedIdsInput) completedIdsInput.value = completedIds.join(',');
         if (exitToPanelInput) exitToPanelInput.value = '1';
+        if (payload.note && studentNoteInput) studentNoteInput.value = payload.note;
         if (modal) modal.style.display = 'flex';
     }
 
@@ -125,7 +138,8 @@ document.addEventListener('DOMContentLoaded', function () {
             openCompletionModal({
                 xp: Number(data.xp || 0),
                 durationSeconds: Number(data.elapsedSeconds || 0),
-                completedLevelIds: data.completedLevelIds || []
+                completedLevelIds: data.completedLevelIds || [],
+                note: String(data.note || '')
             });
             return;
         }
@@ -133,7 +147,8 @@ document.addEventListener('DOMContentLoaded', function () {
             openCompletionModal({
                 xp: Number(data.xp || 0),
                 durationSeconds: Math.round((Date.now() - startedAt) / 1000),
-                completedLevelIds: [Number(data.levelId || 0)]
+                completedLevelIds: [Number(data.levelId || 0)],
+                note: String(data.note || '')
             });
         }
     });

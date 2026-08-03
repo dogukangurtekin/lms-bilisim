@@ -26,6 +26,7 @@ class ProfileController extends Controller
                 'title' => (string) ($meta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
                 'subtitle' => (string) ($meta['pwa_subtitle'] ?? 'Yukleniyor...'),
                 'logo_url' => (string) ($meta['pwa_logo_url'] ?? url('/public/logo.png')),
+                'principal_name' => (string) ($meta['principal_name'] ?? ''),
             ],
         ]);
     }
@@ -42,6 +43,7 @@ class ProfileController extends Controller
             'pwa_title' => ['nullable', 'string', 'max:60'],
             'pwa_subtitle' => ['nullable', 'string', 'max:80'],
             'pwa_logo_url' => ['nullable', 'string', 'max:255'],
+            'principal_name' => ['nullable', 'string', 'max:120'],
         ], [
             'username.regex' => 'Kullanici adi sadece harf, rakam, nokta, alt cizgi ve kisa cizgi icerebilir.',
         ]);
@@ -75,6 +77,7 @@ class ProfileController extends Controller
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
         $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
+        $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
         $profile->meta = $meta;
         $profile->save();
 
@@ -89,6 +92,7 @@ class ProfileController extends Controller
             'pwa_title' => ['nullable', 'string', 'max:60'],
             'pwa_subtitle' => ['nullable', 'string', 'max:80'],
             'pwa_logo_url' => ['nullable', 'string', 'max:255'],
+            'principal_name' => ['nullable', 'string', 'max:120'],
         ]);
 
         $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
@@ -97,6 +101,7 @@ class ProfileController extends Controller
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
         $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
+        $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
         $profile->meta = $meta;
         $profile->save();
 

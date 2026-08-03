@@ -9,8 +9,12 @@ class DailyActivityAssignment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['assignment_date','coding_activity_id','assigned_by','target_role'];
-    protected $casts = ['assignment_date' => 'date'];
+    protected $fillable = ['assignment_date', 'coding_activity_id', 'assigned_by', 'target_role', 'target_class_ids'];
+
+    protected $casts = [
+        'assignment_date' => 'date',
+        'target_class_ids' => 'array',
+    ];
 
     public function activity() { return $this->belongsTo(CodingActivity::class, 'coding_activity_id'); }
 }

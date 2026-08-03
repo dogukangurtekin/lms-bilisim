@@ -10,6 +10,21 @@
         $text = trim((string) $value);
         return $text === '' ? '' : html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     };
+    $renderRichText = static function ($value): string {
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    };
+    $renderPlainText = static function ($value): string {
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+        $decoded = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return trim(strip_tags($decoded));
+    };
     $pickValue = static function (array $source, array $keys) use ($normalizeText): string {
         foreach ($keys as $key) {
             $text = $normalizeText(data_get($source, $key));
@@ -256,11 +271,11 @@ HTML;
             @if($layout === 'text')
                 <div class="lesson-card lesson-text-only">
                     @if(!empty($slide['content']))
-                        <p class="lesson-paragraph">{!! nl2br(e($slide['content'])) !!}</p>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.html')))
-                        <div class="lesson-paragraph">{!! data_get($slide, 'layout_meta.text.html') !!}</div>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText(data_get($slide, 'layout_meta.text.html')) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.text')))
-                        <p class="lesson-paragraph">{!! nl2br(e((string) data_get($slide, 'layout_meta.text.text'))) !!}</p>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText(data_get($slide, 'layout_meta.text.text')) !!}</div>
                     @endif
                 </div>
             @elseif($layout === 'hero' || $layout === 'section')
@@ -273,12 +288,12 @@ HTML;
                 <div class="lesson-grid-cards">
                     @foreach($blocks as $block)
                         @if(($block['type'] ?? '') === 'paragraph')
-                            <article class="lesson-card"><p class="lesson-paragraph">{{ $block['text'] ?? '' }}</p></article>
+                            <article class="lesson-card"><div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($block['text'] ?? '') !!}</div></article>
                         @elseif(($block['type'] ?? '') === 'bullets')
                             <article class="lesson-card">
                                 <ol class="lesson-list">
                                     @foreach((array) ($block['items'] ?? []) as $item)
-                                        <li>{{ $item }}</li>
+                                        <li>{!! $renderRichText($item) !!}</li>
                                     @endforeach
                                 </ol>
                             </article>
@@ -291,7 +306,7 @@ HTML;
                 @include('courses.partials.slides.interactive', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @else
                 @if(!empty($slide['content']))
-                    <p class="lesson-paragraph">{!! nl2br(e($slide['content'])) !!}</p>
+                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
                 @endif
                 @if(!empty($slide['image_url']))
                     <img src="{{ $slide['image_url'] }}" alt="slide görsel" class="lesson-image">

@@ -32,4 +32,9 @@ class StudentHomeworkProgress extends Model
     {
         return $this->belongsTo(CourseHomework::class, 'course_homework_id')->withTrashed();
     }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(Student::class, 'student_id');
+    }
 }

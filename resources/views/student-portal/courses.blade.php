@@ -73,6 +73,7 @@
                 :age="$age"
                 :difficulty="$difficulty"
                 :content-url="route('course.detail', ['id' => $c->id])"
+                content-label="Derse git"
                 :primary-url="route('student.portal.course-show', $c)"
                 :primary-label="$cp?->completed ? 'Tamamlandı' : 'Derse Başla'"
                 primary-variant="success"

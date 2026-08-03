@@ -2,6 +2,8 @@
     $completed = (int) data_get($report, 'kpi.completed_total', 0);
     $total = max(1, (int) data_get($report, 'kpi.total_assignments', 0));
     $donePct = (int) round(($completed / $total) * 100);
+    $pending = max(0, $total - $completed);
+    $doneAngle = max(0, min(360, (int) round(($completed / $total) * 360)));
     $fmtDate = function ($value): string {
         if (! $value) {
             return '-';
@@ -53,10 +55,21 @@
     <div class="content-grid">
         <article class="panel">
             <h3>Görev Özeti</h3>
-            <div class="donut-wrap" style="align-items:flex-start">
-                <div>
-                    <p><b>{{ $completed }}</b> görev tamamlandı</p>
-                    <p><b>{{ data_get($report, 'kpi.badge_count', 0) }}</b> rozet kazanıldı</p>
+            <div class="donut-wrap" style="align-items:center;gap:18px;flex-wrap:wrap">
+                <div style="width:132px;height:132px;display:grid;place-items:center;flex:0 0 auto;">
+                    <div style="width:132px;height:132px;border-radius:50%;background:conic-gradient(#16a34a 0 {{ $doneAngle }}deg,#e5e7eb {{ $doneAngle }}deg 360deg);position:relative;box-shadow:inset 0 0 0 1px rgba(15,23,42,.04);">
+                        <div style="position:absolute;inset:16px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center;">
+                            <div>
+                                <div style="font-size:24px;font-weight:900;line-height:1;color:#0f172a;">{{ $completed }}</div>
+                                <div style="font-size:12px;color:#475569;font-weight:700;">/{{ $total }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="min-width:180px;flex:1">
+                    <p style="margin:0 0 10px;"><b>{{ $completed }}</b> görev tamamlandı</p>
+                    <p style="margin:0 0 10px;"><b>{{ $pending }}</b> görev bekliyor</p>
+                    <p style="margin:0;"><b>{{ data_get($report, 'kpi.badge_count', 0) }}</b> rozet kazanıldı</p>
                 </div>
             </div>
         </article>
@@ -75,7 +88,9 @@
         <h3>Kategori Bazlı Tamamlama Oranı</h3>
         @php
             $categoryItems = collect(data_get($report, 'category_chart', []));
-            $fullCount = $categoryItems->filter(fn ($item) => (int) data_get($item, 'value', 0) >= 100)->count();
+            $fullCount = $categoryItems
+                ->filter(fn ($item) => (int) data_get($item, 'total', 0) > 0 && (int) data_get($item, 'done', 0) >= (int) data_get($item, 'total', 0))
+                ->sum(fn ($item) => (int) data_get($item, 'done', 0));
         @endphp
         <div class="category-chart">
             <div class="category-grid">
@@ -95,6 +110,7 @@
                             <span class="category-bar" style="height: {{ max(2, (int) data_get($item, 'value', 0)) }}%; background: {{ data_get($item, 'color', '#3b82f6') }};"></span>
                         </div>
                         <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;word-break:break-word;">{{ data_get($item, 'label', '-') }}</small>
+                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;color:#475569;">{{ (int) data_get($item, 'done', 0) }}/{{ (int) data_get($item, 'total', 0) }}</small>
                     </div>
                 @endforeach
             </div>
@@ -121,24 +137,31 @@
         <table class="report-table">
             <thead>
                 <tr>
-                    <th>Ders</th>
-                    <th>Ödev</th>
+                    <th>Başlık</th>
                     <th>Tarih</th>
-                    <th>Çözülen Soru</th>
+                    <th>Durum</th>
                     <th>XP</th>
                 </tr>
             </thead>
             <tbody>
-            @forelse((array) data_get($report, 'course_items', []) as $item)
+            @php
+                $courseItems = collect(data_get($report, 'course_items', []))
+                    ->filter(function ($item) {
+                        $courseName = trim((string) data_get($item, 'course_name', ''));
+                        $title = trim((string) data_get($item, 'display_title', data_get($item, 'title', '')));
+                        return $courseName !== '' || $title !== '';
+                    })
+                    ->values();
+            @endphp
+            @forelse($courseItems as $item)
                 <tr>
-                    <td>{{ data_get($item, 'course_name', '-') }}</td>
-                    <td>{{ data_get($item, 'display_title', data_get($item, 'title', data_get($item, 'course_name', '-'))) }}</td>
+                    <td>{{ trim((string) data_get($item, 'course_name', '')) !== '' ? data_get($item, 'course_name') : data_get($item, 'display_title', data_get($item, 'title', '-')) }}</td>
                     <td>{{ $fmtDate(data_get($item, 'sort_date')) }}</td>
-                    <td>{{ (int) data_get($item, 'solved_questions', 0) > 0 ? (int) data_get($item, 'solved_questions', 0) : '-' }}</td>
+                    <td>{{ data_get($item, 'status', 'Tamamlandı') }}</td>
                     <td>{{ (int) data_get($item, 'xp', 0) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="5">Ders ödevi bulunmuyor.</td></tr>
+                <tr><td colspan="4">Bu öğrenci için raporlanacak ders görevi bulunmuyor.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -149,28 +172,37 @@
         <table class="report-table">
             <thead>
                 <tr>
-                    <th>İçerik</th>
-                    <th>Ödev</th>
-                    <th>Seviye</th>
+                    <th>Başlık</th>
+                    <th>Tarih</th>
                     <th>Durum</th>
                     <th>XP</th>
                 </tr>
             </thead>
             <tbody>
-            @forelse((array) data_get($report, 'game_assignments', []) as $a)
+            @php
+                $gameAssignments = collect(data_get($report, 'game_assignments', []))
+                    ->filter(function ($item) {
+                        return trim((string) data_get($item, 'game_name', '')) !== ''
+                            || trim((string) data_get($item, 'title', '')) !== '';
+                    })
+                    ->values();
+            @endphp
+            @forelse($gameAssignments as $a)
                 @php
                     $aid = data_get($a, 'id');
                     $p = data_get($report, 'game_progress.' . $aid);
+                    $gameName = trim((string) data_get($a, 'game_name', ''));
+                    $title = trim((string) data_get($a, 'title', ''));
+                    $sortDate = data_get($a, 'sort_date', data_get($p, 'completed_at', data_get($p, 'started_at')));
                 @endphp
                 <tr>
-                    <td>{{ data_get($a, 'game_name', '-') }}</td>
-                    <td>{{ data_get($a, 'title', '-') }}</td>
-                    <td>{{ data_get($a, 'level_from', '-') }} - {{ data_get($a, 'level_to', '-') }}</td>
+                    <td>{{ $gameName !== '' ? $gameName : ($title !== '' ? $title : '-') }}</td>
+                    <td>{{ $fmtDate($sortDate) }}</td>
                     <td>{{ data_get($p, 'completed_at') ? 'Tamamlandı' : (data_get($p, 'started_at') ? 'Devam Ediyor' : 'Bekliyor') }}</td>
                     <td>{{ (int) data_get($p, 'xp_awarded', 0) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="5">Oyun/uygulama ödevi bulunmuyor.</td></tr>
+                <tr><td colspan="4">Bu öğrenci için raporlanacak oyun/uygulama görevi bulunmuyor.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -184,7 +216,7 @@
                     $name = (string) ($badge->name ?? 'Rozet');
                     $safeIconMap = [
                         'Ilk Adim' => '🚀',
-                        'Odev Ustasi' => '📘',
+                        'Odev Ustasi' => '📝',
                         'Oyun Avcisi' => '🎮',
                         'Ders Kesifi' => '📚',
                         'XP 100' => '⭐',
@@ -201,7 +233,7 @@
                         'Oyun Sampiyonu' => '🎯',
                         'XP 500' => '🌟',
                         'XP 1000' => '🚀',
-                        'Disiplinli Calisma' => '🗂️',
+                        'Disiplinli Calisma' => '🗃️',
                         'Panel Ustasi' => '📈',
                         'Istikrar Madalyasi' => '🥈',
                         'Tamamlama Zirvesi' => '🏔️',

@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 
 @section('title', 'Oyun ve Etkinlikler')
 
@@ -31,7 +31,6 @@
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                     <span style="font-size:13px;font-weight:700;color:#1d4ed8;background:#dbeafe;padding:8px 12px;border-radius:999px;">Toplu atama</span>
-                    <button type="button" id="activity-bulk-unassign-open" class="btn" style="height:40px;padding:0 14px;">Seçili öğretmenden tüm atanmışları kaldır</button>
                 </div>
             </div>
             <form method="POST" action="{{ route('activities.assign.teacher.bulk') }}" style="margin-top:16px;">
@@ -65,9 +64,15 @@
                     </div>
                 </div>
             </form>
-            <form method="POST" action="{{ route('activities.unassign.teacher.bulk') }}" id="activity-bulk-unassign-form" style="display:none;margin-top:10px;">
+            <form method="POST" action="{{ route('activities.unassign.teacher.bulk') }}" id="activity-bulk-unassign-form" data-confirm="Seçili öğretmenden tüm atanmış oyun ve etkinlikler kaldırılacak. Devam edilsin mi?" style="display:flex;justify-content:flex-end;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;">
                 @csrf
-                <input type="hidden" name="teacher_id" id="activity-unassign-teacher-id">
+                <select name="teacher_id" id="activity-unassign-teacher-select" required style="min-width:240px;height:40px;padding:0 12px;border:1px solid #cfe0ff;border-radius:14px;background:#fff;font-size:15px;">
+                    <option value="">Kaldırılacak öğretmeni seçin</option>
+                    @foreach($teachers as $teacher)
+                        <option value="{{ $teacher->id }}">{{ $teacher->user->name ?? ('Öğretmen #' . $teacher->id) }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn" style="height:40px;padding:0 14px;">Seçili öğretmenden tüm atanmışları kaldır</button>
             </form>
         </div>
         <div class="activity-grid">
@@ -105,7 +110,7 @@
             @endforeach
         </div>
     @elseif($isTeacher)
-        <p>Atanan oyun ve etkinlikleriniz aşağıdadır. Sadece sizin sınıflarınıza uygun içerikler görünür.</p>
+        <p>Admin tarafından size atanan oyun ve etkinlikler aşağıdadır.</p>
         @php
             $assigned = collect($assignedGameActivities ?? []);
         @endphp
@@ -119,23 +124,16 @@
                     @php
                         $game = $games[$assignment->game_slug] ?? null;
                         $gameUrl = $game ? url($game['url'] . '?role=teacher') : '#';
-                        $classText = collect($assignment->classes ?? [])
-                            ->map(fn ($class) => trim((string) ($class->name ?? '') . '/' . strtoupper((string) ($class->section ?? ''))))
-                            ->filter()
-                            ->unique()
-                            ->values()
-                            ->implode(', ');
+                        $assignedByName = trim((string) ($assignment->assignedBy?->name ?? ''));
                     @endphp
                     <article class="activity-item">
                         <img src="{{ asset($game['image'] ?? 'quiz.png') }}" alt="{{ $assignment->game_name }}">
                         <div class="activity-body">
                             <h3>{{ $assignment->game_name }}</h3>
-                            <p style="margin:6px 0 0;color:#475569;font-size:14px;font-weight:600;">{{ $assignment->title }}</p>
-                            <p style="margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35;">Sınıf: {{ $classText !== '' ? $classText : '-' }}</p>
                             <div class="actions">
                                 <a class="btn" href="{{ $gameUrl }}" target="_blank" rel="noopener">Oyunu Aç</a>
-                                <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
                             </div>
+                            <p style="margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35;">Atayan: {{ $assignedByName !== '' ? $assignedByName : '-' }}</p>
                         </div>
                     </article>
                 @endforeach
@@ -180,9 +178,13 @@
             const selectAll = document.getElementById('activities-select-all');
             const checks = Array.from(document.querySelectorAll('.activity-game-check'));
             const teacherSelect = document.getElementById('activity-teacher-select');
-            const unassignOpenBtn = document.getElementById('activity-bulk-unassign-open');
-            const unassignForm = document.getElementById('activity-bulk-unassign-form');
-            const unassignTeacherId = document.getElementById('activity-unassign-teacher-id');
+            const unassignTeacherSelect = document.getElementById('activity-unassign-teacher-select');
+            const syncUnassignTeacher = () => {
+                if (!teacherSelect || !unassignTeacherSelect) return;
+                if (teacherSelect.value) {
+                    unassignTeacherSelect.value = teacherSelect.value;
+                }
+            };
 
             const syncChecksFromTeacher = () => {
                 const teacherId = teacherSelect?.value || '';
@@ -204,22 +206,9 @@
             }
 
             teacherSelect?.addEventListener('change', syncChecksFromTeacher);
+            teacherSelect?.addEventListener('change', syncUnassignTeacher);
             syncChecksFromTeacher();
-
-            unassignOpenBtn?.addEventListener('click', () => {
-                const teacherId = teacherSelect?.value || '';
-                if (!teacherId) {
-                    alert('Lütfen önce bir öğretmen seçin.');
-                    return;
-                }
-                if (!confirm('Seçili öğretmenden tüm atanmış oyun ve etkinlikler kaldırılacak. Devam edilsin mi?')) {
-                    return;
-                }
-                if (unassignTeacherId) {
-                    unassignTeacherId.value = teacherId;
-                }
-                unassignForm?.submit();
-            });
+            syncUnassignTeacher();
         })();
     </script>
 @endif

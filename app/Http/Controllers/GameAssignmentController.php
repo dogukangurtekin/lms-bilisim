@@ -30,18 +30,41 @@ class GameAssignmentController extends Controller
         $games = ActivityController::games();
         abort_unless(isset($games[$gameSlug]), 404);
 
+        $ownerFilter = (string) request()->query('owner', $isAdmin ? 'admin' : 'teacher');
+        $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($isAdmin ? 'admin' : 'teacher');
+        $classFilterId = (int) request()->query('class_id', 0);
         $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
-        $recentAssignments = GameAssignment::with(['classes', 'levels'])
+        $recentAssignments = GameAssignment::with(['classes', 'levels', 'creator.role'])
             ->where('game_slug', $gameSlug)
+            ->when(! $isAdmin, function ($query) use ($user) {
+                $query->where('created_by', $user?->id);
+            })
+            ->when($classFilterId > 0, function ($query) use ($classFilterId) {
+                $query->whereHas('classes', fn ($classQuery) => $classQuery->where('school_classes.id', $classFilterId));
+            })
+            ->when($isAdmin && $ownerFilter === 'admin', function ($query) {
+                $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'));
+            })
+            ->when($isAdmin && $ownerFilter === 'teacher', function ($query) {
+                $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'teacher'));
+            })
             ->latest()
             ->limit(10)
             ->get();
+
+        $ownerLabels = [
+            'admin' => 'Admin ödevleri',
+            'teacher' => 'Öğretmen ödevleri',
+            'all' => 'Tüm ödevler',
+        ];
 
         return view('activities.assignments.create', [
             'gameSlug' => $gameSlug,
             'game' => $games[$gameSlug],
             'classes' => $classes,
             'recentAssignments' => $recentAssignments,
+            'ownerFilter' => $ownerFilter,
+            'ownerLabels' => $ownerLabels,
         ]);
     }
 

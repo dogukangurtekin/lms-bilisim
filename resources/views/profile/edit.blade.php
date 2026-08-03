@@ -69,6 +69,10 @@
                     <label>Logo URL</label>
                     <input name="pwa_logo_url" value="{{ old('pwa_logo_url', $pwaSettings['logo_url'] ?? '') }}" placeholder="{{ url('/public/logo.png') }}">
                 </div>
+                <div style="grid-column:1 / -1">
+                    <label>Okul Müdürü Ad Soyad</label>
+                    <input name="principal_name" value="{{ old('principal_name', $pwaSettings['principal_name'] ?? '') }}" placeholder="Müdür adını yazın">
+                </div>
             </div>
             <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
                 <img src="{{ old('pwa_logo_url', $pwaSettings['logo_url'] ?? url('/public/logo.png')) }}" alt="Logo" style="width:64px;height:64px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2;background:#fff">

@@ -7,6 +7,8 @@ use App\Models\ActivityAttempt;
 use App\Models\ActivityQuestion;
 use App\Models\CodingActivity;
 use App\Models\DailyActivityAssignment;
+use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\StudentReport;
 use App\Models\UserStreak;
 use App\Models\UserXpLog;
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class CodingActivityService
 {
-    public function resolveTodayActivityForStudent(): ?CodingActivity
+    public function resolveTodayActivityForStudent(?Student $student = null): ?CodingActivity
     {
         $today = Carbon::today('Europe/Istanbul')->toDateString();
 
@@ -25,16 +27,48 @@ class CodingActivityService
             ->where('target_role', 'student')
             ->first();
 
-        if ($assigned?->activity?->is_active) {
-            return $assigned->activity;
+        if (! $assigned?->activity?->is_active) {
+            return null;
         }
 
-        return CodingActivity::with('questions.options')
-            ->where('is_active', true)
-            ->where('is_random_pool', true)
-            ->whereHas('questions')
-            ->inRandomOrder()
-            ->first();
+        $activity = $assigned->activity;
+        if (! $this->studentCanAccessAssignment($student, $activity, $assigned)) {
+            return null;
+        }
+
+        return $activity;
+    }
+
+    private function studentCanAccessAssignment(?Student $student, CodingActivity $activity, ?DailyActivityAssignment $assignment = null): bool
+    {
+        $assignedClassIds = collect((array) ($assignment?->target_class_ids ?? []))
+            ->map(fn ($value) => (int) $value)
+            ->filter(fn ($value) => $value > 0)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($assignedClassIds !== []) {
+            if (! $student || (int) ($student->school_class_id ?? 0) <= 0) {
+                return false;
+            }
+
+            return in_array((int) $student->school_class_id, $assignedClassIds, true);
+        }
+
+        $teacherId = (int) ($activity->teacher_id ?? 0);
+        if ($teacherId <= 0) {
+            return true;
+        }
+
+        if (! $student || (int) ($student->school_class_id ?? 0) <= 0) {
+            return false;
+        }
+
+        return SchoolClass::query()
+            ->whereKey((int) $student->school_class_id)
+            ->where('teacher_id', $teacherId)
+            ->exists();
     }
 
     public function submitAttempt(CodingActivity $activity, int $userId, array $answers, int $durationSeconds = 0): ActivityAttempt

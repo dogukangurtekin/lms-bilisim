@@ -19,6 +19,7 @@
         window.__APP_PWA_SETTINGS = @json($pwaConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     </script>
     @vite('resources/css/app.css')
+    @vite('resources/js/app.js')
     <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     @if(auth()->user()?->hasRole('student'))
     <link rel="stylesheet" href="{{ url('/public/css/student.css') }}">

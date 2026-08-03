@@ -3,6 +3,16 @@
 @section('title', 'Etkinlik Odevi Ver')
 
 @section('content')
+@php
+    $ownerFilter = $ownerFilter ?? 'teacher';
+    $ownerLabels = $ownerLabels ?? [
+        'admin' => 'Admin ödevleri',
+        'teacher' => 'Öğretmen ödevleri',
+        'all' => 'Tüm ödevler',
+    ];
+    $isAdmin = auth()->user()?->hasRole('admin') === true;
+@endphp
+
 <div class="top">
     <h1>{{ $game['name'] }} - Odev Ver</h1>
     <a class="btn" href="{{ route('activities.index') }}">Etkinliklere Don</a>
@@ -48,9 +58,21 @@
 
 <div class="card">
     <h3>Son Olusturulan Odevler</h3>
+    @if($isAdmin)
+        <form method="GET" action="{{ route('activities.assignments.create', $gameSlug) }}" style="margin:0 0 12px;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+            <div>
+                <label style="display:block;margin-bottom:6px;font-weight:700;">Gösterim Filtresi</label>
+                <select name="owner" onchange="this.form.submit()" style="min-width:220px;height:42px;padding:0 12px;border:1px solid #cfd8e3;border-radius:12px;background:#fff;">
+                    <option value="admin" @selected($ownerFilter === 'admin')>{{ $ownerLabels['admin'] }}</option>
+                    <option value="teacher" @selected($ownerFilter === 'teacher')>{{ $ownerLabels['teacher'] }}</option>
+                    <option value="all" @selected($ownerFilter === 'all')>{{ $ownerLabels['all'] }}</option>
+                </select>
+            </div>
+        </form>
+    @endif
     <table>
         <thead>
-        <tr><th>Odev</th><th>Teslim</th><th>Level Araligi</th><th>Siniflar</th><th>Puanlar</th></tr>
+        <tr><th>Odev</th><th>Teslim</th><th>Level Araligi</th><th>Siniflar</th><th>Veren</th><th>Puanlar</th></tr>
         </thead>
         <tbody>
         @forelse($recentAssignments as $assignment)
@@ -59,10 +81,11 @@
                 <td>{{ $assignment->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td>{{ $assignment->level_from ?? '-' }} - {{ $assignment->level_to ?? '-' }}</td>
                 <td>{{ $assignment->classes->map(fn($c) => $c->name . '/' . $c->section)->implode(', ') }}</td>
+                <td>{{ $assignment->creator?->name ?? '-' }}</td>
                 <td>{{ $assignment->levels->map(fn($l) => 'L' . $l->level . ':' . $l->points)->implode(', ') }}</td>
             </tr>
         @empty
-            <tr><td colspan="5">Henuz odev yok.</td></tr>
+            <tr><td colspan="6">Henuz odev yok.</td></tr>
         @endforelse
         </tbody>
     </table>
@@ -114,4 +137,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endsection
-

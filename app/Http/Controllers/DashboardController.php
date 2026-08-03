@@ -26,7 +26,7 @@ class DashboardController extends Controller
         'courses' => ['visible' => true, 'span' => 4, 'order' => 60, 'title' => 'Ders Sayısı', 'type' => 'stat'],
         'xp' => ['visible' => true, 'span' => 4, 'order' => 70, 'title' => 'Toplam XP', 'type' => 'stat'],
         'chart_success_distribution' => ['visible' => true, 'span' => 4, 'order' => 85, 'title' => 'Başarı Dağılımı', 'type' => 'chart'],
-        'chart_student_lesson_completion' => ['visible' => true, 'span' => 3, 'order' => 95, 'title' => 'Öğrenci Ders Tamamlama', 'type' => 'chart'],
+        'chart_student_lesson_completion' => ['visible' => true, 'span' => 12, 'order' => 95, 'title' => 'Öğrenci Ders Tamamlama', 'type' => 'chart'],
         'signals' => ['visible' => true, 'span' => 6, 'order' => 80, 'title' => 'Sınıf Sinyalleri', 'type' => 'signals'],
         'notes' => ['visible' => true, 'span' => 6, 'order' => 90, 'title' => 'Öğretmen Notları', 'type' => 'notes'],
         'leaderboard' => ['visible' => true, 'span' => 12, 'order' => 100, 'title' => 'Başarı Listesi', 'type' => 'leaderboard'],
