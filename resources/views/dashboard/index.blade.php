@@ -356,14 +356,14 @@
     const defs = {
         quick_qr: { title: 'Mobil QR Girişi', span: 6, order: 10 },
         notes: { title: 'Öğretmen Notları', span: 4, order: 20 },
-        students: { title: 'Toplam Öğrenci', span: 3, order: 30 },
-        active_students: { title: 'Aktif Öğrenci', span: 3, order: 40 },
-        classes: { title: 'Sınıf Sayısı', span: 3, order: 50 },
-        courses: { title: 'Ders Sayısı', span: 3, order: 60 },
-        avg_completion: { title: 'Ortalama Not', span: 3, order: 70 },
-        xp: { title: 'Toplam XP', span: 3, order: 80 },
+        students: { title: 'Toplam Öğrenci', span: 4, order: 30 },
+        active_students: { title: 'Aktif Öğrenci', span: 4, order: 40 },
+        classes: { title: 'Sınıf Sayısı', span: 4, order: 50 },
+        courses: { title: 'Ders Sayısı', span: 4, order: 60 },
+        avg_completion: { title: 'Ortalama Not', span: 4, order: 70 },
+        xp: { title: 'Toplam XP', span: 4, order: 80 },
         chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
-        chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 3, order: 95, zone: 'grid' },
+        chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 6, order: 95, zone: 'grid' },
         leaderboard: { title: 'Başarı Listesi', span: 6, order: 100 },
     };
 
@@ -378,7 +378,7 @@
         };
         if (key === 'chart_student_lesson_completion') {
             state[key].zone = 'grid';
-            state[key].span = Math.max(4, Number(state[key].span || 4));
+            state[key].span = Math.max(6, Number(state[key].span || 6));
         }
     });
 
@@ -452,10 +452,14 @@
             if (!card) return;
             card.style.display = conf.visible ? '' : 'none';
             card.classList.remove('widget-span-1','widget-span-2','widget-span-3','widget-span-4','widget-span-5','widget-span-6','widget-span-7','widget-span-8','widget-span-9','widget-span-10','widget-span-11','widget-span-12');
+            if (['students','active_students','classes','courses','avg_completion','xp'].includes(key) && window.innerWidth >= 1181) {
+                conf.span = Math.max(4, Number(conf.span || 4));
+            }
             card.classList.add(`widget-span-${clampSpan(conf.span)}`);
             if (key === 'chart_student_lesson_completion') {
                 conf.zone = 'grid';
-                card.classList.add('widget-span-4');
+                card.classList.remove('widget-span-4');
+                card.classList.add('widget-span-6');
             }
             card.draggable = false;
             card.querySelectorAll('.widget-toggle').forEach((btn) => {
