@@ -376,6 +376,10 @@
             order: Number(saved.order || def.order),
             zone: saved.zone || (key === 'leaderboard' ? 'sidebar' : 'grid'),
         };
+        if (key === 'chart_student_lesson_completion') {
+            state[key].zone = 'grid';
+            state[key].span = Math.max(4, Number(state[key].span || 4));
+        }
     });
 
     let editMode = false;
@@ -449,6 +453,10 @@
             card.style.display = conf.visible ? '' : 'none';
             card.classList.remove('widget-span-1','widget-span-2','widget-span-3','widget-span-4','widget-span-5','widget-span-6','widget-span-7','widget-span-8','widget-span-9','widget-span-10','widget-span-11','widget-span-12');
             card.classList.add(`widget-span-${clampSpan(conf.span)}`);
+            if (key === 'chart_student_lesson_completion') {
+                conf.zone = 'grid';
+                card.classList.add('widget-span-4');
+            }
             card.draggable = false;
             card.querySelectorAll('.widget-toggle').forEach((btn) => {
                 btn.disabled = !editMode;

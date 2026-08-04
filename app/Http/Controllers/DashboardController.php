@@ -415,12 +415,20 @@ class DashboardController extends Controller
             $merged[$key]['zone'] = in_array($merged[$key]['zone'] ?? 'grid', ['grid', 'sidebar'], true)
                 ? ($merged[$key]['zone'] ?? 'grid')
                 : 'grid';
+            if ($key === 'chart_student_lesson_completion') {
+                $merged[$key]['zone'] = 'grid';
+                $merged[$key]['span'] = max(4, (int) ($merged[$key]['span'] ?? 4));
+            }
         }
 
         foreach ($saved as $key => $widget) {
             if (! isset($merged[$key]) && is_array($widget)) {
                 $widgetZone = $widget['zone'] ?? 'grid';
                 $widget['zone'] = in_array($widgetZone, ['grid', 'sidebar'], true) ? $widgetZone : 'grid';
+                if ($key === 'chart_student_lesson_completion') {
+                    $widget['zone'] = 'grid';
+                    $widget['span'] = max(4, (int) ($widget['span'] ?? 4));
+                }
                 $merged[$key] = $widget;
             }
         }

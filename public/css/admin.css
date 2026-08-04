@@ -1023,6 +1023,23 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .widget-resize-handle::before{content:'';position:absolute;inset:4px;border-right:2px solid rgba(255,255,255,.9);border-bottom:2px solid rgba(255,255,255,.9);border-radius:1px}
 .is-editing .dashboard-widget{animation:widget-jiggle 0.45s infinite alternate}
 @keyframes widget-jiggle{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+@media (min-width: 1181px){
+  .dashboard-main-layout{
+    grid-template-columns:minmax(0,1fr) minmax(420px,500px);
+  }
+  .dashboard-right-column{
+    top:14px;
+  }
+  .dashboard-leaderboard-panel{
+    width:100%;
+  }
+  .dashboard-widget-grid > .dashboard-chart-widget{
+    min-width:0;
+  }
+  .dashboard-widget-grid > .dashboard-chart-widget .chart-widget-body{
+    min-width:0;
+  }
+}
 @media (max-width: 1180px){
   .dashboard-hero{flex-direction:column}
   .dashboard-hero-rates{min-width:0;width:100%}
