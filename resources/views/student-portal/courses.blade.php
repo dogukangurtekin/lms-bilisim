@@ -2,8 +2,21 @@
 @section('title','Derslerim')
 @section('content')
 @php
-    $categories = ['Tumu', 'Kodlama', 'Tasarim', 'Elektrik', 'Robotik', 'Teorik', 'Oyun', 'Yapay Zeka'];
-    $activeCategory = request('category', 'Tumu');
+    $normalizeText = static function ($value): string {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $converted = @mb_convert_encoding($decoded, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
+
+        return trim(strip_tags($converted !== false ? $converted : $decoded));
+    };
+
+    $categories = ['Tümü', 'Kodlama', 'Tasarım', 'Elektrik', 'Robotik', 'Teorik', 'Oyun', 'Yapay Zeka'];
+    $activeCategory = request('category', 'Tümü');
 @endphp
 <style>
     .course-search-layout {
@@ -48,7 +61,7 @@
             name="q"
             value="{{ $q ?? request('q') }}"
             class="h-14 rounded-xl border border-gray-300 bg-white px-5 text-lg text-gray-800 outline-none ring-[#4c1d95] placeholder:text-gray-400 focus:ring-2"
-            placeholder="Ders basligini aratmak icin yaziniz."
+            placeholder="Ders başlığını aratmak için yazınız."
         >
     </form>
 
@@ -59,15 +72,19 @@
                 $slides = (array) data_get($c->lesson_payload, 'slides', []);
                 $firstSlide = $slides[0] ?? [];
                 $desc = trim((string) data_get($c->lesson_payload, 'lesson_description', ''));
-                if ($desc === '') $desc = trim((string) data_get($firstSlide, 'description', ''));
-                if ($desc === '') $desc = $c->name . ' dersi icin hazirlanan konu anlatimi ve etkinlik icerikleri.';
+                if ($desc === '') {
+                    $desc = trim((string) data_get($firstSlide, 'description', ''));
+                }
+                if ($desc === '') {
+                    $desc = $normalizeText($c->name) . ' dersi için hazırlanan konu anlatımı ve etkinlik içerikleri.';
+                }
                 $thumb = (string) ($c->coverImageUrl() ?: data_get($firstSlide, 'image_url') ?: '');
                 $difficulty = (string) (data_get($c->lesson_payload, 'difficulty') ?: (((int) ($c->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($c->schoolClass?->name ?? 5) + 5) . '+';
             @endphp
             <x-course-card
-                :title="$c->name"
-                :description="$desc"
+                :title="$normalizeText($c->name)"
+                :description="$normalizeText($desc)"
                 :image="$thumb"
                 :logo="url('/public/logo.png')"
                 :age="$age"
@@ -80,7 +97,7 @@
             />
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
-                Henuz atanmis ders bulunmuyor.
+                Henüz atanmış ders bulunmuyor.
             </div>
         @endforelse
     </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Utf8Text;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -26,25 +27,7 @@ class LiveQuizQuestion extends Model
 
     public function setOptionsAttribute($value): void
     {
-        $this->attributes['options'] = json_encode($this->utf8ize($value), JSON_UNESCAPED_UNICODE);
-    }
-
-    private function utf8ize($value)
-    {
-        if (is_array($value)) {
-            $out = [];
-            foreach ($value as $k => $v) {
-                $out[$this->utf8ize($k)] = $this->utf8ize($v);
-            }
-            return $out;
-        }
-
-        if (is_string($value)) {
-            $converted = @mb_convert_encoding($value, 'UTF-8', 'UTF-8, Windows-1254, ISO-8859-9, ISO-8859-1');
-            return is_string($converted) ? $converted : utf8_encode($value);
-        }
-
-        return $value;
+        $this->attributes['options'] = json_encode(Utf8Text::sanitizeArray((array) $value), JSON_UNESCAPED_UNICODE);
     }
 
     public function quiz(): BelongsTo

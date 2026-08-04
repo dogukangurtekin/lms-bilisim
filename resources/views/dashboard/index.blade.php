@@ -21,43 +21,62 @@
     }
     .dashboard-widget-sidebar-grid{
         display:grid;
+        grid-template-columns:1fr;
         gap:1.35rem;
+        width:100%;
     }
     .dashboard-widget-sidebar-grid .dashboard-widget{
         width:100%;
+        min-width:0;
+        grid-column:1 / -1 !important;
     }
     .dashboard-leaderboard-panel{
         margin-top:0;
-        max-height: 340px;
-        overflow: hidden;
+        max-height: none;
+        overflow: visible;
         display: flex;
         flex-direction: column;
     }
     /* reverted widget sizing */
     .dashboard-leaderboard-panel .teacher-top10-list{
         display: grid;
-        gap: .55rem;
-        overflow: auto;
-        padding-right: .15rem;
-        max-height: 240px;
+        gap: .7rem;
+        overflow: visible;
+        padding-right: 0;
+        max-height: none;
     }
     .dashboard-leaderboard-panel .teacher-top10-item{
-        padding: .45rem .6rem;
+        padding: .6rem .75rem;
         border-radius: 14px;
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        min-height: 62px;
     }
     .dashboard-leaderboard-panel .teacher-top10-rank{
-        width: 30px;
-        height: 30px;
+        width: 34px;
+        height: 34px;
         font-size: .95rem;
-        flex: 0 0 30px;
+        flex: 0 0 34px;
+        color: #fff;
+        font-weight: 700;
     }
     .dashboard-leaderboard-panel .teacher-top10-main strong{
-        font-size: .95rem;
+        font-size: 1rem;
         line-height: 1.15;
+        display: block;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-weight: 500;
     }
     .dashboard-leaderboard-panel .teacher-top10-main span{
-        font-size: .8rem;
+        font-size: .85rem;
         line-height: 1.1;
+        display: block;
+    }
+    .dashboard-leaderboard-panel .teacher-top10-main{
+        flex: 1 1 auto;
+        min-width: 0;
     }
     .dashboard-leaderboard-panel .teacher-top10-xp{
         font-size: .82rem;
@@ -287,7 +306,7 @@
 
         <aside class="dashboard-right-column">
             <section class="dashboard-sidebar-stack">
-                <div class="dashboard-widget-sidebar-grid" id="dashboard-widget-sidebar-grid"></div>
+                <div class="dashboard-widget-sidebar-grid" id="dashboard-widget-sidebar-grid" style="grid-template-columns:1fr !important;width:100%;"></div>
                 <article class="dashboard-widget dashboard-widget-wide widget-span-12 dashboard-leaderboard-panel" data-widget-key="leaderboard" draggable="true">
                     <div class="widget-head">
                         <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf' }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
@@ -370,15 +389,18 @@
     const state = {};
     Object.entries(defs).forEach(([key, def]) => {
         const saved = initialLayout[key] || {};
+        const initialSpan = Number(saved.span || def.span);
         state[key] = {
             visible: saved.visible !== false,
-            span: Number(saved.span || def.span),
+            span: initialSpan,
+            gridSpan: Number(saved.gridSpan || initialSpan),
             order: Number(saved.order || def.order),
             zone: saved.zone || (key === 'leaderboard' ? 'sidebar' : 'grid'),
         };
         if (key === 'chart_student_lesson_completion') {
             state[key].zone = 'grid';
             state[key].span = Math.max(6, Number(state[key].span || 6));
+            state[key].gridSpan = Math.max(6, Number(state[key].gridSpan || state[key].span || 6));
         }
     });
 
@@ -455,11 +477,11 @@
             if (['students','active_students','classes','courses','avg_completion','xp'].includes(key) && window.innerWidth >= 1181) {
                 conf.span = Math.max(4, Number(conf.span || 4));
             }
-            card.classList.add(`widget-span-${clampSpan(conf.span)}`);
             if (key === 'chart_student_lesson_completion') {
-                conf.zone = 'grid';
-                card.classList.remove('widget-span-4');
-                card.classList.add('widget-span-6');
+                const effectiveSpan = conf.zone === 'grid' ? 6 : clampSpan(conf.span || 4);
+                card.classList.add(`widget-span-${effectiveSpan}`);
+            } else {
+                card.classList.add(`widget-span-${clampSpan(conf.span)}`);
             }
             card.draggable = false;
             card.querySelectorAll('.widget-toggle').forEach((btn) => {
@@ -468,8 +490,14 @@
             });
             const handle = card.querySelector('.widget-resize-handle');
             if (handle) handle.style.display = editMode ? 'block' : 'none';
-            if (conf.zone === 'sidebar' && key !== 'leaderboard') sidebarOrder.push(card);
+            if (conf.zone === 'sidebar' && key !== 'leaderboard') {
+                card.style.gridColumn = '1 / -1';
+                sidebarOrder.push(card);
+            }
             else gridOrder.push(card);
+            if (conf.zone !== 'sidebar') {
+                card.style.gridColumn = '';
+            }
         });
         [...grid.querySelectorAll('.dashboard-widget')].forEach((el) => {
             if (el.dataset.widgetKey !== 'leaderboard') el.remove();
@@ -486,7 +514,10 @@
             .filter((card) => card.dataset.widgetKey !== 'leaderboard')
             .forEach((card) => grid.appendChild(card));
         const leaderboard = shell.querySelector('[data-widget-key="leaderboard"]');
-        if (leaderboard && sidebarGrid) sidebarGrid.appendChild(leaderboard);
+        if (leaderboard && sidebarGrid) {
+            leaderboard.style.gridColumn = '1 / -1';
+            sidebarGrid.appendChild(leaderboard);
+        }
         if (window.innerWidth <= 640) {
             const qrCard = shell.querySelector('[data-widget-key="quick_qr"]');
             if (qrCard) grid.prepend(qrCard);
@@ -531,7 +562,15 @@
     };
     const updateZoneFromContainer = (container) => {
         const zone = container?.id === 'dashboard-widget-sidebar-grid' ? 'sidebar' : 'grid';
-        if (dragKey && state[dragKey]) state[dragKey].zone = zone;
+        if (dragKey && state[dragKey]) {
+            state[dragKey].zone = zone;
+            if (dragKey === 'chart_student_lesson_completion' && zone === 'grid') {
+                state[dragKey].span = state[dragKey].gridSpan || state[dragKey].span || 6;
+            }
+            if (dragKey === 'chart_student_lesson_completion' && zone === 'sidebar') {
+                state[dragKey].gridSpan = state[dragKey].span || state[dragKey].gridSpan || 6;
+            }
+        }
     };
     const moveDragPlaceholder = (target, clientX) => {
         const container = target.closest('#dashboard-widget-sidebar-grid') ? sidebarGrid : grid;
@@ -659,7 +698,8 @@
         const width = Math.max(260, startWidth + delta);
         const gridWidth = grid.getBoundingClientRect().width;
         const span = Math.max(1, Math.min(12, Math.round((width / gridWidth) * 12)));
-        state[resizeTarget.dataset.widgetKey].span = span;
+        const key = resizeTarget.dataset.widgetKey;
+        state[key].span = span;
         dirty = true;
         render();
     };

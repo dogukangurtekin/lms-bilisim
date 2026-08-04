@@ -538,8 +538,7 @@ class LiveQuizController extends Controller
 
     private function forceUtf8(string $text): string
     {
-        $converted = @mb_convert_encoding($text, 'UTF-8', 'UTF-8, Windows-1254, ISO-8859-9, ISO-8859-1');
-        return is_string($converted) ? $converted : utf8_encode($text);
+        return (string) Utf8Text::normalize($text);
     }
 
     private function syncSessionByTimer(LiveQuizSession $session): LiveQuizSession
@@ -681,3 +680,4 @@ class LiveQuizController extends Controller
         return $letter;
     }
 }
+use App\Support\Utf8Text;

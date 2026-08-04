@@ -70,7 +70,7 @@ class DashboardController extends Controller
                 ->get()
                 ->map(fn ($class) => [
                     'id' => (int) $class->id,
-                    'label' => trim($class->name . '/' . $class->section),
+                    'label' => $this->normalizeDashboardText(trim($class->name . '/' . $class->section)),
                 ])
                 ->values()
                 ->all();
@@ -130,7 +130,7 @@ class DashboardController extends Controller
                 ->get()
                 ->map(function (StudentTimeStat $row) {
                     return [
-                        'name' => $row->student?->user?->name ?? '-',
+                        'name' => $this->normalizeDashboardText($row->student?->user?->name ?? '-'),
                         'seen_at' => optional($row->last_seen_at)->format('H:i'),
                     ];
                 })
@@ -189,7 +189,7 @@ class DashboardController extends Controller
                     'student_id' => $student->id,
                     'user_id' => $student->user_id,
                     'school_class_id' => (int) $student->school_class_id,
-                    'name' => $student->user?->name ?? ('user_' . $student->user_id),
+                    'name' => $this->normalizeDashboardText($student->user?->name ?? ('user_' . $student->user_id)),
                     'class_name' => $className,
                     'xp' => $xp,
                     'avg_grade' => (float) ($avgGradeByStudent[$student->id] ?? 0),
@@ -241,7 +241,7 @@ class DashboardController extends Controller
             $studentLessonCompletion = $studentLessonBase
                 ->map(function (Student $student) use ($completedContentCountByUser) {
                     return [
-                        'label' => $student->user?->name ?? ('user_' . $student->user_id),
+                        'label' => $this->normalizeDashboardText($student->user?->name ?? ('user_' . $student->user_id)),
                         'value' => (int) ($completedContentCountByUser[$student->user_id] ?? 0),
                     ];
                 })
@@ -279,6 +279,8 @@ class DashboardController extends Controller
                 ->take(5)
                 ->map(function (array $row, int $i) {
                     $row['rank'] = $i + 1;
+                    $row['name'] = $this->normalizeDashboardText((string) ($row['name'] ?? '-'));
+                    $row['class_name'] = $this->normalizeDashboardText((string) ($row['class_name'] ?? '-'));
 
                     return $row;
                 })
@@ -310,7 +312,7 @@ class DashboardController extends Controller
             $topCompletion = $gradeByClass->first();
 
             return [
-                'headline_name' => $user?->name ?? 'Öğretmen',
+                'headline_name' => $this->normalizeDashboardText($user?->name ?? 'Öğretmen'),
                 'selected_class_id' => $activeClassId,
                 'class_tabs' => $classTabs,
                 'summary' => [
@@ -401,6 +403,7 @@ class DashboardController extends Controller
 
         $user->dashboard_layout = $layout;
         $user->save();
+        $this->forgetDashboardCaches($user);
 
         return response()->json(['ok' => true, 'layout' => $layout]);
     }
@@ -436,5 +439,39 @@ class DashboardController extends Controller
         uasort($merged, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
 
         return $merged;
+    }
+
+    private function forgetDashboardCaches($user): void
+    {
+        $userId = (int) ($user?->id ?? 0);
+        if ($userId <= 0) {
+            return;
+        }
+
+        $classIds = [0];
+        try {
+            $classIds = array_merge($classIds, SchoolClass::query()->pluck('id')->map(fn ($id) => (int) $id)->all());
+        } catch (\Throwable) {
+            // Cache temizliği en iyi çabayla yapılır; ana akış bozulmasın.
+        }
+
+        foreach (array_values(array_unique($classIds)) as $classId) {
+            Cache::forget('dashboard.teacher.' . $userId . '.class.' . $classId);
+        }
+    }
+
+    private function normalizeDashboardText(?string $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        $converted = @mb_convert_encoding($value, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
+        if (is_string($converted) && $converted !== '') {
+            return $converted;
+        }
+
+        return $value;
     }
 }

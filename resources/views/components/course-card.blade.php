@@ -24,8 +24,22 @@
 ])
 
 @php
+    $normalizeText = static function ($value): string {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $converted = @mb_convert_encoding($decoded, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
+
+        return trim(strip_tags($converted !== false ? $converted : $decoded));
+    };
+
     $hasCover = filled($image);
-    $normalizedDescription = trim(strip_tags(html_entity_decode(str_replace(["\r\n", "\n", "\r"], "\n", (string) $description), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+    $safeTitle = $normalizeText($title);
+    $normalizedDescription = $normalizeText(str_replace(["\r\n", "\n", "\r"], "\n", (string) $description));
     $difficultyValue = trim((string) $difficulty);
     $difficultyStyle = match (mb_strtolower($difficultyValue)) {
         'kolay' => 'background:#16a34a;color:#fff;',
@@ -92,7 +106,7 @@
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
         <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
-                <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $title }}</h4>
+                <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
                 @if($normalizedDescription !== '')
                     <p class="mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
                 @endif
@@ -100,10 +114,6 @@
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
         </div>
 
-        @php
-            $btnCount = 2 + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0) + (!empty($subCourseUrl) ? 1 : 0);
-            $btnCols = max(2, min(4, $btnCount));
-        @endphp
         @php
             $visibleButtons = 1 + (!empty($subCourseUrl) ? 1 : 0) + (!empty($deleteUrl) ? 1 : 0) + ($assignEnabled ? 1 : 0);
             $btnCols = max(1, min(4, $visibleButtons));

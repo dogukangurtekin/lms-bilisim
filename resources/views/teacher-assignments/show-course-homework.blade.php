@@ -1,6 +1,47 @@
 @extends('layout.app')
 @section('title','Ders Odevi Onizleme')
 @section('content')
+<style>
+    .homework-preview-grid{
+        display:grid;
+        gap:12px;
+    }
+    .homework-preview-grid p,
+    .homework-preview-grid div{
+        word-break:break-word;
+    }
+    .homework-preview-grid > div:first-child{
+        min-width:0;
+    }
+    .homework-runner{
+        padding:12px;
+    }
+    .homework-runner__frame{
+        width:100%;
+        height:calc(100vh - 260px);
+        min-height:680px;
+        border:1px solid #d1d5db;
+        border-radius:12px;
+        display:block;
+        background:#fff;
+    }
+    @media (max-width: 900px){
+        .homework-runner__frame{
+            height:70vh;
+            min-height:70vh;
+        }
+    }
+    @media (max-width: 640px){
+        .homework-runner{
+            padding:8px;
+        }
+        .homework-runner__frame{
+            height:62vh;
+            min-height:62vh;
+            border-radius:10px;
+        }
+    }
+</style>
 <div class="top">
     <h1>Ders Odevi Onizleme</h1>
     <a class="btn" href="{{ route('teacher.assignments.index') }}">Odevlere Don</a>
@@ -12,8 +53,8 @@
 @endphp
 
 @if($isLessonPreview)
-    <div class="card" style="margin-bottom:10px">
-        <div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;margin:0 0 10px">
+    <div class="card homework-preview-grid" style="margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;margin:0 0 10px">
             <p style="margin:0">
                 <b>Ders:</b> {{ $homework->course?->name ?? '-' }} |
                 <b>Baslik:</b> {{ $homework->title }} |
@@ -34,7 +75,7 @@
 
         @include('courses.partials.theme-css')
 
-        <div id="teacher-lesson-slide-stage" class="card slide-theme" style="min-height:80vh;overflow:hidden;margin:0 0 10px"></div>
+        <div id="teacher-lesson-slide-stage" class="card slide-theme" style="min-height:80vh;overflow:hidden;margin:0 0 10px;min-width:0"></div>
 
         <template id="teacher-lesson-slide-templates">
             @foreach($slides as $i => $slide)
@@ -97,16 +138,16 @@
 @endif
 
 @if(!empty($gameUrl))
-    <div class="card" style="padding:10px">
-        <p><b>Ogretmen Onizleme:</b> Oyunu/uygulamayi ogrencideki gibi burada test edebilirsiniz.</p>
+    <div class="card homework-runner">
+        <p style="margin:0 0 10px;"><b>Ogretmen Onizleme:</b> Oyunu/uygulamayi ogrencideki gibi burada test edebilirsiniz.</p>
         <iframe
             id="teacher-homework-runner"
+            class="homework-runner__frame"
             allow="camera *; microphone *; fullscreen *"
             src="{{ $gameUrl }}"
             data-slug="{{ $gameSlug ?? '' }}"
             data-level-start="{{ (int) ($homework->level_from ?? 1) }}"
             data-level-end="{{ (int) ($homework->level_to ?? ($homework->level_from ?? 1)) }}"
-            style="width:100%;height:calc(100vh - 260px);min-height:680px;border:1px solid #d1d5db;border-radius:10px;display:block"
         ></iframe>
     </div>
 @endif

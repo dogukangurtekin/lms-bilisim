@@ -1,11 +1,54 @@
 @extends('layout.app')
 @section('title','Oyun/Uygulama Odevi Onizleme')
 @section('content')
+<style>
+    .assignment-summary{
+        display:grid;
+        gap:10px;
+    }
+    .assignment-summary p{
+        margin:0;
+        word-break:break-word;
+    }
+    .assignment-runner{
+        padding:12px;
+    }
+    .assignment-runner__frame{
+        width:100%;
+        min-height:calc(100vh - 260px);
+        height:calc(100vh - 260px);
+        border:1px solid #d1d5db;
+        border-radius:12px;
+        display:block;
+        background:#fff;
+    }
+    @media (max-width: 900px){
+        .assignment-runner{
+            padding:10px;
+        }
+        .assignment-runner__frame{
+            min-height:70vh;
+            height:70vh;
+        }
+    }
+    @media (max-width: 640px){
+        .assignment-runner{
+            padding:8px;
+        }
+        .assignment-runner__frame{
+            min-height:62vh;
+            height:62vh;
+            border-radius:10px;
+        }
+    }
+</style>
+
 <div class="top">
     <h1>Oyun/Uygulama Odevi Onizleme</h1>
     <a class="btn" href="{{ route('teacher.assignments.index') }}">Odevlere Don</a>
 </div>
-<div class="card">
+
+<div class="card assignment-summary">
     <p><b>Icerik:</b> {{ $assignment->game_name }} ({{ $assignment->game_slug }})</p>
     <p><b>Baslik:</b> {{ $assignment->title }}</p>
     <p><b>Teslim:</b> {{ $assignment->due_date?->format('Y-m-d') ?? '-' }}</p>
@@ -13,18 +56,20 @@
     <p><b>Siniflar:</b> {{ $assignment->classes->map(fn($c) => $c->name.'/'.$c->section)->implode(', ') ?: '-' }}</p>
     <p><b>Puanlar:</b> {{ $assignment->levels->map(fn($l) => 'L'.$l->level.':'.$l->points)->implode(', ') ?: '-' }}</p>
 </div>
-<div class="card" style="padding:10px">
-    <p><b>Öğretmen Önizleme:</b> Öğrencideki gibi oyunu/uygulamayı burada oynayabilirsiniz.</p>
+
+<div class="card assignment-runner">
+    <p style="margin:0 0 10px;"><b>Ogretmen Onizleme:</b> Ogrencideki gibi oyunu/uygulamayi burada oynayabilirsiniz.</p>
     <iframe
         id="teacher-assignment-runner"
+        class="assignment-runner__frame"
         allow="camera *; microphone *; fullscreen *"
         src="{{ $gameUrl }}"
         data-slug="{{ $assignment->game_slug }}"
         data-level-start="{{ (int) ($assignment->level_from ?? 1) }}"
         data-level-end="{{ (int) ($assignment->level_to ?? ($assignment->level_from ?? 1)) }}"
-        style="width:100%;height:calc(100vh - 260px);min-height:680px;border:1px solid #d1d5db;border-radius:10px;display:block"
     ></iframe>
 </div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {

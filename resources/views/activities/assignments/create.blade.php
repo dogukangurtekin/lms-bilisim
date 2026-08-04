@@ -1,6 +1,6 @@
 @extends('layout.app')
 
-@section('title', 'Etkinlik Odevi Ver')
+@section('title', 'Etkinlik Ödevi Ver')
 
 @section('content')
 @php
@@ -13,51 +13,89 @@
     $isAdmin = auth()->user()?->hasRole('admin') === true;
 @endphp
 
+<style>
+    .assignment-form-grid{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+    }
+    .assignment-form-grid .field{
+        min-width:0;
+    }
+    .assignment-form-grid input,
+    .assignment-form-grid select,
+    .assignment-form-grid textarea{
+        width:100%;
+        box-sizing:border-box;
+    }
+    .assignment-meta-grid{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:10px;
+    }
+    @media (max-width: 760px){
+        .assignment-form-grid,
+        .assignment-meta-grid{
+            grid-template-columns:1fr;
+        }
+        .top{
+            gap:8px;
+        }
+    }
+</style>
+
 <div class="top">
-    <h1>{{ $game['name'] }} - Odev Ver</h1>
-    <a class="btn" href="{{ route('activities.index') }}">Etkinliklere Don</a>
+    <h1>{{ $game['name'] }} - Ödev Ver</h1>
+    <a class="btn" href="{{ route('activities.index') }}">Etkinliklere Dön</a>
 </div>
 
 <div class="card">
     <form method="POST" action="{{ route('activities.assignments.store', $gameSlug) }}" id="assignment-form">
         @csrf
-        <label>Odev Adi</label>
-        <input name="title" value="{{ old('title') }}" required>
+        <div class="assignment-form-grid">
+            <div class="field">
+                <label>Ödev Adı</label>
+                <input name="title" value="{{ old('title') }}" required>
+            </div>
+            <div class="field">
+                <label>Ödev Teslim Tarihi</label>
+                <input type="date" name="due_date" value="{{ old('due_date') }}">
+            </div>
+        </div>
 
-        <label>Odev Teslim Tarihi</label>
-        <input type="date" name="due_date" value="{{ old('due_date') }}">
-
-        <div class="actions">
-            <div style="min-width:220px;flex:1">
-                <label>Level Baslangic</label>
+        <div class="assignment-meta-grid" style="margin-top:12px;">
+            <div class="field">
+                <label>Level Başlangıç</label>
                 <input type="number" name="level_from" id="level_from" min="1" value="{{ old('level_from') }}">
             </div>
-            <div style="min-width:220px;flex:1">
-                <label>Level Bitis</label>
+            <div class="field">
+                <label>Level Bitiş</label>
                 <input type="number" name="level_to" id="level_to" min="1" value="{{ old('level_to') }}">
             </div>
         </div>
 
-        <label>Odev Verilecek Siniflar</label>
-        <select name="class_ids[]" multiple required size="8">
-            @foreach($classes as $class)
-                <option value="{{ $class->id }}" @selected(collect(old('class_ids', []))->contains($class->id))>
-                    {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
-                </option>
-            @endforeach
-        </select>
+        <div class="field" style="margin-top:12px;">
+            <label>Ödev Verilecek Sınıflar</label>
+            <select name="class_ids[]" multiple required size="8">
+                @foreach($classes as $class)
+                    <option value="{{ $class->id }}" @selected(collect(old('class_ids', []))->contains($class->id))>
+                        {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
 
         <div id="level-points-box" style="margin-top:10px"></div>
         @if($errors->any())
             <div style="color:#b91c1c;margin:10px 0">{{ $errors->first() }}</div>
         @endif
 
-        <button class="btn" type="submit">Odevi Kaydet</button>
+        <button class="btn" type="submit">Ödevi Kaydet</button>
     </form>
 </div>
 
 <div class="card">
-    <h3>Son Olusturulan Odevler</h3>
+    <h3>Son Oluşturulan Ödevler</h3>
     @if($isAdmin)
         <form method="GET" action="{{ route('activities.assignments.create', $gameSlug) }}" style="margin:0 0 12px;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
             <div>
@@ -72,7 +110,7 @@
     @endif
     <table>
         <thead>
-        <tr><th>Odev</th><th>Teslim</th><th>Level Araligi</th><th>Siniflar</th><th>Veren</th><th>Puanlar</th></tr>
+        <tr><th>Ödev</th><th>Teslim</th><th>Level Aralığı</th><th>Sınıflar</th><th>Veren</th><th>Puanlar</th></tr>
         </thead>
         <tbody>
         @forelse($recentAssignments as $assignment)
@@ -85,7 +123,7 @@
                 <td>{{ $assignment->levels->map(fn($l) => 'L' . $l->level . ':' . $l->points)->implode(', ') }}</td>
             </tr>
         @empty
-            <tr><td colspan="6">Henuz odev yok.</td></tr>
+            <tr><td colspan="6">Henüz ödev yok.</td></tr>
         @endforelse
         </tbody>
     </table>
@@ -107,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const title = document.createElement('h4');
-        title.textContent = 'Level Bazli Puanlar';
+        title.textContent = 'Level Bazlı Puanlar';
         box.appendChild(title);
 
         for (let i = from; i <= to; i++) {
@@ -116,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
             wrap.style.marginBottom = '6px';
 
             const label = document.createElement('label');
-            label.textContent = 'Level ' + i + ' Puani';
+            label.textContent = 'Level ' + i + ' Puanı';
             label.style.minWidth = '150px';
 
             const input = document.createElement('input');
