@@ -236,6 +236,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/ogretmene-ata/toplu', [CourseController::class, 'assignTeacherBulk'])->name('courses.assign-teacher.bulk');
         Route::post('/courses/ogretmenden-kaldir/toplu', [CourseController::class, 'unassignTeacherBulk'])->name('courses.unassign-teacher.bulk');
         Route::post('/courses/siniflara-ata/toplu', [CourseController::class, 'assignClassesBulk'])->name('courses.assign-classes.bulk');
+        Route::post('/courses/siniflardan-kaldir/toplu', [CourseController::class, 'unassignClassesBulk'])->name('courses.unassign-classes.bulk');
         Route::post('/courses/{course}/assign-teacher', [CourseController::class, 'assignTeacher'])->name('courses.assign-teacher');
         Route::post('/courses/{course}/unassign-teacher', [CourseController::class, 'unassignTeacher'])->name('courses.unassign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
@@ -248,6 +249,10 @@ Route::middleware('auth')->group(function () {
 
     });
 
+    Route::middleware('auth')->group(function () {
+        Route::get('/ogrenci/derslerim/{course}', [StudentPortalController::class, 'courseShow'])->name('student.portal.course-show');
+    });
+
     Route::middleware('role:student')->group(function () {
         Route::get('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoinForm'])->name('student.live-quiz.join.form');
         Route::post('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoin'])->name('student.live-quiz.join');
@@ -258,7 +263,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/ogrenci/panelim', [StudentPortalController::class, 'dashboard'])->name('student.portal.dashboard');
         Route::get('/ogrenci/derslerim', [StudentPortalController::class, 'courses'])->name('student.portal.courses');
-        Route::get('/ogrenci/derslerim/{course}', [StudentPortalController::class, 'courseShow'])->name('student.portal.course-show');
         Route::post('/ogrenci/derslerim/{course}/tamamla', [StudentPortalController::class, 'completeCourse'])->name('student.portal.course.complete');
         Route::get('/ogrenci/odevlerim', [StudentPortalController::class, 'assignments'])->name('student.portal.assignments');
         Route::get('/ogrenci/arkadaslarim', [StudentPortalController::class, 'friends'])->name('student.portal.friends');

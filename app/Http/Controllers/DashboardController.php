@@ -89,17 +89,10 @@ class DashboardController extends Controller
                 ->count();
 
             $totalCourses = Course::query()
-                ->when(! $isAdmin, function ($q) use ($teacher, $teacherClassIds) {
+                ->whereNull('parent_course_id')
+                ->when(! $isAdmin, function ($q) use ($teacher) {
                     $teacherId = (int) ($teacher?->id ?? 0);
-                    $q->where(function ($qq) use ($teacherId, $teacherClassIds) {
-                        if ($teacherId > 0) {
-                            $qq->where('teacher_id', $teacherId);
-                        }
-
-                        if ($teacherClassIds !== []) {
-                            $qq->orWhereIn('school_class_id', $teacherClassIds);
-                        }
-                    });
+                    $q->where('teacher_id', $teacherId);
                 })
                 ->when($activeClassId > 0, fn ($q) => $q->where('school_class_id', $activeClassId))
                 ->count();

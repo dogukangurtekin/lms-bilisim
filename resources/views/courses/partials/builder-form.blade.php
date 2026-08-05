@@ -1069,8 +1069,11 @@
             </select>
         </div>
         <div class="actions">
-            <a class="btn btn-ghost" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
             <button class="btn builder-fullscreen-btn" type="button" id="builder_fullscreen_btn" aria-pressed="false" aria-label="Tam ekran düzenini aç"><span aria-hidden="true" style="font-size:18px;line-height:1">⤢</span><span>Tam Ekran</span></button>
+            @if(!empty($parentCourse))
+                <button type="button" id="sub-course-import-open" class="btn" style="background:#16a34a;color:#fff;font-weight:800">Yükle</button>
+            @endif
+            <a class="btn btn-ghost" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
             <button class="btn btn-primary" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
             <button class="btn btn-outline-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
         </div>

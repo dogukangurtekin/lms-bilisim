@@ -255,7 +255,7 @@
     @else
         <div class="course-show-page">
             <div class="course-show-topbar">
-                <a class="course-show-brand" href="{{ url('/courses') }}" aria-label="Derslerime dön">
+                <a class="course-show-brand" href="{{ route('student.portal.courses') }}" aria-label="Derslerime dön">
                     <img src="{{ $courseLogo }}" alt="Logo">
                     <div class="course-show-brand-text">
                         <p class="course-show-kicker">{{ $previewMode ? 'Önizleme' : 'Ders İçeriği' }}</p>
@@ -263,12 +263,19 @@
                     </div>
                 </a>
 
-                <div></div>
-
                 <div class="course-show-metrics">
                     <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
                     <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
                     <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
+                    <a
+                        class="btn"
+                        href="{{ route('student.portal.courses') }}"
+                        style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;padding:10px 16px;border-radius:16px;background:#f59e0b;border-color:#f59e0b;color:#fff;text-decoration:none;white-space:nowrap;"
+                        aria-label="Derslerime dön"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19z"/></svg>
+                        Derslerime Dön
+                    </a>
                 </div>
             </div>
 

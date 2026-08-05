@@ -2,17 +2,7 @@
 @section('title', $title)
 @section('content')
 @php
-    $normalizeText = static function ($value): string {
-        $value = trim((string) $value);
-        if ($value === '') {
-            return '';
-        }
-
-        $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $converted = @mb_convert_encoding($decoded, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
-
-        return trim(strip_tags($converted !== false ? $converted : $decoded));
-    };
+    $normalizeText = static fn ($value): string => trim((string) \App\Support\Utf8Text::normalize($value));
 
     $subCourses = collect($subCourses ?? []);
     $subCourseProgress = collect($subCourseProgress ?? []);

@@ -2,18 +2,7 @@
 @section('title','Derslerim')
 @section('content')
 @php
-    $normalizeText = static function ($value): string {
-        $value = trim((string) $value);
-
-        if ($value === '') {
-            return '';
-        }
-
-        $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $converted = @mb_convert_encoding($decoded, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
-
-        return trim(strip_tags($converted !== false ? $converted : $decoded));
-    };
+    $normalizeText = static fn ($value): string => trim((string) \App\Support\Utf8Text::normalize($value));
 
     $categories = ['Tümü', 'Kodlama', 'Tasarım', 'Elektrik', 'Robotik', 'Teorik', 'Oyun', 'Yapay Zeka'];
     $activeCategory = request('category', 'Tümü');
@@ -26,8 +15,16 @@
     }
     .course-cards-grid {
         display: grid;
+        width: 100%;
         gap: 1.5rem;
         grid-template-columns: repeat(1, minmax(0, 1fr));
+        justify-items: start;
+        align-items: start;
+        grid-auto-flow: row;
+    }
+    .course-card-cell {
+        width: 100%;
+        min-width: 0;
     }
     @media (min-width: 640px) {
         .course-cards-grid {
@@ -82,22 +79,22 @@
                 $difficulty = (string) (data_get($c->lesson_payload, 'difficulty') ?: (((int) ($c->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($c->schoolClass?->name ?? 5) + 5) . '+';
             @endphp
-            <x-course-card
-                :title="$normalizeText($c->name)"
-                :description="$normalizeText($desc)"
-                :image="$thumb"
-                :logo="url('/public/logo.png')"
-                :age="$age"
-                :difficulty="$difficulty"
-                :content-url="route('course.detail', ['id' => $c->id])"
-                content-label="Derse git"
-                :primary-url="route('student.portal.course-show', $c)"
-                :primary-label="$cp?->completed ? 'Tamamlandı' : 'Derse Başla'"
-                primary-variant="success"
-            />
+            <div class="course-card-cell">
+                <x-course-card
+                    :title="$normalizeText($c->name)"
+                    :description="$normalizeText($desc)"
+                    :image="$thumb"
+                    :logo="url('/public/logo.png')"
+                    :age="$age"
+                    :difficulty="$difficulty"
+                    :primary-url="route('course.detail', ['id' => $c->id])"
+                    :primary-label="$cp?->completed ? 'Tamamlandı' : 'Derse Git'"
+                    primary-variant="success"
+                />
+            </div>
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
-                Henüz atanmış ders bulunmuyor.
+                Henüz atanmamış ders bulunmuyor.
             </div>
         @endforelse
     </div>

@@ -348,12 +348,23 @@ class StudentPortalController extends Controller
 
     public function courseShow(Course $course)
     {
-        $student = $this->getStudent();
-        abort_if(! $this->canStudentAccessCourse($student, $course), 403);
-        $courseProgress = ContentProgress::where('user_id', $student->user_id)
-            ->where('content_id', 'course-' . $course->id)
+        $student = Student::with(['user', 'schoolClass', 'currentAvatar', 'badges'])
+            ->where('user_id', auth()->id())
             ->first();
-        if ($courseProgress?->completed) {
+        $previewMode = ! $student;
+
+        if ($student) {
+            abort_if(! $this->canStudentAccessCourse($student, $course), 403);
+        } elseif (! auth()->user()?->hasRole('admin') && ! auth()->user()?->hasRole('teacher')) {
+            abort(403);
+        }
+
+        $courseProgress = $student
+            ? ContentProgress::where('user_id', $student->user_id)
+                ->where('content_id', 'course-' . $course->id)
+                ->first()
+            : null;
+        if ($student && $courseProgress?->completed) {
             return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi tamamladiniz. Tekrar acilamaz.');
         }
 
@@ -361,11 +372,13 @@ class StudentPortalController extends Controller
         $payload = (array) ($course->lesson_payload ?? []);
         $curriculum = (array) data_get($payload, 'curriculum', []);
         $subCourses = $course->subCourses()->with(['teacher.user', 'schoolClass'])->get();
-        $mainCourseCompleted = ContentProgress::query()
-            ->where('user_id', $student->user_id)
-            ->where('content_id', 'course-' . $course->id)
-            ->where('completed', true)
-            ->exists();
+        $mainCourseCompleted = $student
+            ? ContentProgress::query()
+                ->where('user_id', $student->user_id)
+                ->where('content_id', 'course-' . $course->id)
+                ->where('completed', true)
+                ->exists()
+            : false;
         $questionTotal = collect($slides)->filter(function ($slide) {
             return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
         })->count();
@@ -374,14 +387,14 @@ class StudentPortalController extends Controller
         })->count();
         $summarySlide = [
             '__summary' => true,
-            'title' => 'Ders Özeti',
+            'title' => 'Ders Ã–zeti',
             'xp' => 0,
             'summary' => [
                 'lesson_title' => (string) ($course->name ?? ''),
                 'topic' => (string) ($curriculum['konu'] ?? ''),
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
                 'outcomes' => array_values(array_filter((array) (
-                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
+                    $curriculum['kazanÄ±mlar'] ?? $curriculum['kazanimlar'] ?? []
                 ), fn ($item) => trim((string) $item) !== '')),
                 'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
@@ -400,7 +413,7 @@ class StudentPortalController extends Controller
             'summarySlide' => $summarySlide,
             'subCourses' => $subCourses,
             'mainCourseCompleted' => $mainCourseCompleted,
-            'previewMode' => false,
+            'previewMode' => $previewMode,
         ]);
     }
 
@@ -412,14 +425,14 @@ class StudentPortalController extends Controller
         $subCourses = $course->subCourses()->with(['teacher.user', 'schoolClass'])->get();
         $summarySlide = [
             '__summary' => true,
-            'title' => 'Ders Özeti',
+            'title' => 'Ders Ã–zeti',
             'xp' => 0,
             'summary' => [
                 'lesson_title' => (string) ($course->name ?? ''),
                 'topic' => (string) ($curriculum['konu'] ?? ''),
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
                 'outcomes' => array_values(array_filter((array) (
-                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
+                    $curriculum['kazanÄ±mlar'] ?? $curriculum['kazanimlar'] ?? []
                 ), fn ($item) => trim((string) $item) !== '')),
                 'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
@@ -616,7 +629,7 @@ class StudentPortalController extends Controller
             'message' => $messages[$messageKey],
         ]);
 
-        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sınıf panosunda paylaşıldı.');
+        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sÄ±nÄ±f panosunda paylaÅŸÄ±ldÄ±.');
     }
 
     public function progress()
@@ -657,7 +670,6 @@ class StudentPortalController extends Controller
     {
         return Course::with(['teacher.user', 'schoolClass'])
             ->whereNull('parent_course_id')
-            ->whereNotNull('teacher_id')
             ->whereExists(function ($sq) use ($student) {
                 $sq->select(DB::raw(1))
                     ->from('course_homeworks')
@@ -671,11 +683,20 @@ class StudentPortalController extends Controller
 
     private function canStudentAccessCourse(Student $student, Course $course): bool
     {
-        if ((int) ($course->teacher_id ?? 0) <= 0) {
+        if ((int) ($course->teacher_id ?? 0) <= 0 && empty($course->parent_course_id)) {
             return false;
         }
 
         if (!empty($course->parent_course_id)) {
+            if ((int) ($course->school_class_id ?? 0) > 0 && (int) $course->school_class_id === (int) $student->school_class_id) {
+                return true;
+            }
+
+            $parent = Course::query()->find((int) $course->parent_course_id);
+            if ($parent && (int) ($parent->school_class_id ?? 0) === (int) $student->school_class_id) {
+                return true;
+            }
+
             $childAssigned = CourseHomework::query()
                 ->where('course_id', $course->id)
                 ->where('school_class_id', $student->school_class_id)
@@ -691,6 +712,8 @@ class StudentPortalController extends Controller
             if ($childAssigned || $parentAssigned) {
                 return true;
             }
+
+            return false;
         }
 
         return CourseHomework::query()
@@ -716,7 +739,9 @@ class StudentPortalController extends Controller
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
 
         return max(0, $gradeXp + $contentXp);
-    }    private function classBoardMessages(): array
+    }
+
+    private function classBoardMessages(): array
     {
         return [
             'm01' => 'Bugün kod yazmaya hazırım, hedefim bir adım daha ileri gitmek.',
@@ -729,7 +754,7 @@ class StudentPortalController extends Controller
             'm08' => 'Bugün bir arkadaşıma kodda yardım edeceğim.',
             'm09' => 'Hedefim temiz kod yazmak ve düzenli ilerlemek.',
             'm10' => 'Robotumu daha akıllı hale getirmek için çalışıyorum.',
-            'm11' => 'Yaz?l?m ??renmek sab?r ister, ben haz?r?m.',
+            'm11' => 'Yazılım öğrenmek sabır ister, ben hazırım.',
             'm12' => 'Başarı, vazgeçmeden tekrar denemekle gelir.',
             'm13' => 'Sınıf olarak birbirimizi motive ederek daha hızlı gelişiriz.',
             'm14' => 'Bugün öğrendiğim her satır kod geleceğime yatırımdır.',
@@ -762,7 +787,6 @@ class StudentPortalController extends Controller
             ['name' => 'Quiz Ustası', 'icon' => '❓', 'description' => 'En az 20 quiz oturumuna katıl.', 'metric' => 'quiz_joined_count', 'target' => 20],
         ];
     }
-
     private function syncStudentBadges(Student $student, int $xp): array
     {
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
@@ -914,7 +938,7 @@ class StudentPortalController extends Controller
             }
             if (preg_match('/^homework-(\d+)$/', $cid, $m)) {
                 $item = $homeworks->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Ders Ödevi: ' . $item->title) : $cid;
+                $labels[$cid] = $item ? ('Ders Ã–devi: ' . $item->title) : $cid;
                 continue;
             }
             if (preg_match('/^game-assignment-(\d+)$/', $cid, $m)) {
@@ -1218,3 +1242,4 @@ class StudentPortalController extends Controller
         return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
     }
 }
+
