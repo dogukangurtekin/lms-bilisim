@@ -88,7 +88,7 @@
                     :age="$age"
                     :difficulty="$difficulty"
                     :primary-url="route('course.detail', ['id' => $c->id])"
-                    :primary-label="$cp?->completed ? 'Tamamlandı' : 'Derse Git'"
+                    :primary-label="'Derse Git'"
                     primary-variant="success"
                 />
             </div>
@@ -103,4 +103,5 @@
         {{ $courses->links() }}
     </div>
 </section>
+
 @endsection

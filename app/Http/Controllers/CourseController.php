@@ -43,38 +43,65 @@ class CourseController extends Controller
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
         $isAdmin = (bool) $user?->hasRole('admin');
         $isTeacher = (bool) $user?->hasRole('teacher');
+        $hasTeacherProfile = $teacherId > 0;
         $ownerFilter = trim((string) $request->string('owner')->toString());
         $ownerFilter = $isAdmin ? $ownerFilter : ($isTeacher ? (string) $user?->id : '');
-        $applyOwnerFilter = function ($query) use ($isAdmin, $isTeacher, $ownerFilter, $teacherId): void {
-            if ($isTeacher && $ownerFilter !== '') {
-                $teacherUserId = (int) $ownerFilter;
-                $query->where(function ($subQuery) use ($teacherUserId, $teacherId): void {
-                    $subQuery->where('created_by', $teacherUserId)
-                        ->orWhere('teacher_id', $teacherId);
+        $applyOwnerFilter = function ($query) use ($isAdmin, $isTeacher, $hasTeacherProfile, $ownerFilter, $teacherId, $user): void {
+            if ($isAdmin) {
+                if ($ownerFilter === '' || $ownerFilter === 'all') {
+                    return;
+                }
+
+                if ($ownerFilter === 'system_admin') {
+                    $adminUserIds = User::query()
+                        ->whereHas('role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'))
+                        ->pluck('id')
+                        ->all();
+                    $query->whereIn('created_by', $adminUserIds);
+                    return;
+                }
+
+                if (is_numeric($ownerFilter)) {
+                    $selectedUserId = (int) $ownerFilter;
+                    $selectedTeacherId = (int) (Teacher::query()
+                        ->where('user_id', $selectedUserId)
+                        ->value('id') ?? 0);
+
+                    $query->where(function ($subQuery) use ($selectedUserId, $selectedTeacherId): void {
+                        $subQuery->where('created_by', $selectedUserId);
+                        if ($selectedTeacherId > 0) {
+                            $subQuery->orWhere('teacher_id', $selectedTeacherId);
+                        }
+                    });
+                }
+
+                return;
+            }
+
+            if (($isTeacher || $hasTeacherProfile) && $teacherId > 0) {
+                $currentUserId = (int) ($user?->id ?? 0);
+                $query->where(function ($subQuery) use ($teacherId, $currentUserId): void {
+                    $subQuery->where('teacher_id', $teacherId);
+                    if ($currentUserId > 0) {
+                        $subQuery->orWhere('created_by', $currentUserId);
+                    }
                 });
-                return;
-            }
-
-            if (! $isAdmin || $ownerFilter === '' || $ownerFilter === 'all') {
-                return;
-            }
-
-            if ($ownerFilter === 'system_admin') {
-                $adminUserIds = User::query()->whereHas('role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'))->pluck('id');
-                $query->whereIn('created_by', $adminUserIds->all());
-                return;
-            }
-
-            if (is_numeric($ownerFilter)) {
-                $teacherUserId = (int) $ownerFilter;
-                $query->where('created_by', $teacherUserId);
             }
         };
 
         try {
             $itemsQuery = Course::query()
-                ->with(['schoolClass:id,name,section,grade_level'])
+                ->with(['schoolClass:id,name,section,grade_level', 'creator:id,name'])
                 ->whereNull('parent_course_id')
+                ->when($isTeacher && $teacherId > 0, function ($query) use ($teacherId, $user): void {
+                    $query->where(function ($subQuery) use ($teacherId, $user): void {
+                        $subQuery->where('teacher_id', $teacherId);
+                        $currentUserId = (int) ($user?->id ?? 0);
+                        if ($currentUserId > 0) {
+                            $subQuery->orWhere('created_by', $currentUserId);
+                        }
+                    });
+                })
                 ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
                 ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
                 ;
@@ -89,8 +116,17 @@ class CourseController extends Controller
                 'message' => $e->getMessage(),
             ]);
             $itemsQuery = Course::query()
-                ->with(['schoolClass:id,name,section,grade_level'])
+                ->with(['schoolClass:id,name,section,grade_level', 'creator:id,name'])
                 ->whereNull('parent_course_id')
+                ->when($isTeacher && $teacherId > 0, function ($query) use ($teacherId, $user): void {
+                    $query->where(function ($subQuery) use ($teacherId, $user): void {
+                        $subQuery->where('teacher_id', $teacherId);
+                        $currentUserId = (int) ($user?->id ?? 0);
+                        if ($currentUserId > 0) {
+                            $subQuery->orWhere('created_by', $currentUserId);
+                        }
+                    });
+                })
                 ;
             $applyOwnerFilter($itemsQuery);
 
@@ -998,9 +1034,14 @@ class CourseController extends Controller
                         $lessonPayload['cover_image'] = $cover;
                     }
                 }
-                $importTeacherId = (int) ($courseData['teacher_id'] ?? 0);
-                if ($importTeacherId <= 0 || !Teacher::query()->whereKey($importTeacherId)->exists()) {
-                    $importTeacherId = $teacherId > 0 && $user?->hasRole('teacher') ? $teacherId : null;
+                $importTeacherId = null;
+                if ($user?->hasRole('teacher')) {
+                    $candidateTeacherId = (int) ($courseData['teacher_id'] ?? 0);
+                    if ($candidateTeacherId > 0 && Teacher::query()->whereKey($candidateTeacherId)->exists()) {
+                        $importTeacherId = $candidateTeacherId;
+                    } elseif ($teacherId > 0) {
+                        $importTeacherId = $teacherId;
+                    }
                 }
 
                 $importClassId = $courseData['school_class_id'] ?? null;
@@ -1009,14 +1050,7 @@ class CourseController extends Controller
                     $importClassId = null;
                 }
 
-                $importCreatedBy = $courseData['created_by'] ?? null;
-                $importCreatedBy = is_numeric($importCreatedBy) ? (int) $importCreatedBy : null;
-                if ($importCreatedBy !== null && !\App\Models\User::query()->whereKey($importCreatedBy)->exists()) {
-                    $importCreatedBy = auth()->id();
-                }
-                if ($importCreatedBy === null) {
-                    $importCreatedBy = auth()->id();
-                }
+                $importCreatedBy = (int) auth()->id();
 
                 $parentCourse = Course::query()->create([
                     'name' => $name,
@@ -1057,9 +1091,12 @@ class CourseController extends Controller
                     if (! isset($subPayload['curriculum']) || ! is_array($subPayload['curriculum'])) {
                         $subPayload['curriculum'] = [];
                     }
-                    $subCourseTeacherId = (int) ($subData['teacher_id'] ?? 0);
-                    if ($subCourseTeacherId <= 0 || !Teacher::query()->whereKey($subCourseTeacherId)->exists()) {
-                        $subCourseTeacherId = $importTeacherId;
+                    $subCourseTeacherId = $importTeacherId;
+                    if ($user?->hasRole('teacher')) {
+                        $candidateSubTeacherId = (int) ($subData['teacher_id'] ?? 0);
+                        if ($candidateSubTeacherId > 0 && Teacher::query()->whereKey($candidateSubTeacherId)->exists()) {
+                            $subCourseTeacherId = $candidateSubTeacherId;
+                        }
                     }
                     $subCourseClassId = $subData['school_class_id'] ?? $parentCourse->school_class_id;
                     $subCourseClassId = is_numeric($subCourseClassId) ? (int) $subCourseClassId : null;

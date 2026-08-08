@@ -47,14 +47,52 @@ class CodingActivityManagementController extends Controller
     {
         $user = auth()->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
+        $isAdmin = (bool) auth()->user()?->hasRole('admin');
+        $isTeacher = (bool) auth()->user()?->hasRole('teacher');
         $hasTeacherColumn = $this->canUseTeacherColumn();
         $hasAdminLockColumn = $this->canUseAdminLockColumn();
         $availableClasses = $this->availableClassesForCurrentUser($user);
-        $activities = CodingActivity::query()
+        $creatorFilter = (int) request()->integer('creator_id');
+        $activitiesQuery = CodingActivity::query()
+            ->with(['creator:id,name', 'teacher.user:id,name'])
             ->withCount('questions')
-            ->when($user?->hasRole('teacher') && $hasTeacherColumn, fn ($query) => $query->where('teacher_id', $teacherId))
-            ->latest()
-            ->paginate(20);
+            ->when($user?->hasRole('teacher') && $hasTeacherColumn, function ($query) use ($teacherId, $user): void {
+                $query->where(function ($inner) use ($teacherId, $user): void {
+                    $inner->where('teacher_id', $teacherId)
+                        ->orWhere('created_by', (int) $user?->id);
+                });
+            })
+            ->when($isAdmin && $creatorFilter > 0, fn ($query) => $query->where('created_by', $creatorFilter));
+        $activities = $activitiesQuery->latest()->paginate(20)->withQueryString();
+        $bulkActivities = (clone $activitiesQuery)
+            ->latest('id')
+            ->get();
+        $activityCreators = $isAdmin
+            ? CodingActivity::query()
+                ->whereNotNull('created_by')
+                ->with('creator:id,name')
+                ->select(['created_by'])
+                ->distinct()
+                ->get()
+                ->pluck('creator')
+                ->filter()
+                ->unique('id')
+                ->sortBy('name')
+                ->values()
+            : collect();
+        $bulkClassAssignmentMap = DailyActivityAssignment::query()
+            ->with('activity:id,title,teacher_id,created_by')
+            ->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))
+            ->where('target_role', 'student')
+            ->get(['coding_activity_id', 'target_class_ids'])
+            ->reduce(function (array $carry, DailyActivityAssignment $assignment): array {
+                $activityId = (int) $assignment->coding_activity_id;
+                foreach (array_values(array_filter((array) ($assignment->target_class_ids ?? []), fn ($value) => (int) $value > 0)) as $classId) {
+                    $carry[(int) $classId] ??= [];
+                    $carry[(int) $classId][] = $activityId;
+                }
+                return $carry;
+            }, []);
         $todayAssignment = DailyActivityAssignment::with(['activity' => fn ($query) => $query->when($user?->hasRole('teacher'), fn ($q) => $q->where('teacher_id', $teacherId))])
             ->whereDate('assignment_date', Carbon::today('Europe/Istanbul'))
             ->where('target_role', 'student')
@@ -62,7 +100,6 @@ class CodingActivityManagementController extends Controller
             ->first();
         $selectedId = (int) request()->integer('edit');
         $editingActivity = $selectedId > 0 ? CodingActivity::with('questions.options')->find($selectedId) : null;
-        $isAdmin = (bool) auth()->user()?->hasRole('admin');
         $teachers = Teacher::query()->with('user')->orderBy('id', 'desc')->get();
         $assignableActivities = CodingActivity::query()
             ->select(array_values(array_filter([
@@ -73,8 +110,17 @@ class CodingActivityManagementController extends Controller
             ])))
             ->orderByDesc('id')
             ->get();
+        $activityIdsByTeacher = $hasTeacherColumn
+            ? CodingActivity::query()
+                ->select(['id', 'teacher_id'])
+                ->whereNotNull('teacher_id')
+                ->get()
+                ->groupBy(fn (CodingActivity $activity) => (int) ($activity->teacher_id ?? 0))
+                ->map(fn ($group) => $group->pluck('id')->map(fn ($id) => (int) $id)->values()->all())
+                ->all()
+            : [];
 
-        return view('coding-activities.manage', compact('activities', 'todayAssignment', 'editingActivity', 'isAdmin', 'teachers', 'assignableActivities', 'availableClasses'));
+        return view('coding-activities.manage', compact('activities', 'bulkActivities', 'bulkClassAssignmentMap', 'todayAssignment', 'editingActivity', 'isAdmin', 'isTeacher', 'teachers', 'availableClasses', 'activityIdsByTeacher', 'activityCreators', 'creatorFilter'));
     }
 
     public function store(StoreCodingActivityRequest $request): RedirectResponse
@@ -436,40 +482,128 @@ class CodingActivityManagementController extends Controller
         }
         CodingActivity::query()->whereIn('id', $activityIds)->update($update);
 
-        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' g?nl?k ?al??ma ??retmene atand?.');
+        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' günlük çalışma öğretmene atandı.');
     }
 
     public function unassignTeacherBulk(Request $request): RedirectResponse
     {
-        abort_unless(auth()->user()?->hasRole('admin'), 403);
         abort_unless($this->canUseTeacherColumn(), 404);
 
         $data = $request->validate([
-            'teacher_id' => ['required', 'integer', 'exists:teachers,id'],
+            'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
+            'activity_ids' => ['required', 'array', 'min:1'],
+            'activity_ids.*' => ['integer', 'exists:coding_activities,id'],
         ]);
 
-        $teacherId = (int) $data['teacher_id'];
-        $activityIds = CodingActivity::query()
-            ->where('teacher_id', $teacherId)
-            ->pluck('id')
-            ->map(fn ($value) => (int) $value)
-            ->values()
-            ->all();
+        $teacherId = (int) ($data['teacher_id'] ?? 0);
+        if ($teacherId <= 0) {
+            $teacherId = (int) (optional($request->user()?->teacher)->id ?? 0);
+        }
+        abort_if($teacherId <= 0, 422, 'Oğretmen seçimi bulunamadı.');
 
-        if ($activityIds === []) {
-            return redirect()->route('coding.activities.manage')->with('error', 'Se?ili ??retmende atanm?? g?nl?k ?al??ma bulunamad?.');
+        $activityIds = collect($data['activity_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $updated = 0;
+
+        DB::transaction(function () use ($activityIds, $teacherId, &$updated): void {
+            $activities = CodingActivity::query()
+                ->whereIn('id', $activityIds)
+                ->where('teacher_id', $teacherId)
+                ->get();
+
+            foreach ($activities as $activity) {
+                if ($this->canUseTeacherColumn()) {
+                    $activity->forceFill(['teacher_id' => null])->save();
+                }
+                if ($this->canUseAdminLockColumn()) {
+                    $activity->forceFill(['admin_locked' => false])->save();
+                }
+                $updated++;
+            }
+        });
+
+        return redirect()->route('coding.activities.manage')->with('ok', $updated . ' günlük çalışma öğretmen ataması kaldırıldı.');
+    }
+
+    public function assignClassesBulk(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'activity_ids' => ['required', 'array', 'min:1'],
+            'activity_ids.*' => ['integer', 'exists:coding_activities,id'],
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+
+        $activityIds = collect($data['activity_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $classIds = $this->normalizeAssignableClassIds($data['class_ids'] ?? []);
+        if ($classIds === []) {
+            return back()->with('error', 'Lutfen en az bir sinif secin.');
         }
 
-        $hasTeacherOwned = CodingActivity::query()
-            ->whereIn('id', $activityIds)
-            ->whereNotNull('teacher_id')
-            ->exists();
-
-        if ($hasTeacherOwned) {
-            return redirect()->route('coding.activities.manage')->with('error', '??retmene atanm?? g?nl?k ?al??malar?n geri al?m? sadece ilgili ??retmen taraf?ndan yap?labilir.');
+        if (! $this->classesAreAssignableByCurrentUser($classIds)) {
+            return back()->with('error', 'Secilen siniflar icin yetkiniz yok.');
         }
 
-        return redirect()->route('coding.activities.manage')->with('error', 'Bu ??retmende admin taraf?ndan geri al?nabilecek g?nl?k ?al??ma yok.');
+        foreach ($activityIds as $activityId) {
+            $activity = CodingActivity::query()->find($activityId);
+            if (! $activity) {
+                continue;
+            }
+
+            DailyActivityAssignment::updateOrCreate(
+                ['assignment_date' => Carbon::today('Europe/Istanbul')->toDateString(), 'target_role' => 'student', 'coding_activity_id' => $activity->id],
+                [
+                    'assigned_by' => auth()->id(),
+                    'target_class_ids' => $classIds,
+                ]
+            );
+        }
+
+        return redirect()->route('coding.activities.manage')->with('ok', count($activityIds) . ' günlük çalışma seçilen sınıflara atandı.');
+    }
+
+    public function unassignClassesBulk(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'activity_ids' => ['required', 'array', 'min:1'],
+            'activity_ids.*' => ['integer', 'exists:coding_activities,id'],
+            'class_ids' => ['required', 'array', 'min:1'],
+            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ]);
+
+        $activityIds = collect($data['activity_ids'])->map(fn ($v) => (int) $v)->unique()->values()->all();
+        $classIds = $this->normalizeAssignableClassIds($data['class_ids'] ?? []);
+        $today = Carbon::today('Europe/Istanbul')->toDateString();
+        $updated = 0;
+
+        DB::transaction(function () use ($activityIds, $classIds, $today, &$updated): void {
+            foreach ($activityIds as $activityId) {
+                $assignment = DailyActivityAssignment::query()
+                    ->whereDate('assignment_date', $today)
+                    ->where('target_role', 'student')
+                    ->where('coding_activity_id', $activityId)
+                    ->first();
+
+                if (! $assignment) {
+                    continue;
+                }
+
+                $currentClassIds = collect((array) ($assignment->target_class_ids ?? []))
+                    ->map(fn ($value) => (int) $value)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $remaining = array_values(array_diff($currentClassIds, $classIds));
+                if ($remaining === []) {
+                    $assignment->delete();
+                } else {
+                    $assignment->forceFill(['target_class_ids' => $remaining])->save();
+                }
+                $updated++;
+            }
+        });
+
+        return redirect()->route('coding.activities.manage')->with('ok', $updated . ' günlük çalışma-sınıf ataması kaldırıldı.');
     }
 
     private function purgeUnfinishedStudentDailyCodingTraces(array $activityIds, ?array $targetUserIds = null): void

@@ -102,7 +102,12 @@
     }
     $existingCoverUrl = $isEdit ? ($course->coverImageUrl() ?: '') : '';
     $selectedClass = old('school_class_id', $isEdit ? $course->school_class_id : '__ALL__');
-    $defaultTeacherId = old('teacher_id', $isEdit ? $course->teacher_id : ($teachers->first()->id ?? null));
+    $defaultTeacherId = old(
+        'teacher_id',
+        $isEdit
+            ? $course->teacher_id
+            : (auth()->user()?->hasRole('teacher') ? (optional(auth()->user()?->teacher)->id ?? null) : null)
+    );
     $defaultWeeklyHours = old('weekly_hours', $isEdit ? $course->weekly_hours : 2);
     $defaultCode = old('code', $isEdit ? $course->code : '');
     $defaultLessonTitle = old('name', $isEdit ? $course->name : 'Örnek Ders: Layout Galerisi');
@@ -1073,7 +1078,7 @@
             @if(!empty($parentCourse))
                 <button type="button" id="sub-course-import-open" class="btn" style="background:#16a34a;color:#fff;font-weight:800">Yükle</button>
             @endif
-            <a class="btn btn-ghost" href="{{ route('courses.index') }}">Derslerime Geri Dön</a>
+            <a class="btn btn-ghost" href="{{ url('/courses') }}">Derslerime Geri Dön</a>
             <button class="btn btn-primary" type="submit">{{ $isEdit ? 'Değişiklikleri Kaydet' : 'Dersi Kaydet' }}</button>
             <button class="btn btn-outline-danger" type="button" id="remove_slide_btn">Slaytı Sil</button>
         </div>
@@ -2137,7 +2142,9 @@ document.addEventListener('DOMContentLoaded', function () {
             lessonTitle.value = 'Örnek Ders: Layout Galerisi';
         }
         hName.value = lessonTitle.value || 'Örnek Ders: Layout Galerisi';
-        if (!hTeacher.value) hTeacher.value = '{{ $defaultTeacherId }}';
+        if (!hTeacher.value) {
+            hTeacher.value = @json(auth()->user()?->hasRole('teacher') ? (optional(auth()->user()?->teacher)->id ?? '') : '');
+        }
         if (!hWeekly.value) hWeekly.value = '{{ $defaultWeeklyHours }}';
         ensureCourseCode();
         if (topClassSelect.value === '__ALL__') {

@@ -364,10 +364,6 @@ class StudentPortalController extends Controller
                 ->where('content_id', 'course-' . $course->id)
                 ->first()
             : null;
-        if ($student && $courseProgress?->completed) {
-            return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi tamamladiniz. Tekrar acilamaz.');
-        }
-
         $slides = $this->presentation->prepareCourseSlides($course, false);
         $payload = (array) ($course->lesson_payload ?? []);
         $curriculum = (array) data_get($payload, 'curriculum', []);
@@ -468,7 +464,7 @@ class StudentPortalController extends Controller
             ->where('user_id', $student->user_id)
             ->first();
         if ($existing?->completed) {
-            return redirect()->route('student.portal.courses')->with('ok', 'Bu ders zaten tamamlandi.');
+            return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi zaten tamamladiniz. Tekrar XP kazanamazsiniz.');
         }
 
         $slides = $this->presentation->prepareCourseSlides($course, false);

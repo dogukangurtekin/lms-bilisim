@@ -2,7 +2,7 @@
 @section('title','Ders Detayi')
 @section('content')
 <div class="top" style="margin-bottom:10px">
-    <a class="btn" href="{{ route('courses.index') }}">Derslerime Geri Don</a>
+    <a class="btn" href="{{ url('/courses') }}">Derslerime Geri Don</a>
 </div>
 <div class="card">
     @php
@@ -37,6 +37,14 @@
         </template>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                const fullscreenTarget = document.querySelector('.card') || document.documentElement;
+                const requestFullscreen = fullscreenTarget.requestFullscreen
+                    || fullscreenTarget.webkitRequestFullscreen
+                    || fullscreenTarget.msRequestFullscreen;
+                if (requestFullscreen) {
+                    Promise.resolve(requestFullscreen.call(fullscreenTarget)).catch(() => {});
+                }
+
                 const stage = document.getElementById('course-show-slide-stage');
                 const prevBtn = document.getElementById('course-show-prev');
                 const nextBtn = document.getElementById('course-show-next');

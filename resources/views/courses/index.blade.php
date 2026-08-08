@@ -171,6 +171,16 @@
         .course-action-grid .btn {
             min-width: 0;
         }
+        .course-cards-grid {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1rem;
+        }
+        .course-card-item {
+            flex: 1 1 100%;
+            max-width: 100%;
+            width: 100%;
+        }
     }
     @media (min-width: 640px) {
         .course-card-item {
@@ -269,6 +279,9 @@
                 $className = (string) ($item->schoolClass?->name ?? '6');
                 $classNumber = (int) preg_replace('/\D+/', '', $className);
                 $age = (($classNumber > 0 ? $classNumber : 6) + 5) . '+';
+                $creatorLabel = trim((string) ($item->creator?->name ?? ''));
+                $canEditCourse = (bool) ($isAdmin ?? false) || ((bool) ($isTeacher ?? false) && (int) ($item->created_by ?? 0) === (int) auth()->id());
+                $canCreateSubCourse = (bool) ($isAdmin ?? false) || ((bool) ($isTeacher ?? false) && (int) ($item->created_by ?? 0) === (int) auth()->id());
             @endphp
             <x-course-card
                 :title="$item->name"
@@ -280,12 +293,13 @@
                 :primary-url="route('course.detail', ['id' => $item->id])"
                 primary-label="Dersi Aç"
                 :download-url="route('courses.export', $item)"
-                :sub-course-url="route('courses.create', ['parent_course_id' => $item->id])"
+                :sub-course-url="$canCreateSubCourse ? route('courses.create', ['parent_course_id' => $item->id]) : null"
                 :delete-url="auth()->user()?->hasRole('student') ? null : url('/courses/delete/' . $item->id)"
                 :assign-enabled="auth()->user()?->hasRole('admin','teacher')"
                 :assign-course-id="$item->id"
                 :assign-course-name="$item->name"
                 :assign-current-teacher="(int) ($item->teacher_id ?? 0)"
+                :creator-label="$creatorLabel"
             />
             </div>
             @empty

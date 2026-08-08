@@ -47,7 +47,8 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
 
-        Auth::login($user, $request->boolean('remember'));
+        $remember = $request->boolean('remember') || $user->hasRole('student');
+        Auth::login($user, $remember);
         $request->session()->regenerate();
 
         $user = Auth::user();

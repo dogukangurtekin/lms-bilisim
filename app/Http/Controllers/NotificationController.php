@@ -67,7 +67,7 @@ class NotificationController extends Controller
                         ->filter(fn ($student) => $student->user_id)
                         ->map(fn ($student) => [
                             'id' => $student->id,
-                            'name' => $student->user?->name ?? ('Ogrenci #' . $student->id),
+                            'name' => $student->user?->name ?? ('Öğrenci #' . $student->id),
                         ])
                         ->values()
                         ->all(),
@@ -210,7 +210,7 @@ class NotificationController extends Controller
     public function markRead(NotificationLog $log): JsonResponse
     {
         if ((int) $log->user_id !== (int) auth()->id()) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 403);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz işlem.'], 403);
         }
 
         NotificationLogRead::query()->updateOrCreate(
@@ -225,7 +225,7 @@ class NotificationController extends Controller
     {
         $userId = (int) auth()->id();
         if ($userId <= 0) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 401);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz işlem.'], 401);
         }
 
         $limit = max(1, min(50, (int) $request->query('limit', 20)));
@@ -262,7 +262,7 @@ class NotificationController extends Controller
     {
         $userId = (int) auth()->id();
         if ($userId <= 0 || (int) $log->user_id !== $userId) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 403);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz i?lem.'], 403);
         }
 
         try {
@@ -288,7 +288,7 @@ class NotificationController extends Controller
     {
         $userId = (int) auth()->id();
         if ($userId <= 0) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz islem.'], 401);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz i?lem.'], 401);
         }
 
         try {
@@ -346,7 +346,7 @@ class NotificationController extends Controller
                 ]);
             } else {
                 if (! $isAdmin && in_array($target, ['class', 'class_student'], true) && ! $this->teacherHasClassAccess((int) ($data['class_id'] ?? 0), (int) $user->id)) {
-                    return response()->json(['ok' => false, 'message' => 'Bu sinif icin yetkiniz yok.'], 403);
+                    return response()->json(['ok' => false, 'message' => 'Bu sınıf için yetkiniz yok.'], 403);
                 }
 
                 $userIds = match ($target) {
@@ -373,7 +373,7 @@ class NotificationController extends Controller
                 };
 
                 if ($userIds === []) {
-                    return response()->json(['ok' => false, 'message' => 'Secilen hedef icin aktif kullanici bulunamadi.'], 422);
+                    return response()->json(['ok' => false, 'message' => 'Seçilen hedef için aktif kullanıcı bulunamadı.'], 422);
                 }
 
                 $result = $this->pushService->sendToUsers($userIds, (string) $data['type'], (string) $data['title'], (string) $data['body'], $data['url'] ?? null, [
@@ -400,10 +400,10 @@ class NotificationController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('admin', 'teacher'), 403);
         if (auth()->user()?->hasRole('admin') !== true && (int) $log->user_id !== (int) auth()->id()) {
-            return response()->json(['ok' => false, 'message' => 'Bu log icin yetkiniz yok.'], 403);
+            return response()->json(['ok' => false, 'message' => 'Bu log için yetkiniz yok.'], 403);
         }
         if (!$log->user_id) {
-            return response()->json(['ok' => false, 'message' => 'Kullanici hedefi yok.'], 422);
+            return response()->json(['ok' => false, 'message' => 'Kullanıcı hedefi yok.'], 422);
         }
         try {
             $result = $this->pushService->sendToUsers([(int) $log->user_id], (string) $log->type, (string) $log->title, (string) $log->body, $log->url, [
@@ -416,7 +416,7 @@ class NotificationController extends Controller
             report($e);
             return response()->json([
                 'ok' => false,
-                'message' => 'Tekrar gonderim basarisiz: ' . $e->getMessage(),
+                'message' => 'Tekrar gönderim başarısız: ' . $e->getMessage(),
             ], 500);
         }
     }

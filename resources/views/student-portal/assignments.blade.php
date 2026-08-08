@@ -79,7 +79,7 @@
                 </td>
                 <td class="actions" data-label="İşlem">
                     <a class="btn" href="{{ route('course.detail', ['id' => $c->id]) }}">İçerik</a>
-                    <a class="btn" href="{{ route('student.portal.course-show', $c) }}">{{ $cp?->completed ? 'Tamamlandı' : 'Derse Başla' }}</a>
+                    <a class="btn student-course-start-link" href="{{ route('student.portal.course-show', $c) }}">{{ $cp?->completed ? 'Tamamlandı' : 'Derse Başla' }}</a>
                 </td>
             </tr>
         @empty
@@ -88,6 +88,20 @@
         </tbody>
     </table>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.student-course-start-link').forEach((link) => {
+        if (link.dataset.fullscreenBound === '1') return;
+        link.dataset.fullscreenBound = '1';
+        link.addEventListener('click', () => {
+            try {
+                sessionStorage.setItem('course_auto_fullscreen', '1');
+            } catch (_) {}
+        });
+    });
+});
+</script>
 
 <div class="card">
     <h3>Ödevlerim</h3>

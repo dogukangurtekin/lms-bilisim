@@ -28,6 +28,26 @@
 <body class="{{ auth()->user()?->role?->slug ? 'role-'.auth()->user()->role->slug : 'role-guest' }} @yield('body_class')">
 @if(auth()->user()?->hasRole('student'))
 <style>
+.play-compact .layout{
+    display:block;
+}
+.play-compact .sidebar,
+.play-compact .mobile-sidebar-backdrop,
+.play-compact .navbar,
+.play-compact .footer,
+.play-compact #mobile-sidebar-backdrop{
+    display:none !important;
+}
+.play-compact .main{
+    margin:0 !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-height:100vh;
+    padding:0 !important;
+}
+.play-compact .main > :not(.course-show-shell){
+    display:none !important;
+}
 .live-quiz-overlay {
     position: fixed;
     inset: 0;

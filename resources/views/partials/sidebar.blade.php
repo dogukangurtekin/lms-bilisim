@@ -5,10 +5,10 @@
             $timeStat = $currentStudent ? \App\Models\StudentTimeStat::where('student_id', $currentStudent->id)->first() : null;
             $initialSeconds = (int) ($timeStat?->total_seconds ?? 0);
         @endphp
-        <div class="student-sidebar-top sidebar-brand">
+        <a href="{{ route('student.portal.dashboard') }}" class="student-sidebar-top sidebar-brand" style="text-decoration:none;color:inherit;">
             <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
-        </div>
+        </a>
         <nav class="student-sidebar-nav">
             <a class="{{ request()->routeIs('student.portal.dashboard') ? 'active' : '' }}" href="{{ route('student.portal.dashboard') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panelim
@@ -47,10 +47,10 @@
             <a class="btn" href="{{ route('logout.get') }}" style="margin-top:8px;width:100%;display:inline-flex;justify-content:center">Çıkış Yap</a>
         </div>
     @else
-        <div class="sidebar-top sidebar-brand">
+        <a href="{{ route('dashboard') }}" class="sidebar-top sidebar-brand" style="text-decoration:none;color:inherit;">
             <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
-        </div>
+        </a>
         <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panel
         </a>

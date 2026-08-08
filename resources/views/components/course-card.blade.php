@@ -17,6 +17,7 @@
     'assignCurrentClass' => 0,
     'isFavorite' => false,
     'downloadUrl' => null,
+    'creatorLabel' => '',
 ])
 
 @php
@@ -89,6 +90,9 @@
         <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
                 <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
+                @if(trim((string) $creatorLabel) !== '')
+                    <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabel }}</p>
+                @endif
                 @if($normalizedDescription !== '')
                     <p class="mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
                 @endif
@@ -128,18 +132,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         transition: transform .15s ease, filter .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-    .course-card-action--edit {
-        border: 1px solid #7c3aed;
-        background: #fff;
-        color: #5b21b6;
-        box-shadow: 0 10px 20px rgba(15,23,42,.06);
-    }
-    .course-card-action--edit:hover {
-        background: #7c3aed;
-        color: #fff;
-        box-shadow: 0 14px 26px rgba(124,58,237,.24);
-        transform: translateY(-1px);
     }
     .course-card-action--launch {
         border: 1px solid #f59e0b;

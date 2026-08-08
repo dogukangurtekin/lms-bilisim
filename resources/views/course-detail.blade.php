@@ -3,7 +3,8 @@
 @section('content')
 @php
     $normalizeText = static fn ($value): string => trim((string) \App\Support\Utf8Text::normalize($value));
-
+    $viewer = auth()->user();
+    $canEditMainCourse = (bool) ($viewer?->hasRole('admin') || ((bool) $viewer?->hasRole('teacher') && (int) ($course->created_by ?? 0) === (int) ($viewer?->id ?? 0)));
     $subCourses = collect($subCourses ?? []);
     $subCourseProgress = collect($subCourseProgress ?? []);
     $mainCompleted = (bool) ($isCompleted ?? false);
@@ -22,26 +23,22 @@
     <article class="w-full rounded-2xl bg-white p-6 shadow-lg" style="border:1px solid #e5eef9">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="flex items-start gap-3">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDBA12] text-lg font-bold text-white">
-                    {{ $lessonNumber }}
-                </span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDBA12] text-lg font-bold text-white">{{ $lessonNumber }}</span>
                 <h2 class="text-2xl font-bold text-gray-900">{{ $safeDetailTitle }}</h2>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                @if(auth()->check() && (auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher')))
+                @if($canEditMainCourse)
                     <a href="{{ route('courses.edit', $course) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                         Düzenle
                     </a>
                 @endif
-                @if($mainCompleted)
-                    <span class="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 text-base font-semibold text-white">
-                        Tamamlandı
-                    </span>
-                @else
-                    <a href="{{ $startUrl ?? '#' }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-[#FDBA12] px-6 text-base font-semibold text-white transition hover:brightness-95">
-                        Derse Başla
-                    </a>
-                @endif
+                <a
+                    href="{{ $startUrl ?? '#' }}"
+                    class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $mainCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}"
+                    data-course-fullscreen-start="1"
+                >
+                    {{ $mainCompleted ? 'Tamamlandı' : 'Derse Başla' }}
+                </a>
             </div>
         </div>
 
@@ -94,31 +91,24 @@
                         ->map(fn ($item) => $normalizeText($item))
                         ->filter()
                         ->values();
+                    $canEditSubCourse = (bool) ($viewer?->hasRole('admin') || ((bool) $viewer?->hasRole('teacher') && (int) ($subCourse->created_by ?? 0) === (int) ($viewer?->id ?? 0)));
                 @endphp
 
                 <article class="w-full rounded-2xl bg-white p-6 shadow-lg" style="border:1px solid #e5eef9">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div class="flex items-start gap-3">
-                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDBA12] text-lg font-bold text-white">
-                                {{ $loop->iteration }}
-                            </span>
+                            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#FDBA12] text-lg font-bold text-white">{{ $loop->iteration }}</span>
                             <h2 class="text-2xl font-bold text-gray-900">{{ $normalizeText($subCourse->name) }}</h2>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            @if(auth()->check() && (auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher')))
+                            @if($canEditSubCourse)
                                 <a href="{{ route('courses.edit', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     Düzenle
                                 </a>
                             @endif
-                            @if($subCompleted)
-                                <span class="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 text-base font-semibold text-white">
-                                    Tamamlandı
-                                </span>
-                            @else
-                                <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-[#FDBA12] px-6 text-base font-semibold text-white transition hover:brightness-95">
-                                    Derse Başla
-                                </a>
-                            @endif
+                            <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $subCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}" data-course-fullscreen-start="1">
+                                {{ $subCompleted ? 'Tamamlandı' : 'Derse Başla' }}
+                            </a>
                         </div>
                     </div>
 
@@ -157,4 +147,18 @@
         </section>
     @endif
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-course-fullscreen-start="1"]').forEach((link) => {
+        if (link.dataset.fullscreenBound === '1') return;
+        link.dataset.fullscreenBound = '1';
+        link.addEventListener('click', () => {
+            try {
+                sessionStorage.setItem('course_auto_fullscreen', '1');
+            } catch (_) {}
+        });
+    });
+});
+</script>
 @endsection

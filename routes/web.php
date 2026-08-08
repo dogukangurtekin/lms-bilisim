@@ -223,6 +223,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/odevler/oyun/{assignment}/duzenle', [TeacherAssignmentController::class, 'editGameAssignment'])->name('teacher.assignments.game.edit');
         Route::put('/odevler/oyun/{assignment}', [TeacherAssignmentController::class, 'updateGameAssignment'])->name('teacher.assignments.game.update');
         Route::delete('/odevler/oyun/{assignment}', [TeacherAssignmentController::class, 'destroyGameAssignment'])->name('teacher.assignments.game.destroy');
+        Route::post('/gunluk-calisma/ogretmene-ata/toplu', [CodingActivityManagementController::class, 'assignTeacherBulk'])->name('coding.activities.assign-teacher.bulk');
+        Route::post('/gunluk-calisma/ogretmenden-kaldir/toplu', [CodingActivityManagementController::class, 'unassignTeacherBulk'])->name('coding.activities.unassign-teacher.bulk');
+        Route::post('/gunluk-calisma/siniflara-ata/toplu', [CodingActivityManagementController::class, 'assignClassesBulk'])->name('coding.activities.assign-classes.bulk');
+        Route::post('/gunluk-calisma/siniflardan-kaldir/toplu', [CodingActivityManagementController::class, 'unassignClassesBulk'])->name('coding.activities.unassign-classes.bulk');
         Route::get('/students/bulk/template', [StudentController::class, 'downloadBulkTemplate'])->name('students.bulk.template');
         Route::post('/students/bulk', [StudentController::class, 'bulkStore'])->name('students.bulk.store');
         Route::delete('/students/all', [StudentController::class, 'destroyAll'])->name('students.destroyAll');

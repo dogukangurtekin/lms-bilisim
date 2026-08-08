@@ -255,13 +255,13 @@
     @else
         <div class="course-show-page">
             <div class="course-show-topbar">
-                <a class="course-show-brand" href="{{ route('student.portal.courses') }}" aria-label="Derslerime dön">
+                <div class="course-show-brand" aria-label="Derslerime dön">
                     <img src="{{ $courseLogo }}" alt="Logo">
                     <div class="course-show-brand-text">
                         <p class="course-show-kicker">{{ $previewMode ? 'Önizleme' : 'Ders İçeriği' }}</p>
                         <h1 class="course-show-title">{{ $courseName }}</h1>
                     </div>
-                </a>
+                </div>
 
                 <div class="course-show-metrics">
                     <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
@@ -336,6 +336,17 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                try {
+                    sessionStorage.removeItem('course_auto_fullscreen');
+                    const fullscreenTarget = document.querySelector('.course-show-shell') || document.documentElement;
+                    const requestFullscreen = fullscreenTarget.requestFullscreen
+                        || fullscreenTarget.webkitRequestFullscreen
+                        || fullscreenTarget.msRequestFullscreen;
+                    if (requestFullscreen) {
+                        Promise.resolve(requestFullscreen.call(fullscreenTarget)).catch(() => {});
+                    }
+                } catch (_) {}
+
                 const stage = document.getElementById('student-course-slide-stage');
                 const prevBtn = document.getElementById('student-course-prev');
                 const nextBtn = document.getElementById('student-course-next');
