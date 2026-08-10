@@ -18,6 +18,7 @@ use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\StudentDataController;
 use App\Http\Controllers\StudentPortalController;
+use App\Http\Controllers\SupportRequestController;
 use App\Http\Controllers\StudentCodingActivityController;
 use App\Http\Controllers\CodingActivityManagementController;
 use App\Http\Controllers\StudentController;
@@ -142,6 +143,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
     Route::get('/dersler/{course}/onizle', [CourseController::class, 'preview'])->name('course.preview');
     Route::middleware('role:admin,teacher')->group(function () {
+        Route::get('/taleplerim', [SupportRequestController::class, 'index'])->name('support-requests.index');
+        Route::post('/taleplerim', [SupportRequestController::class, 'store'])->middleware('role:teacher')->name('support-requests.store');
+        Route::put('/taleplerim/{supportRequest}', [SupportRequestController::class, 'update'])->name('support-requests.update');
+        Route::post('/taleplerim/{supportRequest}/reply', [SupportRequestController::class, 'reply'])->name('support-requests.reply');
+        Route::post('/taleplerim/{supportRequest}/archive', [SupportRequestController::class, 'archive'])->name('support-requests.archive');
+
         Route::middleware('role:admin')->group(function () {
             Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');
             Route::post('/kullanici-yonetimi', [UserManagementController::class, 'store'])->name('users.store');

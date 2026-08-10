@@ -74,6 +74,9 @@
         <a class="{{ request()->routeIs('student-data.*') ? 'active' : '' }}" href="{{ route('student-data.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 8h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Öğrenci Verileri
         </a>
+        <a class="{{ request()->routeIs('support-requests.*') ? 'active' : '' }}" href="{{ route('support-requests.index') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-9 9c0 2.21.8 4.23 2.13 5.79L4 21l3.32-1.14A8.97 8.97 0 0 0 12 21a9 9 0 1 0 0-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg></span>Taleplerim
+        </a>
         @if(auth()->user()?->hasRole('admin'))
         <a class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 016 6v3.4l1.7 2.6c.6.9-.1 2-1.2 2H5.5c-1.1 0-1.8-1.1-1.2-2L6 11.4V8a6 6 0 016-6zm0 20a3 3 0 002.8-2H9.2a3 3 0 002.8 2z"/></svg></span>Bildirimler
