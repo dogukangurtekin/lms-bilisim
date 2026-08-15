@@ -123,11 +123,11 @@
     if (!lessonText || !lessonStepIndex || !lessonStepTotal || !lessonPrevBtn || !lessonNextBtn) return;
 
     if (slides.length === 0) {
-      lessonText.textContent = 'Konu anlat?m? haz?rlan?yor.';
+      lessonText.textContent = 'Konu anlatımı hazırlanıyor.';
       lessonStepIndex.textContent = '1';
       lessonStepTotal.textContent = '1';
       lessonPrevBtn.disabled = true;
-      lessonNextBtn.textContent = questionCount > 0 ? 'Sorulara Ge&ccedil;' : 'Konu Tamamland?';
+      lessonNextBtn.textContent = questionCount > 0 ? 'Sorulara Geç' : 'Konu Tamamlandı';
       return;
     }
 

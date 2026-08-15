@@ -94,7 +94,7 @@
             </div>
         @empty
             <div class="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
-                Henüz atanmamış ders bulunmuyor.
+                Henüz atanmış ders bulunmuyor.
             </div>
         @endforelse
     </div>

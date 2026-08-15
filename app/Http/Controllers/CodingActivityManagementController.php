@@ -151,7 +151,7 @@ class CodingActivityManagementController extends Controller
             $this->syncQuestions($activity, $data['questions'] ?? []);
         });
 
-        return back()->with('ok', 'Etkinlik oluÅŸturuldu.');
+        return back()->with('ok', 'Etkinlik oluşturuldu.');
     }
 
     public function update(UpdateCodingActivityRequest $request, CodingActivity $activity): RedirectResponse
@@ -296,11 +296,11 @@ class CodingActivityManagementController extends Controller
         $isTeacherOwned = $this->activityIsTeacherOwned($activity);
 
         if ($user?->hasRole('admin') && $isTeacherOwned) {
-            return back()->with('error', '??retmene atanm?? g?nl?k ?al??ma sadece ilgili ??retmen taraf?ndan geri al?nabilir.');
+            return back()->with('error', 'Öğretmene atanmış günlük çalışma sadece ilgili öğretmen tarafından geri alınabilir.');
         }
 
         if ($user?->hasRole('teacher') && $teacherId > 0 && (int) ($activity->teacher_id ?? 0) !== $teacherId) {
-            return back()->with('error', 'Bu g?nl?k ?al??may? geri alma yetkiniz yok.');
+            return back()->with('error', 'Bu günlük çalışmayı geri alma yetkiniz yok.');
         }
 
         $today = Carbon::today('Europe/Istanbul')->toDateString();
@@ -311,7 +311,7 @@ class CodingActivityManagementController extends Controller
             ->first();
 
         if (! $assignment) {
-            return back()->with('error', 'Bu etkinlik i?in aktif ??renci atamas? bulunamad?.');
+            return back()->with('error', 'Bu etkinlik için aktif öğrenci ataması bulunamadı.');
         }
 
         $targetUserIds = $this->studentUserIdsForAssignmentScope($activity, $assignment);
@@ -321,7 +321,7 @@ class CodingActivityManagementController extends Controller
             $assignment->delete();
         });
 
-        return back()->with('ok', 'Etkinlik ??rencilerden geri al?nd?.');
+        return back()->with('ok', 'Etkinlik öğrencilerden geri alındı.');
     }
 
     public function exportAll(): StreamedResponse

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\CourseHomework;
+use App\Models\DailyActivityAssignment;
 use App\Models\GameAssignment;
 use App\Models\Grade;
 use App\Models\ActivityAttempt;
@@ -148,10 +149,46 @@ class StudentProgressReportService
         $completedSlides = $completedLessonRows->count();
 
         $lessonCourseAssignmentsTotal = $courseProgressRows->count();
-        $totalAssignments = $courseHomeworks->count() + $gameAssignments->count() + $lessonCourseAssignmentsTotal;
+
+        // Sınıfa atanmış tüm oyunları getir (öğrenci hiç açmamış olsalar bile)
+        $allClassGameAssignments = GameAssignment::query()
+            ->whereHas('classes', fn ($q) => $q->where('school_classes.id', $student->school_class_id))
+            ->get();
+
+        // Sınıfa atanmış etkinlikleri getir (DailyActivityAssignment)
+        $classId = (int) $student->school_class_id;
+        $classActivityAssignments = DailyActivityAssignment::query()
+            ->where('target_role', 'student')
+            ->where(function ($q) use ($classId) {
+                // target_class_ids JSON dizisinde sınıf ID'si var mı?
+                $q->whereJsonContains('target_class_ids', $classId)
+                  ->orWhereNull('target_class_ids');
+            })
+            ->with('activity')
+            ->get()
+            ->unique('coding_activity_id');
+
+        // Öğrencinin tamamladığı etkinlik attemptlerini say
+        $completedActivityIds = ActivityAttempt::query()
+            ->where('user_id', $student->user_id)
+            ->whereIn('coding_activity_id', $classActivityAssignments->pluck('coding_activity_id')->filter()->values())
+            ->whereNotNull('submitted_at')
+            ->distinct('coding_activity_id')
+            ->pluck('coding_activity_id')
+            ->all();
+
+        // Toplam görev = ödevler + tüm sınıf oyunları + tüm sınıf etkinlikleri + ders slaytları
+        $totalAssignments = $courseHomeworks->count() 
+            + $allClassGameAssignments->count() 
+            + $classActivityAssignments->count() 
+            + $lessonCourseAssignmentsTotal;
+            
         $completedHomework = $homeworkProgress->filter(fn ($p) => !empty($p->completed_at))->count();
+        // Tamamlanan oyunlar: hem progress kaydı olanlar
         $completedGames = $gameProgress->filter(fn ($p) => !empty($p->completed_at))->count();
-        $completedTotal = $completedHomework + $completedGames + $completedSlides;
+        $completedActivities = count($completedActivityIds);
+        
+        $completedTotal = $completedHomework + $completedGames + $completedActivities + $completedSlides;
         $overallProgress = $totalAssignments > 0 ? (int) round(($completedTotal / $totalAssignments) * 100) : 0;
 
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();

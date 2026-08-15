@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title', 'Ders İçeriği')
 @section('body_class', 'play-compact')
 
@@ -269,7 +269,7 @@
                     <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
                     <a
                         class="btn"
-                        href="{{ route('student.portal.courses') }}"
+                        href="{{ auth()->check() && auth()->user()->hasRole('admin', 'teacher') ? route('courses.index') : route('student.portal.courses') }}"
                         style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;padding:10px 16px;border-radius:16px;background:#f59e0b;border-color:#f59e0b;color:#fff;text-decoration:none;white-space:nowrap;"
                         aria-label="Derslerime dön"
                     >

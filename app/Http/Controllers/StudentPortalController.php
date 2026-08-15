@@ -383,14 +383,14 @@ class StudentPortalController extends Controller
         })->count();
         $summarySlide = [
             '__summary' => true,
-            'title' => 'Ders Ã–zeti',
+            'title' => 'Ders Özeti',
             'xp' => 0,
             'summary' => [
                 'lesson_title' => (string) ($course->name ?? ''),
                 'topic' => (string) ($curriculum['konu'] ?? ''),
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
                 'outcomes' => array_values(array_filter((array) (
-                    $curriculum['kazanÄ±mlar'] ?? $curriculum['kazanimlar'] ?? []
+                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
                 ), fn ($item) => trim((string) $item) !== '')),
                 'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
@@ -421,14 +421,14 @@ class StudentPortalController extends Controller
         $subCourses = $course->subCourses()->with(['teacher.user', 'schoolClass'])->get();
         $summarySlide = [
             '__summary' => true,
-            'title' => 'Ders Ã–zeti',
+            'title' => 'Ders Özeti',
             'xp' => 0,
             'summary' => [
                 'lesson_title' => (string) ($course->name ?? ''),
                 'topic' => (string) ($curriculum['konu'] ?? ''),
                 'lesson_number' => max(1, (int) ($curriculum['lesson_number'] ?? 1)),
                 'outcomes' => array_values(array_filter((array) (
-                    $curriculum['kazanÄ±mlar'] ?? $curriculum['kazanimlar'] ?? []
+                    $curriculum['kazanımlar'] ?? $curriculum['kazanimlar'] ?? []
                 ), fn ($item) => trim((string) $item) !== '')),
                 'activities' => array_values(array_filter((array) ($curriculum['etkinlikler'] ?? []), fn ($item) => trim((string) $item) !== '')),
                 'progress' => max(0, min(100, (int) ($curriculum['progress'] ?? 0))),
@@ -625,7 +625,7 @@ class StudentPortalController extends Controller
             'message' => $messages[$messageKey],
         ]);
 
-        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sÄ±nÄ±f panosunda paylaÅŸÄ±ldÄ±.');
+        return redirect()->route('student.portal.class-board')->with('ok', 'Mesaj sınıf panosunda paylaşıldı.');
     }
 
     public function progress()
@@ -934,7 +934,7 @@ class StudentPortalController extends Controller
             }
             if (preg_match('/^homework-(\d+)$/', $cid, $m)) {
                 $item = $homeworks->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Ders Ã–devi: ' . $item->title) : $cid;
+                $labels[$cid] = $item ? ('Ders Ödevi: ' . $item->title) : $cid;
                 continue;
             }
             if (preg_match('/^game-assignment-(\d+)$/', $cid, $m)) {

@@ -39,7 +39,7 @@ class StudentCodingActivityController extends Controller
             (int) $request->validated('duration_seconds', 0)
         );
 
-        $message = (string) ($attempt->feedback_message ?? 'G?rev tamamland?.');
+        $message = (string) ($attempt->feedback_message ?? 'Görev tamamlandı.');
 
         if ($attempt->all_correct) {
             return redirect()->route('student.portal.dashboard')->with('ok', $message);

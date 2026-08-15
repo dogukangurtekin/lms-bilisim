@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Dersler')
 @section('content')
 @php
@@ -280,16 +280,20 @@
                 $classNumber = (int) preg_replace('/\D+/', '', $className);
                 $age = (($classNumber > 0 ? $classNumber : 6) + 5) . '+';
                 $creatorLabel = trim((string) ($item->creator?->name ?? ''));
+                $courseTitle = \App\Support\Utf8Text::normalize($item->name);
+                $courseDesc = \App\Support\Utf8Text::normalize($desc);
+                $courseCreator = \App\Support\Utf8Text::normalize($creatorLabel);
+                $courseDifficulty = \App\Support\Utf8Text::normalize($difficulty);
                 $canEditCourse = (bool) ($isAdmin ?? false) || ((bool) ($isTeacher ?? false) && (int) ($item->created_by ?? 0) === (int) auth()->id());
                 $canCreateSubCourse = (bool) ($isAdmin ?? false) || ((bool) ($isTeacher ?? false) && (int) ($item->created_by ?? 0) === (int) auth()->id());
             @endphp
             <x-course-card
-                :title="$item->name"
-                :description="$desc"
+                :title="$courseTitle"
+                :description="$courseDesc"
                 :image="$thumb"
                 :logo="url('/public/logo.png')"
                 :age="$age"
-                :difficulty="$difficulty"
+                :difficulty="$courseDifficulty"
                 :primary-url="route('course.detail', ['id' => $item->id])"
                 primary-label="Dersi Aç"
                 :download-url="route('courses.export', $item)"
@@ -299,7 +303,7 @@
                 :assign-course-id="$item->id"
                 :assign-course-name="$item->name"
                 :assign-current-teacher="(int) ($item->teacher_id ?? 0)"
-                :creator-label="$creatorLabel"
+                :creator-label="$courseCreator"
             />
             </div>
             @empty

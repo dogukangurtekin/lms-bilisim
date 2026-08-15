@@ -51,22 +51,55 @@
     }
     .activity-card{
         display:flex;
+        flex-direction:column;
         gap:12px;
-        align-items:flex-start;
         min-width:0;
+        overflow:hidden;
     }
     .activity-card img{
+        width:100%;
+        height:180px;
+        object-fit:cover;
+        object-position:center;
+        border-radius:16px;
+        background:#fff;
         flex:0 0 auto;
-        max-width:100%;
     }
     .activity-card .activity-body{
         min-width:0;
         flex:1 1 auto;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
     }
     .activity-card .actions{
         display:flex;
         flex-wrap:wrap;
         gap:8px;
+        margin-top:auto;
+    }
+    .activity-card .actions .btn{
+        flex:1 1 140px;
+        min-width:0;
+        text-align:center;
+    }
+    .activity-card h3{
+        margin:0;
+        line-height:1.35;
+    }
+    .activity-grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+        gap:16px;
+        margin-top:16px;
+    }
+    .activity-item{
+        padding:16px;
+        border:1px solid #dbe7ff;
+        border-radius:18px;
+        background:#fff;
+        box-shadow:0 8px 24px rgba(37,99,235,.06);
+        min-width:0;
     }
     @media (max-width: 760px){
         .activities-form-grid{
@@ -80,10 +113,14 @@
             flex-direction:column;
         }
         .activity-card{
-            flex-direction:column;
+            padding:14px;
         }
         .activity-card .actions .btn{
             width:100%;
+            flex-basis:100%;
+        }
+        .activity-card img{
+            height:160px;
         }
     }
 </style>

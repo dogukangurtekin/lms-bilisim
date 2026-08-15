@@ -262,7 +262,7 @@ class NotificationController extends Controller
     {
         $userId = (int) auth()->id();
         if ($userId <= 0 || (int) $log->user_id !== $userId) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz i?lem.'], 403);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz işlem.'], 403);
         }
 
         try {
@@ -288,7 +288,7 @@ class NotificationController extends Controller
     {
         $userId = (int) auth()->id();
         if ($userId <= 0) {
-            return response()->json(['ok' => false, 'message' => 'Yetkisiz i?lem.'], 401);
+            return response()->json(['ok' => false, 'message' => 'Yetkisiz işlem.'], 401);
         }
 
         try {

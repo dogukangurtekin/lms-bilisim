@@ -2,7 +2,12 @@
 @section('title','Ders Detayi')
 @section('content')
 <div class="top" style="margin-bottom:10px">
-    <a class="btn" href="{{ url('/courses') }}">Derslerime Geri Don</a>
+    @php
+        $backUrl = auth()->user()?->hasRole('admin', 'teacher')
+            ? url('/courses')
+            : url('/ogrenci/derslerim');
+    @endphp
+    <a class="btn" href="{{ $backUrl }}">Derslerime Geri Dön</a>
 </div>
 <div class="card">
     @php

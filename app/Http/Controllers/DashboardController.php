@@ -460,7 +460,13 @@ class DashboardController extends Controller
             return '';
         }
 
-        $converted = @mb_convert_encoding($value, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
+        // If already valid UTF-8, return as-is.
+        // mb_convert_encoding on valid UTF-8 corrupts Turkish chars (ı→Ä±, ş→Å, etc.)
+        if (mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        $converted = @mb_convert_encoding($value, 'UTF-8', 'Windows-1254');
         if (is_string($converted) && $converted !== '') {
             return $converted;
         }

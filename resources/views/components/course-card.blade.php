@@ -1,4 +1,4 @@
-﻿@props([
+@props([
     'title' => '',
     'description' => '',
     'image' => '',
@@ -21,6 +21,7 @@
 ])
 
 @php
+    $utf8 = \App\Support\Utf8Text::class;
     $normalizeText = static function ($value): string {
         $value = trim((string) $value);
 
@@ -29,15 +30,24 @@
         }
 
         $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $converted = @mb_convert_encoding($decoded, 'UTF-8', ['UTF-8', 'Windows-1254', 'ISO-8859-9', 'ISO-8859-1', 'Latin1']);
 
-        return trim(strip_tags($converted !== false ? $converted : $decoded));
+        // Only re-encode if the string is NOT already valid UTF-8.
+        // mb_convert_encoding on valid UTF-8 strings corrupts Turkish chars (ı→Ä±, ş→Å, etc.)
+        if (! mb_check_encoding($decoded, 'UTF-8')) {
+            $converted = @mb_convert_encoding($decoded, 'UTF-8', 'Windows-1254');
+            $decoded = (is_string($converted) && $converted !== '') ? $converted : $decoded;
+        }
+
+        return trim(strip_tags($decoded));
     };
 
     $hasCover = filled($image);
-    $safeTitle = $normalizeText($title);
-    $normalizedDescription = $normalizeText(str_replace(["\r\n", "\n", "\r"], "\n", (string) $description));
-    $difficultyValue = trim((string) $difficulty);
+    $safeTitle = $normalizeText($utf8::normalize($title));
+    $normalizedDescription = $normalizeText($utf8::normalize(str_replace(["\r\n", "\n", "\r"], "\n", (string) $description)));
+    $difficultyValue = $normalizeText($utf8::normalize($difficulty));
+    $primaryLabelValue = $normalizeText($utf8::normalize($primaryLabel));
+    $creatorLabelValue = $normalizeText($utf8::normalize($creatorLabel));
+    $confirmMessage = $normalizeText($utf8::normalize('Bu dersi silmek istediğinize emin misiniz?'));
     $difficultyStyle = match (mb_strtolower($difficultyValue)) {
         'kolay' => 'background:#16a34a;color:#fff;',
         'orta' => 'background:#2563eb;color:#fff;',
@@ -51,7 +61,7 @@
     <div class="relative">
         <div class="relative h-56 overflow-hidden bg-slate-100">
             @if($hasCover)
-                <img
+                    <img
                     src="{{ $image }}"
                     alt="kapak görseli"
                     class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
@@ -80,7 +90,7 @@
 
             <div class="absolute left-4 top-16 z-20 flex items-center gap-3 pointer-events-none">
                 <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_10px_24px_rgba(15,23,42,.12)]">
-                    <img src="{{ $logo }}" alt="logo" class="h-10 w-10 object-contain">
+                <img src="{{ $logo }}" alt="logo" class="h-10 w-10 object-contain">
                 </div>
             </div>
         </div>
@@ -90,8 +100,8 @@
         <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
                 <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
-                @if(trim((string) $creatorLabel) !== '')
-                    <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabel }}</p>
+                @if(trim((string) $creatorLabelValue) !== '')
+                    <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
                 @endif
                 @if($normalizedDescription !== '')
                     <p class="mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
@@ -105,12 +115,12 @@
             $btnCols = max(1, min(4, $visibleButtons));
         @endphp
         <div class="mt-auto grid gap-2.5" style="grid-template-columns:repeat({{ $btnCols }},minmax(0,1fr));">
-            <a href="{{ $launchUrl }}" class="course-card-action course-card-action--launch">{{ $primaryLabel }}</a>
+            <a href="{{ $launchUrl }}" class="course-card-action course-card-action--launch">{{ $primaryLabelValue }}</a>
             @if(!empty($subCourseUrl))
                 <a href="{{ $subCourseUrl }}" class="course-card-action course-card-action--sub">Alt Ders Oluştur</a>
             @endif
             @if(!empty($deleteUrl))
-                <a href="{{ $deleteUrl }}" class="course-card-action course-card-action--delete course-delete-link" data-delete-url="{{ $deleteUrl }}" data-confirm="Bu dersi silmek istediğinize emin misiniz?">Dersi Sil</a>
+                <a href="{{ $deleteUrl }}" class="course-card-action course-card-action--delete course-delete-link" data-delete-url="{{ $deleteUrl }}" data-confirm="{{ $confirmMessage }}">Dersi Sil</a>
             @endif
         </div>
     </div>
