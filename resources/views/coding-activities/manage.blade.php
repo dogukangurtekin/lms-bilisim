@@ -23,6 +23,7 @@
     box-shadow:0 10px 22px rgba(15,23,42,.10);
   }
   .cam-item{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;min-width:0}
+  .cam-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.95fr);gap:16px;align-items:start;margin-top:16px}
   .btn-lite{padding:8px 10px;border-radius:10px;border:1px solid #cbd5e1;background:#fff}
   .icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid #cbd5e1;background:#fff;flex:0 0 auto}
   .icon-btn svg{width:20px;height:20px;display:block}
@@ -37,6 +38,36 @@
   .bulk-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:800;cursor:pointer}
   @media(max-width: 900px){
     .cam-row,.qgrid{grid-template-columns:1fr}
+  }
+  @media(max-width: 768px){
+    .cam-wrap{padding:10px}
+    .cam-hero{padding:14px}
+    .cam-hero > div{width:100%}
+    .cam-hero > div:last-child{justify-content:flex-start}
+    .cam-layout{grid-template-columns:1fr;gap:12px}
+    .cam-card{padding:14px}
+    .cam-title{font-size:18px}
+    .cam-item{align-items:flex-start}
+    .activity-actions{justify-content:flex-start}
+    .bulk-modal{padding:10px}
+    .bulk-modal__panel{width:100%;max-height:94vh;padding:14px}
+    .bulk-modal__panel > div:last-child{flex-direction:column;align-items:stretch}
+    .bulk-modal__panel form{width:100%;flex-wrap:wrap}
+    .bulk-modal__panel form button{flex:1 1 auto}
+  }
+  @media(max-width: 560px){
+    .cam-hero h1{font-size:22px!important;line-height:1.2}
+    .cam-hero a,.cam-hero button{width:100%;justify-content:center}
+    .cam-row{gap:8px}
+    .cam-item{padding:12px}
+    .cam-item > div:first-child{max-width:100%}
+    .cam-item > .activity-actions{width:100%;display:flex;justify-content:flex-start}
+    .icon-btn{width:40px;height:40px}
+    .cam-sel,.cam-inp,.cam-txt{font-size:16px}
+    .bulk-chip{width:100%;justify-content:center}
+    .bulk-modal__panel{gap:12px}
+    .bulk-modal__panel > div:first-child{flex-direction:column}
+    .bulk-modal__panel > div:first-child button{align-self:flex-start}
   }
 </style>
 @php
@@ -153,7 +184,7 @@
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.95fr);gap:16px;align-items:start;margin-top:16px;">
+  <div class="cam-layout">
     @if(auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher'))
       <section class="cam-card" style="margin-top:0">
         <div class="cam-title">Yeni Etkinlik Oluştur</div>

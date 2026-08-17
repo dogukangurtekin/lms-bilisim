@@ -168,7 +168,7 @@
         $attachmentUrl = $selectedRequest->attachment_path ? Storage::url($selectedRequest->attachment_path) : '';
         $modalTitle = $selectedRequest->subject;
     @endphp
-    <div class="sr-modal is-open" id="supportRequestModal" aria-hidden="false">
+    <div class="sr-modal is-open" id="supportRequestModal">
         <div class="sr-modal-panel" role="dialog" aria-modal="true" aria-labelledby="supportRequestModalTitle">
             <div class="sr-modal-head">
                 <div>
@@ -240,10 +240,16 @@
             var modal = document.getElementById('supportRequestModal');
             var closeBtn = document.getElementById('supportRequestModalClose');
             if (!modal) return;
+
             function closeModal() {
+                var active = document.activeElement;
+                if (active && modal.contains(active) && typeof active.blur === 'function') {
+                    active.blur();
+                }
+
                 modal.classList.remove('is-open');
-                modal.setAttribute('aria-hidden', 'true');
             }
+
             closeBtn && closeBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', function (event) {
                 if (event.target === modal) closeModal();

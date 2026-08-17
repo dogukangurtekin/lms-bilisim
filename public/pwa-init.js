@@ -180,31 +180,9 @@
 
   function setupInstallPrompt() {
     const button = createInstallButton();
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      deferredPrompt = event;
-      window.__pwaPromptInstall = async function () {
-        if (!deferredPrompt) return false;
-        deferredPrompt.prompt();
-        let accepted = false;
-        try {
-          const choice = await deferredPrompt.userChoice;
-          accepted = !!choice && choice.outcome === "accepted";
-        } finally {
-          deferredPrompt = null;
-          window.__pwaPromptInstall = null;
-          button.style.display = "none";
-        }
-        return accepted;
-      };
-      button.style.display = "inline-flex";
-      button.style.alignItems = "center";
-      button.style.gap = "8px";
-      window.dispatchEvent(new CustomEvent("pwa-install-available"));
-    });
-
+    button.style.display = "none";
+    window.__pwaPromptInstall = null;
     window.addEventListener("appinstalled", () => {
-      deferredPrompt = null;
       window.__pwaPromptInstall = null;
       button.style.display = "none";
       window.dispatchEvent(new CustomEvent("pwa-installed"));
