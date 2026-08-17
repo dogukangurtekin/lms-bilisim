@@ -72,9 +72,9 @@
 
         .form-side{display:grid;place-items:center;padding:34px}
         .login-form{width:min(620px,96%);background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #d7e4f7;border-radius:22px;padding:34px 30px;box-shadow:0 25px 50px rgba(15,23,42,.14),0 2px 8px rgba(15,23,42,.05)}
-        .login-form h2{margin:0 0 6px;font-size:34px;line-height:1.1;font-weight:800;color:#0f172a}
-        .login-form p{margin:0 0 18px;color:#64748b;font-size:15px}
-        .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px}
+        .login-form h2{margin:0 0 6px;font-size:34px;line-height:1.1;font-weight:800;color:#0f172a;text-align:center}
+        .login-form p{margin:0 0 18px;color:#64748b;font-size:15px;text-align:center}
+        .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px;text-align:center}
         .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
         .login-form input:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
         .login-form .btn{width:100%;margin-top:14px;padding:11px 14px;border-radius:12px;font-weight:500;font-size:14px;line-height:1.2;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
@@ -146,6 +146,106 @@
             }
             .btn-game,.btn-qr{gap:6px}
             .btn-game svg,.btn-qr svg{width:22px;height:22px}
+        }
+
+        @media (max-width: 640px){
+            .brand-side{
+                min-height:220px;
+                padding:16px 14px;
+            }
+            .space-layer{
+                opacity:.55;
+            }
+            .orbit.o3,
+            .orbit.o2,
+            .svg-item.ship2,
+            .svg-item.robot3,
+            .float-item.code3,
+            .float-item.code4,
+            .float-item.code5,
+            .float-item.code6,
+            .streak.sr5,
+            .streak.sr6,
+            .streak.sr7,
+            .streak.sr8,
+            .streak.sr9{
+                display:none;
+            }
+            .brand-content{
+                gap:10px;
+            }
+            .brand-content img{
+                width:min(170px,62%);
+            }
+            .brand-content h1{
+                font-size:22px;
+                line-height:1.15;
+            }
+            .brand-content p{
+                font-size:13px;
+                line-height:1.35;
+            }
+            .form-side{
+                padding:10px;
+            }
+            .login-form{
+                width:100%;
+                padding:16px 14px;
+                border-radius:16px;
+            }
+            .login-form h2{
+                font-size:22px;
+                margin-bottom:4px;
+            }
+            .login-form p{
+                font-size:13px;
+                margin-bottom:12px;
+            }
+            .login-form label{
+                margin:8px 0 5px;
+                font-size:13px;
+                text-align:center;
+            }
+            .login-form input{
+                padding:11px 12px;
+                font-size:14px;
+                border-radius:10px;
+            }
+            .login-actions{
+                display:grid;
+                gap:8px;
+            }
+            .login-actions .btn{
+                width:100%;
+                min-height:42px;
+                padding:10px 12px;
+                font-size:13px;
+                border-radius:10px;
+            }
+            .btn-game,
+            .btn-qr{
+                justify-content:center;
+            }
+            .game-login-help{
+                font-size:11px;
+                line-height:1.4;
+                margin-top:8px;
+            }
+            #loginGameCanvas{
+                height:300px;
+            }
+            .mini-game-card{
+                width:min(96vw, 760px);
+                padding:12px;
+                border-radius:14px;
+            }
+            .mini-game-head h3{
+                font-size:17px;
+            }
+            .mini-game-head p,
+            .mini-game-foot{
+                font-size:12px;
+            }
         }
     </style>
 </head>
