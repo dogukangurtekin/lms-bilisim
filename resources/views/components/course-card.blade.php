@@ -104,7 +104,9 @@
                     <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
                 @endif
                 @if($normalizedDescription !== '')
-                    <p class="mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
+                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
+                @else
+                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">&nbsp;</p>
                 @endif
             </div>
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
@@ -184,6 +186,10 @@
 
     .course-delete-link {
         cursor: pointer;
+    }
+
+    .course-card-description {
+        min-height: calc(1.5rem * 3);
     }
 </style>
 

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityRunnerController;
