@@ -1,4 +1,4 @@
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#2563eb">
 <meta name="apple-mobile-web-app-title" content="Egitim Portali">
 <meta name="apple-mobile-web-app-capable" content="yes">
