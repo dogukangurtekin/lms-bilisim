@@ -276,4 +276,3 @@
         <script src="{{ asset('pwa-init.js') }}" defer></script>
     </body>
 </html>
-

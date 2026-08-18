@@ -32,7 +32,7 @@
         $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Only re-encode if the string is NOT already valid UTF-8.
-        // mb_convert_encoding on valid UTF-8 strings corrupts Turkish chars (ı→Ä±, ş→Å, etc.)
+        // mb_convert_encoding on valid UTF-8 strings corrupts Turkish chars (ı→ı, ş→Å, etc.)
         if (! mb_check_encoding($decoded, 'UTF-8')) {
             $converted = @mb_convert_encoding($decoded, 'UTF-8', 'Windows-1254');
             $decoded = (is_string($converted) && $converted !== '') ? $converted : $decoded;
@@ -106,7 +106,7 @@
                 @if($normalizedDescription !== '')
                     <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
                 @else
-                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">&nbsp;</p>
+                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600"> </p>
                 @endif
             </div>
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>

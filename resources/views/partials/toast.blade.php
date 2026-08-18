@@ -168,7 +168,7 @@
         article.innerHTML = `
             <p class="app-toast-message"></p>
             <p class="app-toast-repeat" style="display:none;"></p>
-            <button type="button" class="app-toast-close" aria-label="Bildirimi kapat">&times;</button>
+            <button type="button" class="app-toast-close" aria-label="Bildirimi kapat">×</button>
         `;
         article.querySelector('.app-toast-message').textContent = toast.message;
         const repeat = article.querySelector('.app-toast-repeat');

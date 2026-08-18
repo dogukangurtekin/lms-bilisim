@@ -327,7 +327,7 @@
                 </svg>
             </div>
 
-            <div class="float-item code1">&lt;/&gt; while(code){learn();}</div>
+            <div class="float-item code1"></> while(code){learn();}</div>
             <div class="float-item code2">if(future) return you;</div>
             <div class="float-item code3">const xp = progress + effort;</div>
             <div class="float-item code4">for(;;){ build(); }</div>

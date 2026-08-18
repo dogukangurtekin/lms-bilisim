@@ -7,4 +7,3 @@
 <button class="btn" type="submit">Guncelle</button>
 </form></div>
 @endsection
-

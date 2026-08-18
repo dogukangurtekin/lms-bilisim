@@ -15,4 +15,3 @@
 @push('scripts')
     @vite('resources/js/flowchart-editor-entry.js')
 @endpush
-

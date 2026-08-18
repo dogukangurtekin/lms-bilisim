@@ -135,7 +135,7 @@
     lessonStepIndex.textContent = String(state.index + 1);
     lessonStepTotal.textContent = String(slides.length);
     lessonPrevBtn.disabled = state.index === 0;
-    lessonNextBtn.textContent = state.index < slides.length - 1 ? '?lerle' : (questionCount > 0 ? 'Sorulara Ge&ccedil;' : 'Konu Tamamland?');
+    lessonNextBtn.textContent = state.index < slides.length - 1 ? '?lerle' : (questionCount > 0 ? 'Sorulara Geç' : 'Konu Tamamland?');
   };
 
   const showQuiz = () => {

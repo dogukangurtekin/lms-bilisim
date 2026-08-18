@@ -732,11 +732,11 @@
 
     function escapeHtml(value) {
         return value
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
+            .replaceAll('&', '&')
+            .replaceAll('<', '<')
+            .replaceAll('>', '>')
+            .replaceAll('"', '"')
+            .replaceAll("'", ''');
     }
 
     function upsertOpponent(userName, progress, wpm, accuracy) {

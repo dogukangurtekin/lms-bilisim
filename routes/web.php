@@ -42,7 +42,7 @@ Route::get('/', function () {
         }
     }
 
-    return view('home');
+    return view('home-lite');
 });
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->name('support-requests.demo');
 Route::any('/public', fn () => redirect('/'));

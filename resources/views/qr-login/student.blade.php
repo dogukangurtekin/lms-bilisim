@@ -31,4 +31,3 @@
 })();
 </script>
 @endsection
-

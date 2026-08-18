@@ -285,5 +285,3 @@
     </script>
 @endif
 @endsection
-
-

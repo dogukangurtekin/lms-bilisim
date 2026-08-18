@@ -7,4 +7,3 @@
 <button class="btn" type="submit">Kaydet</button>
 </form></div>
 @endsection
-

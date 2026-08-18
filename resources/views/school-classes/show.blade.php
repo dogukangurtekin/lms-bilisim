@@ -5,5 +5,3 @@
 <p>ID: {{ $classroom->id }}</p><p>Ad: {{ $classroom->name }}</p><p>Sube: {{ $classroom->section }}</p>
 </div>
 @endsection
-
-

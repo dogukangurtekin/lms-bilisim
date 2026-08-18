@@ -469,7 +469,7 @@
       <div class="qgrid">
         <div>
           <label style="display:block;font-weight:700;margin-bottom:6px">Soru</label>
-          <input class="cam-inp" name="questions[${index}][prompt]" value="${String(q.prompt ?? '').replaceAll('"','&quot;')}" placeholder="Soru metni">
+          <input class="cam-inp" name="questions[${index}][prompt]" value="${String(q.prompt ?? '').replaceAll('"','"')}" placeholder="Soru metni">
         </div>
         <div>
           <label style="display:block;font-weight:700;margin-bottom:6px">Soru Türü</label>
@@ -486,7 +486,7 @@
       </div>
       <div style="margin-top:10px">
         <label style="display:block;font-weight:700;margin-bottom:6px">Beklenen Cevap</label>
-        <input class="cam-inp" name="questions[${index}][answer]" value="${String(q.answer ?? '').replaceAll('"','&quot;')}" placeholder="Beklenen cevap">
+        <input class="cam-inp" name="questions[${index}][answer]" value="${String(q.answer ?? '').replaceAll('"','"')}" placeholder="Beklenen cevap">
       </div>
     `;
     return wrap;

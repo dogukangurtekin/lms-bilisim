@@ -1266,9 +1266,11 @@
                 <label>Konu</label>
                 <textarea id="curriculum_topic" rows="4" placeholder="Bu derste..."></textarea>
                 <label>Kazanımlar (Her satır bir madde)</label>
-                <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1&#10;Kazanım 2"></textarea>
+                <textarea id="curriculum_outcomes" rows="5" placeholder="Kazanım 1
+Kazanım 2"></textarea>
                 <label>Etkinlikler (Her satır bir madde)</label>
-                <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1&#10;Etkinlik 2"></textarea>
+                <textarea id="curriculum_activities" rows="5" placeholder="Etkinlik 1
+Etkinlik 2"></textarea>
             </div>
             <label>Slayt Arkaplanı</label>
             <div id="slide_background_picker" class="bg-option-grid">
@@ -1679,7 +1681,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     function escapeHtml(v) {
-        return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; });
+        return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]; });
     }
     function decodeHtmlEntities(value) {
         const raw = String(value || '');
@@ -2451,7 +2453,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!value || type === 'none') return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
         if (type === 'color' || type === 'gradient') return 'background:' + value + ';';
         if (type === 'image') {
-            const safe = String(value).replace(/"/g, '&quot;');
+            const safe = String(value).replace(/"/g, '"');
             return 'background-image:url("' + safe + '");background-size:cover;background-position:center;background-repeat:no-repeat;';
         }
         return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
@@ -2711,7 +2713,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (preview) {
             if (value) {
                 preview.style.display = 'block';
-                preview.innerHTML = '<img src="' + String(value).replace(/"/g, '&quot;') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
+                preview.innerHTML = '<img src="' + String(value).replace(/"/g, '"') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
             } else {
                 preview.style.display = 'none';
                 preview.innerHTML = '';
@@ -3803,6 +3805,3 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
-
-
-
