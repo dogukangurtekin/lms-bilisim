@@ -89,11 +89,19 @@
         @media (max-width: 720px){
             .container{width:min(100% - 22px,1180px)}
             .nav{padding:14px 0 6px}
+            .hero-copy{justify-items:center;text-align:center}
             h1{font-size:clamp(38px,12vw,58px)}
+            .lead{max-width:100%}
+            .cta-row{align-items:stretch}
             .cta-row{flex-direction:column}
             .cta{width:100%}
             .hero-card{padding:14px;border-radius:24px}
             .hero-visual{min-height:300px}
+            .feature{text-align:center}
+            .feature .icon{margin-left:auto;margin-right:auto}
+            .trust,.panel,.bullets{justify-items:center}
+            .panel{text-align:center}
+            .bullet{justify-content:center;text-align:left}
             .footer-line{flex-direction:column;align-items:flex-start}
             .modal{padding:18px}
         }
