@@ -10,6 +10,9 @@ class SupportRequest extends Model
 {
     protected $fillable = [
         'sender_user_id',
+        'guest_name',
+        'guest_email',
+        'source',
         'recipient_user_id',
         'subject',
         'message',

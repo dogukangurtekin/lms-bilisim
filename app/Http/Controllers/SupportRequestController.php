@@ -55,6 +55,8 @@ class SupportRequestController extends Controller
             $query->where(function ($q) use ($search): void {
                 $q->where('subject', 'like', '%' . $search . '%')
                     ->orWhere('message', 'like', '%' . $search . '%')
+                    ->orWhere('guest_name', 'like', '%' . $search . '%')
+                    ->orWhere('guest_email', 'like', '%' . $search . '%')
                     ->orWhereHas('sender', fn ($sq) => $sq->where('name', 'like', '%' . $search . '%'));
             });
         }
@@ -113,6 +115,7 @@ class SupportRequestController extends Controller
             'message' => (string) $data['message'],
             'category' => (string) $data['category'],
             'priority' => (string) $data['priority'],
+            'source' => 'teacher',
             'status' => 'open',
             'attachment_path' => $path,
             'read_at' => null,
@@ -128,6 +131,44 @@ class SupportRequestController extends Controller
         );
 
         return redirect()->route('support-requests.index', ['selected' => $ticket->id])->with('ok', 'Talep gönderildi.');
+    }
+
+    public function storeDemo(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'guest_name' => ['required', 'string', 'max:190'],
+            'guest_email' => ['required', 'email', 'max:190'],
+            'message' => ['required', 'string', 'max:6000'],
+        ]);
+
+        $admin = User::query()->whereHas('role', fn ($q) => $q->where('slug', 'admin'))->orderBy('id')->first();
+        abort_unless($admin, 404);
+
+        $ticket = SupportRequest::query()->create([
+            'sender_user_id' => null,
+            'guest_name' => (string) $data['guest_name'],
+            'guest_email' => (string) $data['guest_email'],
+            'recipient_user_id' => $admin->id,
+            'subject' => 'Demo Talebi: ' . $data['guest_name'],
+            'message' => "Ad Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\n\nMesaj:\n" . $data['message'],
+            'category' => 'other',
+            'priority' => 'normal',
+            'source' => 'demo',
+            'status' => 'open',
+            'attachment_path' => null,
+            'read_at' => null,
+        ]);
+
+        $this->pushService->sendToUsers(
+            [$admin->id],
+            'support_request_created',
+            'Yeni Demo Talebi',
+            $data['guest_name'] . ' demo talebi gönderdi.',
+            route('support-requests.index', ['selected' => $ticket->id]),
+            ['ticket_id' => $ticket->id, 'source' => 'demo']
+        );
+
+        return back()->with('ok', 'Demo talebiniz gönderildi.');
     }
 
     public function update(Request $request, SupportRequest $supportRequest): RedirectResponse
@@ -180,7 +221,7 @@ class SupportRequestController extends Controller
             'recipient_user_id' => $isAdmin ? $supportRequest->sender_user_id : null,
         ]);
 
-        if ($isAdmin) {
+        if ($isAdmin && $supportRequest->sender_user_id) {
             $this->pushService->sendToUsers(
                 [$supportRequest->sender_user_id],
                 'support_request_replied',
@@ -217,5 +258,3 @@ class SupportRequestController extends Controller
         return redirect()->route('support-requests.index', ['selected' => $supportRequest->id])->with('ok', 'Talep arşivlendi.');
     }
 }
-
-

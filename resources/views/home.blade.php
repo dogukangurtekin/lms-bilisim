@@ -40,7 +40,19 @@
         .btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:14px;font-weight:800;border:1px solid transparent;transition:transform .2s ease,border-color .2s ease,background .2s ease}
         .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 18px 40px rgba(37,99,235,.22)}
         .btn-secondary{background:#fff;border-color:var(--border);color:var(--text)}
+        .btn-demo{background:#ffb800;color:#12203a;box-shadow:0 16px 36px rgba(255,184,0,.22)}
         .btn:hover{transform:translateY(-1px)}
+        .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+        .modal-backdrop[x-cloak]{display:none !important}
+        .modal{width:min(560px,100%);background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:0 24px 80px rgba(15,23,42,.22);padding:22px}
+        .modal h3{margin:0 0 8px;font-size:24px}
+        .modal p{margin:0 0 18px;color:var(--muted);line-height:1.7}
+        .field{display:grid;gap:8px;margin-bottom:12px}
+        .field label{font-weight:700;font-size:14px;color:var(--text)}
+        .field input,.field textarea{width:100%;border:1px solid var(--border);border-radius:14px;padding:12px 14px;font:inherit;color:var(--text);background:#fff}
+        .field textarea{min-height:120px;resize:vertical}
+        .modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+        .btn-ghost{background:#fff;border-color:var(--border);color:var(--text)}
         .strip{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
         .chip{padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#48607d;font-size:12px;font-weight:700}
         .section{padding:8px 0 32px}
@@ -72,7 +84,7 @@
     </style>
 </head>
 <body>
-<div class="page" x-data="{ section: 'home' }">
+<div class="page" x-data="{ demoOpen: false, demoSent: {{ session('ok') ? 'true' : 'false' }} }">
     <header class="container">
         <div class="nav"></div>
     </header>
@@ -87,6 +99,7 @@
             <div class="actions">
                 <a href="{{ route('login') }}" class="btn btn-primary">Hemen Başla</a>
                 <a href="#hakkinda" class="btn btn-secondary">Daha Fazla Bilgi</a>
+                <button type="button" class="btn btn-demo" @click="demoOpen = true">Demo için talepde bulun</button>
             </div>
             <div class="strip" aria-hidden="true">
                 <span class="chip">Teknoloji</span>
@@ -137,6 +150,32 @@
             </div>
         </div>
     </section>
+
+    <div class="modal-backdrop" x-cloak x-show="demoOpen" x-transition.opacity.duration.150ms @click.self="demoOpen = false">
+        <div class="modal">
+            <h3>Demo Talebi</h3>
+            <p>Ad Soyad, e-posta ve mesajını bırak. Talep admin hesabındaki <strong>Taleplerim</strong> ekranına düşer.</p>
+            <form method="POST" action="{{ route('support-requests.demo') }}">
+                @csrf
+                <div class="field">
+                    <label for="guest_name">Ad Soyad</label>
+                    <input id="guest_name" name="guest_name" type="text" required maxlength="190" value="{{ old('guest_name') }}" placeholder="Adınız ve soyadınız">
+                </div>
+                <div class="field">
+                    <label for="guest_email">E-posta</label>
+                    <input id="guest_email" name="guest_email" type="email" required maxlength="190" value="{{ old('guest_email') }}" placeholder="ornek@eposta.com">
+                </div>
+                <div class="field">
+                    <label for="message">Mesaj</label>
+                    <textarea id="message" name="message" required maxlength="6000" placeholder="Demo talebiniz ile ilgili kısa notunuz">{{ old('message') }}</textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" @click="demoOpen = false">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary">Talebi Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <footer>
         <div class="container footer-line">

@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('home');
 });
+Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->name('support-requests.demo');
 Route::any('/public', fn () => redirect('/'));
 Route::any('/public/', fn () => redirect('/'));
 Route::get('/public/index.php/{asset}', function (Request $request, string $asset) {

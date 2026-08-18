@@ -103,7 +103,13 @@
                             <strong style="font-size:15px;line-height:1.35">{{ $ticket->subject }}</strong>
                             <span class="sr-badge {{ $statusClass }}">{{ $statusLabels[$ticket->status] ?? $ticket->status }}</span>
                         </div>
-                        <div style="color:#475569;font-size:13px">{{ $ticket->sender?->name ?? 'Bilinmiyor' }} · {{ optional($ticket->created_at)->format('d.m.Y H:i') }}</div>
+                        <div style="color:#475569;font-size:13px">
+                            {{ $ticket->guest_name ?: ($ticket->sender?->name ?? 'Bilinmiyor') }}
+                            @if($ticket->guest_email)
+                                · {{ $ticket->guest_email }}
+                            @endif
+                            · {{ optional($ticket->created_at)->format('d.m.Y H:i') }}
+                        </div>
                         <div class="sr-meta">
                             <span class="sr-badge {{ $priorityClass }}">{{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}</span>
                             <span class="sr-badge" style="background:#e0f2fe;color:#0369a1">{{ $categoryLabels[$ticket->category] ?? $ticket->category }}</span>
@@ -173,7 +179,13 @@
             <div class="sr-modal-head">
                 <div>
                     <h2 id="supportRequestModalTitle" style="margin:0;font-size:24px;font-weight:900">{{ $selectedRequest->subject }}</h2>
-                    <div style="margin-top:6px;color:#64748b">{{ $selectedRequest->sender?->name ?? '-' }} · {{ optional($selectedRequest->created_at)->format('d.m.Y H:i') }}</div>
+                    <div style="margin-top:6px;color:#64748b">
+                        {{ $selectedRequest->guest_name ?: ($selectedRequest->sender?->name ?? '-') }}
+                        @if($selectedRequest->guest_email)
+                            · {{ $selectedRequest->guest_email }}
+                        @endif
+                        · {{ optional($selectedRequest->created_at)->format('d.m.Y H:i') }}
+                    </div>
                 </div>
                 <button type="button" class="sr-btn ghost" id="supportRequestModalClose">Kapat</button>
             </div>
