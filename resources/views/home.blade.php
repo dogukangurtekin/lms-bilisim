@@ -52,6 +52,9 @@
         .field textarea{min-height:120px;resize:vertical}
         .modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
         .btn-ghost{background:#fff;border-color:var(--border);color:var(--text)}
+        .alert{padding:14px 16px;border-radius:16px;border:1px solid transparent;font-weight:700;line-height:1.5}
+        .alert-success{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+        .alert-error{background:#fef2f2;border-color:#fecaca;color:#991b1b}
         .strip{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
         .chip{padding:8px 12px;border-radius:999px;background:#fff;border:1px solid var(--border);color:#48607d;font-size:12px;font-weight:700}
         .section{padding:8px 0 32px}
@@ -90,6 +93,16 @@
 
     <main class="hero container">
         <section class="center">
+            @if(session('ok'))
+                <div class="alert alert-success" style="margin-bottom:16px;">
+                    {{ session('ok') }}
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="alert alert-error" id="demoErrors" style="margin-bottom:16px;">
+                    Demo talebi gönderilemedi. Lütfen form alanlarını kontrol edin.
+                </div>
+            @endif
             <div class="logo-wrap">
                 <img class="logo" src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="Bilişim Kod logo">
             </div>
@@ -188,6 +201,7 @@
     const openBtn = document.getElementById('openDemoRequest');
     const closeBtn = document.getElementById('closeDemoRequest');
     const modal = document.getElementById('demoRequestModal');
+    const errorBox = document.getElementById('demoErrors');
     if (!openBtn || !closeBtn || !modal) return;
 
     const openModal = () => {
@@ -211,6 +225,10 @@
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
     });
+
+    if (errorBox) {
+        openModal();
+    }
 })();
 </script>
 </body>
