@@ -5,6 +5,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
-<link rel="icon" href="{{ url('/favicon.ico') }}" sizes="any">
-<link rel="icon" type="image/png" sizes="192x192" href="{{ url('/public/favicon-192.png') }}">
-<link rel="apple-touch-icon" href="{{ url('/public/favicon-192.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url('/public/logo.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url('/public/logo192.png') }}">
+<link rel="apple-touch-icon" href="{{ url('/public/logo192.png') }}">

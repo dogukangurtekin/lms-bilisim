@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="tr">
 <head>
     <meta charset="utf-8">
@@ -495,7 +495,7 @@
         if (winToast) winToast.classList.remove('show');
         state.stars.forEach((s) => s.taken = false);
         setEasyModeIfNeeded();
-        statusEl.innerHTML = 'Canavarlardan kac ve zirveye cik! <span class="mini-game-stars">Deneme: ' + (failCount + 1) + (state.easyMode ? ' · Kolay Mod Aktif ⭐' : '') + '</span>';
+        statusEl.innerHTML = 'Canavarlardan kaç ve zirveye çık! <span class="mini-game-stars">Deneme: ' + (failCount + 1) + (state.easyMode ? ' · Kolay Mod Aktif ⭐' : '') + '</span>';
         state.running = true;
     }
 
@@ -796,3 +796,4 @@
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>
 </html>
+
