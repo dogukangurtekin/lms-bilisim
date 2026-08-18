@@ -30,6 +30,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    $user = auth()->user();
+
+    if ($user) {
+        if ($user->hasRole('student')) {
+            return redirect()->route('student.portal.dashboard');
+        }
+
+        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
+            return redirect()->route('dashboard');
+        }
+    }
+
     return view('home');
 });
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->name('support-requests.demo');
