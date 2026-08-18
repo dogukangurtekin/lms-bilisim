@@ -6,10 +6,45 @@
     $firstName = $nameParts[0] ?? '';
     $lastName = $nameParts[1] ?? '';
     $pwaSettings = (array) ($pwaSettings ?? []);
+    $themes = (array) ($themes ?? []);
+    $themeKey = (string) ($themeKey ?? 'default');
 @endphp
 <div class="top"><h1>Profilim</h1></div>
 
 <div style="display:grid;gap:20px;max-width:1100px">
+    <div class="card">
+        <form method="POST" action="{{ route('profile.update') }}" style="display:grid;gap:14px">
+            @csrf
+            @method('PUT')
+            <div>
+                <h3 style="margin:0 0 4px">Sistem Teması</h3>
+                <p style="margin:0;color:#64748b">Profilinize uygun temayı seçin. Seçim giriş yaptıktan sonra tüm arayüze uygulanır.</p>
+            </div>
+            <input type="hidden" name="first_name" value="{{ old('first_name', $firstName) }}">
+            <input type="hidden" name="last_name" value="{{ old('last_name', $lastName) }}">
+            <input type="hidden" name="username" value="{{ old('username', $username) }}">
+            <input type="hidden" name="theme_key" value="{{ old('theme_key', $themeKey) }}" id="profileThemeKey">
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+                @foreach($themes as $key => $theme)
+                    <label style="display:block;border:1px solid {{ $themeKey === $key ? '#2563eb' : '#dbe5f2' }};border-radius:18px;padding:14px;background:{{ $themeKey === $key ? '#eff6ff' : '#fff' }};cursor:pointer">
+                        <input type="radio" name="theme_key_preview" value="{{ $key }}" {{ $themeKey === $key ? 'checked' : '' }} style="display:none" onchange="document.getElementById('profileThemeKey').value=this.value">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                            <strong>{{ $theme['label'] }}</strong>
+                            <span style="display:inline-flex;gap:4px">
+                                <span style="width:16px;height:16px;border-radius:999px;background:{{ $theme['preview'][0] ?? '#2563eb' }}"></span>
+                                <span style="width:16px;height:16px;border-radius:999px;background:{{ $theme['preview'][1] ?? '#0ea5e9' }}"></span>
+                            </span>
+                        </div>
+                        <p style="margin:8px 0 0;color:#64748b;font-size:13px;line-height:1.5">{{ $theme['description'] }}</p>
+                    </label>
+                @endforeach
+            </div>
+            <div>
+                <button class="btn" type="submit">Temayı Kaydet</button>
+            </div>
+        </form>
+    </div>
+
     <div class="card">
         <form method="POST" action="{{ route('profile.update') }}" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end">
             @csrf

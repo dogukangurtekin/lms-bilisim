@@ -10,6 +10,16 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    private const THEMES = [
+        'default' => ['label' => 'Varsayılan', 'description' => 'Mevcut sistem görünümü.', 'preview' => ['#2563eb', '#0f172a']],
+        'dark' => ['label' => 'Koyu', 'description' => 'Koyu yüzeyler ve yüksek kontrast.', 'preview' => ['#0f172a', '#1e293b']],
+        'light' => ['label' => 'Açık', 'description' => 'Ferahlık veren açık arayüz.', 'preview' => ['#ffffff', '#dbeafe']],
+        'blue-corporate' => ['label' => 'Mavi Kurumsal', 'description' => 'Kurumsal mavi odaklı tema.', 'preview' => ['#1d4ed8', '#0ea5e9']],
+        'purple-modern' => ['label' => 'Mor Modern', 'description' => 'Canlı mor ve lacivert dengesi.', 'preview' => ['#7c3aed', '#2563eb']],
+        'green-calm' => ['label' => 'Yeşil Sakin', 'description' => 'Dengeli ve sakin yeşil tonlar.', 'preview' => ['#059669', '#10b981']],
+        'high-contrast' => ['label' => 'Yüksek Kontrast', 'description' => 'Erişilebilirlik için net karşıtlık.', 'preview' => ['#000000', '#facc15']],
+    ];
+
     public function edit(Request $request): View
     {
         $user = $request->user();
@@ -17,10 +27,13 @@ class ProfileController extends Controller
         $username = $email !== '' ? (string) strtok($email, '@') : '';
         $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
         $meta = (array) ($profile->meta ?? []);
+        $themeKey = (string) ($meta['theme_key'] ?? 'default');
 
         return view('profile.edit', [
             'user' => $user,
             'username' => $username,
+            'themeKey' => array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default',
+            'themes' => self::THEMES,
             'pwaSettings' => [
                 'enabled' => (bool) ($meta['pwa_enabled'] ?? false),
                 'title' => (string) ($meta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
@@ -44,6 +57,7 @@ class ProfileController extends Controller
             'pwa_subtitle' => ['nullable', 'string', 'max:80'],
             'pwa_logo_url' => ['nullable', 'string', 'max:255'],
             'principal_name' => ['nullable', 'string', 'max:120'],
+            'theme_key' => ['nullable', 'string', 'max:32'],
         ], [
             'username.regex' => 'Kullanici adi sadece harf, rakam, nokta, alt cizgi ve kisa cizgi icerebilir.',
         ]);
@@ -78,6 +92,8 @@ class ProfileController extends Controller
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
         $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
         $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
+        $themeKey = (string) ($validated['theme_key'] ?? 'default');
+        $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';
         $profile->meta = $meta;
         $profile->save();
 
@@ -93,6 +109,7 @@ class ProfileController extends Controller
             'pwa_subtitle' => ['nullable', 'string', 'max:80'],
             'pwa_logo_url' => ['nullable', 'string', 'max:255'],
             'principal_name' => ['nullable', 'string', 'max:120'],
+            'theme_key' => ['nullable', 'string', 'max:32'],
         ]);
 
         $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
@@ -102,6 +119,8 @@ class ProfileController extends Controller
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
         $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
         $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
+        $themeKey = (string) ($validated['theme_key'] ?? 'default');
+        $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';
         $profile->meta = $meta;
         $profile->save();
 
