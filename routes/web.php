@@ -30,20 +30,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $projects = [
-        [
-            'name' => 'okul-laravel-yeni',
-            'path' => '/okul-laravel-yeni',
-            'login' => '/okul-laravel-yeni/login',
-        ],
-        [
-            'name' => 'lms-ozelsin',
-            'path' => '/lms-ozelsin',
-            'login' => '/lms-ozelsin/login',
-        ],
-    ];
-
-    return view('localhost-index', compact('projects'));
+    return view('home');
 });
 Route::any('/public', fn () => redirect('/'));
 Route::any('/public/', fn () => redirect('/'));
