@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     @include('partials.pwa-head')
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="description" content="Okul yonetim sistemi admin paneli">
-    <title>@yield('title', 'School Management')</title>
+    <meta name="description" content="Bilişim Kod - yazılım ve eğitim odaklı modern platform.">
+    <title>@yield('title', config('app.name'))</title>
     @php
         $pwaMeta = (array) (auth()->user()?->profile?->meta ?? []);
         $pwaConfig = [
