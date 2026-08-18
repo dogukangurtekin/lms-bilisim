@@ -33,18 +33,13 @@
         .page::after{width:360px;height:360px;right:-120px;bottom:-160px;background:rgba(139,92,246,.14)}
         .grain{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);background-size:18px 18px;opacity:.26;pointer-events:none}
         .container{width:min(1180px,calc(100% - 32px));margin:0 auto;position:relative;z-index:1}
-        .nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0 10px}
+        .nav{display:flex;align-items:center;justify-content:center;padding:22px 0 10px}
         .brand{display:flex;align-items:center;gap:14px;min-width:0}
         .brand-mark{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 36px rgba(0,0,0,.22);backdrop-filter:blur(10px)}
         .brand-mark img{width:100%;height:100%;object-fit:cover;display:block}
-        .brand-text{display:grid;min-width:0}
-        .brand-text strong{font-size:18px;line-height:1.1;letter-spacing:.01em}
-        .brand-text span{font-size:12px;color:var(--muted);margin-top:4px}
-        .login-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#fff;font-weight:800;transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease}
-        .login-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.12);box-shadow:0 16px 32px rgba(0,0,0,.20)}
+        .brand-text{display:none}
         .hero{padding:32px 0 20px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);gap:28px;align-items:center}
-        .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#d9e8ff;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-        h1{margin:16px 0 14px;font-size:clamp(46px,7vw,76px);line-height:.94;letter-spacing:-.05em}
+        h1{margin:0 0 14px;font-size:clamp(46px,7vw,76px);line-height:.94;letter-spacing:-.05em}
         .lead{max-width:620px;margin:0;color:var(--muted);font-size:clamp(16px,1.8vw,19px);line-height:1.8}
         .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
         .cta{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 20px;border-radius:16px;font-weight:900;border:1px solid transparent;transition:transform .2s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease}
@@ -121,7 +116,6 @@
             .container{width:min(100% - 22px,1180px)}
             .nav{padding:16px 0 8px}
             .brand-mark{width:42px;height:42px}
-            .brand-text strong{font-size:17px}
             h1{font-size:clamp(38px,12vw,58px)}
             .cta-row{flex-direction:column}
             .cta{width:100%}
@@ -144,20 +138,13 @@
                 <span class="brand-mark">
                     <img src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="Bilişim Kod logo">
                 </span>
-                <span class="brand-text">
-                    <strong>Bilişim Kod</strong>
-                    <span>Modern eğitim ve yazılım platformu</span>
-                </span>
             </a>
-
-            <a href="{{ route('login') }}" class="login-btn">Login</a>
         </div>
     </header>
 
     <main class="container">
         <section class="hero">
             <div>
-                <span class="eyebrow">Teknoloji • Eğitim • Ürün Odaklı</span>
                 <h1>Bilişim Kod</h1>
                 <p class="lead">Bilişim teknolojileri ve yazılım öğrenimini tek bir premium deneyimde birleştiren modern platform. Net, hızlı ve kurumsal.</p>
 
