@@ -118,11 +118,11 @@
     <main class="container">
         <section class="hero">
             <div class="hero-copy">
-                <h1>BiliÅŸim Kod</h1>
-                <p class="lead">BiliÅŸim teknolojileri ve yazÄ±lÄ±m Ã¶ÄŸrenimini tek bir premium deneyimde birleÅŸtiren modern platform. Net, hÄ±zlÄ± ve kurumsal.</p>
+                <h1>Bilişim Kod</h1>
+                <p class="lead">Bilişim teknolojileri ve yazılım öğrenimini tek bir premium deneyimde birleştiren modern platform. Net, hızlı ve kurumsal.</p>
 
                 <div class="cta-row">
-                    <a href="{{ route('login') }}" class="cta cta-primary">Hemen BaÅŸla</a>
+                    <a href="{{ route('login') }}" class="cta cta-primary">Hemen Başla</a>
                     <button type="button" class="cta cta-secondary" @click="demoOpen = true">Demo Talebi</button>
                 </div>
             </div>
@@ -130,7 +130,7 @@
             <div class="hero-card" aria-hidden="true">
                 <div class="hero-visual">
                     <div class="logo-orbit">
-                        <img src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="BiliÅŸim Kod logo">
+                        <img src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="Bilişim Kod logo">
                     </div>
                 </div>
             </div>
@@ -139,40 +139,40 @@
         <section class="section">
             <div class="feature-grid">
                 <article class="feature">
-                    <div class="icon">âœ¦</div>
-                    <strong>EtkileÅŸimli Ã–ÄŸrenme</strong>
-                    <p>Ders, gÃ¶rev ve ilerleme akÄ±ÅŸÄ± sade bir Ã¼rÃ¼n deneyimiyle sunulur.</p>
+                    <div class="icon">✦</div>
+                    <strong>Etkileşimli Öğrenme</strong>
+                    <p>Ders, görev ve ilerleme akışı sade bir ürün deneyimiyle sunulur.</p>
                 </article>
                 <article class="feature">
-                    <div class="icon">âŒ˜</div>
+                    <div class="icon">⌘</div>
                     <strong>Kurumsal Kontrol</strong>
-                    <p>Ã–ÄŸretmen, Ã¶ÄŸrenci ve yÃ¶netim sÃ¼reÃ§leri tek Ã§atÄ± altÄ±nda dÃ¼zenli kalÄ±r.</p>
+                    <p>Öğretmen, öğrenci ve yönetim süreçleri tek çatı altında düzenli kalır.</p>
                 </article>
                 <article class="feature">
-                    <div class="icon">â—Œ</div>
-                    <strong>GÃ¼Ã§lÃ¼ Ä°lk Ä°zlenim</strong>
-                    <p>Logo odaklÄ± premium kompozisyon marka algÄ±sÄ±nÄ± net biÃ§imde gÃ¼Ã§lendirir.</p>
+                    <div class="icon">◌</div>
+                    <strong>Güçlü İlk İzlenim</strong>
+                    <p>Logo odaklı premium kompozisyon marka algısını net biçimde güçlendirir.</p>
                 </article>
             </div>
         </section>
 
         <section class="trust">
             <div class="panel">
-                <h3>Platformun amacÄ±</h3>
-                <p>BiliÅŸim Kod, eÄŸitim teknolojileri iÃ§in modern bir ana kapÄ± oluÅŸturur. Sade ama etkili bir yapÄ± ile kurumun dijital yÃ¼zÃ¼nÃ¼ gÃ¼Ã§lÃ¼ gÃ¶sterir.</p>
+                <h3>Platformun amacı</h3>
+                <p>Bilişim Kod, eğitim teknolojileri için modern bir ana kapı oluşturur. Sade ama etkili bir yapı ile kurumun dijital yüzünü güçlü gösterir.</p>
                 <div class="bullets">
-                    <div class="bullet"><i>âœ“</i><div><strong>Minimal ama gÃ¼Ã§lÃ¼</strong><p style="margin:4px 0 0;color:var(--muted)">Gereksiz linkler yok, odak net.</p></div></div>
-                    <div class="bullet"><i>âœ“</i><div><strong>Teknoloji hissi</strong><p style="margin:4px 0 0;color:var(--muted)">Cam etkisi, glow ve derinlik dengeli.</p></div></div>
+                    <div class="bullet"><i>✓</i><div><strong>Minimal ama güçlü</strong><p style="margin:4px 0 0;color:var(--muted)">Gereksiz linkler yok, odak net.</p></div></div>
+                    <div class="bullet"><i>✓</i><div><strong>Teknoloji hissi</strong><p style="margin:4px 0 0;color:var(--muted)">Cam etkisi, glow ve derinlik dengeli.</p></div></div>
                 </div>
             </div>
 
             <div class="panel">
-                <h3>Kimler iÃ§in?</h3>
-                <p>Ã–ÄŸrenciler, Ã¶ÄŸretmenler ve yÃ¶neticiler iÃ§in hÄ±zlÄ± giriÅŸ, gÃ¼ven veren tasarÄ±m ve doÄŸrudan kullanÄ±m akÄ±ÅŸÄ±.</p>
+                <h3>Kimler için?</h3>
+                <p>Öğrenciler, öğretmenler ve yöneticiler için hızlı giriş, güven veren tasarım ve doğrudan kullanım akışı.</p>
                 <div class="bullets">
-                    <div class="bullet"><i>1</i><div><strong>Ã–ÄŸrenciler</strong><p style="margin:4px 0 0;color:var(--muted)">Net ve anlaÅŸÄ±lÄ±r baÅŸlangÄ±Ã§.</p></div></div>
-                    <div class="bullet"><i>2</i><div><strong>Ã–ÄŸretmenler</strong><p style="margin:4px 0 0;color:var(--muted)">Kurumsal ve iÅŸlevsel panel algÄ±sÄ±.</p></div></div>
-                    <div class="bullet"><i>3</i><div><strong>Admin</strong><p style="margin:4px 0 0;color:var(--muted)">Kontrol, takip ve yÃ¶netim kolaylÄ±ÄŸÄ±.</p></div></div>
+                    <div class="bullet"><i>1</i><div><strong>Öğrenciler</strong><p style="margin:4px 0 0;color:var(--muted)">Net ve anlaşılır başlangıç.</p></div></div>
+                    <div class="bullet"><i>2</i><div><strong>Öğretmenler</strong><p style="margin:4px 0 0;color:var(--muted)">Kurumsal ve işlevsel panel algısı.</p></div></div>
+                    <div class="bullet"><i>3</i><div><strong>Admin</strong><p style="margin:4px 0 0;color:var(--muted)">Kontrol, takip ve yönetim kolaylığı.</p></div></div>
                 </div>
             </div>
         </section>
@@ -180,20 +180,20 @@
 
     <footer>
         <div class="container footer-line">
-            <div>Â© {{ date('Y') }} BiliÅŸim Kod</div>
-            <div>Modern teknoloji ve eÄŸitim platformu</div>
+            <div>© {{ date('Y') }} Bilişim Kod</div>
+            <div>Modern teknoloji ve eğitim platformu</div>
         </div>
     </footer>
 
     <div class="modal-backdrop" :class="{ 'is-open': demoOpen }" x-cloak @click.self="demoOpen = false">
         <div class="modal">
             <h3>Demo Talebi</h3>
-            <p>Ad Soyad, e-posta ve kÄ±sa mesaj bÄ±rak. Talep admin hesabÄ±ndaki taleplerin arasÄ±na dÃ¼ÅŸer.</p>
+            <p>Ad Soyad, e-posta ve kısa mesaj bırak. Talep admin hesabındaki taleplerin arasına düşer.</p>
             <form method="POST" action="{{ route('support-requests.demo') }}">
                 @csrf
                 <div class="field">
                     <label for="guest_name">Ad Soyad</label>
-                    <input id="guest_name" name="guest_name" type="text" required maxlength="190" value="{{ old('guest_name') }}" placeholder="AdÄ±nÄ±z ve soyadÄ±nÄ±z">
+                    <input id="guest_name" name="guest_name" type="text" required maxlength="190" value="{{ old('guest_name') }}" placeholder="Adınız ve soyadınız">
                 </div>
                 <div class="field">
                     <label for="guest_email">E-posta</label>
@@ -201,11 +201,11 @@
                 </div>
                 <div class="field">
                     <label for="message">Mesaj</label>
-                    <textarea id="message" name="message" required maxlength="6000" placeholder="Demo talebinizle ilgili kÄ±sa notunuz">{{ old('message') }}</textarea>
+                    <textarea id="message" name="message" required maxlength="6000" placeholder="Demo talebinizle ilgili kısa notunuz">{{ old('message') }}</textarea>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="cta btn-ghost" @click="demoOpen = false">VazgeÃ§</button>
-                    <button type="submit" class="cta cta-primary">Talebi GÃ¶nder</button>
+                    <button type="button" class="cta btn-ghost" @click="demoOpen = false">Vazgeç</button>
+                    <button type="submit" class="cta cta-primary">Talebi Gönder</button>
                 </div>
             </form>
         </div>
