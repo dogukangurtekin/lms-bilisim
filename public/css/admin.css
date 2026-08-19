@@ -1,7 +1,7 @@
 :root { --bg:#f3f4f6; --card:#fff; --text:#111827; --accent:#2563eb; --muted:#6b7280; }
 *{box-sizing:border-box}
 html,body{max-width:100%;overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch}
-body{margin:0;background:var(--bg);color:var(--text);font-family:'Open Sans',system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:auto}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,Arial,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:auto}
 img,video,canvas,svg,iframe{max-width:100%;height:auto}
 a,button,input,select,textarea,[role="button"]{touch-action:manipulation}
 button,.btn,.sidebar a,.navbar-actions a,.navbar-actions button,.notif-bell,.user-menu summary{min-height:44px;min-width:44px}

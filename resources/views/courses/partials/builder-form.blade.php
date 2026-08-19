@@ -850,7 +850,6 @@
         font-size:18px;
         line-height:1.6;
         color:#334155;
-        text-align:left;
     }
     .lesson-builder .tiptap-editor .ProseMirror,
     .lesson-builder .tiptap-editor .ProseMirror *{
@@ -858,7 +857,6 @@
     }
     .lesson-builder .tiptap-editor .ProseMirror p{
         margin:0 0 1rem;
-        text-align:left;
     }
     .lesson-builder .tiptap-editor .ProseMirror h1,
     .lesson-builder .tiptap-editor .ProseMirror h2,
@@ -868,7 +866,6 @@
         letter-spacing:-.03em;
         line-height:1.12;
         font-weight:900;
-        text-align:left;
     }
     .lesson-builder .tiptap-editor .ProseMirror h1{ font-size:clamp(28px,3vw,44px); }
     .lesson-builder .tiptap-editor .ProseMirror h2{ font-size:clamp(22px,2.4vw,32px); }
@@ -964,12 +961,10 @@
         font-size:15px;
         line-height:1.35;
         color:#0f172a;
-        text-align:left;
     }
     .tiptap-editor p,
     .ckeditor-shell p{
         margin:0 0 .45rem;
-        text-align:left;
     }
     .tiptap-editor p + p,
     .ckeditor-shell p + p{
@@ -990,7 +985,6 @@
     .ckeditor-shell h3{
         margin:0 0 .65rem;
         line-height:1.25;
-        text-align:left;
     }
     @media (max-width:1280px){
         .lesson-builder-grid{
@@ -1687,9 +1681,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     function escapeHtml(v) {
-        return (v || '').replace(/[&<>"']/g, function (c) {
-            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-        });
+        return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]; });
     }
     function decodeHtmlEntities(value) {
         const raw = String(value || '');
@@ -2371,16 +2363,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </span>
                 </span>
             `;
-            b.addEventListener('click', () => {
-                saveCurrent();
-                active = i;
-                previewIndex = i;
-                loadCurrent();
-                renderList();
-                if (previewModal && previewModal.classList.contains('open')) {
-                    renderPreviewSlide();
-                }
-            });
+            b.addEventListener('click', () => { saveCurrent(); active = i; loadCurrent(); renderList(); });
             list.appendChild(b);
         });
     }
@@ -2481,7 +2464,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (layout === 'text') {
             layoutEditorHint.textContent = def.desc + ' Zengin metin araçlarını kullanabilirsiniz.';
             const text = meta?.text || {};
-            const initialTextHtml = String(text.html || text.text || '').trim();
+            const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
+            const initialTextHtml = String(liveTextHtml || text.html || text.text || '').trim();
             layoutEditorFields.innerHTML = `
                 <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
                     <strong style="display:block;margin-bottom:8px">Metin İçeriği</strong>
@@ -2532,7 +2516,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (layout === 'hero' || layout === 'image') {
                 layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
                 const media = meta?.media || {};
-                const initialMediaHtml = String(media.html || media.text || '').trim();
+                const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
+                const initialMediaHtml = String(liveMediaHtml || media.html || media.text || '').trim();
                 layoutEditorFields.innerHTML = `
                     <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
                         <strong style="display:block;margin-bottom:8px">Ana İçerik</strong>
@@ -2598,8 +2583,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const left = meta?.left || {};
         const right = meta?.right || {};
         const splitRatio = String(meta?.split_ratio || '50-50');
-        const initialLeftHtml = String(left.html || left.text || '').trim();
-        const initialRightHtml = String(right.html || right.text || '').trim();
+        const liveLeftHtml = getLiveEditorHtml('layout_left_html', 'layout_left_editor');
+        const liveRightHtml = getLiveEditorHtml('layout_right_html', 'layout_right_editor');
+        const initialLeftHtml = String(liveLeftHtml || left.html || left.text || '').trim();
+        const initialRightHtml = String(liveRightHtml || right.html || right.text || '').trim();
         layoutEditorFields.innerHTML = `
             <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
@@ -2760,21 +2747,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = raw;
         return (wrapper.innerText || wrapper.textContent || '').replace(/\u00a0/g, ' ').trim();
-    }
-    function normalizeHeadingHtml(value) {
-        const html = String(value || '').trim();
-        if (!html) return '';
-        if (/<h[1-6]\b/i.test(html)) return html;
-        const match = html.match(/^<p\b([^>]*)>(.*?)<\/p>/is);
-        if (!match) return html;
-        const pAttrs = match[1] || '';
-        const firstText = stripHtmlToText(match[2] || '');
-        if (!firstText) return html;
-        const isHeadlineLike = firstText.length <= 90
-            || /^[A-ZÇĞİÖŞÜ0-9\s\-:/]+$/u.test(firstText)
-            || /^\s*(?:\d+[\.\)]\s*)?[^\.\n]{3,90}$/u.test(firstText);
-        if (!isHeadlineLike) return html;
-        return html.replace(/^<p\b[^>]*>.*?<\/p>/is, `<h2${pAttrs}>${match[2]}</h2>`);
     }
     function tiptapTextToHtml(value) {
         const raw = String(value || '').trim();
@@ -3230,7 +3202,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
                 const textHtml = String(liveTextHtml || text.html || text.text || s.content || '').trim();
                 const textBlock = textHtml
-                    ? `<div class="lesson-rich-text" style="max-width:min(92vw,1180px);margin:0 auto;text-align:left;line-height:1.8;font-size:clamp(18px,2vw,24px)">${normalizeHeadingHtml(textHtml)}</div>`
+                    ? `<div class="lesson-rich-text" style="max-width:min(92vw,1180px);margin:0 auto;text-align:left;line-height:1.8;font-size:clamp(18px,2vw,24px)">${textHtml}</div>`
                     : `<div style="height:18px;border-radius:999px;background:#dbeafe;width:72%;margin:0 auto 10px"></div><div style="height:14px;border-radius:999px;background:#eff6ff;width:56%;margin:0 auto"></div>`;
                 return `
                     <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:28px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;align-items:center;justify-content:center">
@@ -3265,9 +3237,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const imageUrl = escapeHtml(normalizeMediaUrl(String(panel.image_url || '')));
                     let body = '';
                     if (type === 'image' && imageUrl) {
-                        body = `<div style="display:grid;gap:12px;align-content:start;justify-items:start;width:100%;min-height:260px;text-align:left"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
+                        body = `<div style="display:grid;gap:12px;align-content:start;justify-items:start;width:100%;min-height:260px"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
                     } else {
-                        body = `<div style="display:grid;gap:10px;align-content:start;justify-items:start;min-height:260px;padding:8px 2px;text-align:left">${text ? `<div class="lesson-rich-text" style="width:100%;text-align:left;line-height:1.8">${normalizeHeadingHtml(text)}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
+                        body = `<div style="display:grid;gap:10px;align-content:start;justify-items:start;min-height:260px;padding:8px 2px;text-align:left">${text ? `<div class="lesson-rich-text" style="width:100%;text-align:left;line-height:1.8">${text}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
                     }
                     return body;
                 };
@@ -3279,7 +3251,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         </div>
                         <div class="lesson-card lesson-split-card" style="min-height:auto">
-                            <div class="lesson-split-body">
+                            <div class="lesson-split-body lesson-split-body--center">
                                 ${renderSplitPanel(right, '#7c3aed', 'Sağ Alan')}
                             </div>
                         </div>
@@ -3302,8 +3274,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const imageBlock = media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="width:100%;height:100%;background:#bfdbfe"></div>`;
                 const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
                 const textBlock = liveMediaHtml
-                    ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${normalizeHeadingHtml(liveMediaHtml)}</div>`
-                    : (media.html ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${normalizeHeadingHtml(media.html)}</div>` : (media.text ? `<div class="lesson-rich-text" style="max-width:900px;text-align:left;line-height:1.7">${normalizeHeadingHtml(media.text)}</div>` : ''));
+                    ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${liveMediaHtml}</div>`
+                    : (media.html ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${media.html}</div>` : (media.text ? `<div class="lesson-rich-text" style="max-width:900px;text-align:left;line-height:1.7">${media.text}</div>` : ''));
                 return `
                     <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
                         ${mediaOrder === 'text-image' ? textBlock : ''}

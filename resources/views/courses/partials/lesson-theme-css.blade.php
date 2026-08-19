@@ -20,7 +20,7 @@
 .slide-theme h1{font-size:clamp(34px,4vw,58px)}
 .slide-theme h2{font-size:clamp(28px,3vw,44px)}
 .slide-theme h3{font-size:clamp(22px,2.2vw,32px)}
-.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155;text-align:left}
+.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}
 .slide-theme :where(strong,b){color:inherit;font-weight:800}
 .slide-theme :where(a){color:#2563eb;text-decoration:none;border-bottom:1px solid rgba(37,99,235,.24)}
 .slide-theme :where(code,pre,kbd,samp){background:#0f172a;color:#f8fafc;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
@@ -39,14 +39,11 @@
 .slide-theme :where(.lesson-rich-text){
     display:grid;
     gap:14px;
-    text-align:left;
-    justify-items:start;
 }
 .slide-theme :where(.lesson-rich-text h1,.lesson-rich-text h2,.lesson-rich-text h3,.lesson-rich-text h4){
     margin:0;
     font-weight:900;
     color:#0f172a;
-    text-align:left;
 }
 .slide-theme :where(.lesson-rich-text h1){font-size:clamp(28px,3vw,46px)}
 .slide-theme :where(.lesson-rich-text h2){font-size:clamp(24px,2.4vw,36px)}
@@ -56,7 +53,6 @@
     font-size:18px;
     line-height:1.5;
     color:#334155;
-    text-align:left;
 }
 .slide-theme :where(.lesson-rich-text ul,.lesson-rich-text ol){
     margin:0;
@@ -68,7 +64,6 @@
     font-size:18px;
     line-height:1.45;
     color:#334155;
-    text-align:left;
 }
 .slide-theme :where(.lesson-rich-text li::marker){
     color:#2563eb;
@@ -80,7 +75,6 @@
     border-left:5px solid #2563eb;
     background:rgba(37,99,235,.08);
     border-radius:0 16px 16px 0;
-    text-align:left;
 }
 .slide-theme :where(.lesson-list,ul,ol){padding-left:1.2rem}
 .slide-theme :where(.lesson-divider,hr){border:0;height:1px;background:linear-gradient(90deg,transparent,rgba(37,99,235,.22),transparent);margin:18px 0}
@@ -134,10 +128,9 @@
     gap:10px;
     min-height:0;
     align-content:center;
-    justify-items:start;
 }
 .slide-theme :where(.lesson-split-body--center){
-    justify-items:start;
+    justify-items:center;
 }
 .slide-theme :where(.lesson-split-media){
     width:100%;

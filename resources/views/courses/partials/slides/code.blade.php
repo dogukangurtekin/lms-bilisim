@@ -12,6 +12,6 @@
         <p class="lesson-paragraph">{{ $renderPlainText($slide['content']) }}</p>
     @endif
     @if($codeSrcdoc !== '')
-        <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ e($codeSrcdoc) }}"></iframe>
+        <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
     @endif
 </div>
