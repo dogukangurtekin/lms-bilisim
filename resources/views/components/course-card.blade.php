@@ -99,7 +99,7 @@
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
         <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
-                <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
+                <h4 class="course-card-title text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
                 @if(trim((string) $creatorLabelValue) !== '')
                     <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
                 @endif
@@ -189,7 +189,19 @@
     }
 
     .course-card-description {
-        min-height: calc(1.5rem * 3);
+        min-height: calc(1.5rem * 2);
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .course-card-title {
+        min-height: calc(1.375rem * 2);
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
     }
 </style>
 

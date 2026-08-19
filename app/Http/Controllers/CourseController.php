@@ -809,9 +809,11 @@ class CourseController extends Controller
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
 
         $courses = Course::query()
+            ->with(['subCourses' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')])
             ->when($user?->hasRole('teacher'), fn ($q) => $q->where('teacher_id', $teacherId))
+            ->whereNull('parent_course_id')
             ->orderBy('id')
-            ->get(['id', 'name', 'code', 'weekly_hours', 'lesson_payload']);
+            ->get();
 
         $payload = [
             'exported_at' => now()->toIso8601String(),
@@ -838,6 +840,32 @@ class CourseController extends Controller
                     'cover_image' => (string) data_get($lessonPayload, 'cover_image', ''),
                     'cover_image_data' => (string) data_get($lessonPayload, 'cover_image_data', ''),
                     'cover_image_mime' => (string) data_get($lessonPayload, 'cover_image_mime', 'image/png'),
+                    'sub_courses' => $c->subCourses->map(function (Course $sub) {
+                        $subPayload = (array) ($sub->lesson_payload ?? []);
+                        $subPayload['cover_image_data'] = $this->exportCoverDataUrl($sub);
+                        $subPayload['cover_image_mime'] = $this->exportCoverMime($sub);
+
+                        return [
+                            'name' => (string) $sub->name,
+                            'code' => (string) $sub->code,
+                            'teacher_id' => $sub->teacher_id !== null ? (int) $sub->teacher_id : null,
+                            'school_class_id' => $sub->school_class_id !== null ? (int) $sub->school_class_id : null,
+                            'weekly_hours' => (int) $sub->weekly_hours,
+                            'parent_course_id' => (int) $sub->parent_course_id,
+                            'sort_order' => (int) ($sub->sort_order ?? 0),
+                            'is_active' => (bool) ($sub->is_active ?? true),
+                            'lesson_payload' => $subPayload,
+                            'created_by' => $sub->created_by !== null ? (int) $sub->created_by : null,
+                            'slides' => (array) data_get($subPayload, 'slides', []),
+                            'curriculum' => (array) data_get($subPayload, 'curriculum', []),
+                            'lesson_description' => (string) data_get($subPayload, 'lesson_description', ''),
+                            'category' => (string) data_get($subPayload, 'category', ''),
+                            'difficulty' => (string) data_get($subPayload, 'difficulty', ''),
+                            'cover_image' => (string) data_get($subPayload, 'cover_image', ''),
+                            'cover_image_data' => (string) data_get($subPayload, 'cover_image_data', ''),
+                            'cover_image_mime' => (string) data_get($subPayload, 'cover_image_mime', 'image/png'),
+                        ];
+                    })->values()->all(),
                 ];
             })->values()->all(),
         ];
@@ -1066,7 +1094,7 @@ class CourseController extends Controller
                 ]);
                 $created[] = $parentCourse;
 
-                $subCoursesData = array_values(array_filter((array) ($decoded['sub_courses'] ?? []), fn ($x) => is_array($x)));
+                $subCoursesData = array_values(array_filter((array) ($courseData['sub_courses'] ?? $decoded['sub_courses'] ?? []), fn ($x) => is_array($x)));
                 foreach ($subCoursesData as $subData) {
                     $subName = trim((string) Utf8Text::normalize($subData['name'] ?? $subData['title'] ?? ''));
                     if ($subName === '') {
