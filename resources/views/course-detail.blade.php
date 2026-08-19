@@ -95,6 +95,7 @@
                         ->filter()
                         ->values();
                     $canEditSubCourse = (bool) ($viewer?->hasRole('admin') || ((bool) $viewer?->hasRole('teacher') && (int) ($subCourse->created_by ?? 0) === (int) ($viewer?->id ?? 0)));
+                    $canDeleteSubCourse = (bool) ($canEditMainCourse || $canEditSubCourse);
                 @endphp
 
                 <article class="w-full rounded-2xl bg-white p-6 shadow-lg" style="border:1px solid #e5eef9">
@@ -108,6 +109,8 @@
                                 <a href="{{ route('courses.edit', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     Düzenle
                                 </a>
+                            @endif
+                            @if($canDeleteSubCourse)
                                 <a href="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition hover:brightness-95 course-delete-link" data-delete-url="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" data-confirm="Bu alt dersi silmek istediğinize emin misiniz?">
                                     Alt Dersi Sil
                                 </a>
