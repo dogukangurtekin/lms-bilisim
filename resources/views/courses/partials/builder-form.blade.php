@@ -1349,27 +1349,34 @@ Etkinlik 2"></textarea>
     </div>
 </div>
 
+<div id="image-preview-modal" class="modal" aria-hidden="true">
+    <div class="modal-card" style="width:min(96vw,1400px);max-width:96vw;max-height:92vh;display:flex;flex-direction:column">
+        <div class="modal-head">
+            <strong>Görsel Önizleme</strong>
+            <button class="btn" type="button" id="image-preview-close">Kapat</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;overflow:auto;background:#0f172a;border-radius:14px;padding:12px;min-height:60vh">
+            <img id="image-preview-modal-img" alt="Görsel önizleme" style="max-width:100%;max-height:82vh;width:auto;height:auto;display:block;background:#fff;border-radius:12px">
+        </div>
+    </div>
+</div>
+
 <div id="cover-crop-modal" class="modal">
     <div class="modal-card" style="width:min(92vw,980px);max-width:980px">
         <div class="modal-head">
-            <strong>Kapak Görseli Kırp (16:9)</strong>
+            <strong>Kapak Görselini Sığdır (16:9)</strong>
             <button class="btn" type="button" id="cover-crop-cancel">İptal</button>
         </div>
-        <div style="display:grid;gap:10px">
-            <div id="cover-crop-viewport" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #cbd5e1;background:#0f172a">
-                <img id="cover-crop-image" alt="Kirpma" style="position:absolute;left:0;top:0;user-select:none;max-width:none;">
-                <div id="cover-crop-selection" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.35);cursor:move;">
-                    <span data-handle="nw" style="position:absolute;left:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
-                    <span data-handle="ne" style="position:absolute;right:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
-                    <span data-handle="sw" style="position:absolute;left:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
-                    <span data-handle="se" style="position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
+            <div style="display:grid;gap:10px">
+                <div id="cover-crop-viewport" style="position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #cbd5e1;background:#0f172a">
+                    <img id="cover-crop-image" alt="Kirpma" style="position:absolute;left:0;top:0;user-select:none;max-width:none;">
+                    <div id="cover-crop-selection" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.35);cursor:move;">
+                        <span data-handle="nw" style="position:absolute;left:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
+                        <span data-handle="ne" style="position:absolute;right:-6px;top:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
+                        <span data-handle="sw" style="position:absolute;left:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nesw-resize"></span>
+                        <span data-handle="se" style="position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#fff;border-radius:999px;cursor:nwse-resize"></span>
+                    </div>
                 </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">
-                <label style="display:grid;gap:6px;margin:0">
-                    <span style="font-size:12px;color:#64748b">Zoom</span>
-                    <input id="cover-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
-                </label>
                 <button class="btn" type="button" id="cover-crop-apply">Kırpmayı Uygula</button>
             </div>
         </div>
@@ -1382,7 +1389,8 @@ Etkinlik 2"></textarea>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const builderForm = document.querySelector('.lesson-builder')?.closest('form');
+    const builderBuilder = document.querySelector('.lesson-builder');
+    const builderForm = builderBuilder ? builderBuilder.closest('form') : null;
     const payloadInput = document.getElementById('lesson_payload');
     const list = document.getElementById('slide_list');
     const addBtn = document.getElementById('add_slide_btn');
@@ -1394,6 +1402,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const previewCounter = document.getElementById('preview_slide_counter');
     const previewPrev = document.getElementById('preview_prev_btn');
     const previewNext = document.getElementById('preview_next_btn');
+    const imagePreviewModal = document.getElementById('image-preview-modal');
+    const imagePreviewModalImg = document.getElementById('image-preview-modal-img');
+    const imagePreviewClose = document.getElementById('image-preview-close');
 
     const lessonTitle = document.getElementById('lesson_title');
     const topClassSelect = document.getElementById('top_class_select');
@@ -1411,7 +1422,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const coverCropImage = document.getElementById('cover-crop-image');
     const coverCropViewport = document.getElementById('cover-crop-viewport');
     const coverCropSelection = document.getElementById('cover-crop-selection');
-    const coverCropZoom = document.getElementById('cover-crop-zoom');
     const coverCropApply = document.getElementById('cover-crop-apply');
     const coverCropCancel = document.getElementById('cover-crop-cancel');
     const appToast = window.appToast;
@@ -1583,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function applyThemePreset(preset) {
         const key = String(preset || 'default');
-        const css = themeTemplates[key] ?? '';
+        const css = themeTemplates[key] || '';
         if (globalThemeCss) globalThemeCss.value = css.trim();
         if (themeTemplateSelect) themeTemplateSelect.value = key in themeTemplates ? key : 'none';
         state.theme_template = key in themeTemplates ? key : 'default';
@@ -1608,30 +1618,35 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!Array.isArray(state.slides)) state.slides = [];
     state.slides = state.slides
         .filter((slide) => slide && typeof slide === 'object')
-        .map((slide) => ({
-            ...slide,
-            title: String(slide.title || slide.baslik || slide.name || 'Basliksiz Slide'),
-            xp: Number.isFinite(Number(slide.xp)) ? Number(slide.xp) : Number(slide.point || slide.points || 0),
-            kind: String(slide.kind || slide.type || 'topic'),
-            interaction_type: String(slide.interaction_type || slide.interactionType || 'none'),
-            content: String(slide.content || slide.text || slide.body || slide.description || ''),
-            instructions: String(slide.instructions || slide.instruction || ''),
-            image_url: String(slide.image_url || slide.imageUrl || slide.image || ''),
-            video_url: String(slide.video_url || slide.videoUrl || slide.video || ''),
-            file_url: String(slide.file_url || slide.fileUrl || slide.file || ''),
-            code: String(slide.code || slide.html || slide.source_code || slide.script || ''),
-            question_prompt: String(slide.question_prompt || slide.prompt || slide.questionText || ''),
-            points: Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5,
-            time_limit: Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10,
-            double_points: !!(slide.double_points ?? slide.doublePoints),
-            question: slide.question && typeof slide.question === 'object'
-                ? slide.question
-                : (slide.question_data && typeof slide.question_data === 'object'
-                    ? slide.question_data
-                    : (slide.quiz && typeof slide.quiz === 'object'
-                        ? slide.quiz
-                        : { options: [], pairs: [], items: [] })),
-        }));
+        .map((slide) => {
+            const normalized = {};
+            normalized.title = String(slide.title || slide.baslik || slide.name || 'Basliksiz Slide');
+            normalized.layout = String(slide.layout || slide.slide_layout || slide.template || 'auto');
+            normalized.xp = Number.isFinite(Number(slide.xp)) ? Number(slide.xp) : Number(slide.point || slide.points || 0);
+            normalized.kind = String(slide.kind || slide.type || 'topic');
+            normalized.interaction_type = String(slide.interaction_type || slide.interactionType || 'none');
+            normalized.content = String(slide.content || slide.text || slide.body || slide.description || '');
+            normalized.instructions = String(slide.instructions || slide.instruction || '');
+            normalized.image_url = String(slide.image_url || slide.imageUrl || slide.image || '');
+            normalized.video_url = String(slide.video_url || slide.videoUrl || slide.video || '');
+            normalized.file_url = String(slide.file_url || slide.fileUrl || slide.file || '');
+            normalized.code = String(slide.code || slide.html || slide.source_code || slide.script || '');
+            normalized.question_prompt = String(slide.question_prompt || slide.prompt || slide.questionText || '');
+            normalized.points = Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5;
+            normalized.time_limit = Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10;
+            normalized.double_points = !!(slide.double_points !== undefined ? slide.double_points : slide.doublePoints);
+            normalized.layout_meta = slide.layout_meta && typeof slide.layout_meta === 'object' ? slide.layout_meta : (slide.layoutMeta && typeof slide.layoutMeta === 'object' ? slide.layoutMeta : {});
+            if (slide.question && typeof slide.question === 'object') {
+                normalized.question = slide.question;
+            } else if (slide.question_data && typeof slide.question_data === 'object') {
+                normalized.question = slide.question_data;
+            } else if (slide.quiz && typeof slide.quiz === 'object') {
+                normalized.question = slide.quiz;
+            } else {
+                normalized.question = { options: [], pairs: [], items: [] };
+            }
+            return normalized;
+        });
     if (!state.theme_template) state.theme_template = 'default';
     if (!state.cover_image && existingCoverUrl) state.cover_image = existingCoverUrl;
     if (state.cover_image_data) state.cover_image_data = '';
@@ -1641,7 +1656,6 @@ document.addEventListener('DOMContentLoaded', function () {
         objectUrl: '',
         imgNaturalW: 0,
         imgNaturalH: 0,
-        zoom: 1,
         imgX: 0,
         imgY: 0,
         imgW: 0,
@@ -1681,7 +1695,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     function escapeHtml(v) {
-        return (v || '').replace(/[&<>"']/g, function (c) { return {'&':'&','<':'<','>':'>','"':'"',"'":'''}[c]; });
+        return String(v || '').replace(/[&<>"']/g, function (c) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c];
+        });
     }
     function decodeHtmlEntities(value) {
         const raw = String(value || '');
@@ -1693,8 +1715,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function insertTextAtCursor(textarea, before, after = '', fallback = '') {
         if (!textarea) return;
         const value = textarea.value || '';
-        const start = textarea.selectionStart ?? value.length;
-        const end = textarea.selectionEnd ?? value.length;
+        const start = textarea.selectionStart != null ? textarea.selectionStart : value.length;
+        const end = textarea.selectionEnd != null ? textarea.selectionEnd : value.length;
         const selected = value.slice(start, end);
         const insert = selected ? before + selected + after : (fallback || (before + after));
         textarea.value = value.slice(0, start) + insert + value.slice(end);
@@ -1792,11 +1814,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     (action === 'bold' && editor.isActive('bold')) ||
                     (action === 'italic' && editor.isActive('italic')) ||
                     (action === 'underline' && editor.isActive('underline')) ||
-                    (action === 'heading' && activeRoot?.matches?.('h1')) ||
-                    (action === 'subheading' && activeRoot?.matches?.('h2')) ||
-                    (action === 'bullet' && activeRoot?.closest?.('ul')) ||
-                    (action === 'numbered' && activeRoot?.closest?.('ol')) ||
-                    (action === 'quote' && activeRoot?.closest?.('blockquote')) ||
+                    (action === 'heading' && activeRoot && activeRoot.matches && activeRoot.matches('h1')) ||
+                    (action === 'subheading' && activeRoot && activeRoot.matches && activeRoot.matches('h2')) ||
+                    (action === 'bullet' && activeRoot && activeRoot.closest && activeRoot.closest('ul')) ||
+                    (action === 'numbered' && activeRoot && activeRoot.closest && activeRoot.closest('ol')) ||
+                    (action === 'quote' && activeRoot && activeRoot.closest && activeRoot.closest('blockquote')) ||
                     (action === 'justify-left' && editor.isActive({ textAlign: 'left' })) ||
                     (action === 'justify-center' && editor.isActive({ textAlign: 'center' })) ||
                     (action === 'justify-right' && editor.isActive({ textAlign: 'right' })) ||
@@ -2083,7 +2105,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         if (type === 'true_false') {
-            const correctTrue = (question.options || []).find((o) => o.text === 'Doğru')?.correct ?? true;
+            const correctMatch = (question.options || []).find((o) => o.text === 'Doğru');
+            const correctTrue = correctMatch && typeof correctMatch.correct !== 'undefined' ? !!correctMatch.correct : true;
             questionEditor.innerHTML = box(`
                 <div class="sq-answers">
                     <label class="sq-answer-card" style="cursor:pointer">
@@ -2145,7 +2168,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         hName.value = lessonTitle.value || 'Örnek Ders: Layout Galerisi';
         if (!hTeacher.value) {
-            hTeacher.value = @json(auth()->user()?->hasRole('teacher') ? (optional(auth()->user()?->teacher)->id ?? '') : '');
+        hTeacher.value = @json(auth()->user() && auth()->user()->hasRole('teacher') ? (optional(auth()->user()->teacher)->id ?: '') : '');
         }
         if (!hWeekly.value) hWeekly.value = '{{ $defaultWeeklyHours }}';
         ensureCourseCode();
@@ -2202,9 +2225,9 @@ document.addEventListener('DOMContentLoaded', function () {
         state.slide_background = readSlideBackground();
         state.slides.forEach((slide) => {
             if (slide && typeof slide === 'object') {
-                slide.slide_background = { ...state.slide_background };
+                slide.slide_background = Object.assign({}, state.slide_background);
                 if (slide.layout_meta && typeof slide.layout_meta === 'object') {
-                    slide.layout_meta.background = { ...state.slide_background };
+                    slide.layout_meta.background = Object.assign({}, state.slide_background);
                 }
             }
         });
@@ -2235,74 +2258,82 @@ document.addEventListener('DOMContentLoaded', function () {
     function loadCurrent() {
         ensureSlide();
         const s = state.slides[active];
-        setFieldValue(fields.title, s.title || '');
-        setFieldValue(fields.layout, s.layout || 'auto');
-        setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
-        if (fields.content) fields.content.value = s.content || '';
-        setFieldValue(fields.instructions, s.instructions || '');
-        setFieldValue(fields.code, s.code || '');
-        setFieldValue(fields.kind, s.kind || 'topic');
-        setFieldValue(fields.interaction_type, s.interaction_type || 'none');
-        setFieldValue(fields.question_prompt, s.question_prompt || '');
-        setFieldValue(fields.points, s.points || 5);
-        setFieldValue(fields.time_limit, s.time_limit || 10);
-        if (fields.double_points) fields.double_points.checked = !!s.double_points;
-        if (slideBackgroundType) slideBackgroundType.value = s.slide_background?.type || s.layout_meta?.background?.type || state.slide_background?.type || 'none';
-        if (slideBackgroundValue) slideBackgroundValue.value = s.slide_background?.value || s.layout_meta?.background?.value || state.slide_background?.value || '';
-        applyBackgroundToPicker();
-        renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
-        renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
-        renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
-        setActiveTab(inferTabForSlide(s));
-        lessonCategory.value = state.category || 'Kodlama';
-        lessonDifficulty.value = state.difficulty || 'Kolay';
-        if (lessonEducationStage) lessonEducationStage.value = state.education_stage || 'ortaokul';
-        lessonGradeLevelChecks.forEach((el) => {
-            el.checked = Array.isArray(state.target_grade_levels) && state.target_grade_levels.includes(Number(el.value));
-        });
-        if (lessonDescription) lessonDescription.value = state.lesson_description || '';
-        if (themeTemplateSelect) {
-            const templateKey = state.theme_template || 'default';
-            themeTemplateSelect.value = templateKey;
+        try {
+            const slideLayout = String(s.layout || 'auto');
+            setFieldValue(fields.title, s.title || '');
+            setFieldValue(fields.layout, slideLayout);
+            setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
+            if (fields.content) fields.content.value = s.content || '';
+            setFieldValue(fields.instructions, s.instructions || '');
+            setFieldValue(fields.code, s.code || '');
+            setFieldValue(fields.kind, s.kind || 'topic');
+            setFieldValue(fields.interaction_type, s.interaction_type || 'none');
+            setFieldValue(fields.question_prompt, s.question_prompt || '');
+            setFieldValue(fields.points, s.points || 5);
+            setFieldValue(fields.time_limit, s.time_limit || 10);
+            if (fields.double_points) fields.double_points.checked = !!s.double_points;
+            if (slideBackgroundType) slideBackgroundType.value = s.slide_background?.type || s.layout_meta?.background?.type || state.slide_background?.type || 'none';
+            if (slideBackgroundValue) slideBackgroundValue.value = s.slide_background?.value || s.layout_meta?.background?.value || state.slide_background?.value || '';
+            applyBackgroundToPicker();
+            renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
+            renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
+            renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
+            setActiveTab(inferTabForSlide(s));
+            if (lessonCategory) lessonCategory.value = state.category || 'Kodlama';
+            if (lessonDifficulty) lessonDifficulty.value = state.difficulty || 'Kolay';
+            if (lessonEducationStage) lessonEducationStage.value = state.education_stage || 'ortaokul';
+            lessonGradeLevelChecks.forEach((el) => {
+                el.checked = Array.isArray(state.target_grade_levels) && state.target_grade_levels.includes(Number(el.value));
+            });
+            if (lessonDescription) lessonDescription.value = state.lesson_description || '';
+            if (themeTemplateSelect) {
+                const templateKey = state.theme_template || 'default';
+                themeTemplateSelect.value = templateKey;
+            }
+            if (globalThemeCss) {
+                globalThemeCss.value = state.global_theme_css || '';
+            }
+            const url = normalizeCoverUrl(state.cover_image || '');
+            if (coverImagePreviewBox) {
+                coverImagePreviewBox.style.display = url ? 'block' : 'none';
+                coverImagePreviewBox.style.backgroundImage = 'none';
+            }
+            if (coverImagePreview) {
+                coverImagePreview.src = url;
+                coverImagePreview.style.display = url ? 'block' : 'none';
+                coverImagePreview.alt = url ? 'Kapak önizleme' : 'Kapak önizleme yok';
+                coverImagePreview.onerror = () => {
+                    if (coverImagePreviewBox) {
+                        coverImagePreviewBox.style.display = 'none';
+                    }
+                };
+            }
+            if (coverImagePathLabel) {
+                coverImagePathLabel.textContent = url ? ('Kapak yolu: ' + String(state.cover_image || url)) : 'Kapak yolu henüz yok.';
+            }
+            if (coverImageRemove) {
+                coverImageRemove.style.display = url ? 'inline-flex' : 'none';
+            }
+            const c = state.curriculum || {};
+            if (curriculum.title) curriculum.title.value = c.title || '';
+            if (curriculum.lessonNumber) curriculum.lessonNumber.value = Number.isFinite(Number(c.lesson_number)) ? Number(c.lesson_number) : 1;
+            if (curriculum.topic) curriculum.topic.value = c.konu || '';
+            const outcomes = c.kazanimlar || c['kazanımlar'] || c['kazanımlar'] || [];
+            if (curriculum.outcomes) curriculum.outcomes.value = Array.isArray(outcomes) ? outcomes.join('\n') : '';
+            if (curriculum.activities) curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
+            if (curriculum.progress) curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
+            if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + Number(s.xp || 0);
+            setTiptapContent('lesson_description', lessonDescription && lessonDescription.value ? lessonDescription.value : '');
+            setTiptapContent('curriculum_topic', curriculum.topic && curriculum.topic.value ? curriculum.topic.value : '');
+            setTiptapContent('curriculum_outcomes', curriculum.outcomes && curriculum.outcomes.value ? curriculum.outcomes.value : '');
+            setTiptapContent('curriculum_activities', curriculum.activities && curriculum.activities.value ? curriculum.activities.value : '');
+            renderQuestionEditor(String(s.interaction_type || 'none'), s.question || {});
+        } catch (error) {
+            console.error('loadCurrent failed', error);
+            if (fields.title) fields.title.value = s.title || '';
+            if (fields.layout) fields.layout.value = s.layout || 'auto';
+            if (fields.xp) fields.xp.value = Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0;
         }
-        if (globalThemeCss) {
-            globalThemeCss.value = state.global_theme_css || '';
-        }
-        const url = normalizeCoverUrl(state.cover_image || '');
-        if (coverImagePreviewBox) {
-            coverImagePreviewBox.style.display = url ? 'block' : 'none';
-            coverImagePreviewBox.style.backgroundImage = 'none';
-        }
-        if (coverImagePreview) {
-            coverImagePreview.src = url;
-            coverImagePreview.style.display = url ? 'block' : 'none';
-            coverImagePreview.alt = url ? 'Kapak önizleme' : 'Kapak önizleme yok';
-            coverImagePreview.onerror = () => {
-                if (coverImagePreviewBox) {
-                    coverImagePreviewBox.style.display = 'none';
-                }
-            };
-        }
-        if (coverImagePathLabel) {
-            coverImagePathLabel.textContent = url ? ('Kapak yolu: ' + String(state.cover_image || url)) : 'Kapak yolu henüz yok.';
-        }
-        if (coverImageRemove) {
-            coverImageRemove.style.display = url ? 'inline-flex' : 'none';
-        }
-        const c = state.curriculum || {};
-        curriculum.title.value = c.title || '';
-        curriculum.lessonNumber.value = Number.isFinite(Number(c.lesson_number)) ? Number(c.lesson_number) : 1;
-        curriculum.topic.value = c.konu || '';
-        const outcomes = c.kazanimlar ?? c['kazanımlar'] ?? c['kazanımlar'] ?? [];
-        curriculum.outcomes.value = Array.isArray(outcomes) ? outcomes.join('\n') : '';
-        curriculum.activities.value = Array.isArray(c.etkinlikler) ? c.etkinlikler.join('\n') : '';
-        curriculum.progress.value = Number.isFinite(Number(c.progress)) ? Number(c.progress) : 0;
-        if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + Number(s.xp || 0);
-        setTiptapContent('lesson_description', lessonDescription?.value || '');
-        setTiptapContent('curriculum_topic', curriculum.topic.value || '');
-        setTiptapContent('curriculum_outcomes', curriculum.outcomes.value || '');
-        setTiptapContent('curriculum_activities', curriculum.activities.value || '');
-        renderQuestionEditor(String(s.interaction_type || 'none'), s.question || {});
     }
     function normalizeCoverUrl(url) {
         const raw = String(url || '').trim();
@@ -2363,7 +2394,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     </span>
                 </span>
             `;
-            b.addEventListener('click', () => { saveCurrent(); active = i; loadCurrent(); renderList(); });
+            b.addEventListener('click', () => {
+                try { saveCurrent(); } catch (error) { console.error('saveCurrent failed', error); }
+                active = i;
+                loadCurrent();
+                renderList();
+            });
             list.appendChild(b);
         });
     }
@@ -2642,8 +2678,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="image">Görsel Seç</button>
                         <button type="button" class="btn" data-split-media-target="left" data-split-media-kind="clear">Temizle</button>
                     </div>
-                    <div id="layout_left_image_preview" style="margin-top:12px;${left.image_url ? '' : 'display:none;'}">
-                        <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
+                    <div id="layout_left_image_preview" style="margin-top:12px;${left.image_url ? '' : 'display:none;'};display:flex;align-items:center;justify-content:center;min-height:180px;max-height:240px;overflow:hidden;background:#f8fbff;border-radius:16px;border:1px solid #dbe5f2;padding:8px">
+                        <img src="${escapeHtml(left.image_url || '')}" alt="" style="width:100%;height:100%;max-height:224px;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:12px">
                     </div>
                 </div>
                 <div class="split-layout-panel" style="border:1px solid #dbe5f2;border-radius:18px;padding:14px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);display:flex;flex-direction:column;min-height:auto">
@@ -2690,8 +2726,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <input id="layout_right_image_file" type="file" accept="image/*" style="display:none">
                     <input id="layout_right_image" type="hidden" value="${escapeHtml(right.image_url || '')}">
-                    <div id="layout_right_image_preview" style="margin-top:12px;${right.image_url ? '' : 'display:none;'}">
-                        <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:16px;border:1px solid #dbe5f2">
+                    <div id="layout_right_image_preview" style="margin-top:12px;${right.image_url ? '' : 'display:none;'};display:flex;align-items:center;justify-content:center;min-height:180px;max-height:240px;overflow:hidden;background:#f8fbff;border-radius:16px;border:1px solid #dbe5f2;padding:8px">
+                        <img src="${escapeHtml(right.image_url || '')}" alt="" style="width:100%;height:100%;max-height:224px;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:12px">
                     </div>
                 </div>
             </div>
@@ -2713,10 +2749,25 @@ document.addEventListener('DOMContentLoaded', function () {
         if (preview) {
             if (value) {
                 preview.style.display = 'block';
-                preview.innerHTML = '<img src="' + String(value).replace(/"/g, '"') + '" alt="" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;border:1px solid #dbe5f2">';
+                preview.style.maxHeight = 'none';
+                preview.style.height = 'auto';
+                preview.style.overflow = 'visible';
+                preview.innerHTML = '<img src="' + String(value).replace(/"/g, '&quot;') + '" alt="" style="display:block;width:100%;height:auto;max-width:100%;object-fit:contain;object-position:top center;background:#fff;border-radius:12px;border:1px solid #dbe5f2">';
+                preview.style.cursor = 'zoom-in';
+                preview.onclick = function () {
+                    if (!imagePreviewModal || !imagePreviewModalImg) return;
+                    imagePreviewModalImg.src = String(value || '');
+                    imagePreviewModal.classList.add('open');
+                    imagePreviewModal.setAttribute('aria-hidden', 'false');
+                };
             } else {
                 preview.style.display = 'none';
+                preview.style.maxHeight = '';
+                preview.style.height = '';
+                preview.style.overflow = '';
                 preview.innerHTML = '';
+                preview.style.cursor = '';
+                preview.onclick = null;
             }
         }
     }
@@ -3237,54 +3288,67 @@ document.addEventListener('DOMContentLoaded', function () {
                     const imageUrl = escapeHtml(normalizeMediaUrl(String(panel.image_url || '')));
                     let body = '';
                     if (type === 'image' && imageUrl) {
-                        body = `<div style="display:grid;gap:12px;align-content:start;justify-items:start;width:100%;min-height:260px"><img src="${imageUrl}" alt="${label}" style="width:100%;max-height:56vh;object-fit:cover;border-radius:16px;border:1px solid ${accent}22"></div>`;
+                        body = [
+                            '<div style="display:flex;align-items:flex-start;justify-content:center;width:100%;min-height:260px;padding:12px;background:#f8fbff;border-radius:16px;border:1px solid ' + accent + '22">',
+                            '<img src="' + imageUrl + '" alt="' + label + '" style="width:100%;height:auto;max-height:56vh;object-fit:contain;object-position:top center;display:block;background:#fff;border-radius:12px">',
+                            '</div>'
+                        ].join('');
                     } else {
-                        body = `<div style="display:grid;gap:10px;align-content:start;justify-items:start;min-height:260px;padding:8px 2px;text-align:left">${text ? `<div class="lesson-rich-text" style="width:100%;text-align:left;line-height:1.8">${text}</div>` : `<div style="height:14px;border-radius:999px;background:${accent}22;width:82%"></div><div style="height:14px;border-radius:999px;background:${accent}18;width:68%"></div><div style="height:14px;border-radius:999px;background:${accent}14;width:54%"></div>`}</div>`;
+                        const skeleton = [
+                            '<div style="height:14px;border-radius:999px;background:' + accent + '22;width:82%"></div>',
+                            '<div style="height:14px;border-radius:999px;background:' + accent + '18;width:68%"></div>',
+                            '<div style="height:14px;border-radius:999px;background:' + accent + '14;width:54%"></div>'
+                        ].join('');
+                        body = [
+                            '<div style="display:grid;gap:10px;align-content:start;justify-items:start;min-height:260px;padding:8px 2px;text-align:left">',
+                            text ? ('<div class="lesson-rich-text" style="width:100%;text-align:left;line-height:1.8">' + text + '</div>') : skeleton,
+                            '</div>'
+                        ].join('');
                     }
                     return body;
                 };
-                return `
-                    <div class="lesson-split" style="display:grid;margin:14px auto 0;grid-template-columns:${splitColumns};gap:18px">
-                        <div class="lesson-card lesson-split-card" style="min-height:auto">
-                            <div class="lesson-split-body">
-                                ${renderSplitPanel(left, '#2563eb', 'Sol Alan')}
-                            </div>
-                        </div>
-                        <div class="lesson-card lesson-split-card" style="min-height:auto">
-                            <div class="lesson-split-body lesson-split-body--center">
-                                ${renderSplitPanel(right, '#7c3aed', 'Sağ Alan')}
-                            </div>
-                        </div>
-                    </div>
-                `;
+                return [
+                    '<div class="lesson-split" style="display:grid;margin:14px auto 0;grid-template-columns:' + splitColumns + ';gap:18px">',
+                    '<div class="lesson-card lesson-split-card" style="min-height:auto"><div class="lesson-split-body">',
+                    renderSplitPanel(left, '#2563eb', 'Sol Alan'),
+                    '</div></div>',
+                    '<div class="lesson-card lesson-split-card" style="min-height:auto"><div class="lesson-split-body lesson-split-body--center">',
+                    renderSplitPanel(right, '#7c3aed', 'Sağ Alan'),
+                    '</div></div>',
+                    '</div>'
+                ].join('');
             }
             if (layout === 'hero') {
                 const media = meta.media || {};
-                return `
-                    <div style="margin:14px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">
-                        <div style="height:18px;width:56%;border-radius:999px;background:#1d4ed8;margin-bottom:10px"></div>
-                        <div style="height:12px;width:38%;border-radius:999px;background:#60a5fa;margin-bottom:18px"></div>
-                        ${media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:130px;object-fit:cover;border-radius:16px;border:1px solid #bfdbfe">` : `<div style="height:130px;border-radius:16px;background:#93c5fd"></div>`}
-                    </div>
-                `;
+                return [
+                    '<div style="margin:14px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">',
+                    '<div style="height:18px;width:56%;border-radius:999px;background:#1d4ed8;margin-bottom:10px"></div>',
+                    '<div style="height:12px;width:38%;border-radius:999px;background:#60a5fa;margin-bottom:18px"></div>',
+                    media.image_url
+                        ? '<div style="width:100%;height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:16px;border:1px solid #bfdbfe;padding:6px"><img src="' + escapeHtml(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:12px"></div>'
+                        : '<div style="height:130px;border-radius:16px;background:#93c5fd"></div>',
+                    '</div>'
+                ].join('');
             }
             if (layout === 'image') {
                 const media = meta.media || {};
                 const mediaOrder = String(media.order || 'image-text');
-                const imageBlock = media.image_url ? `<img src="${escapeHtml(media.image_url)}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<div style="width:100%;height:100%;background:#bfdbfe"></div>`;
+                const imageBlock = media.image_url
+                    ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:inherit"><img src="' + escapeHtml(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:inherit"></div>'
+                    : '<div style="width:100%;height:100%;background:#bfdbfe"></div>';
                 const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
                 const textBlock = liveMediaHtml
-                    ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${liveMediaHtml}</div>`
-                    : (media.html ? `<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">${media.html}</div>` : (media.text ? `<div class="lesson-rich-text" style="max-width:900px;text-align:left;line-height:1.7">${media.text}</div>` : ''));
-                return `
-                    <div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">
-                        ${mediaOrder === 'text-image' ? textBlock : ''}
-                        <div style="width:50%;aspect-ratio:16/6;overflow:hidden;border-radius:16px;border:1px solid #bfdbfe;background:#fff">
-                            ${imageBlock}
-                        </div>
-                        ${mediaOrder === 'image-text' ? textBlock : ''}
-                    </div>
-                `;
+                    ? '<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">' + liveMediaHtml + '</div>'
+                    : (media.html ? '<div class="lesson-rich-text" style="max-width:1100px;text-align:left;line-height:1.7">' + media.html + '</div>' : (media.text ? '<div class="lesson-rich-text" style="max-width:900px;text-align:left;line-height:1.7">' + media.text + '</div>' : ''));
+                return [
+                    '<div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px">',
+                    mediaOrder === 'text-image' ? textBlock : '',
+                    '<div style="width:50%;aspect-ratio:16/6;overflow:hidden;border-radius:16px;border:1px solid #bfdbfe;background:#fff;display:flex;align-items:flex-start;justify-content:center">',
+                    imageBlock,
+                    '</div>',
+                    mediaOrder === 'image-text' ? textBlock : '',
+                    '</div>'
+                ].join('');
             }
             return '';
         })();
@@ -3403,17 +3467,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const vw = coverCropViewport.clientWidth || 1;
         const vh = coverCropViewport.clientHeight || 1;
         const base = Math.min(vw / coverCropState.imgNaturalW, vh / coverCropState.imgNaturalH);
-        const scale = base * coverCropState.zoom;
+        const scale = base;
         coverCropState.imgW = coverCropState.imgNaturalW * scale;
         coverCropState.imgH = coverCropState.imgNaturalH * scale;
         coverCropState.imgX = (vw - coverCropState.imgW) / 2;
         coverCropState.imgY = (vh - coverCropState.imgH) / 2;
         const s = coverCropState.selection;
         if (s.w <= 0 || s.h <= 0) {
-            s.w = Math.min(coverCropState.imgW * 0.7, 520);
-            s.h = s.w / (coverCropState.aspectRatio || (16 / 9));
-            s.x = coverCropState.imgX + (coverCropState.imgW - s.w) / 2;
-            s.y = coverCropState.imgY + (coverCropState.imgH - s.h) / 2;
+            s.x = coverCropState.imgX;
+            s.y = coverCropState.imgY;
+            s.w = coverCropState.imgW;
+            s.h = coverCropState.imgH;
         }
         clampSelection(s);
         renderCropUi();
@@ -3429,13 +3493,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modalTitle) modalTitle.textContent = coverCropState.title;
         if (coverCropState.objectUrl) URL.revokeObjectURL(coverCropState.objectUrl);
         coverCropState.objectUrl = URL.createObjectURL(file);
-        coverCropState.zoom = 1;
-        coverCropZoom.value = '1';
         coverCropState.selection = { x: 0, y: 0, w: 0, h: 0 };
         coverCropImage.onload = () => {
             coverCropState.imgNaturalW = coverCropImage.naturalWidth || 1;
             coverCropState.imgNaturalH = coverCropImage.naturalHeight || 1;
             fitCropImage();
+            if (coverCropSelection) {
+                coverCropSelection.style.left = coverCropState.imgX + 'px';
+                coverCropSelection.style.top = coverCropState.imgY + 'px';
+                coverCropSelection.style.width = coverCropState.imgW + 'px';
+                coverCropSelection.style.height = coverCropState.imgH + 'px';
+            }
         };
         coverCropImage.src = coverCropState.objectUrl;
         coverCropModal.classList.add('open');
@@ -3444,10 +3512,13 @@ document.addEventListener('DOMContentLoaded', function () {
     async function applyCoverCrop() {
         const outW = 1600;
         const outH = Math.round(outW / (coverCropState.aspectRatio || (16 / 9)));
-        const sx = (coverCropState.selection.x - coverCropState.imgX) * (coverCropState.imgNaturalW / coverCropState.imgW);
-        const sy = (coverCropState.selection.y - coverCropState.imgY) * (coverCropState.imgNaturalH / coverCropState.imgH);
-        const sw = coverCropState.selection.w * (coverCropState.imgNaturalW / coverCropState.imgW);
-        const sh = coverCropState.selection.h * (coverCropState.imgNaturalH / coverCropState.imgH);
+        const sourceW = coverCropState.imgNaturalW || (coverCropImage && coverCropImage.naturalWidth) || 1;
+        const sourceH = coverCropState.imgNaturalH || (coverCropImage && coverCropImage.naturalHeight) || 1;
+        const scale = Math.min(outW / sourceW, outH / sourceH);
+        const drawW = Math.round(sourceW * scale);
+        const drawH = Math.round(sourceH * scale);
+        const dx = Math.round((outW - drawW) / 2);
+        const dy = Math.round((outH - drawH) / 2);
 
         const canvas = document.createElement('canvas');
         canvas.width = outW;
@@ -3456,7 +3527,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!ctx) return;
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, outW, outH);
-        ctx.drawImage(coverCropImage, sx, sy, sw, sh, 0, 0, outW, outH);
+        ctx.drawImage(coverCropImage, 0, 0, sourceW, sourceH, dx, dy, drawW, drawH);
 
         let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82));
         if (!blob) {
@@ -3509,12 +3580,6 @@ document.addEventListener('DOMContentLoaded', function () {
         saveCurrent();
     }
 
-    if (coverCropZoom) {
-        coverCropZoom.addEventListener('input', () => {
-            coverCropState.zoom = Math.max(1, Number(coverCropZoom.value || 1));
-            fitCropImage();
-        });
-    }
     if (coverCropSelection) {
         coverCropSelection.addEventListener('mousedown', (e) => {
             e.preventDefault();
@@ -3522,14 +3587,14 @@ document.addEventListener('DOMContentLoaded', function () {
             coverCropState.dragMode = handle;
             coverCropState.dragStartX = e.clientX;
             coverCropState.dragStartY = e.clientY;
-            coverCropState.startSelection = { ...coverCropState.selection };
+            coverCropState.startSelection = Object.assign({}, coverCropState.selection);
         });
     }
     window.addEventListener('mousemove', (e) => {
         if (!coverCropState.dragMode) return;
         const dx = e.clientX - coverCropState.dragStartX;
         const dy = e.clientY - coverCropState.dragStartY;
-        const s = { ...coverCropState.startSelection };
+        const s = Object.assign({}, coverCropState.startSelection);
         const mode = coverCropState.dragMode;
         const ratio = coverCropState.aspectRatio || (16 / 9);
         if (mode === 'move') {
@@ -3558,6 +3623,28 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === coverCropModal) coverCropModal.classList.remove('open');
     });
     coverCropApply?.addEventListener('click', applyCoverCrop);
+    if (imagePreviewClose) {
+        imagePreviewClose.addEventListener('click', () => {
+            if (imagePreviewModal) {
+                imagePreviewModal.classList.remove('open');
+                imagePreviewModal.setAttribute('aria-hidden', 'true');
+            }
+            if (imagePreviewModalImg) {
+                imagePreviewModalImg.removeAttribute('src');
+            }
+        });
+    }
+    if (imagePreviewModal) {
+        imagePreviewModal.addEventListener('click', (e) => {
+            if (e.target === imagePreviewModal) {
+                imagePreviewModal.classList.remove('open');
+                imagePreviewModal.setAttribute('aria-hidden', 'true');
+                if (imagePreviewModalImg) {
+                    imagePreviewModalImg.removeAttribute('src');
+                }
+            }
+        });
+    }
     fields.layout?.addEventListener('change', () => {
         renderLayoutHelp(fields.layout.value);
         renderLayoutEditor(fields.layout.value, readLayoutMeta());
@@ -3566,7 +3653,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     addBtn.addEventListener('click', () => {
         saveCurrent();
-        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: { background: { ...readSlideBackground() } }, slide_background: { ...readSlideBackground() }, xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+        const bg = readSlideBackground();
+        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: { background: Object.assign({}, bg) }, slide_background: Object.assign({}, bg), xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
         active = state.slides.length - 1;
         loadCurrent(); renderList(); saveCurrent();
     });

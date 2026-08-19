@@ -218,6 +218,19 @@ HTML;
     }
     .lesson-split-body{
         width:100%;
+        display:flex;
+        flex-direction:column;
+        align-items:stretch;
+    }
+    .lesson-split-media-wrap{
+        width:100%;
+        aspect-ratio:16 / 9;
+        display:flex;
+        align-items:flex-start;
+        justify-content:center;
+        overflow:hidden;
+        background:#fff;
+        border-radius:16px;
     }
     .lesson-split-media,
     .lesson-image,
@@ -226,6 +239,12 @@ HTML;
     .lesson-image-focus img{
         width:100% !important;
         max-width:100% !important;
+    }
+    .lesson-split-media{
+        height:100% !important;
+        object-fit:contain !important;
+        object-position:top center !important;
+        background:#fff;
     }
     .lesson-image-focus{
         gap:12px !important;

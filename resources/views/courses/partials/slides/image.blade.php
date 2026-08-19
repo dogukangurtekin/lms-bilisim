@@ -79,12 +79,16 @@
     overflow:hidden;
 }
 .lesson-media-figure{
-    width:fit-content;
+    width:100%;
     max-width:100%;
+    aspect-ratio:16 / 9;
     margin:0 auto;
     display:flex;
     align-items:center;
     justify-content:center;
+    overflow:hidden;
+    background:#fff;
+    border-radius:16px;
 }
 .lesson-image-zoom-trigger{
     all:unset;
@@ -96,11 +100,11 @@
     width:100%;
     height:100%;
     object-fit:contain;
-    object-position:center center;
+    object-position:top center;
     display:block;
     background:#fff;
-    max-width:min(100%,280px);
-    max-height:38vh;
+    max-width:100%;
+    max-height:100%;
 }
 .lesson-paragraph--compact{
     max-width:1100px;
@@ -171,9 +175,12 @@
         justify-content:center !important;
     }
     .lesson-image--compact{
-        width:auto !important;
-        max-width:88vw !important;
-        max-height:30vh !important;
+        width:100% !important;
+        height:100% !important;
+        max-width:100% !important;
+        max-height:100% !important;
+        object-fit:contain !important;
+        object-position:top center !important;
     }
     .lesson-image-preview-dialog{
         max-width:96vw;

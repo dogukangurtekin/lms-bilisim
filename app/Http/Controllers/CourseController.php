@@ -1122,7 +1122,7 @@ class CourseController extends Controller
         }
 
         if (count($created) < 1) {
-            return redirect()->route('courses.index')->with('error', 'Yuklenen dosyalarda gecerli ders bulunamadi. .coursepkg dosyasi indirildigi sekilde yuklenmeli.');
+            return redirect()->route('courses.index')->with('error', 'Yüklenen dosyalarda geçerli ders bulunamadı. .coursepkg dosyası indirildiği şekilde yüklenmeli.');
         }
 
         if ($attachToParentCourse) {
@@ -1736,4 +1736,3 @@ class CourseController extends Controller
         return '';
     }
 }
-
