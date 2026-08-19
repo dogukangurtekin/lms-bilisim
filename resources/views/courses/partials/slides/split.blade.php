@@ -53,7 +53,7 @@
             @elseif($leftType === 'video' && $leftVideo !== '')
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" src="{{ $leftVideo }}"></iframe>
             @elseif($leftType === 'code' && $codeSrcdoc !== '')
-                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ e($codeSrcdoc) }}"></iframe>
             @else
                 @if($leftText !== '')
                     <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($leftText) !!}</div>
@@ -69,7 +69,7 @@
             @elseif($rightType === 'video' && $rightVideo !== '')
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" src="{{ $rightVideo }}"></iframe>
             @elseif($rightType === 'code' && $codeSrcdoc !== '')
-                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ e($codeSrcdoc) }}"></iframe>
             @else
                 @if($rightText !== '')
                     <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($rightText) !!}</div>

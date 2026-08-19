@@ -6,7 +6,7 @@
     'age' => '11+',
     'difficulty' => 'Orta',
     'primaryUrl' => '#',
-    'primaryLabel' => 'Derse Başla',
+    'primaryLabel' => 'Derse BaÅŸla',
     'primaryVariant' => 'default',
     'deleteUrl' => null,
     'subCourseUrl' => null,
@@ -21,6 +21,10 @@
 ])
 
 @php
+    $viewer = auth()->user();
+    $isAdmin = (bool) ($viewer?->hasRole('admin') ?? false);
+    $isTeacher = (bool) ($viewer?->hasRole('teacher') ?? false);
+    $showCreatorLabel = $isAdmin || $isTeacher;
     $utf8 = \App\Support\Utf8Text::class;
     $normalizeText = static function ($value): string {
         $value = trim((string) $value);
@@ -31,8 +35,6 @@
 
         $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        // Only re-encode if the string is NOT already valid UTF-8.
-        // mb_convert_encoding on valid UTF-8 strings corrupts Turkish chars (ı→ı, ş→Å, etc.)
         if (! mb_check_encoding($decoded, 'UTF-8')) {
             $converted = @mb_convert_encoding($decoded, 'UTF-8', 'Windows-1254');
             $decoded = (is_string($converted) && $converted !== '') ? $converted : $decoded;
@@ -47,7 +49,7 @@
     $difficultyValue = $normalizeText($utf8::normalize($difficulty));
     $primaryLabelValue = $normalizeText($utf8::normalize($primaryLabel));
     $creatorLabelValue = $normalizeText($utf8::normalize($creatorLabel));
-    $confirmMessage = $normalizeText($utf8::normalize('Bu dersi silmek istediğinize emin misiniz?'));
+    $confirmMessage = $normalizeText($utf8::normalize('Bu dersi silmek istediÄŸinize emin misiniz?'));
     $difficultyStyle = match (mb_strtolower($difficultyValue)) {
         'kolay' => 'background:#16a34a;color:#fff;',
         'orta' => 'background:#2563eb;color:#fff;',
@@ -61,9 +63,9 @@
     <div class="relative">
         <div class="relative h-56 overflow-hidden bg-slate-100">
             @if($hasCover)
-                    <img
+                <img
                     src="{{ $image }}"
-                    alt="kapak görseli"
+                    alt="kapak gÃ¶rseli"
                     class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
                     loading="lazy"
                 >
@@ -88,28 +90,29 @@
                 @endif
             </div>
 
+            <span class="course-card-difficulty-badge" style="{{ $difficultyStyle }}">
+                {{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}
+            </span>
+
             <div class="absolute left-4 top-16 z-20 flex items-center gap-3 pointer-events-none">
                 <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_10px_24px_rgba(15,23,42,.12)]">
-                <img src="{{ $logo }}" alt="logo" class="h-10 w-10 object-contain">
+                    <img src="{{ $logo }}" alt="logo" class="h-10 w-10 object-contain">
                 </div>
             </div>
         </div>
     </div>
 
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
-        <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0">
-                <h4 class="text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
-                @if(trim((string) $creatorLabelValue) !== '')
-                    <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
-                @endif
-                @if($normalizedDescription !== '')
-                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
-                @else
-                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600"> </p>
-                @endif
-            </div>
-            <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
+        <div class="min-w-0">
+            <h4 class="course-card-title text-[17px] md:text-[18px] font-bold leading-snug tracking-tight text-slate-900">{{ $safeTitle }}</h4>
+            @if($showCreatorLabel && trim((string) $creatorLabelValue) !== '')
+                <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
+            @endif
+            @if($normalizedDescription !== '')
+                <p class="course-card-description {{ $showCreatorLabel ? 'mt-2' : 'mt-4' }} text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
+            @else
+                <p class="course-card-description {{ $showCreatorLabel ? 'mt-2' : 'mt-4' }} text-[14px] leading-6 text-slate-600">&nbsp;</p>
+            @endif
         </div>
 
         @php
@@ -188,8 +191,45 @@
         cursor: pointer;
     }
 
+    .course-card-difficulty-badge {
+        position: absolute;
+        right: 14px;
+        bottom: 14px;
+        z-index: 30;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 76px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        box-shadow: 0 12px 28px rgba(15,23,42,.22);
+        border: 2px solid rgba(255,255,255,.92);
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .course-card-title,
     .course-card-description {
-        min-height: calc(1.5rem * 3);
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .course-card-title {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        min-height: calc(1.35em * 2);
+    }
+
+    .course-card-description {
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        min-height: calc(1.5rem * 2);
     }
 </style>
 
@@ -200,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         link.dataset.bound = '1';
         link.addEventListener('click', async (event) => {
             event.preventDefault();
-            const message = link.dataset.confirm || 'Bu dersi silmek istediğinize emin misiniz?';
+            const message = link.dataset.confirm || 'Bu dersi silmek istediÄŸinize emin misiniz?';
             const ok = window.AppDialog && typeof window.AppDialog.confirm === 'function'
                 ? await window.AppDialog.confirm(message)
                 : window.confirm(message);

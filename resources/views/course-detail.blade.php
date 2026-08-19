@@ -1,10 +1,11 @@
-@extends('layout.app')
+﻿@extends('layout.app')
 @section('title', $title)
 @section('content')
 @php
     $normalizeText = static fn ($value): string => trim((string) \App\Support\Utf8Text::normalize($value));
     $viewer = auth()->user();
     $canEditMainCourse = (bool) ($viewer?->hasRole('admin') || ((bool) $viewer?->hasRole('teacher') && (int) ($course->created_by ?? 0) === (int) ($viewer?->id ?? 0)));
+    $canCreateSubCourse = (bool) ($viewer?->hasRole('admin') || $viewer?->hasRole('teacher'));
     $subCourses = collect($subCourses ?? []);
     $subCourseProgress = collect($subCourseProgress ?? []);
     $mainCompleted = (bool) ($isCompleted ?? false);
@@ -27,6 +28,11 @@
                 <h2 class="text-2xl font-bold text-gray-900">{{ $safeDetailTitle }}</h2>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                @if($canCreateSubCourse)
+                    <a href="{{ route('courses.create', ['parent_course_id' => $course->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-600 px-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg">
+                        Alt Ders Oluştur
+                    </a>
+                @endif
                 @if($canEditMainCourse)
                     <a href="{{ route('courses.edit', $course) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                         Düzenle
@@ -82,7 +88,7 @@
                     $subCompleted = (bool) data_get($subProgress, 'completed', false);
                     $subKonu = $normalizeText(data_get($subCourse->lesson_payload, 'curriculum.topic', data_get($subCourse->lesson_payload, 'lesson_description', '')));
                     $subKazanimlar = collect(data_get($subCourse->lesson_payload, 'curriculum.outcomes', []))
-                        ->concat((array) data_get($subCourse->lesson_payload, 'curriculum.kazanımlar', []))
+                        ->concat((array) data_get($subCourse->lesson_payload, 'curriculum.kazanÄ±mlar', []))
                         ->concat((array) data_get($subCourse->lesson_payload, 'curriculum.kazanimlar', []))
                         ->map(fn ($item) => $normalizeText($item))
                         ->filter()
@@ -102,6 +108,13 @@
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             @if($canEditSubCourse)
+                                <form method="POST" action="{{ route('courses.destroy.by-id.delete', $subCourse->id) }}" class="inline-flex sub-course-delete-form" data-confirm="Bu alt dersi silmek istediğinize emin misiniz?">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex h-12 min-w-max cursor-pointer items-center justify-center rounded-xl px-5 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:shadow-xl" style="display:inline-flex;background:#dc2626;border:1px solid #dc2626;box-shadow:0 10px 20px rgba(220,38,38,.22);">
+                                        Alt Dersi Sil
+                                    </button>
+                                </form>
                                 <a href="{{ route('courses.edit', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     Düzenle
                                 </a>
@@ -159,6 +172,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (_) {}
         });
     });
+
+    document.querySelectorAll('.sub-course-delete-form').forEach((form) => {
+        if (form.dataset.bound === '1') return;
+        form.dataset.bound = '1';
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = form.dataset.confirm || 'Bu alt dersi silmek istediğinize emin misiniz?';
+            const ok = window.AppDialog && typeof window.AppDialog.confirm === 'function'
+                ? await window.AppDialog.confirm(message)
+                : window.confirm(message);
+            if (ok) {
+                form.submit();
+            }
+        });
+    });
 });
 </script>
 @endsection
+

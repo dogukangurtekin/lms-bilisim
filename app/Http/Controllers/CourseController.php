@@ -703,7 +703,7 @@ class CourseController extends Controller
     public function destroyById(int $id)
     {
         $this->performDestroyById($id);
-        return redirect()->route('courses.index')->with('ok', 'Ders silindi');
+        return back()->with('ok', 'Ders silindi');
     }
 
     private function getStudent(): Student

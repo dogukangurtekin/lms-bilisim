@@ -25,6 +25,30 @@
         $decoded = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         return trim(strip_tags($decoded));
     };
+    $normalizeHeadingRichText = static function ($value): string {
+        $html = trim((string) $value);
+        if ($html === '') {
+            return '';
+        }
+        if (preg_match('/<h[1-6]\b/i', $html)) {
+            return $html;
+        }
+        if (!preg_match('/^<p\b([^>]*)>(.*?)<\/p>/is', $html, $matches)) {
+            return $html;
+        }
+        $pAttrs = (string) ($matches[1] ?? '');
+        $firstBlock = trim(html_entity_decode(strip_tags($matches[2] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        if ($firstBlock === '') {
+            return $html;
+        }
+        $isHeadlineLike = mb_strlen($firstBlock) <= 90
+            || preg_match('/^[A-ZÇĞİÖŞÜ0-9\s\-\:\/]+$/u', $firstBlock)
+            || preg_match('/^\s*(?:\d+[\.\)]\s*)?[^\.\n]{3,90}$/u', $firstBlock);
+        if (!$isHeadlineLike) {
+            return $html;
+        }
+        return preg_replace('/^<p\b[^>]*>(.*?)<\/p>/is', '<h2' . $pAttrs . '>$1</h2>', $html, 1) ?? $html;
+    };
     $pickValue = static function (array $source, array $keys) use ($normalizeText): string {
         foreach ($keys as $key) {
             $text = $normalizeText(data_get($source, $key));
@@ -271,11 +295,11 @@ HTML;
             @if($layout === 'text')
                 <div class="lesson-card lesson-text-only">
                     @if(!empty($slide['content']))
-                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $normalizeHeadingRichText($renderRichText($slide['content'])) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.html')))
-                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText(data_get($slide, 'layout_meta.text.html')) !!}</div>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $normalizeHeadingRichText($renderRichText(data_get($slide, 'layout_meta.text.html'))) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.text')))
-                        <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText(data_get($slide, 'layout_meta.text.text')) !!}</div>
+                        <div class="lesson-paragraph lesson-rich-text">{!! $normalizeHeadingRichText($renderRichText(data_get($slide, 'layout_meta.text.text'))) !!}</div>
                     @endif
                 </div>
             @elseif($layout === 'hero' || $layout === 'section')
@@ -288,7 +312,7 @@ HTML;
                 <div class="lesson-grid-cards">
                     @foreach($blocks as $block)
                         @if(($block['type'] ?? '') === 'paragraph')
-                            <article class="lesson-card"><div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($block['text'] ?? '') !!}</div></article>
+                            <article class="lesson-card"><div class="lesson-paragraph lesson-rich-text">{!! $normalizeHeadingRichText($renderRichText($block['text'] ?? '')) !!}</div></article>
                         @elseif(($block['type'] ?? '') === 'bullets')
                             <article class="lesson-card">
                                 <ol class="lesson-list">
@@ -306,7 +330,7 @@ HTML;
                 @include('courses.partials.slides.interactive', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @else
                 @if(!empty($slide['content']))
-                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
+                    <div class="lesson-paragraph lesson-rich-text">{!! $normalizeHeadingRichText($renderRichText($slide['content'])) !!}</div>
                 @endif
                 @if(!empty($slide['image_url']))
                     <img src="{{ $slide['image_url'] }}" alt="slide görsel" class="lesson-image">
@@ -318,7 +342,7 @@ HTML;
                     <p><a href="{{ $slide['file_url'] }}" target="_blank" rel="noopener">Ek Kaynak</a></p>
                 @endif
                 @if($codeSrcdoc !== '')
-                    <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                    <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ e($codeSrcdoc) }}"></iframe>
                 @endif
             @endif
 

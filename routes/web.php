@@ -267,6 +267,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
         Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
         Route::get('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id');
+        Route::delete('/courses/delete/{id}', [CourseController::class, 'destroyById'])->name('courses.destroy.by-id.delete');
         Route::resource('courses', CourseController::class);
 
     });

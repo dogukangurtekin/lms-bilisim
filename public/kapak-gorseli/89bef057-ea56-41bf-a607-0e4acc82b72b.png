@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#eef6ff"/>
+      <stop offset="55%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dbeafe"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="yellowGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#1e293b" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1400" cy="140" r="180" fill="#60a5fa" opacity="0.14"/>
+  <circle cx="150" cy="790" r="220" fill="#f59e0b" opacity="0.10"/>
+  <rect x="90" y="90" width="620" height="500" rx="42" fill="#ffffff" filter="url(#shadow)"/>
+  <rect x="120" y="120" width="300" height="54" rx="18" fill="#dbeafe"/>
+  <text x="155" y="155" font-family="Verdana, Arial, sans-serif" font-size="22" font-weight="700" fill="#2563eb">5. SINIF BTY</text>
+  <text x="145" y="280" font-family="Verdana, Arial, sans-serif" font-size="86" font-weight="800" fill="#0f172a">Sıralama</text>
+  <text x="145" y="355" font-family="Verdana, Arial, sans-serif" font-size="52" font-weight="700" fill="#f59e0b">Sequencing</text>
+  <rect x="145" y="402" width="440" height="64" rx="24" fill="#eff6ff" stroke="#93c5fd" stroke-width="3"/>
+  <text x="365" y="445" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="30" font-weight="700" fill="#1d4ed8">Konu Anlatımı ve Etkinlikler</text>
+
+  <!-- isometric cards -->
+  <g transform="translate(890 180) skewX(-10)" filter="url(#shadow)">
+    <rect x="0" y="0" width="520" height="260" rx="36" fill="#fff"/>
+    <rect x="40" y="40" width="120" height="120" rx="24" fill="#eff6ff" stroke="#93c5fd"/>
+    <rect x="200" y="40" width="120" height="120" rx="24" fill="#fef3c7" stroke="#fbbf24"/>
+    <rect x="360" y="40" width="120" height="120" rx="24" fill="#dcfce7" stroke="#86efac"/>
+    <path d="M100 170 C150 180, 180 180, 230 170" fill="none" stroke="#2563eb" stroke-width="8" stroke-dasharray="10 12"/>
+    <path d="M260 170 C310 180, 340 180, 390 170" fill="none" stroke="#f59e0b" stroke-width="8" stroke-dasharray="10 12"/>
+    <path d="M420 170 C460 180, 490 180, 520 170" fill="none" stroke="#22c55e" stroke-width="8" stroke-dasharray="10 12"/>
+  </g>
+
+  <g transform="translate(950 510)" filter="url(#shadow)">
+    <rect x="0" y="0" width="460" height="160" rx="28" fill="#fff"/>
+    <rect x="24" y="26" width="120" height="108" rx="22" fill="url(#blueGrad)"/>
+    <rect x="172" y="26" width="120" height="108" rx="22" fill="url(#yellowGrad)"/>
+    <rect x="320" y="26" width="120" height="108" rx="22" fill="url(#greenGrad)"/>
+    <text x="84" y="93" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">1</text>
+    <text x="232" y="93" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">2</text>
+    <text x="380" y="93" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">3</text>
+  </g>
+
+  <g transform="translate(130 650)">
+    <rect x="0" y="0" width="140" height="92" rx="26" fill="#3b82f6"/>
+    <rect x="160" y="0" width="140" height="92" rx="26" fill="#f59e0b"/>
+    <rect x="320" y="0" width="140" height="92" rx="26" fill="#22c55e"/>
+    <text x="70" y="57" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">Git</text>
+    <text x="230" y="57" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">Al</text>
+    <text x="390" y="57" text-anchor="middle" font-family="Verdana, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff">Gel</text>
+  </g>
+</svg>
