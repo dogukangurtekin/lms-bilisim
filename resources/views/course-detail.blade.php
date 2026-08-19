@@ -168,6 +168,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (_) {}
         });
     });
+
+    document.querySelectorAll('.course-delete-link').forEach((link) => {
+        if (link.dataset.bound === '1') return;
+        link.dataset.bound = '1';
+        link.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const message = link.dataset.confirm || 'Bu alt dersi silmek istediğinize emin misiniz?';
+            const ok = window.AppDialog && typeof window.AppDialog.confirm === 'function'
+                ? await window.AppDialog.confirm(message)
+                : window.confirm(message);
+            if (ok) {
+                window.location.href = link.href;
+            }
+        });
+    });
 });
 </script>
 @endsection
