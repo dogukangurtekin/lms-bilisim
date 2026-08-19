@@ -111,7 +111,7 @@
                                 </a>
                             @endif
                             @if($canDeleteSubCourse)
-                                <a href="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition hover:brightness-95 course-delete-link" data-delete-url="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" data-confirm="Bu alt dersi silmek istediğinize emin misiniz?">
+                                <a href="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white transition course-delete-link" style="background:#ef4444 !important;border:1px solid #dc2626 !important;box-shadow:0 12px 24px rgba(239,68,68,.22) !important;opacity:1 !important;visibility:visible !important;" data-delete-url="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" data-confirm="Bu alt dersi silmek istediğinize emin misiniz?">
                                     Alt Dersi Sil
                                 </a>
                             @endif
