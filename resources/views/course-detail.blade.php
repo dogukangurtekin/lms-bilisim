@@ -31,6 +31,9 @@
                     <a href="{{ route('courses.edit', $course) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                         Düzenle
                     </a>
+                    <a href="{{ route('courses.create', ['parent_course_id' => $course->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:brightness-95">
+                        Alt Ders Oluştur
+                    </a>
                 @endif
                 <a
                     href="{{ $startUrl ?? '#' }}"
@@ -104,6 +107,9 @@
                             @if($canEditSubCourse)
                                 <a href="{{ route('courses.edit', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     Düzenle
+                                </a>
+                                <a href="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" class="inline-flex h-12 items-center justify-center rounded-xl bg-red-500 px-4 text-sm font-semibold text-white transition hover:brightness-95 course-delete-link" data-delete-url="{{ route('courses.destroy.by-id', ['id' => $subCourse->id]) }}" data-confirm="Bu alt dersi silmek istediğinize emin misiniz?">
+                                    Alt Dersi Sil
                                 </a>
                             @endif
                             <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $subCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}" data-course-fullscreen-start="1">
