@@ -3331,7 +3331,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     const raw = String(value || '').trim();
                     if (!raw) return '';
                     if (/^(?:data:|blob:|https?:\/\/)/i.test(raw)) return raw;
-                    return String(appBaseUrl || '').replace(/\/+$/, '') + '/' + raw.replace(/^\/+/, '').replace(/^storage\//i, '');
+                    const base = String(appBaseUrl || '').replace(/\/+$/, '');
+                    const normalized = raw.replace(/^\/+/, '').replace(/^storage\//i, '');
+                    if (normalized.startsWith('course-covers/')) {
+                        return base + '/kapak-gorseli/' + normalized.replace(/^course-covers\//i, '');
+                    }
+                    if (normalized.startsWith('kapak-gorseli/')) {
+                        return base + '/' + normalized;
+                    }
+                    return base + '/' + normalized;
                 };
                 const renderSplitPanel = (panel, accent, label) => {
                     const type = String(panel.type || 'text');

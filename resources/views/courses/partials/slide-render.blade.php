@@ -114,7 +114,34 @@ HTML;
         if (str_starts_with($raw, 'course-covers/')) {
             $raw = 'kapak-gorseli/' . substr($raw, strlen('course-covers/'));
         }
-        return asset(ltrim($raw, '/'));
+        $relative = ltrim($raw, '/');
+        $baseName = pathinfo($relative, PATHINFO_FILENAME);
+        $extensions = ['png', 'webp', 'jpg', 'jpeg'];
+        foreach ([$relative, 'kapak-gorseli/' . basename($relative)] as $candidate) {
+            $candidate = ltrim($candidate, '/');
+            if (is_file(public_path($candidate))) {
+                return asset($candidate);
+            }
+            if (is_file(public_path('public/' . $candidate))) {
+                return asset('public/' . $candidate);
+            }
+            if (is_file(storage_path('app/public/' . $candidate))) {
+                return route('courses.cover', ['path' => $candidate]);
+            }
+        }
+        foreach ($extensions as $ext) {
+            $candidate = 'kapak-gorseli/' . $baseName . '.' . $ext;
+            if (is_file(public_path($candidate))) {
+                return asset($candidate);
+            }
+            if (is_file(public_path('public/' . $candidate))) {
+                return asset('public/' . $candidate);
+            }
+            if (is_file(storage_path('app/public/' . $candidate))) {
+                return route('courses.cover', ['path' => $candidate]);
+            }
+        }
+        return route('courses.cover', ['path' => $relative]);
     };
 
     $slide['content'] = $pickValue($slide, ['content', 'text', 'body', 'description', 'lesson_content', 'lesson_text', 'markdown', 'html_content']);

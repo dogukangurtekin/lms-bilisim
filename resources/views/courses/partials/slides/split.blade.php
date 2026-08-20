@@ -19,10 +19,33 @@
         if (str_starts_with($raw, 'course-covers/')) {
             $raw = 'kapak-gorseli/' . substr($raw, strlen('course-covers/'));
         }
-        if (str_starts_with($raw, 'kapak-gorseli/')) {
-            return asset($raw);
+        $relative = ltrim($raw, '/');
+        $baseName = pathinfo($relative, PATHINFO_FILENAME);
+        foreach ([$relative, 'kapak-gorseli/' . basename($relative)] as $candidate) {
+            $candidate = ltrim($candidate, '/');
+            if (is_file(public_path($candidate))) {
+                return asset($candidate);
+            }
+            if (is_file(public_path('public/' . $candidate))) {
+                return asset('public/' . $candidate);
+            }
+            if (is_file(storage_path('app/public/' . $candidate))) {
+                return route('courses.cover', ['path' => $candidate]);
+            }
         }
-        return asset(ltrim($raw, '/'));
+        foreach (['png', 'webp', 'jpg', 'jpeg'] as $ext) {
+            $candidate = 'kapak-gorseli/' . $baseName . '.' . $ext;
+            if (is_file(public_path($candidate))) {
+                return asset($candidate);
+            }
+            if (is_file(public_path('public/' . $candidate))) {
+                return asset('public/' . $candidate);
+            }
+            if (is_file(storage_path('app/public/' . $candidate))) {
+                return route('courses.cover', ['path' => $candidate]);
+            }
+        }
+        return route('courses.cover', ['path' => $relative]);
     };
 
     $leftType = (string) ($left['type'] ?? 'text');
