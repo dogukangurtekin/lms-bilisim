@@ -1610,7 +1610,16 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const draft = localStorage.getItem(draftKey);
             if (draft) {
-                const parsed = JSON.parse(draft);
+                let parsed = null;
+                try {
+                    parsed = JSON.parse(draft);
+                } catch (_) {
+                    try {
+                        parsed = JSON.parse(decodeURIComponent(escape(atob(draft))));
+                    } catch (_) {
+                        parsed = null;
+                    }
+                }
                 if (parsed && Array.isArray(parsed.slides) && parsed.slides.length) state = parsed;
             }
         } catch (_) {}
@@ -3848,8 +3857,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 uploadProgressBar.style.width = '0%';
                 uploadProgressText.textContent = '%0';
             };
+            const rawPayload = String(payloadInput.value || '');
+            if (shouldPersistDraft) {
+                try {
+                    localStorage.setItem(draftKey, rawPayload);
+                } catch (_) {}
+            }
             if (payloadInput) {
-                payloadInput.value = btoa(unescape(encodeURIComponent(payloadInput.value || '')));
+                payloadInput.value = btoa(unescape(encodeURIComponent(rawPayload)));
             }
             // Normal form submit kullan: _method ve CSRF Laravel tarafından doğal şekilde işlensin.
             // Basarili kayittan sonra taslak temizlensin.
