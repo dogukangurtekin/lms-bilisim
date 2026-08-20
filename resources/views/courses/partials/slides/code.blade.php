@@ -7,7 +7,12 @@
         return trim(strip_tags(html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')));
     };
     $buildCodeSrcdoc = static function (string $rawCode): string {
-        $code = html_entity_decode(trim($rawCode), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $code = trim($rawCode);
+        $decodedBase64 = base64_decode($code, true);
+        if (is_string($decodedBase64) && $decodedBase64 !== '' && base64_encode($decodedBase64) === preg_replace('/\s+/', '', $code)) {
+            $code = $decodedBase64;
+        }
+        $code = html_entity_decode($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         if ($code === '') {
             return '';
         }

@@ -1601,6 +1601,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let state;
     try { state = JSON.parse(payloadInput.value || '{"slides":[]}'); } catch (e) { state = {slides: []}; }
+    function encodeTextForStorage(text) {
+        const raw = String(text || '');
+        if (!raw.trim()) return '';
+        try {
+            return btoa(unescape(encodeURIComponent(raw)));
+        } catch (_) {
+            return raw;
+        }
+    }
+    function decodeTextFromStorage(text) {
+        const raw = String(text || '');
+        if (!raw.trim()) return '';
+        try {
+            const decoded = decodeURIComponent(escape(atob(raw)));
+            if (decoded) return decoded;
+        } catch (_) {}
+        return raw;
+    }
     const existingCoverUrl = @json($existingCoverUrl);
     const appBaseUrl = @json(url('/'));
     const isEditMode = {{ $isEdit ? 'true' : 'false' }};
@@ -1639,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', function () {
             normalized.image_url = String(slide.image_url || slide.imageUrl || slide.image || '');
             normalized.video_url = String(slide.video_url || slide.videoUrl || slide.video || '');
             normalized.file_url = String(slide.file_url || slide.fileUrl || slide.file || '');
-            normalized.code = String(slide.code || slide.html || slide.source_code || slide.script || '');
+            normalized.code = decodeTextFromStorage(String(slide.code || slide.html || slide.source_code || slide.script || ''));
             normalized.question_prompt = String(slide.question_prompt || slide.prompt || slide.questionText || '');
             normalized.points = Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5;
             normalized.time_limit = Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10;
@@ -2005,6 +2023,9 @@ document.addEventListener('DOMContentLoaded', function () {
         Object.entries(value).forEach(([key, item]) => {
             out[key] = sanitizeForSave(item);
         });
+        if (typeof out.code === 'string' && out.code.trim() !== '') {
+            out.code = encodeTextForStorage(out.code);
+        }
         return out;
     }
     function dataUrlToFile(dataUrl, filename = 'media.png') {
@@ -3862,9 +3883,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     localStorage.setItem(draftKey, rawPayload);
                 } catch (_) {}
-            }
-            if (payloadInput) {
-                payloadInput.value = btoa(unescape(encodeURIComponent(rawPayload)));
             }
             // Normal form submit kullan: _method ve CSRF Laravel tarafından doğal şekilde işlensin.
             // Basarili kayittan sonra taslak temizlensin.
