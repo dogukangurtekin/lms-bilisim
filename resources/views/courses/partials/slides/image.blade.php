@@ -23,6 +23,11 @@
 @endphp
 
 <div class="lesson-image-focus">
+    @if(!empty($codeSrcdoc))
+        <div class="lesson-code-block" style="width:100%;max-width:1100px">
+            <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+        </div>
+    @endif
     @if($mediaOrder === 'text-image')
         @if($html !== '')
             <div class="lesson-paragraph lesson-paragraph--compact">{!! $renderRichText($html) !!}</div>

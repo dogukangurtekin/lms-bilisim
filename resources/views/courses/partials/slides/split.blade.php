@@ -59,6 +59,11 @@
 @endphp
 
 <div class="lesson-split" style="display:grid;grid-template-columns:{{ $splitColumns }};gap:18px">
+    @if($codeSrcdoc !== '')
+        <div class="lesson-card" style="grid-column:1 / -1">
+            <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+        </div>
+    @endif
     <div class="lesson-card lesson-split-card">
         <div class="lesson-split-body">
             @if($leftType === 'image' && $leftImage !== '')

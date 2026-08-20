@@ -360,7 +360,7 @@ HTML;
             @elseif($layout === 'split')
                 @include('courses.partials.slides.split', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @elseif($layout === 'image')
-                @include('courses.partials.slides.image', ['slide' => $slide])
+                @include('courses.partials.slides.image', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @elseif($layout === 'features' || $layout === 'timeline' || $layout === 'steps')
                 <div class="lesson-grid-cards">
                     @foreach($blocks as $block)
