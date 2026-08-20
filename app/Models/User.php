@@ -38,7 +38,13 @@ class User extends Authenticatable
 
     public function hasRole(string ...$slugs): bool
     {
-        return in_array($this->role?->slug, $slugs, true);
+        $currentSlug = (string) ($this->role?->slug ?? '');
+
+        if ($currentSlug === '' && ! empty($this->role_id)) {
+            $currentSlug = (string) (Role::query()->whereKey($this->role_id)->value('slug') ?? '');
+        }
+
+        return $currentSlug !== '' && in_array($currentSlug, $slugs, true);
     }
 
     public function teacher(): HasOne
