@@ -3246,9 +3246,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const s = state.slides[previewIndex] || {};
         const layout = String(s.layout || 'auto');
         const meta = s.layout_meta || {};
-        const codeSrcdoc = s.code ? String(s.code) : '';
+        const themeCss = String(state.global_theme_css || globalThemeCss?.value || '').trim();
+        const safeAttr = (value) => String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        const buildCodeSrcdoc = (rawCode) => {
+            const code = String(rawCode || '').trim();
+            if (!code) return '';
+            const hasHtmlShell = /<\s*(?:html|head|body|!doctype)\b/i.test(code);
+            const theme = String(themeCss || '').trim();
+            const helper = [
+                '<meta name="viewport" content="width=device-width, initial-scale=1">',
+                '<style>html,body{margin:0;padding:0;min-height:100%;width:100%;overflow:auto;background:#fff}img,video,canvas,svg,table,pre,code{max-width:100%}</style>',
+                '<script>(function(){function fit(){var d=document.documentElement,b=document.body;if(!d||!b)return;d.style.transform="";d.style.transformOrigin="top left";d.style.width="";var vw=window.innerWidth||1;var cw=Math.max(d.scrollWidth,b.scrollWidth,d.clientWidth,1);var scale=1;if(cw>vw) scale=vw/cw; else if(cw<vw*0.72) scale=Math.min(1.45,vw/cw);if(!isFinite(scale)||scale<=0) scale=1;if(Math.abs(scale-1)>0.01){d.style.transform="scale("+scale+")";d.style.width=(100/scale)+"%"}}window.addEventListener("load",fit);window.addEventListener("resize",fit);setTimeout(fit,60);setTimeout(fit,240)})();<\/script>'
+            ].join('');
+            const style = theme ? '<style>' + theme + '</style>' : '';
+            if (hasHtmlShell) return helper + style + code;
+            return '<!doctype html><html><head>' + helper + style + '</head><body>' + code + '</body></html>';
+        };
+        const codeSrcdoc = s.code ? buildCodeSrcdoc(s.code) : '';
+        const effectiveLayout = (s.code && layout !== 'split' && layout !== 'interactive') ? 'code' : layout;
         const layoutPreview = (() => {
-            if (layout === 'text') {
+            if (effectiveLayout === 'text') {
                 const text = meta.text || {};
                 const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
                 const textHtml = String(liveTextHtml || text.html || text.text || s.content || '').trim();
@@ -3261,7 +3283,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 `;
             }
-            if (layout === 'split') {
+            if (effectiveLayout === 'split') {
                 const left = meta.left || {};
                 const right = meta.right || {};
                 const splitRatio = String(meta.split_ratio || '50-50');
@@ -3285,12 +3307,12 @@ document.addEventListener('DOMContentLoaded', function () {
                             ? (liveLeftHtml || panel.html || panel.text || '')
                             : (liveRightHtml || panel.html || panel.text || '')
                     );
-                    const imageUrl = escapeHtml(normalizeMediaUrl(String(panel.image_url || '')));
+                    const imageUrl = safeAttr(normalizeMediaUrl(String(panel.image_url || '')));
                     let body = '';
                     if (type === 'image' && imageUrl) {
                         body = [
                             '<div style="display:flex;align-items:flex-start;justify-content:center;width:100%;min-height:260px;padding:12px;background:#f8fbff;border-radius:16px;border:1px solid ' + accent + '22">',
-                            '<img src="' + imageUrl + '" alt="' + label + '" style="width:100%;height:auto;max-height:56vh;object-fit:contain;object-position:top center;display:block;background:#fff;border-radius:12px">',
+                            '<img src="' + imageUrl + '" alt="' + safeAttr(label) + '" style="width:100%;height:auto;max-height:56vh;object-fit:contain;object-position:top center;display:block;background:#fff;border-radius:12px">',
                             '</div>'
                         ].join('');
                     } else {
@@ -3318,23 +3340,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     '</div>'
                 ].join('');
             }
-            if (layout === 'hero') {
+            if (effectiveLayout === 'hero') {
                 const media = meta.media || {};
                 return [
                     '<div style="margin:14px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe">',
                     '<div style="height:18px;width:56%;border-radius:999px;background:#1d4ed8;margin-bottom:10px"></div>',
                     '<div style="height:12px;width:38%;border-radius:999px;background:#60a5fa;margin-bottom:18px"></div>',
                     media.image_url
-                        ? '<div style="width:100%;height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:16px;border:1px solid #bfdbfe;padding:6px"><img src="' + escapeHtml(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:12px"></div>'
+                        ? '<div style="width:100%;height:130px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:16px;border:1px solid #bfdbfe;padding:6px"><img src="' + safeAttr(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:12px"></div>'
                         : '<div style="height:130px;border-radius:16px;background:#93c5fd"></div>',
                     '</div>'
                 ].join('');
             }
-            if (layout === 'image') {
+            if (effectiveLayout === 'image') {
                 const media = meta.media || {};
                 const mediaOrder = String(media.order || 'image-text');
                 const imageBlock = media.image_url
-                    ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:inherit"><img src="' + escapeHtml(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:inherit"></div>'
+                    ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fbff;border-radius:inherit"><img src="' + safeAttr(media.image_url) + '" style="width:100%;height:100%;object-fit:contain;object-position:center center;display:block;background:#fff;border-radius:inherit"></div>'
                     : '<div style="width:100%;height:100%;background:#bfdbfe"></div>';
                 const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
                 const textBlock = liveMediaHtml
@@ -3350,32 +3372,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     '</div>'
                 ].join('');
             }
+            if (effectiveLayout === 'code') {
+                return [
+                    '<div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:12px">',
+                    '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;align-self:flex-start">Çalışan Kod</div>',
+                    codeSrcdoc ? '<iframe id="preview_code_iframe" allow="camera *; microphone *; fullscreen *" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:16px;background:#fff" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe>' : '<div style="padding:20px;border-radius:16px;background:#fff;border:1px dashed #cbd5e1">Kod alanı boş.</div>',
+                    '</div>'
+                ].join('');
+            }
             return '';
         })();
         let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';
-        html += '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;margin:6px 0 2px">' + escapeHtml((layout || 'auto').replace(/[-_]/g, ' ')) + '</div>';
+        html += '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;margin:6px 0 2px">' + escapeHtml((effectiveLayout || 'auto').replace(/[-_]/g, ' ')) + '</div>';
         html += layoutPreview;
         const bgStyle = backgroundStyleFromMeta(meta);
-        if (themeCss) {
-            html = '<style>' + themeCss + '</style><div class="slide-theme" style="' + bgStyle + '">' + html;
-        } else {
-            html = '<div class="slide-theme" style="' + bgStyle + '">' + html;
-        }
+        html = (themeCss ? '<style>' + themeCss + '</style>' : '') + '<div class="slide-theme" style="' + bgStyle + '">' + html + '</div>';
         if (s.instructions) html += '<p><b>Yonlendirme:</b> ' + escapeHtml(s.instructions) + '</p>';
         if (s.content) html += '<p>' + escapeHtml(s.content) + '</p>';
-        if (s.image_url) html += '<img src="' + s.image_url + '" style="max-width:100%;border:1px solid #e5e7eb;border-radius:8px">';
-        if (s.video_url) html += '<p><a href="' + s.video_url + '" target="_blank">Video baglantisi</a></p>';
+        if (s.image_url) html += '<img src="' + safeAttr(s.image_url) + '" style="max-width:100%;border:1px solid #e5e7eb;border-radius:8px">';
+        if (s.video_url) html += '<p><a href="' + safeAttr(s.video_url) + '" target="_blank">Video baglantisi</a></p>';
         if (s.question_prompt) html += '<div class="card"><b>Soru:</b> ' + escapeHtml(s.question_prompt) + '</div>';
         if (s.interaction_type && s.interaction_type !== 'none') {
             const p = Number(s.points || 5) * (s.double_points ? 2 : 1);
             html += '<p><b>Puan:</b> ' + p + ' | <b>Süre:</b> ' + Number(s.time_limit || 10) + ' sn</p>';
-        }
-        if (s.code) {
-            const mergedCode = (themeCss ? ('<style>' + themeCss + '</style>') : '') + String(s.code || '');
-            html += '<iframe id="preview_code_iframe" allow="camera *; microphone *; fullscreen *" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:8px;margin-top:6px" srcdoc="' + escapeHtml(mergedCode) + '"></iframe>';
-        }
-        if (themeCss) {
-            html += '</div>';
         }
         previewStage.innerHTML = '<div id="preview-slide-fit" style="width:100%;height:100%;min-height:66vh;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;padding:16px;border-radius:24px;' + bgStyle + '">' + html + '</div>';
         fitPreviewContent();

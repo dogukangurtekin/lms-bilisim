@@ -10,439 +10,303 @@ $rc = new ReflectionClass($controller);
 $build = $rc->getMethod('buildCoursePackage');
 $build->setAccessible(true);
 
-$svgDataUri = static function (string $title, string $subtitle, array $lines, string $accent1, string $accent2): string {
-    $safe = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $y = 184;
-    $lineHtml = '';
-    foreach ($lines as $line) {
-        $lineHtml .= '<text x="88" y="' . $y . '" fill="#e2e8f0" font-size="28" font-family="Inter,Segoe UI,Arial,sans-serif">' . $safe($line) . '</text>';
-        $y += 42;
+$svg = function (string $title, string $subtitle, array $items, string $c1, string $c2): string {
+    $e = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $lines = '';
+    $x = 88;
+    $y = 190;
+    foreach ($items as $idx => $item) {
+        $col = $idx % 2;
+        $row = intdiv($idx, 2);
+        $bx = $x + ($col * 356);
+        $by = $y + ($row * 126);
+        $lines .= '<g transform="translate(' . $bx . ',' . $by . ')">';
+        $lines .= '<rect x="0" y="0" width="300" height="94" rx="22" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.18)"/>';
+        $lines .= '<circle cx="38" cy="47" r="22" fill="url(#g)"/>';
+        $lines .= '<text x="38" y="53" text-anchor="middle" fill="#fff" font-size="18" font-weight="800" font-family="Inter,Segoe UI,Arial,sans-serif">' . ($idx + 1) . '</text>';
+        $lines .= '<text x="74" y="37" fill="#fff" font-size="18" font-weight="800" font-family="Inter,Segoe UI,Arial,sans-serif">' . $e($item['title']) . '</text>';
+        $lines .= '<text x="74" y="62" fill="#dbeafe" font-size="14" font-family="Inter,Segoe UI,Arial,sans-serif">' . $e($item['desc']) . '</text>';
+        $lines .= '</g>';
     }
 
     $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">'
         . '<defs>'
-        . '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        . '<stop offset="0%" stop-color="' . $accent1 . '"/>'
-        . '<stop offset="100%" stop-color="' . $accent2 . '"/>'
-        . '</linearGradient>'
+        . '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' . $c1 . '"/><stop offset="100%" stop-color="' . $c2 . '"/></linearGradient>'
+        . '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0b1120"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>'
         . '<filter id="blur"><feGaussianBlur stdDeviation="18"/></filter>'
         . '</defs>'
-        . '<rect width="1280" height="720" fill="#0f172a"/>'
-        . '<circle cx="1030" cy="120" r="180" fill="' . $accent2 . '" opacity=".22" filter="url(#blur)"/>'
-        . '<circle cx="210" cy="620" r="220" fill="' . $accent1 . '" opacity=".18" filter="url(#blur)"/>'
-        . '<rect x="72" y="70" width="1136" height="580" rx="34" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>'
-        . '<rect x="88" y="100" width="180" height="42" rx="21" fill="url(#g)"/>'
-        . '<text x="178" y="129" fill="#fff" font-size="18" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif">Lise Düzeyi</text>'
-        . '<text x="88" y="220" fill="#fff" font-size="54" font-weight="800" font-family="Inter,Segoe UI,Arial,sans-serif">' . $safe($title) . '</text>'
-        . '<text x="88" y="272" fill="#cbd5e1" font-size="26" font-family="Inter,Segoe UI,Arial,sans-serif">' . $safe($subtitle) . '</text>'
-        . $lineHtml
-        . '<rect x="832" y="158" width="314" height="314" rx="28" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/>'
-        . '<circle cx="990" cy="282" r="76" fill="url(#g)"/>'
-        . '<path d="M965 282h50M990 257v50" stroke="#fff" stroke-width="14" stroke-linecap="round"/>'
-        . '<text x="989" y="392" fill="#e2e8f0" font-size="24" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif">Teknoloji - Bilgi - İletişim</text>'
+        . '<rect width="1280" height="720" fill="url(#bg)"/>'
+        . '<circle cx="1060" cy="120" r="170" fill="' . $c2 . '" opacity=".22" filter="url(#blur)"/>'
+        . '<circle cx="210" cy="610" r="210" fill="' . $c1 . '" opacity=".18" filter="url(#blur)"/>'
+        . '<rect x="68" y="64" width="1144" height="592" rx="34" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>'
+        . '<text x="88" y="128" fill="#fff" font-size="50" font-weight="900" font-family="Inter,Segoe UI,Arial,sans-serif">' . $e($title) . '</text>'
+        . '<text x="88" y="172" fill="#cbd5e1" font-size="24" font-family="Inter,Segoe UI,Arial,sans-serif">' . $e($subtitle) . '</text>'
+        . '<rect x="858" y="110" width="286" height="176" rx="28" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.14)"/>'
+        . '<path d="M904 206h138M973 137v138" stroke="url(#g)" stroke-width="16" stroke-linecap="round"/>'
+        . '<circle cx="972" cy="206" r="54" fill="url(#g)"/>'
+        . '<text x="972" y="214" fill="#fff" font-size="18" text-anchor="middle" font-weight="900" font-family="Inter,Segoe UI,Arial,sans-serif">VERI</text>'
+        . '<text x="1010" y="270" fill="#e2e8f0" font-size="18" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif">TÜRÜ</text>'
+        . $lines
         . '</svg>';
 
     return 'data:image/svg+xml;charset=UTF-8,' . rawurlencode($svg);
 };
 
+$makeSplit = function (string $title, string $html, string $imgTitle, string $subtitle, array $items, string $c1, string $c2) use ($svg): array {
+    return [
+        'title' => $title,
+        'layout' => 'split',
+        'layout_meta' => [
+            'split_ratio' => '70-30',
+            'left' => ['type' => 'text', 'text' => $html],
+            'right' => ['type' => 'image', 'image_url' => $svg($imgTitle, $subtitle, $items, $c1, $c2)],
+        ],
+        'xp' => 10,
+        'kind' => 'topic',
+        'interaction_type' => 'none',
+        'points' => 5,
+        'time_limit' => 10,
+        'double_points' => false,
+        'question' => ['options' => []],
+    ];
+};
+
 $slides = [];
+$slides[] = $makeSplit(
+    'Veri Türlerine Giriş',
+    '<h2>Veri türü neden önemlidir?</h2><p>Programlamada veri, işlenecek bilginin kendisidir. Ancak her veri aynı biçimde saklanmaz. Bazı veriler sayı, bazıları metin, bazıları ise doğru/yanlış gibi mantıksal değerlerdir. Bir değişkende hangi türün tutulacağı, programın amacına göre seçilmelidir.</p><p>Örneğin öğrenci notu sayısal bir veri iken, öğrenci adı metinsel bir veridir. Telefon numarası ise sayıya benzese de çoğu zaman metin olarak tutulur; çünkü üzerinde toplama yapmak değil, aynen saklamak istenir.</p><p><strong>Ana fikir:</strong> Yanlış veri türü, doğru görünen ama yanlış çalışan programlar üretir.</p>',
+    'Veri Türü',
+    'Veriyi doğru sınıflandır',
+    [
+        ['title' => 'Sayı', 'desc' => 'Hesaplama için'],
+        ['title' => 'Metin', 'desc' => 'İsim ve açıklama'],
+        ['title' => 'Mantıksal', 'desc' => 'Evet / hayır'],
+        ['title' => 'Dizi', 'desc' => 'Çoklu veri saklama'],
+    ],
+    '#0f766e',
+    '#2563eb'
+);
+
+$slides[] = $makeSplit(
+    'Doğru Tanımlama',
+    '<h2>Veri türünü doğru seçmek neden kritiktir?</h2><p>Veri türü doğru tanımlandığında program hem daha güvenilir hem de daha anlaşılır olur. Örneğin bir fiyat ondalıklı sayıdır, bir yaş tam sayıdır, bir şifre ise çoğu zaman metin olarak tutulur. Veri türü seçimi, veri üzerinde yapılabilecek işlemleri de belirler.</p><p>Bir sayıyı metin olarak saklarsanız toplama işlemi yapamazsınız. Bir metni sayı olarak tanımlarsanız da biçim kaybı oluşabilir. Bu yüzden veri türü, sadece bir etiket değil, programın davranışını belirleyen önemli bir karar noktasıdır.</p>',
+    'Doğru Seçim',
+    'Program davranışı',
+    [
+        ['title' => 'Yaş', 'desc' => 'Tam sayı'],
+        ['title' => 'Fiyat', 'desc' => 'Ondalıklı sayı'],
+        ['title' => 'İsim', 'desc' => 'Metin'],
+        ['title' => 'Onay', 'desc' => 'Boolean'],
+    ],
+    '#1d4ed8',
+    '#7c3aed'
+);
+
+$slides[] = $makeSplit(
+    'Dil Farkları',
+    '<h2>Veri türlerinin isimleri her dilde aynı olmayabilir</h2><p>Farklı programlama dillerinde veri türlerinin isimleri değişebilir. Bir dilde <strong>integer</strong> denilen tür, başka bir dilde <strong>int</strong> olarak yazılabilir. Benzer şekilde metin için <strong>string</strong>, mantıksal değer için <strong>boolean</strong> veya <strong>bool</strong> kullanılabilir.</p><p>Bu farklılık kavramı değiştirmez; sadece dilin sözdizimini değiştirir. Öğrencinin önce kavramı anlaması, sonra o kavramın dildeki karşılığını öğrenmesi gerekir.</p>',
+    'Dil Sözdizimi',
+    'Aynı kavram farklı ad',
+    [
+        ['title' => 'int', 'desc' => 'Tam sayı'],
+        ['title' => 'float', 'desc' => 'Ondalıklı sayı'],
+        ['title' => 'string', 'desc' => 'Metin'],
+        ['title' => 'bool', 'desc' => 'Doğru / yanlış'],
+    ],
+    '#0891b2',
+    '#0f766e'
+);
+
+$slides[] = $makeSplit(
+    'Sayısal ve Metinsel',
+    '<h2>Sayısal ve metinsel veri örnekleri</h2><p>Sayısal veri türleri hesaplama yapmak için kullanılır. Tam sayı, kesir içermeyen değerleri temsil ederken; float ya da ondalıklı sayı türleri küsuratlı değerleri tutar. Metinsel veri türü ise harf, boşluk, sembol ve rakamların bir arada yer alabildiği yapıdadır.</p><p>Örnek olarak okul numarası, isim, sınıf şubesi, puan ve boy bilgisi farklı veri türleriyle saklanabilir. Aynı veri bazen bir amaçla sayısal, başka bir amaçla metinsel olabilir. Örneğin “2026” tarihi sayı gibi görünse de tarih etiketi olarak metin biçiminde de saklanabilir.</p>',
+    'Veri Örnekleri',
+    'Sayı ve metin',
+    [
+        ['title' => 'Integer', 'desc' => 'Tam sayı'],
+        ['title' => 'Float', 'desc' => 'Küsuratlı sayı'],
+        ['title' => 'String', 'desc' => 'Karakter dizisi'],
+        ['title' => 'Char', 'desc' => 'Tek karakter'],
+    ],
+    '#16a34a',
+    '#0f766e'
+);
+
+$slides[] = $makeSplit(
+    'Alt Veri Türleri',
+    '<h2>Seçilen türün alt yapıları olabilir</h2><p>Her programın ihtiyaç duyduğu veri türü aynı değildir. Sayısal veri türünün de kendi içinde tam sayı ve ondalıklı sayı gibi alt ayrımları vardır. Bu ayrım, yapılacak işlem sonucunu doğrudan etkiler.</p><p>Örneğin 5 / 2 işlemi tam sayı mantığında farklı, ondalıklı sayı mantığında farklı sonuç verir. Bu nedenle veri türünü seçmek yalnızca depolama kararı değil, aynı zamanda hesaplama kararıdır.</p>',
+    'Alt Türler',
+    'Sayıların iç yapısı',
+    [
+        ['title' => 'Byte', 'desc' => 'Küçük aralık'],
+        ['title' => 'Integer', 'desc' => 'Standart tam sayı'],
+        ['title' => 'Long', 'desc' => 'Büyük tam sayı'],
+        ['title' => 'Float', 'desc' => 'Kesirli değer'],
+    ],
+    '#dc2626',
+    '#1d4ed8'
+);
+
+$slides[] = $makeSplit(
+    'Program İçinde Kullanım',
+    '<h2>Bir program aynı anda farklı veri türlerini nasıl kullanır?</h2><p>Bir öğrenci kayıt sisteminde ad, soyad, yaş, sınıf, aktiflik durumu ve ders notu birlikte tutulabilir. Burada metin, sayı, mantıksal değer ve dizi yapıları birlikte çalışır. Programın amacı neyse, veri türleri de o amaca hizmet edecek şekilde düzenlenir.</p><p>Bu yaklaşım sayesinde veriler daha düzenli saklanır, daha hızlı işlenir ve hata ihtimali azalır. Veri türleri arasında bilinçli seçim yapmak, programcıyı daha profesyonel hale getirir.</p>',
+    'Program Verisi',
+    'Birden fazla tür birlikte',
+    [
+        ['title' => 'Ad', 'desc' => 'String'],
+        ['title' => 'Not', 'desc' => 'Integer / Float'],
+        ['title' => 'Aktif', 'desc' => 'Boolean'],
+        ['title' => 'Dersler', 'desc' => 'Dizi'],
+    ],
+    '#7c3aed',
+    '#2563eb'
+);
 
 $slides[] = [
-    'title' => 'BT\'nin Temel Kavramları',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Bilgi, teknoloji ve iletişim neden birlikte düşünülür?</h2><p><strong>Bilişim teknolojileri</strong> yalnızca cihazlar topluluğu değildir; bilgiyi toplama, işleme, depolama ve paylaşma biçimidir. <strong>Bilgi</strong>, ham verinin anlamlı hale gelmiş biçimidir. <strong>Teknoloji</strong>, bir problemi çözmek için geliştirilen yöntem, araç ve sistemlerin bütünüdür. <strong>İletişim</strong> ise insanların, cihazların ve sistemlerin birbirine veri aktarabilmesidir.</p><p>Günlük yaşamda telefonla mesaj atarken, bir okul duyurusunu e-Okul üzerinden kontrol ederken veya bir bankacılık uygulamasında işlem yaparken bu üç kavram birlikte çalışır. Bu yüzden BT okuryazarlığı, sadece cihaz kullanmak değil, <strong>doğru bilgiye erişmek</strong> ve <strong>güvenli biçimde paylaşmak</strong> anlamına da gelir.</p><p><strong>Sorgulama sorusu:</strong> Bir bilgiyi “değerli” yapan şey ne olabilir: çok olması mı, doğru olması mı, zamanında ulaşması mı?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('BT\'nin Temel Kavramları', 'Bilgi, teknoloji ve iletişim ortak bir sistem gibi çalışır.', ['Veri -> Bilgi', 'Araç -> Teknoloji', 'Paylaşım -> İletişim'], '#0f766e', '#2563eb'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Bilgi, Veri ve Enformasyon',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Veri tek başına neden yetmez?</h2><p><strong>Veri</strong>, tek başına anlamı sınırlı işaretlerdir. Örneğin “23, 24, 26” bir veri dizisidir. Bu sayılar bir sınıfın haftalık çevrimiçi kullanım süresini anlatıyorsa <strong>bilgi</strong>ye dönüşür. Veriyi anlamlı hale getiren şey bağlamdır.</p><p>Bir öğrenci için sınav notunun yanında “ders çalışma süresi”, “konu tekrar sayısı” ve “deneme performansı” birlikte değerlendirildiğinde daha güçlü bir yorum yapılabilir. Bu nedenle bilişim teknolojileri, veriyi yalnızca saklamaz; onu anlamlı, karşılaştırılabilir ve kullanılabilir hale getirir.</p><p><strong>Örnek veri:</strong> Bir mobil uygulamanın günlük açılma sayısı, internet kullanım saati, adım sayısı veya akıllı saat verileri.</p><p><strong>Derin düşünme sorusu:</strong> Bir okul yönetimi sadece notlara bakarsa hangi önemli ayrıntıları kaçırabilir?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Veri ve Bilgi', 'Veri bağlam kazandığında bilgiye dönüşür.', ['23, 24, 26 -> veri', 'Sınıfın haftalık süresi -> bilgi', 'Karar verme -> teknoloji çıktısı'], '#1d4ed8', '#7c3aed'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Ülkemizde Kullanılan BT Araçları',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Teknolojik araçlar yalnızca tüketim aracı değil, üretim aracıdır.</h2><p>Ülkemizde bilişim teknolojileri çok farklı alanlarda kullanılıyor: bilgisayar laboratuvarları, akıllı tahtalar, tablet destekli eğitim, hastane bilgi sistemleri, e-devlet uygulamaları, trafik takip sistemleri ve yerli teknoloji projeleri bunlardan bazılarıdır.</p><p>Örneğin <strong>Türk uzay yolcusu ve bilim misyonu</strong> gibi projeler, teknoloji üretiminin yalnızca cihaz kullanmak olmadığını; aynı zamanda bilimsel hedefler koymak, mühendislik çözümleri geliştirmek ve yeni bilgi üretmek anlamına geldiğini gösterir. Yerli otomobil, insansız hava araçları ve akıllı şehir çözümleri de bu yaklaşımın örnekleridir.</p><p>Bilişim araçlarının kullanım alanı sabit değildir. Aynı cihaz evde eğlence için, okulda öğrenme için, iş yerinde üretim için kullanılabilir. Bu esneklik, teknolojiyi güçlü kılar.</p><p><strong>Yorum sorusu:</strong> Bir akıllı telefon aynı anda hem eğitim hem sağlık hem de ulaşım alanına nasıl hizmet edebilir?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('BT Araçları', 'Bilgisayar, tablet, akıllı tahta, telefon, sensör ve yazılım.', ['Eğitim', 'Sağlık', 'Ulaşım', 'Güvenlik'], '#0891b2', '#0f766e'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Cihazların Tarihsel Gelişimi',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Bugünkü cihazlar bir anda ortaya çıkmadı.</h2><p>Bilgisayarlar oda büyüklüğündeki makinelerden taşınabilir cihazlara dönüştü. Telefonlar sabit hatlardan kablosuz ve akıllı yapılara evrildi. Tabletler, hesap makineleri ve giyilebilir cihazlar da bu dönüşümün parçalarıdır.</p><p>Gelişim çizgisinde temel eğilimler hep benzer oldu: cihazlar küçüldü, hızlandı, daha az enerji tüketti ve daha çok iş yapabilir hale geldi. Eski mekanik sistemlerden dijital sistemlere geçiş, otomotiv sektöründen sağlık cihazlarına kadar her alanda hissedildi. Yerli otomobil gibi projeler de bu dönüşümün ülkemizdeki yansımalarıdır.</p><p><strong>Önemli fikir:</strong> Bir teknolojiyi takip etmek sadece merak değil, gelecekteki mesleki becerileri hazırlamaktır.</p><p><strong>Beklenti sorusu:</strong> Sence 10 yıl sonra bugün kullandığımız hangi cihazlar tamamen değişmiş olabilir?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Cihazların Evrimi', 'Büyük makinelerden taşınabilir akıllı sistemlere.', ['Mekanik sistemler', 'Masaüstü bilgisayarlar', 'Telefon ve tabletler', 'Yapay zeka destekli cihazlar'], '#7c3aed', '#2563eb'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Keşifler ve Dönüm Noktaları',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Teknoloji tarihini değiştiren şey çoğu zaman tek bir buluş değil, bir zincirdir.</h2><p>Bilişim teknolojilerinin gelişiminde telgraf, telefon, radyo, bilgisayar, internet ve mobil ağlar gibi dönüm noktaları vardır. Bu aşamaların her biri insanın bilgiye ulaşma hızını artırdı.</p><p>Tarihte <strong>Cezeri\'nin şifreli kilit sistemleri</strong>, güvenlik ve mekanik tasarım düşüncesinin erken örnekleri olarak önemlidir. Günümüzde kullanılan kriptoloji yaklaşımı, bilgiyi yetkisiz erişime karşı koruma fikrini çok daha gelişmiş biçimde sürdürüyor.</p><p>Telefonun icadı ile iletişimde mesafe duygusu zayıfladı. Sonra mobil uygulamalar, görüntülü görüşme ve anlık bildirimler geldi. Bu da kullanıcı beklentilerini ve yazılım geliştirme alanlarını kökten değiştirdi.</p><p><strong>Tartışma sorusu:</strong> Bir buluşun değerini belirleyen şey sadece “ilk olması” mı, yoksa insanlar üzerinde yarattığı etki mi?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Dönüm Noktaları', 'Telgraf, telefon, internet, mobil uygulama, yapay zeka.', ['Cezeri', 'Telefon', 'İnternet', 'Mobil çağ'], '#dc2626', '#1d4ed8'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'BT Kullanım Alanları',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>BT her yerde ama her yerde aynı amaçla kullanılmaz.</h2><p><strong>Eğitimde</strong> içerik sunumu, dijital kitaplar, simülasyonlar ve ölçme-değerlendirme araçları kullanılır. <strong>Sağlıkta</strong> randevu sistemleri, tıbbi görüntüleme ve hasta kayıtları öne çıkar. <strong>İletişimde</strong> mesajlaşma, e-posta, görüntülü görüşme ve sosyal ağlar yer alır.</p><p><strong>Güvenlikte</strong> kameralar, sensörler ve veri analitiği kullanılır. <strong>Ulaşımda</strong> navigasyon, trafik yönetimi, akıllı ulaşım sistemleri ve sürüş destek teknolojileri karşımıza çıkar.</p><p>Bu alanlar arasındaki ortak nokta şudur: teknoloji, insanın işini hızlandırır, hatayı azaltır ve karar vermeyi destekler. Ancak bunun için doğru amaçla, doğru veriyle ve doğru etik çerçevede kullanılmalıdır.</p><p><strong>Örnek durum sorusu:</strong> Bir hastanedeki dijital sistem ile bir okulun çevrim içi sınav sistemi arasında hangi benzerlikler vardır?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Kullanım Alanları', 'Eğitim, sağlık, iletişim, güvenlik ve ulaşım.', ['Eğitim', 'Sağlık', 'İletişim', 'Ulaşım'], '#0f766e', '#2563eb'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Olumlu Yönler',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Teknolojinin güçlü tarafı hayatı görünmez biçimde kolaylaştırmasıdır.</h2><p>BT\'nin olumlu yönleri arasında hızlı erişim, zaman tasarrufu, uzaktan iletişim, üretkenlik artışı, bireyselleştirilmiş öğrenme ve veri temelli karar verme vardır. Ayrıca engelli bireylerin hayata katılımını artıran erişilebilirlik araçları da önemli bir kazanımdır.</p><p>Bir öğretmen, dijital içerik kullanarak farklı öğrenme hızlarına uygun ders hazırlayabilir. Bir doktor, sistemler sayesinde hastanın geçmiş kayıtlarına hızla ulaşabilir. Bir öğrenci de kaynaklara kısa sürede erişerek araştırma yapabilir.</p><p><strong>Sonuç:</strong> Doğru kullanılan teknoloji, yalnızca rahatlık sağlamaz; fırsat eşitliğini de güçlendirebilir.</p><p><strong>Değerlendirme sorusu:</strong> Senin günlük hayatında teknoloji hangi işi gerçekten hızlandırıyor?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Olumlu Etkiler', 'Hız, erişim, verimlilik, öğrenme ve kapsayıcılık.', ['Hızlı erişim', 'Zaman tasarrufu', 'Uzaktan iletişim', 'Erişilebilirlik'], '#16a34a', '#0f766e'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Olumsuz Yönler',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Teknolojinin bedeli, kontrol edilmediğinde görünür hale gelir.</h2><p>Olumsuz yönler arasında dikkat dağınıklığı, aşırı ekran süresi, yanlış bilgiye maruz kalma, veri güvenliği sorunları, bağımlılık, sosyal izolasyon ve gizlilik ihlalleri sayılabilir. Teknoloji nötrdür; onu nasıl kullandığımız sonuçları belirler.</p><p>Örneğin sosyal medya algoritmaları, kullanıcının ilgisini çekmek için içerik akışını daraltabilir. Bu durum yanlış bilgiye daha hızlı maruz kalınmasına veya zamanın verimsiz kullanılmasına yol açabilir. Ayrıca bilinçsiz paylaşım, kişisel verilerin kötüye kullanım riskini artırır.</p><p><strong>Önemli uyarı:</strong> Her teknolojik gelişme otomatik olarak yararlı değildir; etik, güvenlik ve denetim gerekir.</p><p><strong>Yorum sorusu:</strong> Sence bir teknolojinin zararlı olup olmadığı tasarıma mı, kullanıcıya mı, yoksa kurallara mı daha çok bağlıdır?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Olumsuz Etkiler', 'Aşırı kullanım, yanlış bilgi, bağımlılık ve güvenlik riski.', ['Dikkat dağınıklığı', 'Gizlilik riski', 'Bağımlılık', 'Yanlış bilgi'], '#dc2626', '#7c2d12'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Denge ve Sorumluluk',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Teknolojiyi akıllıca kullanmak, onu sadece tüketmemekten geçer.</h2><p>BT\'nin olumlu ve olumsuz yönleri birlikte düşünülmelidir. Amaç, teknolojiyi tamamen reddetmek değil; onu bilinçli, güvenli ve üretken biçimde kullanmaktır. Bir öğrenci için bunun karşılığı; doğru kaynak seçmek, ekran süresini yönetmek ve dijital ayak izinin farkında olmaktır.</p><p>Gelecekte bazı teknolojiler daha da yaygınlaşacak: yapay zeka destekli asistanlar, giyilebilir sağlık sistemleri, otonom ulaşım ve kişiselleştirilmiş öğrenme platformları. Bu nedenle teknoloji gelişimini takip etmek, yalnızca bugünü değil, meslek hayatını da doğrudan etkiler.</p><p><strong>Kapanış sorusu:</strong> Teknolojiyi kullanırken “ne kadar kullandığın” mı, “nasıl kullandığın” mı daha önemlidir?</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Sorumlu Kullanım', 'Bilinçli, güvenli ve üretken teknoloji kullanımı.', ['Denge', 'Güvenlik', 'Üretkenlik', 'Etik'], '#2563eb', '#0f766e'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Kısa Değerlendirme',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<h2>Bugün neyi öğrendik?</h2><p>Bilgi, teknoloji ve iletişim kavramlarının birbirini tamamladığını; bilişim araçlarının eğitimden sağlığa, ulaşımdan güvenliğe kadar çok geniş bir alanda kullanıldığını; cihazların zaman içinde nasıl geliştiğini ve teknolojinin hem olumlu hem olumsuz sonuçlar doğurabildiğini tartıştık.</p><p><strong>Hatırlatma:</strong> Bir teknoloji aracını değerlendirmek için yalnızca işlevine değil, etkisine, etik kullanımına ve güvenliğine de bakmak gerekir.</p><p><strong>Mini görev:</strong> Günlük hayatında kullandığın bir BT aracını seç ve onun 1 olumlu, 1 olumsuz yönünü yaz.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Özet', 'Kavramlar, kullanım alanları ve etkiler.', ['Bilgi', 'Teknoloji', 'İletişim', 'Sorumluluk'], '#1d4ed8', '#16a34a'),
-        ],
-    ],
-    'xp' => 10,
-    'kind' => 'topic',
-    'interaction_type' => 'none',
-    'points' => 5,
-    'time_limit' => 10,
-    'double_points' => false,
-    'question' => ['options' => []],
-];
-
-$slides[] = [
-    'title' => 'Çıkış Soruları',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<p>Bu bölümde bilgiler artık doğrudan soru kartlarıyla ölçülür. Her soru, konuyu ezberden değil, yorum ve ilişkilendirme üzerinden kontrol edecek biçimde hazırlanmıştır.</p><p><strong>İpucu:</strong> Soruyu yanıtlamadan önce kavramlar arasındaki ilişkiyi düşün: veri, bilgi, teknoloji, kullanım alanı ve etki.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Değerlendirme', 'Bilgi, yorum ve örnek üzerinden ölçme.', ['Çoktan seçmeli', 'Açık uçlu', 'Günlük yaşam bağlantısı'], '#7c3aed', '#0f766e'),
-        ],
-    ],
+    'title' => 'Soru 1',
+    'layout' => 'text',
+    'layout_meta' => [],
     'xp' => 10,
     'kind' => 'topic',
     'interaction_type' => 'multiple_choice',
     'points' => 5,
     'time_limit' => 10,
     'double_points' => false,
-    'question_prompt' => 'Aşağıdakilerden hangisi bilişim teknolojilerinin olumlu yönlerinden biridir?',
-    'question' => [
-        'options' => [
-            ['text' => 'Bilgiye hızlı erişim sağlaması', 'correct' => true],
-            ['text' => 'Kişisel verileri korumasız bırakması', 'correct' => false],
-            ['text' => 'Dikkat dağınıklığını artırması', 'correct' => false],
-            ['text' => 'Yanlış bilgi yaymayı kolaylaştırması', 'correct' => false],
-        ],
-    ],
+    'question_prompt' => 'Bir öğrencinin adı hangi veri türüyle temsil edilmelidir?',
+    'question' => ['options' => [
+        ['text' => 'String', 'correct' => true],
+        ['text' => 'Integer', 'correct' => false],
+        ['text' => 'Boolean', 'correct' => false],
+        ['text' => 'Float', 'correct' => false],
+    ]],
 ];
 
 $slides[] = [
-    'title' => 'Çoktan Seçmeli 2',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<p>Bu soru, kavramlar arasındaki temel ilişkiyi ölçer. Tek bir doğru cevap vardır.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Soru 2', 'Kavramlar arası ilişki.', ['Veri', 'Bilgi', 'Teknoloji'], '#1d4ed8', '#7c3aed'),
-        ],
-    ],
+    'title' => 'Soru 2',
+    'layout' => 'text',
+    'layout_meta' => [],
     'xp' => 10,
     'kind' => 'topic',
     'interaction_type' => 'multiple_choice',
     'points' => 5,
     'time_limit' => 10,
     'double_points' => false,
-    'question_prompt' => 'Bir bilginin değerli olmasını sağlayan en önemli unsur aşağıdakilerden hangisidir?',
-    'question' => [
-        'options' => [
-            ['text' => 'Doğru ve güvenilir olması', 'correct' => true],
-            ['text' => 'Çok uzun olması', 'correct' => false],
-            ['text' => 'Her yerde yazılması', 'correct' => false],
-            ['text' => 'Renkli olması', 'correct' => false],
-        ],
-    ],
+    'question_prompt' => 'Aşağıdakilerden hangisi mantıksal veri türüne örnektir?',
+    'question' => ['options' => [
+        ['text' => 'Doğru / yanlış', 'correct' => true],
+        ['text' => 'Metin', 'correct' => false],
+        ['text' => 'Ondalıklı sayı', 'correct' => false],
+        ['text' => 'Dizi', 'correct' => false],
+    ]],
 ];
 
 $slides[] = [
-    'title' => 'Çoktan Seçmeli 3',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<p>Bu soru, teknolojinin kullanım alanlarını ölçer.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Soru 3', 'Kullanım alanı.', ['Eğitim', 'Sağlık', 'Ulaşım'], '#16a34a', '#2563eb'),
-        ],
-    ],
+    'title' => 'Soru 3',
+    'layout' => 'text',
+    'layout_meta' => [],
     'xp' => 10,
     'kind' => 'topic',
     'interaction_type' => 'multiple_choice',
     'points' => 5,
     'time_limit' => 10,
     'double_points' => false,
-    'question_prompt' => 'Aşağıdakilerden hangisi bilişim teknolojilerinin kullanım alanlarından biridir?',
-    'question' => [
-        'options' => [
-            ['text' => 'Sağlık', 'correct' => true],
-            ['text' => 'Tatlı', 'correct' => false],
-            ['text' => 'Kumaş', 'correct' => false],
-            ['text' => 'Spor ayakkabısı', 'correct' => false],
-        ],
-    ],
+    'question_prompt' => 'Fiyat bilgisi için en uygun veri türü hangisidir?',
+    'question' => ['options' => [
+        ['text' => 'Float', 'correct' => true],
+        ['text' => 'Char', 'correct' => false],
+        ['text' => 'Boolean', 'correct' => false],
+        ['text' => 'String', 'correct' => false],
+    ]],
+];
+
+$slides[] = [
+    'title' => 'Doğru Yanlış 1',
+    'layout' => 'text',
+    'layout_meta' => [],
+    'xp' => 10,
+    'kind' => 'topic',
+    'interaction_type' => 'true_false',
+    'points' => 5,
+    'time_limit' => 10,
+    'double_points' => false,
+    'question_prompt' => 'Veri türü doğru seçilmezse programın davranışı etkilenebilir.',
+    'question' => ['options' => [['text' => 'Doğru', 'correct' => true]]],
+];
+
+$slides[] = [
+    'title' => 'Doğru Yanlış 2',
+    'layout' => 'text',
+    'layout_meta' => [],
+    'xp' => 10,
+    'kind' => 'topic',
+    'interaction_type' => 'true_false',
+    'points' => 5,
+    'time_limit' => 10,
+    'double_points' => false,
+    'question_prompt' => 'Aynı veri her programlama dilinde aynı isimle tanımlanmak zorundadır.',
+    'question' => ['options' => [['text' => 'Yanlış', 'correct' => true]]],
 ];
 
 $slides[] = [
     'title' => 'Kısa Cevap',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<p>Bu soru tek kelimelik cevap bekler. Amaç, kavram eşleştirmesini hızlı ve net biçimde ölçmektir.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Kısa Cevap', 'Tek kelime.', ['Bilgi', 'Veri', 'Teknoloji'], '#0f766e', '#2563eb'),
-        ],
-    ],
+    'layout' => 'text',
+    'layout_meta' => [],
     'xp' => 10,
     'kind' => 'topic',
     'interaction_type' => 'short_answer',
     'points' => 5,
     'time_limit' => 10,
     'double_points' => false,
-    'question_prompt' => 'Veri ile bilgi arasındaki farkı tek kelimeyle belirt: Bilgi mi, veri mi?',
-    'question' => [
-        'answer' => 'bilgi',
-    ],
+    'question_prompt' => 'Birden fazla aynı tür veriyi saklayan yapı hangi kavramdır?',
+    'question' => ['answer' => 'dizi'],
 ];
 
 $slides[] = [
     'title' => 'Eşleştirme',
-    'layout' => 'split',
-    'layout_meta' => [
-        'split_ratio' => '70-30',
-        'left' => [
-            'type' => 'text',
-            'text' => '<p>Aşağıdaki kavramları doğru tanımlarla eşleştir.</p>',
-        ],
-        'right' => [
-            'type' => 'image',
-            'image_url' => $svgDataUri('Eşleştirme', 'Kavram ve tanım.', ['Veri', 'İletişim', 'Teknoloji'], '#7c3aed', '#0f766e'),
-        ],
-    ],
+    'layout' => 'text',
+    'layout_meta' => [],
     'xp' => 10,
     'kind' => 'topic',
     'interaction_type' => 'matching',
     'points' => 5,
     'time_limit' => 10,
     'double_points' => false,
-    'question_prompt' => 'Kavramları doğru tanımlarla eşleştir.',
-    'question' => [
-        'pairs' => [
-            ['left' => 'Bilgi', 'right' => 'Anlam kazanmış veri'],
-            ['left' => 'Teknoloji', 'right' => 'Sorun çözmek için geliştirilen araç ve yöntemler'],
-            ['left' => 'İletişim', 'right' => 'Bilginin aktarılması'],
-        ],
-    ],
+    'question_prompt' => 'Veri türlerini uygun örnekleriyle eşleştir.',
+    'question' => ['pairs' => [
+        ['left' => 'Integer', 'right' => 'Tam sayı'],
+        ['left' => 'Float', 'right' => 'Ondalıklı sayı'],
+        ['left' => 'String', 'right' => 'Metin'],
+        ['left' => 'Boolean', 'right' => 'Doğru / yanlış'],
+    ]],
 ];
 
+$slides[] = $makeSplit(
+    'Ders Özeti',
+    '<h2>Bugün ne öğrendik?</h2><p>Veri türünün ne olduğunu, doğru seçimin neden önemli olduğunu, farklı programlama dillerinde isimlerin değişebileceğini ve sayı, metin, mantıksal değer ile dizi kavramlarını inceledik. Ayrıca aynı verinin farklı amaçlarla farklı türlerde saklanabileceğini gördük.</p><p><strong>Mini görev:</strong> Günlük hayattan 5 veri yaz ve her biri için en uygun veri türünü belirle.</p>',
+    'Ders Özeti',
+    'Kapanış',
+    [
+        ['title' => 'Tanım', 'desc' => 'Veri türü belirlenir'],
+        ['title' => 'Önem', 'desc' => 'Doğru seçim davranışı değiştirir'],
+        ['title' => 'Türler', 'desc' => 'Sayı, metin, mantık, dizi'],
+        ['title' => 'Kullanım', 'desc' => 'Program amacına göre seçilir'],
+    ],
+    '#2563eb',
+    '#0f766e'
+);
+
 $curriculum = [
-    'title' => 'BT\'nin Temel Kavramları, Olumlu ve Olumsuz Yönleri',
-    'lesson_number' => 1,
-    'konu' => 'BT\'nin temel kavramları, olumlu olumsuz yönleri',
+    'title' => 'Veri Türleri ve Program İçinde Kullanımı',
+    'lesson_number' => 3,
+    'konu' => 'Veri türleri, sayısal ve metinsel veri kullanımı',
     'kazanimlar' => [
-        'Bilgi, teknoloji ve iletişim kavramlarının açıklamasını yapar.',
-        'Bilişim teknolojisi araçlarını listeler ve örnekler verir.',
-        'Bilişim teknolojisi cihazlarının gelişimini açıklar.',
-        'Bilişim teknolojilerinin gelişiminde rol oynayan keşif, buluş ve dönüm noktalarını tartışır.',
-        'Bilişim teknolojilerinin kullanım alanlarını açıklar.',
-        'Bilişim teknolojilerinin olumlu ve olumsuz yönlerini tartışır.',
+        'Veri türlerini amacına uygun şekilde programa tanımlar.',
+        'Farklı veri türlerini program içerisinde kullanır.',
     ],
     'etkinlikler' => [
-        'Günlük yaşamdan BT örneklerini sınıflandırma çalışması.',
-        'Tarihsel gelişim çizelgesi oluşturma etkinliği.',
-        'Olumlu ve olumsuz yönleri karşılaştırma tartışması.',
-        'Çıkış soruları ile kısa değerlendirme.',
+        'Veri türü seçme ve örnekleme çalışması.',
+        'Aynı verinin farklı amaçlarla kullanılmasını tartışma.',
+        'Sayısal, metinsel ve mantıksal örnekler üzerinden uygulama.',
     ],
     'progress' => 100,
 ];
@@ -450,12 +314,12 @@ $curriculum = [
 $lessonPayload = [
     'slides' => $slides,
     'theme_template' => 'default',
-    'lesson_title' => 'BT\'nin Temel Kavramları, Olumlu ve Olumsuz Yönleri',
+    'lesson_title' => 'Veri Türleri ve Program İçinde Kullanımı',
     'category' => 'Bilişim Teknolojileri ve Yazılım',
     'difficulty' => 'Orta',
-    'lesson_description' => 'Bilişim teknolojilerinin temel kavramlarını, kullanım alanlarını, tarihsel gelişimini ve olumlu-olumsuz yönlerini lise düzeyinde çok yönlü biçimde ele alan ders.',
-    'cover_image' => 'kapak-gorseli/bt-temel-kavramlar-olumlu-olumsuz.jpg',
-    'global_theme_css' => ".slide-theme, .slide-theme *{box-sizing:border-box}\n.slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#f8fafc 0%,#eef6ff 100%);color:#0f172a;--theme-accent:#0f766e;--theme-accent-2:#2563eb;--theme-bg:#f8fbff;--theme-panel:#ffffff;--theme-border:#bfdbfe}\n.slide-theme :where(h1,h2,h3,h4,h5,h6){color:#0f172a;letter-spacing:-.025em;line-height:1.12;font-weight:900;margin:0 0 .75rem}\n.slide-theme :where(p,li,div,span){font-size:18px;line-height:1.82;color:#334155}\n.slide-theme :where(strong,b){color:#0f172a;font-weight:800}\n.slide-theme :where(a){color:#0f766e;text-decoration:none;border-bottom:1px solid rgba(15,118,110,.2)}\n.slide-theme :where(code,pre,kbd,samp){background:#dbeafe;color:#0f172a;border-radius:12px;padding:.2rem .5rem;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}\n.slide-theme pre{padding:14px 16px;overflow:auto}\n.slide-theme :where(blockquote){border-left:6px solid #0f766e;background:#ecfeff;padding:14px 16px;border-radius:0 16px 16px 0}\n.slide-theme :where(table){width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}\n.slide-theme :where(th){background:#dbeafe;color:#0f172a;font-weight:800;text-align:left}\n.slide-theme :where(td,th){border:1px solid #bfdbfe;padding:10px 12px;vertical-align:top}\n.slide-theme :where(img,video,iframe){max-width:100%;border-radius:16px;display:block}\n.slide-theme :where(figure){margin:16px 0;padding:12px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:18px}\n.slide-theme :where(figcaption){margin-top:8px;font-size:14px;color:#475569;text-align:center}\n.slide-theme :where(section,article,aside,main,header,footer,nav,div){border-radius:16px}\n.slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right){border-radius:18px;border:1px solid var(--theme-border);box-shadow:0 14px 30px rgba(14,116,144,.08);background:linear-gradient(180deg,var(--theme-panel),rgba(255,255,255,.9))}\n.slide-theme :where(.highlight,.badge,.pill,.callout){background:#dbeafe;color:#0f172a;border-radius:999px;padding:.15rem .55rem;font-weight:800}",
+    'lesson_description' => 'Veri türleri, değişkenler ve program içinde doğru kullanım odağında lise düzeyi ders.',
+    'cover_image' => 'kapak-gorseli/veri-turleri.jpg',
+    'global_theme_css' => ".slide-theme, .slide-theme *{box-sizing:border-box}\n.slide-theme{font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#f8fbff 0%,#eef6ff 100%);color:#0f172a}",
     'curriculum' => $curriculum,
     'target_scope' => '9-10',
 ];
@@ -463,15 +327,15 @@ $lessonPayload = [
 $payload = [
     'exported_at' => now()->toIso8601String(),
     'course' => [
-        'name' => 'BT\'nin Temel Kavramları, Olumlu ve Olumsuz Yönleri',
-        'code' => 'DERS' . strtoupper(Str::random(10)),
+        'name' => 'Veri Türleri ve Program İçinde Kullanımı',
+        'code' => 'BT-' . strtoupper(\Illuminate\Support\Str::random(8)),
         'weekly_hours' => 2,
         'lesson_payload' => $lessonPayload,
+        'sub_courses' => [],
     ],
 ];
 
 $pkg = $build->invoke($controller, $payload, '', 'image/png');
-$out = storage_path('app/bt-temel-kavramlar-olumlu-olumsuz.coursepkg');
+$out = storage_path('app/veri-turleri-ve-program-icinde-kullanimi.coursepkg');
 file_put_contents($out, $pkg);
-
 echo $out . PHP_EOL;

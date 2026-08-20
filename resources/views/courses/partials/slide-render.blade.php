@@ -25,6 +25,54 @@
         $decoded = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         return trim(strip_tags($decoded));
     };
+    $buildCodeSrcdoc = static function (string $rawCode): string {
+        $code = html_entity_decode(trim($rawCode), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        if ($code === '') {
+            return '';
+        }
+
+        $hasHtmlShell = (bool) preg_match('/<\s*(?:html|head|body|!doctype)\b/i', $code);
+        $themeCss = trim((string) view('courses.partials.lesson-theme-css')->render());
+        $responsiveHelper = <<<'HTML'
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html,body{margin:0;padding:0;min-height:100%;width:100%;overflow:auto;background:#fff}
+img,video,canvas,svg,table,pre,code{max-width:100%}
+</style>
+<script>
+(function () {
+  function fit() {
+    var docEl = document.documentElement;
+    var body = document.body;
+    if (!docEl || !body) return;
+    docEl.style.transform = '';
+    docEl.style.transformOrigin = 'top left';
+    docEl.style.width = '';
+    var vw = window.innerWidth || 1;
+    var contentWidth = Math.max(docEl.scrollWidth, body.scrollWidth, docEl.clientWidth, 1);
+    var scale = 1;
+    if (contentWidth > vw) scale = vw / contentWidth;
+    else if (contentWidth < vw * 0.72) scale = Math.min(1.45, vw / contentWidth);
+    if (!Number.isFinite(scale) || scale <= 0) scale = 1;
+    if (Math.abs(scale - 1) > 0.01) {
+      docEl.style.transform = 'scale(' + scale + ')';
+      docEl.style.width = (100 / scale) + '%';
+    }
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  setTimeout(fit, 60);
+  setTimeout(fit, 240);
+})();
+</script>
+HTML;
+
+        if ($hasHtmlShell) {
+            return $responsiveHelper . ($themeCss !== '' ? '<style>' . $themeCss . '</style>' : '') . $code;
+        }
+
+        return '<!doctype html><html><head>' . $responsiveHelper . ($themeCss !== '' ? '<style>' . $themeCss . '</style>' : '') . '</head><body>' . $code . '</body></html>';
+    };
     $pickValue = static function (array $source, array $keys) use ($normalizeText): string {
         foreach ($keys as $key) {
             $text = $normalizeText(data_get($source, $key));
@@ -148,11 +196,11 @@ img,video,canvas,svg,table,pre,code{max-width:100%}
 </script>
 HTML;
 
-    $codeSrcdoc = (string) ($slide['code'] ?? '');
-    if ($codeSrcdoc !== '') {
-        $codeSrcdoc = $responsiveHelper . '<style>' . trim(view('courses.partials.lesson-theme-css')->render()) . '</style>' . $codeSrcdoc;
-    }
+    $codeSrcdoc = $buildCodeSrcdoc((string) ($slide['code'] ?? ''));
     $interactionType = (string) ($slide['interaction_type'] ?? 'none');
+    if ($codeSrcdoc !== '' && $layout !== 'code' && $layout !== 'split' && $layout !== 'interactive') {
+        $layout = 'code';
+    }
 @endphp
 <style>
 .slide-render{
@@ -289,7 +337,9 @@ HTML;
 
             @if($layout === 'text')
                 <div class="lesson-card lesson-text-only">
-                    @if(!empty($slide['content']))
+                    @if($codeSrcdoc !== '')
+                        <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                    @elseif(!empty($slide['content']))
                         <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.html')))
                         <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText(data_get($slide, 'layout_meta.text.html')) !!}</div>
@@ -324,20 +374,20 @@ HTML;
             @elseif($layout === 'interactive')
                 @include('courses.partials.slides.interactive', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @else
-                @if(!empty($slide['content']))
-                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
-                @endif
-                @if(!empty($slide['image_url']))
-                    <img src="{{ $slide['image_url'] }}" alt="slide görsel" class="lesson-image">
-                @endif
-                @if(!empty($slide['video_url']))
-                    <p><a href="{{ $slide['video_url'] }}" target="_blank" rel="noopener">Video Bağlantısı</a></p>
-                @endif
-                @if(!empty($slide['file_url']))
-                    <p><a href="{{ $slide['file_url'] }}" target="_blank" rel="noopener">Ek Kaynak</a></p>
-                @endif
                 @if($codeSrcdoc !== '')
                     <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                @endif
+                @if($codeSrcdoc === '' && !empty($slide['content']))
+                    <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
+                @endif
+                @if($codeSrcdoc === '' && !empty($slide['image_url']))
+                    <img src="{{ $slide['image_url'] }}" alt="slide görsel" class="lesson-image">
+                @endif
+                @if($codeSrcdoc === '' && !empty($slide['video_url']))
+                    <p><a href="{{ $slide['video_url'] }}" target="_blank" rel="noopener">Video Bağlantısı</a></p>
+                @endif
+                @if($codeSrcdoc === '' && !empty($slide['file_url']))
+                    <p><a href="{{ $slide['file_url'] }}" target="_blank" rel="noopener">Ek Kaynak</a></p>
                 @endif
             @endif
 
