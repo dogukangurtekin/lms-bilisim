@@ -3848,59 +3848,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 uploadProgressBar.style.width = '0%';
                 uploadProgressText.textContent = '%0';
             };
-            if (builderForm.method && builderForm.method.toLowerCase() === 'post' && typeof window.XMLHttpRequest !== 'undefined') {
-                e.preventDefault();
-                const formData = new FormData(builderForm);
-                let notice = null;
-                const clearNotice = () => {
-                    if (notice && typeof appToastDismiss === 'function') {
-                        appToastDismiss(notice);
-                    }
-                    notice = null;
-                };
-                const setNotice = (text) => {
-                    if (typeof appToast !== 'function') return;
-                    if (notice && typeof appToastDismiss === 'function') {
-                        appToastDismiss(notice);
-                    }
-                    notice = appToast('warning', text, { sticky: true });
-                };
-                showUploadProgress(0, '%0');
-                setNotice('Ders yükleniyor: %0');
-                const xhr = new XMLHttpRequest();
-                xhr.open((builderForm.getAttribute('method') || 'POST').toUpperCase(), builderForm.action, true);
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.upload.addEventListener('progress', (evt) => {
-                    if (!evt.lengthComputable) {
-                        showUploadProgress(0, 'Yükleniyor...');
-                        setNotice('Ders yükleniyor...');
-                        return;
-                    }
-                    const percent = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
-                    showUploadProgress(percent, '%' + percent);
-                    setNotice(`Ders yükleniyor: %${percent}`);
-                });
-                xhr.addEventListener('load', () => {
-                    clearNotice();
-                    hideUploadProgress();
-                    if (xhr.status >= 200 && xhr.status < 400) {
-                        window.location.href = @json(route('courses.index'));
-                        return;
-                    }
-                    alert('Ders kaydedilemedi. Lütfen tekrar deneyin.');
-                });
-                xhr.addEventListener('error', () => {
-                    clearNotice();
-                    hideUploadProgress();
-                    alert('Ders yüklenirken ağ hatası oluştu.');
-                });
-                xhr.addEventListener('abort', () => {
-                    clearNotice();
-                    hideUploadProgress();
-                });
-                xhr.send(formData);
-                return;
-            }
+            // Normal form submit kullan: _method ve CSRF Laravel tarafından doğal şekilde işlensin.
             // Basarili kayittan sonra taslak temizlensin.
             if (shouldPersistDraft) {
                 setTimeout(() => {
