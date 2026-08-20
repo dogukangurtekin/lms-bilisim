@@ -1368,6 +1368,10 @@ class CourseController extends Controller
         $payload = [];
         if (!empty($data['lesson_payload'])) {
             $rawPayload = (string) $data['lesson_payload'];
+            $decodedBase64 = $this->decodeBase64PayloadString($rawPayload);
+            if ($decodedBase64 !== null) {
+                $rawPayload = $decodedBase64;
+            }
             $decoded = json_decode($rawPayload, true);
             if (!is_array($decoded)) {
                 $decoded = json_decode(html_entity_decode($rawPayload, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), true);
@@ -1421,6 +1425,26 @@ class CourseController extends Controller
         unset($data['cover_image_file'], $data['cover_image_data']);
 
         return $data;
+    }
+
+    private function decodeBase64PayloadString(string $value): ?string
+    {
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $decoded = base64_decode($trimmed, true);
+        if (! is_string($decoded) || $decoded === '') {
+            return null;
+        }
+
+        $reencoded = base64_encode($decoded);
+        if ($reencoded !== preg_replace('/\s+/', '', $trimmed)) {
+            return null;
+        }
+
+        return $decoded;
     }
 
     private function sanitizeLessonPayloadForStorage(array $payload): array

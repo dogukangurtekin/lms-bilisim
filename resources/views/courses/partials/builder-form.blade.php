@@ -3848,6 +3848,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 uploadProgressBar.style.width = '0%';
                 uploadProgressText.textContent = '%0';
             };
+            if (payloadInput) {
+                payloadInput.value = btoa(unescape(encodeURIComponent(payloadInput.value || '')));
+            }
             // Normal form submit kullan: _method ve CSRF Laravel tarafından doğal şekilde işlensin.
             // Basarili kayittan sonra taslak temizlensin.
             if (shouldPersistDraft) {
