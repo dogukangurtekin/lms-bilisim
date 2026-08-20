@@ -151,7 +151,10 @@ HTML;
         $slide['content'] = '';
         $slide['subtitle'] = '';
         $slide['instructions'] = '';
-        $slide['code'] = '';
+        // Kodlu slaytlarda kullanıcı kodunu koru; yanlış pozitif temizleme sadece ders şablonu metnine uygulanır.
+        if ($layout !== 'code' && $layout !== 'interactive') {
+            $slide['code'] = '';
+        }
         $slide['image_url'] = '';
         $slide['video_url'] = '';
         $slide['file_url'] = '';
