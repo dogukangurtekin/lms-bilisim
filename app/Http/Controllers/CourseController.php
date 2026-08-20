@@ -682,6 +682,11 @@ class CourseController extends Controller
             ? response()->json($course->refresh())
             : redirect()->route('courses.index')->with('ok', 'Ders guncellendi');
     }
+
+    public function updatePost(UpdateCourseRequest $request, Course $course)
+    {
+        return $this->update($request, $course);
+    }
     public function destroy(Course $course)
     {
         $this->performDestroyById((int) $course->id);

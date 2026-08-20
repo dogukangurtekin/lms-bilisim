@@ -263,6 +263,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/courses/{course}/unassign-teacher', [CourseController::class, 'unassignTeacher'])->name('courses.unassign-teacher');
         Route::post('/courses/{course}/assign-classes', [CourseController::class, 'assignClasses'])->name('courses.assign-classes');
         Route::post('/courses/{course}/assign-level', [CourseController::class, 'assignByLevel'])->name('courses.assign-level');
+        Route::post('/courses/{course}/kaydet', [CourseController::class, 'updatePost'])->name('courses.update.post');
         Route::delete('/courses/delete-all', [CourseController::class, 'destroyAll'])->name('courses.destroy-all');
         Route::post('/courses/{course}/delete', [CourseController::class, 'destroyPost'])->name('courses.destroy.post');
         Route::get('/courses/{course}/delete-now', [CourseController::class, 'destroyNow'])->name('courses.destroy.now');
@@ -327,7 +328,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
-
 
 
 
