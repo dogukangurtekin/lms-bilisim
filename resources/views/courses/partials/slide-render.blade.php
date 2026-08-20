@@ -206,9 +206,6 @@ HTML;
 
     $codeSrcdoc = $buildCodeSrcdoc((string) ($slide['code'] ?? ''));
     $interactionType = (string) ($slide['interaction_type'] ?? 'none');
-    if ($codeSrcdoc !== '' && $layout !== 'code' && $layout !== 'split' && $layout !== 'interactive') {
-        $layout = 'code';
-    }
 @endphp
 <style>
 .slide-render{
@@ -341,6 +338,12 @@ HTML;
             @endif
             @if($heroText !== '')
                 <p class="lesson-slide-subtitle">{{ $heroText }}</p>
+            @endif
+
+            @if($codeSrcdoc !== '' && $layout !== 'code')
+                <div class="lesson-card" style="margin-bottom:16px">
+                    <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                </div>
             @endif
 
             @if($layout === 'text')

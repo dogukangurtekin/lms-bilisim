@@ -2226,6 +2226,9 @@ document.addEventListener('DOMContentLoaded', function () {
         syncTiptapField('curriculum_activities');
         s.title = getFieldValue(fields.title, 'Basliksiz Slide');
         s.layout = getFieldValue(fields.layout, 'auto');
+        if (String(s.code || '').trim() !== '') {
+            s.layout = 'text';
+        }
         s.xp = Math.max(0, Math.min(500, parseInt(getFieldValue(fields.xp, '0') || '0', 10) || 0));
         s.content = getFieldValue(fields.content, '');
         s.instructions = getFieldValue(fields.instructions, '');
@@ -2290,8 +2293,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const s = state.slides[active];
         try {
             const slideLayout = String(s.layout || 'auto');
+            const normalizedLayout = String(s.code || '').trim() !== '' ? 'text' : slideLayout;
             setFieldValue(fields.title, s.title || '');
-            setFieldValue(fields.layout, slideLayout);
+            setFieldValue(fields.layout, normalizedLayout);
             setFieldValue(fields.xp, Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0);
             if (fields.content) fields.content.value = s.content || '';
             setFieldValue(fields.instructions, s.instructions || '');
@@ -3298,7 +3302,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return '<!doctype html><html><head>' + helper + style + '</head><body>' + code + '</body></html>';
         };
         const codeSrcdoc = s.code ? buildCodeSrcdoc(s.code) : '';
-        const effectiveLayout = (s.code && layout !== 'split' && layout !== 'interactive') ? 'code' : layout;
+        const effectiveLayout = layout;
+        const codePreview = codeSrcdoc ? ('<div style="margin:14px 0;max-width:min(92vw,1380px);width:100%"><iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe></div>') : '';
         const layoutPreview = (() => {
             if (effectiveLayout === 'text') {
                 const text = meta.text || {};
@@ -3414,7 +3419,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })();
         let html = '<h3>' + escapeHtml(s.title || 'Basliksiz Slide') + ' <span style="font-size:13px;color:#334155">| XP: ' + Number(s.xp || 0) + '</span></h3>';
         html += '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;margin:6px 0 2px">' + escapeHtml((effectiveLayout || 'auto').replace(/[-_]/g, ' ')) + '</div>';
-        html += layoutPreview;
+        html += codePreview + layoutPreview;
         const bgStyle = backgroundStyleFromMeta(meta);
         html = (themeCss ? '<style>' + themeCss + '</style>' : '') + '<div class="slide-theme" style="' + bgStyle + '">' + html + '</div>';
         if (s.instructions) html += '<p><b>Yonlendirme:</b> ' + escapeHtml(s.instructions) + '</p>';
