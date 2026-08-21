@@ -26,18 +26,20 @@ class TeacherAssignmentController extends Controller
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
         $ownerFilter = (string) request()->query('owner', $user?->hasRole('admin') ? 'admin' : 'teacher');
         $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($user?->hasRole('admin') ? 'admin' : 'teacher');
-        $courseHomeworks = CourseHomework::with(['course', 'schoolClass'])
-            ->when($user?->hasRole('teacher'), function ($query) use ($teacherId) {
-                $query->where(function ($sub) use ($teacherId, $user) {
-                    $sub->where(function ($lessonQuery) use ($teacherId) {
-                        $lessonQuery->where('assignment_type', 'lesson')
-                            ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
-                    })->orWhere(function ($ownQuery) use ($user) {
-                        $ownQuery->where('assignment_type', '!=', 'lesson')
-                            ->where('created_by', $user?->id);
-                    });
+        $courseHomeworksQuery = CourseHomework::with(['course', 'schoolClass']);
+        if ($user?->hasRole('teacher')) {
+            $courseHomeworksQuery->where(function ($query) use ($teacherId, $user): void {
+                $query->where(function ($lessonQuery) use ($teacherId): void {
+                    $lessonQuery->where('assignment_type', 'lesson')
+                        ->whereNotNull('course_id')
+                        ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
+                })->orWhere(function ($ownQuery) use ($user): void {
+                    $ownQuery->where('assignment_type', '!=', 'lesson')
+                        ->where('created_by', (int) ($user?->id ?? 0));
                 });
-            })
+            });
+        }
+        $courseHomeworks = $courseHomeworksQuery
             ->latest()
             ->paginate(20, ['*'], 'course_page');
         $gameAssignments = GameAssignment::with(['classes', 'levels', 'creator.role'])
