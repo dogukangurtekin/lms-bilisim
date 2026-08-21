@@ -28,12 +28,14 @@ class TeacherAssignmentController extends Controller
         $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($user?->hasRole('admin') ? 'admin' : 'teacher');
         $courseHomeworks = CourseHomework::with(['course', 'schoolClass'])
             ->when($user?->hasRole('teacher'), function ($query) use ($teacherId) {
-                $query->where(function ($sub) use ($teacherId) {
-                    $sub->where('assignment_type', '!=', 'lesson')
-                        ->orWhere(function ($lessonQuery) use ($teacherId) {
-                            $lessonQuery->where('assignment_type', 'lesson')
-                                ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
-                        });
+                $query->where(function ($sub) use ($teacherId, $user) {
+                    $sub->where(function ($lessonQuery) use ($teacherId) {
+                        $lessonQuery->where('assignment_type', 'lesson')
+                            ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
+                    })->orWhere(function ($ownQuery) use ($user) {
+                        $ownQuery->where('assignment_type', '!=', 'lesson')
+                            ->where('created_by', $user?->id);
+                    });
                 });
             })
             ->latest()
