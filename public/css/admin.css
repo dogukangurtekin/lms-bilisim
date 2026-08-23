@@ -1056,6 +1056,24 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 }
 @media (max-width: 760px){
   .sidebar-pro .sidebar-logo--brand{width:96px;height:96px}
+  .sidebar-pro .sidebar-brand p,
+  .sidebar-pro .student-sidebar-top p,
+  .sidebar-pro a{
+    font-size:12px;
+  }
+  .sidebar-pro a{
+    padding:10px 10px;
+    border-radius:12px;
+    margin:3px 0;
+  }
+  .sidebar-pro .nav-icon{
+    width:18px;
+    height:18px;
+  }
+  .sidebar-pro .nav-icon svg{
+    width:16px;
+    height:16px;
+  }
   .dashboard-hero{padding:18px;border-radius:22px}
   .dashboard-hero h1{font-size:24px}
   .dashboard-main-layout{grid-template-columns:1fr}

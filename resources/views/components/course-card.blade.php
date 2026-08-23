@@ -250,6 +250,49 @@
         background: #fff;
         box-shadow: 0 10px 24px rgba(15,23,42,.12);
     }
+
+    @media (max-width: 640px) {
+        .course-card-action {
+            min-height: 40px;
+            padding: 0 8px;
+            font-size: 11px;
+            line-height: 1.05;
+        }
+
+        .course-card-action--sub,
+        .course-card-action--delete {
+            min-height: 40px;
+            font-size: 10px;
+            white-space: nowrap;
+            padding: 0 6px;
+        }
+
+        .course-card-action--launch {
+            white-space: nowrap;
+        }
+
+        .course-card-action + .course-card-action {
+            margin-left: 0;
+        }
+
+        .mt-auto.grid[style*="grid-template-columns"] {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 6px !important;
+        }
+
+        .mt-auto.grid[style*="grid-template-columns"] > * {
+            min-width: 0;
+        }
+
+        .course-card-action {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .course-card-logo-shell {
+            transform: translateY(10px);
+        }
+    }
 </style>
 
 <script>

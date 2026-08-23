@@ -210,6 +210,36 @@ body.role-student input,body.role-student select,body.role-student textarea{
     flex-wrap:nowrap;
   }
 }
+@media (max-width:640px){
+  body.role-student .sidebar{
+    width:min(76vw,280px);
+    padding:16px 12px;
+  }
+  body.role-student .sidebar-brand p,
+  body.role-student .student-sidebar-top p,
+  body.role-student .sidebar a{
+    font-size:11px;
+  }
+  body.role-student .sidebar a{
+    padding:10px 11px;
+    gap:8px;
+    border-radius:11px;
+    margin-bottom:6px;
+  }
+  body.role-student .sidebar-logo{
+    width:92px;
+    height:92px;
+  }
+  body.role-student .student-sidebar-time{
+    padding:9px 10px;
+  }
+  body.role-student .student-sidebar-time span{
+    font-size:10px;
+  }
+  body.role-student .student-sidebar-time strong{
+    font-size:13px;
+  }
+}
 
 body.role-student .lesson-card-grid{
   display:grid;
