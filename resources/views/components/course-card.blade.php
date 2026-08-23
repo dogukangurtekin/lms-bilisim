@@ -88,9 +88,12 @@
                 @endif
             </div>
 
-            <div class="absolute left-4 top-16 z-20 flex items-center gap-3 pointer-events-none">
-                <div class="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_10px_24px_rgba(15,23,42,.12)]">
-                <img src="{{ $logo }}" alt="logo" class="h-10 w-10 object-contain">
+            <div class="absolute left-4 top-14 z-30 flex h-full items-start gap-3 pointer-events-none">
+                <div class="course-card-logo-accent"></div>
+                <div class="course-card-logo-shell">
+                    <div class="course-card-logo-inner">
+                <img src="{{ $logo }}" alt="logo" class="h-[42px] w-[42px] object-contain">
+                    </div>
                 </div>
             </div>
         </div>
@@ -202,6 +205,50 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         overflow: hidden;
+    }
+
+    .course-card-logo-accent {
+        position: absolute;
+        left: -70px;
+        top: 50%;
+        width: 132px;
+        height: 100%;
+        transform: translateY(-50%) skewX(-18deg);
+        border-radius: 12px;
+        background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 52%, #4c1d95 100%);
+        box-shadow: 0 18px 36px rgba(76,29,149,.34);
+        z-index: 1;
+        opacity: .91;
+    }
+
+    .course-card-logo-accent::before {
+        content: none;
+    }
+
+    .course-card-logo-shell {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        width: 69px;
+        height: 69px;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+        transform: translateY(15px);
+    }
+
+    .course-card-logo-inner {
+        position: relative;
+        z-index: 6;
+        display: flex;
+        width: 65px;
+        height: 65px;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 9999px;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15,23,42,.12);
     }
 </style>
 

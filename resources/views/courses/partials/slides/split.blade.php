@@ -158,6 +158,36 @@
     height:100%;
     max-width:100%;
 }
+.lesson-split-card{
+    position:relative;
+    overflow:hidden;
+    background:rgba(248, 251, 255, .8);
+    border:1px solid rgba(219, 229, 242, .72);
+    box-shadow:0 18px 44px rgba(15,23,42,.08);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+}
+.lesson-split-card::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,0) 42%),
+        radial-gradient(circle at top left, rgba(99,102,241,.10), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(168,85,247,.08), transparent 38%);
+    pointer-events:none;
+    z-index:0;
+}
+.lesson-split-body{
+    position:relative;
+    z-index:1;
+}
+.lesson-split-media-wrap,
+.lesson-paragraph,
+.lesson-code-frame{
+    position:relative;
+    z-index:1;
+}
 @media (max-width:768px){
     .lesson-split{
         grid-template-columns:1fr !important;
@@ -178,7 +208,7 @@
         align-items:flex-start;
         justify-content:center;
         overflow:hidden;
-        background:#fff;
+        background:rgba(255,255,255,.82);
         border-radius:16px;
     }
     .lesson-split-media{
@@ -188,7 +218,7 @@
         object-fit:contain !important;
         object-position:top center !important;
         display:block;
-        background:#fff;
+        background:rgba(255,255,255,.82);
         border-radius:16px;
     }
     .lesson-paragraph{
