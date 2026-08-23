@@ -574,6 +574,13 @@ class CourseController extends Controller
             }
         }
 
+        $fallback = public_path('logo.png');
+        if (is_file($fallback)) {
+            return response()->file($fallback, [
+                'Cache-Control' => 'public, max-age=300',
+            ]);
+        }
+
         abort(404);
     }
     public function store(StoreCourseRequest $request)

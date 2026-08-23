@@ -92,7 +92,7 @@
                 <div class="course-card-logo-accent"></div>
                 <div class="course-card-logo-shell">
                     <div class="course-card-logo-inner">
-                <img src="{{ $logo }}" alt="logo" class="h-[42px] w-[42px] object-contain">
+                <img src="{{ $logo }}" alt="logo" class="h-[48px] w-[48px] object-contain">
                     </div>
                 </div>
             </div>
