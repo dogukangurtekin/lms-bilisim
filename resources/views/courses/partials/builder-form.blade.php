@@ -1619,6 +1619,15 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (_) {}
         return raw;
     }
+    function deepClone(value) {
+        if (value === null || value === undefined) return value;
+        if (typeof structuredClone === 'function') {
+            try {
+                return structuredClone(value);
+            } catch (_) {}
+        }
+        return JSON.parse(JSON.stringify(value));
+    }
     const existingCoverUrl = @json($existingCoverUrl);
     const appBaseUrl = @json(url('/'));
     const isEditMode = {{ $isEdit ? 'true' : 'false' }};
@@ -1645,30 +1654,32 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!Array.isArray(state.slides)) state.slides = [];
     state.slides = state.slides
         .filter((slide) => slide && typeof slide === 'object')
-        .map((slide) => {
-            const normalized = {};
-            normalized.title = String(slide.title || slide.baslik || slide.name || 'Basliksiz Slide');
-            normalized.layout = String(slide.layout || slide.slide_layout || slide.template || 'auto');
-            normalized.xp = Number.isFinite(Number(slide.xp)) ? Number(slide.xp) : Number(slide.point || slide.points || 0);
+            .map((slide) => {
+                const normalized = {};
+                normalized.title = String(slide.title || slide.baslik || slide.name || 'Basliksiz Slide');
+                normalized.layout = String(slide.layout || slide.slide_layout || slide.template || 'auto');
+                normalized.xp = Number.isFinite(Number(slide.xp)) ? Number(slide.xp) : Number(slide.point || slide.points || 0);
             normalized.kind = String(slide.kind || slide.type || 'topic');
             normalized.interaction_type = String(slide.interaction_type || slide.interactionType || 'none');
             normalized.content = String(slide.content || slide.text || slide.body || slide.description || '');
             normalized.instructions = String(slide.instructions || slide.instruction || '');
             normalized.image_url = String(slide.image_url || slide.imageUrl || slide.image || '');
-            normalized.video_url = String(slide.video_url || slide.videoUrl || slide.video || '');
-            normalized.file_url = String(slide.file_url || slide.fileUrl || slide.file || '');
-            normalized.code = decodeTextFromStorage(String(slide.code || slide.html || slide.source_code || slide.script || ''));
-            normalized.question_prompt = String(slide.question_prompt || slide.prompt || slide.questionText || '');
-            normalized.points = Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5;
-            normalized.time_limit = Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10;
-            normalized.double_points = !!(slide.double_points !== undefined ? slide.double_points : slide.doublePoints);
-            normalized.layout_meta = slide.layout_meta && typeof slide.layout_meta === 'object' ? slide.layout_meta : (slide.layoutMeta && typeof slide.layoutMeta === 'object' ? slide.layoutMeta : {});
-            if (slide.question && typeof slide.question === 'object') {
-                normalized.question = slide.question;
+                normalized.video_url = String(slide.video_url || slide.videoUrl || slide.video || '');
+                normalized.file_url = String(slide.file_url || slide.fileUrl || slide.file || '');
+                normalized.code = decodeTextFromStorage(String(slide.code || slide.html || slide.source_code || slide.script || ''));
+                normalized.question_prompt = String(slide.question_prompt || slide.prompt || slide.questionText || '');
+                normalized.points = Number.isFinite(Number(slide.points)) ? Number(slide.points) : 5;
+                normalized.time_limit = Number.isFinite(Number(slide.time_limit)) ? Number(slide.time_limit) : 10;
+                normalized.double_points = !!(slide.double_points !== undefined ? slide.double_points : slide.doublePoints);
+                normalized.layout_meta = slide.layout_meta && typeof slide.layout_meta === 'object'
+                    ? deepClone(slide.layout_meta)
+                    : (slide.layoutMeta && typeof slide.layoutMeta === 'object' ? deepClone(slide.layoutMeta) : {});
+                if (slide.question && typeof slide.question === 'object') {
+                normalized.question = deepClone(slide.question);
             } else if (slide.question_data && typeof slide.question_data === 'object') {
-                normalized.question = slide.question_data;
+                normalized.question = deepClone(slide.question_data);
             } else if (slide.quiz && typeof slide.quiz === 'object') {
-                normalized.question = slide.quiz;
+                normalized.question = deepClone(slide.quiz);
             } else {
                 normalized.question = { options: [], pairs: [], items: [] };
             }
@@ -2240,11 +2251,11 @@ document.addEventListener('DOMContentLoaded', function () {
         s.time_limit = parseInt(getFieldValue(fields.time_limit, '10') || '10', 10);
         s.double_points = !!(fields.double_points && fields.double_points.checked);
         s.slide_background = readSlideBackground();
-        s.layout_meta = readLayoutMeta();
+        s.layout_meta = deepClone(readLayoutMeta());
         if (s.layout_meta && typeof s.layout_meta === 'object') {
-            s.layout_meta.background = s.slide_background;
+            s.layout_meta.background = deepClone(s.slide_background);
         }
-        s.question = readQuestionFromUI(s.interaction_type);
+        s.question = deepClone(readQuestionFromUI(s.interaction_type));
         if (currentSlideXpBadge) currentSlideXpBadge.textContent = 'Slide XP: ' + s.xp;
         state.lesson_title = lessonTitle.value || '';
         state.category = lessonCategory.value || 'Kodlama';
@@ -2258,9 +2269,9 @@ document.addEventListener('DOMContentLoaded', function () {
         state.slide_background = readSlideBackground();
         state.slides.forEach((slide) => {
             if (slide && typeof slide === 'object') {
-                slide.slide_background = Object.assign({}, state.slide_background);
+                slide.slide_background = deepClone(state.slide_background);
                 if (slide.layout_meta && typeof slide.layout_meta === 'object') {
-                    slide.layout_meta.background = Object.assign({}, state.slide_background);
+                    slide.layout_meta.background = deepClone(state.slide_background);
                 }
             }
         });
@@ -3727,7 +3738,26 @@ document.addEventListener('DOMContentLoaded', function () {
     addBtn.addEventListener('click', () => {
         saveCurrent();
         const bg = readSlideBackground();
-        state.slides.push({title: 'Yeni Slide', layout: 'image', layout_meta: { background: Object.assign({}, bg) }, slide_background: Object.assign({}, bg), xp: 0, kind: 'topic', interaction_type: 'none', points: 5, time_limit: 10, double_points: false, question: {options: [], pairs: [], items: []}});
+        state.slides.push({
+            title: 'Yeni Slide',
+            layout: 'image',
+            content: '',
+            instructions: '',
+            image_url: '',
+            video_url: '',
+            file_url: '',
+            code: '',
+            question_prompt: '',
+            layout_meta: { background: deepClone(bg) },
+            slide_background: deepClone(bg),
+            xp: 0,
+            kind: 'topic',
+            interaction_type: 'none',
+            points: 5,
+            time_limit: 10,
+            double_points: false,
+            question: { options: [], pairs: [], items: [] }
+        });
         active = state.slides.length - 1;
         loadCurrent(); renderList(); saveCurrent();
     });
