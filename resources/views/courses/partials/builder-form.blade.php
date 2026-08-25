@@ -2310,7 +2310,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (slideBackgroundValue) slideBackgroundValue.value = s.slide_background?.value || s.layout_meta?.background?.value || state.slide_background?.value || '';
             applyBackgroundToPicker();
             renderLayoutHelp(getFieldValue(fields.layout, 'auto'));
-            renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {});
+            renderLayoutEditor(getFieldValue(fields.layout, 'auto'), s.layout_meta || {}, false);
             renderQuestionEditor(getFieldValue(fields.interaction_type, 'none'), s.question || {});
             setActiveTab(inferTabForSlide(s));
             if (lessonCategory) lessonCategory.value = state.category || 'Kodlama';
@@ -2368,6 +2368,20 @@ document.addEventListener('DOMContentLoaded', function () {
             if (fields.layout) fields.layout.value = s.layout || 'auto';
             if (fields.xp) fields.xp.value = Number.isFinite(Number(s.xp)) ? Number(s.xp) : 0;
         }
+    }
+    function selectSlide(index) {
+        try {
+            saveCurrent();
+        } catch (error) {
+            console.error('saveCurrent failed', error);
+        }
+        active = Math.max(0, Math.min(state.slides.length - 1, Number(index) || 0));
+        const current = state.slides[active] || {};
+        loadCurrent();
+        renderList();
+        setActiveTab(inferTabForSlide(current));
+        renderLayoutEditor(getFieldValue(fields.layout, 'auto'), current.layout_meta || {}, false);
+        renderQuestionEditor(String(current.interaction_type || 'none'), current.question || {});
     }
     function normalizeCoverUrl(url) {
         const raw = String(url || '').trim();
@@ -2427,12 +2441,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         </span>
                     </span>
                 </span>
-            `;
+            `; 
             b.addEventListener('click', () => {
-                try { saveCurrent(); } catch (error) { console.error('saveCurrent failed', error); }
-                active = i;
-                loadCurrent();
-                renderList();
+                selectSlide(i);
             });
             list.appendChild(b);
         });
@@ -2528,13 +2539,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
     }
-    function renderLayoutEditor(layout, meta) {
+    function renderLayoutEditor(layout, meta, useLive = true) {
         const def = layoutDefinition(layout);
         if (!layoutEditorHint) return;
         if (layout === 'text') {
             layoutEditorHint.textContent = def.desc + ' Zengin metin araçlarını kullanabilirsiniz.';
             const text = meta?.text || {};
-            const liveTextHtml = getLiveEditorHtml('layout_text_html', 'layout_text_editor');
+            const liveTextHtml = useLive ? getLiveEditorHtml('layout_text_html', 'layout_text_editor') : '';
             const initialTextHtml = String(liveTextHtml || text.html || text.text || '').trim();
             layoutEditorFields.innerHTML = `
                 <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
@@ -2586,7 +2597,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (layout === 'hero' || layout === 'image') {
                 layoutEditorHint.textContent = def.desc + ' Görsel için dosya seçebilir, zengin metin için araç çubuğunu kullanabilirsiniz.';
                 const media = meta?.media || {};
-                const liveMediaHtml = getLiveEditorHtml('layout_media_html', 'layout_media_editor');
+                const liveMediaHtml = useLive ? getLiveEditorHtml('layout_media_html', 'layout_media_editor') : '';
                 const initialMediaHtml = String(liveMediaHtml || media.html || media.text || '').trim();
                 layoutEditorFields.innerHTML = `
                     <div class="tiptap-shell" style="display:grid;gap:0;background:#fff">
@@ -2653,8 +2664,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const left = meta?.left || {};
         const right = meta?.right || {};
         const splitRatio = String(meta?.split_ratio || '50-50');
-        const liveLeftHtml = getLiveEditorHtml('layout_left_html', 'layout_left_editor');
-        const liveRightHtml = getLiveEditorHtml('layout_right_html', 'layout_right_editor');
+        const liveLeftHtml = useLive ? getLiveEditorHtml('layout_left_html', 'layout_left_editor') : '';
+        const liveRightHtml = useLive ? getLiveEditorHtml('layout_right_html', 'layout_right_editor') : '';
         const initialLeftHtml = String(liveLeftHtml || left.html || left.text || '').trim();
         const initialRightHtml = String(liveRightHtml || right.html || right.text || '').trim();
         layoutEditorFields.innerHTML = `
