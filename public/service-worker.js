@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.4.0";
+const SW_VERSION = "v1.4.1";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -34,6 +34,22 @@ const API_CACHEABLE_PATHS = [
   "/teacher",
   "/app-notifications",
 ];
+
+const RUNNER_SLUGS = [
+  "block-3d-runner",
+  "block-grid-runner",
+  "compute-it-runner",
+  "lightbot-runner",
+  "line-trace-runner",
+  "silent-teacher-runner",
+  "connect-the-dots-runner",
+];
+
+function isRunnerRequest(url) {
+  const path = url.pathname;
+  if (path.includes("/runner-assets/")) return true;
+  return RUNNER_SLUGS.some((slug) => path.includes("/" + slug));
+}
 
 function isSameOrigin(requestUrl) {
   return requestUrl.origin === self.location.origin;
@@ -157,6 +173,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (!isSameOrigin(url)) return;
+  if (isRunnerRequest(url)) return;
 
   if (isNavigationRequest(request)) {
     event.respondWith((async () => {

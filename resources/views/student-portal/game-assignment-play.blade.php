@@ -2,7 +2,7 @@
 @section('title','Etkinlik Odev Oynatici')
 @section('body_class','play-compact')
 @section('content')
-<div class="card" style="padding:12px">
+<div class="card course-show-shell" style="padding:12px">
     <div class="card" style="padding:10px">
         <p><b>{{ $assignment->title }}</b> | <b>Kurallar:</b> Sadece verilen level araliginda ({{ $assignment->level_from }}-{{ $assignment->level_to }}) ilerleyin.</p>
         <iframe
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return m + ' dk ' + sec + ' sn';
     }
 
-    var needsPostMessageLock = ['compute-it-runner', 'block-grid-runner', 'lightbot-runner'].includes(slug);
+    var needsPostMessageLock = ['compute-it-runner', 'block-grid-runner', 'lightbot-runner', 'connect-the-dots-runner'].includes(slug);
     if (needsPostMessageLock) {
         iframe.addEventListener('load', function () {
             var payload = { type: 'SET_LEVEL_RANGE', levelStart: levelStart, levelEnd: levelEnd };

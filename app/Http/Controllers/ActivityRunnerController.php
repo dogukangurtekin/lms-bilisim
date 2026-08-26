@@ -44,6 +44,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('silent-teacher-runner');
     }
 
+    public function connectTheDots()
+    {
+        return $this->serveRunner('connect-the-dots-runner');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());
@@ -200,17 +205,24 @@ class ActivityRunnerController extends Controller
         $html = File::get($runnerAssetPath);
         $appBase = rtrim(config('app.url'), '/');
         $runnerBase = $appBase . '/runner-assets/' . $slug . '/';
+        $appJsPath = public_path('runner-assets/' . $slug . '/app.js');
+        $styleCssPath = public_path('runner-assets/' . $slug . '/style.css');
+        $appJsVersion = File::exists($appJsPath) ? File::lastModified($appJsPath) : time();
+        $styleCssVersion = File::exists($styleCssPath) ? File::lastModified($styleCssPath) : time();
         $inject = '<base href="' . e($runnerBase) . '">' .
             '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';</script>';
         $html = preg_replace('/<head>/i', '<head>' . $inject, $html, 1) ?? $html;
         $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
         $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo.png') . '"', $html);
         $html = str_replace('src="../pwa-init.js"', 'src="' . e($appBase . '/pwa-init.js') . '"', $html);
-        $html = str_replace('src="./app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);
-        $html = str_replace('src="app.js"', 'src="' . e($runnerBase . 'app.js') . '"', $html);
-        $html = str_replace('href="./style.css"', 'href="' . e($runnerBase . 'style.css') . '"', $html);
-        $html = str_replace('href="style.css"', 'href="' . e($runnerBase . 'style.css') . '"', $html);
+        $html = str_replace('src="./app.js"', 'src="' . e($runnerBase . 'app.js?v=' . $appJsVersion) . '"', $html);
+        $html = str_replace('src="app.js"', 'src="' . e($runnerBase . 'app.js?v=' . $appJsVersion) . '"', $html);
+        $html = str_replace('href="./style.css"', 'href="' . e($runnerBase . 'style.css?v=' . $styleCssVersion) . '"', $html);
+        $html = str_replace('href="style.css"', 'href="' . e($runnerBase . 'style.css?v=' . $styleCssVersion) . '"', $html);
 
-        return response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+        return response($html, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
 }

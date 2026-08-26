@@ -12,20 +12,48 @@ class StudentGameAccessService
     {
         $classTeacherId = (int) ($student->schoolClass?->teacher_id ?? 0);
 
-        return $classTeacherId > 0
+        $teacherUnlocked = $classTeacherId > 0
             ? TeacherGameAssignment::query()
                 ->where('teacher_id', $classTeacherId)
                 ->pluck('game_slug')
-                ->map(fn ($slug) => trim((string) $slug))
-                ->filter()
-                ->unique()
-                ->values()
                 ->all()
             : [];
+
+        $homeworkAssigned = $student->school_class_id
+            ? GameAssignment::query()
+                ->whereHas('classes', function ($query) use ($student) {
+                    $query->where('school_classes.id', $student->school_class_id);
+                })
+                ->pluck('game_slug')
+                ->all()
+            : [];
+
+        return collect(array_merge($teacherUnlocked, $homeworkAssigned))
+            ->map(fn ($slug) => trim((string) $slug))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function canPlay(Student $student, string $slug): bool
     {
-        return in_array($slug, $this->allowedSlugsForStudent($student), true);
+        if (in_array($slug, $this->allowedSlugsForStudent($student), true)) {
+            return true;
+        }
+
+        // A direct homework assignment (GameAssignment -> class) also grants
+        // access, independent of whether the teacher separately unlocked the
+        // game for their whole class via TeacherGameAssignment.
+        if (! $student->school_class_id) {
+            return false;
+        }
+
+        return GameAssignment::query()
+            ->where('game_slug', $slug)
+            ->whereHas('classes', function ($query) use ($student) {
+                $query->where('school_classes.id', $student->school_class_id);
+            })
+            ->exists();
     }
 }

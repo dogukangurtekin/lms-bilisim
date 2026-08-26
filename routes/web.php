@@ -21,6 +21,7 @@ use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\SupportRequestController;
 use App\Http\Controllers\StudentCodingActivityController;
 use App\Http\Controllers\CodingActivityManagementController;
+use App\Http\Controllers\DotConnectLevelController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
@@ -141,6 +142,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/lightbot-runner', [ActivityRunnerController::class, 'lightbot']);
     Route::get('/line-trace-runner', [ActivityRunnerController::class, 'lineTrace']);
     Route::get('/silent-teacher-runner', [ActivityRunnerController::class, 'silentTeacher']);
+    Route::get('/connect-the-dots-runner', [ActivityRunnerController::class, 'connectTheDots']);
+    Route::get('/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'feed'])->name('dot-connect.feed');
     Route::get('/flamestone-game', [GameController::class, 'game'])->name('flamestone.game');
     Route::get('/oyunlar', [GameController::class, 'game'])->name('flamestone.game.alias');
     Route::get('/editor', [GameController::class, 'editor'])->name('flamestone.editor');
@@ -176,6 +179,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/kullanici-yonetimi/kullanici/{user}/sinif-ata', [TeacherClassAssignmentController::class, 'editUser'])->name('users.classes.edit');
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevelUser'])->name('users.classes.assign-level');
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClassesUser'])->name('users.classes.assign-classes');
+
+            Route::get('/noktalari-birlestir/yonetim', [DotConnectLevelController::class, 'index'])->name('dot-connect.manage');
+            Route::post('/noktalari-birlestir', [DotConnectLevelController::class, 'store'])->name('dot-connect.store');
+            Route::put('/noktalari-birlestir/{level}', [DotConnectLevelController::class, 'update'])->name('dot-connect.update');
+            Route::delete('/noktalari-birlestir/{level}', [DotConnectLevelController::class, 'destroy'])->name('dot-connect.destroy');
+            Route::post('/noktalari-birlestir/{level}/durum', [DotConnectLevelController::class, 'toggle'])->name('dot-connect.toggle');
+            Route::post('/noktalari-birlestir/sirala', [DotConnectLevelController::class, 'reorder'])->name('dot-connect.reorder');
         });
         Route::get('/bildirimler', [NotificationController::class, 'index'])->name('notifications.index');
         Route::post('/app-notifications/send', [NotificationController::class, 'sendMessage'])->name('notifications.send');

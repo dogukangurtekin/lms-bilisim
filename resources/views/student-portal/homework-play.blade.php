@@ -2,6 +2,7 @@
 @section('title','Odev Oynatici')
 @section('body_class','play-compact')
 @section('content')
+<div class="course-show-shell">
 <div class="top"><h1>{{ $homework->title }}</h1></div>
 <div class="card" style="padding:12px">
     <p><b>Tip:</b> {{ strtoupper($homework->assignment_type) }} | <b>Level Araligi:</b> {{ $homework->level_from ?? '-' }} - {{ $homework->level_to ?? '-' }}</p>
@@ -70,6 +71,7 @@
         </div>
     </div>
 </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -81,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var slug = String(iframe.dataset.slug || '');
     var levelStart = Math.max(1, Number(iframe.dataset.levelStart || 1));
     var levelEnd = Math.max(levelStart, Number(iframe.dataset.levelEnd || levelStart));
-    var needsPostMessageLock = ['compute-it-runner', 'block-grid-runner', 'lightbot-runner'].includes(slug);
+    var needsPostMessageLock = ['compute-it-runner', 'block-grid-runner', 'lightbot-runner', 'connect-the-dots-runner'].includes(slug);
 
     var startedAt = Date.now();
     var completeForm = document.getElementById('homework-complete-form');

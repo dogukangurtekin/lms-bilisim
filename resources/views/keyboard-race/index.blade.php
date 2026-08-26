@@ -113,6 +113,7 @@
 }
 </style>
 
+<div class="course-show-shell">
 <div class="top">
     <h1>Klavye Hız Yarışması</h1>
     <div style="display:flex;gap:8px;align-items:center">
@@ -202,6 +203,7 @@
             <div id="leaderboard" style="margin-top:8px;display:grid;gap:8px"></div>
         </div>
     </div>
+</div>
 </div>
 @endsection
 

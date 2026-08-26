@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#16a34a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="../manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="../logo.png" />
+  <title>Noktaları Birleştir</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <h1 class="app-title">NOKTALARI BİRLEŞTİR</h1>
+    <div class="board-card">
+      <div class="board-top">
+        <button id="btn-back" class="icon-round" title="Geri" aria-label="Geri">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="level-label">Level <span id="level-no">1</span></div>
+        <div class="progress-pill">Tamamlanan: <span id="done-no">0</span>/<span id="total-no">0</span></div>
+      </div>
+
+      <div class="board-stage">
+        <div class="grid-panel">
+          <div id="target-grid" class="dot-grid"></div>
+        </div>
+        <div class="grid-panel">
+          <div id="play-grid" class="dot-grid"></div>
+        </div>
+      </div>
+
+      <div class="tray-row">
+        <button id="btn-go" class="go-btn">Go</button>
+        <div class="cmd-tray">
+          <button type="button" class="cmd-btn" data-cmd="move_up" title="Yukarı">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+          </button>
+          <button type="button" class="cmd-btn" data-cmd="move_right" title="Sağ">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+          <button type="button" class="cmd-btn" data-cmd="move_left" title="Sol">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 5 5 12 12 19"></polyline></svg>
+          </button>
+          <button type="button" class="cmd-btn" data-cmd="move_down" title="Aşağı">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+          </button>
+          <button type="button" class="cmd-btn cmd-repeat" data-cmd="repeat" title="Son komutu tekrarla">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            <span>x2</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="slot-tray" class="slot-tray"></div>
+
+      <div class="bottom-actions">
+        <button id="btn-clear" class="ghost-btn">Temizle</button>
+        <button id="btn-next" class="ghost-btn" disabled>Sonraki Bölüm</button>
+      </div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div id="designer-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>Bölüm Tasarımı</h3>
+      <p>Yeni bölümler eklemek için <strong>Admin Panel → Noktaları Birleştir Yönetimi</strong> sayfasını kullanın.</p>
+      <div class="modal-actions">
+        <button id="btn-cancel-designer" class="ghost">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+  <script src="../pwa-init.js" defer></script>
+</body>
+</html>

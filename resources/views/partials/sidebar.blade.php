@@ -88,6 +88,11 @@
         <a class="{{ request()->routeIs('coding.activities.*') ? 'active' : '' }}" href="{{ route('coding.activities.manage') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Günlük Çalışmalar
         </a>
+        @if(auth()->user()?->hasRole('admin'))
+        <a class="{{ request()->routeIs('dot-connect.*') ? 'active' : '' }}" href="{{ route('dot-connect.manage') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="1.8"/><circle cx="12" cy="6" r="1.8"/><circle cx="18" cy="6" r="1.8"/><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/><circle cx="6" cy="18" r="1.8"/><circle cx="12" cy="18" r="1.8"/><circle cx="18" cy="18" r="1.8"/><path d="M6 6l6 6 6-6M6 18l6-6" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></span>Noktaları Birleştir
+        </a>
+        @endif
         <a class="{{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg></span>Profilim
         </a>
