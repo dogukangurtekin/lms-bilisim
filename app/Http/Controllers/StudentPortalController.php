@@ -336,6 +336,13 @@ class StudentPortalController extends Controller
         $difficulty = trim($request->string('difficulty')->toString());
         $educationStage = trim($request->string('education_stage')->toString());
         $favoritesOnly = $request->boolean('favorites_only');
+        if ($favoritesOnly) {
+            // Favoriler seçiliyken kademe/seviye/kategori filtrelerini yok say;
+            // sadece favori dersler, seviye/kademe fark etmeksizin gösterilsin.
+            $category = '';
+            $difficulty = '';
+            $educationStage = '';
+        }
         $userId = (int) $student->user_id;
         $courses = $this->studentCourses($student)
             ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))

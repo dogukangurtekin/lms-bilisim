@@ -77,6 +77,12 @@
         flex: 0 0 130px;
         min-width: 130px;
     }
+    .course-search-layout select.course-select-fit {
+        flex: 0 1 auto;
+        width: auto;
+        min-width: 0;
+        padding-right: 2.2rem;
+    }
     .course-search-layout input[type="text"]:focus {
         border-color: #4c1d95;
         box-shadow: 0 0 0 3px rgba(76,29,149,.12);
@@ -115,7 +121,7 @@
     }
     .course-action-grid {
         display: flex;
-        gap: .45rem;
+        gap: .35rem;
         flex: 0 0 auto;
         flex-wrap: nowrap;
         align-items: stretch;
@@ -126,30 +132,37 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 3.1rem;
-        padding: .45rem .9rem;
-        border-radius: 14px;
-        font-size: .95rem;
-        font-weight: 700;
+        min-height: 2.35rem;
+        padding: .3rem .65rem;
+        border-radius: 10px;
+        font-size: .78rem;
+        font-weight: 600;
         color: #fff;
         text-decoration: none;
         border: 0;
         cursor: pointer;
         text-align: center;
         white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(15,23,42,.12);
+        transition: filter .15s ease, transform .15s ease;
+    }
+    .course-action-grid a:hover,
+    .course-action-grid button:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
     }
     .course-action-grid .btn-create,
     .course-action-grid .btn-upload,
     .course-action-grid .btn-download {
-        min-width: 132px;
+        min-width: 88px;
     }
     .course-action-grid .btn {
-        min-width: 118px;
+        min-width: 80px;
     }
-    .btn-create { background: #5b21b6; }
-    .btn-upload { background: #0f766e; }
-    .btn-download { background: #2563eb; }
-    .btn-delete { background: #ef4444; }
+    .btn-create { background: #7c4fe0; }
+    .btn-upload { background: #14a394; }
+    .btn-download { background: #4f8cf0; }
+    .btn-delete { background: #f3665a; }
     .course-cards-grid {
         display: flex !important;
         flex-wrap: wrap;
@@ -181,25 +194,35 @@
         .course-search-layout > * {
             min-width: 0;
         }
-        .course-search-layout input[type="text"],
-        .course-search-layout select,
-        .course-action-grid a,
-        .course-action-grid button {
+        .course-search-layout input[type="text"] {
             width: 100%;
-            min-width: 0;
-            max-width: 100%;
+            flex-basis: 100%;
             box-sizing: border-box;
         }
-        .course-search-layout select,
-        .course-search-layout input[type="text"],
-        .course-action-grid a,
-        .course-action-grid button {
-            flex-basis: 100%;
+        .course-search-layout select {
+            box-sizing: border-box;
+        }
+        /* Filtre butonları (seviye/kademe/favori/öğretmen) yan yana kalsın */
+        .course-search-layout select.course-select-narrow,
+        .course-favorites-filter-toggle {
+            flex: 1 1 calc(33.333% - .35rem);
             min-width: 0;
         }
+        .course-search-layout select.course-select-fit {
+            flex: 1 1 100%;
+        }
+        /* Sağdaki eylem butonları (Ders Oluştur...Tüm Dersleri Sil) da yan yana kalsın */
         .course-action-grid {
             width: 100%;
             flex-wrap: wrap;
+        }
+        .course-action-grid a,
+        .course-action-grid button {
+            flex: 1 1 calc(33.333% - .3rem);
+            min-width: 0;
+            width: auto;
+            max-width: 100%;
+            box-sizing: border-box;
         }
         .course-action-grid .btn-create,
         .course-action-grid .btn-upload,
@@ -280,7 +303,7 @@
                 <select
                     name="owner"
                     id="course-owner-filter"
-                    class="course-select-narrow"
+                    class="course-select-fit"
                 >
                     @foreach($courseOwners as $owner)
                         <option value="{{ $owner['value'] }}" @selected((string) ($ownerFilter ?? 'all') === (string) $owner['value'])>
@@ -296,7 +319,7 @@
                 <button id="course-import-open" type="button" class="btn-upload">Yükle</button>
                 <a href="{{ route('courses.export-all') }}" class="btn-download">İndir</a>
                 @if(auth()->user()?->hasRole('admin','teacher'))
-                    <button type="button" id="course-bulk-assign-open" class="btn" style="background:#f97316;color:#fff">Ders Ata</button>
+                    <button type="button" id="course-bulk-assign-open" class="btn" style="background:#fb923c;color:#fff">Ders Ata</button>
                 @endif
                 @if(auth()->user()?->hasRole('admin'))
                     <button type="submit" form="course-destroy-all-form" class="btn-delete">Tüm Dersleri Sil</button>

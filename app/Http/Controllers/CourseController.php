@@ -62,6 +62,13 @@ class CourseController extends Controller
         $difficulty = trim($request->string('difficulty')->toString());
         $educationStage = trim($request->string('education_stage')->toString());
         $favoritesOnly = $request->boolean('favorites_only');
+        if ($favoritesOnly) {
+            // Favoriler seçiliyken kademe/seviye/kategori filtrelerini yok say;
+            // sadece favori dersler, seviye/kademe fark etmeksizin gösterilsin.
+            $category = '';
+            $difficulty = '';
+            $educationStage = '';
+        }
         $sort = in_array($request->string('sort')->toString(), ['id', 'name', 'code', 'created_at'], true) ? $request->string('sort')->toString() : 'id';
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
         $user = $request->user();
