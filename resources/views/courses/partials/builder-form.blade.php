@@ -2537,7 +2537,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     function backgroundStyleFromMeta(meta) {
-        const bg = state?.slide_background || meta?.background || {};
+        const bg = meta?.background || state?.slide_background || {};
         const type = String(bg?.type || 'none');
         const value = String(bg?.value || '');
         if (!value || type === 'none') return 'background:linear-gradient(180deg,#ffffff,#f8fbff);';
