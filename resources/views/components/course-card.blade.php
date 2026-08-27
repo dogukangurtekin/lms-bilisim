@@ -214,11 +214,17 @@
         width: 132px;
         height: 100%;
         transform: translateY(-50%) skewX(-18deg);
-        border-radius: 12px;
         background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 52%, #4c1d95 100%);
         box-shadow: 0 18px 36px rgba(76,29,149,.34);
         z-index: 1;
-        opacity: .91;
+        opacity: .7;
+        /* Düz/keskin kesim yerine alta doğru yumuşak, oval bir kıvrımla devam eden şerit */
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V52 C100,72 68,63 50,88 C32,63 0,72 0,52 Z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V52 C100,72 68,63 50,88 C32,63 0,72 0,52 Z'/%3E%3C/svg%3E");
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
     }
 
     .course-card-logo-accent::before {
