@@ -116,8 +116,8 @@ html, body {
 
 .dot-grid .pen {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  width: clamp(40px, 9vw, 58px);
+  height: clamp(40px, 9vw, 58px);
   transform: translate(-50%, -70%) rotate(0deg);
   pointer-events: none;
   transition: left .18s ease, top .18s ease, transform .18s ease;
