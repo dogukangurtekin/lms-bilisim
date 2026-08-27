@@ -73,6 +73,10 @@
         color: #1f2937;
         outline: none;
     }
+    .course-search-layout select.course-select-narrow {
+        flex: 0 0 130px;
+        min-width: 130px;
+    }
     .course-search-layout input[type="text"]:focus {
         border-color: #4c1d95;
         box-shadow: 0 0 0 3px rgba(76,29,149,.12);
@@ -80,15 +84,14 @@
     .course-favorites-filter-toggle {
         display: inline-flex;
         align-items: center;
-        gap: .4rem;
+        justify-content: center;
         height: 3.25rem;
-        flex: 0 0 auto;
-        white-space: nowrap;
+        width: 3.25rem;
+        flex: 0 0 3.25rem;
         border-radius: 14px;
         border: 1px solid #d1d5db;
         background: #fff;
-        padding: 0 .9rem;
-        font-size: .92rem;
+        font-size: 1.15rem;
         font-weight: 700;
         color: #1f2937;
         cursor: pointer;
@@ -257,26 +260,27 @@
                 value="{{ $q ?? request('q') }}"
                 placeholder="Ders başlığını aratmak için yazınız."
             >
-            <select name="difficulty" id="course-difficulty-filter">
-                <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Tüm Seviyeler</option>
+            <select name="difficulty" id="course-difficulty-filter" class="course-select-narrow" onchange="this.form.submit()">
+                <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Seviye</option>
                 <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
                 <option value="Orta" @selected(($difficulty ?? '') === 'Orta')>Orta</option>
                 <option value="Zor" @selected(($difficulty ?? '') === 'Zor')>Zor</option>
             </select>
-            <select name="education_stage" id="course-stage-filter">
-                <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Tüm Kademeler</option>
+            <select name="education_stage" id="course-stage-filter" class="course-select-narrow" onchange="this.form.submit()">
+                <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Kademe</option>
                 <option value="ilkokul" @selected(($educationStage ?? '') === 'ilkokul')>İlkokul</option>
                 <option value="ortaokul" @selected(($educationStage ?? '') === 'ortaokul')>Ortaokul</option>
                 <option value="lise" @selected(($educationStage ?? '') === 'lise')>Lise</option>
             </select>
-            <label class="course-favorites-filter-toggle">
+            <label class="course-favorites-filter-toggle" title="Favorileri Göster">
                 <input type="checkbox" name="favorites_only" value="1" @checked($favoritesOnly ?? false) onchange="this.form.submit()">
-                <span aria-hidden="true">♥</span> Favorileri Göster
+                <span aria-hidden="true">♥</span>
             </label>
             @if(($isAdmin ?? false) && !empty($courseOwners ?? []))
                 <select
                     name="owner"
                     id="course-owner-filter"
+                    class="course-select-narrow"
                 >
                     @foreach($courseOwners as $owner)
                         <option value="{{ $owner['value'] }}" @selected((string) ($ownerFilter ?? 'all') === (string) $owner['value'])>
