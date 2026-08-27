@@ -21,6 +21,15 @@
 /node_modules
 /storage/logs/*
 /bootstrap/cache/*
+
+# User-uploaded course/lesson images now live in storage/app/public (served
+# via the public/storage symlink) instead of public/, so they persist across
+# this host's git-based deploys (which reset public/ to whatever is
+# committed on every push). Don't track runtime-written content here.
+/storage/app/public/kapak-gorseli/*
+/storage/app/public/ders-gorselleri/*
+!/storage/app/public/kapak-gorseli/.gitkeep
+!/storage/app/public/ders-gorselleri/.gitkeep
 Homestead.json
 Homestead.yaml
 Thumbs.db

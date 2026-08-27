@@ -506,7 +506,7 @@ class CourseController extends Controller
         $path = $this->storeCoverAsWebp($validated['cover_image']);
 
         return response()->json([
-            'url' => asset(ltrim($path, '/')),
+            'url' => asset('storage/' . ltrim($path, '/')),
             'path' => $path,
         ]);
     }
@@ -531,7 +531,7 @@ class CourseController extends Controller
         }
 
         return response()->json([
-            'url' => asset(ltrim($path, '/')),
+            'url' => asset('storage/' . ltrim($path, '/')),
             'path' => $path,
         ]);
     }
@@ -1603,12 +1603,16 @@ class CourseController extends Controller
 
     private function coverStorageDirectory(): string
     {
-        $preferred = public_path('kapak-gorseli');
+        // storage/app/public survives this host's git-based deploys (deploy
+        // resets public/ to whatever is committed, wiping anything written
+        // there at runtime). Files here are reachable via the public/storage
+        // symlink created by `php artisan storage:link`.
+        $preferred = storage_path('app/public/kapak-gorseli');
         if (is_dir($preferred) || @mkdir($preferred, 0775, true) || is_dir($preferred)) {
             return $preferred;
         }
 
-        $alt = public_path('public/kapak-gorseli');
+        $alt = public_path('kapak-gorseli');
         if (is_dir($alt) || @mkdir($alt, 0775, true) || is_dir($alt)) {
             return $alt;
         }

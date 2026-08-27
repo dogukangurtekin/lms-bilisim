@@ -27,7 +27,10 @@ class CourseImageExtractor
 
         $sizeBefore = strlen($raw);
         $extracted = 0;
-        $outDir = public_path('ders-gorselleri');
+        // storage/app/public survives this host's git-based deploys (which
+        // reset public/ to whatever is committed on every push); files here
+        // are reachable via the public/storage symlink from `storage:link`.
+        $outDir = storage_path('app/public/ders-gorselleri');
 
         $rewritten = preg_replace_callback(self::PATTERN, function (array $m) use (&$extracted, $outDir) {
             $ext = strtolower($m[1]) === 'jpg' ? 'jpg' : strtolower($m[1]);
@@ -50,7 +53,7 @@ class CourseImageExtractor
 
             $extracted++;
 
-            return asset('ders-gorselleri/' . $filename);
+            return asset('storage/ders-gorselleri/' . $filename);
         }, $raw);
 
         if ($rewritten === null) {
