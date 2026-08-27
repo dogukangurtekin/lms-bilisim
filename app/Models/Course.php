@@ -138,6 +138,12 @@ class Course extends Model
             $value = [];
         }
 
+        // Any inline base64 image (pasted content, imported .coursepkg, etc.)
+        // gets moved out to a real file automatically on every save, so a
+        // course's payload — and therefore every page that renders it —
+        // never balloons to several MB again.
+        $value = app(\App\Services\Course\CourseImageExtractor::class)->extract($value)['payload'];
+
         $this->attributes['lesson_payload'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
