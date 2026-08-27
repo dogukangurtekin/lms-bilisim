@@ -138,11 +138,13 @@ class Course extends Model
             $value = [];
         }
 
-        // Any inline base64 image (pasted content, imported .coursepkg, etc.)
-        // gets moved out to a real file automatically on every save, so a
-        // course's payload — and therefore every page that renders it —
-        // never balloons to several MB again.
-        $value = app(\App\Services\Course\CourseImageExtractor::class)->extract($value)['payload'];
+        // NOTE: automatic base64 -> file extraction (App\Services\Course\CourseImageExtractor)
+        // is intentionally NOT wired in here. The hosting's git-based deploy
+        // resets public/ to whatever is committed on every push, so any file
+        // written outside of a deploy (e.g. here, on save) is silently wiped
+        // on the next deploy unless someone remembers to commit+push it.
+        // Re-enable this once uploads are moved to storage that survives a
+        // deploy (e.g. a real public disk outside the git-tracked tree).
 
         $this->attributes['lesson_payload'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
