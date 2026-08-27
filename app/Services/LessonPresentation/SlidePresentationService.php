@@ -4,6 +4,7 @@ namespace App\Services\LessonPresentation;
 
 use App\Models\Course;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class SlidePresentationService
@@ -25,15 +26,28 @@ class SlidePresentationService
 
     public function prepareCourseSlides(Course $course, bool $withSummary = true): array
     {
-        $payload = (array) ($course->lesson_payload ?? []);
-        $slides = array_values(array_filter((array) data_get($payload, 'slides', []), fn ($slide) => is_array($slide)));
-        $normalized = array_map(fn (array $slide, int $index) => $this->normalizeSlide($slide, $index, $payload), $slides, array_keys($slides));
+        // Slide normalization (regex-based layout inference, block building) runs
+        // on every request otherwise, even though the source payload only changes
+        // when the course is saved. Cache keyed by course id + updated_at so an
+        // edit automatically busts it without any manual cache invalidation.
+        $cacheKey = sprintf(
+            'course-slides:%d:%d:%s',
+            $course->id,
+            $withSummary ? 1 : 0,
+            optional($course->updated_at)->timestamp ?? 0
+        );
 
-        if ($withSummary && $normalized !== []) {
-            $normalized[] = $this->buildSummarySlide($course, $payload, $normalized);
-        }
+        return Cache::remember($cacheKey, now()->addDays(7), function () use ($course, $withSummary) {
+            $payload = (array) ($course->lesson_payload ?? []);
+            $slides = array_values(array_filter((array) data_get($payload, 'slides', []), fn ($slide) => is_array($slide)));
+            $normalized = array_map(fn (array $slide, int $index) => $this->normalizeSlide($slide, $index, $payload), $slides, array_keys($slides));
 
-        return $normalized;
+            if ($withSummary && $normalized !== []) {
+                $normalized[] = $this->buildSummarySlide($course, $payload, $normalized);
+            }
+
+            return $normalized;
+        });
     }
 
     public function normalizeSlide(array $slide, int $index = 0, array $payload = []): array

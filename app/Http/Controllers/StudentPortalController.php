@@ -378,9 +378,6 @@ class StudentPortalController extends Controller
         $questionTotal = collect($slides)->filter(function ($slide) {
             return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
         })->count();
-        $questionTotal = collect($slides)->filter(function ($slide) {
-            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
-        })->count();
         $summarySlide = [
             '__summary' => true,
             'title' => 'Ders Özeti',

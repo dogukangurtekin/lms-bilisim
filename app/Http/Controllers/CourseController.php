@@ -138,7 +138,7 @@ class CourseController extends Controller
         }
 
         try {
-            $teachers = Teacher::query()->orderByDesc('id')->get();
+            $teachers = Teacher::query()->with('user:id,name')->orderByDesc('id')->get();
         } catch (\Throwable $e) {
             Log::warning('Course teachers fallback triggered', [
                 'message' => $e->getMessage(),
