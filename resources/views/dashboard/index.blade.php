@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title','Öğretmen Paneli')
 @section('body_class','dashboard-page')
 @section('content')

@@ -1,4 +1,4 @@
-﻿@php
+@php
     $uid = (int) (auth()->id() ?? 0);
     $navUnreadCount = \App\Models\NotificationLog::query()
         ->where('user_id', $uid)

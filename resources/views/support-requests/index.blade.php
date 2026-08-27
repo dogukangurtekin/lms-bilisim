@@ -1,4 +1,4 @@
-﻿@extends('layout.app')
+@extends('layout.app')
 @section('title', 'Taleplerim')
 @section('content')
 @php

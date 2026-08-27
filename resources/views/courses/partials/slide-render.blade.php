@@ -1,4 +1,4 @@
-﻿@php
+@php
     $slide = $slide ?? [];
     $question = is_array($slide['question'] ?? null) ? $slide['question'] : [];
     $hideSlideTitle = $hideSlideTitle ?? false;

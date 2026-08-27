@@ -1,4 +1,4 @@
-﻿@php
+@php
     $isEdit = isset($course);
     $initialPayload = old('lesson_payload');
     if ($initialPayload === null) {
