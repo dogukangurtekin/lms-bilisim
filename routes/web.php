@@ -122,6 +122,7 @@ Route::get('/kapak-gorseli/{path}', [CourseController::class, 'cover'])
     ->name('courses.cover');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/courses/{course}/favori', [CourseController::class, 'toggleFavorite'])->name('courses.favorite.toggle');
     Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');

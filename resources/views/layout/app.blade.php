@@ -147,6 +147,50 @@
         overlay.style.display = 'none';
     });
 })();
+(function () {
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.course-favorite-btn');
+        if (!btn || btn.dataset.busy === '1') return;
+        e.preventDefault();
+        var url = btn.getAttribute('data-favorite-url');
+        if (!url) return;
+        var tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
+        btn.dataset.busy = '1';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var favorited = !!data.favorited;
+                btn.dataset.favorited = favorited ? '1' : '0';
+                btn.classList.toggle('is-favorite', favorited);
+                btn.style.color = favorited ? '#ef4444' : '#94a3b8';
+                var svgPath = btn.querySelector('svg path');
+                if (svgPath) svgPath.closest('svg').style.fill = favorited ? 'currentColor' : 'none';
+                btn.title = favorited ? 'Favorilerden çıkar' : 'Favorilere ekle';
+                btn.setAttribute('aria-label', btn.title);
+                if (favorited) {
+                    btn.classList.remove('is-favorite');
+                    void btn.offsetWidth;
+                    btn.classList.add('is-favorite');
+                }
+                if (window.appToast) {
+                    window.appToast('success', favorited ? 'Ders favorilere eklendi.' : 'Ders favorilerden çıkarıldı.');
+                }
+            })
+            .catch(function () {
+                if (window.appToast) window.appToast('error', 'Favori durumu güncellenemedi. Lütfen tekrar deneyin.');
+            })
+            .finally(function () {
+                btn.dataset.busy = '0';
+            });
+    });
+})();
 </script>
 @if(auth()->user()?->hasRole('student'))
 <div id="liveQuizOverlay" class="live-quiz-overlay" role="dialog" aria-modal="true" aria-label="Canli quiz bildirimi">

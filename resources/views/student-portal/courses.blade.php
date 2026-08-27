@@ -9,9 +9,57 @@
 @endphp
 <style>
     .course-search-layout {
-        display: grid;
+        display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
-        grid-template-columns: minmax(0, 1fr);
+    }
+    .course-search-layout input[name="q"] {
+        flex: 1 1 320px;
+        min-width: 260px;
+    }
+    .course-search-layout select {
+        height: 3.5rem;
+        flex: 0 0 220px;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        padding: 0 .9rem;
+        font-size: 1.05rem;
+        color: #1f2937;
+        outline: none;
+    }
+    .course-favorites-filter-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        height: 3.5rem;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        border-radius: 0.75rem;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        padding: 0 .9rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+        cursor: pointer;
+        user-select: none;
+    }
+    .course-favorites-filter-toggle:has(input:checked) {
+        border-color: #ef4444;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+    .course-favorites-filter-toggle input[type="checkbox"] {
+        width: 0;
+        height: 0;
+        opacity: 0;
+        position: absolute;
+    }
+    .course-favorites-filter-toggle span {
+        color: #ef4444;
+        font-size: 1.15rem;
+        line-height: 1;
     }
     .course-cards-grid {
         display: grid;
@@ -60,6 +108,22 @@
             class="h-14 rounded-xl border border-gray-300 bg-white px-5 text-lg text-gray-800 outline-none ring-[#4c1d95] placeholder:text-gray-400 focus:ring-2"
             placeholder="Ders başlığını aratmak için yazınız."
         >
+        <select name="difficulty">
+            <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Tüm Seviyeler</option>
+            <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
+            <option value="Orta" @selected(($difficulty ?? '') === 'Orta')>Orta</option>
+            <option value="Zor" @selected(($difficulty ?? '') === 'Zor')>Zor</option>
+        </select>
+        <select name="education_stage">
+            <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Tüm Kademeler</option>
+            <option value="ilkokul" @selected(($educationStage ?? '') === 'ilkokul')>İlkokul</option>
+            <option value="ortaokul" @selected(($educationStage ?? '') === 'ortaokul')>Ortaokul</option>
+            <option value="lise" @selected(($educationStage ?? '') === 'lise')>Lise</option>
+        </select>
+        <label class="course-favorites-filter-toggle">
+            <input type="checkbox" name="favorites_only" value="1" @checked($favoritesOnly ?? false) onchange="this.form.submit()">
+            <span aria-hidden="true">♥</span> Favorileri Göster
+        </label>
     </form>
 
     <div class="course-cards-grid">
@@ -90,6 +154,8 @@
                     :primary-url="route('course.detail', ['id' => $c->id])"
                     :primary-label="'Derse Git'"
                     primary-variant="success"
+                    :course-id="$c->id"
+                    :is-favorite="in_array($c->id, $favoriteCourseIds ?? [])"
                 />
             </div>
         @empty

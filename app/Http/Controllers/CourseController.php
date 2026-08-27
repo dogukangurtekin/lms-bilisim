@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Models\ContentProgress;
 use App\Models\Course;
+use App\Models\CourseFavorite;
 use App\Models\CourseHomework;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -34,10 +35,33 @@ class CourseController extends Controller
     {
     }
 
+    public function toggleFavorite(Request $request, Course $course)
+    {
+        $userId = (int) $request->user()->id;
+
+        $existing = CourseFavorite::query()
+            ->where('user_id', $userId)
+            ->where('course_id', $course->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            $favorited = false;
+        } else {
+            CourseFavorite::query()->create(['user_id' => $userId, 'course_id' => $course->id]);
+            $favorited = true;
+        }
+
+        return response()->json(['favorited' => $favorited]);
+    }
+
     public function index(Request $request)
     {
         $q = $request->string('q')->toString();
         $category = trim($request->string('category')->toString());
+        $difficulty = trim($request->string('difficulty')->toString());
+        $educationStage = trim($request->string('education_stage')->toString());
+        $favoritesOnly = $request->boolean('favorites_only');
         $sort = in_array($request->string('sort')->toString(), ['id', 'name', 'code', 'created_at'], true) ? $request->string('sort')->toString() : 'id';
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
         $user = $request->user();
@@ -105,6 +129,9 @@ class CourseController extends Controller
                 })
                 ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
                 ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
+                ->when($difficulty !== '' && $difficulty !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.difficulty')) = ?", [$difficulty]))
+                ->when($educationStage !== '' && $educationStage !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.education_stage')) = ?", [$educationStage]))
+                ->when($favoritesOnly && $user, fn ($query) => $query->whereHas('favorites', fn ($fav) => $fav->where('user_id', $user->id)))
                 ;
             $applyOwnerFilter($itemsQuery);
 
@@ -249,7 +276,11 @@ class CourseController extends Controller
             ])->values();
         }
 
-        return view('courses.index', compact('items', 'q', 'category', 'sort', 'dir', 'teachers', 'assignableCourses', 'courseIdsByTeacher', 'courseIdsByClass', 'classAssignmentsByTeacher', 'teacherVisibleClasses', 'teacherVisibleGradeLevels', 'canManageCourses', 'canAssignCourses', 'courseOwners', 'ownerFilter', 'isAdmin', 'isTeacher'));
+        $favoriteCourseIds = $user
+            ? CourseFavorite::query()->where('user_id', $user->id)->pluck('course_id')->map(fn ($id) => (int) $id)->all()
+            : [];
+
+        return view('courses.index', compact('items', 'q', 'category', 'difficulty', 'educationStage', 'favoritesOnly', 'favoriteCourseIds', 'sort', 'dir', 'teachers', 'assignableCourses', 'courseIdsByTeacher', 'courseIdsByClass', 'classAssignmentsByTeacher', 'teacherVisibleClasses', 'teacherVisibleGradeLevels', 'canManageCourses', 'canAssignCourses', 'courseOwners', 'ownerFilter', 'isAdmin', 'isTeacher'));
     }
 
     public function create()

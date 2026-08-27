@@ -333,17 +333,29 @@ class StudentPortalController extends Controller
         $student = $this->getStudent();
         $q = trim($request->string('q')->toString());
         $category = trim($request->string('category')->toString());
+        $difficulty = trim($request->string('difficulty')->toString());
+        $educationStage = trim($request->string('education_stage')->toString());
+        $favoritesOnly = $request->boolean('favorites_only');
+        $userId = (int) $student->user_id;
         $courses = $this->studentCourses($student)
             ->when($q !== '', fn ($query) => $query->where(fn ($sub) => $sub->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%")))
             ->when($category !== '' && $category !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.category')) = ?", [$category]))
+            ->when($difficulty !== '' && $difficulty !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.difficulty')) = ?", [$difficulty]))
+            ->when($educationStage !== '' && $educationStage !== 'Tumu', fn ($query) => $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.education_stage')) = ?", [$educationStage]))
+            ->when($favoritesOnly, fn ($query) => $query->whereHas('favorites', fn ($fav) => $fav->where('user_id', $userId)))
             ->paginate(20)
             ->withQueryString();
         $courseProgress = ContentProgress::where('user_id', $student->user_id)
             ->where('content_id', 'like', 'course-%')
             ->get()
             ->keyBy('content_id');
+        $favoriteCourseIds = \App\Models\CourseFavorite::query()
+            ->where('user_id', $userId)
+            ->pluck('course_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        return view('student-portal.courses', compact('student', 'courses', 'courseProgress', 'q', 'category'));
+        return view('student-portal.courses', compact('student', 'courses', 'courseProgress', 'q', 'category', 'difficulty', 'educationStage', 'favoritesOnly', 'favoriteCourseIds'));
     }
 
     public function courseShow(Course $course)

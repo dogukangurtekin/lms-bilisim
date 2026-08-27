@@ -16,6 +16,7 @@
     'assignCurrentTeacher' => 0,
     'assignCurrentClass' => 0,
     'isFavorite' => false,
+    'courseId' => null,
     'downloadUrl' => null,
     'creatorLabel' => '',
 ])
@@ -77,6 +78,22 @@
             @endif
 
             <div style="position:absolute;top:14px;right:14px;left:auto;z-index:60;display:flex;gap:10px;align-items:center;pointer-events:auto;">
+                @if($courseId)
+                    <button
+                        type="button"
+                        class="course-favorite-btn{{ $isFavorite ? ' is-favorite' : '' }}"
+                        data-course-id="{{ $courseId }}"
+                        data-favorite-url="{{ route('courses.favorite.toggle', $courseId) }}"
+                        data-favorited="{{ $isFavorite ? '1' : '0' }}"
+                        title="{{ $isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle' }}"
+                        aria-label="{{ $isFavorite ? 'Favorilerden çıkar' : 'Favorilere ekle' }}"
+                        style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:#fff;color:{{ $isFavorite ? '#ef4444' : '#94a3b8' }};box-shadow:0 12px 28px rgba(15,23,42,.18);border:2px solid rgba(255,255,255,.92);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease,color .2s ease;position:relative;z-index:61;"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px;fill:{{ $isFavorite ? 'currentColor' : 'none' }};stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round">
+                            <path d="M12 20.5s-7.5-4.6-10-9.1C.4 8.1 1.9 4.5 5.4 3.6c2-.5 4 .3 5.1 2 .3.4.9.4 1.2 0 1.1-1.7 3.1-2.5 5.1-2 3.5.9 5 4.5 3.4 7.8-2.5 4.5-10 9.1-10 9.1z"/>
+                        </svg>
+                    </button>
+                @endif
                 @if(!empty($downloadUrl))
                     <a href="{{ $downloadUrl }}" title="Dersi indir" aria-label="Dersi indir" style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;background:#10b981;color:#fff;box-shadow:0 12px 28px rgba(16,185,129,.28);border:2px solid rgba(255,255,255,.92);text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,background .2s ease;position:relative;z-index:61;">
                         <svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round">
@@ -132,6 +149,19 @@
 </article>
 
 <style>
+    .course-favorite-btn:hover {
+        color: #ef4444 !important;
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 0 14px 30px rgba(239,68,68,.28);
+    }
+    .course-favorite-btn.is-favorite {
+        animation: course-favorite-pop .3s ease;
+    }
+    @keyframes course-favorite-pop {
+        0% { transform: scale(1); }
+        40% { transform: scale(1.25); }
+        100% { transform: scale(1); }
+    }
     .course-card-action {
         display: inline-flex;
         align-items: center;

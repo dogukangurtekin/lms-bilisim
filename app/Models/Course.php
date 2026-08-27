@@ -179,6 +179,20 @@ class Course extends Model
         return $this->hasMany(self::class, 'parent_course_id')->orderBy('sort_order')->orderBy('id');
     }
 
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(CourseFavorite::class);
+    }
+
+    public function isFavoritedBy(?int $userId): bool
+    {
+        if (! $userId) {
+            return false;
+        }
+
+        return $this->favorites->contains('user_id', $userId);
+    }
+
     public function attendance(): HasMany
     {
         return $this->hasMany(Attendance::class);

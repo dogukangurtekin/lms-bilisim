@@ -77,6 +77,39 @@
         border-color: #4c1d95;
         box-shadow: 0 0 0 3px rgba(76,29,149,.12);
     }
+    .course-favorites-filter-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        height: 3.25rem;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        border-radius: 14px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        padding: 0 .9rem;
+        font-size: .92rem;
+        font-weight: 700;
+        color: #1f2937;
+        cursor: pointer;
+        user-select: none;
+    }
+    .course-favorites-filter-toggle:has(input:checked) {
+        border-color: #ef4444;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+    .course-favorites-filter-toggle input[type="checkbox"] {
+        width: 0;
+        height: 0;
+        opacity: 0;
+        position: absolute;
+    }
+    .course-favorites-filter-toggle span {
+        color: #ef4444;
+        font-size: 1.05rem;
+        line-height: 1;
+    }
     .course-action-grid {
         display: flex;
         gap: .45rem;
@@ -224,6 +257,22 @@
                 value="{{ $q ?? request('q') }}"
                 placeholder="Ders başlığını aratmak için yazınız."
             >
+            <select name="difficulty" id="course-difficulty-filter">
+                <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Tüm Seviyeler</option>
+                <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
+                <option value="Orta" @selected(($difficulty ?? '') === 'Orta')>Orta</option>
+                <option value="Zor" @selected(($difficulty ?? '') === 'Zor')>Zor</option>
+            </select>
+            <select name="education_stage" id="course-stage-filter">
+                <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Tüm Kademeler</option>
+                <option value="ilkokul" @selected(($educationStage ?? '') === 'ilkokul')>İlkokul</option>
+                <option value="ortaokul" @selected(($educationStage ?? '') === 'ortaokul')>Ortaokul</option>
+                <option value="lise" @selected(($educationStage ?? '') === 'lise')>Lise</option>
+            </select>
+            <label class="course-favorites-filter-toggle">
+                <input type="checkbox" name="favorites_only" value="1" @checked($favoritesOnly ?? false) onchange="this.form.submit()">
+                <span aria-hidden="true">♥</span> Favorileri Göster
+            </label>
             @if(($isAdmin ?? false) && !empty($courseOwners ?? []))
                 <select
                     name="owner"
@@ -315,6 +364,8 @@
                 :assign-course-name="$item->name"
                 :assign-current-teacher="(int) ($item->teacher_id ?? 0)"
                 :creator-label="$courseCreator"
+                :course-id="$item->id"
+                :is-favorite="in_array($item->id, $favoriteCourseIds ?? [])"
             />
             </div>
             @empty
