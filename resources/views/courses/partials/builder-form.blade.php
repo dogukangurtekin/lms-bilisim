@@ -1051,13 +1051,14 @@
 </style>
 
 <div class="lesson-builder">
-    <div id="course-upload-progress" style="display:none;position:sticky;top:0;z-index:20;margin-bottom:12px;background:#fff;border:1px solid #dbe5f2;border-radius:12px;padding:10px 12px;box-shadow:0 10px 24px rgba(15,23,42,.08);">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;">
-            <strong style="color:#0f172a;font-size:14px;">Ders yükleniyor</strong>
-            <span id="course-upload-progress-text" style="color:#2563eb;font-weight:700;font-size:13px;">%0</span>
-        </div>
-        <div style="height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;">
-            <div id="course-upload-progress-bar" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .15s ease;"></div>
+    <div id="course-upload-progress" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);align-items:center;justify-content:center;z-index:4000;">
+        <div style="width:min(92vw,420px);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.2);text-align:center;">
+            <h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:#111827;">Kaydediliyor</h3>
+            <p style="margin:0 0 16px;color:#64748b;font-size:13px;">Lütfen bekleyin, değişiklikleriniz kaydediliyor...</p>
+            <div style="height:14px;border-radius:999px;background:#e2e8f0;overflow:hidden;">
+                <div id="course-upload-progress-bar" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .15s ease;"></div>
+            </div>
+            <div id="course-upload-progress-text" style="margin-top:10px;font-weight:700;color:#2563eb;font-size:14px;">%0</div>
         </div>
     </div>
 
@@ -3909,6 +3910,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (builderForm) {
+        const showUploadProgress = (percent, label) => {
+            if (!uploadProgressWrap || !uploadProgressBar || !uploadProgressText) return;
+            const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+            uploadProgressWrap.style.display = 'flex';
+            uploadProgressBar.style.width = clamped + '%';
+            uploadProgressText.textContent = label || ('%' + clamped);
+        };
+        const hideUploadProgress = () => {
+            if (!uploadProgressWrap) return;
+            uploadProgressWrap.style.display = 'none';
+            if (uploadProgressBar) uploadProgressBar.style.width = '0%';
+            if (uploadProgressText) uploadProgressText.textContent = '%0';
+        };
+
         builderForm.addEventListener('submit', (e) => {
             const title = (lessonTitle?.value || '').trim();
             if (!title) {
@@ -3918,31 +3933,50 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             saveCurrent();
-            const showUploadProgress = (percent, label) => {
-                if (!uploadProgressWrap || !uploadProgressBar || !uploadProgressText) return;
-                uploadProgressWrap.style.display = 'block';
-                uploadProgressBar.style.width = Math.max(0, Math.min(100, percent)) + '%';
-                uploadProgressText.textContent = label || ('%' + Math.max(0, Math.min(100, percent)));
-            };
-            const hideUploadProgress = () => {
-                if (!uploadProgressWrap || !uploadProgressBar || !uploadProgressText) return;
-                uploadProgressWrap.style.display = 'none';
-                uploadProgressBar.style.width = '0%';
-                uploadProgressText.textContent = '%0';
-            };
+
             const rawPayload = String(payloadInput.value || '');
             if (shouldPersistDraft) {
-                try {
-                    localStorage.setItem(draftKey, rawPayload);
-                } catch (_) {}
+                try { localStorage.setItem(draftKey, rawPayload); } catch (_) {}
             }
-            // Normal form submit kullan: _method ve CSRF Laravel tarafından doğal şekilde işlensin.
-            // Basarili kayittan sonra taslak temizlensin.
-            if (shouldPersistDraft) {
-                setTimeout(() => {
+
+            // Gerçek yükleme yüzdesini gösterebilmek için normal submit yerine
+            // XHR kullanıyoruz; sunucu davranışı (redirect + flash mesaj) aynı kalır.
+            e.preventDefault();
+            const formData = new FormData(builderForm);
+            showUploadProgress(0);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open((builderForm.getAttribute('method') || 'POST').toUpperCase(), builderForm.action, true);
+
+            xhr.upload.addEventListener('progress', (ev) => {
+                if (!ev.lengthComputable) return;
+                // Bayt yüklemesi %90'a kadar; kalan %10 sunucunun kaydedip
+                // yönlendirme yapması için ayrılır.
+                showUploadProgress((ev.loaded / ev.total) * 90);
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status < 200 || xhr.status >= 400) {
+                    hideUploadProgress();
+                    alert('Kaydedilirken bir hata oluştu (HTTP ' + xhr.status + '). Lütfen tekrar deneyin.');
+                    return;
+                }
+                showUploadProgress(100);
+                if (shouldPersistDraft) {
                     try { localStorage.removeItem(draftKey); } catch (_) {}
-                }, 300);
-            }
+                }
+                const target = (xhr.responseURL && xhr.responseURL !== builderForm.action)
+                    ? xhr.responseURL
+                    : @json(route('courses.index'));
+                setTimeout(() => { window.location.href = target; }, 200);
+            });
+
+            xhr.addEventListener('error', () => {
+                hideUploadProgress();
+                alert('Kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+            });
+
+            xhr.send(formData);
         });
     }
 
