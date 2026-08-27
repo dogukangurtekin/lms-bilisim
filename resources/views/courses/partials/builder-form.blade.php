@@ -2266,15 +2266,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .map((el) => Number(el.value))
             .filter((v) => Number.isFinite(v));
         state.lesson_description = lessonDescription?.value || '';
+        // NOT: burada state.slides.forEach ile TÜM slaytların arkaplanını
+        // aktif slaydın arkaplanıyla eziyorduk — kategori/sınıf gibi
+        // slaytla ilgisiz bir alanı değiştirip kaydetmek bile her sayfanın
+        // arkaplanını tek renge indiriyordu. Sadece aktif slaydın arkaplanı
+        // yukarıda (s.slide_background) zaten güncellendi; diğer slaytlar
+        // kendi arkaplanlarını korumalı.
         state.slide_background = readSlideBackground();
-        state.slides.forEach((slide) => {
-            if (slide && typeof slide === 'object') {
-                slide.slide_background = deepClone(state.slide_background);
-                if (slide.layout_meta && typeof slide.layout_meta === 'object') {
-                    slide.layout_meta.background = deepClone(state.slide_background);
-                }
-            }
-        });
         state.theme_template = themeTemplateSelect ? (themeTemplateSelect.value || 'default') : (state.theme_template || 'default');
         state.global_theme_css = globalThemeCss ? globalThemeCss.value || '' : (state.global_theme_css || '');
         state.cover_image = normalizeCoverStoragePath(state.cover_image || '');
