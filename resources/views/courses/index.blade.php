@@ -15,32 +15,6 @@
         display: grid;
         gap: 0.9rem;
     }
-    .course-category-strip {
-        display: flex;
-        gap: 0.5rem;
-        overflow-x: auto;
-        padding-bottom: 0.15rem;
-        scrollbar-width: none;
-    }
-    .course-category-strip::-webkit-scrollbar {
-        display: none;
-    }
-    .course-category-pill {
-        flex: 0 0 auto;
-        border-radius: 16px;
-        padding: 0.85rem 1.1rem;
-        font-size: 1.05rem;
-        line-height: 1;
-        color: #475569;
-        text-decoration: none;
-        transition: .15s ease;
-    }
-    .course-category-pill.active {
-        background: #ede9fe;
-        color: #4c1d95;
-        font-weight: 700;
-        box-shadow: 0 8px 18px rgba(76,29,149,.10);
-    }
     .course-search-layout {
         display: flex;
         gap: .5rem;
@@ -74,8 +48,10 @@
         outline: none;
     }
     .course-search-layout select.course-select-narrow {
-        flex: 0 0 130px;
-        min-width: 130px;
+        flex: 0 0 112px;
+        min-width: 112px;
+        padding: 0 .55rem;
+        font-size: .88rem;
     }
     .course-search-layout select.course-select-fit {
         flex: 0 1 auto;
@@ -262,27 +238,33 @@
 
 <section class="space-y-5">
     <div class="course-topbar">
-        <div class="overflow-x-auto">
-            <div class="inline-flex min-w-max items-center gap-2 rounded-2xl bg-gray-100 p-1">
-                @foreach($categories as $category)
-                    <a
-                        href="{{ route('courses.index', array_merge(request()->except('page'), ['category' => $category])) }}"
-                        class="course-category-pill {{ $activeCategory === $category ? 'active' : '' }}"
-                    >
-                        {{ $category }}
-                    </a>
-                @endforeach
-            </div>
-        </div>
-
         <form method="GET" class="course-search-layout">
-            <input type="hidden" name="category" value="{{ $activeCategory }}">
+            @if(($isAdmin ?? false) && !empty($courseOwners ?? []))
+                <select
+                    name="owner"
+                    id="course-owner-filter"
+                    class="course-select-fit"
+                >
+                    @foreach($courseOwners as $owner)
+                        <option value="{{ $owner['value'] }}" @selected((string) ($ownerFilter ?? 'all') === (string) $owner['value'])>
+                            {{ $owner['label'] }}
+                        </option>
+                    @endforeach
+                </select>
+            @elseif(($isTeacher ?? false))
+                <input type="hidden" name="owner" value="{{ $ownerFilter ?? auth()->id() }}">
+            @endif
             <input
                 type="text"
                 name="q"
                 value="{{ $q ?? request('q') }}"
                 placeholder="Ders başlığını aratmak için yazınız."
             >
+            <select name="category" id="course-category-filter" class="course-select-narrow" onchange="this.form.submit()">
+                @foreach($categories as $categoryOption)
+                    <option value="{{ $categoryOption }}" @selected($activeCategory === $categoryOption)>{{ $categoryOption === 'Tumu' ? 'Dersler' : $categoryOption }}</option>
+                @endforeach
+            </select>
             <select name="difficulty" id="course-difficulty-filter" class="course-select-narrow" onchange="this.form.submit()">
                 <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Seviye</option>
                 <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
@@ -299,21 +281,6 @@
                 <input type="checkbox" name="favorites_only" value="1" @checked($favoritesOnly ?? false) onchange="this.form.submit()">
                 <span aria-hidden="true">♥</span>
             </label>
-            @if(($isAdmin ?? false) && !empty($courseOwners ?? []))
-                <select
-                    name="owner"
-                    id="course-owner-filter"
-                    class="course-select-fit"
-                >
-                    @foreach($courseOwners as $owner)
-                        <option value="{{ $owner['value'] }}" @selected((string) ($ownerFilter ?? 'all') === (string) $owner['value'])>
-                            {{ $owner['label'] }}
-                        </option>
-                    @endforeach
-                </select>
-            @elseif(($isTeacher ?? false))
-                <input type="hidden" name="owner" value="{{ $ownerFilter ?? auth()->id() }}">
-            @endif
             <div class="course-action-grid">
                 <a href="{{ route('courses.create') }}" class="btn-create">Ders Oluştur</a>
                 <button id="course-import-open" type="button" class="btn-upload">Yükle</button>

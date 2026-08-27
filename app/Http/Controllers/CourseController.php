@@ -266,21 +266,9 @@ class CourseController extends Controller
                 ->filter(fn ($item) => $item['value'] !== '')
                 ->values();
 
-            $adminOwners = User::query()
-                ->whereHas('role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'))
-                ->orderBy('name')
-                ->get()
-                ->map(fn (User $admin): array => [
-                    'value' => (string) $admin->id,
-                    'label' => $admin->name ? ($admin->name . ' (System Admin)') : 'System Admin',
-                ])
-                ->values();
-
             $courseOwners = collect([
                 ['value' => 'all', 'label' => 'Öğretmen Seçiniz'],
-            ])->concat($teacherOwners)->concat([
-                ['value' => 'system_admin', 'label' => 'System Admin'],
-            ])->values();
+            ])->concat($teacherOwners)->values();
         }
 
         $favoriteCourseIds = $user
