@@ -250,6 +250,7 @@
                                 <h3>{{ $assignment->game_name }}</h3>
                                 <div class="actions">
                                     <a class="btn" href="{{ $gameUrl }}" target="_blank" rel="noopener">Oyunu Aç</a>
+                                    <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
                                 </div>
                                 <p style="margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35;">Atayan: {{ $assignedByName !== '' ? $assignedByName : '-' }}</p>
                             </div>

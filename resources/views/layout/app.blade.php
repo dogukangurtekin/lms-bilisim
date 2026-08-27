@@ -121,6 +121,33 @@
     </main>
 </div>
 @include('partials.toast')
+<div id="page-loading-overlay" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:99998;">
+    <div style="background:#fff;border-radius:18px;padding:26px 32px;box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;gap:14px;min-width:220px;">
+        <div style="width:44px;height:44px;border-radius:50%;border:4px solid #dbeafe;border-top-color:#2563eb;animation:page-loading-spin .8s linear infinite;"></div>
+        <div id="page-loading-overlay-text" style="font-weight:700;color:#0f172a;font-size:14px;">Yükleniyor...</div>
+    </div>
+</div>
+<style>
+@keyframes page-loading-spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+(function () {
+    var overlay = document.getElementById('page-loading-overlay');
+    var overlayText = document.getElementById('page-loading-overlay-text');
+    if (!overlay) return;
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest('[data-page-loading]');
+        if (!el || el.target === '_blank' || e.defaultPrevented) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var message = el.getAttribute('data-page-loading');
+        if (overlayText) overlayText.textContent = message && message.trim() !== '' ? message : 'Yükleniyor...';
+        overlay.style.display = 'flex';
+    }, true);
+    window.addEventListener('pageshow', function () {
+        overlay.style.display = 'none';
+    });
+})();
+</script>
 @if(auth()->user()?->hasRole('student'))
 <div id="liveQuizOverlay" class="live-quiz-overlay" role="dialog" aria-modal="true" aria-label="Canli quiz bildirimi">
     <div class="live-quiz-overlay-card">

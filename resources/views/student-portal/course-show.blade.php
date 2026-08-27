@@ -176,6 +176,35 @@
         overflow:hidden;
         background:rgba(255,255,255,.72);
     }
+    .course-show-slide-loading{
+        position:absolute;
+        inset:0;
+        z-index:5;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:14px;
+        background:rgba(255,255,255,.92);
+        border-radius:24px;
+        transition:opacity .25s ease;
+    }
+    .course-show-slide-loading.is-hidden{
+        opacity:0;
+        pointer-events:none;
+    }
+    .course-show-slide-spinner{
+        width:46px;height:46px;border-radius:50%;
+        border:4px solid #dbeafe;
+        border-top-color:#2563eb;
+        animation:course-show-slide-spin .8s linear infinite;
+    }
+    .course-show-slide-loading span{
+        font-weight:700;
+        color:#0f172a;
+        font-size:14px;
+    }
+    @keyframes course-show-slide-spin{ to { transform:rotate(360deg); } }
     .course-show-bottom{
         display:grid;
         grid-template-columns:1fr auto;
@@ -282,6 +311,10 @@
             <div class="course-show-stage">
                 <div class="course-show-stage-frame">
                     <div id="student-course-slide-stage" class="course-show-stage-inner slide-theme"></div>
+                    <div id="student-course-slide-loading" class="course-show-slide-loading">
+                        <div class="course-show-slide-spinner"></div>
+                        <span>Ders yükleniyor...</span>
+                    </div>
                 </div>
             </div>
 
@@ -361,6 +394,8 @@
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
 
                 if (!stage || !prevBtn || !nextBtn || !counter || slides.length === 0) {
+                    const fallbackLoadingEl = document.getElementById('student-course-slide-loading');
+                    if (fallbackLoadingEl) fallbackLoadingEl.remove();
                     return;
                 }
 
@@ -742,6 +777,14 @@
 
                 window.addEventListener('resize', fitStage);
                 render();
+
+                const slideLoadingEl = document.getElementById('student-course-slide-loading');
+                if (slideLoadingEl) {
+                    requestAnimationFrame(() => {
+                        slideLoadingEl.classList.add('is-hidden');
+                        setTimeout(() => slideLoadingEl.remove(), 300);
+                    });
+                }
             });
         </script>
         <style>

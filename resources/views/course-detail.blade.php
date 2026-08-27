@@ -39,6 +39,7 @@
                     href="{{ $startUrl ?? '#' }}"
                     class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $mainCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}"
                     data-course-fullscreen-start="1"
+                    data-page-loading="Ders yükleniyor..."
                 >
                     {{ $mainCompleted ? 'Tamamlandı' : 'Derse Başla' }}
                 </a>
@@ -115,7 +116,7 @@
                                     Alt Dersi Sil
                                 </a>
                             @endif
-                            <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $subCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}" data-course-fullscreen-start="1">
+                            <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $subCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}" data-course-fullscreen-start="1" data-page-loading="Ders yükleniyor...">
                                 {{ $subCompleted ? 'Tamamlandı' : 'Derse Başla' }}
                             </a>
                         </div>

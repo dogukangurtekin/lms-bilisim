@@ -256,6 +256,17 @@
         @csrf
         <input id="course-import-file" type="file" name="course_json[]" accept=".coursepkg,.json,application/json,text/plain,application/octet-stream" multiple style="display:none;">
     </form>
+
+    <div id="course-import-progress-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:4000;">
+        <div style="width:min(92vw,420px);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.2);text-align:center;">
+            <h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:#111827;">Ders Yükleniyor</h3>
+            <p style="margin:0 0 16px;color:#64748b;font-size:13px;">Lütfen bekleyin, dosyalarınız sunucuya aktarılıyor...</p>
+            <div style="height:14px;border-radius:999px;background:#e2e8f0;overflow:hidden;">
+                <div id="course-import-progress-bar" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#0ea5e9);transition:width .15s ease;"></div>
+            </div>
+            <div id="course-import-progress-text" style="margin-top:10px;font-weight:700;color:#2563eb;font-size:14px;">%0</div>
+        </div>
+    </div>
     @if(auth()->user()?->hasRole('admin'))
         <form id="course-destroy-all-form" method="POST" action="{{ route('courses.destroy-all') }}" data-confirm="Tüm dersler ve bağlı ödevler sistemden kaldırılsın mı?" style="display:none;">
             @csrf
@@ -709,6 +720,16 @@ document.addEventListener('DOMContentLoaded', () => {
         syncBulkHiddenInputs();
     };
 
+    const importProgressModal = document.getElementById('course-import-progress-modal');
+    const importProgressBar = document.getElementById('course-import-progress-bar');
+    const importProgressText = document.getElementById('course-import-progress-text');
+
+    function setImportProgress(pct) {
+        const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+        if (importProgressBar) importProgressBar.style.width = clamped + '%';
+        if (importProgressText) importProgressText.textContent = '%' + clamped;
+    }
+
     if (importOpenBtn && importForm && importFile) {
         importOpenBtn.addEventListener('click', () => {
             importFile.value = '';
@@ -719,7 +740,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!importFile.files || importFile.files.length === 0) {
                 return;
             }
-            importForm.submit();
+
+            const formData = new FormData(importForm);
+            setImportProgress(0);
+            if (importProgressModal) importProgressModal.style.display = 'flex';
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', importForm.action, true);
+            // Not: X-Requested-With gönderilmiyor; Laravel'in bu isteği normal
+            // (redirect + flash mesajlı) bir form gönderimi gibi işlemesini
+            // istiyoruz, AJAX/JSON hata yanıtına dönüşmesin.
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (!e.lengthComputable) return;
+                // Yükleme baytları %90'a kadar; kalan %10 sunucunun
+                // dosyaları işleyip yönlendirme yapması için ayrılır.
+                setImportProgress((e.loaded / e.total) * 90);
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status < 200 || xhr.status >= 400) {
+                    if (importProgressModal) importProgressModal.style.display = 'none';
+                    alert('Ders yüklenirken bir hata oluştu (HTTP ' + xhr.status + '). Lütfen tekrar deneyin.');
+                    return;
+                }
+                setImportProgress(100);
+                // XHR, sunucunun yönlendirdiği son (GET) adresi responseURL'de verir.
+                // Bu boş/hatalı gelirse asla POST-only import adresine (importForm.action)
+                // geri dönmeyelim, bunun yerine güvenli varsayılan olan ders listesine gidelim.
+                const target = (xhr.responseURL && xhr.responseURL !== importForm.action)
+                    ? xhr.responseURL
+                    : @json(route('courses.index'));
+                setTimeout(() => { window.location.href = target; }, 200);
+            });
+
+            xhr.addEventListener('error', () => {
+                if (importProgressModal) importProgressModal.style.display = 'none';
+                alert('Ders yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+            });
+
+            xhr.send(formData);
         });
     }
 
