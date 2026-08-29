@@ -74,7 +74,156 @@
                 </form>
                 <div id="notifSendStatus" class="pdf-status">Hazır</div>
             </section>
+
+            <section class="card soft-surface" style="margin-top:16px;">
+                <h2>Bildirim Tercihlerim</h2>
+                <p style="margin:0 0 12px;color:#64748b;font-size:13.5px;">Hangi bildirim türlerini almak istediğini buradan yönetebilirsin.</p>
+                <form id="notifPrefsForm" style="display:grid;gap:8px;">
+                    @csrf
+                    @foreach($preferences as $pref)
+                        <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;">
+                            <span style="font-weight:600;">{{ $pref['label'] }}</span>
+                            <input type="checkbox" class="notif-pref-check" data-type="{{ $pref['type'] }}" style="width:20px;height:20px;" @checked($pref['enabled'])>
+                        </label>
+                    @endforeach
+                </form>
+                <div id="notifPrefsStatus" class="pdf-status" style="margin-top:8px;">Değişiklikler otomatik kaydedilir.</div>
+            </section>
+
+            <section class="card soft-surface" style="margin-top:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                    <h2 style="margin:0;">Son Bildirim Kayıtları</h2>
+                    @if($recentLogs->isNotEmpty())
+                        <button type="button" id="notifDeleteAllBtn" class="btn btn-danger" style="padding:8px 14px;font-size:13px;">Tümünü Sil</button>
+                    @endif
+                </div>
+                @if($recentLogs->isEmpty())
+                    <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#475569;margin-top:12px;">
+                        Henüz gönderilmiş bir bildirim yok.
+                    </div>
+                @else
+                    <div style="overflow-x:auto;margin-top:12px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kime</th>
+                                    <th>Başlık</th>
+                                    <th>Mesaj</th>
+                                    <th>Durum</th>
+                                    <th>Tarih</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($recentLogs as $log)
+                                    <tr id="notif-log-row-{{ $log->id }}">
+                                        <td>{{ $log->user?->name ?? '-' }}</td>
+                                        <td>{{ $log->title }}</td>
+                                        <td style="max-width:280px;overflow-wrap:anywhere;">{{ \Illuminate\Support\Str::limit($log->body, 120) }}</td>
+                                        <td>{{ $log->status ?? '-' }}</td>
+                                        <td>{{ optional($log->created_at)->format('d.m.Y H:i') }}</td>
+                                        <td>
+                                            <div style="display:flex;gap:6px;">
+                                                <button type="button" class="btn notif-resend-btn" data-id="{{ $log->id }}" style="padding:6px 10px;font-size:12px;">Tekrar Gönder</button>
+                                                <button type="button" class="btn btn-danger notif-delete-btn" data-id="{{ $log->id }}" style="padding:6px 10px;font-size:12px;">Sil</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </section>
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    // Preferences
+    var prefsForm = document.getElementById('notifPrefsForm');
+    var prefsStatus = document.getElementById('notifPrefsStatus');
+    if (prefsForm) {
+        prefsForm.addEventListener('change', function (e) {
+            var check = e.target.closest('.notif-pref-check');
+            if (!check) return;
+            var payload = { preferences: {} };
+            payload.preferences[check.getAttribute('data-type')] = check.checked;
+            prefsStatus.textContent = 'Kaydediliyor…';
+            fetch('{{ route('notifications.preferences.update') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    prefsStatus.textContent = data && data.ok ? 'Kaydedildi.' : 'Kaydedilemedi.';
+                })
+                .catch(function () { prefsStatus.textContent = 'Kaydedilemedi.'; });
+        });
+    }
+
+    // Resend / delete
+    document.addEventListener('click', function (e) {
+        var resendBtn = e.target.closest('.notif-resend-btn');
+        var deleteBtn = e.target.closest('.notif-delete-btn');
+        var deleteAllBtn = e.target.closest('#notifDeleteAllBtn');
+
+        if (resendBtn) {
+            var id = resendBtn.getAttribute('data-id');
+            resendBtn.disabled = true;
+            fetch('/app-notifications/' + id + '/resend', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (window.appToast) window.appToast(data && data.ok ? 'success' : 'error', data && data.ok ? 'Bildirim tekrar gönderildi.' : (data.message || 'Gönderilemedi.'));
+                })
+                .finally(function () { resendBtn.disabled = false; });
+        }
+
+        if (deleteBtn) {
+            var did = deleteBtn.getAttribute('data-id');
+            if (!confirm('Bu bildirim kaydı silinsin mi?')) return;
+            fetch('/app-notifications/' + did, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data && data.ok) {
+                        var row = document.getElementById('notif-log-row-' + did);
+                        if (row) row.remove();
+                    } else if (window.appToast) {
+                        window.appToast('error', (data && data.message) || 'Silinemedi.');
+                    }
+                });
+        }
+
+        if (deleteAllBtn) {
+            if (!confirm('Tüm bildirim kayıtları silinsin mi?')) return;
+            fetch('{{ route('notifications.logs.destroy-all') }}', {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data && data.ok) {
+                        window.location.reload();
+                    } else if (window.appToast) {
+                        window.appToast('error', (data && data.message) || 'Silinemedi.');
+                    }
+                });
+        }
+    });
+})();
+</script>
 @endsection

@@ -10,7 +10,7 @@
         $pwaMeta = (array) (auth()->user()?->profile?->meta ?? []);
         $themeKey = (string) ($pwaMeta['theme_key'] ?? 'default');
         $themeMap = [
-            'default' => ['bg' => '#f8fafc', 'text' => '#0f172a', 'muted' => '#64748b', 'panel' => '#ffffff', 'surface' => '#ffffff', 'border' => '#dbe5f2', 'primary' => '#2563eb', 'secondary' => '#0ea5e9', 'heroStart' => '#dbeafe', 'heroEnd' => '#eff6ff'],
+            'default' => ['bg' => '#F7F6F2', 'text' => '#16182B', 'muted' => '#585A72', 'panel' => '#ffffff', 'surface' => '#ffffff', 'border' => '#E4E1D8', 'primary' => '#5B3DF5', 'secondary' => '#3E28B8', 'heroStart' => '#EEEBFD', 'heroEnd' => '#F7F6F2'],
             'dark' => ['bg' => '#050816', 'text' => '#eef4ff', 'muted' => '#9cb0cb', 'panel' => '#0f172a', 'surface' => '#111827', 'border' => 'rgba(148,163,184,.20)', 'primary' => '#4f8cff', 'secondary' => '#0ea5e9', 'heroStart' => '#0b1730', 'heroEnd' => '#050816'],
             'light' => ['bg' => '#f8fafc', 'text' => '#0f172a', 'muted' => '#64748b', 'panel' => '#ffffff', 'surface' => '#ffffff', 'border' => '#dbe5f2', 'primary' => '#2563eb', 'secondary' => '#0ea5e9', 'heroStart' => '#eff6ff', 'heroEnd' => '#ffffff'],
             'blue-corporate' => ['bg' => '#eff6ff', 'text' => '#0f172a', 'muted' => '#475569', 'panel' => '#ffffff', 'surface' => '#ffffff', 'border' => '#bfdbfe', 'primary' => '#1d4ed8', 'secondary' => '#0ea5e9', 'heroStart' => '#1d4ed8', 'heroEnd' => '#0ea5e9'],

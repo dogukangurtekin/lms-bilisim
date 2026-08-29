@@ -115,9 +115,17 @@
         .activity-card{
             padding:14px;
         }
+        .activity-card .actions{
+            flex-direction:column;
+            flex-wrap:nowrap;
+        }
         .activity-card .actions .btn{
             width:100%;
-            flex-basis:100%;
+            flex:0 0 auto;
+            font-size:13.5px;
+            padding:11px 12px;
+            white-space:normal;
+            line-height:1.3;
         }
         .activity-card img{
             height:160px;
