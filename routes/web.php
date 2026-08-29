@@ -147,6 +147,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/connect-the-dots-runner', [ActivityRunnerController::class, 'connectTheDots']);
     Route::get('/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'feed'])->name('dot-connect.feed');
     Route::get('/python-editor', [ActivityRunnerController::class, 'pythonEditor']);
+    Route::get('/bee-garden-runner', [ActivityRunnerController::class, 'beeGarden']);
     Route::get('/flamestone-game', [GameController::class, 'game'])->name('flamestone.game');
     Route::get('/oyunlar', [GameController::class, 'game'])->name('flamestone.game.alias');
     Route::get('/editor', [GameController::class, 'editor'])->name('flamestone.editor');

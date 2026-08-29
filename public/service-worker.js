@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.1";
+const SW_VERSION = "v1.5.2";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -44,6 +44,7 @@ const RUNNER_SLUGS = [
   "silent-teacher-runner",
   "connect-the-dots-runner",
   "python-editor",
+  "bee-garden-runner",
 ];
 
 function isRunnerRequest(url) {

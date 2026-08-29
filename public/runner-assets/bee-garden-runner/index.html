@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Arı Bahçesi - CSS Kodlama</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../logo192.png">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="bg-shell">
+    <header class="bg-topbar">
+        <div class="bg-brand">
+            <span class="bg-bee-icon">🐝</span>
+            <div>
+                <strong>Arı Bahçesi</strong>
+                <span>CSS ile arıları çiçeklere kondur</span>
+            </div>
+        </div>
+        <div class="bg-level-nav">
+            <button id="bgPrevBtn" class="bg-nav-btn" type="button" aria-label="Önceki seviye">‹</button>
+            <span id="bgLevelLabel" class="bg-level-label">Seviye 1 / 14</span>
+            <button id="bgNextBtn" class="bg-nav-btn" type="button" aria-label="Sonraki seviye">›</button>
+        </div>
+    </header>
+
+    <main class="bg-main">
+        <section class="bg-panel-left">
+            <div class="bg-task-card">
+                <h2 id="bgTaskTitle">Görev</h2>
+                <p id="bgTaskDesc">Arıyı çiçeğin üstüne kondur.</p>
+            </div>
+
+            <div class="bg-mode-tabs">
+                <button class="bg-mode-tab active" data-mode="blok" type="button">🧩 Blok Kod</button>
+                <button class="bg-mode-tab" data-mode="kod" type="button">⌨️ Kod Yaz</button>
+            </div>
+
+            <div id="bgBlockPanel" class="bg-block-panel"></div>
+
+            <div id="bgCodePanel" class="bg-code-panel" hidden>
+                <div class="bg-code-head">.bahce {</div>
+                <textarea id="bgCodeArea" class="bg-code-area" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+                <div class="bg-code-foot">}</div>
+            </div>
+
+            <div class="bg-code-preview">
+                <div class="bg-code-preview-head">Oluşan CSS Kodu</div>
+                <pre id="bgCodePreview" class="bg-code-preview-body">.bahce {\n}</pre>
+            </div>
+
+            <button id="bgResetBtn" class="bg-btn bg-btn-ghost" type="button">Sıfırla</button>
+        </section>
+
+        <section class="bg-panel-right">
+            <div id="bgGarden" class="bg-garden"></div>
+            <div id="bgWinToast" class="bg-win-toast">🎉 Harika! Seviye tamamlandı!</div>
+        </section>
+    </main>
+
+    <footer class="bg-footer">
+        <span>Gerçek CSS flexbox özellikleriyle çalışır: justify-content, align-items, flex-direction, align-self.</span>
+    </footer>
+</div>
+
+<!-- Gizli referans bahçe: dogru cozumun hedef konumlarini hesaplamak icin kullanilir, ekranda gorunmez -->
+<div id="bgRefGarden" class="bg-garden bg-garden-ref" aria-hidden="true"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>

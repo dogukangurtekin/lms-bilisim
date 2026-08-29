@@ -54,6 +54,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('python-editor');
     }
 
+    public function beeGarden()
+    {
+        return $this->serveRunner('bee-garden-runner');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());
