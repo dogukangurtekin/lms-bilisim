@@ -36,6 +36,7 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter',Segoe UI,Arial
 .bg-mode-tab.active{background:#fff;color:var(--violet-ink);box-shadow:0 2px 6px rgba(22,24,43,.08)}
 
 .bg-block-panel{display:flex;flex-direction:column;gap:10px}
+.bg-block-panel[hidden]{display:none}
 .bg-block-group{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
 .bg-block-group h3{margin:0 0 8px;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em}
 
@@ -63,6 +64,7 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter',Segoe UI,Arial
 .bg-run-status.is-fail{color:var(--signal);font-weight:700}
 
 .bg-code-panel{display:flex;flex-direction:column;background:#161821;border-radius:10px;overflow:hidden}
+.bg-code-panel[hidden]{display:none}
 .bg-code-head,.bg-code-foot{padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#8b8fa3}
 .bg-code-area{flex:1;min-height:140px;resize:vertical;border:0;outline:none;background:transparent;color:#E7E6F0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;padding:0 12px 8px;tab-size:2}
 
