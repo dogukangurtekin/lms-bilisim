@@ -13,29 +13,40 @@
 
 <div style="display:grid;gap:20px;max-width:1100px">
     <div class="card">
-        <form method="POST" action="{{ route('profile.update') }}" style="display:grid;gap:14px">
+        <style>
+            .theme-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+            .theme-card{position:relative;display:block;border:1.5px solid var(--line,#dbe5f2);border-radius:18px;padding:14px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+            .theme-card:hover{border-color:var(--violet,#5B3DF5)}
+            .theme-card input[type="radio"]{position:absolute;top:12px;right:12px;width:18px;height:18px;margin:0;cursor:pointer;accent-color:var(--violet,#5B3DF5)}
+            .theme-card:has(input:checked){border-color:var(--violet,#5B3DF5);background:var(--violet-tint,#EEEBFD);box-shadow:0 0 0 3px var(--violet-tint,#EEEBFD)}
+            .theme-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-right:26px}
+            .theme-card-dots{display:inline-flex;gap:4px}
+            .theme-card-dots span{width:16px;height:16px;border-radius:999px;display:inline-block}
+            .theme-card p{margin:8px 0 0;color:var(--ink-soft,#64748b);font-size:13px;line-height:1.5}
+            @media (max-width:640px){ .theme-picker-grid{grid-template-columns:1fr} }
+        </style>
+        <form method="POST" action="{{ route('profile.update') }}" style="display:grid;gap:14px" id="themeForm">
             @csrf
             @method('PUT')
             <div>
                 <h3 style="margin:0 0 4px">Sistem Teması</h3>
-                <p style="margin:0;color:#64748b">Profilinize uygun temayı seçin. Seçim giriş yaptıktan sonra tüm arayüze uygulanır.</p>
+                <p style="margin:0;color:#64748b">Profilinize uygun temayı seçin ve kaydedin. Seçim giriş yaptıktan sonra tüm arayüze uygulanır.</p>
             </div>
             <input type="hidden" name="first_name" value="{{ old('first_name', $firstName) }}">
             <input type="hidden" name="last_name" value="{{ old('last_name', $lastName) }}">
             <input type="hidden" name="username" value="{{ old('username', $username) }}">
-            <input type="hidden" name="theme_key" value="{{ old('theme_key', $themeKey) }}" id="profileThemeKey">
-            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+            <div class="theme-picker-grid">
                 @foreach($themes as $key => $theme)
-                    <label style="display:block;border:1px solid {{ $themeKey === $key ? '#2563eb' : '#dbe5f2' }};border-radius:18px;padding:14px;background:{{ $themeKey === $key ? '#eff6ff' : '#fff' }};cursor:pointer">
-                        <input type="radio" name="theme_key_preview" value="{{ $key }}" {{ $themeKey === $key ? 'checked' : '' }} style="display:none" onchange="document.getElementById('profileThemeKey').value=this.value">
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                    <label class="theme-card">
+                        <input type="radio" name="theme_key" value="{{ $key }}" {{ old('theme_key', $themeKey) === $key ? 'checked' : '' }}>
+                        <div class="theme-card-head">
                             <strong>{{ $theme['label'] }}</strong>
-                            <span style="display:inline-flex;gap:4px">
-                                <span style="width:16px;height:16px;border-radius:999px;background:{{ $theme['preview'][0] ?? '#2563eb' }}"></span>
-                                <span style="width:16px;height:16px;border-radius:999px;background:{{ $theme['preview'][1] ?? '#0ea5e9' }}"></span>
+                            <span class="theme-card-dots">
+                                <span style="background:{{ $theme['preview'][0] ?? '#5B3DF5' }}"></span>
+                                <span style="background:{{ $theme['preview'][1] ?? '#3E28B8' }}"></span>
                             </span>
                         </div>
-                        <p style="margin:8px 0 0;color:#64748b;font-size:13px;line-height:1.5">{{ $theme['description'] }}</p>
+                        <p>{{ $theme['description'] }}</p>
                     </label>
                 @endforeach
             </div>
