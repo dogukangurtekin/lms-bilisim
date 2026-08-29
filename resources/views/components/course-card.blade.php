@@ -60,7 +60,7 @@
 
 <article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
     <div class="relative">
-        <div class="relative h-56 overflow-hidden bg-slate-100">
+        <div class="relative h-[218px] overflow-hidden bg-slate-100">
             @if($hasCover)
                     <img
                     src="{{ $image }}"
@@ -105,7 +105,7 @@
                 @endif
             </div>
 
-            <div class="absolute left-4 top-14 z-30 flex h-full items-start gap-3 pointer-events-none">
+            <div class="absolute left-4 top-0 z-30 flex h-full items-start gap-3 pointer-events-none">
                 <div class="course-card-logo-accent"></div>
                 <div class="course-card-logo-shell">
                     <div class="course-card-logo-inner">
@@ -126,7 +126,7 @@
                 @if($normalizedDescription !== '')
                     <p class="course-card-description mt-2 text-[12px] leading-5 text-slate-600">{{ $normalizedDescription }}</p>
                 @else
-                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600"> </p>
+                    <p class="course-card-description mt-2 text-[12px] leading-5 text-slate-600"> </p>
                 @endif
             </div>
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
@@ -240,17 +240,19 @@
     .course-card-logo-accent {
         position: absolute;
         left: -70px;
-        top: 50%;
+        /* Üst kenarı kapak resminin tam üst kenarına oturt (logo
+           sarmalayıcısıyla aynı hizada, ikisi de top-0). */
+        top: 0;
         width: 132px;
-        height: 100%;
-        transform: translateY(-50%) skewX(-18deg);
+        height: 218px;
+        transform: skewX(-18deg);
         background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 52%, #4c1d95 100%);
         box-shadow: 0 18px 36px rgba(76,29,149,.34);
         z-index: 1;
         opacity: .7;
         /* Düz/keskin kesim yerine alta doğru yumuşak, oval bir kıvrımla devam eden şerit */
-        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V52 C100,72 68,63 50,88 C32,63 0,72 0,52 Z'/%3E%3C/svg%3E");
-        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V52 C100,72 68,63 50,88 C32,63 0,72 0,52 Z'/%3E%3C/svg%3E");
+        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V65 C100,88 68,78 50,105 C32,78 0,88 0,65 Z'/%3E%3C/svg%3E");
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'%3E%3Cpath d='M0,0 H100 V65 C100,88 68,78 50,105 C32,78 0,88 0,65 Z'/%3E%3C/svg%3E");
         -webkit-mask-size: 100% 100%;
         mask-size: 100% 100%;
         -webkit-mask-repeat: no-repeat;

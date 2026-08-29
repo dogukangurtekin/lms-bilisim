@@ -4,8 +4,8 @@
 @php
     $normalizeText = static fn ($value): string => trim((string) \App\Support\Utf8Text::normalize($value));
 
-    $categories = ['Tümü', 'Kodlama', 'Tasarım', 'Elektrik', 'Robotik', 'Teorik', 'Oyun', 'Yapay Zeka'];
-    $activeCategory = request('category', 'Tümü');
+    $categories = ['Tumu', 'Kodlama', 'Tasarim', 'Elektrik', 'Robotik', 'Teorik', 'Oyun', 'Yapay Zeka'];
+    $activeCategory = request('category', 'Tumu');
 @endphp
 <style>
     .course-search-layout {
@@ -89,27 +89,18 @@
 </style>
 
 <section class="space-y-5">
-    <div class="overflow-x-auto">
-        <div class="inline-flex min-w-max items-center gap-2 rounded-2xl bg-gray-100 p-1">
-            @foreach($categories as $category)
-                <a
-                    href="{{ route('student.portal.courses', array_merge(request()->except('page'), ['category' => $category])) }}"
-                    class="rounded-xl px-4 py-2 text-lg transition {{ $activeCategory === $category ? 'bg-[#ede9fe] font-semibold text-[#4c1d95] shadow' : 'text-gray-600 hover:bg-white/70' }}"
-                >
-                    {{ $category }}
-                </a>
-            @endforeach
-        </div>
-    </div>
-
     <form method="GET" class="course-search-layout">
-        <input type="hidden" name="category" value="{{ $activeCategory }}">
         <input
             name="q"
             value="{{ $q ?? request('q') }}"
             class="h-14 rounded-xl border border-gray-300 bg-white px-5 text-lg text-gray-800 outline-none ring-[#4c1d95] placeholder:text-gray-400 focus:ring-2"
             placeholder="Ders başlığını aratmak için yazınız."
         >
+        <select name="category" class="course-select-narrow" onchange="this.form.submit()">
+            @foreach($categories as $categoryOption)
+                <option value="{{ $categoryOption }}" @selected($activeCategory === $categoryOption)>{{ $categoryOption === 'Tumu' ? 'Dersler' : $categoryOption }}</option>
+            @endforeach
+        </select>
         <select name="difficulty" class="course-select-narrow" onchange="this.form.submit()">
             <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Seviye</option>
             <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
