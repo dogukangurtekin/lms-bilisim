@@ -75,7 +75,7 @@
         .login-form h2{margin:0 0 6px;font-size:34px;line-height:1.1;font-weight:800;color:#0f172a;text-align:center}
         .login-form p{margin:0 0 18px;color:#64748b;font-size:15px;text-align:center}
         .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px;text-align:center}
-        .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
+        .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
         .login-form input:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
         .login-form .btn{width:100%;margin-top:14px;padding:11px 14px;border-radius:12px;font-weight:500;font-size:14px;line-height:1.2;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
         .login-actions{display:flex;gap:10px;margin-top:14px;align-items:stretch}
@@ -208,7 +208,7 @@
             }
             .login-form input{
                 padding:11px 12px;
-                font-size:14px;
+                font-size:16px;
                 border-radius:10px;
             }
             .login-actions{
