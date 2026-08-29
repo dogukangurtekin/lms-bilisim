@@ -31,9 +31,9 @@
     </script>
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
-    <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}?v={{ @filemtime(public_path('css/admin.css')) ?: 1 }}">
     @if(auth()->user()?->hasRole('student'))
-    <link rel="stylesheet" href="{{ url('/public/css/student.css') }}">
+    <link rel="stylesheet" href="{{ url('/public/css/student.css') }}?v={{ @filemtime(public_path('css/student.css')) ?: 1 }}">
     @endif
 </head>
 <body
