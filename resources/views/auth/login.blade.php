@@ -66,7 +66,7 @@
         .form-side{display:grid;place-items:center;padding:34px;background:var(--surface)}
         .login-form{width:min(420px,96%)}
         .login-form-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px}
-        .login-form-brand img{width:34px;height:34px}
+        .login-form-brand img{width:150px;height:auto}
         .login-form-brand span{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--ink)}
         .login-form h2{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:28px;line-height:1.2;font-weight:700;color:var(--ink);text-align:center}
         .login-form p{margin:0 0 26px;color:var(--ink-soft);font-size:14.5px;text-align:center}
@@ -180,6 +180,9 @@
             .login-form{
                 width:100%;
             }
+            .login-form-brand img{
+                width:110px;
+            }
             .login-form h2{
                 font-size:22px;
                 margin-bottom:4px;
@@ -280,7 +283,6 @@
         <div class="login-form">
             <div class="login-form-brand">
                 <img src="{{ url('/public/logo.png') }}" alt="Logo">
-                <span>Bilişim Kod</span>
             </div>
             <h2>Tekrar hoş geldin</h2>
             <p>Hesabına giriş yapmak için bilgilerini gir.</p>
