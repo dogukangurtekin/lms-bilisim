@@ -51,6 +51,29 @@ class NotificationController extends Controller
             ->limit(30)
             ->get();
 
+        $subscribedUserIds = PushSubscription::query()
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        $deviceStatuses = PushDeviceStatus::query()
+            ->with('user:id,name')
+            ->latest('last_seen_at')
+            ->limit(50)
+            ->get()
+            ->map(function (PushDeviceStatus $status) use ($subscribedUserIds) {
+                return [
+                    'user_name' => $status->user?->name ?? '-',
+                    'permission' => (string) $status->permission,
+                    'platform' => (string) ($status->platform ?: '-'),
+                    'is_pwa' => (bool) $status->is_pwa,
+                    'has_subscription' => in_array((int) $status->user_id, $subscribedUserIds, true),
+                    'last_seen_at' => $status->last_seen_at,
+                ];
+            });
+
         $schoolClasses = SchoolClass::query()
             ->with([
                 'teacher.user:id,name',
@@ -78,6 +101,7 @@ class NotificationController extends Controller
         return view('notifications.index', [
             'preferences' => $preferences,
             'recentLogs' => $recentLogs,
+            'deviceStatuses' => $deviceStatuses,
             'types' => $types,
             'schoolClasses' => $schoolClasses,
             'classStudentMap' => $classStudentMap,

@@ -91,6 +91,55 @@
             </section>
 
             <section class="card soft-surface" style="margin-top:16px;">
+                <h2 style="margin:0 0 6px;">Cihaz Bildirim İzinleri</h2>
+                <p style="margin:0 0 12px;color:#64748b;font-size:13.5px;">Bir kullanıcıda bildirim "partial" (kısmi) gidiyorsa, o kişinin cihazında izin verilmemiş ya da abonelik süresi dolmuş olabilir — aşağıdan kontrol edebilirsin.</p>
+                @if($deviceStatuses->isEmpty())
+                    <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#475569;">
+                        Henüz hiçbir cihaz bildirim durumu bildirmedi.
+                    </div>
+                @else
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Kullanıcı</th>
+                                    <th>İzin</th>
+                                    <th>Platform</th>
+                                    <th>PWA</th>
+                                    <th>Abonelik</th>
+                                    <th>Son Görülme</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($deviceStatuses as $d)
+                                    @php
+                                        $permLabel = match($d['permission']) {
+                                            'granted' => 'İzin Verildi',
+                                            'denied' => 'Reddedildi',
+                                            default => 'Sorulmadı',
+                                        };
+                                        $permColor = match($d['permission']) {
+                                            'granted' => '#0EA57A',
+                                            'denied' => '#E14B4B',
+                                            default => '#94a3b8',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $d['user_name'] }}</td>
+                                        <td><span style="display:inline-block;padding:2px 8px;border-radius:999px;background:{{ $permColor }}22;color:{{ $permColor }};font-size:12px;font-weight:700;">{{ $permLabel }}</span></td>
+                                        <td>{{ $d['platform'] }}</td>
+                                        <td>{{ $d['is_pwa'] ? 'Evet' : 'Hayır' }}</td>
+                                        <td>{{ $d['has_subscription'] ? 'Aktif' : 'Yok' }}</td>
+                                        <td>{{ $d['last_seen_at']?->format('d.m.Y H:i') ?? '-' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </section>
+
+            <section class="card soft-surface" style="margin-top:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                     <h2 style="margin:0;">Son Bildirim Kayıtları</h2>
                     @if($recentLogs->isNotEmpty())
@@ -191,8 +240,9 @@
         if (deleteBtn) {
             var did = deleteBtn.getAttribute('data-id');
             if (!confirm('Bu bildirim kaydı silinsin mi?')) return;
-            fetch('/app-notifications/' + did, {
-                method: 'DELETE',
+            deleteBtn.disabled = true;
+            fetch('/app-notifications/' + did + '/delete', {
+                method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
                 credentials: 'same-origin',
             })
@@ -201,16 +251,22 @@
                     if (data && data.ok) {
                         var row = document.getElementById('notif-log-row-' + did);
                         if (row) row.remove();
-                    } else if (window.appToast) {
-                        window.appToast('error', (data && data.message) || 'Silinemedi.');
+                    } else {
+                        deleteBtn.disabled = false;
+                        if (window.appToast) window.appToast('error', (data && data.message) || 'Silinemedi.');
                     }
+                })
+                .catch(function () {
+                    deleteBtn.disabled = false;
+                    if (window.appToast) window.appToast('error', 'Silinemedi.');
                 });
         }
 
         if (deleteAllBtn) {
             if (!confirm('Tüm bildirim kayıtları silinsin mi?')) return;
-            fetch('{{ route('notifications.logs.destroy-all') }}', {
-                method: 'DELETE',
+            deleteAllBtn.disabled = true;
+            fetch('{{ route('notifications.logs.destroy-all.post') }}', {
+                method: 'POST',
                 headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
                 credentials: 'same-origin',
             })
@@ -218,9 +274,14 @@
                 .then(function (data) {
                     if (data && data.ok) {
                         window.location.reload();
-                    } else if (window.appToast) {
-                        window.appToast('error', (data && data.message) || 'Silinemedi.');
+                    } else {
+                        deleteAllBtn.disabled = false;
+                        if (window.appToast) window.appToast('error', (data && data.message) || 'Silinemedi.');
                     }
+                })
+                .catch(function () {
+                    deleteAllBtn.disabled = false;
+                    if (window.appToast) window.appToast('error', 'Silinemedi.');
                 });
         }
     });
