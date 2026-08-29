@@ -47,6 +47,11 @@ class NotificationController extends Controller
 
         $recentLogs = NotificationLog::query()
             ->with('user:id,name')
+            // Ogrenciye tek tek giden odev/etkinlik bildirimleri (assignment_created)
+            // burada gosterilmez: bunlarin yerine tek bir sinif/etkinlik ozeti
+            // (assignment_summary) gelir, boylece bir sinifa odev verildiginde
+            // her ogrencinin ismi tek tek listede gorunup kalabalik yaratmaz.
+            ->where('type', '!=', 'assignment_created')
             ->latest('id')
             ->limit(30)
             ->get();

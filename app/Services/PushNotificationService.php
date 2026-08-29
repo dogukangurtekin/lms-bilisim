@@ -18,6 +18,55 @@ class PushNotificationService
         return $this->sendToUsers($userIds, $type, $title, $body, $url, $context);
     }
 
+    /**
+     * Bir ogretmen/admin ogrencilere odev/etkinlik/gunluk calisma atadiginda
+     * kullanilir: ogrencilere tek tek anlik bildirim gider, adminlere ise
+     * ogrenci ismi ismi tek tek degil sinif/etkinlik bazinda TEK bir ozet
+     * bildirim gider (admin bildirimler sayfasinda gereksiz kalabalik
+     * olusturmamasi icin). Diger ogretmenlere ya da atamayla ilgisi olmayan
+     * kullanicilara hicbir bildirim gitmez.
+     */
+    public function notifyAssignment(
+        array $studentUserIds,
+        string $studentType,
+        string $studentTitle,
+        string $studentBody,
+        ?string $studentUrl,
+        string $adminSummaryTitle,
+        string $adminSummaryBody,
+        ?string $adminUrl = null,
+        array $context = []
+    ): array {
+        $studentResult = $this->sendToUsers(
+            $studentUserIds,
+            $studentType,
+            $studentTitle,
+            $studentBody,
+            $studentUrl,
+            $context + ['audience' => 'student']
+        );
+
+        $adminIds = User::query()
+            ->whereHas('role', fn ($q) => $q->where('slug', 'admin'))
+            ->pluck('id')
+            ->map(fn ($x) => (int) $x)
+            ->all();
+
+        $adminResult = ['total' => 0, 'sent' => 0, 'failed' => 0, 'no_target' => 0];
+        if ($adminIds !== []) {
+            $adminResult = $this->sendToUsers(
+                $adminIds,
+                'assignment_summary',
+                $adminSummaryTitle,
+                $adminSummaryBody,
+                $adminUrl,
+                $context + ['audience' => 'admin_summary']
+            );
+        }
+
+        return ['student' => $studentResult, 'admin' => $adminResult];
+    }
+
     public function sendToUsers(array $userIds, string $type, string $title, string $body, ?string $url = null, array $context = []): array
     {
         $this->ensureOpenSslConfig();

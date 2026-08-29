@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\TeacherGameAssignment;
 use App\Models\GameAssignment;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class GameAssignmentController extends Controller
 {
+    public function __construct(private PushNotificationService $pushService)
+    {
+    }
+
     public function create(string $gameSlug)
     {
         $user = auth()->user();
@@ -123,6 +129,32 @@ class GameAssignmentController extends Controller
                 }
             }
         });
+
+        $studentUserIds = Student::query()
+            ->whereIn('school_class_id', $validated['class_ids'])
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->map(fn ($x) => (int) $x)
+            ->all();
+
+        $classNames = SchoolClass::query()
+            ->whereIn('id', $validated['class_ids'])
+            ->orderBy('name')->orderBy('section')
+            ->get()
+            ->map(fn ($c) => trim($c->name . ' ' . ($c->section ?? '')))
+            ->implode(', ');
+
+        $this->pushService->notifyAssignment(
+            $studentUserIds,
+            'assignment_created',
+            'Yeni Etkinlik Ödevi',
+            $games[$gameSlug]['name'] . ' - ' . $validated['title'],
+            url($games[$gameSlug]['url']),
+            'Yeni Etkinlik Ödevi Atandı',
+            sprintf('%s sınıfına "%s" (%s) ödevi atandı (%d öğrenci).', $classNames, $validated['title'], $games[$gameSlug]['name'], count($studentUserIds)),
+            url('/odevler'),
+            ['game_slug' => $gameSlug]
+        );
 
         return redirect()
             ->route('activities.assignments.create', $gameSlug)

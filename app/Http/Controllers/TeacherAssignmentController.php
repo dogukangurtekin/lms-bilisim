@@ -114,12 +114,23 @@ class TeacherAssignmentController extends Controller
             ->pluck('user_id')
             ->map(fn ($x) => (int) $x)
             ->all();
-        $this->pushService->sendToUsers(
+
+        $classNames = SchoolClass::query()
+            ->whereIn('id', $targetClassIds)
+            ->orderBy('name')->orderBy('section')
+            ->get()
+            ->map(fn ($c) => trim($c->name . ' ' . ($c->section ?? '')))
+            ->implode(', ');
+
+        $this->pushService->notifyAssignment(
             $studentUserIds,
             'assignment_created',
             'Yeni Odev Eklendi',
             (string) $validated['title'],
             url('/ogrenci/odevlerim'),
+            'Yeni Odev Atandi',
+            sprintf('%s sinifina "%s" odevi atandi (%d ogrenci).', $classNames, $validated['title'], count($studentUserIds)),
+            url('/odevler'),
             ['trigger' => 'teacher_assignment']
         );
 

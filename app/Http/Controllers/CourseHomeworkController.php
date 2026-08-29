@@ -72,12 +72,23 @@ class CourseHomeworkController extends Controller
             ->pluck('user_id')
             ->map(fn ($x) => (int) $x)
             ->all();
-        $this->pushService->sendToUsers(
+
+        $classNames = SchoolClass::query()
+            ->whereIn('id', $classIds)
+            ->orderBy('name')->orderBy('section')
+            ->get()
+            ->map(fn ($c) => trim($c->name . ' ' . ($c->section ?? '')))
+            ->implode(', ');
+
+        $this->pushService->notifyAssignment(
             $studentUserIds,
             'assignment_created',
             'Yeni Odev Eklendi',
             $validated['title'],
             url('/ogrenci/odevlerim'),
+            'Yeni Odev Atandi',
+            sprintf('%s sinifina "%s" dersi icin "%s" odevi atandi (%d ogrenci).', $classNames, $course->name, $validated['title'], count($studentUserIds)),
+            url('/odevler'),
             ['course_id' => $course->id]
         );
 

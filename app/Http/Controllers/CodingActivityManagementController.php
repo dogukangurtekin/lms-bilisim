@@ -14,6 +14,7 @@ use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Models\QuestionOption;
 use App\Models\UserXpLog;
+use App\Services\PushNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CodingActivityManagementController extends Controller
 {
+    public function __construct(private PushNotificationService $pushService)
+    {
+    }
+
     private function canUseTeacherColumn(): bool
     {
         return Schema::hasColumn('coding_activities', 'teacher_id');
@@ -283,6 +288,32 @@ class CodingActivityManagementController extends Controller
         if ($this->canUseTeacherColumn()) {
             $activity->forceFill(['teacher_id' => $activity->teacher_id ?: null])->save();
         }
+
+        $studentUserIds = Student::query()
+            ->whereIn('school_class_id', $classIds)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->map(fn ($x) => (int) $x)
+            ->all();
+
+        $classNames = SchoolClass::query()
+            ->whereIn('id', $classIds)
+            ->orderBy('name')->orderBy('section')
+            ->get()
+            ->map(fn ($c) => trim($c->name . ' ' . ($c->section ?? '')))
+            ->implode(', ');
+
+        $this->pushService->notifyAssignment(
+            $studentUserIds,
+            'assignment_created',
+            'Bugunun Gunluk Calismasi',
+            (string) $activity->title,
+            url('/ogrenci/gunluk-calisma'),
+            'Gunluk Calisma Atandi',
+            sprintf('%s sinifina bugun icin "%s" gunluk calismasi atandi (%d ogrenci).', $classNames, $activity->title, count($studentUserIds)),
+            url('/kodlama-etkinlikleri/yonetim'),
+            ['coding_activity_id' => $activity->id]
+        );
 
         return back()->with('ok', 'Bugunun etkinligi secilen siniflara atandi.');
     }
