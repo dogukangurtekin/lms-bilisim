@@ -31,6 +31,12 @@ body{background:var(--paper);color:var(--ink);font-family:'Inter',Segoe UI,Arial
 .bg-task-card h2{margin:0 0 4px;font-family:'Space Grotesk',sans-serif;font-size:14.5px;color:var(--violet-ink)}
 .bg-task-card p{margin:0;font-size:13px;line-height:1.5;color:var(--ink)}
 
+.bg-tutorial-card{background:var(--signal-tint);border:1px solid #FBD9C8;border-radius:12px;padding:11px 14px}
+.bg-tutorial-card[hidden]{display:none}
+.bg-tutorial-head{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:#9A3D18;margin-bottom:4px}
+.bg-tutorial-card p{margin:0;font-size:12.5px;line-height:1.55;color:var(--ink)}
+.bg-tutorial-card code{background:#fff;border:1px solid #FBD9C8;border-radius:5px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9A3D18}
+
 .bg-mode-tabs{display:flex;gap:6px;background:var(--paper);border-radius:10px;padding:4px}
 .bg-mode-tab{flex:1;border:0;background:transparent;border-radius:8px;padding:8px 10px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;color:var(--ink-soft);cursor:pointer}
 .bg-mode-tab.active{background:#fff;color:var(--violet-ink);box-shadow:0 2px 6px rgba(22,24,43,.08)}

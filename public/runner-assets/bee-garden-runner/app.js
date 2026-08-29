@@ -15,8 +15,29 @@
     const codePreview = document.getElementById('bgCodePreview');
     const runBtn = document.getElementById('bgRunBtn');
     const runStatusEl = document.getElementById('bgRunStatus');
+    const tutorialCard = document.getElementById('bgTutorialCard');
+    const tutorialText = document.getElementById('bgTutorialText');
 
     const STORAGE_KEY = 'bee_garden_progress_v1';
+
+    // Bu oyun gercek CSS ozelliklerini (justify-content, align-items, ...)
+    // kullanmiyor; ayni MANTIGI ogreten ama farkli kelimelerle yazilan
+    // kendi basit "Ari Dili" komutlarimiz var. Kod metninde bu kelimeler
+    // gorunur; arka planda gercek flexbox degerine cevrilip uygulanir.
+    const VALUE_TO_CODE = {
+        'flex-start': 'basa',
+        'center': 'ortaya',
+        'flex-end': 'sona',
+        'space-between': 'esit-arada',
+        'space-around': 'esit-kenarli',
+        'space-evenly': 'tam-esit',
+        'stretch': 'uzat',
+        'row': 'yatay',
+        'column': 'dikey',
+        'row-reverse': 'yatay-ters',
+        'column-reverse': 'dikey-ters',
+    };
+    const CODE_TO_VALUE = Object.fromEntries(Object.entries(VALUE_TO_CODE).map(([css, code]) => [code, css]));
 
     function beeSvg() {
         return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
@@ -76,37 +97,39 @@
     const LEVELS = [
         {
             title: 'Ortaya Kondur',
-            desc: 'Arıyı bahçenin yatayda tam ortasına kondur. "justify-content" özelliğini "center" yap.',
+            desc: 'Arıyı bahçenin yatayda tam ortasına kondur. "yatay-hizala" komutunu "ortaya" yap.',
             beeCount: 1,
-            properties: [prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3))],
+            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
             solution: { container: { justifyContent: 'center' } },
+            tutorial: 'Bu oyunda arıyı sağdaki bahçede çiçeğin üstüne konduracaksın. Sol taraftaki kutucuğa kurallar yazarak (ya da blokları sürükleyerek) arıya komut verirsin. <code>yatay-hizala</code> komutu arının SOLA-SAĞA doğru nereye gideceğini belirler: <code>basa</code> (sola), <code>ortaya</code> (ortaya), <code>sona</code> (sağa).',
         },
         {
             title: 'Sona Kondur',
             desc: 'Arıyı bahçenin sağ tarafına (sonuna) kondur.',
             beeCount: 1,
-            properties: [prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3))],
+            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
             solution: { container: { justifyContent: 'flex-end' } },
         },
         {
             title: 'Başa Kondur',
             desc: 'Arıyı bahçenin sol tarafına (başına) kondur.',
             beeCount: 1,
-            properties: [prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3))],
+            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
             solution: { container: { justifyContent: 'flex-start' } },
         },
         {
             title: 'Yukarı-Aşağı Ortala',
-            desc: 'Bu sefer dikeyde ortala. "align-items" özelliğini "center" yap.',
+            desc: 'Bu sefer dikeyde ortala. "dikey-hizala" komutunu "ortaya" yap.',
             beeCount: 1,
-            properties: [prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3))],
+            properties: [prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3))],
             solution: { container: { alignItems: 'center' } },
+            tutorial: 'Yeni komut: <code>dikey-hizala</code>. Bu komut arının YUKARI-AŞAĞI doğru nereye gideceğini belirler: <code>basa</code> (yukarı), <code>ortaya</code> (ortaya), <code>sona</code> (aşağı).',
         },
         {
             title: 'Aşağı Kondur',
             desc: 'Arıyı bahçenin altına kondur.',
             beeCount: 1,
-            properties: [prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3))],
+            properties: [prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3))],
             solution: { container: { alignItems: 'flex-end' } },
         },
         {
@@ -114,18 +137,19 @@
             desc: 'Şimdi iki özelliği birden kullan: hem yatayda hem dikeyde tam ortala.',
             beeCount: 1,
             properties: [
-                prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3)),
-                prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3)),
+                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
+                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
             ],
             solution: { container: { justifyContent: 'center', alignItems: 'center' } },
+            tutorial: 'İki komutu AYNI ANDA kullanabilirsin! <code>yatay-hizala</code> ve <code>dikey-hizala</code> birlikte yazılırsa arı hem yatayda hem dikeyde istediğin yere gider.',
         },
         {
             title: 'Sağ Alt Köşe',
             desc: 'Arıyı bahçenin sağ alt köşesine kondur.',
             beeCount: 1,
             properties: [
-                prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3)),
-                prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3)),
+                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
+                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
             ],
             solution: { container: { justifyContent: 'flex-end', alignItems: 'flex-end' } },
         },
@@ -134,62 +158,65 @@
             desc: 'Arıyı bahçenin sol alt köşesine kondur.',
             beeCount: 1,
             properties: [
-                prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC.slice(0, 3)),
-                prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3)),
+                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
+                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
             ],
             solution: { container: { justifyContent: 'flex-start', alignItems: 'flex-end' } },
         },
         {
             title: 'Üç Arı, Eşit Aralık',
-            desc: '3 arı var. Onları aralarında eşit boşlukla, kenarlarda boşluk bırakmadan diz. "space-between" kullan.',
+            desc: '3 arı var. Onları aralarında eşit boşlukla, kenarlarda boşluk bırakmadan diz. "esit-arada" kullan.',
             beeCount: 3,
-            properties: [prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC)],
+            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC)],
             solution: { container: { justifyContent: 'space-between' } },
+            tutorial: 'Birden fazla arı olunca <code>yatay-hizala</code> için yeni değerler kullanabilirsin: <code>esit-arada</code> (aralarında eşit boşluk, kenarlar boş), <code>esit-kenarli</code> (kenarlarda da boşluk var), <code>tam-esit</code> (hepsi tamamen eşit aralıklı).',
         },
         {
             title: 'Üç Arı, Kenarlar da Boşluklu',
-            desc: 'Bu sefer kenarlarda da boşluk olsun. "space-around" kullan.',
+            desc: 'Bu sefer kenarlarda da boşluk olsun. "esit-kenarli" kullan.',
             beeCount: 3,
-            properties: [prop('justifyContent', 'justify-content', 'Yatay Hizalama (justify-content)', JC)],
+            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC)],
             solution: { container: { justifyContent: 'space-around' } },
         },
         {
             title: 'Yön Değiştir: Dikey',
-            desc: 'Arılar artık yukarıdan aşağıya doğru sıralanacak. "flex-direction" özelliğini "column" yap, sonra ortala.',
+            desc: 'Arılar artık yukarıdan aşağıya doğru sıralanacak. "ucus-yonu" komutunu "dikey" yap, sonra ortala.',
             beeCount: 1,
             properties: [
-                prop('flexDirection', 'flex-direction', 'Yön (flex-direction)', FD.slice(0, 2)),
-                prop('justifyContent', 'justify-content', 'Ana Eksen Hizalama (justify-content)', JC.slice(0, 3)),
+                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD.slice(0, 2)),
+                prop('justifyContent', 'yatay-hizala', 'Ana Eksen Hizalama (yatay-hizala)', JC.slice(0, 3)),
             ],
             solution: { container: { flexDirection: 'column', justifyContent: 'center' } },
+            tutorial: 'Yeni komut: <code>ucus-yonu</code>. Arıların hangi YÖNDE dizileceğini değiştirir: <code>yatay</code> (soldan sağa, varsayılan) veya <code>dikey</code> (yukarıdan aşağıya). Yön değişince dikkat: <code>yatay-hizala</code> artık YUKARI-AŞAĞI eksenini kontrol etmeye başlar!',
         },
         {
             title: 'Dikeyde Kenara Yasla',
             desc: 'Dikey yönde, arıyı sağ tarafa yasla.',
             beeCount: 1,
             properties: [
-                prop('flexDirection', 'flex-direction', 'Yön (flex-direction)', FD.slice(0, 2)),
-                prop('alignItems', 'align-items', 'Yan Eksen Hizalama (align-items)', AI.slice(0, 3)),
+                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD.slice(0, 2)),
+                prop('alignItems', 'dikey-hizala', 'Yan Eksen Hizalama (dikey-hizala)', AI.slice(0, 3)),
             ],
             solution: { container: { flexDirection: 'column', alignItems: 'flex-end' } },
         },
         {
             title: 'Farklı Çiçek, Farklı Kural',
-            desc: '3 arı da üstte duruyor ama 2. arı farklı bir çiçeğe konacak. Ona özel bir kural (align-self) yaz.',
+            desc: '3 arı da üstte duruyor ama 2. arı farklı bir çiçeğe konacak. Ona özel bir kural (kendi-hizasi) yaz.',
             beeCount: 3,
             properties: [
-                prop('alignItems', 'align-items', 'Dikey Hizalama (align-items)', AI.slice(0, 3)),
+                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
             ],
-            itemProperty: prop('alignSelf', 'align-self', 'Seçili Arının Kendi Hizalaması (align-self)', AI.slice(0, 3)),
+            itemProperty: prop('alignSelf', 'kendi-hizasi', 'Seçili Arının Kendi Hizalaması (kendi-hizasi)', AI.slice(0, 3)),
             solution: { container: { alignItems: 'flex-start' }, items: { 2: { alignSelf: 'flex-end' } } },
+            tutorial: 'Yeni komut: <code>kendi-hizasi</code>. Diğer komutlar TÜM arılara birden uygulanır, ama bu komut SADECE seçtiğin TEK bir arıya özel bir kural yazmanı sağlar. Aşağıdan hangi arı olduğunu seç.',
         },
         {
             title: 'Son Görev: Ters ve Aralıklı',
             desc: 'En zor görev! Yönü ters çevir ve aralarında eşit boşluk bırak.',
             beeCount: 3,
             properties: [
-                prop('flexDirection', 'flex-direction', 'Yön (flex-direction)', FD),
-                prop('justifyContent', 'justify-content', 'Ana Eksen Hizalama (justify-content)', JC),
+                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD),
+                prop('justifyContent', 'yatay-hizala', 'Ana Eksen Hizalama (yatay-hizala)', JC),
             ],
             solution: { container: { flexDirection: 'column-reverse', justifyContent: 'space-between' } },
         },
@@ -323,7 +350,8 @@
         let lines = [];
         (level.properties || []).forEach((p) => {
             if (currentState[p.key]) {
-                lines.push('  ' + p.cssName + ': ' + currentState[p.key] + ';');
+                const codeValue = VALUE_TO_CODE[currentState[p.key]] || currentState[p.key];
+                lines.push('  ' + p.cssName + ': ' + codeValue + ';');
             }
         });
         let text = '.bahce {\n' + lines.join('\n') + (lines.length ? '\n' : '') + '}';
@@ -331,7 +359,8 @@
             Object.keys(currentState.items).forEach((idx) => {
                 const val = currentState.items[idx][level.itemProperty.key];
                 if (val) {
-                    text += '\n\n.ari-' + idx + ' {\n  ' + level.itemProperty.cssName + ': ' + val + ';\n}';
+                    const codeValue = VALUE_TO_CODE[val] || val;
+                    text += '\n\n.ari-' + idx + ' {\n  ' + level.itemProperty.cssName + ': ' + codeValue + ';\n}';
                 }
             });
         }
@@ -509,9 +538,9 @@
             let m;
             while ((m = declRe.exec(body))) {
                 const cssName = m[1].trim();
-                const value = m[2].trim();
-                if (propByCssName[cssName]) {
-                    currentState[propByCssName[cssName]] = value;
+                const codeValue = m[2].trim();
+                if (propByCssName[cssName] && CODE_TO_VALUE[codeValue]) {
+                    currentState[propByCssName[cssName]] = CODE_TO_VALUE[codeValue];
                     recognizedCount++;
                 }
             }
@@ -526,10 +555,11 @@
                 const declRe = /([a-zA-Z-]+)\s*:\s*([a-zA-Z0-9-]+)\s*;?/g;
                 let m2;
                 while ((m2 = declRe.exec(body))) {
-                    if (m2[1].trim() === level.itemProperty.cssName) {
+                    const itemCodeValue = m2[2].trim();
+                    if (m2[1].trim() === level.itemProperty.cssName && CODE_TO_VALUE[itemCodeValue]) {
                         currentState.items = currentState.items || {};
                         currentState.items[idx] = currentState.items[idx] || {};
-                        currentState.items[idx][level.itemProperty.key] = m2[2].trim();
+                        currentState.items[idx][level.itemProperty.key] = CODE_TO_VALUE[itemCodeValue];
                         recognizedCount++;
                     }
                 }
@@ -563,7 +593,7 @@
     runBtn.addEventListener('click', () => {
         const recognized = parseCodeIntoState(codeArea.value);
         if (!recognized) {
-            runStatusEl.textContent = 'Kod tanınmadı. Örnek: justify-content: center;';
+            runStatusEl.textContent = 'Kod tanınmadı. Örnek: yatay-hizala: ortaya;';
             runStatusEl.className = 'bg-run-status is-fail';
             return;
         }
@@ -598,6 +628,13 @@
 
         taskTitleEl.textContent = level.title;
         taskDescEl.textContent = level.desc;
+
+        if (level.tutorial) {
+            tutorialText.innerHTML = level.tutorial;
+            tutorialCard.hidden = false;
+        } else {
+            tutorialCard.hidden = true;
+        }
 
         buildBees(gardenEl, level.beeCount);
         currentTargets = computeTargets(level);
