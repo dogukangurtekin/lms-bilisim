@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.0";
+const SW_VERSION = "v1.5.1";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -233,8 +233,8 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "Yeni Bildirim";
   const options = {
     body: payload.body || "",
-    icon: "/public/logo.png",
-    badge: "/public/logo.png",
+    icon: payload.icon || "/logo-icon-512.png",
+    badge: "/logo-icon-512.png",
     data: {
       url: payload.url || "/bildirimler",
       log_id: payload.log_id || null,
