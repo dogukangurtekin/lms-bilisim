@@ -126,6 +126,36 @@ class ActivityController extends Controller
             : 'Seçili öğretmende atanmış oyun/etkinlik bulunamadı.');
     }
 
+    public function play(Request $request)
+    {
+        $target = (string) $request->query('target', '');
+        $target = trim($target);
+
+        if ($target === '' || $target[0] !== '/' || str_contains($target, '://')) {
+            abort(404);
+        }
+
+        $path = trim((string) parse_url($target, PHP_URL_PATH), '/');
+        $segments = $path === '' ? [] : explode('/', $path);
+        $games = self::games();
+
+        $slug = null;
+        if (($segments[0] ?? '') === 'runner-open' && isset($segments[1])) {
+            $slug = $segments[1];
+        } elseif (isset($segments[0])) {
+            $slug = $segments[0];
+        }
+
+        if ($slug === null || ! isset($games[$slug])) {
+            abort(404);
+        }
+
+        return view('activities.play', [
+            'src' => url($target),
+            'title' => $games[$slug]['name'],
+        ]);
+    }
+
     public function studentAllowedSlug(string $slug): bool
     {
         $user = auth()->user();

@@ -131,6 +131,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
+      Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');
       Route::post('/etkinlikler/ogretmenden-kaldir/toplu', [ActivityController::class, 'unassignTeacherBulk'])->name('activities.unassign.teacher.bulk');
       Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');

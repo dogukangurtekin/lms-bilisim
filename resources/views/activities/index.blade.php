@@ -220,7 +220,7 @@
                         <div class="activity-body">
                             <h3>{{ $game['name'] }}</h3>
                             <div class="actions">
-                                <a class="btn" href="{{ url($game['url']) }}" target="_blank" rel="noopener">Oyunu Aç</a>
+                                <a class="btn" href="{{ route('activities.play', ['target' => $game['url']]) }}">Oyunu Aç</a>
                                 <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Ödevi Oluştur</a>
                             </div>
                         </div>
@@ -241,7 +241,7 @@
                     @foreach($assigned as $assignment)
                         @php
                             $game = $games[$assignment->game_slug] ?? null;
-                            $gameUrl = $game ? url($game['url'] . '?role=teacher') : '#';
+                            $gameUrl = $game ? route('activities.play', ['target' => $game['url'] . '?role=teacher']) : '#';
                             $assignedByName = trim((string) ($assignment->assignedBy?->name ?? ''));
                         @endphp
                         <article class="activity-item activity-card">
@@ -249,7 +249,7 @@
                             <div class="activity-body">
                                 <h3>{{ $assignment->game_name }}</h3>
                                 <div class="actions">
-                                    <a class="btn" href="{{ $gameUrl }}" target="_blank" rel="noopener">Oyunu Aç</a>
+                                    <a class="btn" href="{{ $gameUrl }}">Oyunu Aç</a>
                                     <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
                                 </div>
                                 <p style="margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35;">Atayan: {{ $assignedByName !== '' ? $assignedByName : '-' }}</p>
@@ -279,9 +279,9 @@
                             <h3>{{ $game['name'] }}</h3>
                             <div class="actions">
                                 @if(auth()->user()?->hasRole('student') && !in_array($slug, ['keyboard-race', 'block-builder-studio', 'flamestone-game'], true))
-                                    <a class="btn" href="{{ route('runner.open', ['slug' => $slug, 'from' => 1, 'to' => 2]) }}">Oyunu Aç (L1-L2)</a>
+                                    <a class="btn" href="{{ route('activities.play', ['target' => route('runner.open', ['slug' => $slug, 'from' => 1, 'to' => 2], false)]) }}">Oyunu Aç (L1-L2)</a>
                                 @else
-                                    <a class="btn" href="{{ url($game['url']) }}" target="_blank" rel="noopener">Oyunu Aç</a>
+                                    <a class="btn" href="{{ route('activities.play', ['target' => $game['url']]) }}">Oyunu Aç</a>
                                 @endif
                             </div>
                         </div>
