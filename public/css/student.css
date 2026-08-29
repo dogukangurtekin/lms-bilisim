@@ -6,8 +6,14 @@
   --s-green:#34d399;
   --s-orange:#f59e0b;
   --s-pink:#f472b6;
+  --s-mint:#0EA57A;
+  --s-mint-tint:#E4F7EF;
+  --s-signal:#FF7A45;
+  --s-signal-tint:#FFEEE4;
+  --s-violet:#5B3DF5;
 }
-body.role-student{background:radial-gradient(circle at 10% 5%,#fff7ed 0,#fef6e9 45%,#ecfeff 100%)}
+body.role-student{background:radial-gradient(circle at 10% 5%,#FFF6EE 0,#F7F6F2 45%,#EAF7F1 100%);font-family:'Inter',Segoe UI,Arial,sans-serif}
+body.role-student h1,body.role-student h2,body.role-student h3,body.role-student .sidebar-brand p{font-family:'Space Grotesk',Segoe UI,Arial,sans-serif}
 html,body{overscroll-behavior-y:auto;-webkit-overflow-scrolling:touch;overflow-y:auto}
 body.role-student{-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;touch-action:auto}
 body.role-student a,body.role-student button,body.role-student input,body.role-student select,body.role-student textarea,body.role-student [role="button"]{touch-action:manipulation}
@@ -19,8 +25,8 @@ body.role-student .layout{
   align-items:start;
 }
 body.role-student .sidebar{
-  background:linear-gradient(180deg,#93c5fd,#60a5fa 50%,#38bdf8 100%);
-  border-right:0;
+  background:var(--s-panel);
+  border-right:1px solid #EADFCF;
   padding:22px 16px;
   display:flex;
   flex-direction:column;
@@ -28,25 +34,25 @@ body.role-student .sidebar{
   overflow:hidden;
   width:280px;
 }
-body.role-student .student-sidebar-top{display:grid;justify-items:center;align-content:start;gap:8px;margin-bottom:10px}
+body.role-student .student-sidebar-top{display:grid;justify-items:center;align-content:start;gap:8px;margin-bottom:10px;padding-bottom:16px;border-bottom:1px dashed #EADFCF}
 body.role-student .sidebar-brand{display:grid;justify-items:center;align-content:start;text-align:center;gap:8px;width:100%}
-body.role-student .sidebar-logo{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(2,6,23,.2))}
-body.role-student .sidebar-brand p{margin:0;color:#eff6ff;font-size:13px;font-weight:800;letter-spacing:.3px}
+body.role-student .sidebar-logo{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(37,50,74,.12))}
+body.role-student .sidebar-brand p{margin:0;color:var(--s-text);font-size:13px;font-weight:700;letter-spacing:.3px}
 body.role-student .student-sidebar-nav{margin-top:8px;flex:1;overflow:auto;padding-right:4px}
 body.role-student .student-sidebar-time{
   margin-top:auto;
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.2);
-  border-radius:12px;
+  background:var(--s-mint-tint);
+  border:1px solid #C7ECDC;
+  border-radius:14px;
   padding:10px 12px;
-  color:#eff6ff;
+  color:#0B6B4F;
   position:sticky;
   bottom:0;
 }
-body.role-student .student-sidebar-time span{display:block;font-size:11px;opacity:.9}
-body.role-student .student-sidebar-time strong{display:block;margin-top:4px;font-size:15px;color:#fff}
+body.role-student .student-sidebar-time span{display:block;font-size:11px;opacity:.85}
+body.role-student .student-sidebar-time strong{display:block;margin-top:4px;font-size:15px;color:#0B6B4F}
 body.role-student .sidebar h3{
-  color:#fff;
+  color:var(--s-text);
   font-size:24px;
   margin:0 0 14px;
   letter-spacing:.3px;
@@ -55,28 +61,29 @@ body.role-student .sidebar a{
   display:flex;
   align-items:center;
   gap:10px;
-  color:#eff6ff;
-  background:rgba(255,255,255,.15);
-  border:1px solid rgba(255,255,255,.24);
-  border-radius:12px;
-  padding:12px 14px;
-  margin-bottom:8px;
-  font-weight:700;
-  transition:.18s ease;
+  color:var(--s-text);
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:999px;
+  padding:12px 16px;
+  margin-bottom:6px;
+  font-weight:600;
+  transition:.15s ease;
 }
 body.role-student .nav-icon{width:20px;text-align:center}
 body.role-student .nav-icon{height:20px;display:inline-flex;align-items:center;justify-content:center}
 body.role-student .nav-icon svg{width:18px;height:18px;fill:currentColor}
 body.role-student .sidebar a:hover{
-  color:#0f172a;
-  background:#fff;
-  transform:translateX(2px);
+  color:var(--s-signal);
+  background:var(--s-signal-tint);
+  transform:none;
 }
 body.role-student .sidebar a.active{
-  color:#0f172a;
-  background:#ffffff;
-  border-color:#dbeafe;
-  font-weight:800;
+  color:#fff;
+  background:var(--s-signal);
+  border-color:var(--s-signal);
+  font-weight:700;
+  box-shadow:0 8px 16px rgba(255,122,69,.28);
 }
 body.role-student .main{
   padding:18px;
@@ -98,8 +105,8 @@ body.role-student:not(.pwa-standalone){overscroll-behavior-y:auto}
 body.role-student.pwa-standalone{overscroll-behavior:none}
 body.role-student.is-offline .toast{display:none}
 body.role-student .navbar{
-  border:1px solid #dbeafe;
-  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  border:1px solid #EADFCF;
+  background:#ffffff;
 }
 body.role-student .navbar-actions{
   display:inline-flex;
@@ -130,30 +137,38 @@ body.role-student .notif-bell-count{
   font-size:13px;
 }
 body.role-student .btn-logout{
-  background:linear-gradient(180deg,#f97316,#ea580c);
-  border:1px solid #c2410c;
+  background:var(--s-signal);
+  border:1px solid var(--s-signal);
   color:#fff;
 }
 body.role-student .btn-logout:hover{
-  background:linear-gradient(180deg,#ea580c,#c2410c);
+  background:#e8622f;
+  border-color:#e8622f;
 }
 body.role-student .badge{
-  background:#d1fae5;
-  color:#065f46;
-  border:1px solid #a7f3d0;
+  background:var(--s-mint-tint);
+  color:#0B6B4F;
+  border:1px solid #C7ECDC;
 }
 body.role-student .btn{
   border-radius:12px;
   font-weight:700;
-  background:linear-gradient(180deg,#3b82f6,#2563eb);
+  font-family:'Space Grotesk',Segoe UI,Arial,sans-serif;
+  background:var(--s-mint);
+  border:1px solid var(--s-mint);
+}
+body.role-student .btn:hover{
+  background:#0c8c66;
+  border-color:#0c8c66;
 }
 body.role-student .btn-danger{
-  background:linear-gradient(180deg,#f87171,#ef4444);
+  background:#ef4444;
+  border-color:#ef4444;
 }
 body.role-student .card{
-  border:1px solid #dbe5f2;
+  border:1px solid #EADFCF;
   border-radius:16px;
-  box-shadow:0 12px 24px rgba(14,30,60,.06);
+  box-shadow:0 12px 24px rgba(37,50,74,.06);
 }
 body.role-student h1,body.role-student h2,body.role-student h3{color:#1e293b}
 body.role-student .v2-metrics article:nth-child(1){background:linear-gradient(180deg,#eff6ff,#dbeafe)}
