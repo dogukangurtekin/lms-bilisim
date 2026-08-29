@@ -63,11 +63,19 @@ class NotificationController extends Controller
             ->unique()
             ->all();
 
+        // Bir kullanicinin cihazi her acilista/PWA yeniden kaydinda yeni bir
+        // PushDeviceStatus satiri birakabiliyor; bu yuzden ham satirlari degil,
+        // kullanici basina SADECE en son goruleni gosteriyoruz ve listeyi
+        // belirli sayida kullaniciyla sinirliyoruz (ekranda kalabalik olmasin).
+        $deviceStatusUserLimit = 15;
         $deviceStatuses = PushDeviceStatus::query()
             ->with('user:id,name')
+            ->whereNotNull('user_id')
             ->latest('last_seen_at')
-            ->limit(50)
+            ->limit(500)
             ->get()
+            ->unique('user_id')
+            ->take($deviceStatusUserLimit)
             ->map(function (PushDeviceStatus $status) use ($subscribedUserIds) {
                 return [
                     'user_name' => $status->user?->name ?? '-',
@@ -77,7 +85,8 @@ class NotificationController extends Controller
                     'has_subscription' => in_array((int) $status->user_id, $subscribedUserIds, true),
                     'last_seen_at' => $status->last_seen_at,
                 ];
-            });
+            })
+            ->values();
 
         $schoolClasses = SchoolClass::query()
             ->with([
@@ -107,6 +116,7 @@ class NotificationController extends Controller
             'preferences' => $preferences,
             'recentLogs' => $recentLogs,
             'deviceStatuses' => $deviceStatuses,
+            'deviceStatusUserLimit' => $deviceStatusUserLimit,
             'types' => $types,
             'schoolClasses' => $schoolClasses,
             'classStudentMap' => $classStudentMap,

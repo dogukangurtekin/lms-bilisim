@@ -107,7 +107,7 @@
 
             <section class="card soft-surface" style="margin-top:16px;">
                 <h2 style="margin:0 0 6px;">Cihaz Bildirim İzinleri</h2>
-                <p style="margin:0 0 12px;color:#64748b;font-size:13.5px;">Bir kullanıcıda bildirim "partial" (kısmi) gidiyorsa, o kişinin cihazında izin verilmemiş ya da abonelik süresi dolmuş olabilir — aşağıdan kontrol edebilirsin.</p>
+                <p style="margin:0 0 12px;color:#64748b;font-size:13.5px;">Bir kullanıcıda bildirim "partial" (kısmi) gidiyorsa, o kişinin cihazında izin verilmemiş ya da abonelik süresi dolmuş olabilir — aşağıdan kontrol edebilirsin. En son görülen en fazla {{ $deviceStatusUserLimit }} kullanıcı listelenir, her kullanıcı için tek satır gösterilir.</p>
                 @if($deviceStatuses->isEmpty())
                     <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#475569;">
                         Henüz hiçbir cihaz bildirim durumu bildirmedi.
