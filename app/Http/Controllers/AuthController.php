@@ -66,7 +66,11 @@ class AuthController extends Controller
             $stat->save();
         }
 
-        return redirect()->route('dashboard');
+        // Bildirime tiklayip giris yapan ama once login'e dusen kullanicilar
+        // (orn. oturumu dolmus telefon) genel panele degil, tam olarak
+        // gitmek istedigi sayfaya (Laravel'in "intended" mekanizmasi ile)
+        // yonlendirilir. Boyle bir hedef yoksa eskisi gibi dashboard'a gider.
+        return redirect()->intended(route('dashboard'));
     }
 
     private function matchesPassword(User $user, string $plainPassword): bool
