@@ -215,14 +215,36 @@
     var disableBtn = document.getElementById('notifDisableBtn');
     var testBtn = document.getElementById('notifTestBtn');
 
+    function isIos() {
+        return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    function isStandalonePwa() {
+        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+    }
+
     function refreshPermUi() {
+        if (isIos() && !isStandalonePwa()) {
+            permDot.style.background = '#FF7A45';
+            permLabel.textContent = 'iPhone: önce ana ekrana eklenmeli';
+            enableBtn.style.display = 'none';
+            disableBtn.style.display = 'none';
+            testBtn.style.display = 'none';
+            permHelp.innerHTML = 'iPhone/iPad\'de (Safari) web bildirimleri yalnızca site <b>ana ekrana eklendiğinde</b> çalışır — Apple\'ın kısıtlaması, normal sekmede hiçbir izin düğmesi bunu açamaz.<br>' +
+                '1) Safari\'de alttaki <b>Paylaş</b> (kare + yukarı ok) simgesine bas.<br>' +
+                '2) <b>"Ana Ekrana Ekle"</b> seçeneğini seç.<br>' +
+                '3) Ana ekrandaki uygulama simgesinden aç, sonra bu sayfaya tekrar gel — "Bildirim İznini Aç" düğmesi o zaman görünecek.';
+            return;
+        }
         if (!('Notification' in window)) {
             permDot.style.background = '#94a3b8';
             permLabel.textContent = 'Bu tarayıcı bildirim desteklemiyor.';
             enableBtn.style.display = 'none';
             disableBtn.style.display = 'none';
+            testBtn.style.display = 'none';
             return;
         }
+        testBtn.style.display = 'inline-flex';
         var perm = window.getWebPushPermission ? window.getWebPushPermission() : Notification.permission;
         if (perm === 'granted') {
             permDot.style.background = '#0EA57A';

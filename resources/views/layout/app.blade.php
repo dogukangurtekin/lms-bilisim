@@ -513,7 +513,9 @@
         const installBtn = div.querySelector('#pwa-onboard-install');
         installBtn?.addEventListener('click', async () => {
             const fn = window.__pwaPromptInstall;
-            if (typeof fn === 'function') {
+            if (isIosDevice() && !isPwaInstalled()) {
+                alert('iPhone/iPad\'de uygulamayi ana ekrana eklemek icin:\n\n1) Safari\'de alttaki Paylas (kare + yukari ok) simgesine bas.\n2) "Ana Ekrana Ekle" secenegini sec.\n3) Ana ekrandaki simgeden ac, sonra bildirim iznini ver.');
+            } else if (typeof fn === 'function') {
                 await fn();
             } else {
                 alert('Tarayiciniz su an dogrudan yukleme penceresi vermiyor. Tarayici menusunden "Uygulamayi Yuke" secenegini kullanin.');
@@ -542,13 +544,20 @@
         return div;
     }
 
+    function isIosDevice() {
+        return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
     function updateOnboardUi() {
         if (localStorage.getItem(pwaOnboardDismissKey) === '1') return;
-        if (!('Notification' in window)) return;
-        const permission = Notification.permission;
         const installed = isPwaInstalled();
+        const iosNotInstalled = isIosDevice() && !installed;
 
-        if (installed && permission === 'granted') {
+        if (!iosNotInstalled && !('Notification' in window)) return;
+
+        const permission = ('Notification' in window) ? Notification.permission : 'default';
+
+        if (!iosNotInstalled && installed && permission === 'granted') {
             if (onboardEl) {
                 onboardEl.remove();
                 onboardEl = null;
@@ -562,7 +571,9 @@
         const notifyBtn = div.querySelector('#pwa-onboard-notify');
         const hasDirectInstallPrompt = typeof window.__pwaPromptInstall === 'function';
 
-        if (!installed && permission !== 'granted') {
+        if (iosNotInstalled) {
+            textEl.innerHTML = 'iPhone/iPad\'de bildirim almak icin once uygulamayi ana ekrana eklemelisin: alttaki <b>Paylas</b> (kare + yukari ok) simgesine bas, <b>"Ana Ekrana Ekle"</b> secenegini sec, sonra ana ekrandaki simgeden ac.';
+        } else if (!installed && permission !== 'granted') {
             textEl.textContent = 'Gercek sistem bildirimi icin once uygulamayi yukleyin, sonra bildirim izni verin.';
         } else if (permission === 'denied') {
             textEl.textContent = 'Bildirim izni engellenmis. Tarayici ayarlarindan bu site icin izni tekrar acin.';
@@ -574,11 +585,12 @@
 
         if (installBtn) {
             installBtn.style.display = installed ? 'none' : 'inline-block';
-            installBtn.disabled = !hasDirectInstallPrompt;
-            installBtn.style.opacity = hasDirectInstallPrompt ? '1' : '.7';
+            installBtn.disabled = !hasDirectInstallPrompt && !iosNotInstalled;
+            installBtn.style.opacity = (hasDirectInstallPrompt || iosNotInstalled) ? '1' : '.7';
+            installBtn.textContent = iosNotInstalled ? 'Nasil Eklenir?' : 'Uygulamayi Yukle';
         }
         if (notifyBtn) {
-            notifyBtn.style.display = permission === 'granted' ? 'none' : 'inline-block';
+            notifyBtn.style.display = (iosNotInstalled || permission === 'granted') ? 'none' : 'inline-block';
             notifyBtn.textContent = permission === 'denied' ? 'Izin Engellendi' : 'Bildirim Izni Ver';
         }
     }
