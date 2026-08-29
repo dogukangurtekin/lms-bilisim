@@ -90,7 +90,14 @@ class PushNotificationService
                 'verify' => (bool) config('webpush.verify_ssl', true),
             ]
         );
-        $webPush->setReuseVAPIDHeaders(true);
+        // NOT: setReuseVAPIDHeaders(true) KULLANMA. VAPID JWT'nin "aud" (audience)
+        // alani, gonderilen push servisinin origin'ine gore degisir (orn.
+        // fcm.googleapis.com vs web.push.apple.com). Bu bayrak acikken, ayni
+        // toplu gonderim (flush) icinde farkli push servislerine giden
+        // aboneliklere AYNI JWT tekrar kullaniliyor; bu da o servisin
+        // beklediginden farkli bir "aud" tasidigi icin reddediliyor. Bu
+        // yuzden PC (FCM) bildirimi alirken iPhone (Apple web push) her
+        // seferinde "403 BadJwtToken" ile basarisiz oluyordu.
 
         $endpointMap = [];
         foreach ($logs as $userId => $log) {
