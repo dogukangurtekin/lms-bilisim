@@ -659,12 +659,13 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 
 
 /* Modern teacher/admin shell */
-.sidebar-pro{background:linear-gradient(180deg,#65748b 0%,#56657a 100%);box-shadow:inset -1px 0 0 rgba(255,255,255,.08)}
-.sidebar-pro .sidebar-logo--brand{width:124px;height:124px;filter:drop-shadow(0 14px 22px rgba(0,0,0,.28));margin-bottom:6px}
-.sidebar-pro .sidebar-brand p,.sidebar-pro .student-sidebar-top p{font-size:15px;font-weight:800;letter-spacing:.3px;opacity:.98}
-.sidebar-pro a{background:rgba(255,255,255,.05);border:1px solid transparent;margin:4px 0;padding:12px 12px;border-radius:14px;transition:all .18s ease}
-.sidebar-pro a:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);transform:translateX(2px)}
-.sidebar-pro a.active{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.28);box-shadow:0 8px 18px rgba(15,23,42,.12)}
+.sidebar-pro{background:var(--surface);box-shadow:none;border-right:1px solid var(--line)}
+.sidebar-pro .sidebar-logo--brand{width:124px;height:124px;filter:drop-shadow(0 6px 14px rgba(22,24,43,.12));margin-bottom:6px}
+.sidebar-pro .sidebar-brand p,.sidebar-pro .student-sidebar-top p{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--ink);opacity:1}
+.sidebar-pro a{background:transparent;color:var(--ink-soft);border:1px solid transparent;border-left:3px solid transparent;margin:2px 0;padding:12px 12px;border-radius:10px;transition:all .15s ease}
+.sidebar-pro a:hover{background:var(--violet-tint);color:var(--violet-ink);transform:none}
+.sidebar-pro a.active{background:var(--violet-tint);color:var(--violet-ink);border-color:transparent;border-left-color:var(--violet);box-shadow:none;font-weight:700}
+.sidebar-pro .nav-icon svg{fill:currentColor}
 
 .dashboard-shell{max-width:100%;display:grid;gap:18px;position:relative}
 .dashboard-hero{
