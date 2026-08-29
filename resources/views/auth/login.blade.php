@@ -6,87 +6,86 @@
     <title>Giriş</title>
     <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap');
-        body{margin:0;font-family:'Manrope',Segoe UI,Arial,sans-serif;background:#eef2f9;color:#0f172a}
-        .login-shell{min-height:100vh;display:grid;grid-template-columns:1.08fr .92fr;background:linear-gradient(130deg,#f2f7ff 0%,#ebf2ff 45%,#f8fbff 100%)}
-        .brand-side{position:relative;display:grid;place-items:center;padding:44px;background:radial-gradient(circle at 25% 20%,#bfdbfe 0,#93c5fd 45%,#60a5fa 100%);overflow:hidden}
-        .brand-side::before,.brand-side::after{content:"";position:absolute;border-radius:999px;background:rgba(255,255,255,.28)}
-        .brand-side::before{width:340px;height:340px;left:-110px;bottom:-90px}
-        .brand-side::after{width:250px;height:250px;right:-80px;top:-70px}
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        :root{
+            --paper:#F7F6F2; --surface:#FFFFFF; --ink:#16182B; --ink-soft:#585A72;
+            --line:#E4E1D8; --violet:#5B3DF5; --violet-ink:#3E28B8; --violet-tint:#EEEBFD;
+            --signal:#FF7A45; --signal-tint:#FFEEE4; --mint:#0EA57A;
+            --shadow-md:0 12px 30px rgba(22,24,43,.09);
+            --shadow-lg:0 24px 56px rgba(22,24,43,.14);
+        }
+        body{margin:0;font-family:'Inter',Segoe UI,Arial,sans-serif;background:var(--paper);color:var(--ink)}
+        .login-shell{min-height:100vh;display:grid;grid-template-columns:1.08fr .92fr;background:var(--paper)}
 
-        .space-layer{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
-        .star{position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.85);animation:twinkle 2.2s ease-in-out infinite}
-        .star.s1{left:12%;top:18%;animation-delay:.2s}
-        .star.s2{left:30%;top:66%;animation-delay:1.1s}
-        .star.s3{left:58%;top:24%;animation-delay:.8s}
-        .star.s4{left:74%;top:70%;animation-delay:1.6s}
-        .star.s5{left:86%;top:38%;animation-delay:.5s}
+        /* ---------- left: brand-side (light, sky + rocket + stars) ---------- */
+        .brand-side{position:relative;display:grid;place-items:center;padding:48px;overflow:hidden;
+            background:radial-gradient(circle at 22% 18%,#EEEBFD 0%,var(--paper) 55%);
+            border-right:1px solid var(--line);}
+        .brand-grid{position:absolute;inset:0;z-index:0;pointer-events:none;
+            background-image:linear-gradient(rgba(22,24,43,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,24,43,.05) 1px,transparent 1px);
+            background-size:42px 42px; mask-image:radial-gradient(circle at 50% 40%,#000 0%,transparent 75%);}
+
+        .star-layer{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+        .star{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--violet);animation:twinkle 2.4s ease-in-out infinite}
+        .star.gold{background:var(--signal)}
+        .star.s1{left:12%;top:16%;animation-delay:.2s}
+        .star.s2{left:30%;top:62%;animation-delay:1.1s}
+        .star.s3{left:60%;top:20%;animation-delay:.8s}
+        .star.s4{left:76%;top:66%;animation-delay:1.6s}
+        .star.s5{left:88%;top:34%;animation-delay:.5s}
         .star.s6{left:6%;top:8%;animation-delay:.9s}
-        .star.s7{left:94%;top:10%;animation-delay:1.9s}
-        .star.s8{left:5%;top:88%;animation-delay:1.3s}
-        .star.s9{left:90%;top:86%;animation-delay:.4s}
-        .star.s10{left:48%;top:10%;animation-delay:2.1s}
+        .star.s7{left:20%;top:82%;animation-delay:1.9s}
+        .star.s8{left:70%;top:88%;animation-delay:1.3s}
+        .star.s9{left:44%;top:10%;animation-delay:2.1s}
 
-        .orbit{position:absolute;border:1px dashed rgba(255,255,255,.35);border-radius:999px;animation:spin 26s linear infinite}
-        .orbit.o1{width:340px;height:340px;left:-40px;top:40px}
-        .orbit.o2{width:280px;height:280px;right:-30px;bottom:30px;animation-direction:reverse;animation-duration:32s}
-        .orbit.o3{width:460px;height:460px;left:18%;top:8%;animation-duration:40s;opacity:.5}
+        .rocket{position:absolute;left:70%;top:56%;width:70px;height:70px;animation:fly 5.5s ease-in-out infinite;filter:drop-shadow(0 10px 18px rgba(91,61,245,.28))}
+        .rocket-trail{position:absolute;left:14%;top:30%;width:150px;height:2px;border-radius:999px;
+            background:linear-gradient(90deg,transparent,rgba(91,61,245,.5));animation:streak .9s linear infinite}
+        .rocket-trail.t2{left:50%;top:76%;width:110px;animation-delay:.4s;background:linear-gradient(90deg,transparent,rgba(255,122,69,.5))}
 
-        .float-item{position:absolute;color:rgba(15,23,42,.55);font-weight:800;letter-spacing:.6px;animation:drift 6.4s ease-in-out infinite}
-        .svg-item{position:absolute;animation:drift 3.8s ease-in-out infinite;opacity:.78}
-        .svg-item svg{display:block}
-        .svg-item.robot{left:10%;top:24%;animation-delay:.4s}
-        .svg-item.ship{left:76%;top:14%;animation-delay:1.1s}
-        .svg-item.sat{left:6%;top:66%;animation-delay:1.8s}
-        .svg-item.bot2{left:82%;top:72%;animation-delay:2.3s}
-        .svg-item.ship2{left:52%;top:34%;animation-delay:.9s}
-        .svg-item.robot3{left:36%;top:78%;animation-delay:1.6s}
-        .streak{position:absolute;width:128px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95));opacity:.88;animation:streak .72s linear infinite}
-        .streak.sr1{left:70%;top:12%;transform:rotate(-12deg)}
-        .streak.sr2{left:12%;top:22%;transform:rotate(-16deg);animation-delay:.35s}
-        .streak.sr3{left:44%;top:30%;transform:rotate(-10deg);animation-delay:.2s}
-        .streak.sr4{left:8%;top:62%;transform:rotate(-14deg);animation-delay:.62s}
-        .streak.sr5{left:74%;top:70%;transform:rotate(-8deg);animation-delay:.48s}
-        .streak.sr6{left:58%;top:44%;transform:rotate(-9deg);animation-delay:.14s}
-        .streak.sr7{left:28%;top:80%;transform:rotate(-13deg);animation-delay:.28s}
-        .streak.sr8{left:86%;top:48%;transform:rotate(-11deg);animation-delay:.44s}
-        .streak.sr9{left:36%;top:12%;transform:rotate(-7deg);animation-delay:.56s}
+        .code-float{position:absolute;z-index:1;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-soft);
+            background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;box-shadow:var(--shadow-md);
+            animation:drift 7s ease-in-out infinite;}
+        .code-float.c1{left:6%;top:44%}
+        .code-float.c2{left:58%;top:12%;animation-delay:1.2s}
+        .code-float.c3{left:8%;top:78%;animation-delay:2.1s}
+        .code-float.c4{left:62%;top:82%;animation-delay:.6s}
+        .code-float.c5{left:80%;top:18%;animation-delay:1.8s;font-size:11.5px}
 
-        .float-item.code1{font-size:13px;left:72%;top:8%;font-family:Consolas,monospace}
-        .float-item.code2{font-size:13px;left:3%;top:20%;font-family:Consolas,monospace;animation-delay:2s}
-        .float-item.code3{font-size:12px;left:80%;top:90%;font-family:Consolas,monospace;animation-delay:3s}
-        .float-item.code4{font-size:12px;left:2%;top:78%;font-family:Consolas,monospace;animation-delay:1.2s}
-        .float-item.code5{font-size:12px;left:40%;top:4%;font-family:Consolas,monospace;animation-delay:2.6s}
-        .float-item.code6{font-size:12px;left:88%;top:40%;font-family:Consolas,monospace;animation-delay:3.2s}
+        .brand-content{position:relative;z-index:2;display:grid;gap:18px;justify-items:center;text-align:center;color:var(--ink);max-width:460px}
+        .brand-content img{width:110px;height:auto;filter:drop-shadow(0 10px 20px rgba(22,24,43,.14))}
+        .brand-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;
+            letter-spacing:.06em;color:var(--violet-ink);text-transform:uppercase;}
+        .brand-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--signal)}
+        .brand-content h1{margin:0;font-family:'Space Grotesk',sans-serif;font-size:37px;line-height:1.14;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+        .brand-content p{margin:0;font-size:16px;line-height:1.55;color:var(--ink-soft)}
 
-        .shape{position:absolute;border:1px solid rgba(255,255,255,.35);animation:drift 7.5s ease-in-out infinite}
-        .shape.sq1{width:22px;height:22px;left:10%;top:56%;transform:rotate(18deg)}
-        .shape.sq2{width:16px;height:16px;left:90%;top:74%;transform:rotate(30deg);animation-delay:1.4s}
-        .shape.tr1{width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid rgba(255,255,255,.26);left:14%;top:10%;border-top:none;border-radius:0;animation-delay:2.1s}
-        .shape.tr2{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid rgba(255,255,255,.26);left:86%;top:18%;border-top:none;border-radius:0;animation-delay:1.1s}
+        @keyframes fly{0%,100%{transform:translate(0,0) rotate(-38deg)}50%{transform:translate(-14px,-22px) rotate(-38deg)}}
 
-        .brand-content{position:relative;z-index:2;display:grid;gap:18px;justify-items:center;text-align:center;color:#0f172a}
-        .brand-content img{width:min(315px,70%);max-width:315px;height:auto;filter:drop-shadow(0 14px 32px rgba(2,6,23,.35))}
-        .brand-content h1{margin:0;font-size:37.8px;line-height:1.1;font-weight:800;letter-spacing:.2px}
-        .brand-content p{margin:0;max-width:620px;font-size:18px;color:#1e3a8a}
-
-        .form-side{display:grid;place-items:center;padding:34px}
-        .login-form{width:min(620px,96%);background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #d7e4f7;border-radius:22px;padding:34px 30px;box-shadow:0 25px 50px rgba(15,23,42,.14),0 2px 8px rgba(15,23,42,.05)}
-        .login-form h2{margin:0 0 6px;font-size:34px;line-height:1.1;font-weight:800;color:#0f172a;text-align:center}
-        .login-form p{margin:0 0 18px;color:#64748b;font-size:15px;text-align:center}
-        .login-form label{display:block;font-weight:700;color:#1e293b;margin:10px 0 6px;text-align:center}
-        .login-form input{width:100%;padding:14px 14px;border:1px solid #cbd9ef;border-radius:12px;background:#fff;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
-        .login-form input:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.16)}
-        .login-form .btn{width:100%;margin-top:14px;padding:11px 14px;border-radius:12px;font-weight:500;font-size:14px;line-height:1.2;background:linear-gradient(180deg,#2563eb,#1d4ed8)}
-        .login-actions{display:flex;gap:10px;margin-top:14px;align-items:stretch}
-        .login-actions .btn{margin-top:0;width:auto;min-height:48px}
-        .btn-compact{padding:10px 12px;min-width:120px}
-        .btn-game{flex:1;background:linear-gradient(180deg,#f59e0b,#ea580c) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-        .btn-game svg{width:20px;height:20px;fill:currentColor}
-        .btn-qr{flex:1;background:linear-gradient(180deg,#0ea5e9,#0369a1) !important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-        .btn-qr svg{width:20px;height:20px;fill:currentColor}
-        .game-login-help{margin-top:10px;font-size:12px;color:#475569;line-height:1.45}
-        .error-box{background:#fff1f2;border:1px solid #fecdd3;border-radius:12px;color:#be123c;padding:10px 12px;margin-bottom:10px}
+        /* ---------- right: form-side (fresh light style) ---------- */
+        .form-side{display:grid;place-items:center;padding:34px;background:var(--surface)}
+        .login-form{width:min(420px,96%)}
+        .login-form-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:28px}
+        .login-form-brand img{width:34px;height:34px}
+        .login-form-brand span{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--ink)}
+        .login-form h2{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:28px;line-height:1.2;font-weight:700;color:var(--ink);text-align:center}
+        .login-form p{margin:0 0 26px;color:var(--ink-soft);font-size:14.5px;text-align:center}
+        .login-form label{display:block;font-weight:600;color:var(--ink);font-size:13px;margin:0 0 6px;text-align:center}
+        .login-form .field{margin-bottom:16px}
+        .login-form input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font-size:16px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s,background .15s;box-sizing:border-box}
+        .login-form input:focus{border-color:var(--violet);background:#fff;box-shadow:0 0 0 4px var(--violet-tint)}
+        .login-form input::placeholder{color:#A6A4B8}
+        .login-form .btn{width:100%;margin-top:6px;padding:13px 14px;border-radius:10px;font-weight:600;font-size:15px;line-height:1.2;font-family:'Space Grotesk',sans-serif;background:var(--violet);color:#fff;border:1px solid var(--violet);cursor:pointer;transition:background .15s,border-color .15s}
+        .login-form .btn:hover{background:var(--violet-ink);border-color:var(--violet-ink)}
+        .login-divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--ink-soft);font-size:12px}
+        .login-divider::before,.login-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+        .login-actions{display:flex;gap:10px;align-items:stretch}
+        .login-actions .btn{margin-top:0;width:auto;min-height:46px;flex:1;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+        .login-actions .btn:hover{background:var(--paper);border-color:var(--ink-soft)}
+        .btn-game svg{width:19px;height:19px;fill:var(--signal)}
+        .btn-qr svg{width:19px;height:19px;fill:var(--violet)}
+        .game-login-help{margin-top:12px;font-size:12px;color:var(--ink-soft);line-height:1.45;text-align:left}
+        .error-box{background:var(--signal-tint);border:1px solid #ffd4bb;border-radius:10px;color:#b8481f;padding:10px 12px;margin-bottom:16px;font-size:13.5px}
         .mini-game-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:1200}
         .mini-game-modal.open{display:flex}
         .mini-game-card{width:min(760px,94vw);background:#fff;border-radius:16px;border:1px solid #dbeafe;box-shadow:0 20px 55px rgba(15,23,42,.35);padding:14px}
@@ -120,19 +119,21 @@
         .win-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
         @keyframes twinkle{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1.4)}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes drift{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-14px) translateX(10px)}}
-        @keyframes streak{0%{transform:translateX(16px) scaleX(.55)}100%{transform:translateX(-44px) scaleX(1)}}
+        @keyframes streak{0%{transform:translateX(0) scaleX(.5)}100%{transform:translateX(30px) scaleX(1)}}
+        @keyframes drift{0%,100%{transform:translateY(0) translateX(0)}50%{transform:translateY(-10px) translateX(6px)}}
 
         @media (max-width:1100px){
             .login-shell{grid-template-columns:1fr}
-            .brand-side{min-height:310px;padding:24px}
-            .brand-content img{width:min(240px,78%)}
-            .brand-content h1{font-size:28.8px}
-            .brand-content p{font-size:15px}
+            .brand-side{min-height:280px;padding:28px}
+            .brand-content{max-width:none}
+            .brand-content img{width:88px}
+            .brand-content h1{font-size:27px}
+            .brand-content p{font-size:14.5px}
+            .rocket{width:54px;height:54px}
+            .code-float{display:none}
             .form-side{padding:16px}
-            .login-form{width:min(680px,100%);padding:22px}
-            .login-form h2{font-size:28px}
+            .login-form{width:min(440px,100%);padding:8px}
+            .login-form h2{font-size:26px}
             .login-actions{gap:8px}
             .login-actions .btn{
                 flex:1 1 0;
@@ -150,48 +151,34 @@
 
         @media (max-width: 640px){
             .brand-side{
-                min-height:220px;
-                padding:16px 14px;
-            }
-            .space-layer{
-                opacity:.55;
-            }
-            .orbit.o3,
-            .orbit.o2,
-            .svg-item.ship2,
-            .svg-item.robot3,
-            .float-item.code3,
-            .float-item.code4,
-            .float-item.code5,
-            .float-item.code6,
-            .streak.sr5,
-            .streak.sr6,
-            .streak.sr7,
-            .streak.sr8,
-            .streak.sr9{
-                display:none;
+                min-height:180px;
+                padding:18px 16px;
             }
             .brand-content{
-                gap:10px;
+                gap:8px;
             }
             .brand-content img{
-                width:min(170px,62%);
+                width:64px;
+            }
+            .brand-eyebrow{
+                font-size:11px;
             }
             .brand-content h1{
-                font-size:22px;
-                line-height:1.15;
+                font-size:20px;
+                line-height:1.2;
             }
             .brand-content p{
                 font-size:13px;
                 line-height:1.35;
             }
+            .code-float,.rocket,.rocket-trail{
+                display:none;
+            }
             .form-side{
-                padding:10px;
+                padding:16px 12px;
             }
             .login-form{
                 width:100%;
-                padding:16px 14px;
-                border-radius:16px;
             }
             .login-form h2{
                 font-size:22px;
@@ -199,12 +186,11 @@
             }
             .login-form p{
                 font-size:13px;
-                margin-bottom:12px;
+                margin-bottom:18px;
             }
             .login-form label{
-                margin:8px 0 5px;
+                margin:0 0 5px;
                 font-size:13px;
-                text-align:center;
             }
             .login-form input{
                 padding:11px 12px;
@@ -252,120 +238,74 @@
 <body>
 <div class="login-shell">
     <section class="brand-side">
-        <div class="space-layer">
+        <div class="brand-grid"></div>
+
+        <div class="star-layer">
             <span class="star s1"></span>
-            <span class="star s2"></span>
+            <span class="star s2 gold"></span>
             <span class="star s3"></span>
-            <span class="star s4"></span>
+            <span class="star s4 gold"></span>
             <span class="star s5"></span>
             <span class="star s6"></span>
-            <span class="star s7"></span>
+            <span class="star s7 gold"></span>
             <span class="star s8"></span>
             <span class="star s9"></span>
-            <span class="star s10"></span>
-            <span class="streak sr1"></span>
-            <span class="streak sr2"></span>
-            <span class="streak sr3"></span>
-            <span class="streak sr4"></span>
-            <span class="streak sr5"></span>
-            <span class="streak sr6"></span>
-            <span class="streak sr7"></span>
-            <span class="streak sr8"></span>
-            <span class="streak sr9"></span>
-
-            <div class="orbit o1"></div>
-            <div class="orbit o2"></div>
-            <div class="orbit o3"></div>
-
-            <div class="svg-item robot">
-                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="7" y="10" width="26" height="22" rx="6" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
-                    <circle cx="15" cy="20" r="3" fill="#0ea5e9"/>
-                    <circle cx="25" cy="20" r="3" fill="#0ea5e9"/>
-                    <rect x="16" y="25" width="8" height="2" rx="1" fill="#334155"/>
-                    <rect x="19" y="4" width="2" height="6" rx="1" fill="#475569"/>
-                    <circle cx="20" cy="3.5" r="2" fill="#22d3ee"/>
-                </svg>
-            </div>
-            <div class="svg-item ship">
-                <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 4L30 22L22 40L14 22L22 4Z" fill="#e2e8f0" stroke="#475569" stroke-width="1.5"/>
-                    <circle cx="22" cy="22" r="4.5" fill="#38bdf8"/>
-                    <path d="M14 22H6L11 27" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M30 22H38L33 17" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <div class="svg-item sat">
-                <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="15" y="14" width="8" height="10" rx="2" fill="#e2e8f0" stroke="#475569" stroke-width="1.4"/>
-                    <rect x="4" y="15" width="9" height="8" rx="1.5" fill="#bfdbfe" stroke="#64748b" stroke-width="1.2"/>
-                    <rect x="25" y="15" width="9" height="8" rx="1.5" fill="#bfdbfe" stroke="#64748b" stroke-width="1.2"/>
-                    <path d="M19 11V8M19 30V27" stroke="#475569" stroke-width="1.4" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <div class="svg-item bot2">
-                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="6" y="8" width="22" height="18" rx="5" fill="#dbeafe" stroke="#475569" stroke-width="1.4"/>
-                    <circle cx="13" cy="17" r="2.2" fill="#0284c7"/>
-                    <circle cx="21" cy="17" r="2.2" fill="#0284c7"/>
-                    <path d="M12 22H22" stroke="#334155" stroke-width="1.4" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <div class="svg-item ship2">
-                <svg width="42" height="42" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 5L29 22L22 39L15 22L22 5Z" fill="#dbeafe" stroke="#334155" stroke-width="1.5"/>
-                    <circle cx="22" cy="22" r="4" fill="#22d3ee"/>
-                    <path d="M15 22H7" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </div>
-            <div class="svg-item robot3">
-                <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="8" y="11" width="24" height="20" rx="6" fill="#e2e8f0" stroke="#475569" stroke-width="1.4"/>
-                    <circle cx="16" cy="21" r="2.6" fill="#0ea5e9"/>
-                    <circle cx="24" cy="21" r="2.6" fill="#0ea5e9"/>
-                    <rect x="17" y="26" width="6" height="2" rx="1" fill="#334155"/>
-                </svg>
-            </div>
-
-            <div class="float-item code1"></> while(code){learn();}</div>
-            <div class="float-item code2">if(future) return you;</div>
-            <div class="float-item code3">const xp = progress + effort;</div>
-            <div class="float-item code4">for(;;){ build(); }</div>
-            <div class="float-item code5">class FutureEngineer {}</div>
-            <div class="float-item code6">deploy("dreams")</div>
-
-            <div class="shape sq1"></div>
-            <div class="shape sq2"></div>
-            <div class="shape tr1"></div>
-            <div class="shape tr2"></div>
+            <span class="rocket-trail t1"></span>
+            <span class="rocket-trail t2"></span>
         </div>
+
+        <svg class="rocket" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M32 6C40 14 44 26 42 40L32 46L22 40C20 26 24 14 32 6Z" fill="#EEEBFD" stroke="#5B3DF5" stroke-width="2"/>
+            <circle cx="32" cy="26" r="6" fill="#5B3DF5"/>
+            <path d="M22 40L14 48L20 50L22 40Z" fill="#FF7A45" stroke="#5B3DF5" stroke-width="1.5"/>
+            <path d="M42 40L50 48L44 50L42 40Z" fill="#FF7A45" stroke="#5B3DF5" stroke-width="1.5"/>
+            <path d="M28 46L32 58L36 46" fill="#FFEEE4" stroke="#5B3DF5" stroke-width="1.5"/>
+        </svg>
+
+        <div class="code-float c1">while(code){ learn(); }</div>
+        <div class="code-float c2">const xp = progress + effort;</div>
+        <div class="code-float c3">deploy("dreams")</div>
+        <div class="code-float c4">class FutureEngineer {}</div>
+        <div class="code-float c5">if(future) return you;</div>
+
         <div class="brand-content">
             <img src="{{ url('/public/logo.png') }}" alt="Logo">
+            <span class="brand-eyebrow">Bilişim Kod</span>
             <h1>Dijital Bilişim Eğitim Platformu</h1>
-            <p>Özelsin Çünkü Gelecek Sensin</p>
+            <p>Kodlama oyunları ve ders defteriyle öğrenmeyi somutlaştıran platform. Özelsin çünkü gelecek sensin.</p>
         </div>
     </section>
 
     <section class="form-side">
         <div class="login-form">
-            <h2>Hesabına Giriş Yap</h2>
-            <p>Kullanıcı adı veya e-posta ile devam et.</p>
+            <div class="login-form-brand">
+                <img src="{{ url('/public/logo.png') }}" alt="Logo">
+                <span>Bilişim Kod</span>
+            </div>
+            <h2>Tekrar hoş geldin</h2>
+            <p>Hesabına giriş yapmak için bilgilerini gir.</p>
             @if($errors->any())
                 <div class="error-box">{{ $errors->first() }}</div>
             @endif
             <form method="POST" action="{{ route('login.attempt') }}">
                 @csrf
-                <label>Kullanıcı Adı veya E-posta</label>
-                <input type="text" id="login-email" name="email" value="{{ old('email') }}" placeholder="ornek: pipek.5a" required>
+                <div class="field">
+                    <label>Kullanıcı Adı veya E-posta</label>
+                    <input type="text" id="login-email" name="email" value="{{ old('email') }}" placeholder="ornek: pipek.5a" required>
+                </div>
+                <div class="field">
+                    <label>Şifre</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
 
-                <label>Şifre</label>
-                <input type="password" name="password" required>
+                <button class="btn" type="submit">Giriş Yap</button>
+
+                <div class="login-divider">veya</div>
 
                 <div class="login-actions">
-                    <button class="btn btn-compact" type="submit">Giriş Yap</button>
                     <button class="btn btn-game" type="button" id="openGameLoginBtn">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.5l-2.2 2.2a1 1 0 01-1.6-.3L10.4 18H7a3 3 0 01-3-3V9a3 3 0 013-3zm1 3v2h2v2h2v-2h2V9h-2V7h-2v2H8zm8 0h2v2h-2V9z"/></svg>
-                        Oyun ile Giriş Yap
+                        Oyun ile Giriş
                     </button>
                     <button class="btn btn-qr" type="button" id="openQrLoginBtn">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg>
