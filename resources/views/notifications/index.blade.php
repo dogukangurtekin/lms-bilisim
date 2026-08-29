@@ -11,6 +11,21 @@
                 </div>
             </section>
 
+            <section class="card soft-surface" id="notifSettingsCard">
+                <h2 style="margin:0 0 6px;">Bu Cihazda Bildirim Ayarları</h2>
+                <p style="margin:0 0 14px;color:#64748b;font-size:13.5px;">Bu cihazda (bu tarayıcı/telefon) gerçek zamanlı bildirim alabilmek için önce izin vermen gerekir. Her cihazda ayrı ayrı açılmalıdır.</p>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);">
+                    <span id="notifPermDot" style="width:12px;height:12px;border-radius:999px;background:#94a3b8;flex:0 0 auto;"></span>
+                    <span id="notifPermLabel" style="font-weight:700;">Durum kontrol ediliyor…</span>
+                    <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;">
+                        <button type="button" id="notifEnableBtn" class="btn" style="padding:9px 14px;font-size:13.5px;">Bildirim İznini Aç</button>
+                        <button type="button" id="notifDisableBtn" class="btn btn-danger" style="padding:9px 14px;font-size:13.5px;display:none;">Bu Cihazda Kapat</button>
+                        <button type="button" id="notifTestBtn" class="btn" style="padding:9px 14px;font-size:13.5px;background:var(--mint);border-color:var(--mint);">Test Bildirimi Gönder</button>
+                    </div>
+                </div>
+                <p id="notifPermHelp" style="margin:10px 0 0;font-size:12.5px;color:#94a3b8;"></p>
+            </section>
+
             <section class="card soft-surface soft-surface-mint">
                 <h2>Bildirim Gönder</h2>
                 <form id="adminSendForm" class="parent-wa-form">
@@ -191,6 +206,190 @@
 <script>
 (function () {
     var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    // ---- Bu cihazda bildirim ayarları ----
+    var permDot = document.getElementById('notifPermDot');
+    var permLabel = document.getElementById('notifPermLabel');
+    var permHelp = document.getElementById('notifPermHelp');
+    var enableBtn = document.getElementById('notifEnableBtn');
+    var disableBtn = document.getElementById('notifDisableBtn');
+    var testBtn = document.getElementById('notifTestBtn');
+
+    function refreshPermUi() {
+        if (!('Notification' in window)) {
+            permDot.style.background = '#94a3b8';
+            permLabel.textContent = 'Bu tarayıcı bildirim desteklemiyor.';
+            enableBtn.style.display = 'none';
+            disableBtn.style.display = 'none';
+            return;
+        }
+        var perm = window.getWebPushPermission ? window.getWebPushPermission() : Notification.permission;
+        if (perm === 'granted') {
+            permDot.style.background = '#0EA57A';
+            permLabel.textContent = 'Bildirimler açık';
+            enableBtn.style.display = 'none';
+            disableBtn.style.display = 'inline-flex';
+            permHelp.textContent = 'Bu cihazda gerçek zamanlı bildirim alabilirsin.';
+        } else if (perm === 'denied') {
+            permDot.style.background = '#E14B4B';
+            permLabel.textContent = 'Bildirimler engellenmiş';
+            enableBtn.style.display = 'inline-flex';
+            enableBtn.textContent = 'İzin Engellenmiş';
+            enableBtn.disabled = true;
+            disableBtn.style.display = 'none';
+            permHelp.textContent = 'Tarayıcı ayarlarından (adres çubuğundaki kilit simgesi) bu site için bildirim iznini elle açman gerekiyor.';
+        } else {
+            permDot.style.background = '#FF7A45';
+            permLabel.textContent = 'Bildirimler kapalı';
+            enableBtn.style.display = 'inline-flex';
+            enableBtn.disabled = false;
+            enableBtn.textContent = 'Bildirim İznini Aç';
+            disableBtn.style.display = 'none';
+            permHelp.textContent = 'Mobilde bildirim almıyorsan büyük ihtimalle bu cihazda henüz izin verilmedi — "Bildirim İznini Aç" düğmesine bas.';
+        }
+    }
+
+    if (enableBtn) {
+        enableBtn.addEventListener('click', async function () {
+            enableBtn.disabled = true;
+            permLabel.textContent = 'İzin isteniyor…';
+            try {
+                if (typeof window.requestWebPushPermission === 'function') {
+                    await window.requestWebPushPermission();
+                } else if ('Notification' in window) {
+                    await Notification.requestPermission();
+                }
+            } catch (_) {}
+            refreshPermUi();
+        });
+    }
+
+    if (disableBtn) {
+        disableBtn.addEventListener('click', async function () {
+            disableBtn.disabled = true;
+            try {
+                if (typeof window.disableWebPushSubscription === 'function') {
+                    await window.disableWebPushSubscription();
+                }
+            } catch (_) {}
+            disableBtn.disabled = false;
+            refreshPermUi();
+        });
+    }
+
+    if (testBtn) {
+        testBtn.addEventListener('click', function () {
+            testBtn.disabled = true;
+            fetch('{{ route('notifications.send') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    type: 'system',
+                    title: 'Test Bildirimi',
+                    body: 'Bu bir test bildirimidir. Bu cihazda görüyorsan bildirimler çalışıyor demektir.',
+                    target: 'self',
+                }),
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (window.appToast) window.appToast(data && data.ok ? 'success' : 'error', data && data.ok ? 'Test bildirimi gönderildi.' : (data.message || 'Gönderilemedi.'));
+                })
+                .catch(function () { if (window.appToast) window.appToast('error', 'Gönderilemedi.'); })
+                .finally(function () { testBtn.disabled = false; });
+        });
+    }
+
+    refreshPermUi();
+    window.addEventListener('focus', refreshPermUi);
+
+    // ---- Bildirim Gönder formu ----
+    var sendForm = document.getElementById('adminSendForm');
+    var sendBtn = document.getElementById('notifSendBtn');
+    var sendStatus = document.getElementById('notifSendStatus');
+    var targetSelect = document.getElementById('notifTarget');
+    var classRow = document.getElementById('notifClassRow');
+    var studentRow = document.getElementById('notifStudentRow');
+    var teacherRow = document.getElementById('notifTeacherRow');
+    var classSelect = document.getElementById('notifClassId');
+    var studentSelect = document.getElementById('notifStudentId');
+    var classStudentMap = @json($classStudentMap ?? []);
+
+    function updateTargetRows() {
+        var target = targetSelect ? targetSelect.value : '';
+        if (classRow) classRow.style.display = (target === 'class' || target === 'class_student') ? '' : 'none';
+        if (studentRow) studentRow.style.display = (target === 'class_student') ? '' : 'none';
+        if (teacherRow) teacherRow.style.display = (target === 'teacher') ? '' : 'none';
+    }
+
+    function populateStudents() {
+        if (!studentSelect || !classSelect) return;
+        var students = classStudentMap[classSelect.value] || [];
+        studentSelect.innerHTML = '<option value="">Öğrenci seçin</option>' + students.map(function (s) {
+            return '<option value="' + s.id + '">' + s.name.replace(/</g, '&lt;') + '</option>';
+        }).join('');
+    }
+
+    if (targetSelect) {
+        targetSelect.addEventListener('change', updateTargetRows);
+        updateTargetRows();
+    }
+    if (classSelect) {
+        classSelect.addEventListener('change', populateStudents);
+    }
+
+    if (sendForm) {
+        sendForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var target = targetSelect ? targetSelect.value : 'self';
+            var payload = {
+                type: document.getElementById('notifType')?.value || 'system',
+                title: document.getElementById('notifTitle')?.value || '',
+                body: document.getElementById('notifBody')?.value || '',
+                url: document.getElementById('notifUrl')?.value || '',
+                target: target,
+            };
+            if (target === 'class' || target === 'class_student') {
+                payload.class_id = classSelect ? classSelect.value : '';
+            }
+            if (target === 'class_student') {
+                payload.student_id = studentSelect ? studentSelect.value : '';
+            }
+            if (target === 'teacher') {
+                payload.teacher_id = document.getElementById('notifTeacherId')?.value || '';
+            }
+
+            if (sendBtn) sendBtn.disabled = true;
+            if (sendStatus) sendStatus.textContent = 'Gönderiliyor…';
+
+            fetch('{{ route('notifications.send') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            })
+                .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+                .then(function (res) {
+                    if (res.ok && res.data && res.data.ok) {
+                        var result = res.data.result || {};
+                        sendStatus.textContent = 'Gönderildi. Toplam: ' + (result.total ?? '-') + ', Gönderilen: ' + (result.sent ?? '-') + ', Başarısız: ' + (result.failed ?? '-');
+                        if (window.appToast) window.appToast('success', 'Bildirim gönderildi.');
+                        sendForm.reset();
+                        updateTargetRows();
+                    } else {
+                        sendStatus.textContent = (res.data && res.data.message) || 'Gönderilemedi.';
+                        if (window.appToast) window.appToast('error', sendStatus.textContent);
+                    }
+                })
+                .catch(function () {
+                    sendStatus.textContent = 'Gönderilemedi (bağlantı hatası).';
+                    if (window.appToast) window.appToast('error', sendStatus.textContent);
+                })
+                .finally(function () {
+                    if (sendBtn) sendBtn.disabled = false;
+                });
+        });
+    }
 
     // Preferences
     var prefsForm = document.getElementById('notifPrefsForm');
