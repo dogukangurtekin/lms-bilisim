@@ -13,6 +13,8 @@
     const codePanel = document.getElementById('bgCodePanel');
     const codeArea = document.getElementById('bgCodeArea');
     const codePreview = document.getElementById('bgCodePreview');
+    const runBtn = document.getElementById('bgRunBtn');
+    const runStatusEl = document.getElementById('bgRunStatus');
 
     const STORAGE_KEY = 'bee_garden_progress_v1';
 
@@ -295,9 +297,11 @@
             if (!matched) allMatch = false;
             bee.classList.toggle('is-landed', matched);
         });
-        if (allMatch && bees.length > 0) {
+        const solved = allMatch && bees.length > 0;
+        if (solved) {
             onLevelSolved();
         }
+        return solved;
     }
 
     let solvedForLevel = false;
@@ -342,7 +346,71 @@
         const level = LEVELS[currentLevelIndex];
         applyState(gardenEl, level, currentState);
         refreshPreview();
-        checkSolved();
+        return checkSolved();
+    }
+
+    // ---- Sürükle-bırak (pointer events ile, fare + dokunmatik ortak) ----
+    let dragInfo = null;
+
+    function makeChipDraggable(chip, value, text, onAssign) {
+        chip.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            const ghost = document.createElement('div');
+            ghost.className = 'bg-chip-ghost';
+            ghost.textContent = text;
+            document.body.appendChild(ghost);
+            dragInfo = { value, onAssign, ghost, chip };
+            chip.classList.add('is-dragging');
+            positionGhost(e.clientX, e.clientY);
+            window.addEventListener('pointermove', onDragMove);
+            window.addEventListener('pointerup', onDragEnd, { once: true });
+        });
+        // Klavye/erişilebilirlik icin: tikla da atansin.
+        chip.addEventListener('click', () => onAssign(value));
+    }
+
+    function positionGhost(x, y) {
+        if (!dragInfo) return;
+        dragInfo.ghost.style.left = x + 'px';
+        dragInfo.ghost.style.top = y + 'px';
+    }
+
+    function onDragMove(e) {
+        if (!dragInfo) return;
+        positionGhost(e.clientX, e.clientY);
+        document.querySelectorAll('.bg-dropzone').forEach((dz) => dz.classList.remove('drag-over'));
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const dz = el ? el.closest('.bg-dropzone') : null;
+        if (dz) dz.classList.add('drag-over');
+    }
+
+    function onDragEnd(e) {
+        if (!dragInfo) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const dz = el ? el.closest('.bg-dropzone') : null;
+        document.querySelectorAll('.bg-dropzone').forEach((d) => d.classList.remove('drag-over'));
+        dragInfo.chip.classList.remove('is-dragging');
+        dragInfo.ghost.remove();
+        window.removeEventListener('pointermove', onDragMove);
+        if (dz) {
+            dragInfo.onAssign(dragInfo.value);
+        }
+        dragInfo = null;
+    }
+
+    function buildDropzoneRow(p, currentValue) {
+        const row = document.createElement('div');
+        row.className = 'bg-dropzone-row';
+        const label = document.createElement('span');
+        label.className = 'bg-dropzone-label';
+        label.textContent = p.cssName + ':';
+        const zone = document.createElement('div');
+        zone.className = 'bg-dropzone' + (currentValue ? ' has-value' : '');
+        const optionText = p.options.find((o) => o.value === currentValue);
+        zone.textContent = optionText ? optionText.text : 'Bir blok sürükle';
+        row.appendChild(label);
+        row.appendChild(zone);
+        return row;
     }
 
     function renderBlockPanel() {
@@ -355,6 +423,9 @@
             const h3 = document.createElement('h3');
             h3.textContent = p.label;
             group.appendChild(h3);
+
+            group.appendChild(buildDropzoneRow(p, currentState[p.key]));
+
             const chips = document.createElement('div');
             chips.className = 'bg-block-chips';
             p.options.forEach((opt) => {
@@ -362,8 +433,8 @@
                 chip.type = 'button';
                 chip.className = 'bg-chip' + (currentState[p.key] === opt.value ? ' active' : '');
                 chip.textContent = opt.text;
-                chip.addEventListener('click', () => {
-                    currentState[p.key] = opt.value;
+                makeChipDraggable(chip, opt.value, opt.text, (value) => {
+                    currentState[p.key] = value;
                     renderBlockPanel();
                     applyAndCheck();
                 });
@@ -400,18 +471,20 @@
             targetRow.appendChild(select);
             group.appendChild(targetRow);
 
+            const currentVal = (currentState.items && currentState.items[currentTargetBee] && currentState.items[currentTargetBee][level.itemProperty.key]) || '';
+            group.appendChild(buildDropzoneRow(level.itemProperty, currentVal));
+
             const chips = document.createElement('div');
             chips.className = 'bg-block-chips';
-            const currentVal = (currentState.items && currentState.items[currentTargetBee] && currentState.items[currentTargetBee][level.itemProperty.key]) || '';
             level.itemProperty.options.forEach((opt) => {
                 const chip = document.createElement('button');
                 chip.type = 'button';
                 chip.className = 'bg-chip' + (currentVal === opt.value ? ' active' : '');
                 chip.textContent = opt.text;
-                chip.addEventListener('click', () => {
+                makeChipDraggable(chip, opt.value, opt.text, (value) => {
                     currentState.items = currentState.items || {};
                     currentState.items[currentTargetBee] = currentState.items[currentTargetBee] || {};
-                    currentState.items[currentTargetBee][level.itemProperty.key] = opt.value;
+                    currentState.items[currentTargetBee][level.itemProperty.key] = value;
                     renderBlockPanel();
                     applyAndCheck();
                 });
@@ -427,6 +500,8 @@
         const propByCssName = {};
         (level.properties || []).forEach((p) => { propByCssName[p.cssName] = p.key; });
 
+        let recognizedCount = 0;
+
         const containerMatch = text.match(/\.bahce\s*{([^}]*)}/);
         if (containerMatch) {
             const body = containerMatch[1];
@@ -437,6 +512,7 @@
                 const value = m[2].trim();
                 if (propByCssName[cssName]) {
                     currentState[propByCssName[cssName]] = value;
+                    recognizedCount++;
                 }
             }
         }
@@ -454,10 +530,13 @@
                         currentState.items = currentState.items || {};
                         currentState.items[idx] = currentState.items[idx] || {};
                         currentState.items[idx][level.itemProperty.key] = m2[2].trim();
+                        recognizedCount++;
                     }
                 }
             }
         }
+
+        return recognizedCount > 0;
     }
 
     function setMode(mode) {
@@ -467,6 +546,8 @@
         codePanel.hidden = mode !== 'kod';
         if (mode === 'kod') {
             codeArea.value = generateCodeText();
+            runStatusEl.textContent = '';
+            runStatusEl.className = 'bg-run-status';
         }
     }
 
@@ -475,8 +556,25 @@
     });
 
     codeArea.addEventListener('input', () => {
-        parseCodeIntoState(codeArea.value);
-        applyAndCheck();
+        runStatusEl.textContent = '';
+        runStatusEl.className = 'bg-run-status';
+    });
+
+    runBtn.addEventListener('click', () => {
+        const recognized = parseCodeIntoState(codeArea.value);
+        if (!recognized) {
+            runStatusEl.textContent = 'Kod tanınmadı. Örnek: justify-content: center;';
+            runStatusEl.className = 'bg-run-status is-fail';
+            return;
+        }
+        const solved = applyAndCheck();
+        if (solved) {
+            runStatusEl.textContent = '✅ Doğru! Arı çiçeğe kondu.';
+            runStatusEl.className = 'bg-run-status is-ok';
+        } else {
+            runStatusEl.textContent = 'Çalıştı ama henüz doğru değil, tekrar dene.';
+            runStatusEl.className = 'bg-run-status is-fail';
+        }
     });
 
     resetBtn.addEventListener('click', () => {
@@ -508,6 +606,8 @@
         renderBlockPanel();
         refreshPreview();
         if (currentMode === 'kod') codeArea.value = generateCodeText();
+        runStatusEl.textContent = '';
+        runStatusEl.className = 'bg-run-status';
         updateNav();
     }
 
