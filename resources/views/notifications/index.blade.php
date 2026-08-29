@@ -437,8 +437,23 @@
         });
     }
 
+    async function confirmAction(message) {
+        if (window.AppDialog && typeof window.AppDialog.confirm === 'function') {
+            return await window.AppDialog.confirm(message);
+        }
+        // Fallback: native confirm() is disabled in some standalone PWA
+        // contexts (returns immediately without prompting), so if
+        // AppDialog isn't available for some reason, proceed rather than
+        // silently blocking the action.
+        try {
+            return confirm(message);
+        } catch (_) {
+            return true;
+        }
+    }
+
     // Resend / delete
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
         var resendBtn = e.target.closest('.notif-resend-btn');
         var deleteBtn = e.target.closest('.notif-delete-btn');
         var deleteAllBtn = e.target.closest('#notifDeleteAllBtn');
@@ -460,7 +475,7 @@
 
         if (deleteBtn) {
             var did = deleteBtn.getAttribute('data-id');
-            if (!confirm('Bu bildirim kaydı silinsin mi?')) return;
+            if (!(await confirmAction('Bu bildirim kaydı silinsin mi?'))) return;
             deleteBtn.disabled = true;
             fetch('/app-notifications/' + did + '/delete', {
                 method: 'POST',
@@ -484,7 +499,7 @@
         }
 
         if (deleteAllBtn) {
-            if (!confirm('Tüm bildirim kayıtları silinsin mi?')) return;
+            if (!(await confirmAction('Tüm bildirim kayıtları silinsin mi?'))) return;
             deleteAllBtn.disabled = true;
             fetch('{{ route('notifications.logs.destroy-all.post') }}', {
                 method: 'POST',
