@@ -49,6 +49,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('connect-the-dots-runner');
     }
 
+    public function pythonEditor()
+    {
+        return $this->serveRunner('python-editor');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());

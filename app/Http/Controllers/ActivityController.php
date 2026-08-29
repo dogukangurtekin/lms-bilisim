@@ -30,6 +30,7 @@ class ActivityController extends Controller
             'keyboard-race' => ['name' => 'Klavye Yarismasi', 'image' => 'keyboard-runner.png', 'url' => '/keyboard-race'],
             'block-builder-studio' => ['name' => '3D Grid Tasarim', 'image' => '3d-blok-grid-runner.png', 'url' => '/block-builder-studio'],
             'connect-the-dots-runner' => ['name' => 'Noktaları Birleştir', 'image' => 'connect-the-dots.svg', 'url' => '/connect-the-dots-runner'],
+            'python-editor' => ['name' => 'Python Kod Editörü', 'image' => 'python.png', 'url' => '/python-editor'],
         ];
     }
 

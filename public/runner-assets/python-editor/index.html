@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Python Kod Editörü</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../logo192.png">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="pe-shell">
+    <header class="pe-topbar">
+        <div class="pe-brand">
+            <span class="pe-dot"></span>
+            <div>
+                <strong>Python Kod Editörü</strong>
+                <span>Deneme · Öğrenme · Çalışma Alanı</span>
+            </div>
+        </div>
+        <div class="pe-topbar-actions">
+            <select id="peTemplateSelect" class="pe-select" title="Örnek görev seç">
+                <option value="">Örnek görev seç…</option>
+            </select>
+            <button id="peResetBtn" class="pe-btn pe-btn-ghost" type="button">Sıfırla</button>
+            <button id="peRunBtn" class="pe-btn pe-btn-run" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                Çalıştır
+            </button>
+        </div>
+    </header>
+
+    <main class="pe-main">
+        <section class="pe-editor-pane">
+            <div class="pe-pane-head">
+                <span>main.py</span>
+                <span id="peStatus" class="pe-status">Python ortamı hazırlanıyor…</span>
+            </div>
+            <div class="pe-editor-wrap">
+                <div id="peLineNumbers" class="pe-line-numbers">1</div>
+                <textarea id="peCode" class="pe-code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+            </div>
+        </section>
+
+        <section class="pe-output-pane">
+            <div class="pe-tabs">
+                <button class="pe-tab active" data-tab="output" type="button">Çıktı</button>
+                <button class="pe-tab" data-tab="hints" type="button">Öneriler <span id="peHintDot" class="pe-hint-dot" hidden></span></button>
+            </div>
+            <div class="pe-tab-panel" data-panel="output">
+                <pre id="peOutput" class="pe-console"><span class="pe-console-placeholder">Kodunu yaz ve "Çalıştır" butonuna bas. Çıktı burada görünecek.</span></pre>
+            </div>
+            <div class="pe-tab-panel" data-panel="hints" hidden>
+                <div id="peHints" class="pe-hints">
+                    <p class="pe-hints-empty">Bir hata oluşursa, olası nedeni ve doğru kullanım örneği burada gösterilecek.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="pe-footer">
+        <span>Bu araç kodunu tamamen tarayıcında, sunucuya göndermeden çalıştırır.</span>
+    </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
