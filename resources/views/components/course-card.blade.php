@@ -124,7 +124,7 @@
                     <p class="mt-2 text-[12px] font-semibold uppercase tracking-[0.12em] text-slate-500">Yükleyen: {{ $creatorLabelValue }}</p>
                 @endif
                 @if($normalizedDescription !== '')
-                    <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600">{{ $normalizedDescription }}</p>
+                    <p class="course-card-description mt-2 text-[12px] leading-5 text-slate-600">{{ $normalizedDescription }}</p>
                 @else
                     <p class="course-card-description mt-2 text-[14px] leading-6 text-slate-600"> </p>
                 @endif
@@ -222,7 +222,7 @@
     }
 
     .course-card-description {
-        min-height: calc(1.5rem * 2);
+        min-height: calc(1.25rem * 2);
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
