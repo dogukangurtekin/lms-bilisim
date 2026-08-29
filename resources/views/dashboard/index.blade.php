@@ -243,7 +243,12 @@
                         <div class="chart-widget-body">
                             @if(($chart['type'] ?? '') === 'donut')
                                 <div class="chart-donut" style="--p1:{{ (int) ($chart['items'][0]['percent'] ?? 0) }};--p2:{{ (int) ($chart['items'][1]['percent'] ?? 0) }};--p3:{{ (int) ($chart['items'][2]['percent'] ?? 0) }};--p4:{{ (int) ($chart['items'][3]['percent'] ?? 0) }}">
-                                    <div class="chart-donut-hole"></div>
+                                    <div class="chart-donut-hole">
+                                        <div class="chart-donut-center">
+                                            <strong>{{ (int) ($chart['items'][0]['percent'] ?? 0) }}%</strong>
+                                            <span>{{ \Illuminate\Support\Str::limit($chart['items'][0]['label'] ?? '', 12) }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="chart-legend">
                                     @foreach($chartItems as $item)

@@ -868,28 +868,46 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   margin-bottom:0;
 }
 .chart-widget-body{flex:1;display:grid;grid-template-columns:1.05fr .95fr;gap:12px;align-items:stretch;min-height:0;overflow:hidden}
+@keyframes chart-donut-in{from{opacity:0;transform:scale(.82) rotate(-90deg)}to{opacity:1;transform:scale(1) rotate(-90deg)}}
 .chart-donut{
   position:relative;
-  width:min(100%,220px);
+  width:min(100%,200px);
   aspect-ratio:1/1;
   margin:auto;
   border-radius:50%;
-  background:conic-gradient(#16a34a 0 calc(var(--p1,25) * 1%), #38bdf8 0 calc((var(--p1,25) + var(--p2,25)) * 1%), #f59e0b 0 calc((var(--p1,25) + var(--p2,25) + var(--p3,25)) * 1%), #ef4444 0 100%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.4), 0 16px 30px rgba(15,23,42,.08);
+  background:conic-gradient(
+    var(--violet) 0 calc(var(--p1,25) * 1%),
+    var(--mint) 0 calc((var(--p1,25) + var(--p2,25)) * 1%),
+    var(--signal) 0 calc((var(--p1,25) + var(--p2,25) + var(--p3,25)) * 1%),
+    #C7C4D6 0 100%
+  );
+  -webkit-mask-image:radial-gradient(circle, transparent 62%, #000 63%);
+  mask-image:radial-gradient(circle, transparent 62%, #000 63%);
+  filter:drop-shadow(0 14px 24px rgba(91,61,245,.16));
+  transform:rotate(-90deg);
+  animation:chart-donut-in .7s cubic-bezier(.2,.8,.2,1) both;
 }
 .chart-donut-hole{
   position:absolute;
-  inset:18%;
+  inset:31%;
   border-radius:50%;
-  background:linear-gradient(180deg,#fff,#f8fbff);
-  box-shadow:inset 0 0 0 1px rgba(219,234,254,.8);
+  background:var(--surface,#fff);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 2px 8px rgba(22,24,43,.06);
+  transform:rotate(90deg);
 }
+.chart-donut-center{display:grid;justify-items:center;gap:1px;line-height:1}
+.chart-donut-center strong{font-family:var(--font-display);font-size:19px;color:var(--ink,#16182B)}
+.chart-donut-center span{font-size:9px;color:var(--ink-soft,#585A72);max-width:64px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chart-legend{display:grid;gap:8px;align-content:center}
-.chart-legend-item{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:center;background:#fff;border:1px solid #e5edf8;border-radius:14px;padding:8px 10px;min-width:0}
-.chart-legend-item strong{font-size:12px;line-height:1.1}
-.chart-legend-item small{font-size:11px;color:#0f766e;font-weight:800}
-.chart-dot{width:12px;height:12px;border-radius:999px;display:inline-block}
-.chart-dot-1{background:#16a34a}.chart-dot-2{background:#38bdf8}.chart-dot-3{background:#f59e0b}.chart-dot-4{background:#ef4444}
+.chart-legend-item{display:grid;grid-template-columns:10px 1fr auto;gap:9px;align-items:center;background:var(--surface,#fff);border:1px solid var(--line,#e5edf8);border-radius:12px;padding:9px 12px;min-width:0;transition:border-color .15s,background .15s}
+.chart-legend-item:hover{border-color:var(--violet);background:var(--violet-tint,#EEEBFD)}
+.chart-legend-item strong{font-size:12px;line-height:1.1;font-weight:600;color:var(--ink,#16182B)}
+.chart-legend-item small{font-size:12px;color:var(--violet-ink,#3E28B8);font-weight:700;font-family:var(--font-display)}
+.chart-dot{width:9px;height:9px;border-radius:999px;display:inline-block}
+.chart-dot-1{background:var(--violet)}.chart-dot-2{background:var(--mint)}.chart-dot-3{background:var(--signal)}.chart-dot-4{background:#C7C4D6}
 .chart-radial{display:grid;gap:9px;align-content:center}
 .chart-radial-row,.chart-bar-row{display:grid;grid-template-columns:92px 1fr 34px;gap:8px;align-items:center}
 .chart-radial-label,.chart-bar-label{font-size:12px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -926,9 +944,10 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   overflow:hidden;
 }
 .chart-column-value{
-  font-size:11px;
-  font-weight:800;
-  color:#0f172a;
+  font-family:var(--font-display);
+  font-size:12px;
+  font-weight:700;
+  color:var(--violet-ink,#3E28B8);
   line-height:1;
 }
 .chart-column-track{
@@ -940,21 +959,23 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   align-items:flex-end;
   justify-content:center;
   padding:8px 6px 6px;
-  border-radius:18px;
-  background:linear-gradient(180deg,#f8fbff 0%,#eef5ff 100%);
-  border:1px solid #e0eaf7;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+  border-radius:14px;
+  background:var(--paper,#F7F6F2);
+  border:1px solid var(--line,#e0eaf7);
 }
+@keyframes chart-column-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .chart-column-track i{
   width:100%;
-  border-radius:12px 12px 8px 8px;
-  background:linear-gradient(180deg,#2563eb 0%,#0ea5e9 100%);
-  box-shadow:0 10px 20px rgba(37,99,235,.18);
+  border-radius:10px 10px 6px 6px;
+  background:linear-gradient(180deg,var(--violet) 0%,var(--violet-ink) 100%);
+  box-shadow:0 10px 20px rgba(91,61,245,.18);
   min-height:8px;
+  transform-origin:bottom;
+  animation:chart-column-grow .6s cubic-bezier(.2,.8,.2,1) both;
 }
 .chart-column-label{
-  font-size:10px;
-  color:#475569;
+  font-size:10.5px;
+  color:var(--ink-soft,#585A72);
   text-align:center;
   line-height:1.15;
   min-height:2.1em;
