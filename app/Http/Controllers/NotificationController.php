@@ -56,38 +56,6 @@ class NotificationController extends Controller
             ->limit(30)
             ->get();
 
-        $subscribedUserIds = PushSubscription::query()
-            ->whereNotNull('user_id')
-            ->pluck('user_id')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->all();
-
-        // Bir kullanicinin cihazi her acilista/PWA yeniden kaydinda yeni bir
-        // PushDeviceStatus satiri birakabiliyor; bu yuzden ham satirlari degil,
-        // kullanici basina SADECE en son goruleni gosteriyoruz ve listeyi
-        // belirli sayida kullaniciyla sinirliyoruz (ekranda kalabalik olmasin).
-        $deviceStatusUserLimit = 15;
-        $deviceStatuses = PushDeviceStatus::query()
-            ->with('user:id,name')
-            ->whereNotNull('user_id')
-            ->latest('last_seen_at')
-            ->limit(500)
-            ->get()
-            ->unique('user_id')
-            ->take($deviceStatusUserLimit)
-            ->map(function (PushDeviceStatus $status) use ($subscribedUserIds) {
-                return [
-                    'user_name' => $status->user?->name ?? '-',
-                    'permission' => (string) $status->permission,
-                    'platform' => (string) ($status->platform ?: '-'),
-                    'is_pwa' => (bool) $status->is_pwa,
-                    'has_subscription' => in_array((int) $status->user_id, $subscribedUserIds, true),
-                    'last_seen_at' => $status->last_seen_at,
-                ];
-            })
-            ->values();
-
         $schoolClasses = SchoolClass::query()
             ->with([
                 'teacher.user:id,name',
@@ -115,8 +83,6 @@ class NotificationController extends Controller
         return view('notifications.index', [
             'preferences' => $preferences,
             'recentLogs' => $recentLogs,
-            'deviceStatuses' => $deviceStatuses,
-            'deviceStatusUserLimit' => $deviceStatusUserLimit,
             'types' => $types,
             'schoolClasses' => $schoolClasses,
             'classStudentMap' => $classStudentMap,

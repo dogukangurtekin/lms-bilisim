@@ -6,6 +6,7 @@ use App\Models\Avatar;
 use App\Models\Badge;
 use App\Models\ContentProgress;
 use App\Models\Grade;
+use App\Models\PushDeviceStatus;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentCredential;
@@ -119,7 +120,14 @@ class StudentDataController extends Controller
             ->orderBy('section')
             ->get();
 
-        return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses', 'perPage'));
+        $pushPermissionByUser = PushDeviceStatus::query()
+            ->whereIn('user_id', $userIds)
+            ->latest('last_seen_at')
+            ->get(['user_id', 'permission'])
+            ->unique('user_id')
+            ->pluck('permission', 'user_id');
+
+        return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses', 'perPage', 'pushPermissionByUser'));
     }
 
     public function loginCards()

@@ -99,6 +99,21 @@
                         Giriş Bilgileri
                     </button>
                     <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelişim Karnesi</a>
+                    @php
+                        $pushPerm = (string) ($pushPermissionByUser[$student->user_id] ?? '');
+                        $pushColor = match($pushPerm) {
+                            'granted' => '#0EA57A',
+                            'denied' => '#E14B4B',
+                            default => '#94a3b8',
+                        };
+                        $pushTitle = match($pushPerm) {
+                            'granted' => 'Bildirim izni açık',
+                            'denied' => 'Bildirim izni reddedilmiş',
+                            'default' => 'Bildirim izni henüz sorulmamış',
+                            default => 'Bildirim durumu bilinmiyor (henüz cihaz kaydı yok)',
+                        };
+                    @endphp
+                    <span title="{{ $pushTitle }}" style="display:inline-block;width:12px;height:12px;border-radius:999px;background:{{ $pushColor }};margin-left:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.08);"></span>
                 </td>
             </tr>
         @empty
