@@ -31,7 +31,9 @@ body.role-student .sidebar{
   display:flex;
   flex-direction:column;
   height:100vh;
-  overflow:hidden;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
   width:280px;
 }
 body.role-student .student-sidebar-top{display:grid;justify-items:center;align-content:start;gap:8px;margin-bottom:10px;padding-bottom:16px;border-bottom:1px dashed #EADFCF}

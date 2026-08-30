@@ -22,7 +22,9 @@ input,select,textarea{font-size:16px}
   color:var(--ink-soft);
   padding:20px;
   height:100vh;
-  overflow:hidden;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
   position:fixed;
   top:0;
   left:0;
