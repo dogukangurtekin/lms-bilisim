@@ -257,22 +257,24 @@
             <input
                 type="text"
                 name="q"
+                id="course-search-input"
                 value="{{ $q ?? request('q') }}"
                 placeholder="Ders başlığını aratmak için yazınız."
+                autocomplete="off"
             >
             <select name="category" id="course-category-filter" class="course-select-narrow" onchange="this.form.submit()">
                 @foreach($categories as $categoryOption)
-                    <option value="{{ $categoryOption }}" @selected($activeCategory === $categoryOption)>{{ $categoryOption === 'Tumu' ? 'Dersler' : $categoryOption }}</option>
+                    <option value="{{ $categoryOption }}" @selected($activeCategory === $categoryOption)>{{ $categoryOption === 'Tumu' ? 'Tüm Dersler' : $categoryOption }}</option>
                 @endforeach
             </select>
             <select name="difficulty" id="course-difficulty-filter" class="course-select-narrow" onchange="this.form.submit()">
-                <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Seviye</option>
+                <option value="Tumu" @selected(($difficulty ?? '') === '' || ($difficulty ?? '') === 'Tumu')>Tüm Seviye</option>
                 <option value="Kolay" @selected(($difficulty ?? '') === 'Kolay')>Kolay</option>
                 <option value="Orta" @selected(($difficulty ?? '') === 'Orta')>Orta</option>
                 <option value="Zor" @selected(($difficulty ?? '') === 'Zor')>Zor</option>
             </select>
             <select name="education_stage" id="course-stage-filter" class="course-select-narrow" onchange="this.form.submit()">
-                <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Kademe</option>
+                <option value="Tumu" @selected(($educationStage ?? '') === '' || ($educationStage ?? '') === 'Tumu')>Tüm Kademe</option>
                 <option value="ilkokul" @selected(($educationStage ?? '') === 'ilkokul')>İlkokul</option>
                 <option value="ortaokul" @selected(($educationStage ?? '') === 'ortaokul')>Ortaokul</option>
                 <option value="lise" @selected(($educationStage ?? '') === 'lise')>Lise</option>
@@ -565,6 +567,17 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const courseSearchInput = document.getElementById('course-search-input');
+    if (courseSearchInput) {
+        let courseSearchTimer = null;
+        courseSearchInput.addEventListener('input', () => {
+            if (courseSearchTimer) clearTimeout(courseSearchTimer);
+            courseSearchTimer = setTimeout(() => {
+                courseSearchInput.form.submit();
+            }, 500);
+        });
+    }
+
     const importOpenBtn = document.getElementById('course-import-open');
     const importForm = document.getElementById('course-import-form');
     const importFile = document.getElementById('course-import-file');
