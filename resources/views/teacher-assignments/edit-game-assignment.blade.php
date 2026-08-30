@@ -40,23 +40,23 @@
     <a class="btn" href="{{ route('teacher.assignments.index') }}">Odevlere Don</a>
 </div>
 <div class="card">
-    <form method="POST" action="{{ route('teacher.assignments.game.update', $assignment) }}">
+    <form method="POST" action="{{ route('teacher.assignments.game.update', $assignment) }}" id="edit-assignment-form">
         @csrf
         @method('PUT')
         <label>Odev Adi</label>
         <input name="title" value="{{ old('title', $assignment->title) }}" required>
 
         <label>Odev Teslim Tarihi</label>
-        <input type="date" name="due_date" id="due_date" value="{{ old('due_date', optional($assignment->due_date)->format('Y-m-d')) }}">
+        <input type="date" name="due_date" id="due_date" value="{{ old('due_date', optional($assignment->due_date)->format('Y-m-d')) }}" required>
 
         <div class="actions">
             <div style="min-width:220px;flex:1">
                 <label>Level Baslangic</label>
-                <input type="number" name="level_from" id="level_from" min="1" value="{{ old('level_from', $assignment->level_from) }}">
+                <input type="number" name="level_from" id="level_from" min="1" value="{{ old('level_from', $assignment->level_from) }}" required>
             </div>
             <div style="min-width:220px;flex:1">
                 <label>Level Bitis</label>
-                <input type="number" name="level_to" id="level_to" min="1" value="{{ old('level_to', $assignment->level_to) }}">
+                <input type="number" name="level_to" id="level_to" min="1" value="{{ old('level_to', $assignment->level_to) }}" required>
             </div>
         </div>
 
@@ -81,6 +81,21 @@ document.addEventListener('DOMContentLoaded', function () {
         dueDate.addEventListener('click', function () {
             if (typeof dueDate.showPicker === 'function') {
                 try { dueDate.showPicker(); } catch (_) {}
+            }
+        });
+    }
+
+    const form = document.getElementById('edit-assignment-form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const checked = form.querySelectorAll('input[name="class_ids[]"]:checked');
+            if (checked.length === 0) {
+                e.preventDefault();
+                if (window.appToast) {
+                    window.appToast('error', 'En az bir sınıf seçmelisiniz.');
+                } else {
+                    alert('En az bir sınıf seçmelisiniz.');
+                }
             }
         });
     }

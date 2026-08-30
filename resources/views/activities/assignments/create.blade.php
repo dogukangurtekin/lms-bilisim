@@ -91,18 +91,18 @@
             </div>
             <div class="field">
                 <label>Ödev Teslim Tarihi</label>
-                <input type="date" name="due_date" id="due_date" value="{{ old('due_date') }}">
+                <input type="date" name="due_date" id="due_date" value="{{ old('due_date') }}" required>
             </div>
         </div>
 
         <div class="assignment-meta-grid" style="margin-top:12px;">
             <div class="field">
                 <label>Level Başlangıç</label>
-                <input type="number" name="level_from" id="level_from" min="1" value="{{ old('level_from') }}">
+                <input type="number" name="level_from" id="level_from" min="1" value="{{ old('level_from') }}" required>
             </div>
             <div class="field">
                 <label>Level Bitiş</label>
-                <input type="number" name="level_to" id="level_to" min="1" value="{{ old('level_to') }}">
+                <input type="number" name="level_to" id="level_to" min="1" value="{{ old('level_to') }}" required>
             </div>
         </div>
 
@@ -168,6 +168,21 @@ document.addEventListener('DOMContentLoaded', function () {
         dueDate.addEventListener('click', function () {
             if (typeof dueDate.showPicker === 'function') {
                 try { dueDate.showPicker(); } catch (_) {}
+            }
+        });
+    }
+
+    const form = document.getElementById('assignment-form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const checked = form.querySelectorAll('input[name="class_ids[]"]:checked');
+            if (checked.length === 0) {
+                e.preventDefault();
+                if (window.appToast) {
+                    window.appToast('error', 'En az bir sınıf seçmelisiniz.');
+                } else {
+                    alert('En az bir sınıf seçmelisiniz.');
+                }
             }
         });
     }

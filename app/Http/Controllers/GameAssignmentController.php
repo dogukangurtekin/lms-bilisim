@@ -95,11 +95,17 @@ class GameAssignmentController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
-            'due_date' => ['nullable', 'date', 'after_or_equal:today'],
-            'level_from' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'level_to' => ['nullable', 'integer', 'min:1', 'max:999', 'gte:level_from'],
+            'due_date' => ['required', 'date', 'after_or_equal:today'],
+            'level_from' => ['required', 'integer', 'min:1', 'max:999'],
+            'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => ['integer', Rule::exists('school_classes', 'id')],
+        ], [
+            'title.required' => 'Ödev adı zorunludur.',
+            'due_date.required' => 'Ödev teslim tarihi zorunludur.',
+            'level_from.required' => 'Level başlangıç zorunludur.',
+            'level_to.required' => 'Level bitiş zorunludur.',
+            'class_ids.required' => 'En az bir sınıf seçmelisiniz.',
         ]);
 
         // Ogretmenin sayfada tek tek level puani girmesine gerek yok;

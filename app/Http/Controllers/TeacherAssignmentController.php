@@ -293,11 +293,17 @@ class TeacherAssignmentController extends Controller
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
-            'due_date' => ['nullable', 'date'],
-            'level_from' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'level_to' => ['nullable', 'integer', 'min:1', 'max:999', 'gte:level_from'],
+            'due_date' => ['required', 'date'],
+            'level_from' => ['required', 'integer', 'min:1', 'max:999'],
+            'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => ['integer', 'exists:school_classes,id'],
+        ], [
+            'title.required' => 'Odev adi zorunludur.',
+            'due_date.required' => 'Odev teslim tarihi zorunludur.',
+            'level_from.required' => 'Level baslangic zorunludur.',
+            'level_to.required' => 'Level bitis zorunludur.',
+            'class_ids.required' => 'En az bir sinif secmelisiniz.',
         ]);
 
         // Sayfada artik tek tek level puani girilmiyor. Level araligi
