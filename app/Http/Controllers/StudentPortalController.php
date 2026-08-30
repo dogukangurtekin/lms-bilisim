@@ -37,6 +37,7 @@ class StudentPortalController extends Controller
     public function dashboard()
     {
         $student = $this->getStudent();
+        $this->purgeStaleUnfinishedAssignments($student);
         $today = Carbon::today('Europe/Istanbul')->toDateString();
         $todayDailyAssignment = $this->codingActivityService->resolveTodayActivityForStudent($student);
         $hasDailyAssignment = (bool) $todayDailyAssignment;
