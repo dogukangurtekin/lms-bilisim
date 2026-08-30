@@ -737,10 +737,23 @@ class StudentPortalController extends Controller
 
     private function studentAssignments(Student $student)
     {
+        // Ogretmen bir oyun/etkinlik odevini sildiginde, ogrenci hic
+        // baslamadiysa listede gorunmemeli (acilmayan, olu bir satir
+        // birakmamak icin). Ama ogrenci baslamis ya da tamamlamissa,
+        // o kaydin ilerleme gecmisinde/gelisim raporunda gorunmeye devam
+        // etmesi icin listede tutulur.
+        $startedAssignmentIds = StudentGameAssignmentProgress::query()
+            ->where('student_id', $student->id)
+            ->pluck('game_assignment_id');
+
         return GameAssignment::withTrashed()
             ->with(['levels', 'classes'])
             ->whereHas('classes', function ($query) use ($student) {
                 $query->where('school_classes.id', $student->school_class_id);
+            })
+            ->where(function ($query) use ($startedAssignmentIds) {
+                $query->whereNull('deleted_at')
+                    ->orWhereIn('id', $startedAssignmentIds);
             })
             ->latest();
     }

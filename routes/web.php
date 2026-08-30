@@ -314,8 +314,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/odevlerim/{homework}/basarili', [StudentPortalController::class, 'homeworkSuccess'])->name('student.portal.homework.success');
         Route::get('/ogrenci/etkinlik-odevleri/{assignment}/ac', [StudentPortalController::class, 'openGameAssignment'])
             ->name('student.portal.game-assignment.open')
+            ->withTrashed()
             ->missing(fn () => redirect()->route('student.portal.assignments'));
-        Route::post('/ogrenci/etkinlik-odevleri/{assignment}/tamamla', [StudentPortalController::class, 'completeGameAssignment'])->name('student.portal.game-assignment.complete');
+        Route::post('/ogrenci/etkinlik-odevleri/{assignment}/tamamla', [StudentPortalController::class, 'completeGameAssignment'])
+            ->name('student.portal.game-assignment.complete')
+            ->withTrashed();
         Route::post('/ogrenci/sure/ping', [StudentPortalController::class, 'pingTime'])->name('student.portal.time.ping');
         
         Route::get('/ogrenci/gunluk-calisma', [StudentCodingActivityController::class, 'index'])->name('student.coding.index');
