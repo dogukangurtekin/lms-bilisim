@@ -33,6 +33,38 @@
         grid-template-columns:repeat(2,minmax(0,1fr));
         gap:10px;
     }
+    .assignment-class-checklist{
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+        gap:8px;
+        max-height:280px;
+        overflow-y:auto;
+        padding:10px;
+        border:1px solid var(--line,#d1d9e6);
+        border-radius:12px;
+        background:var(--paper,#f8fafc);
+    }
+    .assignment-class-checklist label{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 10px;
+        border:1px solid var(--line,#e2e8f0);
+        border-radius:10px;
+        background:#fff;
+        cursor:pointer;
+        min-width:0;
+        font-size:13.5px;
+    }
+    .assignment-class-checklist label:has(input:checked){
+        border-color:var(--violet,#5B3DF5);
+        background:var(--violet-tint,#EEEBFD);
+    }
+    .assignment-class-checklist input{
+        width:16px;
+        height:16px;
+        flex:0 0 auto;
+    }
     @media (max-width: 760px){
         .assignment-form-grid,
         .assignment-meta-grid{
@@ -59,7 +91,7 @@
             </div>
             <div class="field">
                 <label>Ödev Teslim Tarihi</label>
-                <input type="date" name="due_date" value="{{ old('due_date') }}">
+                <input type="date" name="due_date" id="due_date" value="{{ old('due_date') }}">
             </div>
         </div>
 
@@ -76,16 +108,16 @@
 
         <div class="field" style="margin-top:12px;">
             <label>Ödev Verilecek Sınıflar</label>
-            <select name="class_ids[]" multiple required size="8">
+            <div class="assignment-class-checklist">
                 @foreach($classes as $class)
-                    <option value="{{ $class->id }}" @selected(collect(old('class_ids', []))->contains($class->id))>
+                    <label>
+                        <input type="checkbox" name="class_ids[]" value="{{ $class->id }}" @checked(collect(old('class_ids', []))->contains($class->id))>
                         {{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}
-                    </option>
+                    </label>
                 @endforeach
-            </select>
+            </div>
         </div>
 
-        <div id="level-points-box" style="margin-top:10px"></div>
         @if($errors->any())
             <div style="color:#b91c1c;margin:10px 0">{{ $errors->first() }}</div>
         @endif
@@ -131,47 +163,14 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const levelFrom = document.getElementById('level_from');
-    const levelTo = document.getElementById('level_to');
-    const box = document.getElementById('level-points-box');
-
-    function drawLevelPoints() {
-        const from = parseInt(levelFrom.value || '0', 10);
-        const to = parseInt(levelTo.value || '0', 10);
-        box.innerHTML = '';
-
-        if (!from || !to || to < from) {
-            return;
-        }
-
-        const title = document.createElement('h4');
-        title.textContent = 'Level Bazlı Puanlar';
-        box.appendChild(title);
-
-        for (let i = from; i <= to; i++) {
-            const wrap = document.createElement('div');
-            wrap.className = 'actions';
-            wrap.style.marginBottom = '6px';
-
-            const label = document.createElement('label');
-            label.textContent = 'Level ' + i + ' Puanı';
-            label.style.minWidth = '150px';
-
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.name = 'points[' + i + ']';
-            input.min = '0';
-            input.value = '{{ old('points') ? '' : '10' }}';
-
-            wrap.appendChild(label);
-            wrap.appendChild(input);
-            box.appendChild(wrap);
-        }
+    const dueDate = document.getElementById('due_date');
+    if (dueDate) {
+        dueDate.addEventListener('click', function () {
+            if (typeof dueDate.showPicker === 'function') {
+                try { dueDate.showPicker(); } catch (_) {}
+            }
+        });
     }
-
-    levelFrom.addEventListener('input', drawLevelPoints);
-    levelTo.addEventListener('input', drawLevelPoints);
-    drawLevelPoints();
 });
 </script>
 @endsection

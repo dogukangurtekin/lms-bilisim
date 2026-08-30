@@ -100,11 +100,13 @@ class GameAssignmentController extends Controller
             'level_to' => ['nullable', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => ['integer', Rule::exists('school_classes', 'id')],
-            'points' => ['nullable', 'array'],
-            'points.*' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
 
-        DB::transaction(function () use ($validated, $games, $gameSlug) {
+        // Ogretmenin sayfada tek tek level puani girmesine gerek yok;
+        // her level icin sabit bir varsayilan puan atanir.
+        $defaultLevelPoints = 10;
+
+        DB::transaction(function () use ($validated, $games, $gameSlug, $defaultLevelPoints) {
             $assignment = GameAssignment::create([
                 'game_slug' => $gameSlug,
                 'game_name' => $games[$gameSlug]['name'],
@@ -119,12 +121,11 @@ class GameAssignmentController extends Controller
 
             $levelFrom = $validated['level_from'] ?? null;
             $levelTo = $validated['level_to'] ?? null;
-            $points = $validated['points'] ?? [];
             if ($levelFrom !== null && $levelTo !== null) {
                 for ($level = $levelFrom; $level <= $levelTo; $level++) {
                     $assignment->levels()->create([
                         'level' => $level,
-                        'points' => (int) ($points[$level] ?? 0),
+                        'points' => $defaultLevelPoints,
                     ]);
                 }
             }

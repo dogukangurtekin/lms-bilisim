@@ -298,9 +298,14 @@ class TeacherAssignmentController extends Controller
             'level_to' => ['nullable', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => ['integer', 'exists:school_classes,id'],
-            'points' => ['nullable', 'array'],
-            'points.*' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ]);
+
+        // Sayfada artik tek tek level puani girilmiyor. Level araligi
+        // degistiginde mevcut puanlar korunur, araliga yeni eklenen
+        // levellere varsayilan bir puan atanir.
+        $defaultLevelPoints = 10;
+        $existingPointsByLevel = $assignment->levels->pluck('points', 'level');
+
         $assignment->update([
             'title' => $validated['title'],
             'due_date' => $validated['due_date'] ?? null,
@@ -315,7 +320,7 @@ class TeacherAssignmentController extends Controller
             for ($level = $from; $level <= $to; $level++) {
                 $assignment->levels()->create([
                     'level' => $level,
-                    'points' => (int) (($validated['points'] ?? [])[$level] ?? 0),
+                    'points' => (int) ($existingPointsByLevel[$level] ?? $defaultLevelPoints),
                 ]);
             }
         }
