@@ -30,6 +30,19 @@ use App\Http\Controllers\TeacherClassAssignmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// Deploy sonrasi PHP-FPM opcache'inde birkac saniye surebilen eski
+// kod calismasi ihtimalini ortadan kaldirmak icin: git push sonrasi bu
+// route'a bir kere istek atilarak opcache aninda temizlenir. Token,
+// APP_KEY'den turetilir; ekstra .env degeri gerekmez.
+Route::get('/__deploy/opcache-clear/{token}', function (string $token) {
+    $expected = hash('sha256', (string) config('app.key') . '|opcache-clear');
+    abort_unless(hash_equals($expected, $token), 404);
+
+    $cleared = function_exists('opcache_reset') ? opcache_reset() : false;
+
+    return response()->json(['ok' => (bool) $cleared]);
+});
+
 Route::get('/', function () {
     $user = auth()->user();
 
