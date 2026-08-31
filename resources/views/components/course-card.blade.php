@@ -59,8 +59,8 @@
 @endphp
 
 <article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
-    <div class="relative" style="height:218px;overflow:hidden;flex:0 0 auto;">
-        <div class="relative h-[218px] overflow-hidden bg-slate-100">
+    <div class="relative" style="aspect-ratio:3/2;overflow:hidden;flex:0 0 auto;width:100%;">
+        <div class="relative h-full w-full overflow-hidden bg-slate-100">
             @if($hasCover)
                     <img
                     src="{{ $image }}"
@@ -244,7 +244,7 @@
            sarmalayıcısıyla aynı hizada, ikisi de top-0). */
         top: 0;
         width: 132px;
-        height: 218px;
+        height: 100%;
         transform: skewX(-18deg);
         background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 52%, #4c1d95 100%);
         box-shadow: 0 18px 36px rgba(76,29,149,.34);
