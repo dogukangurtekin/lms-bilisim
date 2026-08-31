@@ -1343,12 +1343,13 @@ class CourseController extends Controller
                 throw new \RuntimeException('Ders bu ogretmene atali degil veya bulunamadi.');
             }
 
-            // Ogretmen kendi olusturdugu dersi tamamen silebilir.
+            // Ogretmen kendi olusturdugu dersi tamamen silebilir (alt dersleriyle birlikte).
             if ((int) ($course->created_by ?? 0) === (int) auth()->id()) {
-                Course::query()
-                    ->whereKey($courseId)
-                    ->where('teacher_id', $teacherId)
-                    ->delete();
+                $courseIds = $this->collectCourseIdsWithDescendants($courseId);
+                DB::transaction(function () use ($courseIds) {
+                    CourseHomework::query()->whereIn('course_id', $courseIds)->delete();
+                    Course::query()->whereIn('id', $courseIds)->delete();
+                });
                 return;
             }
 
@@ -1368,13 +1369,45 @@ class CourseController extends Controller
             return;
         }
 
-        DB::transaction(function () use ($courseId) {
-            CourseHomework::query()->where('course_id', $courseId)->delete();
-            $deleted = Course::query()->whereKey($courseId)->delete();
-            if ($deleted !== 1) {
+        $courseIds = $this->collectCourseIdsWithDescendants($courseId);
+
+        DB::transaction(function () use ($courseId, $courseIds) {
+            CourseHomework::query()->whereIn('course_id', $courseIds)->delete();
+            $deleted = Course::query()->whereIn('id', $courseIds)->delete();
+            if ($deleted < 1 || ! in_array($courseId, $courseIds, true)) {
                 throw new \RuntimeException('Ders kaydi bulunamadi veya silinemedi.');
             }
         });
+    }
+
+    /**
+     * Verilen ders id'si ile birlikte tüm alt derslerinin (ve varsa onların da alt derslerinin)
+     * id'lerini toplar, böylece bir ders silinirken alt dersleri de yetim kalmadan silinir.
+     *
+     * @return array<int, int>
+     */
+    private function collectCourseIdsWithDescendants(int $courseId): array
+    {
+        $ids = [$courseId];
+        $queue = [$courseId];
+
+        while ($queue !== []) {
+            $childIds = Course::query()
+                ->whereIn('parent_course_id', $queue)
+                ->pluck('id')
+                ->map(fn ($v) => (int) $v)
+                ->all();
+
+            $childIds = array_values(array_diff($childIds, $ids));
+            if ($childIds === []) {
+                break;
+            }
+
+            $ids = array_merge($ids, $childIds);
+            $queue = $childIds;
+        }
+
+        return $ids;
     }
 
     private function resolveAdminTeacherId(int $currentTeacherId): int
