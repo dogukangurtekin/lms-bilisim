@@ -3,41 +3,67 @@
 @section('content')
 <div class="top"><h1>Sınıflar</h1></div>
 <style>
-    .classes-form .field-wrap{min-width:180px}
-    .classes-filter .field-wrap{min-width:180px}
+    .panel-section{border:1px solid var(--line,#e2e8f0);border-radius:14px;padding:16px;margin-bottom:16px;background:var(--surface,#fff)}
+    .panel-section:last-child{margin-bottom:0}
+    .panel-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .panel-section-head h3{margin:0;font-family:var(--font-display);font-size:15px;color:var(--ink,#16182B)}
+    .panel-section-head p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft,#585A72)}
+    .panel-form-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+    .panel-form-row .field-wrap{min-width:180px;display:flex;flex-direction:column;gap:6px}
+    .panel-form-row .field-wrap label{font-size:12.5px;font-weight:600;color:var(--ink-soft,#585A72);margin:0}
+    .panel-form-row .field-wrap input{margin:0}
     .classes-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .classes-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .classes-actions .btn-danger{background:#dc2626 !important;border-color:#b91c1c !important}
     @media (max-width: 768px){
-        .classes-form,.classes-filter{display:grid !important;grid-template-columns:1fr;gap:10px !important;align-items:stretch !important}
-        .classes-form .field-wrap,.classes-filter .field-wrap{min-width:0;width:100%}
-        .classes-form input,.classes-filter input{width:100%}
-        .classes-form .btn{justify-self:start}
+        .panel-form-row{display:grid !important;grid-template-columns:1fr;gap:10px !important;align-items:stretch !important}
+        .panel-form-row .field-wrap{min-width:0;width:100%}
+        .panel-form-row input{width:100%}
+        .panel-form-row .btn{justify-self:stretch;width:100%}
+        .panel-section-head{flex-direction:column;align-items:stretch}
         .classes-table-wrap table{min-width:560px}
     }
 </style>
-<div class="card">
-    <div class="classes-actions" style="margin-bottom:14px">
+
+<div class="panel-section">
+    <div class="panel-section-head">
+        <div>
+            <h3>Yeni Sınıf Ekle</h3>
+            <p>Sınıf adı ve şube bilgisiyle yeni bir sınıf oluşturun.</p>
+        </div>
         @if(auth()->user()?->hasRole('admin'))
             <form id="classes-destroy-all-form" method="POST" action="{{ route('classes.destroy-all') }}" data-confirm="Tüm sınıflar sistemden kaldırılsın mı?">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="btn btn-danger">Tüm Sınıfları Sil</button>
+                <button type="submit" class="btn btn-danger" style="padding:8px 14px;font-size:13px;">Tüm Sınıfları Sil</button>
             </form>
         @endif
     </div>
-    <form method="POST" action="{{ route('classes.store') }}" class="actions classes-form" style="margin-bottom:14px;align-items:end;flex-wrap:wrap;gap:10px">
+    <form method="POST" action="{{ route('classes.store') }}" class="panel-form-row">
         @csrf
         <div class="field-wrap"><label>Sınıf Adı</label><input name="name" value="{{ old('name') }}" placeholder="Örn: 5"></div>
         <div class="field-wrap"><label>Şube</label><input name="section" value="{{ old('section') }}" placeholder="Örn: A"></div>
         <button class="btn" type="submit">Sınıf Ekle</button>
     </form>
+</div>
 
-    <form id="classes-filter-form" method="GET" class="actions classes-filter" style="margin-bottom:10px;align-items:end;flex-wrap:wrap">
+<div class="panel-section">
+    <div class="panel-section-head">
+        <div>
+            <h3>Sınıfları Filtrele</h3>
+            <p>Sınıf adı veya şubeye göre listeyi daraltın.</p>
+        </div>
+    </div>
+    <form id="classes-filter-form" method="GET" class="panel-form-row">
         <div class="field-wrap" style="min-width:220px"><label>Sınıf</label><input id="classes-class-name" name="class_name" value="{{ $className ?? request('class_name') }}" placeholder="Sınıf adı..."></div>
         <div class="field-wrap"><label>Şube</label><input id="classes-section" name="section" value="{{ $section ?? request('section') }}" placeholder="Şube..."></div>
     </form>
+</div>
 
+<div class="panel-section">
+    <div class="panel-section-head">
+        <div>
+            <h3>Sınıf Listesi</h3>
+        </div>
+    </div>
     <div class="classes-table-wrap">
         <table>
             <thead><tr><th>ID</th><th>Ad</th><th>Şube</th><th>İşlem</th></tr></thead>
@@ -46,8 +72,8 @@
                 <tr>
                     <td>{{ $item->id }}</td><td>{{ $item->name }}</td><td>{{ $item->section }}</td>
                     <td class="actions">
-                        <a class="btn" href="{{ route('classes.show', $item) }}">Göster</a>
-                        <a class="btn" href="{{ route('classes.edit', $item) }}">Düzenle</a>
+                        <a class="btn" href="{{ route('classes.show', $item) }}" style="padding:7px 12px;font-size:13px;">Göster</a>
+                        <a class="btn" href="{{ route('classes.edit', $item) }}" style="padding:7px 12px;font-size:13px;">Düzenle</a>
                     </td>
                 </tr>
             @endforeach
@@ -62,18 +88,12 @@
     const form = document.getElementById('classes-filter-form');
     const className = document.getElementById('classes-class-name');
     const section = document.getElementById('classes-section');
-    const destroyAllForm = document.getElementById('classes-destroy-all-form');
     if (form) {
         let timer = null;
         const submitLater = () => { if (timer) clearTimeout(timer); timer = setTimeout(() => form.submit(), 300); };
         className?.addEventListener('input', submitLater);
         section?.addEventListener('input', submitLater);
     }
-    destroyAllForm?.addEventListener('submit', (e) => {
-        const ok = window.confirm('Tüm sınıflar silinsin mi? Bu işlem geri alınamaz.');
-        if (!ok) e.preventDefault();
-    });
-
 })();
 </script>
 @endsection
