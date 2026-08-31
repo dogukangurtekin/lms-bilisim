@@ -59,7 +59,7 @@
 @endphp
 
 <article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
-    <div class="relative">
+    <div class="relative" style="height:218px;overflow:hidden;flex:0 0 auto;">
         <div class="relative h-[218px] overflow-hidden bg-slate-100">
             @if($hasCover)
                     <img
