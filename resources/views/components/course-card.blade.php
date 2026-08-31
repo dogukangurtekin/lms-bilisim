@@ -59,13 +59,13 @@
 @endphp
 
 <article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
-    <div class="relative" style="aspect-ratio:3/2;overflow:hidden;flex:0 0 auto;width:100%;">
-        <div class="relative h-full w-full overflow-hidden bg-slate-100">
+    <div class="relative overflow-hidden bg-slate-100" style="aspect-ratio:3/2;flex:0 0 auto;width:100%;">
             @if($hasCover)
                     <img
                     src="{{ $image }}"
                     alt="kapak görseli"
-                    class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
+                    class="absolute inset-0 block h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
+                    style="min-height:100%;min-width:100%;"
                     loading="lazy"
                 >
             @else
@@ -113,7 +113,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 
     <div class="flex flex-1 flex-col gap-4 p-5 pt-4">
