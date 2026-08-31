@@ -479,14 +479,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 menu.appendChild(a);
             });
 
+            // Önce görünmez şekilde ekle ki gerçek genişlik/yükseklik ölçülebilsin,
+            // sonra 3 noktanın hemen yanına/altına, ekran sınırları içinde kalacak
+            // şekilde konumlandır (gerekirse üstüne veya sola doğru çevir).
+            menu.style.visibility = 'hidden';
+            menu.style.position = 'fixed';
+            menu.style.top = '0px';
+            menu.style.left = '0px';
             document.body.appendChild(menu);
+
             const rect = btn.getBoundingClientRect();
             const menuWidth = menu.offsetWidth || 180;
+            const menuHeight = menu.offsetHeight || 120;
+            const vw = document.documentElement.clientWidth;
+            const vh = document.documentElement.clientHeight;
+            const margin = 8;
+
             let left = rect.right - menuWidth;
-            if (left < 8) left = 8;
-            menu.style.position = 'fixed';
-            menu.style.top = (rect.bottom + 8) + 'px';
+            if (left < margin) left = margin;
+            if (left + menuWidth > vw - margin) left = Math.max(margin, vw - menuWidth - margin);
+
+            let top = rect.bottom + margin;
+            if (top + menuHeight > vh - margin) {
+                top = rect.top - menuHeight - margin;
+            }
+            if (top < margin) top = margin;
+
+            menu.style.top = top + 'px';
             menu.style.left = left + 'px';
+            menu.style.visibility = 'visible';
             openMenu = menu;
         });
 
