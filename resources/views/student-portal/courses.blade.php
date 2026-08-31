@@ -63,16 +63,23 @@
         font-size: 1.15rem;
         line-height: 1;
     }
+    /* Ders kartı ızgarası: 1 (mobil) / 2 (≥640px) / 3 (≥900px) / 4 (≥1280px) sütun.
+       Tek bir grid-template-columns kaynağı — çakışan medya sorguları yok. */
     .course-cards-grid {
         display: grid;
         width: 100%;
         gap: 1.5rem;
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-        justify-items: start;
-        align-items: start;
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: stretch;
+        align-items: stretch;
         grid-auto-flow: row;
     }
     .course-card-cell {
+        width: 100%;
+        min-width: 0;
+        display: flex;
+    }
+    .course-card-cell > * {
         width: 100%;
         min-width: 0;
     }
@@ -81,7 +88,12 @@
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
-    @media (min-width: 1024px) {
+    @media (min-width: 900px) {
+        .course-cards-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 1280px) {
         .course-cards-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
         }

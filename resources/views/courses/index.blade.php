@@ -139,23 +139,38 @@
     .btn-upload { background: #14a394; }
     .btn-download { background: #4f8cf0; }
     .btn-delete { background: #f3665a; }
+    /* Ders kartı ızgarası: 1 (mobil) / 2 (≥640px) / 3 (≥900px) / 4 (≥1280px) sütun.
+       Tek bir grid-template-columns kaynağı — çakışan medya sorguları yok, bu yüzden
+       ara genişliklerde kapak resmi ile açıklama arasında boşluk oluşmuyor. */
     .course-cards-grid {
-        display: flex !important;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 1.5rem;
         align-items: stretch;
         width: 100%;
-        justify-content: flex-start;
     }
     .course-card-item {
-        flex: 0 0 calc(25% - 1.125rem);
-        max-width: calc(25% - 1.125rem);
         min-width: 0;
         display: flex;
     }
     .course-card-item > * {
         width: 100%;
         min-width: 0;
+    }
+    @media (min-width: 640px) {
+        .course-cards-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 900px) {
+        .course-cards-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+    @media (min-width: 1280px) {
+        .course-cards-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
     }
     @media (min-width: 768px) {
         .course-action-grid {
@@ -207,26 +222,7 @@
             min-width: 0;
         }
         .course-cards-grid {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr);
             gap: 1rem;
-        }
-        .course-card-item {
-            flex: 1 1 100%;
-            max-width: 100%;
-            width: 100%;
-        }
-    }
-    @media (min-width: 640px) {
-        .course-card-item {
-            flex-basis: calc(50% - .75rem);
-            max-width: calc(50% - .75rem);
-        }
-    }
-    @media (min-width: 1024px) {
-        .course-card-item {
-            flex-basis: calc(25% - 1.125rem);
-            max-width: calc(25% - 1.125rem);
         }
     }
     .course-cards-wrap {
