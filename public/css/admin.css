@@ -695,7 +695,7 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .rate-track{height:10px;background:#e7eef8;border-radius:999px;overflow:hidden;margin-top:10px}
 .rate-track i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#0ea5e9)}
 .widget-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
-.dashboard-main-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,380px);gap:18px;align-items:start}
+.dashboard-main-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(240px,20vw,320px);gap:18px;align-items:start}
 .dashboard-left-rail{display:none}
 .dashboard-center-column{min-width:0;display:block}
 .dashboard-right-column{min-width:0;align-self:start;position:sticky;top:16px}
@@ -716,15 +716,15 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .dashboard-leaderboard-panel{height:393.2px;min-height:393.2px;background:rgba(248,250,252,.92)}
 .dashboard-sidebar-stack > .dashboard-leaderboard-panel{height:393.2px;min-height:393.2px}
 .dashboard-leaderboard-panel .widget-head{margin-bottom:2px}
-.dashboard-leaderboard-panel .widget-head strong{font-size:14px;line-height:1.15}
-.dashboard-leaderboard-panel .widget-head span{font-size:11px;line-height:1.15}
+.dashboard-leaderboard-panel .widget-head strong{font-size:12.5px;line-height:1.15}
+.dashboard-leaderboard-panel .widget-head span{font-size:10px;line-height:1.15}
 .dashboard-leaderboard-panel .teacher-top10-list{display:grid;grid-template-rows:repeat(5,minmax(0,1fr));gap:8px;flex:1;min-height:0}
-.dashboard-leaderboard-panel .teacher-top10-item{grid-template-columns:28px 1fr auto;padding:10px 12px;gap:10px;min-height:0;height:100%;border-radius:14px;align-items:center}
+.dashboard-leaderboard-panel .teacher-top10-item{grid-template-columns:24px 1fr auto;padding:8px 10px;gap:8px;min-height:0;height:100%;border-radius:14px;align-items:center}
 .dashboard-leaderboard-panel .teacher-top10-main{display:flex;flex-direction:column;justify-content:center;min-height:0}
-.dashboard-leaderboard-panel .teacher-top10-rank{width:28px;height:28px;font-size:12px}
-.dashboard-leaderboard-panel .teacher-top10-main strong{font-size:12px;line-height:1.12}
-.dashboard-leaderboard-panel .teacher-top10-main span{font-size:10px;line-height:1.08}
-.dashboard-leaderboard-panel .teacher-top10-xp{font-size:10px}
+.dashboard-leaderboard-panel .teacher-top10-rank{width:24px;height:24px;font-size:10.5px}
+.dashboard-leaderboard-panel .teacher-top10-main strong{font-size:11px;line-height:1.12}
+.dashboard-leaderboard-panel .teacher-top10-main span{font-size:9px;line-height:1.08}
+.dashboard-leaderboard-panel .teacher-top10-xp{font-size:9px}
 .dashboard-widget-grid > .widget-span-6{grid-column:span 6}
 .dashboard-widget-grid > .widget-span-12{grid-column:span 12}
 .dashboard-widget-grid > .dashboard-notes-widget{
@@ -1066,7 +1066,7 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 @keyframes widget-jiggle{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
 @media (min-width: 1181px){
   .dashboard-main-layout{
-    grid-template-columns:minmax(0,1fr) minmax(420px,500px);
+    grid-template-columns:minmax(0,1fr) clamp(260px,19vw,340px);
   }
   .dashboard-right-column{
     top:14px;
@@ -1080,6 +1080,13 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   .dashboard-widget-grid > .dashboard-chart-widget .chart-widget-body{
     min-width:0;
   }
+}
+@media (max-width: 1520px) and (min-width: 1181px){
+  .dashboard-widget-grid,.widget-grid{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .dashboard-widget{grid-column:span 4}
+  .dashboard-widget.dashboard-widget-wide,
+  .dashboard-widget.dashboard-widget-hero{grid-column:span 8}
+  .dashboard-widget-stack--stats{grid-column:span 8}
 }
 @media (max-width: 1180px){
   .dashboard-hero{flex-direction:column}
