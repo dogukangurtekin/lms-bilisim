@@ -145,7 +145,7 @@
             <span class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm" style="{{ $difficultyStyle }}">{{ $difficultyValue !== '' ? $difficultyValue : 'Kolay' }}</span>
         </div>
 
-        <div class="mt-auto grid gap-2.5" style="grid-template-columns:repeat(1,minmax(0,1fr));">
+        <div class="course-card-action-row mt-auto grid gap-2.5" style="grid-template-columns:repeat(1,minmax(0,1fr));">
             <a href="{{ $launchUrl }}" class="course-card-action course-card-action--launch">{{ $primaryLabelValue }}</a>
         </div>
     </div>
@@ -335,32 +335,14 @@
     }
 
     @media (max-width: 640px) {
-        .course-card-action {
-            min-height: 40px;
-            padding: 0 8px;
-            font-size: 11px;
-            line-height: 1.05;
-        }
-
-        .course-card-action--sub,
-        .course-card-action--delete {
-            min-height: 40px;
-            font-size: 10px;
-            white-space: nowrap;
-            padding: 0 6px;
-        }
-
-        .course-card-action--launch {
-            white-space: nowrap;
+        /* Mobilde kart artık tamamen tıklanabilir olduğu için ayrı bir
+           "Dersi Aç" butonuna gerek yok; alt satırdaki buton alanı kaldırılır. */
+        .course-card-action-row {
+            display: none !important;
         }
 
         .course-card-action + .course-card-action {
             margin-left: 0;
-        }
-
-        .mt-auto.grid[style*="grid-template-columns"] {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            gap: 6px !important;
         }
 
         .mt-auto.grid[style*="grid-template-columns"] > * {
