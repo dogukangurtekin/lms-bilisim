@@ -242,13 +242,37 @@
                         </div>
                         <div class="chart-widget-body">
                             @if(($chart['type'] ?? '') === 'donut')
-                                <div class="chart-donut" style="--p1:{{ (int) ($chart['items'][0]['percent'] ?? 0) }};--p2:{{ (int) ($chart['items'][1]['percent'] ?? 0) }};--p3:{{ (int) ($chart['items'][2]['percent'] ?? 0) }};--p4:{{ (int) ($chart['items'][3]['percent'] ?? 0) }}">
-                                    <div class="chart-donut-hole">
-                                        <div class="chart-donut-center">
-                                            <strong>{{ (int) ($chart['items'][0]['percent'] ?? 0) }}%</strong>
-                                            <span>{{ \Illuminate\Support\Str::limit($chart['items'][0]['label'] ?? '', 12) }}</span>
-                                        </div>
-                                    </div>
+                                @php
+                                    $pieTotal = max(1, array_sum(array_map(fn ($i) => (int) ($i['percent'] ?? 0), $chartItems)));
+                                    $pieCumulative = 0;
+                                    $pieSlices = [];
+                                    foreach ($chartItems as $pieItem) {
+                                        $pieValue = (int) ($pieItem['percent'] ?? 0);
+                                        $startAngle = ($pieCumulative / $pieTotal) * 360;
+                                        $pieCumulative += $pieValue;
+                                        $endAngle = ($pieCumulative / $pieTotal) * 360;
+                                        // Tam daire (tek dilim %100) durumunda arc çizilemediği için ufak bir boşluk bırak.
+                                        if ($endAngle - $startAngle >= 359.999) {
+                                            $endAngle = $startAngle + 359.99;
+                                        }
+                                        $r = 46;
+                                        $cx = 50;
+                                        $cy = 50;
+                                        $toRad = fn ($deg) => ($deg - 90) * M_PI / 180;
+                                        $x1 = $cx + $r * cos($toRad($startAngle));
+                                        $y1 = $cy + $r * sin($toRad($startAngle));
+                                        $x2 = $cx + $r * cos($toRad($endAngle));
+                                        $y2 = $cy + $r * sin($toRad($endAngle));
+                                        $largeArc = ($endAngle - $startAngle) > 180 ? 1 : 0;
+                                        $pieSlices[] = sprintf('M%s,%s L%s,%s A%s,%s 0 %d 1 %s,%s Z', $cx, $cy, round($x1, 3), round($y1, 3), $r, $r, $largeArc, round($x2, 3), round($y2, 3));
+                                    }
+                                @endphp
+                                <div class="chart-pie">
+                                    <svg viewBox="0 0 100 100" class="chart-pie-svg" role="img" aria-label="{{ $chart['title'] ?? 'Pasta grafiği' }}">
+                                        @foreach($pieSlices as $slicePath)
+                                            <path class="chart-pie-slice chart-pie-fill-{{ $loop->index + 1 }}" d="{{ $slicePath }}"></path>
+                                        @endforeach
+                                    </svg>
                                 </div>
                                 <div class="chart-legend">
                                     @foreach($chartItems as $item)
