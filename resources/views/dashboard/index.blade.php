@@ -254,7 +254,10 @@
                                     @foreach($chartItems as $item)
                                         <div class="chart-legend-item">
                                             <span class="chart-dot chart-dot-{{ $loop->index + 1 }}"></span>
-                                            <strong>{{ $item['label'] ?? '-' }}</strong>
+                                            <div class="chart-legend-main">
+                                                <strong>{{ $item['label'] ?? '-' }}</strong>
+                                                <div class="chart-legend-bar"><i class="chart-legend-bar-fill-{{ $loop->index + 1 }}" style="width:{{ (int) ($item['percent'] ?? 0) }}%"></i></div>
+                                            </div>
                                             <small>{{ (int) ($item['percent'] ?? 0) }}%</small>
                                         </div>
                                     @endforeach
@@ -290,6 +293,30 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                </div>
+                            @elseif($key === 'student_lesson_completion')
+                                @php
+                                    $rankItems = (array) ($chart['items'] ?? []);
+                                    $rankMax = max(1, (int) ($rankItems[0]['value'] ?? $rankItems[0]['percent'] ?? 1));
+                                @endphp
+                                <div class="chart-rank-list">
+                                    @forelse($rankItems as $item)
+                                        @php
+                                            $rank = $loop->iteration;
+                                            $rankValue = (int) ($item['value'] ?? $item['percent'] ?? 0);
+                                            $rankPct = max(6, (int) round(($rankValue / $rankMax) * 100));
+                                        @endphp
+                                        <div class="chart-rank-row chart-rank-row--{{ $rank <= 3 ? $rank : 'default' }}">
+                                            <span class="chart-rank-badge">{{ $rank }}</span>
+                                            <div class="chart-rank-main">
+                                                <strong>{{ $item['label'] ?? '-' }}</strong>
+                                                <div class="chart-rank-track"><i style="width:{{ $rankPct }}%"></i></div>
+                                            </div>
+                                            <span class="chart-rank-value">{{ $rankValue }}</span>
+                                        </div>
+                                    @empty
+                                        <p class="chart-rank-empty">Henüz veri yok.</p>
+                                    @endforelse
                                 </div>
                             @else
                                 <div class="chart-bars">
