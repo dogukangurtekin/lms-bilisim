@@ -47,9 +47,13 @@
     .sr-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
     .sr-card{background:var(--sr-surface);border:1px solid var(--sr-border);border-radius:14px;padding:16px;min-width:0;color:var(--sr-text)}
     .sr-list{display:grid;gap:10px;max-height:72vh;overflow:auto}
-    .sr-item{display:grid;gap:6px;padding:12px 14px;border-radius:14px;border:1px solid var(--sr-border);background:var(--sr-panel);text-decoration:none;color:inherit;transition:border-color .15s,background .15s}
+    .sr-item{display:flex;align-items:flex-start;gap:8px;padding:12px 14px;border-radius:14px;border:1px solid var(--sr-border);background:var(--sr-panel);transition:border-color .15s,background .15s}
     .sr-item:hover{border-color:var(--sr-primary)}
     .sr-item.is-active{border-color:var(--sr-primary);background:var(--violet-tint,#EEEBFD)}
+    .sr-item-link{flex:1 1 auto;min-width:0;display:grid;gap:6px;text-decoration:none;color:inherit}
+    .sr-item-delete{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-top:1px;border-radius:9px;border:1px solid var(--sr-border);background:var(--sr-panel);color:#94a3b8;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+    .sr-item-delete:hover{color:var(--signal,#FF7A45);border-color:var(--signal,#FF7A45);background:var(--signal-tint,#FFEEE4)}
+    .sr-item-delete svg{width:16px;height:16px;display:block;pointer-events:none}
     .sr-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .sr-badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800}
     .sr-badge.status-open{background:#fef3c7;color:#92400e}
@@ -123,24 +127,36 @@
                         $active = (int) ($selectedRequest?->id ?? 0) === (int) $ticket->id;
                         $statusClass = 'status-' . ($ticket->status ?? 'open');
                         $priorityClass = 'priority-' . ($ticket->priority ?? 'normal');
+                        $canDeleteTicket = $isAdmin || (int) $ticket->sender_user_id === (int) auth()->id();
                     @endphp
-                    <a class="sr-item {{ $active ? 'is-active' : '' }}" href="{{ route('support-requests.index', array_merge(request()->except('page'), ['selected' => $ticket->id])) }}">
-                        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
-                            <strong style="font-size:15px;line-height:1.35">{{ $ticket->subject }}</strong>
-                            <span class="sr-badge {{ $statusClass }}">{{ $statusLabels[$ticket->status] ?? $ticket->status }}</span>
-                        </div>
-                        <div style="color:#475569;font-size:13px">
-                            {{ $ticket->guest_name ?: ($ticket->sender?->name ?? 'Bilinmiyor') }}
-                            @if($ticket->guest_email)
-                                · {{ $ticket->guest_email }}
-                            @endif
-                            · {{ optional($ticket->created_at)->format('d.m.Y H:i') }}
-                        </div>
-                        <div class="sr-meta">
-                            <span class="sr-badge {{ $priorityClass }}">{{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}</span>
-                            <span class="sr-badge" style="background:#e0f2fe;color:#0369a1">{{ $categoryLabels[$ticket->category] ?? $ticket->category }}</span>
-                        </div>
-                    </a>
+                    <div class="sr-item {{ $active ? 'is-active' : '' }}">
+                        <a class="sr-item-link" href="{{ route('support-requests.index', array_merge(request()->except('page'), ['selected' => $ticket->id])) }}">
+                            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+                                <strong style="font-size:15px;line-height:1.35">{{ $ticket->subject }}</strong>
+                                <span class="sr-badge {{ $statusClass }}">{{ $statusLabels[$ticket->status] ?? $ticket->status }}</span>
+                            </div>
+                            <div style="color:#475569;font-size:13px">
+                                {{ $ticket->guest_name ?: ($ticket->sender?->name ?? 'Bilinmiyor') }}
+                                @if($ticket->guest_email)
+                                    · {{ $ticket->guest_email }}
+                                @endif
+                                · {{ optional($ticket->created_at)->format('d.m.Y H:i') }}
+                            </div>
+                            <div class="sr-meta">
+                                <span class="sr-badge {{ $priorityClass }}">{{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}</span>
+                                <span class="sr-badge" style="background:#e0f2fe;color:#0369a1">{{ $categoryLabels[$ticket->category] ?? $ticket->category }}</span>
+                            </div>
+                        </a>
+                        @if($canDeleteTicket)
+                            <form method="POST" action="{{ route('support-requests.destroy', $ticket) }}" data-confirm="'{{ $ticket->subject }}' talebi silinsin mi?">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="sr-item-delete" title="Talebi Sil" aria-label="Talebi Sil">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                                </button>
+                            </form>
+                        @endif
+                    </div>
                 @empty
                     <div style="padding:14px;border:1px dashed #cbd5e1;border-radius:14px;color:#64748b;background:#f8fafc">Henüz talep yok.</div>
                 @endforelse

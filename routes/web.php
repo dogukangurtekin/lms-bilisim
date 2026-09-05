@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/taleplerim/{supportRequest}', [SupportRequestController::class, 'update'])->name('support-requests.update');
         Route::post('/taleplerim/{supportRequest}/reply', [SupportRequestController::class, 'reply'])->name('support-requests.reply');
         Route::post('/taleplerim/{supportRequest}/archive', [SupportRequestController::class, 'archive'])->name('support-requests.archive');
+        Route::delete('/taleplerim/{supportRequest}', [SupportRequestController::class, 'destroy'])->name('support-requests.destroy');
 
         Route::middleware('role:admin')->group(function () {
             Route::get('/kullanici-yonetimi', [UserManagementController::class, 'index'])->name('users.index');

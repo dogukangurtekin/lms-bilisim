@@ -257,4 +257,21 @@ class SupportRequestController extends Controller
 
         return redirect()->route('support-requests.index', ['selected' => $supportRequest->id])->with('ok', 'Talep arşivlendi.');
     }
+
+    public function destroy(SupportRequest $supportRequest): RedirectResponse
+    {
+        $user = request()->user();
+        $isAdmin = $user?->hasRole('admin') === true;
+        $isOwner = (int) $supportRequest->sender_user_id === (int) $user?->id;
+
+        abort_unless($isAdmin || $isOwner, 403);
+
+        if ($supportRequest->attachment_path) {
+            Storage::delete($supportRequest->attachment_path);
+        }
+
+        $supportRequest->delete();
+
+        return redirect()->route('support-requests.index')->with('ok', 'Talep silindi.');
+    }
 }
