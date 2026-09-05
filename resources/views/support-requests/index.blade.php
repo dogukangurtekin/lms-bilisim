@@ -28,25 +28,28 @@
 @endphp
 
 <style>
+    .panel-section{border:1px solid var(--line,#e2e8f0);border-radius:14px;padding:16px;margin-bottom:16px;background:var(--surface,#fff)}
+    .panel-section:last-child{margin-bottom:0}
+    .panel-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:0}
+    .panel-section-head h3{margin:0;font-family:var(--font-display);font-size:15px;color:var(--ink,#16182B)}
+    .panel-section-head p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft,#585A72)}
     :root{
-        --sr-bg: var(--app-bg, #f8fafc);
-        --sr-text: var(--app-text, #0f172a);
-        --sr-muted: var(--app-muted, #64748b);
-        --sr-panel: var(--app-panel, #fff);
-        --sr-surface: var(--app-surface, #fff);
-        --sr-border: var(--app-border, #dbe5f2);
-        --sr-primary: var(--app-primary, #2563eb);
-        --sr-secondary: var(--app-secondary, #0ea5e9);
-        --sr-hero-start: var(--app-hero-start, #1d4ed8);
-        --sr-hero-end: var(--app-hero-end, #0ea5e9);
+        --sr-bg: var(--paper, #F7F6F2);
+        --sr-text: var(--ink, #16182B);
+        --sr-muted: var(--ink-soft, #585A72);
+        --sr-panel: var(--surface, #fff);
+        --sr-surface: var(--surface, #fff);
+        --sr-border: var(--line, #E4E1D8);
+        --sr-primary: var(--violet, #5B3DF5);
+        --sr-secondary: var(--violet-ink, #3E28B8);
     }
     .sr-shell{display:grid;gap:16px}
-    .sr-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;background:linear-gradient(120deg,var(--sr-hero-start),var(--sr-hero-end));color:#fff;border-radius:20px;padding:20px}
     .sr-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;align-items:start}
-    .sr-card{background:var(--sr-surface);border:1px solid var(--sr-border);border-radius:18px;padding:16px;min-width:0;box-shadow:0 10px 30px rgba(15,23,42,.04);color:var(--sr-text)}
+    .sr-card{background:var(--sr-surface);border:1px solid var(--sr-border);border-radius:14px;padding:16px;min-width:0;color:var(--sr-text)}
     .sr-list{display:grid;gap:10px;max-height:72vh;overflow:auto}
-    .sr-item{display:grid;gap:6px;padding:12px 14px;border-radius:14px;border:1px solid var(--sr-border);background:var(--sr-panel);text-decoration:none;color:inherit}
-    .sr-item.is-active{border-color:var(--sr-primary);box-shadow:0 10px 24px rgba(37,99,235,.12)}
+    .sr-item{display:grid;gap:6px;padding:12px 14px;border-radius:14px;border:1px solid var(--sr-border);background:var(--sr-panel);text-decoration:none;color:inherit;transition:border-color .15s,background .15s}
+    .sr-item:hover{border-color:var(--sr-primary)}
+    .sr-item.is-active{border-color:var(--sr-primary);background:var(--violet-tint,#EEEBFD)}
     .sr-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .sr-badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800}
     .sr-badge.status-open{background:#fef3c7;color:#92400e}
@@ -58,40 +61,51 @@
     .sr-badge.priority-normal{background:#eef2ff;color:#3730a3}
     .sr-badge.priority-high{background:#fee2e2;color:#b91c1c}
     .sr-field{display:grid;gap:6px;margin-top:12px}
-    .sr-input,.sr-select,.sr-textarea{width:100%;border:1px solid var(--sr-border);border-radius:12px;padding:11px 12px;background:var(--sr-panel);box-sizing:border-box;color:var(--sr-text)}
+    .sr-field label{font-size:12.5px;font-weight:600;color:var(--sr-muted)}
+    .sr-input,.sr-select,.sr-textarea{width:100%;border:1px solid var(--sr-border);border-radius:10px;padding:11px 12px;background:var(--sr-panel);box-sizing:border-box;color:var(--sr-text)}
     .sr-textarea{min-height:120px;resize:vertical}
-    .sr-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border:0;border-radius:12px;font-weight:800;text-decoration:none;cursor:pointer}
-    .sr-btn.primary{background:var(--sr-primary);color:#fff}
-    .sr-btn.warning{background:#f59e0b;color:#fff}
-    .sr-btn.ghost{background:var(--sr-panel);color:var(--sr-text);border:1px solid var(--sr-border)}
-    .sr-btn.danger{background:#ef4444;color:#fff}
+    .sr-btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border:1px solid transparent;border-radius:8px;font-weight:600;font-family:var(--font-display);text-decoration:none;cursor:pointer;transition:filter .15s}
+    .sr-btn:hover{filter:brightness(.88)}
+    .sr-btn.primary{background:var(--sr-primary);border-color:var(--sr-primary);color:#fff}
+    .sr-btn.warning{background:var(--signal,#FF7A45);border-color:var(--signal,#FF7A45);color:#fff}
+    .sr-btn.ghost{background:var(--sr-panel);color:var(--sr-text);border-color:var(--sr-border)}
+    .sr-btn.danger{background:var(--signal,#FF7A45);border-color:var(--signal,#FF7A45);color:#fff}
     .sr-stack{display:grid;gap:14px}
     .sr-reply{display:grid;gap:10px;padding:12px;border:1px solid var(--sr-border);border-radius:14px;background:color-mix(in srgb, var(--sr-panel) 88%, var(--sr-primary) 12%)}
-    .sr-reply.internal{background:color-mix(in srgb, var(--sr-panel) 84%, #f59e0b 16%)}
+    .sr-reply.internal{background:color-mix(in srgb, var(--sr-panel) 84%, var(--signal,#FF7A45) 16%)}
     .sr-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(15,23,42,.55);z-index:60}
     .sr-modal.is-open{display:flex}
-    .sr-modal-panel{width:min(100%,980px);max-height:88vh;overflow:auto;background:var(--sr-panel);border-radius:24px;box-shadow:0 30px 80px rgba(15,23,42,.28);border:1px solid var(--sr-border)}
+    .sr-modal-panel{width:min(100%,980px);max-height:88vh;overflow:auto;background:var(--sr-panel);border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.28);border:1px solid var(--sr-border)}
     .sr-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--sr-border);position:sticky;top:0;background:var(--sr-panel);z-index:1}
     .sr-modal-body{padding:20px}
     @media (max-width: 1180px){.sr-grid{grid-template-columns:1fr}.sr-list{max-height:none}}
 </style>
 
+<div class="top"><h1>Taleplerim</h1></div>
+
 <section class="sr-shell">
-    <div class="sr-hero">
-        <div>
-            <div style="font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.9">Destek ve İletişim</div>
-            <h1 style="margin:6px 0 0;font-size:30px;font-weight:900">Taleplerim</h1>
-            <p style="margin:8px 0 0;max-width:760px;opacity:.95">Öğretmen taleplerini gönderir, admin inceleyip cevaplar. Mevcut bildirim sistemiyle uyumlu çalışır.</p>
-        </div>
-        <div class="sr-meta">
-            <span class="sr-badge status-open">Açık: {{ $requests->where('status', 'open')->count() }}</span>
-            <span class="sr-badge status-answered">Cevaplı: {{ $requests->where('status', 'answered')->count() }}</span>
-            <span class="sr-badge status-closed">Kapalı: {{ $requests->where('status', 'closed')->count() }}</span>
+    <div class="panel-section">
+        <div class="panel-section-head">
+            <div>
+                <h3>Destek ve İletişim</h3>
+                <p>Öğretmen taleplerini gönderir, admin inceleyip cevaplar.</p>
+            </div>
+            <div class="sr-meta">
+                <span class="sr-badge status-open">Açık: {{ $requests->where('status', 'open')->count() }}</span>
+                <span class="sr-badge status-answered">Cevaplı: {{ $requests->where('status', 'answered')->count() }}</span>
+                <span class="sr-badge status-closed">Kapalı: {{ $requests->where('status', 'closed')->count() }}</span>
+            </div>
         </div>
     </div>
 
         <div class="sr-grid">
-        <aside class="sr-card">
+        <aside class="panel-section">
+            <div class="panel-section-head" style="margin-bottom:12px">
+                <div>
+                    <h3>Talep Listesi</h3>
+                    <p>Konuya veya duruma göre filtreleyin.</p>
+                </div>
+            </div>
             <form method="GET" class="sr-stack">
                 <input class="sr-input" type="search" name="q" value="{{ $search ?? '' }}" placeholder="Öğretmen, konu, tarih">
                 <select class="sr-select" name="status">
@@ -135,10 +149,10 @@
         </aside>
 
         <main class="sr-center">
-            <div class="sr-card">
+            <div class="panel-section">
                 @if($isTeacher)
-                    <details style="border:1px solid #dbe5f2;border-radius:16px;padding:14px;background:#f8fbff" open>
-                        <summary style="cursor:pointer;font-size:18px;font-weight:900;list-style:none">Yeni Talep Oluştur</summary>
+                    <details style="border:1px solid var(--line,#E4E1D8);border-radius:14px;padding:14px;background:var(--surface,#fff)" open>
+                        <summary style="cursor:pointer;font-size:16px;font-weight:700;font-family:var(--font-display);list-style:none;color:var(--ink,#16182B)">Yeni Talep Oluştur</summary>
                         <form method="POST" action="{{ route('support-requests.store') }}" enctype="multipart/form-data" class="sr-stack" style="margin-top:14px">
                             @csrf
                             <div class="sr-field">

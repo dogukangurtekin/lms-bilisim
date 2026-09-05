@@ -2,51 +2,50 @@
 @section('title','Günlük Çalışmalar Yönetimi')
 @section('content')
 <style>
+  .panel-section{border:1px solid var(--line,#E4E1D8);border-radius:14px;padding:16px;margin-bottom:16px;background:var(--surface,#fff)}
+  .panel-section:last-child{margin-bottom:0}
+  .panel-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:0}
+  .panel-section-head h3{margin:0;font-family:var(--font-display);font-size:15px;color:var(--ink,#16182B)}
+  .panel-section-head p{margin:2px 0 0;font-size:12.5px;color:var(--ink-soft,#585A72)}
   .cam-wrap{max-width:1280px;margin:0 auto;padding:16px}
-  .cam-hero{border-radius:18px;padding:18px 20px;color:#fff;background:linear-gradient(120deg,#0ea5e9,#2563eb);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
   .cam-stack{display:grid;gap:16px;margin-top:16px}
-  .cam-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;min-width:0}
-  .cam-title{font-size:20px;font-weight:800}
-  .cam-inp,.cam-sel,.cam-txt{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;box-sizing:border-box;background:#fff}
+  .cam-card{background:var(--surface,#fff);border:1px solid var(--line,#E4E1D8);border-radius:14px;padding:16px;min-width:0}
+  .cam-title{font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--ink,#16182B)}
+  .cam-inp,.cam-sel,.cam-txt{width:100%;border:1px solid var(--line,#E4E1D8);border-radius:10px;padding:11px 12px;box-sizing:border-box;background:var(--surface,#fff);color:var(--ink,#16182B)}
   .cam-txt{min-height:92px;resize:vertical}
   .cam-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .cam-btn{border:0;border-radius:12px;padding:11px 14px;color:#fff;font-weight:700;background:linear-gradient(90deg,#2563eb,#0ea5e9)}
+  .cam-btn{border:1px solid var(--violet,#5B3DF5);border-radius:8px;padding:11px 14px;color:#fff;font-weight:600;font-family:var(--font-display);background:var(--violet,#5B3DF5)}
   .cam-btn,
   .btn-lite{
     cursor:pointer;
-    transition:transform .15s ease, filter .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease, border-color .15s ease;
+    transition:filter .15s ease;
   }
   .cam-btn:hover,
   .btn-lite:hover{
-    filter:brightness(.97);
-    transform:translateY(-1px);
-    box-shadow:0 10px 22px rgba(15,23,42,.10);
+    filter:brightness(.9);
   }
-  .cam-item{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;min-width:0}
+  .cam-item{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line,#E4E1D8);border-radius:12px;padding:10px 12px;min-width:0}
   .cam-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.95fr);gap:16px;align-items:start;margin-top:16px}
-  .btn-lite{padding:8px 10px;border-radius:10px;border:1px solid #cbd5e1;background:#fff}
-  .icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid #cbd5e1;background:#fff;flex:0 0 auto}
+  .btn-lite{padding:8px 10px;border-radius:8px;border:1px solid var(--line,#E4E1D8);background:var(--surface,#fff);color:var(--ink,#16182B);font-family:var(--font-display)}
+  .icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--line,#E4E1D8);background:var(--surface,#fff);flex:0 0 auto}
   .icon-btn svg{width:20px;height:20px;display:block}
-  .icon-btn.edit{color:#2563eb}.icon-btn.delete{color:#dc2626;border-color:#fecaca}
+  .icon-btn.edit{color:var(--violet,#5B3DF5)}.icon-btn.delete{color:var(--signal,#FF7A45);border-color:var(--signal-tint,#FFEEE4)}
   .q-stack{display:grid;gap:10px}
-  .qcard{border:1px solid #dbeafe;border-radius:12px;padding:12px;background:#f8fbff}
+  .qcard{border:1px solid var(--line,#E4E1D8);border-radius:12px;padding:12px;background:var(--violet-tint,#EEEBFD)}
   .qgrid{display:grid;grid-template-columns:1.2fr .7fr auto;gap:8px}
   .activity-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
   .bulk-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .bulk-modal{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.55)}
-  .bulk-modal__panel{width:min(96vw,1200px);max-height:92vh;overflow:hidden;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:14px}
-  .bulk-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:800;cursor:pointer}
+  .bulk-modal__panel{width:min(96vw,1200px);max-height:92vh;overflow:hidden;background:var(--surface,#fff);border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:14px}
+  .bulk-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid var(--line,#E4E1D8);background:var(--surface,#fff);font-weight:700;font-family:var(--font-display);cursor:pointer}
   @media(max-width: 900px){
     .cam-row,.qgrid{grid-template-columns:1fr}
   }
   @media(max-width: 768px){
     .cam-wrap{padding:10px}
-    .cam-hero{padding:14px}
-    .cam-hero > div{width:100%}
-    .cam-hero > div:last-child{justify-content:flex-start}
     .cam-layout{grid-template-columns:1fr;gap:12px}
     .cam-card{padding:14px}
-    .cam-title{font-size:18px}
+    .cam-title{font-size:15px}
     .cam-item{align-items:flex-start}
     .activity-actions{justify-content:flex-start}
     .bulk-modal{padding:10px}
@@ -56,8 +55,7 @@
     .bulk-modal__panel form button{flex:1 1 auto}
   }
   @media(max-width: 560px){
-    .cam-hero h1{font-size:22px!important;line-height:1.2}
-    .cam-hero a,.cam-hero button{width:100%;justify-content:center}
+    .top a,.top button{width:100%;justify-content:center}
     .cam-row{gap:8px}
     .cam-item{padding:12px}
     .cam-item > div:first-child{max-width:100%}
@@ -84,22 +82,22 @@
 @endphp
 
 <div class="cam-wrap" data-question-builder data-initial-questions='@json($initialQuestions)'>
-  <div class="cam-hero">
+  <div class="top" style="flex-wrap:wrap;gap:12px">
     <div>
-      <div style="font-size:13px">Admin / Öğretmen Paneli</div>
-      <h1 style="margin:4px 0 0;font-size:30px">Günlük Çalışmalar Yönetimi</h1>
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft,#585A72)">Admin / Öğretmen Paneli</div>
+      <h1 style="margin:4px 0 0">Günlük Çalışmalar Yönetimi</h1>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
       @if(auth()->user()?->hasRole('admin'))
-        <a class="btn-lite" href="{{ route('coding.activities.export.all') }}" style="height:44px;padding:0 16px;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;">Tümünü İndir</a>
+        <a class="btn-lite" href="{{ route('coding.activities.export.all') }}" style="height:44px;padding:0 16px;text-decoration:none;display:inline-flex;align-items:center;">Tümünü İndir</a>
         <form id="daily-import-form" method="POST" action="{{ route('coding.activities.import') }}" enctype="multipart/form-data" style="display:inline-flex;align-items:center;gap:8px;">
           @csrf
           <input id="daily-import-input" type="file" name="activity_json[]" accept=".json,.txt,application/json,text/plain" multiple style="display:none">
-          <button type="button" id="daily-import-open" class="btn-lite" style="height:44px;padding:0 16px;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;font-weight:800;">Yükle</button>
+          <button type="button" id="daily-import-open" class="btn-lite" style="height:44px;padding:0 16px;">Yükle</button>
         </form>
       @endif
       @if($isAdmin || $isTeacher)
-        <button type="button" class="cam-btn" id="daily-exercise-assign-open" style="height:44px;background:#f59e0b;">Egzersiz Ata</button>
+        <button type="button" class="cam-btn" id="daily-exercise-assign-open" style="height:44px;background:var(--signal,#FF7A45);border-color:var(--signal,#FF7A45);">Egzersiz Ata</button>
       @endif
     </div>
   </div>
@@ -377,9 +375,9 @@
     if (currentTab === 'class') autoSelectActivitiesForClasses();
     bulkTabButtons.forEach((button) => {
       const isActive = (button.dataset.dailyTab || 'teacher') === currentTab;
-      button.style.background = isActive ? '#2563eb' : '#fff';
+      button.style.background = isActive ? '#5B3DF5' : '#fff';
       button.style.color = isActive ? '#fff' : '#111827';
-      button.style.borderColor = isActive ? '#2563eb' : '#cbd5e1';
+      button.style.borderColor = isActive ? '#5B3DF5' : '#E4E1D8';
     });
     if (bulkModal) bulkModal.style.display = 'flex';
   };
