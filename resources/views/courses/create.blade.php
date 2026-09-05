@@ -2,15 +2,12 @@
 @section('title', isset($parentCourse) && $parentCourse ? 'Alt Ders Oluşturucu' : 'Ders Oluşturucu')
 @section('content')
 <div class="top">
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:flex-end">
-            @if(!empty($parentCourse))
-                <div class="badge" style="display:inline-flex;gap:8px;align-items:center">
-                    Ana ders: <strong>{{ $parentCourse->name }}</strong>
-                </div>
-            @endif
+    <h1>{{ !empty($parentCourse) ? 'Alt Ders Oluşturucu' : 'Ders Oluşturucu' }}</h1>
+    @if(!empty($parentCourse))
+        <div class="badge" style="display:inline-flex;gap:8px;align-items:center">
+            Ana ders: <strong>{{ $parentCourse->name }}</strong>
         </div>
-    </div>
+    @endif
 </div>
 
 @if(!empty($parentCourse))
@@ -21,13 +18,13 @@
 </form>
 
 <div id="sub-course-import-progress-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:4000;">
-    <div style="width:min(92vw,420px);background:#fff;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.2);text-align:center;">
-        <h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:#111827;">Ders Yükleniyor</h3>
-        <p style="margin:0 0 16px;color:#64748b;font-size:13px;">Lütfen bekleyin, dosyanız sunucuya aktarılıyor...</p>
-        <div style="height:14px;border-radius:999px;background:#e2e8f0;overflow:hidden;">
-            <div id="sub-course-import-progress-bar" style="height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#22c55e);transition:width .15s ease;"></div>
+    <div style="width:min(92vw,420px);background:var(--surface,#fff);border:1px solid var(--line,#E4E1D8);border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.2);text-align:center;">
+        <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--ink,#16182B);">Ders Yükleniyor</h3>
+        <p style="margin:0 0 16px;color:var(--ink-soft,#585A72);font-size:13px;">Lütfen bekleyin, dosyanız sunucuya aktarılıyor...</p>
+        <div style="height:14px;border-radius:999px;background:var(--paper,#F7F6F2);overflow:hidden;">
+            <div id="sub-course-import-progress-bar" style="height:100%;width:0%;border-radius:999px;background:var(--violet,#5B3DF5);transition:width .15s ease;"></div>
         </div>
-        <div id="sub-course-import-progress-text" style="margin-top:10px;font-weight:700;color:#2563eb;font-size:14px;">%0</div>
+        <div id="sub-course-import-progress-text" style="margin-top:10px;font-weight:700;color:var(--violet,#5B3DF5);font-family:var(--font-display);font-size:14px;">%0</div>
     </div>
 </div>
 @endif
