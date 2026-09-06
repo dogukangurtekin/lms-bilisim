@@ -1,6 +1,11 @@
 .slide-theme, .slide-theme *{box-sizing:border-box}
 .slide-theme{
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Slaytlar her zaman kendi açık temasıyla gösterilir; cihazın/Safari'nin
+       sistem karanlık modu bu bileşeni etkilememeli (aksi halde bazı kartların
+       arka planı açık kalırken yazı rengi karanlık moda göre beyaza dönüp
+       okunaksız hale geliyordu). */
+    color-scheme: light only;
     background:
         radial-gradient(circle at top left, rgba(37,99,235,.16), transparent 32%),
         radial-gradient(circle at top right, rgba(15,23,42,.10), transparent 28%),
@@ -194,28 +199,7 @@
         font-size:16px;
     }
 }
-@media (prefers-color-scheme: dark){
-    .slide-theme{
-        background:
-            radial-gradient(circle at top left, rgba(56,189,248,.10), transparent 32%),
-            radial-gradient(circle at top right, rgba(255,255,255,.06), transparent 30%),
-            linear-gradient(180deg, #07111f 0%, #0f172a 100%);
-        color:#e5eefb;
-        --theme-border:rgba(125,211,252,.16);
-        --theme-surface:rgba(15,23,42,.72);
-        --theme-card:rgba(15,23,42,.9);
-    }
-    .slide-theme :where(h1,h2,h3,h4,h5,h6){color:#f8fafc}
-    .slide-theme :where(p,li,div,span){color:#cbd5e1}
-    .slide-theme :where(strong,b){color:inherit}
-    .slide-theme :where(code,pre,kbd,samp){background:#020617;color:#f8fafc}
-    .slide-theme :where(table){background:rgba(15,23,42,.88)}
-    .slide-theme :where(th){background:linear-gradient(180deg,#1e293b,#0f172a);color:#f8fafc}
-    .slide-theme :where(td,th){border-color:rgba(125,211,252,.14)}
-    .slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right,.sqz-qcard,.lesson-card){background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.86))}
-    .slide-theme :where(.lesson-hero-card){background:linear-gradient(135deg,rgba(15,23,42,.92) 0%,rgba(2,6,23,.86) 100%);border-color:rgba(125,211,252,.16)}
-    .slide-theme :where(.lesson-code-frame){background:#0b1220;border-color:rgba(125,211,252,.16)}
-    .slide-theme :where(.glass){background:rgba(15,23,42,.6)}
-    .slide-theme :where(.lesson-slide-subtitle){color:#cbd5e1}
-    .slide-theme :where(.lesson-hero-card,.lesson-card){background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.86))}
-}
+/* Not: .slide-theme bilerek sistem karanlık moduna göre değişmiyor (yukarıdaki
+   color-scheme:light only kuralına bakın) — slaytlar her cihazda aynı, tutarlı
+   açık temayla gösteriliyor, böylece bazı kartların açık kalan arka planı ile
+   karanlık moda göre beyazlaşan yazı rengi arasında okunaksızlık oluşmuyor. */
