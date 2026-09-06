@@ -389,9 +389,15 @@
     </section>
 
     <div class="dashboard-actions-bar">
-        <button type="button" class="btn btn-secondary" data-open-widget-editor>Widgetleri Düzenle</button>
-        <button type="button" class="btn btn-warning" id="dashboard-save-btn" hidden>Düzeni Kaydet</button>
-        <button type="button" class="btn btn-secondary" id="dashboard-close-edit-btn" hidden>Düzenlemeyi Kapat</button>
+        <button type="button" class="dash-edit-btn dash-edit-btn--open" data-open-widget-editor>
+            <span class="dash-edit-btn-icon">✎</span> Widgetleri Düzenle
+        </button>
+        <button type="button" class="dash-edit-btn dash-edit-btn--save" id="dashboard-save-btn" hidden>
+            <span class="dash-edit-btn-icon">💾</span> Düzeni Kaydet
+        </button>
+        <button type="button" class="dash-edit-btn dash-edit-btn--close" id="dashboard-close-edit-btn" hidden>
+            <span class="dash-edit-btn-icon">✕</span> Düzenlemeyi Kapat
+        </button>
     </div>
 
     <aside class="widget-library-panel" id="widget-library-panel" aria-hidden="true">
@@ -498,6 +504,34 @@
     const allWidgetNodes = () => Array.from(grid.querySelectorAll('.dashboard-widget'));
     const sidebarWidgetNodes = () => Array.from(sidebarGrid?.querySelectorAll('.dashboard-widget') || []);
     const zoneNode = (zone) => zone === 'sidebar' ? sidebarGrid : grid;
+
+    // FLIP tekniği: yeniden diz(il)me sırasında widget'lar birbirinin üstüne
+    // "zıplamak" yerine eski konumundan yeni konumuna yumuşakça kayar.
+    const captureRects = () => {
+        const map = new Map();
+        [...allWidgetNodes(), ...sidebarWidgetNodes()].forEach((card) => {
+            if (card.style.display !== 'none') map.set(card, card.getBoundingClientRect());
+        });
+        return map;
+    };
+    const playFlip = (firstRects) => {
+        [...allWidgetNodes(), ...sidebarWidgetNodes()].forEach((card) => {
+            const first = firstRects.get(card);
+            if (!first || card.style.display === 'none') return;
+            const last = card.getBoundingClientRect();
+            const dx = first.left - last.left;
+            const dy = first.top - last.top;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+            card.style.transition = 'none';
+            card.style.transform = `translate(${dx}px, ${dy}px)`;
+            void card.offsetWidth;
+            requestAnimationFrame(() => {
+                card.style.transition = 'transform .38s cubic-bezier(.22,.9,.3,1.08)';
+                card.style.transform = '';
+                setTimeout(() => { card.style.transition = ''; }, 420);
+            });
+        });
+    };
     const applyMasonrySpans = () => {
         if (!grid) return;
         const rowHeight = 10;
@@ -522,6 +556,7 @@
             renderLibrary();
             return;
         }
+        const flipFirstRects = captureRects();
         const cards = Object.entries(state).sort((a, b) => a[1].order - b[1].order);
         const gridOrder = [];
         const sidebarOrder = [];
@@ -542,7 +577,7 @@
             card.draggable = false;
             card.querySelectorAll('.widget-toggle').forEach((btn) => {
                 btn.disabled = !editMode;
-                btn.textContent = editMode ? '-' : '';
+                btn.style.display = editMode ? 'inline-flex' : 'none';
             });
             const handle = card.querySelector('.widget-resize-handle');
             if (handle) handle.style.display = editMode ? 'block' : 'none';
@@ -582,7 +617,10 @@
         requestAnimationFrame(() => {
             applyMasonrySpans();
             requestAnimationFrame(applyMasonrySpans);
-            setTimeout(applyMasonrySpans, 120);
+            setTimeout(() => {
+                applyMasonrySpans();
+                playFlip(flipFirstRects);
+            }, 120);
         });
     };
 
@@ -628,11 +666,27 @@
             }
         }
     };
-    const moveDragPlaceholder = (target, clientX) => {
+    const moveDragPlaceholder = (target, clientX, clientY) => {
         const container = target.closest('#dashboard-widget-sidebar-grid') ? sidebarGrid : grid;
         if (!dragPlaceholder || !container || !dragSource || !target || target === dragSource) return;
         const rect = target.getBoundingClientRect();
-        const before = clientX < rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        let before;
+        if (container === sidebarGrid) {
+            // Kenar çubuğu tek sütunlu; konum sadece dikey eksene göre belirlenir.
+            before = clientY < centerY;
+        } else {
+            // Ana grid çok sütunlu ve satırlar değişken yükseklikte (masonry);
+            // imleç hedefin belirgin şekilde üstünde/altındaysa dikey, aynı
+            // satırdaysa yatay eksene göre karar ver. Böylece "önce/sonra"
+            // kararı gerçek konuma göre tutarlı olur.
+            const dy = clientY - centerY;
+            if (Math.abs(dy) > rect.height * 0.32) {
+                before = dy < 0;
+            } else {
+                before = clientX < rect.left + rect.width / 2;
+            }
+        }
         container.insertBefore(dragPlaceholder, before ? target : target.nextSibling);
         updateZoneFromContainer(container);
     };
@@ -658,7 +712,7 @@
         if (!target || target === dragSource || target.classList.contains('widget-drag-placeholder')) return;
         shell.querySelectorAll('.widget-drop-active').forEach((el) => el.classList.remove('widget-drop-active'));
         target.classList.add('widget-drop-active');
-        moveDragPlaceholder(target, e.clientX);
+        moveDragPlaceholder(target, e.clientX, e.clientY);
     });
     shell.addEventListener('pointerup', () => {
         if (!editMode || !dragSource) return;
@@ -738,6 +792,7 @@
         libraryPanel?.setAttribute('aria-hidden', 'false');
     });
 
+    let resizeBadge = null;
     const startResize = (e) => {
         if (!editMode) return;
         const handle = e.target.closest('.widget-resize-handle');
@@ -746,7 +801,17 @@
         if (!resizeTarget) return;
         startX = e.clientX;
         startWidth = resizeTarget.getBoundingClientRect().width;
+        resizeTarget.classList.add('is-resizing');
+        resizeBadge = document.createElement('div');
+        resizeBadge.className = 'widget-resize-badge';
+        document.body.appendChild(resizeBadge);
         e.preventDefault();
+    };
+    const positionResizeBadge = () => {
+        if (!resizeBadge || !resizeTarget) return;
+        const rect = resizeTarget.getBoundingClientRect();
+        resizeBadge.style.left = (rect.left + rect.width / 2) + 'px';
+        resizeBadge.style.top = (rect.top + rect.height / 2) + 'px';
     };
     const moveResize = (e) => {
         if (!editMode || !resizeTarget || !grid) return;
@@ -757,9 +822,16 @@
         const key = resizeTarget.dataset.widgetKey;
         state[key].span = span;
         dirty = true;
+        if (resizeBadge) resizeBadge.textContent = span + ' / 12 sütun';
         render();
+        positionResizeBadge();
     };
-    const endResize = () => { resizeTarget = null; };
+    const endResize = () => {
+        resizeTarget?.classList.remove('is-resizing');
+        resizeTarget = null;
+        resizeBadge?.remove();
+        resizeBadge = null;
+    };
     shell.addEventListener('mousedown', startResize);
     window.addEventListener('mousemove', moveResize);
     window.addEventListener('mouseup', endResize);

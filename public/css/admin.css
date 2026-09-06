@@ -524,7 +524,26 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .notification-recent-item p{margin:0;font-size:13px;color:#334155;line-height:1.45;white-space:pre-line}
 
 .dashboard-shell{position:relative}
-.dashboard-actions-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;padding:0 0 18px}
+.dashboard-actions-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;padding:0 0 18px;position:sticky;bottom:14px;z-index:40}
+.dash-edit-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  height:44px;padding:0 18px;
+  border:1px solid rgba(255,255,255,.5);
+  border-radius:999px;
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;font-size:13.5px;
+  color:#fff;
+  cursor:pointer;
+  backdrop-filter:blur(10px);
+  box-shadow:0 14px 30px rgba(15,23,42,.18);
+  transition:transform .15s,box-shadow .15s,filter .15s;
+}
+.dash-edit-btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.dash-edit-btn:active{transform:translateY(0)}
+.dash-edit-btn-icon{font-size:14px;line-height:1}
+.dash-edit-btn--open{background:linear-gradient(135deg,#5B3DF5,#8B5CF6);border-color:rgba(139,92,246,.5)}
+.dash-edit-btn--save{background:linear-gradient(135deg,#17c98a,#0EA57A);border-color:rgba(14,165,122,.5)}
+.dash-edit-btn--close{background:linear-gradient(135deg,#475569,#1e293b);border-color:rgba(30,41,59,.5)}
 .widget-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;align-items:start}
 .dashboard-widget{position:relative;grid-column:span 12;min-width:0;overflow:hidden;user-select:none}
 .dashboard-widget.is-hidden{display:none}
@@ -540,32 +559,79 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .widget-span-10{grid-column:span 10}
 .widget-span-11{grid-column:span 11}
 .widget-span-12{grid-column:span 12}
+/* ---- Dashboard widget düzenleme sistemi (v2): daha görsel, daha net konum tespiti ---- */
 .dashboard-shell.is-editing .dashboard-widget{
-  animation:widget-jiggle 2.8s ease-in-out infinite;
+  animation:widget-jiggle-v2 .34s ease-in-out infinite alternate;
   transform-origin:center center;
   cursor:grab;
+  box-shadow:0 0 0 2px rgba(91,61,245,.16),0 14px 36px rgba(15,23,42,.06);
 }
-.dashboard-widget.is-dragging{opacity:.72;transform:scale(.99)}
-.widget-drag-placeholder{border:2px dashed #93c5fd;background:rgba(219,234,254,.45);box-shadow:none;outline:2px solid rgba(59,130,246,.18)}
-.widget-drag-placeholder::after{content:'Buraya bırak';position:absolute;inset:0;display:grid;place-items:center;color:#2563eb;font-size:12px;font-weight:700}
-.widget-drop-active{outline:2px solid #60a5fa;outline-offset:2px}
-@keyframes widget-jiggle{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-0.5px)}
+.dashboard-shell.is-editing .dashboard-widget:nth-child(even){animation-delay:-.17s}
+.dashboard-shell.is-editing .dashboard-widget::before{
+  content:'⠿';
+  position:absolute;
+  top:8px;left:8px;
+  z-index:5;
+  width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;
+  background:rgba(91,61,245,.92);
+  color:#fff;
+  font-size:14px;
+  line-height:1;
+  box-shadow:0 4px 10px rgba(91,61,245,.35);
+  pointer-events:none;
 }
+@keyframes widget-jiggle-v2{
+  0%{transform:rotate(-.6deg)}
+  100%{transform:rotate(.6deg)}
+}
+.dashboard-widget.is-dragging{
+  opacity:.55;
+  animation:none !important;
+  box-shadow:0 0 0 2px rgba(91,61,245,.35),0 24px 48px rgba(91,61,245,.22) !important;
+  z-index:3;
+}
+.widget-drag-placeholder{
+  border:2.5px dashed #8b5cf6;
+  border-radius:20px;
+  background:linear-gradient(135deg,rgba(139,92,246,.10),rgba(56,189,248,.08));
+  box-shadow:none;
+  outline:none;
+  animation:widget-drop-pulse 1.1s ease-in-out infinite;
+}
+.widget-drag-placeholder::after{
+  content:'✋ Buraya bırak';
+  position:absolute;inset:0;
+  display:grid;place-items:center;
+  color:#7c3aed;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+@keyframes widget-drop-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,.18)}
+  50%{box-shadow:0 0 0 8px rgba(139,92,246,0)}
+}
+.widget-drop-active{outline:2px solid #a78bfa;outline-offset:3px;border-radius:24px}
 .widget-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
 .widget-head strong{display:block;font-size:15px;line-height:1.2}
 .widget-head span{display:block;margin-top:2px;color:#64748b;font-size:12px}
 .widget-toggle{
-  border:1px solid #cbd5e1;
-  background:#fff;
-  color:#0f172a;
+  position:relative;
+  width:26px;height:26px;
+  padding:0;
+  border:0;
+  background:rgba(15,23,42,.08);
+  color:#475569;
   border-radius:999px;
-  padding:6px 10px;
-  font-size:12px;
-  font-weight:700;
+  font-size:0;
   cursor:pointer;
+  flex:0 0 auto;
+  transition:background .15s,color .15s,transform .15s;
 }
+.widget-toggle::before{content:'✕';font-size:12px;font-weight:800;line-height:1}
+.widget-toggle:hover{background:#fee2e2;color:#dc2626;transform:scale(1.08)}
 .widget-toggle-remove{
   width:28px;
   height:28px;
@@ -582,13 +648,31 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   position:absolute;
   right:8px;
   bottom:8px;
-  width:22px;
-  height:22px;
-  border-radius:8px;
-  background:linear-gradient(135deg,#f97316,#ea580c);
-  box-shadow:0 6px 16px rgba(249,115,22,.28);
+  width:26px;
+  height:26px;
+  border-radius:9px;
+  background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+  box-shadow:0 6px 16px rgba(109,40,217,.32);
   cursor:se-resize;
   display:none;
+  transition:transform .15s,box-shadow .15s;
+}
+.widget-resize-handle:hover{transform:scale(1.1);box-shadow:0 8px 20px rgba(109,40,217,.4)}
+.dashboard-widget.is-resizing{box-shadow:0 0 0 2px #8b5cf6,0 20px 40px rgba(109,40,217,.22) !important}
+.widget-resize-badge{
+  position:fixed;
+  z-index:9999;
+  transform:translate(-50%,-50%);
+  padding:6px 12px;
+  border-radius:999px;
+  background:#1e1b3a;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+  font-family:'Space Grotesk',sans-serif;
+  box-shadow:0 12px 26px rgba(15,23,42,.32);
+  pointer-events:none;
+  white-space:nowrap;
 }
 .dashboard-shell.is-editing .widget-resize-handle{display:block}
 .widget-kpi{padding:12px;border-radius:16px;background:linear-gradient(135deg,#f8fbff,#fff);min-height:64px}
@@ -1004,8 +1088,8 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .widget-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .widget-head strong{display:block;font-size:14px;color:#172033}
 .widget-head span{display:block;font-size:11px;color:#74839b;margin-top:3px}
-.widget-toggle{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:999px;border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:22px;line-height:1;cursor:pointer}
-.is-editing .widget-toggle{display:inline-flex}
+/* Not: .widget-toggle görünümü artık yukarıda (dashboard widget düzenleme
+   sistemi v2) tanımlı; buradaki eski çakışan kopya kaldırıldı. */
 .metric-card{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);border:1px solid #edf2f8;border-radius:18px;padding:16px 18px}
 .metric-card strong{font-size:28px;line-height:1;color:#162033}
 .metric-card span{font-size:15px;color:#74839b;font-weight:700}
@@ -1035,17 +1119,18 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .sidebar-placeholder-card span{font-size:12px;color:#64748b;line-height:1.4}
 .teacher-top10-rank{width:34px;height:34px;border-radius:999px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:800;color:#334155}
 .teacher-top10-xp{font-weight:800;color:#0f766e}
-.dashboard-actions-bar{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:6px}
-.widget-library-panel{position:fixed;left:50%;bottom:18px;transform:translate(-50%,120%);width:min(920px,calc(100vw - 24px));max-height:min(48vh,440px);overflow:auto;background:#fff;border:1px solid #d9e4f2;border-radius:24px;box-shadow:0 20px 60px rgba(15,23,42,.14);padding:16px;transition:transform .22s ease;z-index:120}
+/* Not: .dashboard-actions-bar görünümü artık yukarıda tanımlı; eski çakışan kopya kaldırıldı. */
+.widget-library-panel{position:fixed;left:50%;bottom:18px;transform:translate(-50%,120%);width:min(920px,calc(100vw - 24px));max-height:min(48vh,440px);overflow:auto;background:#fff;border:1px solid #d9e4f2;border-top:3px solid #8B5CF6;border-radius:24px;box-shadow:0 24px 64px rgba(91,61,245,.16);padding:16px;transition:transform .28s cubic-bezier(.22,.9,.3,1.05);z-index:120}
 .widget-library-panel.collapsed{transform:translate(-50%,calc(100% + 16px)) !important}
 .widget-library-panel.fab-only{transform:translate(-50%,calc(100% - 40px)) !important;overflow:visible}
 .widget-library-panel.open{transform:translate(-50%,0)}
 .widget-library-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;cursor:grab}
 .widget-library-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-.widget-library-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-.widget-library-head strong{display:block;font-size:14px;color:#162033}
+.widget-library-head strong{display:flex;align-items:center;gap:6px;font-size:14px;color:#162033}
+.widget-library-head strong::before{content:'🧩';font-size:15px}
 .widget-library-head span{display:block;font-size:11px;color:#74839b;margin-top:4px}
-.widget-library-close,.widget-library-minimize{width:34px;height:34px;border-radius:999px;border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:20px;line-height:1;cursor:pointer;flex:0 0 auto}
+.widget-library-close,.widget-library-minimize{width:34px;height:34px;border-radius:999px;border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:20px;line-height:1;cursor:pointer;flex:0 0 auto;transition:transform .15s}
+.widget-library-close:hover,.widget-library-minimize:hover{transform:scale(1.08)}
 .widget-library-fab{
   position:absolute;
   left:50%;
@@ -1068,15 +1153,15 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 .widget-library-panel.fab-only .widget-library-head,
 .widget-library-panel.fab-only .widget-library-list{display:none}
 .widget-library-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;max-height:calc(48vh - 84px);overflow:auto;scrollbar-width:thin}
-.widget-library-item{width:100%;text-align:left;border:1px solid #d9e4f2;background:#f8fbff;border-radius:18px;padding:12px;cursor:pointer}
+.widget-library-item{width:100%;text-align:left;border:1px solid #d9e4f2;background:#f8fbff;border-radius:18px;padding:12px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.widget-library-item:hover{transform:translateY(-2px);border-color:#8B5CF6;box-shadow:0 10px 22px rgba(91,61,245,.14)}
 .widget-library-item strong{display:block;font-size:14px;color:#162033}
-.widget-library-item span{display:block;margin-top:4px;color:#64748b;font-size:11px}
+.widget-library-item span{display:block;margin-top:4px;color:#8B5CF6;font-size:11px;font-weight:700}
 .widget-library-empty{margin:0;color:#64748b}
 .widget-span-1{grid-column:span 1}.widget-span-2{grid-column:span 2}.widget-span-3{grid-column:span 3}.widget-span-4{grid-column:span 4}.widget-span-5{grid-column:span 5}.widget-span-6{grid-column:span 6}.widget-span-7{grid-column:span 7}.widget-span-8{grid-column:span 8}.widget-span-9{grid-column:span 9}.widget-span-10{grid-column:span 10}.widget-span-11{grid-column:span 11}.widget-span-12{grid-column:span 12}
-.widget-resize-handle{display:none;position:absolute;right:10px;bottom:10px;width:18px;height:18px;border-radius:4px;background:linear-gradient(135deg,#f97316,#fb923c);box-shadow:0 8px 18px rgba(249,115,22,.28);cursor:nwse-resize}
-.widget-resize-handle::before{content:'';position:absolute;inset:4px;border-right:2px solid rgba(255,255,255,.9);border-bottom:2px solid rgba(255,255,255,.9);border-radius:1px}
-.is-editing .dashboard-widget{animation:widget-jiggle 0.45s infinite alternate}
-@keyframes widget-jiggle{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+/* Not: .widget-resize-handle ve düzenleme modu animasyonu artık yukarıda
+   (dashboard widget düzenleme sistemi v2 bloğunda) tanımlı; burada eskiden
+   var olan çakışan/ölü kopyaları kaldırıldı. */
 @media (min-width: 1181px){
   .dashboard-main-layout{
     grid-template-columns:minmax(0,1fr) clamp(260px,19vw,340px);
