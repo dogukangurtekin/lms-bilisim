@@ -213,5 +213,9 @@
     .slide-theme :where(th){background:linear-gradient(180deg,#1e293b,#0f172a);color:#f8fafc}
     .slide-theme :where(td,th){border-color:rgba(125,211,252,.14)}
     .slide-theme :where(.card,.sqz-wrap,.dc-q,.dc-review-card,.builder-panel,.lesson-builder-top,.builder-left,.builder-center,.builder-right,.sqz-qcard,.lesson-card){background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.86))}
+    .slide-theme :where(.lesson-hero-card){background:linear-gradient(135deg,rgba(15,23,42,.92) 0%,rgba(2,6,23,.86) 100%);border-color:rgba(125,211,252,.16)}
+    .slide-theme :where(.lesson-code-frame){background:#0b1220;border-color:rgba(125,211,252,.16)}
+    .slide-theme :where(.glass){background:rgba(15,23,42,.6)}
+    .slide-theme :where(.lesson-slide-subtitle){color:#cbd5e1}
     .slide-theme :where(.lesson-hero-card,.lesson-card){background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.86))}
 }
