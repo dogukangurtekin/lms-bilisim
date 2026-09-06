@@ -45,11 +45,22 @@
             <div id="bgBlockPanel" class="bg-block-panel"></div>
 
             <div id="bgCodePanel" class="bg-code-panel" hidden>
-                <div class="bg-code-head">.bahce {</div>
-                <textarea id="bgCodeArea" class="bg-code-area" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
-                <div class="bg-code-foot">}</div>
+                <div class="bg-code-titlebar">
+                    <span class="bg-code-dot bg-code-dot--red"></span>
+                    <span class="bg-code-dot bg-code-dot--yellow"></span>
+                    <span class="bg-code-dot bg-code-dot--green"></span>
+                    <span class="bg-code-filename">bahce.css</span>
+                </div>
+                <div class="bg-code-body">
+                    <div id="bgCodeGutter" class="bg-code-gutter" aria-hidden="true">1</div>
+                    <div class="bg-code-editor">
+                        <div class="bg-code-head">.bahce {</div>
+                        <textarea id="bgCodeArea" class="bg-code-area" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+                        <div class="bg-code-foot">}</div>
+                    </div>
+                </div>
                 <div class="bg-code-actions">
-                    <button id="bgRunBtn" class="bg-btn bg-btn-run" type="button">▶ Çalıştır</button>
+                    <button id="bgRunBtn" class="bg-btn bg-btn-run" type="button"><span class="bg-run-icon">▶</span> Çalıştır</button>
                     <span id="bgRunStatus" class="bg-run-status"></span>
                 </div>
             </div>
@@ -75,6 +86,25 @@
 
 <!-- Gizli referans bahçe: dogru cozumun hedef konumlarini hesaplamak icin kullanilir, ekranda gorunmez -->
 <div id="bgRefGarden" class="bg-garden bg-garden-ref" aria-hidden="true"></div>
+
+<div id="bgIntroOverlay" class="bg-intro-overlay">
+    <div class="bg-intro-card">
+        <div class="bg-intro-bee">🐝</div>
+        <h2 class="bg-intro-title">Arı Bahçesine Hoş Geldin!</h2>
+        <p class="bg-intro-text">
+            Solda çiçeğe konması gereken görevi göreceksin. <strong>Blok Kod</strong> sekmesinde
+            renkli blokları sürükleyip boşluklara bırakarak, <strong>Kod Yaz</strong> sekmesinde ise
+            gerçek koda benzer kurallar yazarak arıya komut verirsin. Doğru komutu verdiğinde arı
+            uçarak çiçeğin üstüne konar!
+        </p>
+        <ul class="bg-intro-steps">
+            <li><span class="bg-intro-step-num">1</span> Sağdaki görevi oku.</li>
+            <li><span class="bg-intro-step-num">2</span> Soldan bir blok sürükle ya da kodu yaz.</li>
+            <li><span class="bg-intro-step-num">3</span> Arının çiçeğe konmasını izle 🌸</li>
+        </ul>
+        <button id="bgIntroStartBtn" class="bg-intro-start-btn" type="button">Anladım, Başla! 🚀</button>
+    </div>
+</div>
 
 <script src="./app.js"></script>
 </body>

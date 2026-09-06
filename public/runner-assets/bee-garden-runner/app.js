@@ -17,8 +17,19 @@
     const runStatusEl = document.getElementById('bgRunStatus');
     const tutorialCard = document.getElementById('bgTutorialCard');
     const tutorialText = document.getElementById('bgTutorialText');
+    const introOverlay = document.getElementById('bgIntroOverlay');
+    const introStartBtn = document.getElementById('bgIntroStartBtn');
+    const codeGutter = document.getElementById('bgCodeGutter');
 
     const STORAGE_KEY = 'bee_garden_progress_v1';
+
+    // Blockly/Scratch tarzı blok parçalarının kural kategorisine göre rengi.
+    const PROP_COLORS = {
+        justifyContent: { name: 'orange', hex: '#FF9F43' },
+        alignItems: { name: 'blue', hex: '#3E7BFA' },
+        flexDirection: { name: 'purple', hex: '#8B5CF6' },
+        alignSelf: { name: 'green', hex: '#22B07D' },
+    };
 
     // Bu oyun gercek CSS ozelliklerini (justify-content, align-items, ...)
     // kullanmiyor; ayni MANTIGI ogreten ama farkli kelimelerle yazilan
@@ -308,27 +319,62 @@
         });
     }
 
-    function checkSolved() {
-        const rect = gardenEl.getBoundingClientRect();
-        const bees = Array.from(gardenEl.children).filter((el) => el.classList.contains('bg-bee'));
+    function checkSolved(containerRect, beeRects, beeEls) {
+        if (!containerRect) {
+            containerRect = gardenEl.getBoundingClientRect();
+            beeEls = Array.from(gardenEl.children).filter((el) => el.classList.contains('bg-bee'));
+            beeRects = beeEls.map((el) => el.getBoundingClientRect());
+        }
         let allMatch = true;
-        bees.forEach((bee, i) => {
+        beeEls.forEach((bee, i) => {
             const target = currentTargets[i];
-            if (!target) return;
-            const r = bee.getBoundingClientRect();
-            const cx = ((r.left + r.width / 2 - rect.left) / rect.width) * 100;
-            const cy = ((r.top + r.height / 2 - rect.top) / rect.height) * 100;
+            const r = beeRects[i];
+            if (!target || !r) return;
+            const cx = ((r.left + r.width / 2 - containerRect.left) / containerRect.width) * 100;
+            const cy = ((r.top + r.height / 2 - containerRect.top) / containerRect.height) * 100;
             const dx = Math.abs(cx - target.xPercent);
             const dy = Math.abs(cy - target.yPercent);
             const matched = dx < 4 && dy < 4;
             if (!matched) allMatch = false;
             bee.classList.toggle('is-landed', matched);
         });
-        const solved = allMatch && bees.length > 0;
+        const solved = allMatch && beeEls.length > 0;
         if (solved) {
             onLevelSolved();
         }
         return solved;
+    }
+
+    // FLIP tekniği: arı(lar)ın eski konumunu kaydet, yeni CSS kuralını uygula
+    // (flexbox anında yeniden yerleşir), sonra eski konumdan yeni konuma
+    // yumuşak bir transform geçişiyle "uçarak" gitmesini sağla.
+    function applyStateAnimated(container, level, state) {
+        const bees = Array.from(container.children).filter((el) => el.classList.contains('bg-bee'));
+        const firstRects = bees.map((b) => b.getBoundingClientRect());
+
+        applyState(container, level, state);
+
+        const containerRect = container.getBoundingClientRect();
+        const lastRects = bees.map((b) => b.getBoundingClientRect());
+
+        bees.forEach((bee, i) => {
+            const dx = firstRects[i].left - lastRects[i].left;
+            const dy = firstRects[i].top - lastRects[i].top;
+            if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+            bee.style.transition = 'none';
+            bee.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+            bee.classList.add('is-flying');
+            // Reflow'u zorla ki tarayıcı "from" konumunu gerçekten uygulasın.
+            void bee.offsetWidth;
+            requestAnimationFrame(() => {
+                bee.style.transition = '';
+                bee.style.transform = '';
+                setTimeout(() => bee.classList.remove('is-flying'), 600);
+            });
+        });
+
+        return { bees, containerRect, lastRects };
     }
 
     let solvedForLevel = false;
@@ -373,20 +419,23 @@
 
     function applyAndCheck() {
         const level = LEVELS[currentLevelIndex];
-        applyState(gardenEl, level, currentState);
+        const { bees, containerRect, lastRects } = applyStateAnimated(gardenEl, level, currentState);
         refreshPreview();
-        return checkSolved();
+        return checkSolved(containerRect, lastRects, bees);
     }
 
     // ---- Sürükle-bırak (pointer events ile, fare + dokunmatik ortak) ----
+    // Blockly/Scratch mantığı: her blok kendi kategorisinin rengini taşır ve
+    // bırakıldığı yuvaya (dropzone) "snap" (klik) hissi veren kısa bir animasyonla oturur.
     let dragInfo = null;
 
-    function makeChipDraggable(chip, value, text, onAssign) {
+    function makeChipDraggable(chip, value, text, color, onAssign) {
         chip.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             const ghost = document.createElement('div');
             ghost.className = 'bg-chip-ghost';
             ghost.textContent = text;
+            ghost.style.background = color;
             document.body.appendChild(ghost);
             dragInfo = { value, onAssign, ghost, chip };
             chip.classList.add('is-dragging');
@@ -422,12 +471,15 @@
         dragInfo.ghost.remove();
         window.removeEventListener('pointermove', onDragMove);
         if (dz) {
+            dz.classList.add('snap-pulse');
+            setTimeout(() => dz.classList.remove('snap-pulse'), 400);
             dragInfo.onAssign(dragInfo.value);
         }
         dragInfo = null;
     }
 
     function buildDropzoneRow(p, currentValue) {
+        const color = (PROP_COLORS[p.key] || {}).hex || 'var(--violet)';
         const row = document.createElement('div');
         row.className = 'bg-dropzone-row';
         const label = document.createElement('span');
@@ -435,6 +487,10 @@
         label.textContent = p.cssName + ':';
         const zone = document.createElement('div');
         zone.className = 'bg-dropzone' + (currentValue ? ' has-value' : '');
+        if (currentValue) {
+            zone.style.background = color;
+            zone.style.borderColor = color;
+        }
         const optionText = p.options.find((o) => o.value === currentValue);
         zone.textContent = optionText ? optionText.text : 'Bir blok sürükle';
         row.appendChild(label);
@@ -442,43 +498,53 @@
         return row;
     }
 
+    function buildChipGroup(p, currentValue, onAssign) {
+        const color = (PROP_COLORS[p.key] || {}).hex || '#5B3DF5';
+        const group = document.createElement('div');
+        group.className = 'bg-block-group';
+        group.dataset.propColor = (PROP_COLORS[p.key] || {}).name || '';
+        const h3 = document.createElement('h3');
+        h3.textContent = p.label;
+        group.appendChild(h3);
+
+        group.appendChild(buildDropzoneRow(p, currentValue));
+
+        const chips = document.createElement('div');
+        chips.className = 'bg-block-chips';
+        p.options.forEach((opt) => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'bg-chip' + (currentValue === opt.value ? ' active' : '');
+            chip.textContent = opt.text;
+            makeChipDraggable(chip, opt.value, opt.text, color, onAssign);
+            chips.appendChild(chip);
+        });
+        group.appendChild(chips);
+        return group;
+    }
+
     function renderBlockPanel() {
         const level = LEVELS[currentLevelIndex];
         blockPanel.innerHTML = '';
 
         (level.properties || []).forEach((p) => {
-            const group = document.createElement('div');
-            group.className = 'bg-block-group';
-            const h3 = document.createElement('h3');
-            h3.textContent = p.label;
-            group.appendChild(h3);
-
-            group.appendChild(buildDropzoneRow(p, currentState[p.key]));
-
-            const chips = document.createElement('div');
-            chips.className = 'bg-block-chips';
-            p.options.forEach((opt) => {
-                const chip = document.createElement('button');
-                chip.type = 'button';
-                chip.className = 'bg-chip' + (currentState[p.key] === opt.value ? ' active' : '');
-                chip.textContent = opt.text;
-                makeChipDraggable(chip, opt.value, opt.text, (value) => {
-                    currentState[p.key] = value;
-                    renderBlockPanel();
-                    applyAndCheck();
-                });
-                chips.appendChild(chip);
+            const group = buildChipGroup(p, currentState[p.key], (value) => {
+                currentState[p.key] = value;
+                renderBlockPanel();
+                applyAndCheck();
             });
-            group.appendChild(chips);
             blockPanel.appendChild(group);
         });
 
         if (level.itemProperty) {
-            const group = document.createElement('div');
-            group.className = 'bg-block-group';
-            const h3 = document.createElement('h3');
-            h3.textContent = level.itemProperty.label;
-            group.appendChild(h3);
+            const currentVal = (currentState.items && currentState.items[currentTargetBee] && currentState.items[currentTargetBee][level.itemProperty.key]) || '';
+            const group = buildChipGroup(level.itemProperty, currentVal, (value) => {
+                currentState.items = currentState.items || {};
+                currentState.items[currentTargetBee] = currentState.items[currentTargetBee] || {};
+                currentState.items[currentTargetBee][level.itemProperty.key] = value;
+                renderBlockPanel();
+                applyAndCheck();
+            });
 
             const targetRow = document.createElement('div');
             targetRow.className = 'bg-block-target';
@@ -498,28 +564,8 @@
             });
             targetRow.appendChild(label);
             targetRow.appendChild(select);
-            group.appendChild(targetRow);
-
-            const currentVal = (currentState.items && currentState.items[currentTargetBee] && currentState.items[currentTargetBee][level.itemProperty.key]) || '';
-            group.appendChild(buildDropzoneRow(level.itemProperty, currentVal));
-
-            const chips = document.createElement('div');
-            chips.className = 'bg-block-chips';
-            level.itemProperty.options.forEach((opt) => {
-                const chip = document.createElement('button');
-                chip.type = 'button';
-                chip.className = 'bg-chip' + (currentVal === opt.value ? ' active' : '');
-                chip.textContent = opt.text;
-                makeChipDraggable(chip, opt.value, opt.text, (value) => {
-                    currentState.items = currentState.items || {};
-                    currentState.items[currentTargetBee] = currentState.items[currentTargetBee] || {};
-                    currentState.items[currentTargetBee][level.itemProperty.key] = value;
-                    renderBlockPanel();
-                    applyAndCheck();
-                });
-                chips.appendChild(chip);
-            });
-            group.appendChild(chips);
+            // "Hangi arı?" seçicisi başlıktan hemen sonra, yuvadan önce gelmeli.
+            group.insertBefore(targetRow, group.children[1]);
             blockPanel.appendChild(group);
         }
     }
@@ -578,6 +624,7 @@
             codeArea.value = generateCodeText();
             runStatusEl.textContent = '';
             runStatusEl.className = 'bg-run-status';
+            syncCodeGutter();
         }
     }
 
@@ -585,9 +632,22 @@
         tab.addEventListener('click', () => setMode(tab.getAttribute('data-mode')));
     });
 
+    function syncCodeGutter() {
+        if (!codeGutter) return;
+        const lineCount = Math.max(1, codeArea.value.split('\n').length);
+        let lines = '';
+        for (let i = 1; i <= lineCount; i++) lines += (i > 1 ? '\n' : '') + i;
+        codeGutter.textContent = lines;
+        codeGutter.scrollTop = codeArea.scrollTop;
+    }
+
     codeArea.addEventListener('input', () => {
         runStatusEl.textContent = '';
         runStatusEl.className = 'bg-run-status';
+        syncCodeGutter();
+    });
+    codeArea.addEventListener('scroll', () => {
+        if (codeGutter) codeGutter.scrollTop = codeArea.scrollTop;
     });
 
     runBtn.addEventListener('click', () => {
@@ -642,7 +702,10 @@
         applyState(gardenEl, level, currentState);
         renderBlockPanel();
         refreshPreview();
-        if (currentMode === 'kod') codeArea.value = generateCodeText();
+        if (currentMode === 'kod') {
+            codeArea.value = generateCodeText();
+            syncCodeGutter();
+        }
         runStatusEl.textContent = '';
         runStatusEl.className = 'bg-run-status';
         updateNav();
@@ -661,4 +724,14 @@
     });
 
     goToLevel(loadProgress());
+
+    // Açılış tanıtım kutusu: oyun her açıldığında animasyonlu şekilde belirir
+    // ve kullanıcı "Anladım, Başla!" demeden altındaki oyunla etkileşime
+    // izin vermez (overlay tüm ekranı kaplayıp pointer-events'i yakalar).
+    if (introOverlay && introStartBtn) {
+        requestAnimationFrame(() => introOverlay.classList.add('show'));
+        introStartBtn.addEventListener('click', () => {
+            introOverlay.classList.remove('show');
+        });
+    }
 })();
