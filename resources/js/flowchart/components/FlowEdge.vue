@@ -3,7 +3,7 @@
   <EdgeLabelRenderer>
     <div
       v-if="label"
-      class="edge-label"
+      :class="['edge-label', `edge-label--${data?.condition}`]"
       :style="{ transform: `translate(-50%, -50%) translate(${edgePath[1]}px,${edgePath[2]}px)` }"
     >
       {{ label }}
@@ -37,6 +37,8 @@ const label = computed(() => {
 </script>
 
 <style scoped>
-.edge-label { background:#0f172a; color:#fff; padding:2px 6px; border-radius:8px; font-size:11px; font-weight:800; }
+.edge-label { background:#0f172a; color:#fff; padding:3px 9px; border-radius:999px; font-size:10.5px; font-weight:800; letter-spacing:.03em; box-shadow:0 4px 10px rgba(15,23,42,.25); }
+.edge-label--yes { background:#0EA57A; }
+.edge-label--no { background:#DC2626; }
 </style>
 

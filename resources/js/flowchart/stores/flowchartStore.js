@@ -17,6 +17,15 @@ export const useFlowchartStore = defineStore('flowchart', {
     logs: [],
     errors: [],
     executionState: null,
+    // Yürütme sırasında "şu an çalışan blok" vurgusu; kullanıcının panelden
+    // seçtiği (düzenlediği) blok olan selectedNodeId'den bilerek ayrı tutulur.
+    executingNodeId: '',
+    // "io" bloğundaki "input degisken" komutu için beklenen değişken; dolu
+    // olduğunda arayüz kullanıcıdan bir değer ister.
+    pendingInput: null,
+    providedInputs: [],
+    runMode: 'full',
+    _pausedForInput: false,
   }),
   getters: {
     selectedNode(state) {
@@ -24,6 +33,9 @@ export const useFlowchartStore = defineStore('flowchart', {
     },
     canStep(state) {
       return Boolean(state.executionState?.nextNodeId);
+    },
+    isRunning(state) {
+      return Boolean(state.executingNodeId) || Boolean(state.pendingInput);
     },
   },
   actions: {
@@ -46,14 +58,18 @@ export const useFlowchartStore = defineStore('flowchart', {
         y: Math.round((Number(position?.y ?? (120 + count * 20)) || 0) / 20) * 20,
       };
 
+      const defaultCode = { process: 'x = 0', decision: 'x > 0', io: 'output x' }[type] || '';
+      const defaultText = { start: 'Başla', end: 'Bitir', process: 'İşlem', decision: 'Koşul', io: 'Giriş/Çıkış' }[type] || `${type} ${count}`;
+
       this.nodes.push({
         id: uid('n'),
         type,
-        text: `${type.toUpperCase()} ${count}`,
-        code: type === 'process' ? 'x = 0' : type === 'decision' ? 'x > 0' : '',
+        text: type === 'start' || type === 'end' ? defaultText : `${defaultText} ${count}`,
+        code: defaultCode,
         position: snappedPosition,
       });
       this.errors = [];
+      this.selectedNodeId = this.nodes[this.nodes.length - 1].id;
     },
     deleteSelectedNode() {
       if (!this.selectedNodeId) return;
@@ -127,42 +143,72 @@ export const useFlowchartStore = defineStore('flowchart', {
       this.errors = errors;
       return errors;
     },
-    runFull(inputs = []) {
-      const result = executeFlowchart({
-        nodes: this.nodes,
-        edges: this.edges,
-        inputs,
-        state: null,
-        stepMode: false,
-      });
+    _applyResult(result) {
       this.logs = result.logs || [];
       this.errors = result.errors || [];
       this.executionState = result.state || null;
-      if (result.steps?.length) {
-        this.selectedNodeId = result.steps[result.steps.length - 1].nodeId;
+      this._pausedForInput = Boolean(result.waitingInput);
+      this.pendingInput = result.waitingInput || null;
+      if (this.pendingInput) {
+        // Bekleyen input node'u vurgula.
+        this.executingNodeId = this.executionState?.nextNodeId || '';
+      } else if (result.steps?.length) {
+        this.executingNodeId = result.steps[result.steps.length - 1].nodeId;
+      } else if (!result.ok) {
+        this.executingNodeId = '';
       }
       return result;
     },
-    runStep(inputs = []) {
+    runFull() {
+      this.runMode = 'full';
+      const state = this._pausedForInput ? this.executionState : null;
+      this._pausedForInput = false;
       const result = executeFlowchart({
         nodes: this.nodes,
         edges: this.edges,
-        inputs,
+        inputs: this.providedInputs,
+        state,
+        stepMode: false,
+      });
+      return this._applyResult(result);
+    },
+    runStep() {
+      this.runMode = 'step';
+      const result = executeFlowchart({
+        nodes: this.nodes,
+        edges: this.edges,
+        inputs: this.providedInputs,
         state: this.executionState,
         stepMode: true,
       });
-      this.logs = result.logs || [];
-      this.errors = result.errors || [];
-      this.executionState = result.state || null;
-      if (result.steps?.length) {
-        this.selectedNodeId = result.steps[result.steps.length - 1].nodeId;
-      }
-      return result;
+      return this._applyResult(result);
+    },
+    // Kullanıcı bekleyen bir "input" isteğine değer girip gönderdiğinde çağrılır.
+    provideInput(rawValue) {
+      if (!this.pendingInput) return;
+      const numeric = Number(rawValue);
+      const value = rawValue !== '' && !Number.isNaN(numeric) ? numeric : rawValue;
+      this.providedInputs.push(value);
+      this.pendingInput = null;
+      if (this.runMode === 'full') this.runFull();
+      else this.runStep();
     },
     resetExecution() {
       this.executionState = null;
       this.logs = [];
       this.errors = [];
+      this.executingNodeId = '';
+      this.pendingInput = null;
+      this.providedInputs = [];
+      this._pausedForInput = false;
+    },
+    loadExample(example) {
+      this.name = example.name;
+      this.nodes = JSON.parse(JSON.stringify(example.nodes));
+      this.edges = JSON.parse(JSON.stringify(example.edges));
+      this.selectedNodeId = '';
+      this.flowchartId = null;
+      this.resetExecution();
     },
     exportJson() {
       return {

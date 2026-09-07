@@ -1,18 +1,26 @@
-const MAX_ITERATION = 1000;
+const MAX_ITERATION = 2000;
 
 function evaluateExpression(expr, vars) {
-  const safe = String(expr || '').replace(/\b([a-zA-Z_]\w*)\b/g, (name) => {
-    if (['true', 'false', 'null'].includes(name)) return name;
-    if (Object.prototype.hasOwnProperty.call(vars, name)) return JSON.stringify(vars[name]);
+  const raw = String(expr || '');
+
+  // Tırnak içindeki metinleri (string literal) tek geçişte, alternatifli bir
+  // regex ile koru: eşleşme tırnaklı bir metinse OLDUĞU GİBİ bırak, değilse
+  // (bir identifier ise) değişken değeriyle değiştir. Böylece "Çift" gibi bir
+  // metnin içindeki harfler bilinmeyen değişken sanılıp 0'a çevrilmiyor
+  // (eski davranış: output "Çift" -> "0" gibi yanlış bir sonuç veriyordu).
+  const restored = raw.replace(/('[^']*'|"[^"]*")|\b([a-zA-Z_]\w*)\b/g, (match, stringLiteral, identifier) => {
+    if (stringLiteral) return stringLiteral;
+    if (['true', 'false', 'null'].includes(identifier)) return identifier;
+    if (Object.prototype.hasOwnProperty.call(vars, identifier)) return JSON.stringify(vars[identifier]);
     return '0';
   });
 
-  if (!/^[0-9\s+\-*/().<>=!&|'",a-zA-Z_]+$/.test(safe)) {
+  if (!/^[0-9\s+\-*/%().<>=!&|'",a-zA-Z_çÇıİöÖüÜğĞşŞ]+$/.test(restored)) {
     throw new Error('İzin verilmeyen ifade karakteri');
   }
 
   // eslint-disable-next-line no-new-func
-  return Function(`"use strict"; return (${safe});`)();
+  return Function(`"use strict"; return (${restored});`)();
 }
 
 function executeAssignment(code, vars) {
@@ -57,6 +65,13 @@ export function validateFlowchart(nodes, edges) {
   return errors;
 }
 
+/**
+ * Bir akış şemasını çalıştırır. "io" bloğunda "input degisken" komutuyla
+ * karşılaşıp henüz bir değer sağlanmamışsa, çalıştırmayı o blokta durdurup
+ * `waitingInput` alanıyla hangi değişkenin beklendiğini bildirir; arayüz
+ * kullanıcıdan değeri aldıktan sonra aynı node'dan (aynı state ile) tekrar
+ * çağrılarak kaldığı yerden devam edilir.
+ */
 export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null, state = null, stepMode = false }) {
   const errors = validateFlowchart(nodes, edges);
   if (errors.length) return { ok: false, errors, logs: [], steps: [], variables: {} };
@@ -73,7 +88,7 @@ export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null
   while (currentId) {
     iteration += 1;
     if (iteration > MAX_ITERATION) {
-      return { ok: false, errors: ['Sonsuz döngü tespit edildi'], logs, steps, variables: vars };
+      return { ok: false, errors: ['Sonsuz döngü tespit edildi (2000 adımı aştı).'], logs, steps, variables: vars };
     }
 
     const node = nodeMap[currentId];
@@ -90,7 +105,20 @@ export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null
         const inputMatch = code.match(/^\s*input\s+([a-zA-Z_]\w*)\s*$/);
         const outputMatch = code.match(/^\s*output\s+(.+)\s*$/);
         if (inputMatch) {
-          vars[inputMatch[1]] = inputs[inputIndex] ?? null;
+          if (inputIndex >= inputs.length) {
+            // Girdi bekleniyor: aynı node'da dur, arayüz değeri toplayıp
+            // tekrar çağıracak.
+            return {
+              ok: true,
+              errors: [],
+              logs,
+              steps,
+              variables: vars,
+              waitingInput: inputMatch[1],
+              state: { nextNodeId: currentId, variables: vars, logs, inputIndex },
+            };
+          }
+          vars[inputMatch[1]] = inputs[inputIndex];
           inputIndex += 1;
         } else if (outputMatch) {
           const out = evaluateExpression(outputMatch[1], vars);
@@ -108,7 +136,15 @@ export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null
       return { ok: false, errors: [`Çalıştırma hatası (${currentId}): ${error.message}`], logs, steps, variables: vars };
     }
 
-    if (node.type !== 'decision' && node.type !== 'end') {
+    if (node.type === 'end') {
+      step.variablesAfter = { ...vars };
+      step.nextNodeId = null;
+      steps.push(step);
+      currentId = null;
+      break;
+    }
+
+    if (node.type !== 'decision') {
       nextNodeId = findEdge(edges, currentId)?.to || null;
     }
 
@@ -116,7 +152,6 @@ export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null
     step.nextNodeId = nextNodeId;
     steps.push(step);
 
-    if (node.type === 'end') break;
     currentId = nextNodeId;
     if (stepMode) break;
   }
@@ -130,4 +165,3 @@ export function executeFlowchart({ nodes, edges, inputs = [], startNodeId = null
     state: { nextNodeId: currentId, variables: vars, logs, inputIndex },
   };
 }
-

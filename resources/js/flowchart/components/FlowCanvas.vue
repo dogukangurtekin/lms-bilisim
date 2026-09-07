@@ -39,6 +39,8 @@ const props = defineProps({
   nodes: { type: Array, required: true },
   edges: { type: Array, required: true },
   selectedNodeId: { type: String, default: '' },
+  executingNodeId: { type: String, default: '' },
+  waitingNodeId: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -66,6 +68,8 @@ const localNodes = computed({
         text: node.text,
         code: node.code,
         active: node.id === props.selectedNodeId,
+        executing: node.id === props.executingNodeId,
+        waiting: node.id === props.waitingNodeId,
       },
       type: 'default',
     }));
@@ -139,6 +143,21 @@ function onDrop(event) {
 </script>
 
 <style scoped>
-.canvas-wrap { border:1px solid #d1d5db; border-radius:16px; overflow:hidden; background:#f8fafc; min-height:600px; }
-.canvas { width:100%; height:600px; }
+.canvas-wrap {
+  border: 1px solid #dbe4ee;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(91,61,245,.06), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(14,165,122,.06), transparent 40%),
+    #f8fafc;
+  min-height: 640px;
+  box-shadow: 0 20px 44px rgba(15,23,42,.06);
+}
+.canvas { width:100%; height:640px; }
+.canvas :deep(.vue-flow__minimap) { border-radius: 12px; overflow: hidden; box-shadow: 0 10px 24px rgba(15,23,42,.14); }
+.canvas :deep(.vue-flow__controls) { border-radius: 12px; overflow: hidden; box-shadow: 0 10px 24px rgba(15,23,42,.14); }
+.canvas :deep(.vue-flow__controls-button) { border-color: #e2e8f0; }
+.canvas :deep(.vue-flow__edge-path) { stroke: #94a3b8; stroke-width: 2.2; }
+.canvas :deep(.vue-flow__edge.selected .vue-flow__edge-path) { stroke: #5B3DF5; }
 </style>
