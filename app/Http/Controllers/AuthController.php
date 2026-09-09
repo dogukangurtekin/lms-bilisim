@@ -107,10 +107,25 @@ class AuthController extends Controller
         $login = strtolower(trim($rawLogin));
         $email = str_contains($login, '@') ? $login : ($login . '@school.local');
 
+        // Once: dogrudan esitlik sorgusu - email sutunundaki UNIQUE index'i
+        // kullanir (utf8mb4_unicode_ci collation zaten büyük/küçük harf
+        // duyarsiz oldugu icin LOWER() sarmalamaya gerek yok). Eski sorgu
+        // hem LOWER(email) hem de LOWER(SUBSTRING_INDEX(...)) ile sütunu
+        // fonksiyona sardigi icin MySQL index'i hic kullanamiyor, her
+        // girişte tüm kullanicilar tablosunu taraman gerekiyordu - bir
+        // sinifin ayni anda giris yapmasi sirasinda bu, art arda yavaslayan
+        // (sıraya giren) sorgulara yol acan asil darbogazdi.
+        $user = User::query()->with('role')->where('email', $email)->first();
+        if ($user) {
+            return $user;
+        }
+
+        // Sadece dogrudan eslesme bulunamazsa (orn. kullanici farkli bir
+        // domain'e kayitli ama sadece kullanici adini yazdiysa) daha yavas,
+        // index kullanamayan onek eslesmesine dus.
         return User::query()
             ->with('role')
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->orWhereRaw("LOWER(SUBSTRING_INDEX(email, '@', 1)) = ?", [$login])
+            ->whereRaw("LOWER(SUBSTRING_INDEX(email, '@', 1)) = ?", [$login])
             ->first();
     }
 
