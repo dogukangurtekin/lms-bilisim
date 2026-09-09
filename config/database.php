@@ -61,6 +61,12 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                // Paylaşımlı hosting'de kısa sürede çok sayıda yeni MySQL bağlantısı
+                // açılması (örn. bir sınıfın aynı anda giriş yapması) "Operation not
+                // permitted" (SQLSTATE[HY000] [2002]) hatasına yol açabiliyordu. Kalıcı
+                // bağlantı, her PHP-FPM worker'ının aynı bağlantıyı istekler arasında
+                // yeniden kullanmasını sağlayıp yeni bağlantı açma sıklığını azaltır.
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
             ]) : [],
         ],
 
@@ -81,6 +87,12 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                // Paylaşımlı hosting'de kısa sürede çok sayıda yeni MySQL bağlantısı
+                // açılması (örn. bir sınıfın aynı anda giriş yapması) "Operation not
+                // permitted" (SQLSTATE[HY000] [2002]) hatasına yol açabiliyordu. Kalıcı
+                // bağlantı, her PHP-FPM worker'ının aynı bağlantıyı istekler arasında
+                // yeniden kullanmasını sağlayıp yeni bağlantı açma sıklığını azaltır.
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
             ]) : [],
         ],
 
