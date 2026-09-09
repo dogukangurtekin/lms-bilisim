@@ -119,12 +119,19 @@ Route::any('/public/{path}', fn (string $path) => redirect('/' . ltrim($path, '/
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.attempt');
-    Route::post('/login/game', [AuthController::class, 'gameLogin'])->middleware('throttle:10,1')->name('login.game');
-    Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->middleware('throttle:10,1')->name('qr.guest.generate');
+    // Not: bu route seviyesindeki limit sadece IP'ye bakar (kim olduğuna bakmaz).
+    // Bir sınıftaki 20-30 öğrenci aynı okul ağı (tek IP) üzerinden aynı anda
+    // giriş yapmaya çalıştığında eski "10,1" limiti dakikada sadece 10 isteğe
+    // izin verip geri kalan öğrencileri 429 ile bloke ediyordu. Gerçek
+    // brute-force koruması zaten AuthController::login() içinde hesap+IP
+    // bazlı ayrı bir RateLimiter ile yapılıyor; bu route limiti sadece kaba
+    // bir üst sınır olduğu için sınıf kullanımına uygun şekilde yükseltildi.
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:120,1')->name('login.attempt');
+    Route::post('/login/game', [AuthController::class, 'gameLogin'])->middleware('throttle:120,1')->name('login.game');
+    Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->middleware('throttle:120,1')->name('qr.guest.generate');
     Route::get('/qr/guest/status/{token}', [QrLoginController::class, 'status'])->name('qr.guest.status');
 });
-Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])->middleware('throttle:20,1')->name('qr.login.consume');
+Route::get('/qr-login/{token}', [QrLoginController::class, 'consume'])->middleware('throttle:120,1')->name('qr.login.consume');
 
 Route::get('/veli/gelisim-raporu/{student}', [StudentDataController::class, 'parentProgressReport'])
     ->middleware('signed')
