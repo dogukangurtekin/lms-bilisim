@@ -15,7 +15,10 @@
         if ($text === '') {
             return '';
         }
-        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        // Güvenlik: ham HTML {!! !!} ile basılmadan önce beyaz liste tabanlı
+        // temizlemeden geçirilir (script/onerror/javascript: vb. XSS
+        // vektörlerini engeller). Bkz. App\Support\RichTextSanitizer.
+        return \App\Support\RichTextSanitizer::clean(html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     };
     $renderPlainText = static function ($value): string {
         $text = trim((string) $value);
@@ -369,14 +372,14 @@ HTML;
 
             @if($codeSrcdoc !== '' && $layout !== 'code')
                 <div class="lesson-card" style="margin-bottom:16px">
-                    <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                    <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
                 </div>
             @endif
 
             @if($layout === 'text')
                 <div class="lesson-card lesson-text-only">
                     @if($codeSrcdoc !== '')
-                        <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                        <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
                     @elseif(!empty($slide['content']))
                         <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>
                     @elseif(!empty(data_get($slide, 'layout_meta.text.html')))
@@ -413,7 +416,7 @@ HTML;
                 @include('courses.partials.slides.interactive', ['slide' => $slide, 'codeSrcdoc' => $codeSrcdoc])
             @else
                 @if($codeSrcdoc !== '')
-                    <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                    <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
                 @endif
                 @if($codeSrcdoc === '' && !empty($slide['content']))
                     <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($slide['content']) !!}</div>

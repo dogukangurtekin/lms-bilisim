@@ -64,7 +64,8 @@
         if ($text === '') {
             return '';
         }
-        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        // Güvenlik: bkz. App\Support\RichTextSanitizer (stored XSS koruması).
+        return \App\Support\RichTextSanitizer::clean(html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     };
     $buildCodeSrcdoc = static function (string $rawCode): string {
         $code = html_entity_decode(trim($rawCode), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -84,7 +85,7 @@
 <div class="lesson-split" style="display:grid;grid-template-columns:{{ $splitColumns }};gap:18px">
     @if($codeSrcdoc !== '')
         <div class="lesson-card" style="grid-column:1 / -1">
-            <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+            <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
         </div>
     @endif
     <div class="lesson-card lesson-split-card">
@@ -103,7 +104,7 @@
             @elseif($leftType === 'video' && $leftVideo !== '')
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" src="{{ $leftVideo }}"></iframe>
             @elseif($leftType === 'code' && $codeSrcdoc !== '')
-                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
             @else
                 @if($leftText !== '')
                     <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($leftText) !!}</div>
@@ -128,7 +129,7 @@
             @elseif($rightType === 'video' && $rightVideo !== '')
                 <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" src="{{ $rightVideo }}"></iframe>
             @elseif($rightType === 'code' && $codeSrcdoc !== '')
-                <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+                <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
             @else
                 @if($rightText !== '')
                     <div class="lesson-paragraph lesson-rich-text">{!! $renderRichText($rightText) !!}</div>

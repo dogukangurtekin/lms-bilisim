@@ -8,7 +8,8 @@
         if ($text === '') {
             return '';
         }
-        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        // Güvenlik: bkz. App\Support\RichTextSanitizer (stored XSS koruması).
+        return \App\Support\RichTextSanitizer::clean(html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     };
 @endphp
 

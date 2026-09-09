@@ -30,7 +30,7 @@
         <p class="lesson-paragraph">{{ $renderPlainText($slide['content']) }}</p>
     @endif
     @if($codeSrcdoc !== '')
-        <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+        <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
     @elseif(!empty($slide['content']))
         <p class="lesson-paragraph">{{ $renderPlainText($slide['content']) }}</p>
     @endif

@@ -3324,7 +3324,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
         const codeSrcdoc = s.code ? buildCodeSrcdoc(s.code) : '';
         const effectiveLayout = layout;
-        const codePreview = codeSrcdoc ? ('<div style="margin:14px 0;max-width:min(92vw,1380px);width:100%"><iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe></div>') : '';
+        const codePreview = codeSrcdoc ? ('<div style="margin:14px 0;max-width:min(92vw,1380px);width:100%"><iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe></div>') : '';
         const layoutPreview = (() => {
             if (effectiveLayout === 'text') {
                 const text = meta.text || {};
@@ -3440,7 +3440,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return [
                     '<div style="margin:14px auto 0;max-width:min(92vw,1380px);min-width:320px;min-height:min(72vh,760px);padding:16px;border-radius:18px;background:#f8fbff;border:1px solid #dbe5f2;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:12px">',
                     '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:800;font-size:13px;align-self:flex-start">Çalışan Kod</div>',
-                    codeSrcdoc ? '<iframe id="preview_code_iframe" allow="camera *; microphone *; fullscreen *" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:16px;background:#fff" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe>' : '<div style="padding:20px;border-radius:16px;background:#fff;border:1px dashed #cbd5e1">Kod alanı boş.</div>',
+                    codeSrcdoc ? '<iframe id="preview_code_iframe" allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" style="width:100%;height:100%;min-height:58vh;border:1px solid #d1d5db;border-radius:16px;background:#fff" srcdoc="' + safeAttr(codeSrcdoc) + '"></iframe>' : '<div style="padding:20px;border-radius:16px;background:#fff;border:1px dashed #cbd5e1">Kod alanı boş.</div>',
                     '</div>'
                 ].join('');
             }

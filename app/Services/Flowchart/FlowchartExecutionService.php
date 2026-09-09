@@ -210,23 +210,58 @@ class FlowchartExecutionService
 
     private function evaluateExpression(string $expr, array $variables): mixed
     {
-        $safe = preg_replace_callback('/\b([a-zA-Z_]\w*)\b/', function ($m) use ($variables) {
-            $name = $m[1];
-            if (in_array(strtolower($name), ['true', 'false', 'null'], true)) {
-                return $name;
-            }
-            if (array_key_exists($name, $variables)) {
-                $value = $variables[$name];
-                if (is_numeric($value)) {
-                    return (string) $value;
+        // GÜVENLİK: Bu eval() içine gömülecek kodu inşa ediyor - "code" alanı
+        // API üzerinden HERHANGİ bir giriş yapmış kullanıcı (öğrenci dahil,
+        // bkz. routes/api.php: /execute sadece 'auth' ister) tarafından
+        // serbestçe belirlenebiliyor ve "inputs" (io node'larındaki "input x"
+        // için sağlanan değerler) de çalışma zamanında tamamen çağıranın
+        // kontrolünde. Eski kod, değişken değerlerini tek tırnak içine
+        // koyarken SADECE tek tırnağı kaçışlıyordu (str_replace("'", "\\'", ...)),
+        // ters eğik çizgiyi (\) hiç kaçışlamıyordu. Bir değişken değeri sonu
+        // ters eğik çizgiyle biten bir girdi içerdiğinde ("\") bu, PHP'nin
+        // tek-tırnaklı string ayrıştırmasında \' dizisini "kaçışlanmış tek
+        // tırnak" olarak yorumlamasına yol açar - yani eklenen kapanış
+        // tırnağı string'i GERÇEKTEN kapatmaz, string açık kalır ve
+        // sonrasındaki (saldırganın "code" alanına serbestçe yazabildiği)
+        // metin PHP KODU olarak yorumlanmaya devam eder. Bu, dikkatlice
+        // hazırlanmış bir girdiyle sunucuda rastgele PHP kodu çalıştırmaya
+        // (RCE) açık bırakıyordu.
+        //
+        // Düzeltme: string değerleri json_encode() ile PHP-uyumlu, TAM ve
+        // güvenli şekilde kaçışlanmış çift tırnaklı literallere çeviriyoruz
+        // (JS tarafındaki JSON.stringify ile aynı, kanıtlanmış yaklaşım).
+        // Ayrıca tırnak içindeki metinler artık identifier regex'inin
+        // yanlışlıkla içlerindeki kelimeleri "bilinmeyen değişken" sanıp 0'a
+        // çevirmesinden de korunuyor.
+        $safe = preg_replace_callback(
+            '/(\'[^\']*\'|"[^"]*")|\b([a-zA-Z_]\w*)\b/',
+            function ($m) use ($variables) {
+                if ($m[1] !== '') {
+                    // Doğrudan kodda yazılmış bir metin literali: dokunma.
+                    return $m[1];
                 }
-                return "'".str_replace("'", "\\'", (string) $value)."'";
-            }
-            return '0';
-        }, $expr);
+                $name = $m[2];
+                if (in_array(strtolower($name), ['true', 'false', 'null'], true)) {
+                    return $name;
+                }
+                if (array_key_exists($name, $variables)) {
+                    $value = $variables[$name];
+                    if (is_int($value) || is_float($value)) {
+                        return (string) $value;
+                    }
+                    if (is_bool($value)) {
+                        return $value ? 'true' : 'false';
+                    }
+                    $encoded = json_encode((string) $value, JSON_UNESCAPED_UNICODE);
+                    return $encoded !== false ? $encoded : '""';
+                }
+                return '0';
+            },
+            $expr
+        );
 
         $safe = str_replace(['&&', '||'], [' and ', ' or '], (string) $safe);
-        $allowed = '/^[0-9\.\s\+\-\*\/\(\)\<\>\=\!\&\|\'\"a-zA-Z_]+$/';
+        $allowed = '/^[0-9\.\s\+\-\*\/\%\(\)\<\>\=\!\&\|\'\"a-zA-Z_]+$/u';
         if (! preg_match($allowed, $safe)) {
             throw new RuntimeException('İzin verilmeyen ifade karakteri.');
         }

@@ -6,7 +6,8 @@
         if ($text === '') {
             return '';
         }
-        return html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        // Güvenlik: bkz. App\Support\RichTextSanitizer (stored XSS koruması).
+        return \App\Support\RichTextSanitizer::clean(html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     };
     $renderPlainText = static function ($value): string {
         $text = trim((string) $value);
@@ -25,7 +26,7 @@
 <div class="lesson-image-focus">
     @if(!empty($codeSrcdoc))
         <div class="lesson-code-block" style="width:100%;max-width:1100px">
-            <iframe allow="camera *; microphone *; fullscreen *" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
+            <iframe allow="camera *; microphone *; fullscreen *" sandbox="allow-scripts" class="lesson-code-frame" srcdoc="{{ $codeSrcdoc }}"></iframe>
         </div>
     @endif
     @if($mediaOrder === 'text-image')
