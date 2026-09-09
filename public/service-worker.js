@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.2";
+const SW_VERSION = "v1.5.3";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -176,6 +176,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (!isSameOrigin(url)) return;
   if (isRunnerRequest(url)) return;
+  // Vite'nin hash'li build çıktılarını (/build/assets/...) service worker'ın
+  // kendi önbelleğine almasına izin verme: bu dosyalar zaten dosya adında
+  // içerik hash'i taşıdığı için tarayıcının normal HTTP önbelleği yeterli.
+  // SW burada araya girince, sayfanın koyduğu <link rel="modulepreload">
+  // ile gerçek <script> isteği FARKLI yanıt nesneleri (biri ağdan, biri SW
+  // önbelleğinden) alıyor ve tarayıcı bunları eşleştiremiyor ("cross-world
+  // service worker resource mismatch" konsol uyarısı ve boşa gitmiş preload
+  // buradan kaynaklanıyordu).
+  if (url.pathname.startsWith("/build/")) return;
 
   if (isNavigationRequest(request)) {
     event.respondWith((async () => {
