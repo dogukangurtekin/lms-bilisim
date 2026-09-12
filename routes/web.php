@@ -245,9 +245,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/canli-quiz', [LiveQuizController::class, 'store'])->name('live-quiz.store');
         Route::post('/canli-quiz/{quiz}/baslat', [LiveQuizController::class, 'start'])->name('live-quiz.start');
         Route::get('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'showSession'])->name('live-quiz.session.show');
+        Route::post('/canli-quiz/oturum/{session}/herkese-baslat', [LiveQuizController::class, 'launch'])->name('live-quiz.session.launch');
+        Route::get('/canli-quiz/oturum/{session}/durum', [LiveQuizController::class, 'sessionStatus'])->name('live-quiz.session.status');
         Route::post('/canli-quiz/oturum/{session}/sonraki', [LiveQuizController::class, 'next'])->name('live-quiz.session.next');
         Route::post('/canli-quiz/oturum/{session}/kilit', [LiveQuizController::class, 'toggleLock'])->name('live-quiz.session.lock');
         Route::post('/canli-quiz/oturum/{session}/bitir', [LiveQuizController::class, 'finish'])->name('live-quiz.session.finish');
+        Route::get('/canli-quiz/oturum/{session}/rapor', [LiveQuizController::class, 'sessionReport'])->name('live-quiz.session.report');
 
         Route::get('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'create'])->name('courses.homeworks.create');
         Route::post('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'store'])->name('courses.homeworks.store');
@@ -317,6 +320,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/canli-quiz/anlik-katil/{session}', [LiveQuizController::class, 'studentInstantJoin'])->name('student.live-quiz.instant-join');
         Route::get('/ogrenci/canli-quiz/aktif-oturum', [LiveQuizController::class, 'studentActiveSession'])->name('student.live-quiz.active');
         Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play');
+        Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status');
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
 
         Route::get('/ogrenci/panelim', [StudentPortalController::class, 'dashboard'])->name('student.portal.dashboard');

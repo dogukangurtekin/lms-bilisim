@@ -152,6 +152,38 @@
             </table>
         </div>
     </div>
+
+    <div class="card">
+        <h3>Gecmis Oturumlar / Raporlar</h3>
+        <div class="quiz-table-wrap">
+            <table>
+                <thead><tr><th>Quiz</th><th>Kod</th><th>Durum</th><th>Islem</th></tr></thead>
+                <tbody>
+                @forelse($sessions as $s)
+                    <tr>
+                        <td>{{ $s->quiz?->title ?? '-' }}</td>
+                        <td>{{ $s->join_code }}</td>
+                        <td>
+                            @if($s->status === 'finished') Tamamlandi
+                            @elseif($s->status === 'lobby') Lobide
+                            @else Canli
+                            @endif
+                        </td>
+                        <td>
+                            @if($s->status === 'finished')
+                                <a class="btn" href="{{ route('live-quiz.session.report', $s) }}">Raporu Gor</a>
+                            @else
+                                <a class="btn" href="{{ route('live-quiz.session.show', $s) }}">Oturuma Git</a>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4">Henuz oturum yok.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @endsection
 

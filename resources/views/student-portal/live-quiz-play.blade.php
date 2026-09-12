@@ -73,7 +73,17 @@
         </div>
     </div>
 
-    @if(!$q)
+    @if($session->status === 'lobby')
+        <div class="lq-center-stage">
+            <div class="lq-wait-box">
+                <h3 class="lq-wait-title">Ogretmen Baslatmasini Bekliyorsun</h3>
+                <p>Katilim kodu ile lobiye girdin. Ogretmen "Herkese Baslat" dedigi an ilk soru
+                   herkes icin ayni anda baslayacak.</p>
+                <div class="lq-wait-count" id="lqLobbyCount">{{ $joinedCount ?? 0 }}</div>
+                <p class="lq-auto-note">Lobide bekleyen ogrenci sayisi</p>
+            </div>
+        </div>
+    @elseif(!$q)
         <div class="lq-state">Bu oturumda soru bulunamadi.</div>
     @elseif($session->status !== 'live')
         <div class="lq-state">Quiz tamamlandi.</div>
@@ -208,8 +218,32 @@
             @endif
         });
     });
+    const statusUrl = @json(route('student.live-quiz.status', $session));
+    let clockOffsetMs = 0;
+
+    @if($session->status === 'lobby')
+    const lobbyCountEl = document.getElementById('lqLobbyCount');
+    const pollLobby = async () => {
+        try {
+            const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            clockOffsetMs = data.server_now_ms - Date.now();
+            if (lobbyCountEl && typeof data.joined_count === 'number') {
+                lobbyCountEl.textContent = String(data.joined_count);
+            }
+            if (data.status === 'live') {
+                // Ogretmen "Herkese Baslat" dedi: soru ekranina gecmek icin yenile.
+                window.location.reload();
+            }
+        } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+    };
+    pollLobby();
+    setInterval(pollLobby, 1500);
+    @endif
+
     @if($session->status === 'live')
-    const endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
+    let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
     const countdownEl = document.getElementById('lq-countdown');
     const answerCountdownEl = document.getElementById('lq-answer-countdown');
     const waitingStage = document.getElementById('lqWaitingStage');
@@ -234,8 +268,25 @@
         }, 1000);
     };
 
+    // Ogrencinin cihaz saati sunucudan farkli olabilir; periyodik senkronizasyon
+    // ile sayacin gercek kalan sureyi gostermesi saglanir (Kahoot'taki gibi
+    // herkeste ayni anda sifirlanmasi icin).
+    const syncClock = async () => {
+        try {
+            const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            clockOffsetMs = data.server_now_ms - Date.now();
+            if (typeof data.ends_at_ms === 'number' && data.ends_at_ms > 0) {
+                endsAtMs = data.ends_at_ms;
+            }
+        } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+    };
+    syncClock();
+    setInterval(syncClock, 4000);
+
     const tick = () => {
-        const leftMs = endsAtMs - Date.now();
+        const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
         const leftSec = Math.max(0, Math.ceil(leftMs / 1000));
         if (countdownEl) countdownEl.textContent = String(leftSec);
         if (answerCountdownEl) answerCountdownEl.textContent = String(leftSec);

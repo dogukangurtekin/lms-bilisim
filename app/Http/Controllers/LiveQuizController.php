@@ -11,6 +11,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentReport;
 use App\Models\UserProfile;
+use App\Support\Utf8Text;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -83,14 +84,37 @@ class LiveQuizController extends Controller
     public function start(LiveQuiz $quiz)
     {
         abort_unless($quiz->teacher_user_id === auth()->id(), 403);
-        $first = $quiz->questions()->orderBy('sort_order')->first();
-        $duration = max(5, (int) ($first?->duration_sec ?? 30));
-        $nowMs = $this->nowMs();
+        abort_unless($quiz->questions()->exists(), 422);
 
+        // Once soru sayaci baslatilmiyor: ogrenciler once bir "lobi" ekraninda
+        // katilim koduyla toplanir, ogretmen "Herkese Baslat" dedigi an ayni
+        // milisaniyede birinci sorunun suresi herkes icin birlikte baslar.
         $session = LiveQuizSession::query()->create([
             'live_quiz_id' => $quiz->id,
             'teacher_user_id' => auth()->id(),
             'join_code' => strtoupper(Str::random(6)),
+            'status' => 'lobby',
+            'current_index' => 0,
+            'is_locked' => true,
+            'started_at_ms' => null,
+            'ends_at_ms' => null,
+        ]);
+
+        return redirect()->route('live-quiz.session.show', $session)->with('ok', 'Lobi olusturuldu. Ogrenciler koda katilinca "Herkese Baslat" butonuna basin.');
+    }
+
+    public function launch(LiveQuizSession $session)
+    {
+        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        if ($session->status !== 'lobby') {
+            return back();
+        }
+
+        $first = $session->quiz()->first()?->questions()->orderBy('sort_order')->first();
+        $duration = max(5, (int) ($first?->duration_sec ?? 30));
+        $nowMs = $this->nowMs();
+
+        $session->update([
             'status' => 'live',
             'current_index' => 0,
             'is_locked' => false,
@@ -98,7 +122,7 @@ class LiveQuizController extends Controller
             'ends_at_ms' => $nowMs + ($duration * 1000),
         ]);
 
-        return redirect()->route('live-quiz.session.show', $session)->with('ok', 'Canli quiz baslatildi.');
+        return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');
     }
 
     public function showSession(LiveQuizSession $session)
@@ -106,13 +130,71 @@ class LiveQuizController extends Controller
         abort_unless($session->teacher_user_id === auth()->id(), 403);
         $session = $this->syncSessionByTimer($session);
         if ($session->status === 'finished') {
-            return redirect()->route('live-quiz.index')->with('ok', 'Quiz tamamlandi. Quiz listesine yonlendirildiniz.');
+            return redirect()->route('live-quiz.session.report', $session)->with('ok', 'Quiz tamamlandi. Rapor asagida.');
         }
         $session->load(['quiz.questions', 'participants.studentUser']);
         $rows = $this->leaderboardRows($session);
         $currentQuestionStats = $this->currentQuestionStats($session);
 
         return view('live-quiz.session', compact('session', 'rows', 'currentQuestionStats'));
+    }
+
+    /**
+     * Ogretmen/admin ekraninin AJAX ile (sayfa yenilemeden) canli sayacini,
+     * katilan/cevaplayan sayilarini ve durumunu guncellemesi icin JSON uc noktasi.
+     */
+    public function sessionStatus(LiveQuizSession $session)
+    {
+        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $session = $this->syncSessionByTimer($session);
+        $session->load('quiz.questions');
+        $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
+        $current = $questions->get((int) $session->current_index);
+
+        return response()->json([
+            'status' => $session->status,
+            'current_index' => (int) $session->current_index,
+            'question_count' => $questions->count(),
+            'question_text' => $current?->question_text,
+            'is_locked' => (bool) $session->is_locked,
+            'ends_at_ms' => (int) ($session->ends_at_ms ?? 0),
+            'server_now_ms' => $this->nowMs(),
+            'stats' => $this->currentQuestionStats($session),
+            'rows' => $this->leaderboardRows($session),
+            'report_url' => route('live-quiz.session.report', $session),
+        ]);
+    }
+
+    public function sessionReport(LiveQuizSession $session)
+    {
+        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $session->load(['quiz.questions', 'participants.studentUser']);
+
+        $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
+        $answers = LiveQuizAnswer::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->get()
+            ->groupBy('question_index');
+
+        $questionBreakdown = $questions->map(function ($question, $index) use ($answers) {
+            $qAnswers = $answers->get($index, collect());
+            $answered = $qAnswers->count();
+            $correct = $qAnswers->where('is_correct', true)->count();
+            $avgAnsweredAtMs = $answered > 0 ? (int) round($qAnswers->avg('answered_at_ms')) : null;
+
+            return [
+                'index' => $index,
+                'question_text' => $question->question_text,
+                'answered' => $answered,
+                'correct' => $correct,
+                'wrong' => max(0, $answered - $correct),
+                'avg_xp' => $answered > 0 ? round($qAnswers->avg('xp_earned'), 1) : 0,
+            ];
+        })->values()->all();
+
+        $rows = $this->leaderboardRows($session);
+
+        return view('live-quiz.report', compact('session', 'questionBreakdown', 'rows'));
     }
 
     public function next(LiveQuizSession $session)
@@ -173,14 +255,14 @@ class LiveQuizController extends Controller
         $data = $request->validate(['join_code' => ['required', 'string', 'size:6']]);
         $session = LiveQuizSession::query()
             ->where('join_code', Str::upper($data['join_code']))
-            ->where('status', 'live')
+            ->whereIn('status', ['lobby', 'live'])
             ->first();
         if (!$session) {
             return back()->withErrors(['join_code' => 'Aktif oturum bulunamadi.']);
         }
 
         $session = $this->syncSessionByTimer($session);
-        if ($session->status !== 'live') {
+        if (!in_array($session->status, ['lobby', 'live'], true)) {
             return back()->withErrors(['join_code' => 'Bu oturumun suresi doldu veya quiz bitti.']);
         }
         if (!$this->studentCanJoinSession($session, auth()->id())) {
@@ -204,7 +286,7 @@ class LiveQuizController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
         $session = $this->syncSessionByTimer($session);
-        abort_unless($session->status === 'live', 403);
+        abort_unless(in_array($session->status, ['lobby', 'live'], true), 403);
         abort_unless(((string) ($session->quiz?->join_mode ?? 'code')) === 'instant', 403);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
 
@@ -225,7 +307,7 @@ class LiveQuizController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
         $session = $this->syncSessionByTimer($session);
-        abort_unless($session->status === 'live' || $session->status === 'finished', 403);
+        abort_unless(in_array($session->status, ['lobby', 'live', 'finished'], true), 403);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
         if (!LiveQuizParticipant::query()
             ->where('live_quiz_session_id', $session->id)
@@ -242,8 +324,29 @@ class LiveQuizController extends Controller
             ->where('student_user_id', auth()->id())
             ->where('question_index', (int) $session->current_index)
             ->exists();
+        $joinedCount = $session->status === 'lobby' ? $session->participants()->count() : 0;
 
-        return view('student-portal.live-quiz-play', compact('session', 'alreadyAnsweredCurrent'));
+        return view('student-portal.live-quiz-play', compact('session', 'alreadyAnsweredCurrent', 'joinedCount'));
+    }
+
+    /**
+     * Ogrenci ekraninin lobide "ogretmen baslatti mi" ve sorudayken sunucu
+     * saatiyle senkron kalan sureyi sayfa yenilemeden kontrol etmesi icin.
+     */
+    public function studentSessionStatus(LiveQuizSession $session)
+    {
+        abort_unless(auth()->user()?->hasRole('student'), 403);
+        $session = $this->syncSessionByTimer($session);
+        abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
+
+        return response()->json([
+            'status' => $session->status,
+            'current_index' => (int) $session->current_index,
+            'is_locked' => (bool) $session->is_locked,
+            'ends_at_ms' => (int) ($session->ends_at_ms ?? 0),
+            'server_now_ms' => $this->nowMs(),
+            'joined_count' => $session->status === 'lobby' ? $session->participants()->count() : null,
+        ]);
     }
 
     public function studentAnswer(Request $request, LiveQuizSession $session)
@@ -279,7 +382,8 @@ class LiveQuizController extends Controller
         }
 
         $evaluation = $this->evaluateAnswer($request, $question);
-        $xp = $evaluation['is_correct'] ? ((int) $question->xp * ($question->double_xp ? 2 : 1)) : 0;
+        $answeredAtMs = $this->nowMs();
+        $xp = $evaluation['is_correct'] ? $this->calculateSpeedXp($session, $question, $answeredAtMs) : 0;
 
         LiveQuizAnswer::query()->create([
             'live_quiz_session_id' => $session->id,
@@ -288,7 +392,7 @@ class LiveQuizController extends Controller
             'selected_answer' => $evaluation['selected_answer'],
             'is_correct' => $evaluation['is_correct'],
             'xp_earned' => $xp,
-            'answered_at_ms' => $this->nowMs(),
+            'answered_at_ms' => $answeredAtMs,
         ]);
 
         if ($xp > 0) {
@@ -323,7 +427,7 @@ class LiveQuizController extends Controller
 
         $session = LiveQuizSession::query()
             ->with('quiz')
-            ->where('status', 'live')
+            ->whereIn('status', ['lobby', 'live'])
             ->latest('id')
             ->get()
             ->first(function (LiveQuizSession $candidate) {
@@ -336,7 +440,7 @@ class LiveQuizController extends Controller
         }
 
         $session = $this->syncSessionByTimer($session);
-        if ($session->status !== 'live' || ((string) ($session->quiz?->join_mode ?? 'code')) !== 'instant') {
+        if (!in_array($session->status, ['lobby', 'live'], true) || ((string) ($session->quiz?->join_mode ?? 'code')) !== 'instant') {
             return response()->json(['active' => false]);
         }
 
@@ -437,6 +541,27 @@ class LiveQuizController extends Controller
             'xp' => $xp,
             'double_xp' => $doubleXp,
         ];
+    }
+
+    /**
+     * Kahoot'taki gibi en hizli dogru cevap en yuksek puani alir: sorunun
+     * suresinin ne kadari kaldiysa (0 ile 1 arasi bir oran) taban XP'nin
+     * %50 ile %100'u arasinda bir carpanla odullendirilir. En son anda dogru
+     * cevap verilse bile en az yarim puan garanti edilir, boylece dogru
+     * cevap vermek her zaman yanlistan/cevapsizdan daha degerlidir.
+     */
+    private function calculateSpeedXp(LiveQuizSession $session, LiveQuizQuestion $question, int $answeredAtMs): int
+    {
+        $baseXp = (int) $question->xp * ($question->double_xp ? 2 : 1);
+        $durationMs = max(1000, (int) $question->duration_sec * 1000);
+        $endsAtMs = (int) ($session->ends_at_ms ?? 0);
+        $startedAtMs = $endsAtMs > 0 ? $endsAtMs - $durationMs : $answeredAtMs;
+
+        $elapsedMs = max(0, $answeredAtMs - $startedAtMs);
+        $remainingFraction = max(0.0, min(1.0, 1 - ($elapsedMs / $durationMs)));
+        $speedMultiplier = 0.5 + (0.5 * $remainingFraction);
+
+        return max(1, (int) round($baseXp * $speedMultiplier));
     }
 
     private function evaluateAnswer(Request $request, LiveQuizQuestion $question): array
@@ -680,4 +805,3 @@ class LiveQuizController extends Controller
         return $letter;
     }
 }
-use App\Support\Utf8Text;
