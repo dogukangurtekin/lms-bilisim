@@ -516,8 +516,19 @@ HTML;
                         </div>
                     @elseif($interactionType === 'true_false')
                         @php
-                            $trueOption = collect($question['options'] ?? [])->first(fn ($opt) => is_array($opt) && $isTruthyCorrect($opt));
-                            $trueCorrect = is_array($trueOption) ? true : (!empty($question['correct_index']) ? ((int) $question['correct_index'] === 0) : true);
+                            // Onceki kod, secenekler arasinda ISARETLI (correct=true) HERHANGI
+                            // BIR secenek bulundugunda "Dogru" tarafinin dogru cevap oldugunu
+                            // varsayiyordu - "Yanlis" secenegi correct=true olarak isaretlenmis
+                            // olsa bile. Bu yuzden ogretmen "Yanlis"i dogru cevap olarak
+                            // isaretlese bile ogrenci "Yanlis"i sectiginde yanlis sayiliyordu.
+                            // Artik hangi SECENEGIN isaretli oldugunu (metnine gore) buluyoruz.
+                            $correctTfOption = collect($question['options'] ?? [])->first(fn ($opt) => is_array($opt) && $isTruthyCorrect($opt));
+                            if (is_array($correctTfOption)) {
+                                $correctTfText = mb_strtolower(trim((string) ($correctTfOption['text'] ?? '')));
+                                $trueCorrect = $correctTfText !== 'yanlış' && $correctTfText !== 'yanlis';
+                            } else {
+                                $trueCorrect = !empty($question['correct_index']) ? ((int) $question['correct_index'] === 0) : true;
+                            }
                         @endphp
                         <div class="sqz-grid">
                             <label class="sqz-opt sqz-blue" data-sqz-option data-sqz-correct="{{ $trueCorrect ? '1' : '0' }}">
