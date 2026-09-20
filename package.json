@@ -24,7 +24,7 @@
         "@tiptap/extension-font-family": "^3.29.2",
         "@tiptap/extension-highlight": "^3.29.2",
         "@tiptap/extension-link": "^3.29.2",
-        "@tiptap/extension-list-item": "^3.29.2",
+        "@tiptap/extension-list-item": "^3.31.3",
         "@tiptap/extension-ordered-list": "^3.29.2",
         "@tiptap/extension-placeholder": "^3.29.2",
         "@tiptap/extension-text-align": "^3.29.2",
