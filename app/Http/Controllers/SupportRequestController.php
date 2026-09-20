@@ -100,7 +100,7 @@ class SupportRequestController extends Controller
             'message' => ['required', 'string', 'max:6000'],
             'category' => ['required', Rule::in(['technical_support', 'lesson_content', 'user_permission', 'bug_report', 'other'])],
             'priority' => ['required', Rule::in(['low', 'normal', 'high'])],
-            'attachment' => ['nullable', 'file', 'max:10240'],
+            'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,webp,txt', 'max:10240'],
         ]);
 
         $path = null;

@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Audit dependencies for known vulnerabilities
+        run: composer audit --no-interaction
+
       - name: Prepare env
         run: |
           cp .env.example .env

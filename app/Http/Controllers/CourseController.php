@@ -291,6 +291,13 @@ class CourseController extends Controller
     }
     public function assignTeacher(Request $request, Course $course)
     {
+        // Diger atama fonksiyonlariyla (unassignTeacher, assignTeacherBulk)
+        // tutarli olmasi icin: bu, herhangi bir dersi herhangi bir ogretmene
+        // atayabilen guclu bir yetki, sadece admin kullanabilmeli. Onceden
+        // hicbir kontrol yoktu; herhangi bir ogretmen baska bir ogretmenin
+        // dersini kendine/baskasina atayabiliyordu (IDOR).
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
         $data = $request->validate([
             'teacher_id' => ['nullable', 'integer', 'exists:teachers,id'],
         ]);
@@ -704,6 +711,12 @@ class CourseController extends Controller
     }
     public function update(UpdateCourseRequest $request, Course $course)
     {
+        // CoursePolicy zaten "admin, dersin ogretmeni, ya da dersi olusturan
+        // kullanici" kuralini dogru tanimliyordu ama hicbir yerden cagirilmiyordu
+        // - herhangi bir ogretmen baska bir ogretmenin dersini
+        // duzenleyebiliyordu (IDOR). Mevcut policy'yi devreye sokuyoruz.
+        $this->authorize('update', $course);
+
         $data = $request->validated();
         $data['parent_course_id'] = !empty($data['parent_course_id']) ? (int) $data['parent_course_id'] : null;
         $data['sort_order'] = isset($data['sort_order']) ? (int) $data['sort_order'] : 0;
@@ -1479,6 +1492,14 @@ class CourseController extends Controller
             return $data;
         }
 
+        // Bu dosya asagida dogrudan bir ImageMagick/GD islem hattina veriliyor;
+        // uzanti/MIME dogrulamasi olmadan gonderilirse "ImageTragick" tarzi bir
+        // RCE/SSRF yuzeyi acar. Gercek icerigin gorsel oldugunu once burada
+        // dogruluyoruz (Laravel'in 'image' kurali dosyayi getimagesize ile kontrol eder).
+        $request->validate([
+            'cover_image_file' => ['file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+        ]);
+
         try {
             $path = $this->storeCoverAsWebp($request->file('cover_image_file'));
         } catch (\Throwable $e) {
@@ -1580,6 +1601,16 @@ class CourseController extends Controller
         if ($binary === false || $binary === '') {
             throw new \RuntimeException('Kapak gorseli base64 cozulemedi.');
         }
+        // data: URL'sinin "image/png" etiketi istemci tarafindan yazildigi icin
+        // guvenilmez; icerigin gercekten gecerli bir gorsel oldugunu getimagesize
+        // ile dogruluyoruz. Aksi halde keyfi binary veri "kapak gorseli" diye
+        // herkese acik klasore yazilabilirdi.
+        if (strlen($binary) > 8 * 1024 * 1024) {
+            throw new \RuntimeException('Kapak gorseli 8MB sinirini asiyor.');
+        }
+        if (@getimagesizefromstring($binary) === false) {
+            throw new \RuntimeException('Kapak gorseli gecerli bir resim dosyasi degil.');
+        }
 
         $outputDir = $this->coverStorageDirectory();
         if (!is_dir($outputDir)) {
@@ -1600,6 +1631,15 @@ class CourseController extends Controller
 
     private function storeCoverAsWebp(UploadedFile $file): string
     {
+        $sourcePathForCheck = $file->getRealPath();
+        // Ikinci bir savunma katmani: bu fonksiyon dogrudan bir ImageMagick/GD
+        // sürecine dosya yolu veriyor. Cagiran taraf validate ediyor olsa bile,
+        // burada da icerigin gercekten bir gorsel oldugunu dogrulamadan harici
+        // magick binary'sine gecmiyoruz (ImageTragick tarzi RCE/SSRF'e karsi).
+        if (!$sourcePathForCheck || !is_file($sourcePathForCheck) || @getimagesize($sourcePathForCheck) === false) {
+            throw new \RuntimeException('Kapak gorseli gecerli bir resim dosyasi degil.');
+        }
+
         $outputDir = $this->coverStorageDirectory();
         if (!is_dir($outputDir)) {
             @mkdir($outputDir, 0775, true);

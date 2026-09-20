@@ -17,12 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecureHeaders::class);
-        $middleware->validateCsrfTokens(except: [
-            'login',
-            'login/game',
-            'public/index.php/login',
-            'public/index.php/login/game',
-        ]);
+        // Not: giris formlari zaten @csrf iceriyor; bu route'lari CSRF
+        // dogrulamasindan muaf tutmanin bilinen bir gerekcesi yoktu ve
+        // "login CSRF" saldirilarina (saldirganin kendi hesabina otomatik
+        // giris yaptirip kurbani kandirmasi) acik kapi birakiyordu.
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'client.auth' => AuthenticateClientApi::class,
