@@ -8,7 +8,7 @@
         "socket": "node socket-server.js"
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.0.0",
+        "@tailwindcss/vite": "^4.3.3",
         "@vitejs/plugin-vue": "^6.0.5",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
