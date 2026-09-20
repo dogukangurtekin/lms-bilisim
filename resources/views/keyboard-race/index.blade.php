@@ -496,10 +496,20 @@
             const liveResults = room.race_results || room.raceResults || data.results || [];
             renderOpponentsFromResults(liveResults);
             if (room.status === 'active' && !state.startHandled) {
+                // "rooms" tablosunda duration_seconds/ends_at kolonlari hic yok, bu yuzden
+                // room.ends_at her zaman undefined geliyordu ve her ogrenci kendi
+                // tarayicisinin Date.now()'una gore -yani polling ile durumu fark ettigi
+                // ANA gore- kendi bitis zamanini hesapliyordu. Sonuc: herkes ayni anda
+                // baslamis gibi gorunse de yaris farkli anlarda bitiyordu. Artik sunucunun
+                // gerceklestirdigi/otoriter zaman damgasi olan room.started_at'i anchor
+                // olarak kullaniyoruz; boylece polling ile durumu ne zaman fark ettiginden
+                // bagimsiz olarak TUM katilimcilar ayni mutlak bitis zamanini hesapliyor.
+                const startedAtMs = room.started_at ? new Date(room.started_at).getTime() : Date.now();
+                const durationSeconds = Number(room.duration_seconds || state.raceDurationSeconds || 120);
                 await handleRaceStarted({
                     text: room.text || state.roomText,
-                    durationSeconds: Number(room.duration_seconds || state.raceDurationSeconds || 120),
-                    endsAt: room.ends_at || null,
+                    durationSeconds,
+                    endsAt: new Date(startedAtMs + (durationSeconds * 1000)).toISOString(),
                     skipCountdown: true,
                 });
             }

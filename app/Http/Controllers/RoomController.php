@@ -42,6 +42,12 @@ class RoomController extends Controller
             'created_by' => $payload['user_id'] ?? null,
         ]);
 
+        // Oda olusturan ogretmen bir yarisci degil, sadece yaris sahibidir. Daha once
+        // bu kayit is_spectator=false ile aciliyordu; ogretmen hicbir zaman
+        // yazmadigindan progress'i hep 0 kalip RaceController::finish()'teki
+        // "tum katilimcilar bitirdi mi" kontrolunu SONSUZA KADAR engelliyordu -
+        // oda hicbir zaman kendiliginden "finished" olamiyordu ve ogretmen
+        // skor tablosunda 0 puanla goruntuleniyordu.
         RaceResult::create([
             'room_id' => $room->id,
             'user_id' => $payload['user_id'] ?? null,
@@ -49,7 +55,7 @@ class RoomController extends Controller
             'progress' => 0,
             'wpm' => 0,
             'accuracy' => 100,
-            'is_spectator' => false,
+            'is_spectator' => true,
         ]);
 
         $this->publishRaceEvent([
