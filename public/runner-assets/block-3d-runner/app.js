@@ -1055,6 +1055,70 @@ function placeDraftItem(x, y, itemType) {
   }
 }
 
+// --- Akilli tahta / dokunmatik ekran destegi -------------------------
+// HTML5'in yerlesik draggable="true" surukle-birak API'si dokunmatik
+// girdiyi HIC desteklemiyor (spesifikasyon geregi sadece fare ile
+// calisir) - bu yuzden akilli tahtalarda tasarim paletinden ogeleri
+// suruklemek mumkun olmuyordu. Asagidaki touchstart/touchmove/touchend
+// tabanli kucuk polyfill, ayni "surukle-birak" hareketini parmakla da
+// (ya da akilli tahta kaleminin dokunma modunda) calisir hale getiriyor;
+// mevcut fare ile surukleme (dragstart/dragover/drop) davranisi aynen
+// korunuyor.
+let touchDragItem = null;
+let touchDragOverCell = null;
+
+function cellAtPoint(clientX, clientY) {
+  const el = document.elementFromPoint(clientX, clientY);
+  return el?.closest?.(".designer-cell") || null;
+}
+
+function startTouchDrag(itemType, touch) {
+  touchDragItem = itemType;
+  touchDragOverCell = null;
+  if (touch) updateTouchDragOver(touch.clientX, touch.clientY);
+}
+
+function updateTouchDragOver(clientX, clientY) {
+  const cell = cellAtPoint(clientX, clientY);
+  if (cell === touchDragOverCell) return;
+  touchDragOverCell?.classList.remove("drag-over");
+  touchDragOverCell = cell;
+  touchDragOverCell?.classList.add("drag-over");
+}
+
+function endTouchDrag(clientX, clientY) {
+  if (!touchDragItem) return;
+  const cell = cellAtPoint(clientX, clientY);
+  touchDragOverCell?.classList.remove("drag-over");
+  touchDragOverCell = null;
+  if (cell) {
+    const x = Number(cell.dataset.x);
+    const y = Number(cell.dataset.y);
+    placeDraftItem(x, y, touchDragItem);
+    renderDesignerBoard();
+  }
+  touchDragItem = null;
+}
+
+document.addEventListener("touchmove", (ev) => {
+  if (!touchDragItem) return;
+  ev.preventDefault();
+  const touch = ev.touches[0];
+  if (touch) updateTouchDragOver(touch.clientX, touch.clientY);
+}, { passive: false });
+
+document.addEventListener("touchend", (ev) => {
+  if (!touchDragItem) return;
+  const touch = ev.changedTouches[0];
+  endTouchDrag(touch ? touch.clientX : -1, touch ? touch.clientY : -1);
+});
+
+document.addEventListener("touchcancel", () => {
+  touchDragOverCell?.classList.remove("drag-over");
+  touchDragOverCell = null;
+  touchDragItem = null;
+});
+
 function refreshPaletteActive() {
   const items = designerPalette?.querySelectorAll(".palette-item") || [];
   items.forEach((el) => {
@@ -1409,6 +1473,13 @@ function bindUI() {
       ev.dataTransfer?.setData("text/plain", itemType);
       ev.dataTransfer.effectAllowed = "copy";
     });
+    item.addEventListener("touchstart", (ev) => {
+      const itemType = item.dataset.item || "obstacle";
+      selectedPaletteItem = itemType;
+      refreshPaletteActive();
+      startTouchDrag(itemType, ev.touches[0]);
+      ev.preventDefault();
+    }, { passive: false });
   });
   designerModal?.addEventListener("click", (ev) => {
     if (ev.target === designerModal) closeDesigner();

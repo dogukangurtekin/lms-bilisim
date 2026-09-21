@@ -237,6 +237,9 @@
       display: grid;
       place-items: center;
       justify-self: center;
+      /* Akilli tahta/dokunmatik ekranda parmakla surukleme sirasinda
+         sayfanin kaymasini engeller. */
+      touch-action: none;
     }
     .palette-item.active {
       border-color: #2563eb;
