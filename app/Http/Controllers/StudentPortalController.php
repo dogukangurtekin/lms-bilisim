@@ -228,13 +228,24 @@ class StudentPortalController extends Controller
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();
         $systemSeconds = (int) ($timeStat?->total_seconds ?? 0);
 
+        // Anasayfadaki "XP" ogrencinin harcayabilecegi bakiye olarak
+        // gosteriliyor (avatar magazasindaki "Kalan XP" ile ayni deger).
+        // "Toplam XP" (yasam boyu kazanilan, hic azalmayan) degeri rozet
+        // esiklerinde ve siralamada kullanilmaya devam ediyor - bir avatar
+        // satin alindiginda oradan bir sey dusmemesi kasitlidir, aksi halde
+        // ogrenci kazanilmis rozetleri/siralamayi kaybedebilirdi. Ama
+        // anasayfada gorunen sayi avatar satin alindiktan sonra gozle
+        // gorulur sekilde azalmali, bu yuzden burada netleniyor.
+        $availableXp = max(0, $xp - (int) ($student->avatar_xp_spent ?? 0));
+
         return view('student-portal.dashboard', [
             'student' => $student,
             'courses' => $courses,
             'assignments' => $gameAssignments,
             'courseHomeworks' => $courseHomeworks,
             'totalAssignments' => $totalAssignments,
-            'xp' => $xp,
+            'xp' => $availableXp,
+            'totalXp' => $xp,
             'avg' => round((float) Grade::where('student_id', $student->id)->avg('score'), 1),
             'completedAssignments' => $completedAssignments,
             'pendingAssignments' => $pendingAssignments,

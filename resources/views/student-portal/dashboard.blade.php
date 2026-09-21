@@ -32,7 +32,7 @@
             <p class="student-hero-sub">Görevlerini tamamlamaya devam et, istatistiklerini takip et ve liderlikte yerini koru.</p>
 
             <div class="student-hero-kpis">
-                <article><span>Toplam XP</span><strong>{{ $xp }} XP</strong></article>
+                <article><span>Kalan XP</span><strong>{{ $xp }} XP</strong></article>
                 <article><span>Tamamlanan</span><strong>{{ $completedAssignments }}</strong></article>
                 <article><span>Bekleyen</span><strong>{{ $pendingAssignments }}</strong></article>
                 <article><span>Sınıf Sıralaması</span><strong>{{ $gradeRank ?? '-' }}</strong></article>
