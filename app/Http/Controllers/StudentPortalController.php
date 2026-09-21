@@ -696,10 +696,13 @@ class StudentPortalController extends Controller
 
     private function canStudentAccessCourse(Student $student, Course $course): bool
     {
-        if ((int) ($course->teacher_id ?? 0) <= 0 && empty($course->parent_course_id)) {
-            return false;
-        }
-
+        // ESKI KOD: teacher_id bos olan (ornegin henuz bir ogretmene atanmamis,
+        // sadece mufredat kutuphanesinden import edilmis) ve ust dersi olmayan
+        // her ders, asagidaki CourseHomework (ders atama) kontrolune HIC
+        // bakilmadan direkt reddediliyordu. Bu, ogretmenin "Kademeye Gore Ata"
+        // ile bilfiil atadigi bir dersi bile ogrenciye 403 olarak gosteriyordu -
+        // ders atama sistemi zaten tek basina yeterli/dogru yetki kontrolu,
+        // teacher_id'nin dolu olup olmamasinin bununla ilgisi yok.
         if (!empty($course->parent_course_id)) {
             if ((int) ($course->school_class_id ?? 0) > 0 && (int) $course->school_class_id === (int) $student->school_class_id) {
                 return true;
