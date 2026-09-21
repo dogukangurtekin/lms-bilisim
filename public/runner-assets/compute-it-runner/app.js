@@ -639,17 +639,40 @@
     return walls;
   }
 
+  // 31-60 icin zorluk egrisi: 1-30 arasi zaten elle yazilmis giris+orta
+  // seviye bolumler. Bu yuzden 31-34 hala "giris/gecis" seviyesinde kalip
+  // 35'ten itibaren SERT bir "zor" bandina atlamiyor - bunun yerine tek,
+  // surekli bir "orta seviye zorlasiyor" rampasi olarak ilerliyor (35-60).
   function buildExtraComputeLevels() {
     const extra = [];
     for (let id = 31; id <= 60; id++) {
-      const rel = id - 31;
-      const band = rel < 10 ? "kolay" : rel < 20 ? "orta" : "zor";
-      const size = band === "zor" ? 9 : 8;
-      const rightSteps = band === "kolay" ? 3 + (rel % 2) : band === "orta" ? 4 + (rel % 2) : 5 + (rel % 2);
-      const upSteps = band === "kolay" ? 2 + (rel % 2) : band === "orta" ? 3 + (rel % 2) : 4 + (rel % 2);
+      const rel = id - 31; // 0..29
+      const isIntro = id <= 34; // 31-34: giris/gecis
+      let size, rightSteps, upSteps, wallCount, xp, label;
+
+      if (isIntro) {
+        // 31-34: onceki (1-30) giris+orta seviyeyle ayni hizada, hafif devam.
+        size = 7;
+        rightSteps = 3 + (rel % 2);
+        upSteps = 2 + (rel % 2);
+        wallCount = 6 + rel;
+        xp = 72 + rel;
+        label = `Giris ${rel + 1}`;
+      } else {
+        // 35-60: 26 bolumluk tek parca, kademeli zorlasan orta seviye rampasi.
+        const t = id - 35; // 0..25
+        rightSteps = 4 + Math.floor(t / 5); // 4..9
+        upSteps = 3 + Math.floor(t / 5); // 3..8
+        // Izgara, en uzun adimi (start=[1,size-2]) + duvar payi sigacak sekilde
+        // doğrudan adim sayilarindan hesaplaniyor (sabit kademeli deger yerine).
+        size = Math.max(rightSteps, upSteps) + 3;
+        wallCount = 10 + Math.floor(t / 2); // 10..22 (yumusak, surekli artis)
+        xp = 76 + t * 2;
+        label = `Orta ${t + 1}`;
+      }
+
       const start = [1, size - 2];
       const built = buildComputePath(start, rightSteps, upSteps);
-      const wallCount = band === "kolay" ? 10 : band === "orta" ? 14 : 18;
       const walls = buildComputeWalls(size, built.path, start, built.goal, id, wallCount);
       const stepToLine = [
         ...Array.from({ length: rightSteps }, () => 1),
@@ -657,12 +680,12 @@
       ];
       extra.push({
         id,
-        name: `Yeni ${band === "kolay" ? "Kolay" : band === "orta" ? "Orta" : "Zor"} ${rel + 1}`,
+        name: label,
         size,
         start,
         goal: built.goal,
         walls,
-        xp: band === "kolay" ? 72 + rel : band === "orta" ? 88 + rel : 108 + rel,
+        xp,
         aValue: 5 + (rel % 6),
         countersStart: { a: 0, b: 0, c: 0 },
         counterRules: { right: { a: 1 }, up: { b: 1 }, left: { a: -1 }, down: { b: -1 } },
@@ -677,7 +700,9 @@
         expectedMoves: built.moves,
         stepToLine,
         targetCounters: { a: rightSteps, b: upSteps, c: 0 },
-        tip: `Yeni ${band} bolumu: engeller arasindan dogru rotayi takip et.`
+        tip: isIntro
+          ? "Giris/gecis bolumu: engeller arasindan dogru rotayi takip et."
+          : "Orta seviye zorlasan bolum: engeller arasindan dogru rotayi takip et."
       });
     }
     return extra;
@@ -954,9 +979,8 @@
     const n = Math.max(1, toInt(levelNo, 1));
     if (n <= 10) return 5;
     if (n <= 21) return 10;
-    if (n <= 35) return 17;
-    if (n <= 42) return 22;
-    if (n <= 60) return 30;
+    if (n <= 34) return 17;
+    if (n <= 60) return 26;
     if (n <= 75) return 38;
     if (n <= 90) return 46;
     if (n <= 105) return 55;
