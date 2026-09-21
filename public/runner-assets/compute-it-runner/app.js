@@ -130,9 +130,9 @@
     {
       id: 6,
       name: "Ic Ice Tekrarla 1",
-      size: 7,
+      size: 8,
       start: [1, 2],
-      goal: [0, 3],
+      goal: [7, 3],
       walls: [],
       xp: 20,
       aValue: 2,
@@ -337,9 +337,9 @@
     {
       id: 17,
       name: "Orta 7",
-      size: 7,
+      size: 8,
       start: [0, 0],
-      goal: [0, 2],
+      goal: [7, 2],
       walls: [],
       xp: 44,
       aValue: 1,
@@ -685,6 +685,232 @@
 
   defaultLevels.push(...buildExtraComputeLevels());
 
+  // --- 61-120: fonksiyon / dongu / karar (if-else) konularini ele alan,
+  // adim sayisi ve zorlugu kademeli artan 60 ek bolum. -------------------
+
+  function buildDiagonalPath(start, pairs) {
+    const moves = [];
+    const path = new Set([`${start[0]},${start[1]}`]);
+    let x = start[0];
+    let y = start[1];
+    for (let i = 0; i < pairs; i++) {
+      x += 1;
+      path.add(`${x},${y}`);
+      moves.push("right");
+      y -= 1;
+      path.add(`${x},${y}`);
+      moves.push("up");
+    }
+    return { moves, path, goal: [x, y] };
+  }
+
+  // "fonksiyon" konusunu tanitan bolumler: tekrar eden bir hareket bloÄŸu
+  // once bir fonksiyon olarak tanimlanip sonra defalarca cagriliyor.
+  // Bu metin tamamen gorsel/egitici amaclidir (oyun motoru gercek bir
+  // fonksiyon cagrisi calistirmiyor); asil hareket verisi (expectedMoves)
+  // ayni capraz-yol uretecinden geliyor, boylece patika her zaman geÃ§erli
+  // ve duvarlarla celismiyor.
+  function buildFunctionLevel(id, pairs, size, wallTarget, xp) {
+    const start = [1, size - 2];
+    const built = buildDiagonalPath(start, pairs);
+    const walls = wallTarget > 0
+      ? buildComputeWalls(size, built.path, start, built.goal, id, wallTarget)
+      : [];
+    const codeLines = [
+      "fonksiyon capraz() {",
+      "  sag()",
+      "  yukari()",
+      "}",
+      ...Array.from({ length: pairs }, () => "capraz()")
+    ];
+    const stepToLine = [];
+    for (let k = 0; k < pairs; k++) {
+      stepToLine.push(4 + k, 4 + k);
+    }
+    return {
+      id,
+      name: `Fonksiyon ${id - 60}`,
+      size,
+      start,
+      goal: built.goal,
+      walls,
+      xp,
+      aValue: 4 + (pairs % 5),
+      countersStart: { a: 0, b: 0, c: 0 },
+      counterRules: { right: { a: 1 }, up: { b: 1 }, left: { a: -1 }, down: { b: -1 } },
+      codeLines,
+      expectedMoves: built.moves,
+      stepToLine,
+      targetCounters: { a: pairs, b: pairs, c: 0 },
+      tip: "Fonksiyon: ayni hareket blogu 'capraz()' ile defalarca cagriliyor."
+    };
+  }
+
+  // "dongu + karar (eger/degilse)" konusunu ele alan bolumler: once bir
+  // dongu ile ilerleniyor, sonra A degiskenine bagli bir kosul son adimi
+  // belirliyor. Duvar yok (kosul iki farkli sonuc uretebildigi icin patika
+  // karmasiklastirilmiyor, boylece ogrenci kosulun kendisine odaklanir).
+  function buildLoopIfLevel(id, loopCount, threshold, aValue, xp) {
+    const size = Math.min(13, loopCount + 4);
+    const start = [1, size - 2];
+    let x = start[0];
+    const y = start[1];
+    for (let i = 0; i < loopCount; i++) x += 1;
+    const afterLoop = [x, y];
+    const goalFalse = afterLoop;
+    // Dogru dalda once "yukari()" (y-1) sonra "sag()" (x+1) calisiyor.
+    const goalTrue = [x + 1, y - 1];
+    const codeLines = [
+      `tekrarla (${loopCount}) {`,
+      "  sag()",
+      "}",
+      `eger (A >= ${threshold}) {`,
+      "  yukari()",
+      "  sag()",
+      "}"
+    ];
+    return {
+      id,
+      name: `Karar ${id - 75}`,
+      size,
+      start,
+      goal: goalFalse,
+      walls: [],
+      xp,
+      aValue,
+      countersStart: { a: 0, b: 0, c: 0 },
+      counterRules: { right: { a: 1 }, up: { b: 1 }, left: { a: -1 }, down: { b: -1 } },
+      codeLines,
+      expectedMovesTrue: [...Array.from({ length: loopCount }, () => "right"), "up", "right"],
+      stepToLineTrue: [...Array.from({ length: loopCount }, () => 1), 4, 5],
+      expectedMovesFalse: Array.from({ length: loopCount }, () => "right"),
+      stepToLineFalse: Array.from({ length: loopCount }, () => 1),
+      condition: { var: "A", op: ">=", value: threshold },
+      goalTrue,
+      goalFalse,
+      targetCounters: { a: loopCount, b: 0, c: 0 },
+      tip: "Karar yapisi: A degiskeni esik degeri gecerse ek adimlar calisir."
+    };
+  }
+
+  // En zor bolumler: iki dongu + bir karar yapisi bir arada. Duvarlar hem
+  // "eger" dogru hem yanlis oldugunda gecerli kalacak sekilde, iki olasi
+  // sonuc hucresi de rezerve edilerek yerlestiriliyor.
+  function buildLoopLoopIfLevel(id, r1, r2, threshold, aValue, xp) {
+    // "Dogru" dalda r1 sag hareketinden sonra 2 ekstra sag() daha var; bu yuzden
+    // genislik en az r1+4 (start x=1 + r1 + 2 ekstra + kenar payi) olmali.
+    // Yukseklik icin de en az r2+2 gerekli (start y=size-2, r2 kadar yukari).
+    const size = Math.min(16, Math.max(r1 + 5, r2 + 3));
+    const start = [1, size - 2];
+    let x = start[0];
+    let y = start[1];
+    const path = new Set([`${x},${y}`]);
+    for (let i = 0; i < r1; i++) { x += 1; path.add(`${x},${y}`); }
+    for (let i = 0; i < r2; i++) { y -= 1; path.add(`${x},${y}`); }
+    const goalFalse = [x, y];
+    let tx = x;
+    for (let i = 0; i < 2; i++) { tx += 1; path.add(`${tx},${y}`); }
+    const goalTrue = [tx, y];
+    const walls = buildComputeWalls(size, path, start, goalTrue, id, Math.min(16, 8 + Math.floor((r1 + r2) / 2)));
+    const codeLines = [
+      `tekrarla (${r1}) {`,
+      "  sag()",
+      "}",
+      `tekrarla (${r2}) {`,
+      "  yukari()",
+      "}",
+      `eger (A >= ${threshold}) {`,
+      "  sag()",
+      "  sag()",
+      "}"
+    ];
+    return {
+      id,
+      name: `Usta ${id - 105}`,
+      size,
+      start,
+      goal: goalFalse,
+      walls,
+      xp,
+      aValue,
+      countersStart: { a: 0, b: 0, c: 0 },
+      counterRules: { right: { a: 1 }, up: { b: 1 }, left: { a: -1 }, down: { b: -1 } },
+      codeLines,
+      expectedMovesTrue: [
+        ...Array.from({ length: r1 }, () => "right"),
+        ...Array.from({ length: r2 }, () => "up"),
+        "right", "right"
+      ],
+      stepToLineTrue: [
+        ...Array.from({ length: r1 }, () => 1),
+        ...Array.from({ length: r2 }, () => 4),
+        7, 8
+      ],
+      expectedMovesFalse: [
+        ...Array.from({ length: r1 }, () => "right"),
+        ...Array.from({ length: r2 }, () => "up")
+      ],
+      stepToLineFalse: [
+        ...Array.from({ length: r1 }, () => 1),
+        ...Array.from({ length: r2 }, () => 4)
+      ],
+      condition: { var: "A", op: ">=", value: threshold },
+      goalTrue,
+      goalFalse,
+      targetCounters: { a: r1, b: r2, c: 0 },
+      tip: "Iki dongu ve bir karar yapisi birlikte: en uzun programlardan biri."
+    };
+  }
+
+  function buildComputeLevels61to120() {
+    const extra = [];
+
+    // 61-75: Fonksiyon + tekrar (duvarsiz -> hafif duvarli), capraz yol.
+    for (let id = 61; id <= 75; id++) {
+      const rel = id - 61; // 0..14
+      const pairs = 5 + Math.floor(rel / 4); // 5..8
+      const size = Math.min(12, pairs + 3);
+      const wallTarget = rel < 5 ? 0 : 6 + Math.floor((rel - 5) / 2); // gitgide daha fazla engel
+      const xp = 130 + rel * 3;
+      extra.push(buildFunctionLevel(id, pairs, size, wallTarget, xp));
+    }
+
+    // 76-90: Dongu + karar yapisi (eger), esik degeri ve dongu sayisi artan.
+    for (let id = 76; id <= 90; id++) {
+      const rel = id - 76; // 0..14
+      const loopCount = 6 + Math.floor(rel / 3); // 6..10
+      const threshold = 4 + (rel % 5);
+      const aValue = rel % 2 === 0 ? threshold + 2 : Math.max(0, threshold - 2); // kosul sirayla dogru/yanlis
+      const xp = 150 + rel * 3;
+      extra.push(buildLoopIfLevel(id, loopCount, threshold, aValue, xp));
+    }
+
+    // 91-105: Fonksiyon + tekrar, artik hep duvarli ve daha uzun capraz yol.
+    for (let id = 91; id <= 105; id++) {
+      const rel = id - 91; // 0..14
+      const pairs = 7 + Math.floor(rel / 3); // 7..11
+      const size = Math.min(13, pairs + 3);
+      const wallTarget = 10 + Math.floor(rel / 2); // 10..17
+      const xp = 180 + rel * 3;
+      extra.push(buildFunctionLevel(id, pairs, size, wallTarget, xp));
+    }
+
+    // 106-120: En zor bolumler - iki dongu + karar yapisi, en uzun programlar.
+    for (let id = 106; id <= 120; id++) {
+      const rel = id - 106; // 0..14
+      const r1 = 6 + Math.floor(rel / 3); // 6..10
+      const r2 = 5 + Math.floor(rel / 4); // 5..8
+      const threshold = 5 + (rel % 6);
+      const aValue = rel % 2 === 0 ? threshold + 3 : Math.max(0, threshold - 3);
+      const xp = 220 + rel * 4;
+      extra.push(buildLoopLoopIfLevel(id, r1, r2, threshold, aValue, xp));
+    }
+
+    return extra;
+  }
+
+  defaultLevels.push(...buildComputeLevels61to120());
+
   let levels = defaultLevels.map((l) => ({ ...l }));
   let levelIndex = 0;
   let pos = [0, 0];
@@ -730,7 +956,11 @@
     if (n <= 21) return 10;
     if (n <= 35) return 17;
     if (n <= 42) return 22;
-    return 30;
+    if (n <= 60) return 30;
+    if (n <= 75) return 38;
+    if (n <= 90) return 46;
+    if (n <= 105) return 55;
+    return 65;
   }
   function getLevelNo(level, fallbackIndex) {
     const n = Number(level?.id);
@@ -847,7 +1077,8 @@
       const cls = idx === shiftedBadLine ? "bad" : (idx === activeLine ? "active" : "");
       const styledLine = line
         .replace(/\btekrarla\b/gi, '<span class="kw-red">tekrarla</span>')
-        .replace(/\beger\b/gi, '<span class="kw-red">eger</span>');
+        .replace(/\beger\b/gi, '<span class="kw-red">eger</span>')
+        .replace(/\bfonksiyon\b/gi, '<span class="kw-red">fonksiyon</span>');
       const html = `<div class="line i${Math.min(3, Math.max(0, indent))} ${cls}">${styledLine}</div>`;
       const opens = (trimmed.match(/\{/g) || []).length;
       const closes = (trimmed.match(/\}/g) || []).length;
@@ -959,7 +1190,7 @@
 
   function loadLevel(index) {
     if (!isStaff && assignmentRangeLocked) {
-      try { window.parent.postMessage({ type: "LOCKED_LEVEL_WARNING", message: "Ödev aralýðý tamamlandý. Uygulama kapanýyor." }, "*"); } catch (e) {}
+      try { window.parent.postMessage({ type: "LOCKED_LEVEL_WARNING", message: "ï¿½dev aralï¿½ï¿½ï¿½ tamamlandï¿½. Uygulama kapanï¿½yor." }, "*"); } catch (e) {}
       return;
     }
     let minIdx = 0;
