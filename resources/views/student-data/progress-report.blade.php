@@ -24,9 +24,12 @@
 <div class="tools"><button onclick="window.print()">PDF Olarak Kaydet / Yazdir</button></div>
 <div class="page">
     <div class="head">
-        <div>
-            <h1>Ogrenci Gelisim Karnesi</h1>
-            <div class="meta">{{ $student->user?->name }} - {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <img src="{{ asset('logo.png') }}" alt="Bilişim Kod" style="width:52px;height:52px;object-fit:contain">
+            <div>
+                <h1>Ogrenci Gelisim Karnesi</h1>
+                <div class="meta">{{ $student->user?->name }} - {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</div>
+            </div>
         </div>
         @if($student->currentAvatar)
             <img src="{{ asset($student->currentAvatar->image_path) }}" style="width:60px;height:60px;object-fit:cover;border-radius:8px" alt="avatar">
