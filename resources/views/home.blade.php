@@ -33,8 +33,8 @@
 
     {{-- Google'a site kimliğini net anlatan yapısal veri (Organization) --}}
     <script type="application/ld+json">{!! json_encode([
-        '@context' => 'https://schema.org',
-        '@type' => 'EducationalOrganization',
+        '@@context' => 'https://schema.org',
+        '@@type' => 'EducationalOrganization',
         'name' => 'Bilişim Kod',
         'url' => 'https://bilisimkod.com/',
         'logo' => url('/logo512.png'),
