@@ -37,7 +37,7 @@ input,select,textarea{font-size:16px}
 .sidebar-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
 .sidebar-brand{display:grid;justify-items:center;align-content:start;text-align:center;gap:8px;margin-bottom:14px;width:100%}
 .sidebar-top.sidebar-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;text-align:center}
-.sidebar-logo{width:112px;height:112px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(22,24,43,.12))}
+.sidebar-logo{width:135px;height:135px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(22,24,43,.12))}
 .sidebar-top.sidebar-brand .sidebar-logo{display:block;margin:0 auto}
 .sidebar-top.sidebar-brand p{width:100%;text-align:center}
 .sidebar-brand p{margin:0;color:var(--ink);font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.2px}
@@ -746,7 +746,7 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 
 /* Modern teacher/admin shell */
 .sidebar-pro{background:var(--app-surface, var(--surface));box-shadow:none;border-right:1px solid var(--app-border, var(--line))}
-.sidebar-pro .sidebar-logo--brand{width:124px;height:124px;filter:drop-shadow(0 6px 14px rgba(22,24,43,.12));margin-bottom:6px}
+.sidebar-pro .sidebar-logo--brand{width:150px;height:150px;filter:drop-shadow(0 6px 14px rgba(22,24,43,.12));margin-bottom:6px}
 .sidebar-pro .sidebar-brand p,.sidebar-pro .student-sidebar-top p{font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--ink);opacity:1}
 .sidebar-pro a{background:transparent;color:var(--ink-soft);border:1px solid transparent;border-left:3px solid transparent;margin:2px 0;padding:12px 12px;border-radius:10px;transition:all .15s ease}
 .sidebar-pro a:hover{background:var(--violet-tint);color:var(--app-primary, var(--violet-ink));transform:none}
@@ -1201,7 +1201,7 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   .dashboard-widget-grid > .dashboard-widget-qr{display:none !important}
 }
 @media (max-width: 760px){
-  .sidebar-pro .sidebar-logo--brand{width:96px;height:96px}
+  .sidebar-pro .sidebar-logo--brand{width:115px;height:115px}
   .sidebar-pro .sidebar-brand p,
   .sidebar-pro .student-sidebar-top p,
   .sidebar-pro a{

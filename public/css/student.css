@@ -38,7 +38,7 @@ body.role-student .sidebar{
 }
 body.role-student .student-sidebar-top{display:grid;justify-items:center;align-content:start;gap:8px;margin-bottom:10px;padding-bottom:16px;border-bottom:1px dashed #EADFCF}
 body.role-student .sidebar-brand{display:grid;justify-items:center;align-content:start;text-align:center;gap:8px;width:100%}
-body.role-student .sidebar-logo{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(37,50,74,.12))}
+body.role-student .sidebar-logo{width:145px;height:145px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(37,50,74,.12))}
 body.role-student .sidebar-brand p{margin:0;color:var(--s-text);font-size:13px;font-weight:700;letter-spacing:.3px}
 body.role-student .student-sidebar-nav{margin-top:8px;flex:1;overflow:auto;padding-right:4px}
 body.role-student .student-sidebar-time{
@@ -244,8 +244,8 @@ body.role-student input,body.role-student select,body.role-student textarea{
     margin-bottom:6px;
   }
   body.role-student .sidebar-logo{
-    width:92px;
-    height:92px;
+    width:110px;
+    height:110px;
   }
   body.role-student .student-sidebar-time{
     padding:9px 10px;
