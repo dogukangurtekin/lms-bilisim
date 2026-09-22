@@ -62,7 +62,7 @@
         font-weight: 700;
     }
     .dashboard-leaderboard-panel .teacher-top10-main strong{
-        font-size: 1rem;
+        font-size: 13px;
         line-height: 1.15;
         display: block;
         white-space: normal;
@@ -70,7 +70,7 @@
         font-weight: 500;
     }
     .dashboard-leaderboard-panel .teacher-top10-main span{
-        font-size: .85rem;
+        font-size: 11px;
         line-height: 1.1;
         display: block;
     }
