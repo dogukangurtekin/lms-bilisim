@@ -53,7 +53,7 @@
         .code-float.c5{left:80%;top:18%;animation-delay:1.8s;font-size:11.5px}
 
         .brand-content{position:relative;z-index:2;display:grid;gap:18px;justify-items:center;text-align:center;color:var(--ink);max-width:460px}
-        .brand-content img{width:210px;height:auto;filter:drop-shadow(0 10px 20px rgba(22,24,43,.14))}
+        .brand-content img{width:294px;height:auto;filter:drop-shadow(0 10px 20px rgba(22,24,43,.14))}
         .brand-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12px;
             letter-spacing:.06em;color:var(--violet-ink);text-transform:uppercase;}
         .brand-eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--signal)}
@@ -123,7 +123,7 @@
             .login-shell{grid-template-columns:1fr}
             .brand-side{min-height:280px;padding:28px}
             .brand-content{max-width:none}
-            .brand-content img{width:123px}
+            .brand-content img{width:172px}
             .brand-content h1{font-size:27px}
             .brand-content p{font-size:14.5px}
             .rocket{width:54px;height:54px}
@@ -155,7 +155,7 @@
                 gap:8px;
             }
             .brand-content img{
-                width:90px;
+                width:126px;
             }
             .brand-eyebrow{
                 font-size:11px;
