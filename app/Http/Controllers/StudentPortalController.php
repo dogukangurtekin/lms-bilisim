@@ -144,7 +144,11 @@ class StudentPortalController extends Controller
         $students = Student::with(['user', 'schoolClass', 'currentAvatar'])->get();
         $xpMap = [];
         foreach ($students as $s) {
-            $xpMap[$s->id] = $this->xp($s);
+            // Bu harita hem sinif/okul siralamasini hem de "Ilk 7" listesini
+            // besliyor; avatar magazasinda harcanan XP burada da dusulmezse
+            // avatar alan ogrenci listede hala eski (harcamadan onceki) XP
+            // ile gorunmeye devam eder.
+            $xpMap[$s->id] = max(0, $this->xp($s) - (int) ($s->avatar_xp_spent ?? 0));
         }
 
         $schoolRank = collect($xpMap)->sortDesc()->keys()->search($student->id);
@@ -599,6 +603,7 @@ class StudentPortalController extends Controller
                         0,
                         (int) ($gradeXpByStudentId[$classmate->id] ?? 0)
                         + (int) ($contentXpByUserId[$classmate->user_id] ?? 0)
+                        - (int) ($classmate->avatar_xp_spent ?? 0)
                     ),
                 ];
             })
