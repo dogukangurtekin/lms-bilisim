@@ -205,33 +205,27 @@
         font-size:14px;
     }
     @keyframes course-show-slide-spin{ to { transform:rotate(360deg); } }
-    .course-show-bottom{
-        display:grid;
-        grid-template-columns:1fr auto;
-        align-items:end;
-        gap:12px;
-    }
-    .course-show-bottom-note{
-        min-height:54px;
-    }
-    .course-show-bottom-note .badge{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        padding:10px 14px;
-        border-radius:999px;
-        background:#fff;
-        border:1px solid rgba(37,99,235,.12);
-        box-shadow:0 10px 22px rgba(15,23,42,.04);
-        font-size:13px;
-        font-weight:800;
+    /* Slayt sayaci ve ileri/geri butonlari, akilli tahtada/kucuk ekranlarda
+       ogrencinin gormesi zor olan slaytin ALTI yerine, her zaman gorunur
+       olan ust bara (sag uste) tasindi. */
+    .course-show-counter{
+        white-space:nowrap;
     }
     .course-show-nav{
         display:flex;
-        justify-content:flex-end;
         align-items:center;
-        gap:10px;
-        flex-wrap:wrap;
+        gap:8px;
+        flex-wrap:nowrap;
+    }
+    .course-show-nav .btn{
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        font-size:14px;
+        font-weight:800;
+        padding:9px 14px;
+        border-radius:14px;
+        white-space:nowrap;
     }
     .course-show-shell img,.course-show-shell video,.course-show-shell iframe,.course-show-shell table{max-width:100%}
     .course-show-shell .lesson-slide,.course-show-shell .lesson-slide-shell,.course-show-shell .lesson-card,.course-show-shell .lesson-split,.course-show-shell .lesson-split-card,.course-show-shell .lesson-split-body,.course-show-shell .lesson-image-focus,.course-show-shell .lesson-grid-cards,.course-show-shell .sqz-wrap{min-width:0;max-width:100%}
@@ -257,8 +251,10 @@
         .course-show-metrics{justify-content:flex-start}
         .course-show-stage{min-height:auto}
         .course-show-stage-frame{padding:10px;border-radius:22px}
-        .course-show-bottom{grid-template-columns:1fr;align-items:start}
-        .course-show-nav{justify-content:space-between}
+        /* Kucuk ekranda ileri/geri butonlarinin metnini gizleyip sadece
+           ikonlari birakiyoruz ki ust bardan tasmasin. */
+        .course-show-nav-label{display:none}
+        .course-show-nav .btn{padding:9px 10px}
         .course-show-shell .lesson-slide-title{font-size:clamp(22px,6vw,34px);line-height:1.1;word-break:break-word;overflow-wrap:anywhere}
         .course-show-shell .lesson-slide-subtitle,.course-show-shell .lesson-paragraph{font-size:clamp(14px,3.8vw,17px);line-height:1.6;word-break:break-word;overflow-wrap:anywhere;hyphens:auto}
         .course-show-shell .lesson-grid-cards,.course-show-shell .lesson-split{grid-template-columns:1fr !important}
@@ -296,6 +292,20 @@
                     <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
                     <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
                     <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
+
+                    <span id="student-course-counter" class="course-show-metric course-show-counter">1 / {{ count($slides) }}</span>
+                    <div class="course-show-nav">
+                        <button class="btn" type="button" id="student-course-prev" title="Geri" aria-label="Geri">
+                            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                            <span class="course-show-nav-label">Geri</span>
+                        </button>
+
+                        <button class="btn" type="button" id="student-course-next" title="İleri" aria-label="İleri">
+                            <span id="student-course-next-label" class="course-show-nav-label">İleri</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
+                        </button>
+                    </div>
+
                     <a
                         class="btn"
                         href="{{ auth()->check() && auth()->user()->hasRole('admin', 'teacher') ? route('courses.index') : route('student.portal.courses') }}"
@@ -315,23 +325,6 @@
                         <div class="course-show-slide-spinner"></div>
                         <span>Ders yükleniyor...</span>
                     </div>
-                </div>
-            </div>
-
-            <div class="course-show-bottom">
-                <div class="course-show-bottom-note">
-                    <span id="student-course-counter" class="badge">1 / {{ count($slides) }}</span>
-                </div>
-                <div class="course-show-nav">
-                    <button class="btn" type="button" id="student-course-prev" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px;border-radius:16px">
-                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                        Geri
-                    </button>
-
-                    <button class="btn" type="button" id="student-course-next" style="display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;padding:10px 16px;border-radius:16px">
-                        <span id="student-course-next-label">İleri</span>
-                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
-                    </button>
                 </div>
             </div>
         </div>
