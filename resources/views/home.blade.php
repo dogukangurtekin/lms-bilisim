@@ -172,7 +172,7 @@
     <nav class="nav" :class="{ 'is-scrolled': scrolled }">
         <div class="container nav-row">
             <a href="/" class="brand">
-                <img src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="Bilişim Kod">
+                <img src="{{ asset('logo.png') }}" alt="Bilişim Kod">
                 Bilişim Kod
             </a>
             <div class="nav-links">
@@ -302,7 +302,7 @@
     <footer>
         <div class="container footer-row">
             <a href="/" class="brand" style="font-weight:700">
-                <img src="{{ asset('images/bilisim-kod-logo.jpg') }}" alt="Bilişim Kod" style="width:26px;height:26px;border-radius:7px">
+                <img src="{{ asset('logo.png') }}" alt="Bilişim Kod" style="width:26px;height:26px;border-radius:7px">
                 Bilişim Kod
             </a>
             <div>© {{ date('Y') }} Bilişim Kod — Okullar için kodlama ve yapay zekâ platformu</div>
