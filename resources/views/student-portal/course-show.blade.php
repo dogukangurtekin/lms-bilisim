@@ -10,7 +10,7 @@
         $slides[] = $summarySlide;
     }
     $courseName = trim((string) ($course->name ?? 'Ders İçeriği'));
-    $courseLogo = url('/public/logo.png');
+    $courseLogo = \App\Support\Brand::logoUrl();
     $slideCount = count($slides);
     $totalXpPreview = array_sum(array_map(static fn ($slide) => max(0, (int) ($slide['xp'] ?? 0)), $slides));
     $questionCountPreview = 0;

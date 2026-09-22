@@ -25,7 +25,7 @@
 <div class="page">
     <div class="head">
         <div style="display:flex;align-items:center;gap:12px">
-            <img src="{{ asset('logo.png') }}" alt="Bilişim Kod" style="width:52px;height:52px;object-fit:contain">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Bilişim Kod" style="width:52px;height:52px;object-fit:contain">
             <div>
                 <h1>Ogrenci Gelisim Karnesi</h1>
                 <div class="meta">{{ $student->user?->name }} - {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</div>

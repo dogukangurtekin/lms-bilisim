@@ -135,7 +135,7 @@
             @foreach($chunk as $student)
                 <div class="card">
                     <div class="head">
-                        <img class="brand" src="{{ url('/public/logo.png') }}" alt="Logo">
+                        <img class="brand" src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo">
                         <span class="head-text">BİLİŞİM DERSİ<br>ÖĞRENCİ GİRİŞ KARTI</span>
                     </div>
                     <div style="margin-top:8px">

@@ -276,7 +276,7 @@ class StudentDataController extends Controller
             'certificateStyle' => $certificateStyle,
             'certificateNo' => 'CERT-' . str_pad((string) $student->id, 6, '0', STR_PAD_LEFT),
             'certificateDate' => now()->timezone('Europe/Istanbul')->format('d.m.Y'),
-            'logoUrl' => url('/public/logo.png'),
+            'logoUrl' => \App\Support\Brand::logoUrl(),
         ]);
     }
 

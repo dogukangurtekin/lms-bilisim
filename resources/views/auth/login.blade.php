@@ -266,7 +266,7 @@
         <div class="code-float c5">if(future) return you;</div>
 
         <div class="brand-content">
-            <img src="{{ url('/public/logo.png') }}" alt="Logo">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo">
             <span class="brand-eyebrow">Bilişim Kod</span>
             <h1>Dijital Bilişim Eğitim Platformu</h1>
             <p>Kodlama oyunları ve ders defteriyle öğrenmeyi somutlaştıran platform. Özelsin çünkü gelecek sensin.</p>

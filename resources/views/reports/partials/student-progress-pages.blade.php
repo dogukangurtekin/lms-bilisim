@@ -22,7 +22,7 @@
 <section class="report-page">
     <div class="hero">
         <div class="hero-left">
-            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="brand-logo">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
             <div>
                 <h1>Öğrenci Gelişim Raporu</h1>
                 <p class="subtitle">{{ $student->user?->name }} · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · {{ now()->format('d.m.Y') }}</p>
@@ -124,7 +124,7 @@
 <section class="report-page page-break">
     <div class="hero compact">
         <div class="hero-left">
-            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="brand-logo small">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo small">
             <div>
                 <h2>Detaylı Görev Raporu</h2>
                 <p class="subtitle">Ödevler, oyunlar, kazanımlar ve tarihler</p>

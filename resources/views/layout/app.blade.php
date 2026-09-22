@@ -23,7 +23,7 @@
             'enabled' => (bool) ($pwaMeta['pwa_enabled'] ?? false),
             'title' => (string) ($pwaMeta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
             'subtitle' => (string) ($pwaMeta['pwa_subtitle'] ?? 'Yukleniyor...'),
-            'logoUrl' => (string) ($pwaMeta['pwa_logo_url'] ?? url('/public/logo.png')),
+            'logoUrl' => (string) ($pwaMeta['pwa_logo_url'] ?? \App\Support\Brand::logoUrl()),
         ];
     @endphp
     <script>

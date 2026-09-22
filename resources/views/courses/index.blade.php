@@ -343,7 +343,7 @@
                 :title="$courseTitle"
                 :description="$courseDesc"
                 :image="$thumb"
-                :logo="url('/public/logo.png')"
+                :logo="\App\Support\Brand::logoUrl()"
                 :age="$age"
                 :difficulty="$courseDifficulty"
                 :primary-url="route('course.detail', ['id' => $item->id])"

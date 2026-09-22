@@ -6,7 +6,7 @@
             $initialSeconds = (int) ($timeStat?->total_seconds ?? 0);
         @endphp
         <a href="{{ route('student.portal.dashboard') }}" class="student-sidebar-top sidebar-brand" style="text-decoration:none;color:inherit;">
-            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
         </a>
         <nav class="student-sidebar-nav">
@@ -48,7 +48,7 @@
         </div>
     @else
         <a href="{{ route('dashboard') }}" class="sidebar-top sidebar-brand" style="text-decoration:none;color:inherit;">
-            <img src="{{ url('/public/logo.png') }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
         </a>
         <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">

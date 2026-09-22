@@ -38,7 +38,7 @@ class ProfileController extends Controller
                 'enabled' => (bool) ($meta['pwa_enabled'] ?? false),
                 'title' => (string) ($meta['pwa_title'] ?? config('app.name', 'Egitim Portali')),
                 'subtitle' => (string) ($meta['pwa_subtitle'] ?? 'Yukleniyor...'),
-                'logo_url' => (string) ($meta['pwa_logo_url'] ?? url('/public/logo.png')),
+                'logo_url' => (string) ($meta['pwa_logo_url'] ?? \App\Support\Brand::logoUrl()),
                 'principal_name' => (string) ($meta['principal_name'] ?? ''),
             ],
         ]);
@@ -90,7 +90,7 @@ class ProfileController extends Controller
         $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
-        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: \App\Support\Brand::logoUrl();
         $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
         $themeKey = (string) ($validated['theme_key'] ?? 'default');
         $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';
@@ -117,7 +117,7 @@ class ProfileController extends Controller
         $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
         $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
         $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
-        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: url('/public/logo.png');
+        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: \App\Support\Brand::logoUrl();
         $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
         $themeKey = (string) ($validated['theme_key'] ?? 'default');
         $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';

@@ -155,7 +155,7 @@
                     :title="$normalizeText($c->name)"
                     :description="$normalizeText($desc)"
                     :image="$thumb"
-                    :logo="url('/public/logo.png')"
+                    :logo="\App\Support\Brand::logoUrl()"
                     :age="$age"
                     :difficulty="$difficulty"
                     :primary-url="route('course.detail', ['id' => $c->id])"

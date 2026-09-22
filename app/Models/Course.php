@@ -92,7 +92,7 @@ class Course extends Model
 
         return is_file(public_path($relative))
             ? $appendVersion(asset($relative), public_path($relative))
-            : asset('logo.png');
+            : \App\Support\Brand::logoUrl();
     }
 
     private function normalizeCoverPath(string $cover): string
