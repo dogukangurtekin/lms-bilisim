@@ -5,7 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Bilişim Kod - okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.">
+    <meta name="keywords" content="kodlama eğitimi, okullar için kodlama, bilişim teknolojileri, robotik kodlama, yapay zeka eğitimi, blok kodlama, öğrenci kodlama platformu, öğretmen paneli, Bilişim Kod">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Bilişim Kod">
+    <link rel="canonical" href="https://bilisimkod.com/">
     <title>Bilişim Kod | Okullar için Kodlama &amp; Yapay Zekâ Platformu</title>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url('/logo-icon-512.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url('/logo192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url('/logo-icon-512.png') }}">
+    <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
+
+    {{-- Open Graph / Facebook, WhatsApp vb. link paylaşım önizlemesi --}}
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="tr_TR">
+    <meta property="og:url" content="https://bilisimkod.com/">
+    <meta property="og:site_name" content="Bilişim Kod">
+    <meta property="og:title" content="Bilişim Kod | Okullar için Kodlama &amp; Yapay Zekâ Platformu">
+    <meta property="og:description" content="Okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.">
+    <meta property="og:image" content="{{ url('/logo512.png') }}">
+
+    {{-- Twitter/X kart önizlemesi --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bilişim Kod | Okullar için Kodlama &amp; Yapay Zekâ Platformu">
+    <meta name="twitter:description" content="Okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.">
+    <meta name="twitter:image" content="{{ url('/logo512.png') }}">
+
+    {{-- Google'a site kimliğini net anlatan yapısal veri (Organization) --}}
+    <script type="application/ld+json">{!! json_encode([
+        '@context' => 'https://schema.org',
+        '@type' => 'EducationalOrganization',
+        'name' => 'Bilişim Kod',
+        'url' => 'https://bilisimkod.com/',
+        'logo' => url('/logo512.png'),
+        'description' => 'Okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
