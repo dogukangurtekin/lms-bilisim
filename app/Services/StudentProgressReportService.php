@@ -136,7 +136,10 @@ class StudentProgressReportService
         }
         $dailySuccessRate = $dailyAttemptCount > 0 ? (int) round(($dailyFullCorrectCount / $dailyAttemptCount) * 100) : 0;
 
-        $totalXp = max(0, $gradeXp + $contentXp);
+        // Rapordaki siralama (asagida) avatar harcamasi dusulerek
+        // hesaplandigindan, ayni raporun basligindaki XP de tutarli olmasi
+        // icin ayni sekilde netleniyor.
+        $totalXp = max(0, $gradeXp + $contentXp - (int) ($student->avatar_xp_spent ?? 0));
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
         $completedLessonRows = ContentProgress::where('user_id', $student->user_id)
@@ -201,12 +204,16 @@ class StudentProgressReportService
             $totalSeconds % 60
         );
 
+        // Avatar magazasinda harcanan XP siralamadan dusuluyor; boylece bu
+        // rapordaki okul/sinif siralamasi, admin/ogretmen panelindeki
+        // "Basari Listesi" ve ogrencinin kendi anasayfasindaki guncel
+        // (kalan) XP ile tutarli kaliyor.
         $students = Student::with(['user', 'schoolClass'])->get();
         $xpMap = [];
         foreach ($students as $s) {
             $sx = (int) round((float) Grade::where('student_id', $s->id)->sum('score'));
             $cx = (int) ContentProgress::where('user_id', $s->user_id)->sum('xp_awarded');
-            $xpMap[$s->id] = max(0, $sx + $cx);
+            $xpMap[$s->id] = max(0, $sx + $cx - (int) ($s->avatar_xp_spent ?? 0));
         }
 
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);

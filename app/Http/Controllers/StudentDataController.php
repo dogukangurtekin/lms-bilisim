@@ -94,7 +94,10 @@ class StudentDataController extends Controller
         $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser) {
             $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
             $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
-            $xp = max(0, $gradeXp + $contentXp);
+            // Diger tum XP gosterimleriyle (anasayfa, Basari Listesi, gelisim
+            // raporu) tutarli olmasi icin avatar magazasinda harcanan XP
+            // burada da dusuluyor.
+            $xp = max(0, $gradeXp + $contentXp - (int) ($student->avatar_xp_spent ?? 0));
 
             return [
                 $student->id => [

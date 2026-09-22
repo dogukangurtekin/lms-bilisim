@@ -175,7 +175,11 @@ class DashboardController extends Controller
                 $quizXp = (int) ($quizXpByUser[$student->user_id] ?? 0);
                 $profileXp = (int) ($profileXpByUser[$student->user_id] ?? 0);
                 $computedXp = max(0, $gradeXp + $contentXp + $quizXp);
-                $xp = max($computedXp, $profileXp);
+                // Avatar magazasinda harcanan XP burada da dusuluyor; boylece
+                // admin/ogretmen panelindeki "Basari Listesi" (ilk 5), basari
+                // dagilimi grafigi ve toplam XP, ogrenci tarafinda gosterilen
+                // guncel (kalan) XP ile birebir tutarli oluyor.
+                $xp = max(0, max($computedXp, $profileXp) - (int) ($student->avatar_xp_spent ?? 0));
                 $className = $student->schoolClass ? ($student->schoolClass->name . '/' . $student->schoolClass->section) : '-';
 
                 return [

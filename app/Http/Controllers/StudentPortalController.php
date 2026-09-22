@@ -660,7 +660,9 @@ class StudentPortalController extends Controller
     {
         $student = $this->getStudent();
         $rows = ContentProgress::where('user_id', $student->user_id)->latest()->paginate(30);
-        $xp = $this->xp($student);
+        // Anasayfa ve diger tum XP gosterimleriyle tutarli olmasi icin
+        // burada da avatar magazasinda harcanan XP dusuluyor.
+        $xp = max(0, $this->xp($student) - (int) ($student->avatar_xp_spent ?? 0));
         $avg = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
         $contentLabels = $this->resolveContentLabels($rows->getCollection()->pluck('content_id')->all());
 
@@ -855,10 +857,12 @@ class StudentPortalController extends Controller
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();
         $minutes = (int) floor(((int) ($timeStat?->total_seconds ?? 0)) / 60);
 
+        // Siralama, admin/ogretmen panelindeki "Basari Listesi" ile tutarli
+        // olmasi icin avatar magazasinda harcanan XP dusulerek hesaplaniyor.
         $allStudents = Student::with('schoolClass')->get();
         $xpMap = [];
         foreach ($allStudents as $s) {
-            $xpMap[$s->id] = $this->xp($s);
+            $xpMap[$s->id] = max(0, $this->xp($s) - (int) ($s->avatar_xp_spent ?? 0));
         }
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);
         $schoolRank = $schoolRankPos === false ? 999 : ($schoolRankPos + 1);
