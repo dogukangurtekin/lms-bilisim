@@ -135,7 +135,7 @@
                         @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
                             <a class="btn" href="{{ route('users.classes.edit', $item) }}" style="padding:7px 12px;font-size:13px;">Sınıf Ata</a>
                         @endif
-                        @if($item->hasRole('teacher'))
+                        @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
                             <button type="button" class="btn edit-user-trigger" style="padding:7px 12px;font-size:13px;"
                                 data-url="{{ route('users.update', $item) }}"
                                 data-name="{{ $item->name }}"
