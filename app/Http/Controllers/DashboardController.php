@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
 use App\Models\Teacher;
