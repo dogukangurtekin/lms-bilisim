@@ -132,10 +132,12 @@
     @if($user->hasRole('admin'))
         <div class="card" style="border:1.5px solid #fecaca;background:#fef2f2;">
             <h3 style="margin:0 0 4px;color:#991b1b;">Tehlikeli Bölge</h3>
-            <p style="margin:0 0 14px;color:#7f1d1d;">Bu işlem geri alınamaz. Öğretmenler, öğrenci hesapları ve sınıflar
-               olduğu gibi kalır; ancak öğrencilere ait <strong>tüm ilerleme ve sonuç verisi</strong> (notlar, devamsızlık,
-               ders/ödev/oyun/etkinlik/quiz ilerlemesi, XP, rozetler, satın alınan avatarlar) kalıcı olarak silinir —
-               öğrenciler sisteme sanki yeni yüklenmiş gibi tertemiz bir durumda kalır.</p>
+            <p style="margin:0 0 10px;color:#7f1d1d;">Bu işlem geri alınamaz. Öğretmenler, öğrenci hesapları ve sınıflar
+               olduğu gibi kalır; ayrıca <strong>admin/öğretmen tarafından yüklenen dersler, oyun ve etkinlikler,
+               günlük çalışmalar kesinlikle silinmez</strong> — sadece öğrencilerin bu içeriklere ait <strong>ilerleme ve
+               sonuç verisi</strong> (notlar, devamsızlık, ders/ödev/oyun/etkinlik/quiz ilerlemesi, XP, rozetler,
+               satın alınan avatarlar) kalıcı olarak silinir.</p>
+            <p style="margin:0 0 14px;color:#7f1d1d;">Öğrenciler sisteme sanki yeni yüklenmiş gibi tertemiz bir durumda kalır.</p>
             <button type="button" class="btn btn-danger" id="open-reset-system-modal">Sistemi Sıfırla (Öğrenci Verileri)</button>
         </div>
 

@@ -40,6 +40,19 @@ class SystemMaintenanceController extends Controller
      * satin alinan avatarlar, devamsizlik vb.) kalici olarak siliniyor.
      * Amac: sanki ogrenciler sisteme yeni yuklenmis gibi tertemiz bir
      * baslangic durumu elde etmek.
+     *
+     * ONEMLI - KESINLIKLE SILINMEZ: Admin/ogretmen tarafindan yuklenen
+     * DERSLER (Course/CourseHomework), OYUN VE ETKINLIKLER (GameAssignment,
+     * Level/Flowchart/vb'nin sistem-varsayilan ve ogretmen/admin'e ait
+     * olanlari) ve GUNLUK CALISMALAR (CodingActivity) asagida HICBIR
+     * sekilde silinmiyor/guncellenmiyor - sadece bu iceriklere baglı
+     * OGRENCI ilerleme/sonuc kayitlari (orn. StudentHomeworkProgress,
+     * ActivityAttempt) siliniyor. Bu listeye yeni bir silme satiri
+     * eklerken de bu kurala kesinlikle uyulmali: sadece student_id /
+     * student_user_id ile filtrelenen, ogrenciye ozel SONUC tablolari
+     * silinebilir - icerik/tanim tablolarina (Course, CourseHomework,
+     * GameAssignment, CodingActivity, LiveQuiz, CompetitionRoom vb.)
+     * asla dokunulmamali.
      */
     public function resetStudentData(Request $request): RedirectResponse
     {
