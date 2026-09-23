@@ -1585,11 +1585,15 @@
         denyRunnerAccess("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.");
         return;
       }
-      const data = await res.json();
-      const start = Math.max(1, Number(data?.from || initialRangeStart || 1));
-      const end = Math.max(start, Number(data?.to || initialRangeEndRaw || start));
-      levelRange = { startIdx: start - 1, endIdx: end - 1 };
-      enforceAssignmentSlice();
+      // NOT: "levels" dizisi script yuklenirken (enforceAssignmentSlice,
+      // yukarida) zaten URL'deki from/to parametrelerine gore mutlak id
+      // indeksleriyle kirpildi. Burada AYNI mutlak indekslerle tekrar
+      // enforceAssignmentSlice() cagirmak, zaten kirpilmis (kucuk) diziye
+      // eski/buyuk baslangic indeksini tekrar uyguluyor ve dizi bosaliyordu -
+      // ozellikle level_from>1 olan canli yarisma senaryolarinda (orn.
+      // 30-40 araligi) bolum tamamen bos geliyordu. Grant sunucudan basariyla
+      // dondugune gore levelRange zaten dogru (satir ~961) - burada tekrar
+      // kirpmaya gerek yok, sadece erisimi onayliyoruz.
       grantReady = true;
     } catch (e) {
       denyRunnerAccess("Erisim dogrulanamadi. Sayfayi yenileyip tekrar deneyin.");
