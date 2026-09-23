@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
 use App\Models\Teacher;
 use App\Models\UserProfile;
@@ -97,9 +98,59 @@ class DashboardController extends Controller
                 ->when($activeClassId > 0, fn ($q) => $q->where('school_class_id', $activeClassId))
                 ->count();
 
+            $gradeCount = Grade::query()
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->count();
+
             $avgGrade = round((float) Grade::query()
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->avg('score'), 1);
+
+            // "Ortalama Not / Genel Basari" widget'i sadece manuel girilen
+            // Grade kayitlarinin ortalamasini kullaniyordu. Cogu okulda
+            // manuel not hic girilmiyor (ilerleme oyun/odev/ders tamamlama
+            // uzerinden takip ediliyor) - bu durumda widget her zaman %0
+            // gosteriyordu, sistemde gercek ilerleme olsa bile. Artik
+            // "ilerleme kaydi olan ogrenci orani" da (odev tamamlama, oyun
+            // odevi tamamlama, ders/icerik tamamlama - hepsi ContentProgress/
+            // StudentHomeworkProgress/StudentGameAssignmentProgress
+            // tablolarindan) ikinci bir sinyal olarak hesaplanip, not
+            // girilmemisse bu sinyal kullaniliyor; not da girilmisse ikisinin
+            // ortalamasi aliniyor.
+            $studentsWithHomeworkProgress = StudentHomeworkProgress::query()
+                ->whereIn('student_id', $studentIds)
+                ->whereNotNull('completed_at')
+                ->distinct()
+                ->pluck('student_id');
+            $studentsWithGameProgress = StudentGameAssignmentProgress::query()
+                ->whereIn('student_id', $studentIds)
+                ->whereNotNull('completed_at')
+                ->distinct()
+                ->pluck('student_id');
+            $userIdToStudentId = (clone $studentsBase)->pluck('id', 'user_id');
+            $studentsWithContentProgress = ContentProgress::query()
+                ->whereIn('user_id', $studentUserIds)
+                ->where('completed', true)
+                ->distinct()
+                ->pluck('user_id')
+                ->map(fn ($userId) => $userIdToStudentId[$userId] ?? null)
+                ->filter();
+
+            $studentsWithAnyProgress = $studentsWithHomeworkProgress
+                ->merge($studentsWithGameProgress)
+                ->merge($studentsWithContentProgress)
+                ->unique();
+
+            $progressParticipationRate = $totalStudents > 0
+                ? ($studentsWithAnyProgress->count() / $totalStudents) * 100
+                : 0.0;
+
+            $successSignals = [];
+            if ($gradeCount > 0) {
+                $successSignals[] = $avgGrade;
+            }
+            $successSignals[] = $progressParticipationRate;
+            $blendedSuccessRate = array_sum($successSignals) / count($successSignals);
 
             $avgGradeByStudent = Grade::query()
                 ->selectRaw('student_id, ROUND(AVG(score), 1) as avg_score')
@@ -132,7 +183,7 @@ class DashboardController extends Controller
 
             $absentToday = max(0, $totalStudents - $activeStudents);
             $participationRate = $totalStudents > 0 ? (int) round(($activeStudents / $totalStudents) * 100) : 0;
-            $progressRate = max(0, min(100, (int) round($avgGrade)));
+            $progressRate = max(0, min(100, (int) round($blendedSuccessRate)));
 
             $gradeXpByStudent = Grade::query()
                 ->selectRaw('student_id, ROUND(SUM(score)) as xp')
