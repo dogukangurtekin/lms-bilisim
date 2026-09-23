@@ -75,7 +75,7 @@
         <div class="comp-wait-box">
             <h3 class="comp-wait-title">Yarışma Sona Erdi</h3>
             <p>Sonuçlar öğretmen ekranında görüntüleniyor.</p>
-            <a class="btn" href="{{ route('student.portal.dashboard') }}">Anasayfaya Dön</a>
+            <a class="btn" href="{{ route('student.competitions.join.form') }}">Yeni Bir Yarışmaya Katıl</a>
         </div>
     </div>
 @endif
