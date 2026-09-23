@@ -24,7 +24,7 @@ class UserManagementController extends Controller
         $users = User::query()
             ->with(['role', 'teacher', 'student'])
             ->when($roleFilter !== '', fn ($q) => $q->whereHas('role', fn ($r) => $r->where('slug', $roleFilter)))
-            ->orderByRaw("case when exists (select 1 from roles where roles.id = users.role_id and roles.slug = 'admin') then 0 else 1 end")
+            ->orderByRaw("case (select roles.slug from roles where roles.id = users.role_id) when 'admin' then 0 when 'teacher' then 1 else 2 end")
             ->orderByDesc('id')
             ->paginate(30)
             ->withQueryString();
