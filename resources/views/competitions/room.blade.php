@@ -158,9 +158,21 @@
     // kazanan bir ogrenci sıralamada HIZLI/enerjik bir sicrayisla yukari
     // cikiyor, yavas ilerleyen/duran bir ogrencinin sirasi ise yavas ve
     // yumusak bir gecisle degisiyor.
-    const rowElements = new Map(); // student_user_id -> DOM elemani
+    const rowElements = new Map(); // student_user_id (string) -> DOM elemani
     const lastXpByStudent = new Map();
     let lastPollAt = Date.now();
+
+    // Sayfa ilk yuklendiginde Blade zaten sunucu tarafinda satirlari
+    // basmis oluyor (server-side render). Bu satirlari burada Map'e
+    // KAYDETMEZSEK, ilk poll() cagrisinda ayni ogrenciler icin YENI
+    // elemanlar olusturulup eskileri DOM'da unutulmus/yetim halde
+    // kaliyordu - ekranda ayni ogrenci iki kez (biri eski/durgun, biri
+    // guncel) goruluyordu. Mevcut satirlari once burada devralıyoruz.
+    if (leaderboardEl) {
+        leaderboardEl.querySelectorAll('[data-student]').forEach((el) => {
+            rowElements.set(el.dataset.student, el);
+        });
+    }
 
     function renderLeaderboard(rows) {
         if (!leaderboardEl) return;
@@ -178,7 +190,7 @@
 
         const seenIds = new Set();
         rows.forEach((row, i) => {
-            const id = row.student_user_id;
+            const id = String(row.student_user_id);
             seenIds.add(id);
             const prevXp = lastXpByStudent.has(id) ? lastXpByStudent.get(id) : row.xp_earned;
             const xpRate = Math.max(0, (row.xp_earned - prevXp) / dtSec);
