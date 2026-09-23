@@ -346,21 +346,35 @@ class CompetitionController extends Controller
 
     private function leaderboardRows(CompetitionRoom $room): array
     {
+        $startedAtMs = (int) ($room->started_at_ms ?? 0);
+
         return CompetitionParticipant::query()
             ->where('competition_room_id', $room->id)
             ->where('is_spectator', false)
+            ->with('studentUser.student.currentAvatar')
             ->orderByDesc('progress_percent')
             ->orderByDesc('xp_earned')
             ->orderBy('finished_at_ms')
             ->get()
-            ->map(fn ($p) => [
-                'student_user_id' => (int) $p->student_user_id,
-                'name' => $p->user_name,
-                'progress_percent' => (float) $p->progress_percent,
-                'current_level_index' => (int) $p->current_level_index,
-                'xp_earned' => (int) $p->xp_earned,
-                'finished' => $p->finished_at_ms !== null,
-            ])
+            ->map(function ($p) use ($startedAtMs) {
+                $avatar = $p->studentUser?->student?->currentAvatar;
+                $finishedAtMs = $p->finished_at_ms !== null ? (int) $p->finished_at_ms : null;
+                $completedSeconds = ($finishedAtMs !== null && $startedAtMs > 0)
+                    ? max(0, (int) round(($finishedAtMs - $startedAtMs) / 1000))
+                    : null;
+
+                return [
+                    'student_user_id' => (int) $p->student_user_id,
+                    'name' => $p->user_name,
+                    'avatar_url' => $avatar?->image_path ? asset($avatar->image_path) : null,
+                    'avatar_name' => $avatar?->name,
+                    'progress_percent' => (float) $p->progress_percent,
+                    'current_level_index' => (int) $p->current_level_index,
+                    'xp_earned' => (int) $p->xp_earned,
+                    'finished' => $finishedAtMs !== null,
+                    'completed_seconds' => $completedSeconds,
+                ];
+            })
             ->values()
             ->all();
     }

@@ -7,10 +7,12 @@
 .comp-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .comp-big-clock{font-size:34px;font-weight:800;color:#1e293b}
 .comp-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
-.comp-rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform}
+.comp-rank-row{display:grid;grid-template-columns:40px 36px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform}
 .comp-rank-row.leader{background:#fef3c7}
 .comp-rank-row .comp-rank-no{font-weight:900;color:#64748b}
 .comp-rank-row.leader .comp-rank-no{color:#b45309}
+.comp-rank-avatar{width:36px;height:36px;border-radius:8px;object-fit:cover;background:#e2e8f0}
+.comp-rank-avatar.empty{display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8}
 </style>
 <div class="modal" id="compDeleteModal">
     <div class="modal-card">
@@ -40,6 +42,25 @@
     </form>
     <button type="button" class="btn btn-danger comp-delete-trigger" style="display:inline-block;margin-left:8px">Odayı Sil</button>
 </div>
+<div class="card">
+    <h3>Katılan Öğrenciler <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
+    <div id="compLeaderboard">
+        @forelse($rows as $row)
+            <div class="comp-rank-row" data-student="{{ $row['student_user_id'] }}">
+                <div class="comp-rank-no">•</div>
+                @if($row['avatar_url'])
+                    <img class="comp-rank-avatar" src="{{ $row['avatar_url'] }}" alt="{{ $row['avatar_name'] }}">
+                @else
+                    <div class="comp-rank-avatar empty">?</div>
+                @endif
+                <div>{{ $row['name'] }}</div>
+                <div style="color:#64748b;font-size:13px">Bekliyor</div>
+            </div>
+        @empty
+            <p style="color:#64748b">Henüz katılan öğrenci yok.</p>
+        @endforelse
+    </div>
+</div>
 @else
 <div class="card" style="margin-bottom:12px;">
     <p><strong>Oyun:</strong> {{ $room->game_name }} | <strong>Kod:</strong> {{ $room->join_code }} |
@@ -68,8 +89,13 @@
         @forelse($rows as $i => $row)
             <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }}" data-student="{{ $row['student_user_id'] }}">
                 <div class="comp-rank-no">#{{ $i + 1 }}</div>
+                @if($row['avatar_url'])
+                    <img class="comp-rank-avatar" src="{{ $row['avatar_url'] }}" alt="{{ $row['avatar_name'] }}">
+                @else
+                    <div class="comp-rank-avatar empty">?</div>
+                @endif
                 <div>{{ $row['name'] }}</div>
-                <div>%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['finished'] ? ' ✅' : '' }}</div>
+                <div>%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['completed_seconds'] !== null ? ' — '.$row['completed_seconds'].' sn' : '' }}{{ $row['finished'] ? ' ✅' : '' }}</div>
             </div>
         @empty
             <p style="color:#64748b">Henüz ilerleme verisi yok.</p>
@@ -163,12 +189,27 @@
                 el.dataset.student = String(id);
                 rowElements.set(id, el);
             }
-            el.classList.toggle('leader', i === 0);
-            el.innerHTML = `
-                <div class="comp-rank-no">#${i + 1}</div>
-                <div>${row.name}</div>
-                <div>%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${row.finished ? ' ✅' : ''}</div>
-            `;
+            const avatarHtml = row.avatar_url
+                ? `<img class="comp-rank-avatar" src="${row.avatar_url}" alt="${row.avatar_name || ''}">`
+                : `<div class="comp-rank-avatar empty">?</div>`;
+            if (status === 'lobby') {
+                el.classList.remove('leader');
+                el.innerHTML = `
+                    <div class="comp-rank-no">•</div>
+                    ${avatarHtml}
+                    <div>${row.name}</div>
+                    <div style="color:#64748b;font-size:13px">Bekliyor</div>
+                `;
+            } else {
+                el.classList.toggle('leader', i === 0);
+                const timeSuffix = row.completed_seconds !== null && row.completed_seconds !== undefined ? ` — ${row.completed_seconds} sn` : '';
+                el.innerHTML = `
+                    <div class="comp-rank-no">#${i + 1}</div>
+                    ${avatarHtml}
+                    <div>${row.name}</div>
+                    <div>%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${timeSuffix}${row.finished ? ' ✅' : ''}</div>
+                `;
+            }
             el.dataset.duration = String(durationMs);
             leaderboardEl.appendChild(el); // yeni siraya gore konumlandir
             lastXpByStudent.set(id, row.xp_earned);
