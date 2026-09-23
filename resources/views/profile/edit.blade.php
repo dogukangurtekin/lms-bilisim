@@ -128,6 +128,58 @@
                 <button class="btn" type="submit">Logo Güncelle</button>
             </div>
         </form>
-    </div>
+
+    @if($user->hasRole('admin'))
+        <div class="card" style="border:1.5px solid #fecaca;background:#fef2f2;">
+            <h3 style="margin:0 0 4px;color:#991b1b;">Tehlikeli Bölge</h3>
+            <p style="margin:0 0 14px;color:#7f1d1d;">Bu işlem geri alınamaz. Öğretmenler, öğrenci hesapları ve sınıflar
+               olduğu gibi kalır; ancak öğrencilere ait <strong>tüm ilerleme ve sonuç verisi</strong> (notlar, devamsızlık,
+               ders/ödev/oyun/etkinlik/quiz ilerlemesi, XP, rozetler, satın alınan avatarlar) kalıcı olarak silinir —
+               öğrenciler sisteme sanki yeni yüklenmiş gibi tertemiz bir durumda kalır.</p>
+            <button type="button" class="btn btn-danger" id="open-reset-system-modal">Sistemi Sıfırla (Öğrenci Verileri)</button>
+        </div>
+
+        <div class="modal {{ $errors->has('confirm_phrase') ? 'open' : '' }}" id="reset-system-modal">
+            <div class="modal-card">
+                <div class="modal-head"><strong>Sistemi Sıfırla</strong></div>
+                <p style="margin:0 0 10px;color:#475569;">Bu işlem <strong>geri alınamaz</strong>. Devam etmek için aşağıdaki
+                   kutuya tam olarak <code>SİSTEMİ SIFIRLA</code> yazın.</p>
+                <form method="POST" action="{{ route('system.reset-student-data') }}" id="reset-system-form">
+                    @csrf
+                    <input type="text" name="confirm_phrase" id="reset-system-confirm-input" autocomplete="off"
+                        placeholder="SİSTEMİ SIFIRLA" style="width:100%;margin-bottom:12px;">
+                    @error('confirm_phrase')
+                        <div style="color:#dc2626;font-size:13px;margin-bottom:10px">{{ $message }}</div>
+                    @enderror
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button type="button" class="btn" id="reset-system-cancel">Vazgeç</button>
+                        <button type="submit" class="btn btn-danger" id="reset-system-submit" disabled>Evet, Kalıcı Olarak Sıfırla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        (() => {
+            const modal = document.getElementById('reset-system-modal');
+            const openBtn = document.getElementById('open-reset-system-modal');
+            const cancelBtn = document.getElementById('reset-system-cancel');
+            const input = document.getElementById('reset-system-confirm-input');
+            const submitBtn = document.getElementById('reset-system-submit');
+            const REQUIRED_PHRASE = 'SİSTEMİ SIFIRLA';
+
+            openBtn?.addEventListener('click', () => {
+                if (input) input.value = '';
+                if (submitBtn) submitBtn.disabled = true;
+                modal?.classList.add('open');
+            });
+            cancelBtn?.addEventListener('click', () => modal?.classList.remove('open'));
+            modal?.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+            input?.addEventListener('input', () => {
+                if (submitBtn) submitBtn.disabled = input.value.trim() !== REQUIRED_PHRASE;
+            });
+        })();
+        </script>
+    @endif
 </div>
 @endsection

@@ -24,6 +24,7 @@ use App\Http\Controllers\StudentCodingActivityController;
 use App\Http\Controllers\CodingActivityManagementController;
 use App\Http\Controllers\DotConnectLevelController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SystemMaintenanceController;
 use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
 use App\Http\Controllers\UserManagementController;
@@ -207,6 +208,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/kullanici-yonetimi/kullanici/{user}/sinif-ata', [TeacherClassAssignmentController::class, 'editUser'])->name('users.classes.edit');
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevelUser'])->name('users.classes.assign-level');
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClassesUser'])->name('users.classes.assign-classes');
+
+            Route::post('/sistem/ogrenci-verilerini-sifirla', [SystemMaintenanceController::class, 'resetStudentData'])->name('system.reset-student-data');
 
             Route::get('/noktalari-birlestir/yonetim', [DotConnectLevelController::class, 'index'])->name('dot-connect.manage');
             Route::post('/noktalari-birlestir', [DotConnectLevelController::class, 'store'])->name('dot-connect.store');
