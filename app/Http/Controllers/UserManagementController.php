@@ -111,12 +111,12 @@ class UserManagementController extends Controller
         return $this->downloadTemplate('ogretmen-toplu-kayit-sablonu.xlsx', $headers, $sample);
     }
 
-    public function bulkStoreStudents(Request $request): RedirectResponse
+    public function bulkStoreStudents(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         return $this->bulkStoreByRole($request, 'student');
     }
 
-    public function bulkStoreTeachers(Request $request): RedirectResponse
+    public function bulkStoreTeachers(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         return $this->bulkStoreByRole($request, 'teacher');
     }

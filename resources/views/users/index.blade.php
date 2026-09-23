@@ -162,13 +162,22 @@ let bulkProgressCurrent = 0;
 
 const showWidget = () => { if (widget) widget.style.display = 'block'; };
 const hideWidget = () => { if (widget) widget.style.display = 'none'; };
+// Yukleme (dosya transferi) asamasi 0-25% araligini kullanir; sunucu
+// isini bitirip cevap donduktan sonraki "isleniyor" animasyonu ise geri
+// kalan 25-100% araliginda devam eder. Onceden ikisi de ayri ayri 0-100%
+// olarak hesaplaniyordu, bu da yukleme %30'a gelince "islendi" fazina
+// gecerken cubugun aniden geriye (orn. %30 -> %2) sicramasina yol
+// aciyordu. Ortak bir baslangic yuzdesi (UPLOAD_DONE_PCT) kullanilarak
+// cubuk artik hep ileri dogru akiyor.
+const UPLOAD_DONE_PCT = 25;
 const renderBulkProgress = () => {
     if (bulkProgressTotal <= 0) return;
-    const pct = Math.min(100, Math.round((bulkProgressCurrent / bulkProgressTotal) * 100));
+    const processedFraction = Math.min(1, bulkProgressCurrent / bulkProgressTotal);
+    const pct = Math.min(100, Math.round(UPLOAD_DONE_PCT + processedFraction * (100 - UPLOAD_DONE_PCT)));
     if (progressBar) progressBar.style.width = pct + '%';
     if (progressPercent) progressPercent.textContent = pct + '%';
     if (progressStep) progressStep.textContent = bulkProgressCurrent + '/' + bulkProgressTotal;
-    if (progressStatus) progressStatus.textContent = bulkProgressCurrent >= bulkProgressTotal ? 'Tamamland�' : '��leniyor...';
+    if (progressStatus) progressStatus.textContent = bulkProgressCurrent >= bulkProgressTotal ? 'Tamamlandı' : 'İşleniyor...';
 };
 
 const estimateRows = async (file) => {
@@ -195,12 +204,12 @@ bulkFileInputs.forEach((input) => {
                 bulkProgressTotal = Math.max(1, count || 1);
                 bulkProgressCurrent = 0;
                 if (progressStep) progressStep.textContent = '0/' + bulkProgressTotal;
-                if (progressStatus) progressStatus.textContent = 'Y�klemeye haz�r';
+                if (progressStatus) progressStatus.textContent = 'Yüklemeye hazır';
                 if (progressPercent) progressPercent.textContent = '0%';
                 if (progressBar) progressBar.style.width = '0%';
             }).catch(() => {
                 bulkProgressTotal = 1;
-                if (progressStatus) progressStatus.textContent = 'Dosya okunamad�';
+                if (progressStatus) progressStatus.textContent = 'Dosya okunamadı';
             });
         } else {
             bulkProgressTotal = 0;
@@ -220,7 +229,7 @@ bulkForms.forEach((bulkForm) => {
         showWidget();
         if (bulkProgressTotal <= 0) bulkProgressTotal = 1;
         bulkProgressCurrent = 0;
-        if (progressStatus) progressStatus.textContent = 'Y�kleniyor...';
+        if (progressStatus) progressStatus.textContent = 'Yükleniyor...';
         if (progressPercent) progressPercent.textContent = '0%';
         if (progressBar) progressBar.style.width = '0%';
         if (progressStep) progressStep.textContent = '0/' + bulkProgressTotal;
@@ -232,15 +241,15 @@ bulkForms.forEach((bulkForm) => {
         xhr.responseType = 'json';
         xhr.upload.addEventListener('progress', (ev) => {
             if (!ev.lengthComputable) return;
-            const pct = Math.min(30, Math.max(1, Math.round((ev.loaded / ev.total) * 30)));
+            const pct = Math.min(UPLOAD_DONE_PCT, Math.max(1, Math.round((ev.loaded / ev.total) * UPLOAD_DONE_PCT)));
             if (progressBar) progressBar.style.width = pct + '%';
             if (progressPercent) progressPercent.textContent = pct + '%';
-            if (progressStatus) progressStatus.textContent = 'Dosya aktar�l�yor...';
+            if (progressStatus) progressStatus.textContent = 'Dosya aktarılıyor...';
         });
         xhr.onload = () => {
             const data = xhr.response || {};
             bulkProgressTotal = Math.max(1, Number(data.total || bulkProgressTotal || 1));
-            if (progressStatus) progressStatus.textContent = data.ok === false ? '��lenemedi' : '��leniyor...';
+            if (progressStatus) progressStatus.textContent = data.ok === false ? 'İşlenemedi' : 'İşleniyor...';
             const animate = () => {
                 if (bulkProgressCurrent < bulkProgressTotal) {
                     bulkProgressCurrent += 1;
@@ -248,13 +257,15 @@ bulkForms.forEach((bulkForm) => {
                     window.setTimeout(animate, 85);
                     return;
                 }
-                if (progressStatus) progressStatus.textContent = data.ok === false ? '��lenemedi' : 'Tamamland�';
+                if (progressStatus) progressStatus.textContent = data.ok === false ? 'İşlenemedi' : 'Tamamlandı';
+                if (progressBar) progressBar.style.width = '100%';
+                if (progressPercent) progressPercent.textContent = '100%';
                 window.setTimeout(() => window.location.reload(), 350);
             };
             animate();
         };
         xhr.onerror = () => {
-            if (progressStatus) progressStatus.textContent = 'Y�kleme ba�ar�s�z';
+            if (progressStatus) progressStatus.textContent = 'Yükleme başarısız';
         };
         xhr.send(new FormData(bulkForm));
     });
