@@ -186,11 +186,18 @@ class ActivityRunnerController extends Controller
             $grant = session('runner_grant');
             $from = (int) request('from', 0);
             $to = (int) request('to', 0);
+            $isCompetitionGrant = is_array($grant)
+                && str_starts_with((string) ($grant['homework_id'] ?? ''), 'competition-');
             $valid = is_array($grant)
                 && ($grant['slug'] ?? null) === $slug
-                && ($grant['from'] ?? null) === $from
-                && ($grant['to'] ?? null) === $to
-                && (($grant['expires_at'] ?? 0) >= time());
+                && (($grant['expires_at'] ?? 0) >= time())
+                // Canli yarisma icin verilen izin, oyunun kendi ic navigasyonu
+                // (level degisimi vb.) farkli from/to parametreleriyle tekrar
+                // istek atsa bile gecerli kalmali - aksi halde ogrenci normal
+                // (sinifa atanmamis) erisim kontrolune dusup "atanmadi" hatasi
+                // aliyordu. Normal odev/atama tabanli izinlerde ise from/to
+                // hala birebir eslesmek zorunda.
+                && ($isCompetitionGrant || (($grant['from'] ?? null) === $from && ($grant['to'] ?? null) === $to));
 
             if (! $valid) {
                 $student = $user->student;
