@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Avatar;
 use App\Models\CompetitionParticipant;
 use App\Models\CompetitionRoom;
 use App\Models\SchoolClass;
@@ -347,6 +348,11 @@ class CompetitionController extends Controller
     private function leaderboardRows(CompetitionRoom $room): array
     {
         $startedAtMs = (int) ($room->started_at_ms ?? 0);
+        $defaultAvatarPath = Avatar::query()
+            ->where('is_active', true)
+            ->orderBy('required_xp')
+            ->value('image_path');
+        $defaultAvatarUrl = $defaultAvatarPath ? asset($defaultAvatarPath) : null;
 
         return CompetitionParticipant::query()
             ->where('competition_room_id', $room->id)
@@ -356,7 +362,7 @@ class CompetitionController extends Controller
             ->orderByDesc('xp_earned')
             ->orderBy('finished_at_ms')
             ->get()
-            ->map(function ($p) use ($startedAtMs) {
+            ->map(function ($p) use ($startedAtMs, $defaultAvatarUrl) {
                 $avatar = $p->studentUser?->student?->currentAvatar;
                 $finishedAtMs = $p->finished_at_ms !== null ? (int) $p->finished_at_ms : null;
                 $completedSeconds = ($finishedAtMs !== null && $startedAtMs > 0)
@@ -366,7 +372,7 @@ class CompetitionController extends Controller
                 return [
                     'student_user_id' => (int) $p->student_user_id,
                     'name' => $p->user_name,
-                    'avatar_url' => $avatar?->image_path ? asset($avatar->image_path) : null,
+                    'avatar_url' => $avatar?->image_path ? asset($avatar->image_path) : $defaultAvatarUrl,
                     'avatar_name' => $avatar?->name,
                     'progress_percent' => (float) $p->progress_percent,
                     'current_level_index' => (int) $p->current_level_index,

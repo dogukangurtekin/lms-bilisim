@@ -7,12 +7,15 @@
 .comp-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .comp-big-clock{font-size:34px;font-weight:800;color:#1e293b}
 .comp-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
-.comp-rank-row{display:grid;grid-template-columns:40px 36px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform}
-.comp-rank-row.leader{background:#fef3c7}
+.comp-rank-row{display:grid;grid-template-columns:40px 36px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform;border-left:4px solid transparent}
+.comp-rank-row.leader{border-left-color:#f59e0b}
 .comp-rank-row .comp-rank-no{font-weight:900;color:#64748b}
 .comp-rank-row.leader .comp-rank-no{color:#b45309}
 .comp-rank-avatar{width:36px;height:36px;border-radius:8px;object-fit:cover;background:#e2e8f0}
 .comp-rank-avatar.empty{display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8}
+.comp-rank-row.status-green{background:#dcfce7}
+.comp-rank-row.status-orange{background:#ffedd5}
+.comp-rank-row.status-red{background:#fee2e2}
 </style>
 <div class="modal" id="compDeleteModal">
     <div class="modal-card">
@@ -87,7 +90,8 @@
     <h3>Canlı Sıralama <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
     <div id="compLeaderboard">
         @forelse($rows as $i => $row)
-            <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }}" data-student="{{ $row['student_user_id'] }}">
+            @php($statusClass = $row['finished'] ? 'status-green' : ($row['progress_percent'] >= 50 ? 'status-orange' : 'status-red'))
+            <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }} {{ $statusClass }}" data-student="{{ $row['student_user_id'] }}">
                 <div class="comp-rank-no">#{{ $i + 1 }}</div>
                 @if($row['avatar_url'])
                     <img class="comp-rank-avatar" src="{{ $row['avatar_url'] }}" alt="{{ $row['avatar_name'] }}">
@@ -192,6 +196,7 @@
             const avatarHtml = row.avatar_url
                 ? `<img class="comp-rank-avatar" src="${row.avatar_url}" alt="${row.avatar_name || ''}">`
                 : `<div class="comp-rank-avatar empty">?</div>`;
+            el.classList.remove('status-green', 'status-orange', 'status-red');
             if (status === 'lobby') {
                 el.classList.remove('leader');
                 el.innerHTML = `
@@ -202,6 +207,8 @@
                 `;
             } else {
                 el.classList.toggle('leader', i === 0);
+                const statusClass = row.finished ? 'status-green' : (row.progress_percent >= 50 ? 'status-orange' : 'status-red');
+                el.classList.add(statusClass);
                 const timeSuffix = row.completed_seconds !== null && row.completed_seconds !== undefined ? ` — ${row.completed_seconds} sn` : '';
                 el.innerHTML = `
                     <div class="comp-rank-no">#${i + 1}</div>
