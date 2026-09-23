@@ -213,6 +213,16 @@
                 </article>
 
                 <article class="activity-item activity-card">
+                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <div class="activity-body">
+                        <h3>Canlı Yarışmalar</h3>
+                        <div class="actions">
+                            <a class="btn" href="{{ route('competitions.index') }}">Yarışma Aç</a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="activity-item activity-card">
                     <img src="{{ asset('flowchart.png') }}" alt="Flowchart Programming">
                     <div class="activity-body">
                         <h3>Flowchart Programming</h3>
@@ -236,6 +246,17 @@
                 @endforeach
             </div>
         @elseif($isTeacher)
+            <div class="activity-grid" style="margin-bottom:14px;">
+                <article class="activity-item activity-card">
+                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <div class="activity-body">
+                        <h3>Canlı Yarışmalar</h3>
+                        <div class="actions">
+                            <a class="btn" href="{{ route('competitions.index') }}">Yarışma Aç</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
             <p>Admin tarafından size atanan oyun ve etkinlikler aşağıdadır.</p>
             @php
                 $assigned = collect($assignedGameActivities ?? []);
@@ -267,6 +288,17 @@
                 </div>
             @endif
         @else
+            <div class="activity-grid" style="margin-bottom:14px;">
+                <article class="activity-item activity-card">
+                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <div class="activity-body">
+                        <h3>Canlı Yarışmalar</h3>
+                        <div class="actions">
+                            <a class="btn" href="{{ route('student.competitions.join.form') }}">Kod ile Katıl</a>
+                        </div>
+                    </div>
+                </article>
+            </div>
             <p>Aşağıdaki oyunlar seviye tabanlı ilerleme ve ödevleme için hazırdır.</p>
             @if(auth()->user()?->hasRole('student'))
                 <p style="margin-top:8px;color:#475569">

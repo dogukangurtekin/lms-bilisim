@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityRunnerController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\CourseHomeworkController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FlowchartPageController;
@@ -252,6 +253,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/canli-quiz/oturum/{session}/bitir', [LiveQuizController::class, 'finish'])->name('live-quiz.session.finish');
         Route::get('/canli-quiz/oturum/{session}/rapor', [LiveQuizController::class, 'sessionReport'])->name('live-quiz.session.report');
 
+        Route::get('/canli-yarismalar', [CompetitionController::class, 'index'])->name('competitions.index');
+        Route::post('/canli-yarismalar', [CompetitionController::class, 'store'])->name('competitions.store');
+        Route::get('/canli-yarismalar/oda/{room}', [CompetitionController::class, 'showRoom'])->name('competitions.room.show');
+        Route::post('/canli-yarismalar/oda/{room}/herkese-baslat', [CompetitionController::class, 'launch'])->name('competitions.room.launch');
+        Route::get('/canli-yarismalar/oda/{room}/durum', [CompetitionController::class, 'roomStatus'])->name('competitions.room.status');
+        Route::post('/canli-yarismalar/oda/{room}/bitir', [CompetitionController::class, 'finish'])->name('competitions.room.finish');
+
         Route::get('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'create'])->name('courses.homeworks.create');
         Route::post('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'store'])->name('courses.homeworks.store');
         Route::get('/ogrenci-verileri', [StudentDataController::class, 'index'])->name('student-data.index');
@@ -322,6 +330,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play');
         Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status');
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
+
+        Route::get('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoinForm'])->name('student.competitions.join.form');
+        Route::post('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoin'])->name('student.competitions.join');
+        Route::get('/ogrenci/canli-yarismalar/{room}', [CompetitionController::class, 'studentPlay'])->name('student.competitions.play');
+        Route::get('/ogrenci/canli-yarismalar/{room}/durum', [CompetitionController::class, 'studentStatus'])->name('student.competitions.status');
+        Route::post('/ogrenci/canli-yarismalar/{room}/ilerleme', [CompetitionController::class, 'reportProgress'])->name('student.competitions.progress');
 
         Route::get('/ogrenci/panelim', [StudentPortalController::class, 'dashboard'])->name('student.portal.dashboard');
         Route::get('/ogrenci/derslerim', [StudentPortalController::class, 'courses'])->name('student.portal.courses');
