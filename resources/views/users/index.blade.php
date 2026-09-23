@@ -113,6 +113,29 @@
     <div class="panel-section-head">
         <h3>Kullanıcı Listesi</h3>
     </div>
+    <form method="GET" action="{{ route('users.index') }}" class="panel-form-row" style="margin-bottom:14px;">
+        <div class="field-wrap" style="min-width:220px"><label>Ad / E-posta Ara</label><input type="text" name="search" value="{{ $search }}" placeholder="Ara..."></div>
+        <div class="field-wrap" style="min-width:200px"><label>Sınıf</label>
+            <select name="school_class_id">
+                <option value="">Tüm sınıflar</option>
+                @foreach($classes as $class)
+                    <option value="{{ $class->id }}" {{ (string) $classFilter === (string) $class->id ? 'selected' : '' }}>{{ $class->name }} / {{ $class->section }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field-wrap"><label>Rol</label>
+            <select name="role">
+                <option value="" {{ $roleFilter === '' ? 'selected' : '' }}>Tümü</option>
+                <option value="admin" {{ $roleFilter === 'admin' ? 'selected' : '' }}>Admin</option>
+                <option value="teacher" {{ $roleFilter === 'teacher' ? 'selected' : '' }}>Öğretmen</option>
+                <option value="student" {{ $roleFilter === 'student' ? 'selected' : '' }}>Öğrenci</option>
+            </select>
+        </div>
+        <button class="btn" type="submit">Filtrele</button>
+        @if($search !== '' || $classFilter !== '' || $roleFilter !== '')
+            <a class="btn btn-ghost" href="{{ route('users.index') }}">Temizle</a>
+        @endif
+    </form>
     <div class="student-delete-tools" style="margin-bottom:12px">
         <button form="delete-selected-students-form" type="submit" class="btn btn-danger" style="padding:8px 14px;font-size:13px;">Seçilen Öğrencileri Sil</button>
         <form id="delete-all-students-form" method="POST" action="{{ route('users.students.destroy-all') }}" data-confirm="Tüm öğrenciler sistemden kaldırılsın mı?" style="display:inline">@csrf @method('DELETE')

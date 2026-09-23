@@ -21,15 +21,22 @@ class UserManagementController extends Controller
     public function index(Request $request)
     {
         $roleFilter = trim((string) $request->query('role', ''));
+        $search = trim((string) $request->query('search', ''));
+        $classFilter = trim((string) $request->query('school_class_id', ''));
         $users = User::query()
-            ->with(['role', 'teacher', 'student'])
+            ->with(['role', 'teacher', 'student.schoolClass'])
             ->when($roleFilter !== '', fn ($q) => $q->whereHas('role', fn ($r) => $r->where('slug', $roleFilter)))
+            ->when($search !== '', fn ($q) => $q->where(function ($sub) use ($search) {
+                $sub->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
+            }))
+            ->when($classFilter !== '', fn ($q) => $q->whereHas('student', fn ($s) => $s->where('school_class_id', $classFilter)))
             ->orderByRaw("case (select roles.slug from roles where roles.id = users.role_id) when 'admin' then 0 when 'teacher' then 1 else 2 end")
             ->orderByDesc('id')
             ->paginate(30)
             ->withQueryString();
         $classes = SchoolClass::query()->orderBy('name')->orderBy('section')->get();
-        return view('users.index', compact('users', 'classes', 'roleFilter'));
+        return view('users.index', compact('users', 'classes', 'roleFilter', 'search', 'classFilter'));
     }
 
     public function store(Request $request)
