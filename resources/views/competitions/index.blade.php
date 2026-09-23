@@ -8,6 +8,18 @@
 .comp-row label{font-size:13px;font-weight:700;color:#475569}
 @media (max-width:900px){.comp-grid{grid-template-columns:1fr}}
 </style>
+<div class="modal" id="compDeleteModal">
+    <div class="modal-card">
+        <div class="modal-head"><strong>Odayı Sil</strong></div>
+        <p style="margin:0 0 14px;color:#475569;">Bu yarışma odasını kalıcı olarak silmek üzeresiniz. Tüm katılımcı kayıtları da birlikte silinecek. Bu işlem geri alınamaz.</p>
+        <form method="POST" id="compDeleteForm" style="margin:0;display:flex;gap:8px;justify-content:flex-end;">
+            @csrf
+            @method('DELETE')
+            <button type="button" class="btn" id="compDeleteCancel">Vazgeç</button>
+            <button type="submit" class="btn btn-danger">Evet, Sil</button>
+        </form>
+    </div>
+</div>
 <div class="top"><h1>Canlı Yarışmalar</h1></div>
 <p style="color:#64748b;margin-top:-6px">
     Oyun ve etkinlikler arasından bir oyun seçip bir yarışma odası oluştur. Öğrenciler odaya katılım koduyla girer,
@@ -76,7 +88,7 @@
                         </td>
                         <td style="display:flex;gap:6px;flex-wrap:wrap">
                             <a class="btn" href="{{ route('competitions.room.show', $room) }}">Odaya Git</a>
-                            <a class="btn btn-danger" href="{{ route('competitions.room.destroy.confirm', $room) }}">Sil</a>
+                            <button type="button" class="btn btn-danger comp-delete-trigger" data-delete-url="{{ route('competitions.room.destroy', $room) }}">Sil</button>
                         </td>
                     </tr>
                 @empty
@@ -87,4 +99,23 @@
         </div>
     </div>
 </div>
+
+<script>
+(() => {
+    const modal = document.getElementById('compDeleteModal');
+    const form = document.getElementById('compDeleteForm');
+    const cancelBtn = document.getElementById('compDeleteCancel');
+    if (!modal || !form) return;
+
+    document.querySelectorAll('.comp-delete-trigger').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            form.action = btn.getAttribute('data-delete-url');
+            modal.classList.add('open');
+        });
+    });
+    const closeModal = () => modal.classList.remove('open');
+    cancelBtn?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+})();
+</script>
 @endsection

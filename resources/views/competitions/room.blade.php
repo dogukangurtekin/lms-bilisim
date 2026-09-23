@@ -7,10 +7,23 @@
 .comp-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .comp-big-clock{font-size:34px;font-weight:800;color:#1e293b}
 .comp-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
-.comp-rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px}
-.comp-rank-row:nth-child(odd){background:#f8fafc}
+.comp-rank-row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform}
 .comp-rank-row.leader{background:#fef3c7}
+.comp-rank-row .comp-rank-no{font-weight:900;color:#64748b}
+.comp-rank-row.leader .comp-rank-no{color:#b45309}
 </style>
+<div class="modal" id="compDeleteModal">
+    <div class="modal-card">
+        <div class="modal-head"><strong>Odayı Sil</strong></div>
+        <p style="margin:0 0 14px;color:#475569;">Bu yarışma odasını kalıcı olarak silmek üzeresiniz. Tüm katılımcı kayıtları da birlikte silinecek. Bu işlem geri alınamaz.</p>
+        <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" style="margin:0;display:flex;gap:8px;justify-content:flex-end;">
+            @csrf
+            @method('DELETE')
+            <button type="button" class="btn" id="compDeleteCancel">Vazgeç</button>
+            <button type="submit" class="btn btn-danger">Evet, Sil</button>
+        </form>
+    </div>
+</div>
 <div class="top"><h1>Yarışma Odası — {{ $room->game_name }}</h1></div>
 
 @if($room->status === 'lobby')
@@ -25,7 +38,7 @@
         @csrf
         <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Başlat</button>
     </form>
-    <a class="btn btn-danger" href="{{ route('competitions.room.destroy.confirm', $room) }}" style="display:inline-block;margin-left:8px">Odayı Sil</a>
+    <button type="button" class="btn btn-danger comp-delete-trigger" style="display:inline-block;margin-left:8px">Odayı Sil</button>
 </div>
 @else
 <div class="card" style="margin-bottom:12px;">
@@ -45,7 +58,7 @@
         <form method="POST" action="{{ route('competitions.room.finish', $room) }}">@csrf<button class="btn btn-danger" type="submit">Yarışmayı Bitir</button></form>
         @endif
         <a class="btn" href="{{ route('competitions.index') }}">Canlı Yarışmalar'a Dön</a>
-        <a class="btn btn-danger" href="{{ route('competitions.room.destroy.confirm', $room) }}">Odayı Sil</a>
+        <button type="button" class="btn btn-danger comp-delete-trigger">Odayı Sil</button>
     </div>
 </div>
 
@@ -53,8 +66,8 @@
     <h3>Canlı Sıralama <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
     <div id="compLeaderboard">
         @forelse($rows as $i => $row)
-            <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }}">
-                <div>#{{ $i + 1 }}</div>
+            <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }}" data-student="{{ $row['student_user_id'] }}">
+                <div class="comp-rank-no">#{{ $i + 1 }}</div>
                 <div>{{ $row['name'] }}</div>
                 <div>%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['finished'] ? ' ✅' : '' }}</div>
             </div>
@@ -68,6 +81,14 @@
 @push('scripts')
 <script>
 (() => {
+    const deleteModal = document.getElementById('compDeleteModal');
+    const deleteCancel = document.getElementById('compDeleteCancel');
+    document.querySelectorAll('.comp-delete-trigger').forEach((btn) => {
+        btn.addEventListener('click', () => deleteModal?.classList.add('open'));
+    });
+    deleteCancel?.addEventListener('click', () => deleteModal?.classList.remove('open'));
+    deleteModal?.addEventListener('click', (e) => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+
     const status = @json($room->status);
     if (status === 'finished') return;
 
@@ -98,19 +119,99 @@
     setInterval(tickClock, 250);
     tickClock();
 
+    // --- Canli siralama: FLIP animasyonlu yeniden siralama -----------------
+    // Satirlar DOM'dan silinip yeniden yazilmiyor; her ogrenci icin sabit bir
+    // eleman tutuluyor (data-student anahtari) ve sira degistiginde eski/yeni
+    // konum farki bir transform animasyonuyla kapatiliyor (FLIP teknigi).
+    // Animasyon hizi, o ogrencinin bir onceki yoklamadan bu yana kazandigi XP
+    // miktarina (birim zamanda XP kazanma hizina) gore ayarlaniyor: hizli XP
+    // kazanan bir ogrenci sıralamada HIZLI/enerjik bir sicrayisla yukari
+    // cikiyor, yavas ilerleyen/duran bir ogrencinin sirasi ise yavas ve
+    // yumusak bir gecisle degisiyor.
+    const rowElements = new Map(); // student_user_id -> DOM elemani
+    const lastXpByStudent = new Map();
+    let lastPollAt = Date.now();
+
     function renderLeaderboard(rows) {
         if (!leaderboardEl) return;
         if (!rows.length) {
             leaderboardEl.innerHTML = '<p style="color:#64748b">Henüz ilerleme verisi yok.</p>';
+            rowElements.clear();
             return;
         }
-        leaderboardEl.innerHTML = rows.map((row, i) => `
-            <div class="comp-rank-row ${i === 0 ? 'leader' : ''}">
-                <div>#${i + 1}</div>
+
+        const now = Date.now();
+        const dtSec = Math.max(0.4, (now - lastPollAt) / 1000);
+
+        const oldTops = new Map();
+        rowElements.forEach((el, id) => oldTops.set(id, el.getBoundingClientRect().top));
+
+        const seenIds = new Set();
+        rows.forEach((row, i) => {
+            const id = row.student_user_id;
+            seenIds.add(id);
+            const prevXp = lastXpByStudent.has(id) ? lastXpByStudent.get(id) : row.xp_earned;
+            const xpRate = Math.max(0, (row.xp_earned - prevXp) / dtSec);
+            // Hizli XP kazanma -> kisa (hizli) gecis suresi; yavas/sabit -> uzun (yavas) gecis.
+            const durationMs = Math.max(220, Math.min(900, 900 - Math.min(xpRate, 20) * 34));
+
+            let el = rowElements.get(id);
+            const isNew = !el;
+            if (!el) {
+                el = document.createElement('div');
+                el.className = 'comp-rank-row';
+                el.dataset.student = String(id);
+                rowElements.set(id, el);
+            }
+            el.classList.toggle('leader', i === 0);
+            el.innerHTML = `
+                <div class="comp-rank-no">#${i + 1}</div>
                 <div>${row.name}</div>
                 <div>%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${row.finished ? ' ✅' : ''}</div>
-            </div>
-        `).join('');
+            `;
+            el.dataset.duration = String(durationMs);
+            leaderboardEl.appendChild(el); // yeni siraya gore konumlandir
+            lastXpByStudent.set(id, row.xp_earned);
+
+            if (isNew) {
+                el.style.transition = 'none';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-6px)';
+            }
+        });
+
+        // Odadan ayrilan/artik listede olmayan satirlari kaldir
+        Array.from(rowElements.keys()).forEach((id) => {
+            if (!seenIds.has(id)) {
+                rowElements.get(id)?.remove();
+                rowElements.delete(id);
+            }
+        });
+
+        // FLIP: Invert + Play (eski konumdan yeni konuma anima et)
+        rowElements.forEach((el, id) => {
+            const durationMs = el.dataset.duration || '400';
+            const oldTop = oldTops.get(id);
+            if (oldTop == null) {
+                requestAnimationFrame(() => {
+                    el.style.transition = `transform ${durationMs}ms ease, opacity 300ms ease`;
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                });
+                return;
+            }
+            const newTop = el.getBoundingClientRect().top;
+            const delta = oldTop - newTop;
+            if (Math.abs(delta) < 0.5) return;
+            el.style.transition = 'none';
+            el.style.transform = `translateY(${delta}px)`;
+            requestAnimationFrame(() => {
+                el.style.transition = `transform ${durationMs}ms ease`;
+                el.style.transform = 'translateY(0)';
+            });
+        });
+
+        lastPollAt = now;
     }
 
     async function poll() {
@@ -132,7 +233,7 @@
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     }
     poll();
-    setInterval(poll, status === 'lobby' ? 2000 : 2500);
+    setInterval(poll, status === 'lobby' ? 2000 : 1500);
 })();
 </script>
 @endpush
