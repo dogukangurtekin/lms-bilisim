@@ -21,9 +21,14 @@
        aşağıdaki butona basınca yarışma <strong>o an</strong> tüm öğrenciler için aynı anda başlar.</p>
     <p><strong>Lobide bekleyen öğrenci: <span id="compLobbyJoined">{{ $room->participants()->count() }}</span></strong></p>
     <p style="color:#64748b;font-size:13px">Seviye aralığı: {{ $room->level_from }}–{{ $room->level_to }} | Süre: {{ (int) ($room->duration_seconds / 60) }} dk</p>
-    <form method="POST" action="{{ route('competitions.room.launch', $room) }}">
+    <form method="POST" action="{{ route('competitions.room.launch', $room) }}" style="display:inline-block">
         @csrf
         <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Başlat</button>
+    </form>
+    <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" onsubmit="return confirm('Bu yarisma odasi kalici olarak silinsin mi?');" style="display:inline-block;margin-left:8px">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-danger" type="submit">Odayı Sil</button>
     </form>
 </div>
 @else
@@ -44,6 +49,11 @@
         <form method="POST" action="{{ route('competitions.room.finish', $room) }}">@csrf<button class="btn btn-danger" type="submit">Yarışmayı Bitir</button></form>
         @endif
         <a class="btn" href="{{ route('competitions.index') }}">Canlı Yarışmalar'a Dön</a>
+        <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" onsubmit="return confirm('Bu yarisma odasi kalici olarak silinsin mi?');" style="margin:0">
+            @csrf
+            @method('DELETE')
+            <button class="btn btn-danger" type="submit">Odayı Sil</button>
+        </form>
     </div>
 </div>
 

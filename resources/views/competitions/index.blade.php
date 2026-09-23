@@ -74,7 +74,14 @@
                             @else Bitti
                             @endif
                         </td>
-                        <td><a class="btn" href="{{ route('competitions.room.show', $room) }}">Odaya Git</a></td>
+                        <td style="display:flex;gap:6px;flex-wrap:wrap">
+                            <a class="btn" href="{{ route('competitions.room.show', $room) }}">Odaya Git</a>
+                            <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" onsubmit="return confirm('Bu yarisma odasi kalici olarak silinsin mi?');" style="margin:0">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger" type="submit">Sil</button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="5">Henüz oda yok.</td></tr>

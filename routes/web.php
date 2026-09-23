@@ -259,6 +259,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/canli-yarismalar/oda/{room}/herkese-baslat', [CompetitionController::class, 'launch'])->name('competitions.room.launch');
         Route::get('/canli-yarismalar/oda/{room}/durum', [CompetitionController::class, 'roomStatus'])->name('competitions.room.status');
         Route::post('/canli-yarismalar/oda/{room}/bitir', [CompetitionController::class, 'finish'])->name('competitions.room.finish');
+        Route::delete('/canli-yarismalar/oda/{room}', [CompetitionController::class, 'destroy'])->name('competitions.room.destroy');
 
         Route::get('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'create'])->name('courses.homeworks.create');
         Route::post('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'store'])->name('courses.homeworks.store');

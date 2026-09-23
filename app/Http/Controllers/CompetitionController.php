@@ -130,6 +130,16 @@ class CompetitionController extends Controller
         return redirect()->route('competitions.room.show', $room)->with('ok', 'Yarisma sonlandirildi.');
     }
 
+    public function destroy(CompetitionRoom $room)
+    {
+        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+
+        $room->participants()->delete();
+        $room->delete();
+
+        return redirect()->route('competitions.index')->with('ok', 'Yarisma odasi silindi.');
+    }
+
     public function roomStatus(CompetitionRoom $room)
     {
         abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
