@@ -159,6 +159,42 @@ class CompetitionController extends Controller
         return view('student-portal.competition-join');
     }
 
+    /**
+     * Ogrenci uygulamanin herhangi bir sayfasindaysa (ozellikle Oyun ve
+     * Etkinlikler sayfasinda), katildigi bir yarisma odasi canliya
+     * gectiginde otomatik olarak oyuna yonlendirilebilsin diye bu uc nokta
+     * periyodik olarak yoklaniyor.
+     */
+    public function studentActiveRoom()
+    {
+        abort_unless(auth()->user()?->hasRole('student'), 403);
+
+        $participant = CompetitionParticipant::query()
+            ->where('student_user_id', auth()->id())
+            ->whereHas('room', function ($q) {
+                $q->whereIn('status', ['lobby', 'live']);
+            })
+            ->with('room')
+            ->latest('id')
+            ->first();
+
+        if (! $participant || ! $participant->room) {
+            return response()->json(['active' => false]);
+        }
+
+        $room = $this->syncRoomByTimer($participant->room);
+
+        if (! in_array($room->status, ['lobby', 'live'], true)) {
+            return response()->json(['active' => false]);
+        }
+
+        return response()->json([
+            'active' => true,
+            'room_id' => $room->id,
+            'status' => $room->status,
+        ]);
+    }
+
     public function studentJoin(Request $request)
     {
         // Mobil klavye/otomatik tamamlamadan gelebilecek bastaki/sondaki

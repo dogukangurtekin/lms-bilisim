@@ -331,6 +331,32 @@
         @endif
     </div>
 </div>
+@if(auth()->user()?->hasRole('student'))
+    <script>
+        (function () {
+            // Ogrenci katildigi bir Canli Yarisma odasinin baslamasini
+            // beklerken Oyun ve Etkinlikler sayfasinda da olsa, oda canliya
+            // gectigi an otomatik olarak oyuna yonlendirilsin diye periyodik
+            // olarak yokluyoruz.
+            const activeUrl = @json(route('student.competitions.active'));
+            let redirected = false;
+            const poll = async () => {
+                if (redirected) return;
+                try {
+                    const res = await fetch(activeUrl, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data.active && data.status === 'live' && data.room_id) {
+                        redirected = true;
+                        window.location.href = '/ogrenci/canli-yarismalar/' + data.room_id;
+                    }
+                } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+            };
+            poll();
+            setInterval(poll, 3000);
+        })();
+    </script>
+@endif
 @if($isAdmin)
     <script>
         (function () {

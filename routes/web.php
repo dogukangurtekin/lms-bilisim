@@ -333,6 +333,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
 
         Route::get('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoinForm'])->name('student.competitions.join.form');
+        Route::get('/ogrenci/canli-yarismalar-aktif', [CompetitionController::class, 'studentActiveRoom'])->name('student.competitions.active');
         Route::post('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoin'])->name('student.competitions.join');
         Route::get('/ogrenci/canli-yarismalar/{room}', [CompetitionController::class, 'studentPlay'])->name('student.competitions.play');
         Route::get('/ogrenci/canli-yarismalar/{room}/durum', [CompetitionController::class, 'studentStatus'])->name('student.competitions.status');
