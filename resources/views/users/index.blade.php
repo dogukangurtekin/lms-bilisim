@@ -128,15 +128,13 @@
                 <tr>
                     <td>@if($item->hasRole('student'))<input type="checkbox" class="student-row-checkbox" form="delete-selected-students-form" name="user_ids[]" value="{{ $item->id }}">@endif</td>
                     <td>{{ $item->id }}</td>
-                    <td>
-                        {{ $item->name }}
-                        @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
-                            <a class="btn" href="{{ route('users.classes.edit', $item) }}" style="margin-left:8px;padding:6px 10px;font-size:12px;">Sınıf Ata</a>
-                        @endif
-                    </td>
+                    <td>{{ $item->name }}</td>
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role?->slug ?? '-' }}</td>
                     <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">
+                        @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
+                            <a class="btn" href="{{ route('users.classes.edit', $item) }}" style="padding:7px 12px;font-size:13px;">Sınıf Ata</a>
+                        @endif
                         @if($item->hasRole('teacher'))
                             <button type="button" class="btn edit-user-trigger" style="padding:7px 12px;font-size:13px;"
                                 data-url="{{ route('users.update', $item) }}"
