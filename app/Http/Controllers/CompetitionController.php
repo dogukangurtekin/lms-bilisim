@@ -151,9 +151,14 @@ class CompetitionController extends Controller
 
     public function studentJoin(Request $request)
     {
+        // Mobil klavye/otomatik tamamlamadan gelebilecek bastaki/sondaki
+        // bosluklari, kod dogrulanmadan once temizliyoruz - aksi halde
+        // gorunmez bir bosluk yuzunden "boyut 6 olmali" hatasi cikip
+        // ogrenci neden katilamadigini anlamiyordu.
+        $request->merge(['join_code' => strtoupper(trim((string) $request->input('join_code', '')))]);
         $data = $request->validate(['join_code' => ['required', 'string', 'size:6']]);
         $room = CompetitionRoom::query()
-            ->where('join_code', Str::upper($data['join_code']))
+            ->where('join_code', $data['join_code'])
             ->whereIn('status', ['lobby', 'live'])
             ->first();
         if (! $room) {
@@ -177,7 +182,7 @@ class CompetitionController extends Controller
             ]
         );
 
-        return redirect()->route('student.competitions.play', $room);
+        return redirect()->route('student.competitions.play', $room)->with('ok', 'Odaya katildin.');
     }
 
     public function studentPlay(CompetitionRoom $room)
