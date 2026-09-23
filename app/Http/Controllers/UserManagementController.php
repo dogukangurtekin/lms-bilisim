@@ -64,6 +64,35 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')->with('ok', 'Kullanici eklendi.');
     }
 
+    public function update(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:190', 'unique:users,email,' . $user->id],
+            'password' => ['nullable', 'string', 'min:4'],
+        ]);
+
+        $user->name = $data['name'];
+        $user->email = strtolower(trim($data['email']));
+        if (! empty($data['password'])) {
+            $user->password = Hash::make($data['password']);
+        }
+        $user->save();
+
+        return redirect()->route('users.index')->with('ok', 'Kullanici bilgileri guncellendi.');
+    }
+
+    public function resetPassword(User $user)
+    {
+        $newPassword = Str::password(10, symbols: false);
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        return redirect()->route('users.index')
+            ->with('reset_password_name', $user->name)
+            ->with('reset_password_value', $newPassword);
+    }
+
     public function destroy(User $user)
     {
         if ($user->hasRole('admin')) {

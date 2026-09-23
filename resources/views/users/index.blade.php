@@ -41,6 +41,34 @@
     }
 </style>
 
+@if(session('reset_password_value'))
+    <div class="panel-section" style="background:#f0fdf4;border-color:#86efac;">
+        <p style="margin:0 0 8px;font-weight:700;color:#166534;">{{ session('reset_password_name') }} için yeni şifre oluşturuldu:</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <code id="new-password-value" style="font-size:18px;font-weight:900;background:#dcfce7;padding:8px 14px;border-radius:8px;letter-spacing:1px;">{{ session('reset_password_value') }}</code>
+            <button type="button" class="btn" id="copy-new-password">Kopyala</button>
+        </div>
+        <p style="margin:8px 0 0;font-size:12.5px;color:#166534;">Bu şifreyi öğretmenle paylaşın, sayfa yenilenince tekrar gösterilmeyecek.</p>
+    </div>
+@endif
+
+<div class="modal" id="edit-user-modal">
+    <div class="modal-card">
+        <div class="modal-head"><strong>Kullanıcıyı Düzenle</strong></div>
+        <form method="POST" id="edit-user-form">
+            @csrf
+            @method('PUT')
+            <div class="field-wrap" style="margin-bottom:10px"><label>Ad Soyad</label><input type="text" name="name" id="edit-user-name" required></div>
+            <div class="field-wrap" style="margin-bottom:10px"><label>Kullanıcı (E-posta)</label><input type="email" name="email" id="edit-user-email" required></div>
+            <div class="field-wrap" style="margin-bottom:10px"><label>Yeni Şifre (opsiyonel - boş bırakırsan değişmez)</label><input type="password" name="password" id="edit-user-password" minlength="4" placeholder="••••••••"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" class="btn" id="edit-user-cancel">Vazgeç</button>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="panel-section">
     <div class="panel-section-head">
         <h3>Toplu Kullanıcı Yükleme</h3>
@@ -108,11 +136,20 @@
                     </td>
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role?->slug ?? '-' }}</td>
-                    <td class="actions">
+                    <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">
+                        @if($item->hasRole('teacher'))
+                            <button type="button" class="btn edit-user-trigger" style="padding:7px 12px;font-size:13px;"
+                                data-url="{{ route('users.update', $item) }}"
+                                data-name="{{ $item->name }}"
+                                data-email="{{ $item->email }}">Düzenle</button>
+                            <form method="POST" action="{{ route('users.reset-password', $item) }}" data-confirm="{{ $item->name }} için yeni bir şifre oluşturulsun mu?" style="margin:0">@csrf
+                                <button class="btn" type="submit" style="padding:7px 12px;font-size:13px;">Şifre Sıfırla</button>
+                            </form>
+                        @endif
                         @if($item->hasRole('admin'))
                             <button class="btn" type="button" disabled style="padding:7px 12px;font-size:13px;">Admin Silinemez</button>
                         @else
-                            <form method="POST" action="{{ route('users.destroy', $item) }}" data-confirm="Bu kullanıcı silinsin mi?">@csrf @method('DELETE')
+                            <form method="POST" action="{{ route('users.destroy', $item) }}" data-confirm="Bu kullanıcı silinsin mi?" style="margin:0">@csrf @method('DELETE')
                                 <button class="btn btn-danger" type="submit" style="padding:7px 12px;font-size:13px;">Sil</button>
                             </form>
                         @endif
@@ -140,6 +177,34 @@
 </div>
 <script>
 (() => {
+const editModal = document.getElementById('edit-user-modal');
+const editForm = document.getElementById('edit-user-form');
+const editNameInput = document.getElementById('edit-user-name');
+const editEmailInput = document.getElementById('edit-user-email');
+const editPasswordInput = document.getElementById('edit-user-password');
+document.querySelectorAll('.edit-user-trigger').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        if (editForm) editForm.action = btn.dataset.url;
+        if (editNameInput) editNameInput.value = btn.dataset.name || '';
+        if (editEmailInput) editEmailInput.value = btn.dataset.email || '';
+        if (editPasswordInput) editPasswordInput.value = '';
+        editModal?.classList.add('open');
+    });
+});
+document.getElementById('edit-user-cancel')?.addEventListener('click', () => editModal?.classList.remove('open'));
+editModal?.addEventListener('click', (e) => { if (e.target === editModal) editModal.classList.remove('open'); });
+
+document.getElementById('copy-new-password')?.addEventListener('click', async (e) => {
+    const value = document.getElementById('new-password-value')?.textContent || '';
+    try {
+        await navigator.clipboard.writeText(value);
+        const btn = e.currentTarget;
+        const original = btn.textContent;
+        btn.textContent = 'Kopyalandı!';
+        setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (err) { /* pano erisimi yoksa sessizce gec */ }
+});
+
 const role = document.getElementById('role-select');
 const wrap = document.getElementById('class-wrap');
 const set = () => wrap.style.display = (role && role.value === 'student') ? 'block' : 'none';
