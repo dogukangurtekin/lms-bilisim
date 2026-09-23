@@ -25,11 +25,7 @@
         @csrf
         <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Başlat</button>
     </form>
-    <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" onsubmit="return confirm('Bu yarisma odasi kalici olarak silinsin mi?');" style="display:inline-block;margin-left:8px">
-        @csrf
-        @method('DELETE')
-        <button class="btn btn-danger" type="submit">Odayı Sil</button>
-    </form>
+    <a class="btn btn-danger" href="{{ route('competitions.room.destroy.confirm', $room) }}" style="display:inline-block;margin-left:8px">Odayı Sil</a>
 </div>
 @else
 <div class="card" style="margin-bottom:12px;">
@@ -49,11 +45,7 @@
         <form method="POST" action="{{ route('competitions.room.finish', $room) }}">@csrf<button class="btn btn-danger" type="submit">Yarışmayı Bitir</button></form>
         @endif
         <a class="btn" href="{{ route('competitions.index') }}">Canlı Yarışmalar'a Dön</a>
-        <form method="POST" action="{{ route('competitions.room.destroy', $room) }}" onsubmit="return confirm('Bu yarisma odasi kalici olarak silinsin mi?');" style="margin:0">
-            @csrf
-            @method('DELETE')
-            <button class="btn btn-danger" type="submit">Odayı Sil</button>
-        </form>
+        <a class="btn btn-danger" href="{{ route('competitions.room.destroy.confirm', $room) }}">Odayı Sil</a>
     </div>
 </div>
 
