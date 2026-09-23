@@ -14,6 +14,20 @@
 .comp-wait-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
 .comp-wait-title{margin:0 0 8px;font-size:32px;font-weight:900}
 .comp-wait-count{font-size:64px;line-height:1;font-weight:900;margin:10px 0;color:#4f46e5}
+
+/* --- Bolum tamamlandi gecisi: konfeti + yumusak fade/scale ----------- */
+.comp-celebrate-wrap{position:relative}
+.comp-celebrate-fadeout{transition:opacity .5s ease,transform .5s ease;opacity:0;transform:scale(.97)}
+#compConfettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:9999}
+.comp-done-enter{opacity:0;transform:translateY(14px) scale(.96)}
+.comp-done-enter-active{opacity:1;transform:translateY(0) scale(1);transition:opacity .5s ease,transform .5s ease}
+.comp-trophy{font-size:56px;line-height:1;display:inline-block;animation:comp-trophy-bounce 1s ease 1}
+@keyframes comp-trophy-bounce{
+    0%{transform:scale(.2) rotate(-15deg);opacity:0}
+    55%{transform:scale(1.15) rotate(8deg);opacity:1}
+    75%{transform:scale(.95) rotate(-4deg)}
+    100%{transform:scale(1) rotate(0)}
+}
 </style>
 
 <div class="comp-play-bar">
@@ -48,12 +62,14 @@
     </div>
     <div class="comp-wait-stage" id="compPlayDoneStage" style="{{ $alreadyFinished ? '' : 'display:none;' }}">
         <div class="comp-wait-box">
-            <h3 class="comp-wait-title">Bölümünü Tamamladın! 🎉</h3>
-            <p>Verilen seviye aralığını bitirdin. Diğer öğrenciler devam ederken süre dolmasını bekle, sıralama canlı olarak güncellenmeye devam ediyor.</p>
+            <div class="comp-trophy">🏆</div>
+            <h3 class="comp-wait-title">Bölümünü Tamamladın!</h3>
+            <p>Harika iş çıkardın! Diğer öğrenciler devam ederken süre dolmasını bekle, sıralama canlı olarak güncellenmeye devam ediyor.</p>
             <div class="comp-wait-count" id="compPlayDoneCountdown">-</div>
             <p style="color:#64748b;font-size:13px">saniye kaldı</p>
         </div>
     </div>
+    <canvas id="compConfettiCanvas"></canvas>
 @else
     <div class="comp-wait-stage">
         <div class="comp-wait-box">
@@ -192,13 +208,82 @@
         }).catch(() => {});
     };
 
+    // --- Basit konfeti patlamasi (harici kutuphane yok, hafif canvas) ----
+    function burstConfetti() {
+        const canvas = document.getElementById('compConfettiCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const resize = () => {
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = window.innerHeight + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        resize();
+        const colors = ['#4f46e5', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
+        const pieces = Array.from({ length: 140 }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: -20 - Math.random() * window.innerHeight * 0.4,
+            w: 6 + Math.random() * 6,
+            h: 8 + Math.random() * 10,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speedY: 2 + Math.random() * 3.5,
+            speedX: -1.5 + Math.random() * 3,
+            rotation: Math.random() * 360,
+            spin: -8 + Math.random() * 16,
+        }));
+        const startedAt = Date.now();
+        const durationMs = 2600;
+        let rafId = null;
+        const step = () => {
+            const elapsed = Date.now() - startedAt;
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            pieces.forEach((p) => {
+                p.x += p.speedX;
+                p.y += p.speedY;
+                p.rotation += p.spin;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, 1 - elapsed / durationMs);
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                ctx.restore();
+            });
+            if (elapsed < durationMs) {
+                rafId = requestAnimationFrame(step);
+            } else {
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                window.removeEventListener('resize', resize);
+            }
+        };
+        window.addEventListener('resize', resize);
+        step();
+    }
+
     const showDoneStage = () => {
         if (myFinished) return;
         myFinished = true;
         const wrap = document.getElementById('compPlayFrameWrap');
         const stage = document.getElementById('compPlayDoneStage');
-        if (wrap) wrap.style.display = 'none';
-        if (stage) stage.style.display = '';
+
+        // Ani "tak diye" gecis yerine: once oyun ekrani yumusakca solup
+        // kuculuyor, ayni anda konfeti patliyor, sonra tebrik ekrani
+        // hafif yukselerek/buyuyerek beliriyor.
+        burstConfetti();
+        if (wrap) {
+            wrap.classList.add('comp-celebrate-fadeout');
+            setTimeout(() => { wrap.style.display = 'none'; }, 500);
+        }
+        if (stage) {
+            stage.style.display = '';
+            stage.classList.add('comp-done-enter');
+            requestAnimationFrame(() => {
+                stage.classList.add('comp-done-enter-active');
+            });
+        }
     };
 
     window.addEventListener('message', (ev) => {
