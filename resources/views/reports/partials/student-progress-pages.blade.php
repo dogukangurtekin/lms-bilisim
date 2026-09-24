@@ -46,6 +46,11 @@
             <strong class="small">Quiz Puanı: {{ data_get($report, 'kpi.quiz_total_xp', 0) }}</strong>
         </article>
         <article class="kpi-card">
+            <span>Canlı Yarışma</span>
+            <strong class="small">Katıldığı Yarışma: {{ data_get($report, 'kpi.competition_joined_count', 0) }}</strong>
+            <strong class="small">Yarışma Puanı: {{ data_get($report, 'kpi.competition_total_xp', 0) }}</strong>
+        </article>
+        <article class="kpi-card">
             <span>Başarı Oranı</span>
             <strong>{{ $donePct }}%</strong>
         </article>

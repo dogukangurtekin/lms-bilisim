@@ -6,6 +6,7 @@ use App\Models\ContentProgress;
 use App\Models\Avatar;
 use App\Models\Badge;
 use App\Models\ClassBoardPost;
+use App\Models\CompetitionParticipant;
 use App\Models\Course;
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
@@ -803,8 +804,11 @@ class StudentPortalController extends Controller
     {
         $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
+        // Canli Yarisma'da kazanilan XP de diger kaynaklar gibi (not, ders/
+        // icerik tamamlama) ogrencinin toplam XP'sine dahil ediliyor.
+        $competitionXp = (int) CompetitionParticipant::where('student_user_id', $student->user_id)->sum('xp_earned');
 
-        return max(0, $gradeXp + $contentXp);
+        return max(0, $gradeXp + $contentXp + $competitionXp);
     }
 
     private function classBoardMessages(): array

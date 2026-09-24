@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\CourseHomework;
@@ -112,6 +113,16 @@ class StudentProgressReportService
             ->where('student_user_id', $student->user_id)
             ->distinct('live_quiz_session_id')
             ->count('live_quiz_session_id');
+        // Canli Yarisma'da kazanilan XP daha once hicbir yerde ogrencinin
+        // toplam XP'sine dahil edilmiyordu; Canli Quiz ile ayni sekilde
+        // (katilim sayisi + kazanilan XP) burada da takip ediliyor.
+        $competitionXp = (int) CompetitionParticipant::query()
+            ->where('student_user_id', $student->user_id)
+            ->sum('xp_earned');
+        $competitionJoinedCount = (int) CompetitionParticipant::query()
+            ->where('student_user_id', $student->user_id)
+            ->distinct('competition_room_id')
+            ->count('competition_room_id');
 
         $dailyAttemptRows = ActivityAttempt::query()
             ->with(['answers.activityQuestion'])
@@ -139,7 +150,7 @@ class StudentProgressReportService
         // Rapordaki siralama (asagida) avatar harcamasi dusulerek
         // hesaplandigindan, ayni raporun basligindaki XP de tutarli olmasi
         // icin ayni sekilde netleniyor.
-        $totalXp = max(0, $gradeXp + $contentXp - (int) ($student->avatar_xp_spent ?? 0));
+        $totalXp = max(0, $gradeXp + $contentXp + $competitionXp - (int) ($student->avatar_xp_spent ?? 0));
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
         $completedLessonRows = ContentProgress::where('user_id', $student->user_id)
@@ -209,11 +220,18 @@ class StudentProgressReportService
         // "Basari Listesi" ve ogrencinin kendi anasayfasindaki guncel
         // (kalan) XP ile tutarli kaliyor.
         $students = Student::with(['user', 'schoolClass'])->get();
+        $studentUserIdsAll = $students->pluck('user_id');
+        $competitionXpByUserAll = CompetitionParticipant::query()
+            ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
+            ->whereIn('student_user_id', $studentUserIdsAll)
+            ->groupBy('student_user_id')
+            ->pluck('xp', 'user_id');
         $xpMap = [];
         foreach ($students as $s) {
             $sx = (int) round((float) Grade::where('student_id', $s->id)->sum('score'));
             $cx = (int) ContentProgress::where('user_id', $s->user_id)->sum('xp_awarded');
-            $xpMap[$s->id] = max(0, $sx + $cx - (int) ($s->avatar_xp_spent ?? 0));
+            $compx = (int) ($competitionXpByUserAll[$s->user_id] ?? 0);
+            $xpMap[$s->id] = max(0, $sx + $cx + $compx - (int) ($s->avatar_xp_spent ?? 0));
         }
 
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);
@@ -438,6 +456,8 @@ class StudentProgressReportService
                 'grade_avg' => $avgGrade,
                 'quiz_joined_count' => $quizJoinedCount,
                 'quiz_total_xp' => $quizXp,
+                'competition_joined_count' => $competitionJoinedCount,
+                'competition_total_xp' => $competitionXp,
                 'daily_attempt_count' => $dailyAttemptCount,
                 'daily_correct_count' => $dailyCorrectCount,
                 'daily_wrong_count' => $dailyWrongCount,

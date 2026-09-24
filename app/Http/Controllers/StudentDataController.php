@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Avatar;
 use App\Models\Badge;
+use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Grade;
 use App\Models\PushDeviceStatus;
@@ -91,13 +92,20 @@ class StudentDataController extends Controller
             ->groupBy('user_id')
             ->pluck('xp', 'user_id');
 
-        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser) {
+        $competitionXpByUser = CompetitionParticipant::query()
+            ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
+            ->when(!empty($userIds), fn ($q) => $q->whereIn('student_user_id', $userIds))
+            ->groupBy('student_user_id')
+            ->pluck('xp', 'user_id');
+
+        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $competitionXpByUser) {
             $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
             $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
+            $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
             // Diger tum XP gosterimleriyle (anasayfa, Basari Listesi, gelisim
             // raporu) tutarli olmasi icin avatar magazasinda harcanan XP
             // burada da dusuluyor.
-            $xp = max(0, $gradeXp + $contentXp - (int) ($student->avatar_xp_spent ?? 0));
+            $xp = max(0, $gradeXp + $contentXp + $competitionXp - (int) ($student->avatar_xp_spent ?? 0));
 
             return [
                 $student->id => [

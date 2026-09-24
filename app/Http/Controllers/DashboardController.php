@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\Grade;
@@ -204,6 +205,16 @@ class DashboardController extends Controller
                 ->groupBy('student_user_id')
                 ->pluck('xp', 'user_id');
 
+            // Canli Yarisma'da kazanilan XP daha once hicbir XP toplamina dahil
+            // edilmiyordu - ogrenci yarismada XP kazansa bile genel XP'sine
+            // yansimiyordu. Diger kaynaklarla (not/icerik/canli quiz) ayni
+            // sekilde toplaniyor.
+            $competitionXpByUser = CompetitionParticipant::query()
+                ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_user_id', $studentUserIds))
+                ->groupBy('student_user_id')
+                ->pluck('xp', 'user_id');
+
             $profileXpByUser = UserProfile::query()
                 ->selectRaw('user_id, xp')
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
@@ -221,12 +232,13 @@ class DashboardController extends Controller
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
                 ->get();
 
-            $studentXpRows = $students->map(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $quizXpByUser, $profileXpByUser) {
+            $studentXpRows = $students->map(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $quizXpByUser, $competitionXpByUser, $profileXpByUser) {
                 $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
                 $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
                 $quizXp = (int) ($quizXpByUser[$student->user_id] ?? 0);
+                $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
                 $profileXp = (int) ($profileXpByUser[$student->user_id] ?? 0);
-                $computedXp = max(0, $gradeXp + $contentXp + $quizXp);
+                $computedXp = max(0, $gradeXp + $contentXp + $quizXp + $competitionXp);
                 // Avatar magazasinda harcanan XP burada da dusuluyor; boylece
                 // admin/ogretmen panelindeki "Basari Listesi" (ilk 5), basari
                 // dagilimi grafigi ve toplam XP, ogrenci tarafinda gosterilen
