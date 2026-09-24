@@ -150,6 +150,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
+    // "Aktif Siniflar" widget'indeki "Cikis Yap" sonrasi ogrencinin ekraninda
+    // sayfa yenilemesi beklemeden aninda login'e dusmesi icin: bu uc nokta
+    // sik sik (bkz. layout/app.blade.php) yokleniyor. Asil is CheckForcedLogout
+    // middleware'inde oluyor (bkz. bootstrap/app.php) - force_logout_at
+    // isaretlenmisse bu istek zaten middleware tarafindan /login'e
+    // yonlendiriliyor; buraya hic ulasilmiyor. Normal durumda sadece {ok:true}.
+    Route::get('/oturum/canlilik', fn () => response()->json(['ok' => true]))->name('session.heartbeat');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
     Route::get('/dashboard/aktif-siniflar', [DashboardController::class, 'activeClasses'])->name('dashboard.active-classes');

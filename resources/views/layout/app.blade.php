@@ -624,6 +624,34 @@
 })();
 </script>
 @endif
+@auth
+<script>
+(() => {
+    // "Aktif Siniflar" widget'indeki "Cikis Yap" tetiklendiginde, sayfa
+    // yenilemesi/baska bir tikrama beklemeden ekranin ANINDA login'e
+    // dusmesi icin sik araliklarla hafif bir uc nokta yokluyoruz. Asil
+    // cikis mantigi sunucu tarafindaki CheckForcedLogout middleware'inde -
+    // force_logout_at isaretlenmisse bu istek zaten sunucu tarafindan
+    // /login'e yonlendiriliyor; fetch() bu yonlendirmeyi otomatik takip
+    // edip response.redirected=true olarak bildiriyor, biz de tum
+    // sayfayi login ekranina yonlendiriyoruz.
+    const heartbeatUrl = @json(route('session.heartbeat'));
+    const checkForcedLogout = async () => {
+        try {
+            const res = await fetch(heartbeatUrl, {
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store',
+                credentials: 'same-origin',
+            });
+            if (res.redirected) {
+                window.location.href = res.url;
+            }
+        } catch (_) { /* aginfi bir sorun varsa bir sonraki denemede tekrar denenecek */ }
+    };
+    setInterval(checkForcedLogout, 4000);
+})();
+</script>
+@endauth
 @if(auth()->check() && auth()->user()?->hasRole('student'))
 <script>
 (() => {
