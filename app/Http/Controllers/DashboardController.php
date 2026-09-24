@@ -464,8 +464,18 @@ class DashboardController extends Controller
         $rows = Student::query()
             ->join('student_time_stats', 'student_time_stats.student_id', '=', 'students.id')
             ->join('school_classes', 'school_classes.id', '=', 'students.school_class_id')
+            ->join('users', 'users.id', '=', 'students.user_id')
             ->when(! $isAdmin, fn ($q) => $q->whereIn('students.school_class_id', $teacherClassIds))
             ->where('student_time_stats.last_seen_at', '>=', now()->subMinutes(15))
+            // Cikis yaptirilan (force_logout_at girildikten sonra ogrenci
+            // henuz tekrar giris yapmamis) ogrenciler "aktif" sayilmamali -
+            // aksi halde last_seen_at hala eski (cikistan onceki) deger
+            // oldugu icin sinif, cikis yaptirildiktan sonra bile listede
+            // "aktif" gorunmeye devam ediyordu.
+            ->where(function ($q) {
+                $q->whereNull('users.force_logout_at')
+                    ->orWhereColumn('users.force_logout_at', '<', 'student_time_stats.last_seen_at');
+            })
             ->selectRaw('school_classes.id as class_id, school_classes.name, school_classes.section, COUNT(*) as active_count')
             ->groupBy('school_classes.id', 'school_classes.name', 'school_classes.section')
             ->orderBy('school_classes.name')
