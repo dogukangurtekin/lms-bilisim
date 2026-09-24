@@ -144,7 +144,7 @@ class CourseController extends Controller
 
             $items = $itemsQuery
                 ->orderBy($sort, $dir)
-                ->paginate(20)
+                ->paginate(40)
                 ->withQueryString();
         } catch (\Throwable $e) {
             Log::warning('Course index fallback triggered', [
@@ -167,7 +167,7 @@ class CourseController extends Controller
 
             $items = $itemsQuery
                 ->orderByDesc('id')
-                ->paginate(20)
+                ->paginate(40)
                 ->withQueryString();
         }
 
