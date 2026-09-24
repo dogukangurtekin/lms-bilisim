@@ -492,6 +492,47 @@ class DashboardController extends Controller
     }
 
     /**
+     * "Aktif Sınıflar" widgetindeki bir sınıf icin, o an aktif sayilan
+     * ogrencilerin listesini dondurur (Detay pop-up'i icin).
+     */
+    public function activeClassStudents(Request $request, SchoolClass $class): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
+
+        if (! $user->hasRole('admin')) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $ownsClass = $teacher && $teacher->classes()->where('school_classes.id', $class->id)->exists();
+            abort_unless($ownsClass, 403);
+        }
+
+        $rows = Student::query()
+            ->join('student_time_stats', 'student_time_stats.student_id', '=', 'students.id')
+            ->join('users', 'users.id', '=', 'students.user_id')
+            ->where('students.school_class_id', $class->id)
+            ->where('student_time_stats.last_seen_at', '>=', now()->subMinutes(15))
+            ->where(function ($q) {
+                $q->whereNull('users.force_logout_at')
+                    ->orWhereColumn('users.force_logout_at', '<', 'student_time_stats.last_seen_at');
+            })
+            ->selectRaw('students.id as student_id, users.name as user_name, students.student_no, student_time_stats.last_seen_at')
+            ->orderBy('student_time_stats.last_seen_at', 'desc')
+            ->get()
+            ->map(fn ($row) => [
+                'student_id' => (int) $row->student_id,
+                'name' => $this->normalizeDashboardText($row->user_name ?? '-'),
+                'student_no' => $row->student_no,
+                'last_seen_at' => $row->last_seen_at,
+            ])
+            ->values();
+
+        return response()->json([
+            'class_name' => $this->normalizeDashboardText($class->name . '/' . $class->section),
+            'students' => $rows,
+        ]);
+    }
+
+    /**
      * Ders sonrasi tum siniftaki ogrenci hesaplarindan AYNI ANDA cikis
      * yaptirir. Baska siniflarin (ayni anda sisteme girmis olsalar bile)
      * oturumlari etkilenmez - sadece bu sinifin ogrencilerinin User

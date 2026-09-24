@@ -241,6 +241,17 @@
                     </div>
                 </div>
 
+                <div class="modal" id="active-class-students-modal">
+                    <div class="modal-card">
+                        <div class="modal-head"><strong id="active-class-students-title">Aktif Öğrenciler</strong></div>
+                        <div id="active-class-students-list" style="display:grid;gap:6px;max-height:320px;overflow-y:auto;margin-bottom:14px;">
+                        </div>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;">
+                            <button type="button" class="btn" id="active-class-students-close">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+
                 @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
                     @php
                         $chartItems = (array) ($chart['items'] ?? []);
@@ -885,6 +896,44 @@
     cancelBtn?.addEventListener('click', closeModal);
     modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
+    const studentsModal = document.getElementById('active-class-students-modal');
+    const studentsTitle = document.getElementById('active-class-students-title');
+    const studentsList = document.getElementById('active-class-students-list');
+    const studentsCloseBtn = document.getElementById('active-class-students-close');
+
+    const closeStudentsModal = () => { studentsModal?.classList.remove('open'); };
+    studentsCloseBtn?.addEventListener('click', closeStudentsModal);
+    studentsModal?.addEventListener('click', (e) => { if (e.target === studentsModal) closeStudentsModal(); });
+
+    async function openStudentsModal(classId, className) {
+        if (studentsTitle) studentsTitle.textContent = `${className} - Aktif Öğrenciler`;
+        if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Yükleniyor...</p>';
+        studentsModal?.classList.add('open');
+        try {
+            const res = await fetch(`/dashboard/sinif/${classId}/aktif-ogrenciler`, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#dc2626;font-size:13px;">Liste yüklenemedi.</p>';
+                return;
+            }
+            const students = data.students || [];
+            if (!students.length) {
+                if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Şu an aktif öğrenci yok.</p>';
+                return;
+            }
+            if (studentsList) {
+                studentsList.innerHTML = students.map((s) => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
+                        <span style="font-size:13px;">${s.name}</span>
+                        <span style="font-size:12px;color:#64748b;">${s.student_no ?? ''}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#dc2626;font-size:13px;">Bağlantı hatası oluştu.</p>';
+        }
+    }
+
     function render(classes) {
         if (!classes.length) {
             listEl.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Şu an sistemde aktif öğrencisi olan bir sınıf yok.</p>';
@@ -896,7 +945,10 @@
                     <strong style="font-size:14px;">${c.class_name}</strong>
                     <span style="display:block;font-size:12px;color:#64748b;">${c.active_count} öğrenci aktif</span>
                 </div>
-                <button type="button" class="btn btn-danger active-class-logout-btn" data-class-id="${c.class_id}" data-class-name="${c.class_name}" style="padding:6px 12px;font-size:13px;">Çıkış Yap</button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button type="button" class="btn active-class-detail-link" data-class-id="${c.class_id}" data-class-name="${c.class_name}" style="padding:6px 12px;font-size:13px;">Detay</button>
+                    <button type="button" class="btn btn-danger active-class-logout-btn" data-class-id="${c.class_id}" data-class-name="${c.class_name}" style="padding:6px 12px;font-size:13px;">Çıkış Yap</button>
+                </div>
             </div>
         `).join('');
         listEl.querySelectorAll('.active-class-logout-btn').forEach((btn) => {
@@ -904,6 +956,12 @@
                 pendingClassId = btn.dataset.classId;
                 if (modalText) modalText.textContent = `${btn.dataset.className} sınıfındaki tüm öğrenci hesaplarından şu an çıkış yaptırılacak. Diğer sınıflar etkilenmez. Emin misiniz?`;
                 modal?.classList.add('open');
+            });
+        });
+        listEl.querySelectorAll('.active-class-detail-link').forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                openStudentsModal(link.dataset.classId, link.dataset.className);
             });
         });
     }
