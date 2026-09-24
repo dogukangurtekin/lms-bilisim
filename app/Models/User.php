@@ -28,6 +28,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'dashboard_layout' => 'array',
+            'force_logout_at' => 'datetime',
         ];
     }
 

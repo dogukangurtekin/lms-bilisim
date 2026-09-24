@@ -152,6 +152,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
+    Route::get('/dashboard/aktif-siniflar', [DashboardController::class, 'activeClasses'])->name('dashboard.active-classes');
+    Route::post('/dashboard/sinif/{class}/oturumlari-kapat', [DashboardController::class, 'forceLogoutClass'])->name('dashboard.class.force-logout');
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');

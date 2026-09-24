@@ -219,6 +219,28 @@
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
 
+                <article class="dashboard-widget widget-span-6" data-widget-key="active_classes" draggable="true">
+                    <div class="widget-head">
+                        <div><strong>Aktif Sınıflar</strong><span>Şu an sistemde olan sınıflar</span></div>
+                        <button type="button" class="widget-toggle" data-widget-toggle="active_classes" aria-label="Gizle" title="Gizle">-</button>
+                    </div>
+                    <div id="active-classes-list" style="display:grid;gap:8px;">
+                        <p style="margin:0;color:#64748b;font-size:13px;">Yükleniyor...</p>
+                    </div>
+                    <span class="widget-resize-handle" aria-hidden="true"></span>
+                </article>
+
+                <div class="modal" id="active-class-logout-modal">
+                    <div class="modal-card">
+                        <div class="modal-head"><strong>Sınıftan Çıkış Yaptır</strong></div>
+                        <p id="active-class-logout-text" style="margin:0 0 14px;color:#475569;"></p>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;">
+                            <button type="button" class="btn" id="active-class-logout-cancel">Vazgeç</button>
+                            <button type="button" class="btn btn-danger" id="active-class-logout-confirm">Evet, Çıkış Yaptır</button>
+                        </div>
+                    </div>
+                </div>
+
                 @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
                     @php
                         $chartItems = (array) ($chart['items'] ?? []);
@@ -443,6 +465,7 @@
         courses: { title: 'Ders Sayısı', span: 4, order: 60 },
         avg_completion: { title: 'Ortalama Not', span: 4, order: 70 },
         xp: { title: 'Toplam XP', span: 4, order: 80 },
+        active_classes: { title: 'Aktif Sınıflar', span: 6, order: 75 },
         chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
         chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 6, order: 95, zone: 'grid' },
         leaderboard: { title: 'Başarı Listesi', span: 6, order: 100 },
@@ -845,6 +868,83 @@
     allWidgetNodes().forEach((card) => masonryObserver.observe(card));
 
     render();
+})();
+
+(() => {
+    const listEl = document.getElementById('active-classes-list');
+    if (!listEl) return;
+    const activeClassesUrl = @json(route('dashboard.active-classes'));
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const modal = document.getElementById('active-class-logout-modal');
+    const modalText = document.getElementById('active-class-logout-text');
+    const cancelBtn = document.getElementById('active-class-logout-cancel');
+    const confirmBtn = document.getElementById('active-class-logout-confirm');
+    let pendingClassId = null;
+
+    const closeModal = () => { modal?.classList.remove('open'); pendingClassId = null; };
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    function render(classes) {
+        if (!classes.length) {
+            listEl.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Şu an sistemde aktif öğrencisi olan bir sınıf yok.</p>';
+            return;
+        }
+        listEl.innerHTML = classes.map((c) => `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;">
+                <div>
+                    <strong style="font-size:14px;">${c.class_name}</strong>
+                    <span style="display:block;font-size:12px;color:#64748b;">${c.active_count} öğrenci aktif</span>
+                </div>
+                <button type="button" class="btn btn-danger active-class-logout-btn" data-class-id="${c.class_id}" data-class-name="${c.class_name}" style="padding:6px 12px;font-size:13px;">Çıkış Yap</button>
+            </div>
+        `).join('');
+        listEl.querySelectorAll('.active-class-logout-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                pendingClassId = btn.dataset.classId;
+                if (modalText) modalText.textContent = `${btn.dataset.className} sınıfındaki tüm öğrenci hesaplarından şu an çıkış yaptırılacak. Diğer sınıflar etkilenmez. Emin misiniz?`;
+                modal?.classList.add('open');
+            });
+        });
+    }
+
+    async function load() {
+        try {
+            const res = await fetch(activeClassesUrl, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) return;
+            const data = await res.json();
+            render(data.classes || []);
+        } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+    }
+
+    confirmBtn?.addEventListener('click', async () => {
+        if (!pendingClassId) return;
+        const classId = pendingClassId;
+        confirmBtn.disabled = true;
+        try {
+            const res = await fetch(`/dashboard/sinif/${classId}/oturumlari-kapat`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+                closeModal();
+                load();
+            } else {
+                window.alert(data.message || 'Işlem basarisiz oldu.');
+            }
+        } catch (e) {
+            window.alert('Baglanti hatasi olustu.');
+        } finally {
+            confirmBtn.disabled = false;
+        }
+    });
+
+    load();
+    setInterval(load, 20000);
 })();
 </script>
 @endpush

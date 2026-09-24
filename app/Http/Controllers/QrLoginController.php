@@ -138,6 +138,7 @@ class QrLoginController extends Controller
         }
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_at', now()->timestamp);
         return redirect()->route('dashboard')->with('success', 'QR ile giris basarili.');
     }
 }

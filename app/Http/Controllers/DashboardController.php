@@ -13,6 +13,7 @@ use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
 use App\Models\Teacher;
+use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class DashboardController extends Controller
         'notes' => ['visible' => true, 'span' => 6, 'order' => 90, 'title' => 'Öğretmen Notları', 'type' => 'notes'],
         'leaderboard' => ['visible' => true, 'span' => 12, 'order' => 100, 'title' => 'Başarı Listesi', 'type' => 'leaderboard'],
         'quick_qr' => ['visible' => true, 'span' => 12, 'order' => 110, 'title' => 'Mobil QR Girişi', 'type' => 'qr'],
+        'active_classes' => ['visible' => true, 'span' => 6, 'order' => 75, 'title' => 'Aktif Sınıflar', 'type' => 'active_classes'],
     ];
 
     public function index()
@@ -435,6 +437,79 @@ class DashboardController extends Controller
             'dashboard' => $dashboard,
             'dashboardLayout' => $layout,
             'selectedClassId' => $dashboard['selected_class_id'] ?? 0,
+        ]);
+    }
+
+    /**
+     * "Aktif Siniflar" widget'i icin: sadece son 15 dakika icinde en az bir
+     * istek atmis (StudentTimeStat.last_seen_at - TrackStudentActiveTime
+     * middleware'i tarafindan her istekte guncelleniyor) ogrencisi olan
+     * siniflari listeler. Admin tum siniflari, ogretmen sadece kendi
+     * siniflarini gorur.
+     */
+    public function activeClasses(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
+        $isAdmin = $user->hasRole('admin');
+
+        $teacherClassIds = [];
+        if (! $isAdmin) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
+
+        $rows = Student::query()
+            ->join('student_time_stats', 'student_time_stats.student_id', '=', 'students.id')
+            ->join('school_classes', 'school_classes.id', '=', 'students.school_class_id')
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('students.school_class_id', $teacherClassIds))
+            ->where('student_time_stats.last_seen_at', '>=', now()->subMinutes(15))
+            ->selectRaw('school_classes.id as class_id, school_classes.name, school_classes.section, COUNT(*) as active_count')
+            ->groupBy('school_classes.id', 'school_classes.name', 'school_classes.section')
+            ->orderBy('school_classes.name')
+            ->orderBy('school_classes.section')
+            ->get()
+            ->map(fn ($row) => [
+                'class_id' => (int) $row->class_id,
+                'class_name' => $this->normalizeDashboardText($row->name . '/' . $row->section),
+                'active_count' => (int) $row->active_count,
+            ])
+            ->values();
+
+        return response()->json(['classes' => $rows]);
+    }
+
+    /**
+     * Ders sonrasi tum siniftaki ogrenci hesaplarindan AYNI ANDA cikis
+     * yaptirir. Baska siniflarin (ayni anda sisteme girmis olsalar bile)
+     * oturumlari etkilenmez - sadece bu sinifin ogrencilerinin User
+     * kayitlari isaretlenir. Bkz. app/Http/Middleware/CheckForcedLogout.php.
+     */
+    public function forceLogoutClass(Request $request, SchoolClass $class): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
+
+        if (! $user->hasRole('admin')) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $ownsClass = $teacher && $teacher->classes()->where('school_classes.id', $class->id)->exists();
+            abort_unless($ownsClass, 403);
+        }
+
+        $studentUserIds = Student::query()
+            ->where('school_class_id', $class->id)
+            ->pluck('user_id');
+
+        $affected = User::query()
+            ->whereIn('id', $studentUserIds)
+            ->update(['force_logout_at' => now()]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => "{$class->name}/{$class->section} sinifindaki {$affected} ogrenci hesabindan cikis yaptirildi.",
+            'affected' => $affected,
         ]);
     }
 

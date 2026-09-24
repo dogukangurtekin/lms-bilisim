@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuthenticateClientApi;
+use App\Http\Middleware\CheckForcedLogout;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
 use Illuminate\Foundation\Application;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecureHeaders::class);
+        $middleware->web(append: [CheckForcedLogout::class]);
         // Not: giris formlari zaten @csrf iceriyor; bu route'lari CSRF
         // dogrulamasindan muaf tutmanin bilinen bir gerekcesi yoktu ve
         // "login CSRF" saldirilarina (saldirganin kendi hesabina otomatik

@@ -50,6 +50,7 @@ class AuthController extends Controller
         $remember = $request->boolean('remember') || $user->hasRole('student');
         Auth::login($user, $remember);
         $request->session()->regenerate();
+        $request->session()->put('auth_at', now()->timestamp);
 
         $user = Auth::user();
         if ($user?->hasRole('student')) {
@@ -147,6 +148,7 @@ class AuthController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->put('auth_at', now()->timestamp);
 
         $student = Student::query()->firstOrCreate(
             ['user_id' => $user->id],
