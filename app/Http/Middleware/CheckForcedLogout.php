@@ -29,9 +29,16 @@ class CheckForcedLogout
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->withErrors([
-                    'email' => 'Oturumunuz sinif oturumlarini kapatma islemiyle sonlandirildi. Lutfen tekrar giris yapin.',
-                ]);
+                // Not: bu yonlendirme cogu zaman bir fetch() "canlilik" istegi
+                // tarafindan otomatik takip ediliyor (bkz. layout/app.blade.php),
+                // ardindan istemci ayrica GERCEK bir sayfa navigasyonu daha
+                // tetikliyor. Bu iki asamali dolayli yonlendirme yuzunden
+                // Laravel'in tek seferlik session flash mekanizmasi (with())
+                // ikinci (gercek) navigasyona ulasmadan "eskimis" sayiliyor ve
+                // mesaj kayboluyor. Bunun yerine mesaji URL query parametresi
+                // olarak tasiyoruz - bu, kac kez yonlendirme takip edilirse
+                // edilsin degismeden kaliyor.
+                return redirect()->route('login', ['force_logout' => 1]);
             }
         }
 

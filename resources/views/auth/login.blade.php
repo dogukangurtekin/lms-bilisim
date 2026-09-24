@@ -280,6 +280,25 @@
             @if($errors->any())
                 <div class="error-box">{{ $errors->first() }}</div>
             @endif
+            @if(request()->query('force_logout'))
+                <div class="modal open" id="force-logout-modal">
+                    <div class="modal-card">
+                        <div class="modal-head"><strong>Oturum Sonlandırıldı</strong></div>
+                        <p style="margin:0 0 14px;color:#475569;">Öğretmen/admin tarafından çıkış yapılmıştır. Lütfen tekrar giriş yapın.</p>
+                        <div style="display:flex;justify-content:flex-end;">
+                            <button type="button" class="btn" id="force-logout-modal-ok">Tamam</button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    document.getElementById('force-logout-modal-ok')?.addEventListener('click', () => {
+                        document.getElementById('force-logout-modal')?.classList.remove('open');
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('force_logout');
+                        window.history.replaceState({}, '', url);
+                    });
+                </script>
+            @endif
             <form method="POST" action="{{ route('login.attempt') }}">
                 @csrf
                 <div class="field">
