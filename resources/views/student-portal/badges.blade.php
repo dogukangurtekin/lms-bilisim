@@ -35,6 +35,18 @@
                     'Panel Ustasi' => '📈',
                     'Istikrar Madalyasi' => '🥈',
                     'Tamamlama Zirvesi' => '🏔️',
+                    'Yola Çıktı' => '🧭',
+                    'Görev Serisi 50' => '🏆',
+                    'Ders Kâşifi' => '📚',
+                    'Çalışkan' => '⏳',
+                    'Quiz Ustası' => '❓',
+                    'Yarışma Gönüllüsü' => '⚡',
+                    'Yarışma Efsanesi' => '🥊',
+                    'Zirve Avcısı' => '🌋',
+                    'Kod Kâşifi' => '🛸',
+                    'Bilgi Küpü' => '📖',
+                    'XP 750' => '🔱',
+                    'Demir İrade' => '💪',
                 ];
                 $displayEmoji = $emojiMap[$item['name']] ?? '🏅';
             @endphp

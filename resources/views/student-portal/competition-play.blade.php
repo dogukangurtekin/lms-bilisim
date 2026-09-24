@@ -14,6 +14,11 @@
 .comp-wait-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
 .comp-wait-title{margin:0 0 8px;font-size:32px;font-weight:900}
 .comp-wait-count{font-size:64px;line-height:1;font-weight:900;margin:10px 0;color:#4f46e5}
+.comp-joined-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;max-width:520px}
+.comp-joined-tile{width:64px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.comp-joined-tile img{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid #e5e7eb;background:#f1f5f9}
+.comp-joined-tile .empty{width:44px;height:44px;border-radius:10px;border:1px solid #e5e7eb;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;font-weight:800}
+.comp-joined-tile span{font-size:11px;color:#475569;text-align:center;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* --- Bolum tamamlandi gecisi: konfeti + yumusak fade/scale ----------- */
 .comp-celebrate-wrap{position:relative}
@@ -53,6 +58,7 @@
             <p>Katılım kodu ile lobiye girdin. Öğretmen "Herkese Başlat" dediği an yarışma herkes için aynı anda başlayacak.</p>
             <div class="comp-wait-count" id="compLobbyCount">-</div>
             <p style="color:#64748b;font-size:13px">Lobide bekleyen öğrenci sayısı</p>
+            <div class="comp-joined-grid" id="compLobbyStudents"></div>
         </div>
     </div>
 @elseif($room->status === 'live')
@@ -91,12 +97,25 @@
     // --- Lobi bekleme: ogretmen baslatinca otomatik yenile ---------------
     if (status === 'lobby') {
         const lobbyCountEl = document.getElementById('compLobbyCount');
+        const lobbyStudentsEl = document.getElementById('compLobbyStudents');
+        const renderStudents = (students) => {
+            if (!lobbyStudentsEl) return;
+            lobbyStudentsEl.innerHTML = (students || []).map((s) => `
+                <div class="comp-joined-tile">
+                    ${s.avatar_url
+                        ? `<img src="${s.avatar_url}" alt="">`
+                        : `<div class="empty">?</div>`}
+                    <span title="${s.name || ''}">${s.name || ''}</span>
+                </div>
+            `).join('');
+        };
         const pollLobby = async () => {
             try {
                 const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
                 if (!res.ok) return;
                 const data = await res.json();
                 if (lobbyCountEl) lobbyCountEl.textContent = String(data.joined ?? 0);
+                renderStudents(data.students);
                 if (data.status === 'live' || data.status === 'finished') {
                     window.location.reload();
                 }

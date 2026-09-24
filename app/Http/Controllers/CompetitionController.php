@@ -295,6 +295,10 @@ class CompetitionController extends Controller
             'joined' => $room->participants()->count(),
             'my_rank' => $myRank,
             'total' => count($rows),
+            'students' => array_map(fn ($row) => [
+                'name' => $row['name'],
+                'avatar_url' => $row['avatar_url'],
+            ], $rows),
         ]);
     }
 

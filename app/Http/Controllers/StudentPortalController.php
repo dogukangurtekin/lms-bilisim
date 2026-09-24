@@ -11,6 +11,7 @@ use App\Models\Course;
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
 use App\Models\Grade;
+use App\Models\LiveQuizAnswer;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
@@ -855,6 +856,13 @@ class StudentPortalController extends Controller
             ['name' => 'Sınıf Birincisi', 'icon' => '🥇', 'description' => 'Sınıfında birinci ol.', 'metric' => 'class_rank', 'target' => 1],
             ['name' => 'Okul Birincisi', 'icon' => '🏆', 'description' => 'Okul genelinde birinci ol.', 'metric' => 'school_rank', 'target' => 1],
             ['name' => 'Quiz Ustası', 'icon' => '❓', 'description' => 'En az 20 quiz oturumuna katıl.', 'metric' => 'quiz_joined_count', 'target' => 20],
+            ['name' => 'Yarışma Gönüllüsü', 'icon' => '⚡', 'description' => 'En az 5 canlı yarışmaya katıl.', 'metric' => 'competition_joined_count', 'target' => 5],
+            ['name' => 'Yarışma Efsanesi', 'icon' => '🥊', 'description' => 'En az 15 canlı yarışmaya katıl.', 'metric' => 'competition_joined_count', 'target' => 15],
+            ['name' => 'Zirve Avcısı', 'icon' => '🌋', 'description' => '300 görev tamamla.', 'metric' => 'completed_total', 'target' => 300],
+            ['name' => 'Kod Kâşifi', 'icon' => '🛸', 'description' => '120 oyun/uygulama ödevi tamamla.', 'metric' => 'completed_games', 'target' => 120],
+            ['name' => 'Bilgi Küpü', 'icon' => '📖', 'description' => '60 ders/slayt içeriği bitir.', 'metric' => 'completed_slides', 'target' => 60],
+            ['name' => 'XP 750', 'icon' => '🔱', 'description' => '3000 XP seviyesine ulaş.', 'metric' => 'xp', 'target' => 3000],
+            ['name' => 'Demir İrade', 'icon' => '💪', 'description' => 'En az 2400 dakika sistemde aktif kal.', 'metric' => 'minutes', 'target' => 2400],
         ];
     }
     private function syncStudentBadges(Student $student, int $xp): array
@@ -898,6 +906,13 @@ class StudentPortalController extends Controller
         $gradeRankPos = $gradePeers->mapWithKeys(fn ($s) => [$s->id => $xpMap[$s->id] ?? 0])->sortDesc()->keys()->search($student->id);
         $classRank = $gradeRankPos === false ? 999 : ($gradeRankPos + 1);
 
+        $quizJoinedCount = LiveQuizAnswer::where('student_user_id', $student->user_id)
+            ->distinct('live_quiz_session_id')
+            ->count('live_quiz_session_id');
+        $competitionJoinedCount = CompetitionParticipant::where('student_user_id', $student->user_id)
+            ->distinct('competition_room_id')
+            ->count('competition_room_id');
+
         $metrics = [
             'completed_total' => $completedCourseHomework + $completedGameAssignments + $completedSlides,
             'completed_games' => $completedGameAssignments + $completedGameHomework,
@@ -906,6 +921,8 @@ class StudentPortalController extends Controller
             'minutes' => $minutes,
             'school_rank' => $schoolRank === 1 ? 1 : 0,
             'class_rank' => $classRank === 1 ? 1 : 0,
+            'quiz_joined_count' => $quizJoinedCount,
+            'competition_joined_count' => $competitionJoinedCount,
         ];
 
         $items = [];
