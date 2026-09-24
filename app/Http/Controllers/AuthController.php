@@ -14,8 +14,6 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        request()->session()->regenerateToken();
-
         return response()
             ->view('auth.login')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
