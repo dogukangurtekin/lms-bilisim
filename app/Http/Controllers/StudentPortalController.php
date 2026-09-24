@@ -491,6 +491,8 @@ class StudentPortalController extends Controller
             'earned_xp' => ['nullable', 'integer', 'min:0'],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
             'solved_questions' => ['nullable', 'integer', 'min:0'],
+            'correct_questions' => ['nullable', 'integer', 'min:0'],
+            'wrong_questions' => ['nullable', 'integer', 'min:0'],
         ]);
         $existing = ContentProgress::where('content_id', 'course-' . $course->id)
             ->where('user_id', $student->user_id)
@@ -525,6 +527,21 @@ class StudentPortalController extends Controller
             : 0;
         $solvedQuestions = min($solvedQuestions, $questionTotal);
 
+        // Ogrenci her soruya SADECE ILK sectigi secenege gore dogru/yanlis
+        // olarak degerlendiriliyor (bkz. course-show.blade.php - coktan
+        // secmeli/dogru-yanlis sorular ilk cevaptan sonra kilitleniyor).
+        // Bu sayilar, ders sonu ozetinde ve gelisim raporunda "bu dersi
+        // tekrar calismalisin" / "bu dersi cok iyi anladin" geri
+        // donutunu uretmek icin kullaniliyor.
+        $correctQuestions = isset($validated['correct_questions'])
+            ? max(0, (int) $validated['correct_questions'])
+            : $solvedQuestions;
+        $correctQuestions = min($correctQuestions, $questionTotal);
+        $wrongQuestions = isset($validated['wrong_questions'])
+            ? max(0, (int) $validated['wrong_questions'])
+            : max(0, $questionTotal - $correctQuestions);
+        $wrongQuestions = min($wrongQuestions, $questionTotal);
+
         ContentProgress::updateOrCreate(
             ['content_id' => 'course-' . $course->id, 'user_id' => $student->user_id],
             [
@@ -537,6 +554,8 @@ class StudentPortalController extends Controller
                     'slide_count' => count($slides),
                     'question_total' => $questionTotal,
                     'solved_questions' => $solvedQuestions,
+                    'correct_questions' => $correctQuestions,
+                    'wrong_questions' => $wrongQuestions,
                 ],
             ]
         );

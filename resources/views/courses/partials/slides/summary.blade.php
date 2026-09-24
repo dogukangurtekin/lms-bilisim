@@ -16,9 +16,13 @@
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <span data-summary-earned-xp style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:900;white-space:nowrap">Kazanılan XP: {{ (int) ($summary['lesson_total_xp'] ?? 0) }}</span>
                 @if($questionTotal > 0)
-                    <span data-summary-solved-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900;white-space:nowrap">Çözülen soru sayısı: {{ $solvedQuestions }} / {{ $questionTotal }}</span>
+                    <span data-summary-solved-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900;white-space:nowrap">Doğru: {{ $solvedQuestions }} / {{ $questionTotal }}</span>
+                    <span data-summary-wrong-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:900;white-space:nowrap">Yanlış: 0</span>
                 @endif
             </div>
+            @if($questionTotal > 0)
+                <p data-summary-feedback class="lesson-summary-feedback" style="margin:0;font-size:17px;font-weight:800;padding:12px 16px;border-radius:14px;"></p>
+            @endif
         </div>
         <div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;max-width:100%">
             <div style="padding:22px;border-radius:22px;background:#fff;border:1px solid #dbeafe;min-width:0;overflow:hidden">
@@ -61,6 +65,8 @@
 </div>
 
 <style>
+.lesson-summary-feedback.is-good{background:#dcfce7;color:#166534;border:1px solid #22c55e}
+.lesson-summary-feedback.is-warn{background:#fef3c7;color:#92400e;border:1px solid #f59e0b}
 @media (max-width:768px){
     .lesson-summary-shell{
         padding:12px !important;

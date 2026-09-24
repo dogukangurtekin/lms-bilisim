@@ -25,12 +25,15 @@
         @forelse($rows as $r)
             @php
                 $solvedQuestions = (int) data_get($r->payload, 'solved_questions', 0);
+                $questionTotal = (int) data_get($r->payload, 'question_total', 0);
+                $wrongQuestions = (int) data_get($r->payload, 'wrong_questions', 0);
                 $contentLabel = $contentLabels[$r->content_id] ?? $r->content_id;
                 $courseName = (string) data_get($r->payload, 'course_name', '');
                 if ($courseName !== '' && str_starts_with((string) $r->content_id, 'course-')) {
                     $contentLabel = 'Ders: ' . $courseName;
-                    if ($solvedQuestions > 0) {
-                        $contentLabel .= ' • Çözülen soru: ' . $solvedQuestions;
+                    if ($questionTotal > 0) {
+                        $contentLabel .= ' • Doğru: ' . $solvedQuestions . ' / ' . $questionTotal . ' • Yanlış: ' . $wrongQuestions;
+                        $contentLabel .= $wrongQuestions <= 1 ? ' • Bu dersi çok iyi anladı' : ' • Bu dersi tekrar çalışmalı';
                     }
                 }
             @endphp

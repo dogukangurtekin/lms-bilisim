@@ -422,6 +422,8 @@ class StudentProgressReportService
                 'xp' => (int) ($row->xp_awarded ?? 0),
                 'solved_questions' => (int) data_get($payload, 'solved_questions', 0),
                 'question_total' => (int) data_get($payload, 'question_total', 0),
+                'correct_questions' => (int) data_get($payload, 'correct_questions', data_get($payload, 'solved_questions', 0)),
+                'wrong_questions' => (int) data_get($payload, 'wrong_questions', 0),
                 'sort_date' => $row->updated_at ?? $row->created_at,
             ];
         }

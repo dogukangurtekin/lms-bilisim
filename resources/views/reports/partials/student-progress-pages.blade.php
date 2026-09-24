@@ -141,6 +141,8 @@
                     <th>Tarih</th>
                     <th>Durum</th>
                     <th>XP</th>
+                    <th>Doğru/Yanlış</th>
+                    <th>Değerlendirme</th>
                 </tr>
             </thead>
             <tbody>
@@ -154,14 +156,31 @@
                     ->values();
             @endphp
             @forelse($courseItems as $item)
+                @php
+                    $qTotal = (int) data_get($item, 'question_total', 0);
+                    $qCorrect = (int) data_get($item, 'correct_questions', 0);
+                    $qWrong = (int) data_get($item, 'wrong_questions', 0);
+                @endphp
                 <tr>
                     <td>{{ trim((string) data_get($item, 'course_name', '')) !== '' ? data_get($item, 'course_name') : data_get($item, 'display_title', data_get($item, 'title', '-')) }}</td>
                     <td>{{ $fmtDate(data_get($item, 'sort_date')) }}</td>
                     <td>{{ data_get($item, 'status', 'Tamamlandı') }}</td>
                     <td>{{ (int) data_get($item, 'xp', 0) }}</td>
+                    <td>{{ $qTotal > 0 ? "{$qCorrect}/{$qWrong} ({$qTotal} soru)" : '-' }}</td>
+                    <td>
+                        @if($qTotal > 0)
+                            @if($qWrong <= 1)
+                                <span style="color:#166534;font-weight:700;">Bu dersi çok iyi anladı</span>
+                            @else
+                                <span style="color:#92400e;font-weight:700;">Bu dersi tekrar çalışmalı</span>
+                            @endif
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
             @empty
-                <tr><td colspan="4">Bu öğrenci için raporlanacak ders görevi bulunmuyor.</td></tr>
+                <tr><td colspan="6">Bu öğrenci için raporlanacak ders görevi bulunmuyor.</td></tr>
             @endforelse
             </tbody>
         </table>

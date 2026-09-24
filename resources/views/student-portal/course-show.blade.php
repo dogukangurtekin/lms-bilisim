@@ -335,6 +335,8 @@
                 <input type="hidden" name="earned_xp" id="student-course-earned-xp" value="0">
                 <input type="hidden" name="duration_seconds" id="student-course-duration-seconds" value="0">
                 <input type="hidden" name="solved_questions" id="student-course-solved-questions" value="0">
+                <input type="hidden" name="correct_questions" id="student-course-correct-questions" value="0">
+                <input type="hidden" name="wrong_questions" id="student-course-wrong-questions" value="0">
             </form>
         @endif
 
@@ -383,6 +385,8 @@
                 const earnedXpInput = document.getElementById('student-course-earned-xp');
                 const durationInput = document.getElementById('student-course-duration-seconds');
                 const solvedQuestionsInput = document.getElementById('student-course-solved-questions');
+                const correctQuestionsInput = document.getElementById('student-course-correct-questions');
+                const wrongQuestionsInput = document.getElementById('student-course-wrong-questions');
                 const tmpl = document.getElementById('student-course-slide-templates');
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
 
@@ -399,8 +403,29 @@
                 const startedAt = Date.now();
                 let earnedXpTotal = 0;
                 let solvedQuestionsTotal = 0;
+                let correctQuestionsTotal = 0;
+                let wrongQuestionsTotal = 0;
                 const awardedSlideIndexes = new Set();
                 const solvedQuestionIndexes = new Set();
+                // Bir soruya sadece BIR KEZ cevap verilebilsin diye: ogrenci
+                // ilk sectigi secenege gore dogru/yanlis olarak kaydediliyor
+                // ve o soru o an icin kilitleniyor (input'lar disabled
+                // oluyor) - artik tum sikkalara tiklayip dogru cevaba
+                // ulasilamiyor.
+                const answeredQuestionIndexes = new Set();
+
+                function recordQuestionResult(isCorrect) {
+                    const current = slides[idx];
+                    if (!current) return;
+                    const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
+                    if (isSummary || answeredQuestionIndexes.has(idx)) return;
+                    answeredQuestionIndexes.add(idx);
+                    if (isCorrect) {
+                        correctQuestionsTotal += 1;
+                    } else {
+                        wrongQuestionsTotal += 1;
+                    }
+                }
                 let nextAdvanceTimer = null;
                 const totalXp = slides.reduce((sum, node) => sum + Math.max(0, Number(node?.dataset?.slideXp || 0)), 0);
                 const totalQuestions = slides.reduce((sum, node) => sum + ((String(node?.dataset?.slideSummary || '0') === '1') ? 0 : ((node.querySelector('[data-sqz-question]') ? 1 : 0))), 0);
@@ -500,8 +525,31 @@
                         const solvedEl = stage.querySelector('[data-summary-solved-questions]');
                         if (solvedEl) {
                             solvedEl.textContent = totalQuestions > 0
-                                ? 'Çözülen soru sayısı: ' + solvedQuestionsTotal + ' / ' + totalQuestions
+                                ? 'Doğru: ' + correctQuestionsTotal + ' / ' + totalQuestions
                                 : 'Çözülen soru sayısı: 0';
+                        }
+                        const wrongEl = stage.querySelector('[data-summary-wrong-questions]');
+                        if (wrongEl) {
+                            if (totalQuestions > 0) {
+                                wrongEl.textContent = 'Yanlış: ' + wrongQuestionsTotal;
+                                wrongEl.style.display = '';
+                            } else {
+                                wrongEl.style.display = 'none';
+                            }
+                        }
+                        const feedbackEl = stage.querySelector('[data-summary-feedback]');
+                        if (feedbackEl) {
+                            if (totalQuestions > 0) {
+                                const doingGreat = wrongQuestionsTotal <= 1;
+                                feedbackEl.textContent = doingGreat
+                                    ? 'Bu dersi çok iyi anladın! 🎉'
+                                    : 'Bu dersi tekrar çalışmalısın.';
+                                feedbackEl.classList.remove('is-good', 'is-warn');
+                                feedbackEl.classList.add(doingGreat ? 'is-good' : 'is-warn');
+                                feedbackEl.style.display = '';
+                            } else {
+                                feedbackEl.style.display = 'none';
+                            }
                         }
                     }
                     counter.textContent = (idx + 1) + ' / ' + slides.length;
@@ -561,7 +609,9 @@
                                     if (previewMode || !completeForm) return;
                                     if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                                     if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
-                                    if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(solvedQuestionsTotal, totalQuestions));
+                                    if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(correctQuestionsTotal, totalQuestions));
+                                    if (correctQuestionsInput) correctQuestionsInput.value = String(correctQuestionsTotal);
+                                    if (wrongQuestionsInput) wrongQuestionsInput.value = String(wrongQuestionsTotal);
                                     completeForm.submit();
                                     return;
                                 }
@@ -571,7 +621,25 @@
                         }
                     };
 
+                    // Coktan secmeli / dogru-yanlis sorularda ogrenci ilk
+                    // sectigi secenekten sonra soruyu tekrar
+                    // cevaplayamamali - aksi halde tum sikkalari deneyip
+                    // dogru cevaba ulasabiliyordu. Ilk secimden sonra tum
+                    // secenekler kilitleniyor (disabled) ve o ilk secim
+                    // ogrencinin cevabi olarak kabul edilip dogru/yanlis
+                    // sayisina ekleniyor.
+                    let mcLocked = false;
+                    const lockOptions = () => {
+                        mcLocked = true;
+                        optionLabels.forEach((label) => {
+                            const inp = label.querySelector('input[type="radio"], input[type="checkbox"]');
+                            if (inp) inp.disabled = true;
+                            label.classList.add('is-locked');
+                        });
+                    };
+
                     const evaluateSelectedOption = () => {
+                        if (mcLocked) return;
                         const selected = Array.from(optionLabels).find((x) => {
                             const i = x.querySelector('input[type="radio"], input[type="checkbox"]');
                             return i && i.checked;
@@ -585,6 +653,8 @@
                         setOptionState(selected, isCorrect ? 'is-correct' : 'is-wrong');
                         showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
                         if (isCorrect) markSolvedCurrentSlide();
+                        recordQuestionResult(isCorrect);
+                        lockOptions();
                     };
 
                     const evaluateRowInputs = () => {
@@ -731,7 +801,9 @@
                         if (!completeForm) return;
                         if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
                         if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
-                        if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(solvedQuestionsTotal, totalQuestions));
+                        if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(correctQuestionsTotal, totalQuestions));
+                        if (correctQuestionsInput) correctQuestionsInput.value = String(correctQuestionsTotal);
+                        if (wrongQuestionsInput) wrongQuestionsInput.value = String(wrongQuestionsTotal);
                         completeForm.submit();
                         return;
                     }
