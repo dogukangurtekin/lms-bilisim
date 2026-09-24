@@ -648,7 +648,18 @@
             }
         } catch (_) { /* aginfi bir sorun varsa bir sonraki denemede tekrar denenecek */ }
     };
+    // Mobil tarayicilar (ve arka plandaki/aktif olmayan masaustu sekmeleri)
+    // pil tasarrufu icin setInterval'i agresif sekilde yavaslatiyor/
+    // durduruyor - sadece interval'a guvenmek, telefon kilitliyken veya
+    // sekme arka plandayken kontrolun gecikmesine/hic calismamasina yol
+    // aciyordu. Bu yuzden sekme/telefon tekrar govrunur/odakli oldugu anda
+    // da AYRICA hemen bir kontrol tetikleniyor.
     setInterval(checkForcedLogout, 4000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForcedLogout();
+    });
+    window.addEventListener('focus', checkForcedLogout);
+    window.addEventListener('pageshow', checkForcedLogout);
 })();
 </script>
 @endauth
