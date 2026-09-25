@@ -154,7 +154,7 @@
             bottom: 10px;
             top: 16px;
             display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr));
+            grid-template-columns: repeat(8, minmax(0, 1fr));
             gap: 8px;
             align-items: end;
         }

@@ -116,13 +116,17 @@ class StudentProgressReportService
         // Canli Yarisma'da kazanilan XP daha once hicbir yerde ogrencinin
         // toplam XP'sine dahil edilmiyordu; Canli Quiz ile ayni sekilde
         // (katilim sayisi + kazanilan XP) burada da takip ediliyor.
-        $competitionXp = (int) CompetitionParticipant::query()
+        $competitionParticipantRows = CompetitionParticipant::query()
             ->where('student_user_id', $student->user_id)
-            ->sum('xp_earned');
-        $competitionJoinedCount = (int) CompetitionParticipant::query()
-            ->where('student_user_id', $student->user_id)
-            ->distinct('competition_room_id')
-            ->count('competition_room_id');
+            ->get();
+        $competitionXp = (int) $competitionParticipantRows->sum('xp_earned');
+        $competitionJoinedCount = $competitionParticipantRows
+            ->unique('competition_room_id')
+            ->count();
+        $competitionCompletedCount = $competitionParticipantRows
+            ->filter(fn ($participant) => !empty($participant->finished_at_ms) || (float) $participant->progress_percent >= 100)
+            ->unique('competition_room_id')
+            ->count();
 
         $dailyAttemptRows = ActivityAttempt::query()
             ->with(['answers.activityQuestion'])
@@ -370,6 +374,13 @@ class StudentProgressReportService
                 'done' => $dailyFullCorrectCount,
                 'total' => $dailyAttemptCount,
                 'color' => '#f59e0b',
+            ],
+            [
+                'label' => 'Canlı Yarışma',
+                'value' => $pct($competitionCompletedCount, $competitionJoinedCount),
+                'done' => $competitionCompletedCount,
+                'total' => $competitionJoinedCount,
+                'color' => '#ef4444',
             ],
         ];
 
