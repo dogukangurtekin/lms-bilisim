@@ -227,6 +227,14 @@
         border-radius:14px;
         white-space:nowrap;
     }
+    .course-show-nav .btn:disabled{opacity:.48;cursor:not-allowed;filter:grayscale(.35);box-shadow:none}
+    .course-show-timer{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:rgba(255,255,255,.9);border:1px solid rgba(37,99,235,.12);box-shadow:0 12px 28px rgba(15,23,42,.05)}
+    .course-show-timer-label,.course-show-timer-clock{color:#1e293b;font-size:14px;font-weight:900;white-space:nowrap}
+    .course-show-timer-clock{min-width:48px;text-align:right;color:#1d4ed8}
+    .course-show-timer-bar{height:12px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+    .course-show-timer-fill{width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#4f46e5);transition:width .25s linear,background .2s ease}
+    .course-show-timer-fill.is-warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+    .course-show-timer.is-ready .course-show-timer-label,.course-show-timer.is-ready .course-show-timer-clock{color:#15803d}
     .course-show-shell img,.course-show-shell video,.course-show-shell iframe,.course-show-shell table{max-width:100%}
     .course-show-shell .lesson-slide,.course-show-shell .lesson-slide-shell,.course-show-shell .lesson-card,.course-show-shell .lesson-split,.course-show-shell .lesson-split-card,.course-show-shell .lesson-split-body,.course-show-shell .lesson-image-focus,.course-show-shell .lesson-grid-cards,.course-show-shell .sqz-wrap{min-width:0;max-width:100%}
     .course-show-shell .sqz-opt.is-correct{outline:3px solid rgba(34,197,94,.98) !important;box-shadow:0 0 0 5px rgba(34,197,94,.18),inset 0 -4px 0 rgba(0,0,0,.16) !important}
@@ -255,6 +263,9 @@
            ikonlari birakiyoruz ki ust bardan tasmasin. */
         .course-show-nav-label{display:none}
         .course-show-nav .btn{padding:9px 10px}
+        .course-show-timer{grid-template-columns:1fr auto;gap:8px;padding:9px 12px}
+        .course-show-timer-label{font-size:12px}
+        .course-show-timer-bar{grid-column:1 / -1;grid-row:2}
         .course-show-shell .lesson-slide-title{font-size:clamp(22px,6vw,34px);line-height:1.1;word-break:break-word;overflow-wrap:anywhere}
         .course-show-shell .lesson-slide-subtitle,.course-show-shell .lesson-paragraph{font-size:clamp(14px,3.8vw,17px);line-height:1.6;word-break:break-word;overflow-wrap:anywhere;hyphens:auto}
         .course-show-shell .lesson-grid-cards,.course-show-shell .lesson-split{grid-template-columns:1fr !important}
@@ -318,6 +329,16 @@
                 </div>
             </div>
 
+            @if(empty($previewMode))
+                <div id="student-course-timer" class="course-show-timer" role="timer" aria-live="polite">
+                    <span id="student-course-timer-label" class="course-show-timer-label">Sayfayı incele</span>
+                    <div class="course-show-timer-bar" aria-hidden="true">
+                        <div id="student-course-timer-fill" class="course-show-timer-fill"></div>
+                    </div>
+                    <span id="student-course-timer-clock" class="course-show-timer-clock">15 sn</span>
+                </div>
+            @endif
+
             <div class="course-show-stage">
                 <div class="course-show-stage-frame">
                     <div id="student-course-slide-stage" class="course-show-stage-inner slide-theme"></div>
@@ -380,6 +401,10 @@
                 const nextBtn = document.getElementById('student-course-next');
                 const nextLabel = document.getElementById('student-course-next-label');
                 const counter = document.getElementById('student-course-counter');
+                const timerBox = document.getElementById('student-course-timer');
+                const timerLabel = document.getElementById('student-course-timer-label');
+                const timerFill = document.getElementById('student-course-timer-fill');
+                const timerClock = document.getElementById('student-course-timer-clock');
                 const completeForm = document.getElementById('student-course-complete-form');
                 const previewMode = {{ !empty($previewMode) ? 'true' : 'false' }};
                 const earnedXpInput = document.getElementById('student-course-earned-xp');
@@ -405,6 +430,11 @@
                 let solvedQuestionsTotal = 0;
                 let correctQuestionsTotal = 0;
                 let wrongQuestionsTotal = 0;
+                const slideWaitMs = 15000;
+                let slideUnlockAt = 0;
+                let slideTimer = null;
+                let slideUnlocked = previewMode;
+                let pendingAutoAdvanceIndex = null;
                 const awardedSlideIndexes = new Set();
                 const solvedQuestionIndexes = new Set();
                 // Bir soruya sadece BIR KEZ cevap verilebilsin diye: ogrenci
@@ -452,6 +482,86 @@
                     solvedQuestionsTotal += 1;
                 }
 
+                function syncNextButton() {
+                    const locked = !previewMode && !slideUnlocked;
+                    nextBtn.disabled = locked;
+                    nextBtn.setAttribute('aria-disabled', locked ? 'true' : 'false');
+                    nextBtn.title = locked
+                        ? 'Bu sayfayı incelemek için geri sayımın bitmesini bekle'
+                        : 'İleri';
+                }
+
+                function advanceAfterCorrect(expectedIndex) {
+                    if (idx !== expectedIndex) return;
+                    if (!previewMode && !slideUnlocked) {
+                        pendingAutoAdvanceIndex = expectedIndex;
+                        return;
+                    }
+
+                    pendingAutoAdvanceIndex = null;
+                    awardCurrentSlideXp();
+                    const isSummary = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
+                    if (idx >= slides.length - 1 || isSummary) {
+                        if (previewMode || !completeForm) return;
+                        if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
+                        if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
+                        if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(correctQuestionsTotal, totalQuestions));
+                        if (correctQuestionsInput) correctQuestionsInput.value = String(correctQuestionsTotal);
+                        if (wrongQuestionsInput) wrongQuestionsInput.value = String(wrongQuestionsTotal);
+                        completeForm.submit();
+                        return;
+                    }
+                    lastDirection = 1;
+                    idx += 1;
+                    render();
+                }
+
+                function updateSlideTimer() {
+                    if (previewMode) return;
+                    const leftMs = Math.max(0, slideUnlockAt - Date.now());
+                    const leftSec = Math.ceil(leftMs / 1000);
+                    const pct = Math.max(0, Math.min(100, (leftMs / slideWaitMs) * 100));
+
+                    if (timerClock) timerClock.textContent = leftSec > 0 ? leftSec + ' sn' : 'Hazır';
+                    if (timerFill) {
+                        timerFill.style.width = pct + '%';
+                        timerFill.classList.toggle('is-warn', leftSec > 0 && leftSec <= 5);
+                    }
+                    if (leftMs > 0) return;
+
+                    slideUnlocked = true;
+                    if (timerBox) timerBox.classList.add('is-ready');
+                    if (timerLabel) timerLabel.textContent = 'Sonraki sayfaya geçebilirsin';
+                    syncNextButton();
+                    if (slideTimer) {
+                        clearInterval(slideTimer);
+                        slideTimer = null;
+                    }
+                    if (pendingAutoAdvanceIndex === idx) {
+                        const expectedIndex = idx;
+                        nextAdvanceTimer = setTimeout(() => advanceAfterCorrect(expectedIndex), 250);
+                    }
+                }
+
+                function startSlideTimer() {
+                    if (slideTimer) clearInterval(slideTimer);
+                    slideTimer = null;
+                    pendingAutoAdvanceIndex = null;
+                    slideUnlocked = previewMode;
+                    if (previewMode) {
+                        syncNextButton();
+                        return;
+                    }
+
+                    slideUnlockAt = Date.now() + slideWaitMs;
+                    if (timerBox) timerBox.classList.remove('is-ready');
+                    if (timerLabel) timerLabel.textContent = 'Sayfayı incele';
+                    if (timerFill) timerFill.classList.remove('is-warn');
+                    syncNextButton();
+                    updateSlideTimer();
+                    slideTimer = setInterval(updateSlideTimer, 250);
+                }
+
                 function fitIframeToHolder(iframe, holder) {
                     if (!iframe || !holder) return;
                     iframe.style.width = '100%';
@@ -493,6 +603,10 @@
                 }
 
                 function render() {
+                    if (nextAdvanceTimer) {
+                        clearTimeout(nextAdvanceTimer);
+                        nextAdvanceTimer = null;
+                    }
                     const current = slides[idx];
                     const previous = stage.querySelector('#student-course-fit');
                     if (previous) {
@@ -554,10 +668,10 @@
                     }
                     counter.textContent = (idx + 1) + ' / ' + slides.length;
                     prevBtn.disabled = idx <= 0;
-                    nextBtn.disabled = false;
                     const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
                     if (nextLabel) nextLabel.textContent = isSummary ? 'Dersi Bitir' : 'İleri';
                     bindQuestionInteractions();
+                    startSlideTimer();
                 }
 
                 function bindQuestionInteractions() {
@@ -566,7 +680,6 @@
                     const feedbackEl = qRoot.querySelector('[data-sqz-feedback]');
                     const optionLabels = qRoot.querySelectorAll('[data-sqz-option]');
                     const currentXp = Math.max(0, Number(slides[idx]?.dataset?.slideXp || 0));
-                    const isSummary = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
                     const normalize = (value) => String(value || '')
                         .replace(/<[^>]*>/g, ' ')
                         .replace(/ /gi, ' ')
@@ -603,20 +716,9 @@
                         if (isCorrect && autoAdvance) {
                             markSolvedCurrentSlide();
                             if (nextAdvanceTimer) clearTimeout(nextAdvanceTimer);
+                            const answeredSlideIndex = idx;
                             nextAdvanceTimer = setTimeout(() => {
-                                awardCurrentSlideXp();
-                                if (idx >= slides.length - 1 || isSummary) {
-                                    if (previewMode || !completeForm) return;
-                                    if (earnedXpInput) earnedXpInput.value = String(Math.max(earnedXpTotal, totalXp));
-                                    if (durationInput) durationInput.value = String(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
-                                    if (solvedQuestionsInput) solvedQuestionsInput.value = String(Math.min(correctQuestionsTotal, totalQuestions));
-                                    if (correctQuestionsInput) correctQuestionsInput.value = String(correctQuestionsTotal);
-                                    if (wrongQuestionsInput) wrongQuestionsInput.value = String(wrongQuestionsTotal);
-                                    completeForm.submit();
-                                    return;
-                                }
-                                idx += 1;
-                                render();
+                                advanceAfterCorrect(answeredSlideIndex);
                             }, 900);
                         }
                     };
@@ -792,6 +894,7 @@
                 });
 
                 nextBtn.addEventListener('click', function () {
+                    if (!previewMode && !slideUnlocked) return;
                     if (!isCurrentQuestionAnswered()) {
                         window.alert('Bu soruyu cevaplamadan ilerleyemezsin.');
                         return;
