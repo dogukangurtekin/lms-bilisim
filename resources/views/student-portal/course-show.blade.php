@@ -436,6 +436,7 @@
                 let slideTimer = null;
                 let slideUnlocked = previewMode;
                 let pendingAutoAdvanceIndex = null;
+                const unlockedSlideIndexes = new Set();
                 const awardedSlideIndexes = new Set();
                 const solvedQuestionIndexes = new Set();
                 // Bir soruya sadece BIR KEZ cevap verilebilsin diye: ogrenci
@@ -536,6 +537,7 @@
                     if (leftMs > 0) return;
 
                     slideUnlocked = true;
+                    unlockedSlideIndexes.add(idx);
                     if (timerBox) timerBox.classList.add('is-ready');
                     if (timerLabel) timerLabel.textContent = 'Sonraki sayfaya geçebilirsin';
                     syncNextButton();
@@ -553,8 +555,16 @@
                     if (slideTimer) clearInterval(slideTimer);
                     slideTimer = null;
                     pendingAutoAdvanceIndex = null;
-                    slideUnlocked = previewMode;
-                    if (previewMode) {
+                    const isQuestionSlide = !!slides[idx]?.querySelector('[data-sqz-question]');
+                    const wasAlreadyUnlocked = unlockedSlideIndexes.has(idx);
+                    slideUnlocked = previewMode || isQuestionSlide || wasAlreadyUnlocked;
+
+                    if (timerBox) timerBox.style.display = isQuestionSlide ? 'none' : '';
+                    if (slideUnlocked) {
+                        if (timerBox) timerBox.classList.toggle('is-ready', wasAlreadyUnlocked);
+                        if (timerLabel && wasAlreadyUnlocked) timerLabel.textContent = 'Bu sayfayı tamamladın';
+                        if (timerClock && wasAlreadyUnlocked) timerClock.textContent = 'Hazır';
+                        if (timerFill && wasAlreadyUnlocked) timerFill.style.width = '0%';
                         syncNextButton();
                         return;
                     }
