@@ -299,7 +299,7 @@
                     });
                 </script>
             @endif
-            <form method="POST" action="{{ route('login.attempt') }}">
+            <form method="POST" action="{{ route('login.attempt') }}" id="login-form">
                 @csrf
                 <div class="field">
                     <label>Kullanıcı Adı veya E-posta</label>
@@ -310,7 +310,7 @@
                     <input type="password" name="password" placeholder="••••••••" required>
                 </div>
 
-                <button class="btn" type="submit">Giriş Yap</button>
+                <button class="btn" type="submit" id="login-submit">Giriş Yap</button>
 
                 <div class="login-divider">veya</div>
 
@@ -331,6 +331,34 @@
         </div>
     </section>
 </div>
+<script>
+(() => {
+    const form = document.getElementById('login-form');
+    const submit = document.getElementById('login-submit');
+    if (!form || !submit) return;
+
+    let submitting = false;
+    form.addEventListener('submit', (event) => {
+        if (submitting) {
+            event.preventDefault();
+            return;
+        }
+
+        submitting = true;
+        submit.disabled = true;
+        submit.setAttribute('aria-busy', 'true');
+        submit.textContent = 'Giriş yapılıyor...';
+    });
+
+    // Geri/ileri önbelleğinden dönüldüğünde form tekrar kullanılabilsin.
+    window.addEventListener('pageshow', () => {
+        submitting = false;
+        submit.disabled = false;
+        submit.removeAttribute('aria-busy');
+        submit.textContent = 'Giriş Yap';
+    });
+})();
+</script>
 <div id="miniGameModal" class="mini-game-modal">
     <div class="mini-game-card">
         <div class="mini-game-head">
