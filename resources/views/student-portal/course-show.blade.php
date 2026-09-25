@@ -11,7 +11,7 @@
     }
     $courseName = trim((string) ($course->name ?? 'Ders İçeriği'));
     $courseLogo = \App\Support\Brand::logoUrl();
-    $slideCount = count($slides);
+    $slideCount = count(array_filter($slides, static fn ($slide) => empty($slide['__summary'])));
     $totalXpPreview = array_sum(array_map(static fn ($slide) => max(0, (int) ($slide['xp'] ?? 0)), $slides));
     $questionCountPreview = 0;
     foreach ($slides as $slideItem) {
@@ -304,7 +304,7 @@
                     <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
                     <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
 
-                    <span id="student-course-counter" class="course-show-metric course-show-counter">1 / {{ count($slides) }}</span>
+                    <span id="student-course-counter" class="course-show-metric course-show-counter">1 / {{ max(1, $slideCount) }}</span>
                     <div class="course-show-nav">
                         <button class="btn" type="button" id="student-course-prev" title="Geri" aria-label="Geri">
                             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
@@ -414,6 +414,7 @@
                 const wrongQuestionsInput = document.getElementById('student-course-wrong-questions');
                 const tmpl = document.getElementById('student-course-slide-templates');
                 const slides = Array.from(tmpl.content.querySelectorAll('[data-slide-index]'));
+                const lessonSlideCount = slides.filter((node) => String(node?.dataset?.slideSummary || '0') !== '1').length;
 
                 if (!stage || !prevBtn || !nextBtn || !counter || slides.length === 0) {
                     const fallbackLoadingEl = document.getElementById('student-course-slide-loading');
@@ -443,13 +444,18 @@
                 // oluyor) - artik tum sikkalara tiklayip dogru cevaba
                 // ulasilamiyor.
                 const answeredQuestionIndexes = new Set();
+                const answeredQuestionStates = new Map();
 
-                function recordQuestionResult(isCorrect) {
+                function recordQuestionResult(isCorrect, optionIndex = null) {
                     const current = slides[idx];
                     if (!current) return;
                     const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
                     if (isSummary || answeredQuestionIndexes.has(idx)) return;
                     answeredQuestionIndexes.add(idx);
+                    answeredQuestionStates.set(idx, {
+                        isCorrect: !!isCorrect,
+                        optionIndex: Number.isInteger(optionIndex) ? optionIndex : null,
+                    });
                     if (isCorrect) {
                         correctQuestionsTotal += 1;
                     } else {
@@ -666,7 +672,8 @@
                             }
                         }
                     }
-                    counter.textContent = (idx + 1) + ' / ' + slides.length;
+                    const visibleSlideNumber = Math.min(idx + 1, Math.max(1, lessonSlideCount));
+                    counter.textContent = visibleSlideNumber + ' / ' + Math.max(1, lessonSlideCount);
                     prevBtn.disabled = idx <= 0;
                     const isSummary = String(current?.dataset?.slideSummary || '0') === '1';
                     if (nextLabel) nextLabel.textContent = isSummary ? 'Dersi Bitir' : 'İleri';
@@ -713,8 +720,8 @@
                         feedbackEl.style.display = 'block';
                         void feedbackEl.offsetWidth;
                         feedbackEl.classList.add('is-animate');
-                        if (isCorrect && autoAdvance) {
-                            markSolvedCurrentSlide();
+                        if (autoAdvance) {
+                            if (isCorrect) markSolvedCurrentSlide();
                             if (nextAdvanceTimer) clearTimeout(nextAdvanceTimer);
                             const answeredSlideIndex = idx;
                             nextAdvanceTimer = setTimeout(() => {
@@ -751,13 +758,31 @@
                             showFeedback(null, '');
                             return;
                         }
+                        const selectedIndex = Array.from(optionLabels).indexOf(selected);
                         const isCorrect = String(selected.getAttribute('data-sqz-correct') || '0') === '1';
                         setOptionState(selected, isCorrect ? 'is-correct' : 'is-wrong');
-                        showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', isCorrect);
+                        showFeedback(isCorrect, isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.', true);
                         if (isCorrect) markSolvedCurrentSlide();
-                        recordQuestionResult(isCorrect);
+                        recordQuestionResult(isCorrect, selectedIndex);
                         lockOptions();
                     };
+
+                    const savedAnswer = answeredQuestionStates.get(idx);
+                    if (savedAnswer && Number.isInteger(savedAnswer.optionIndex)) {
+                        const savedLabel = Array.from(optionLabels)[savedAnswer.optionIndex];
+                        const savedInput = savedLabel?.querySelector('input[type="radio"], input[type="checkbox"]');
+                        if (savedInput) savedInput.checked = true;
+                        if (savedLabel) {
+                            savedLabel.classList.add('selected');
+                            setOptionState(savedLabel, savedAnswer.isCorrect ? 'is-correct' : 'is-wrong');
+                        }
+                        showFeedback(
+                            savedAnswer.isCorrect,
+                            savedAnswer.isCorrect ? correctMessage('Doğru cevap.') : 'Yanlış cevap.',
+                            false
+                        );
+                        lockOptions();
+                    }
 
                     const evaluateRowInputs = () => {
                         const rows = Array.from(qRoot.querySelectorAll('[data-sqz-row]'));
