@@ -55,6 +55,7 @@ Route::prefix('race')->group(function () {
 
     Route::post('/rooms/{room:code}/start', [RaceController::class, 'start']);
     Route::post('/rooms/{room:code}/end', [RaceController::class, 'end']);
+    Route::post('/rooms/{room:code}/progress', [RaceController::class, 'progress']);
     Route::post('/rooms/{room:code}/finish', [RaceController::class, 'finish']);
     Route::get('/rooms/{room:code}/leaderboard', [RaceController::class, 'leaderboard']);
     Route::get('/rooms/{room:code}/report', [RaceController::class, 'report']);

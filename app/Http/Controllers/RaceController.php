@@ -69,6 +69,43 @@ class RaceController extends Controller
         ]);
     }
 
+    public function progress(Request $request, Room $room): JsonResponse
+    {
+        $payload = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'progress' => ['required', 'numeric', 'min:0', 'max:100'],
+            'wpm' => ['required', 'numeric', 'min:0', 'max:400'],
+            'accuracy' => ['required', 'numeric', 'min:0', 'max:100'],
+            'elapsed_seconds' => ['required', 'integer', 'min:0', 'max:36000'],
+        ]);
+
+        if ($room->status !== 'active') {
+            return response()->json(['message' => 'Race is not active.'], 422);
+        }
+
+        $result = RaceResult::query()
+            ->where('room_id', $room->id)
+            ->where('user_id', (int) $payload['user_id'])
+            ->where('is_spectator', false)
+            ->first();
+
+        if (! $result) {
+            return response()->json(['message' => 'Join the race before sending progress.'], 403);
+        }
+
+        $result->update([
+            'progress' => $payload['progress'],
+            'wpm' => $payload['wpm'],
+            'accuracy' => $payload['accuracy'],
+            'elapsed_seconds' => $payload['elapsed_seconds'],
+        ]);
+
+        Cache::forget("race:leaderboard:{$room->id}");
+        Cache::forget("race:report:{$room->id}");
+
+        return response()->json(['message' => 'Progress updated.']);
+    }
+
     public function finish(Request $request, Room $room): JsonResponse
     {
         $payload = $request->validate([
@@ -136,16 +173,19 @@ class RaceController extends Controller
 
         $leaderboard = $this->buildLeaderboard($room);
 
-        $this->publishRaceEvent([
-            'type' => 'race_finished',
-            'roomCode' => $room->code,
-            'payload' => [
-                'leaderboard' => $leaderboard,
-            ],
-        ]);
+        if ($room->status === 'finished') {
+            $this->publishRaceEvent([
+                'type' => 'race_finished',
+                'roomCode' => $room->code,
+                'payload' => [
+                    'leaderboard' => $leaderboard,
+                ],
+            ]);
+        }
 
         return response()->json([
             'message' => 'Result stored.',
+            'room_status' => $room->status,
             'leaderboard' => $leaderboard,
         ]);
     }

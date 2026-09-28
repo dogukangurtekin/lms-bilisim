@@ -237,6 +237,8 @@
         raceDurationSeconds: 120,
         raceEndsAtMs: null,
         raceTimerInterval: null,
+        progressSyncTimer: null,
+        progressSyncInFlight: false,
         isSpectator: false,
         myProgress: 0,
         opponents: new Map(),
@@ -412,7 +414,7 @@
 
         state.socket.on('race_finished', (payload) => {
             if (Array.isArray(payload?.leaderboard)) {
-                renderLeaderboard(payload.leaderboard);
+                renderLeaderboard(payload.leaderboard, true);
             }
         });
     }
@@ -434,6 +436,40 @@
             clearInterval(state.raceTimerInterval);
             state.raceTimerInterval = null;
         }
+    }
+
+    function stopProgressSync() {
+        if (!state.progressSyncTimer) return;
+        clearInterval(state.progressSyncTimer);
+        state.progressSyncTimer = null;
+    }
+
+    async function syncProgress() {
+        if (state.progressSyncInFlight || state.finished || state.isSpectator || actorRole !== 'student' || !state.roomCode || !state.startedAtMs) return;
+
+        state.progressSyncInFlight = true;
+        try {
+            const stats = computeStats(el.typingInput.value);
+            await api(`/rooms/${state.roomCode}/progress`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    user_id: actorUserId,
+                    ...stats,
+                    elapsed_seconds: Math.max(0, Math.floor((Date.now() - state.startedAtMs) / 1000)),
+                }),
+            });
+        } finally {
+            state.progressSyncInFlight = false;
+        }
+    }
+
+    function startProgressSync() {
+        stopProgressSync();
+        if (actorRole !== 'student' || state.isSpectator) return;
+        syncProgress().catch((error) => setStatus(error.message));
+        state.progressSyncTimer = setInterval(() => {
+            syncProgress().catch((error) => setStatus(error.message));
+        }, 1000);
     }
 
     function updateRaceTimerLabel() {
@@ -514,20 +550,15 @@
                 });
             }
             const snapshotResults = room.race_results || room.raceResults || data.results || [];
+            if (room.status === 'active' || room.status === 'finished') {
+                renderLeaderboard(snapshotResults, room.status === 'finished');
+            }
             if (room.status === 'finished' && Array.isArray(snapshotResults) && !state.finished) {
                 state.finished = true;
                 el.typingInput.disabled = true;
                 stopRaceTimer();
+                stopProgressSync();
                 stopRoomPolling();
-                const leaderboard = snapshotResults
-                    .map((row) => ({
-                        userName: row.user_name,
-                        progress: Number(row.progress || 0),
-                        wpm: Number(row.wpm || 0),
-                        accuracy: Number(row.accuracy || 0),
-                    }))
-                    .sort((a, b) => (b.progress - a.progress) || (b.wpm - a.wpm) || (b.accuracy - a.accuracy));
-                renderLeaderboard(leaderboard);
             }
         } catch (error) {
             setStatus(error.message);
@@ -558,6 +589,7 @@
         el.endRaceBtn.disabled = actorRole !== 'teacher';
         setStatus('Yaris basladi. Yazmaya baslayin.');
         startRaceTimer();
+        startProgressSync();
     }
 
     async function createRoom() {
@@ -665,9 +697,10 @@
             method: 'POST',
             body: JSON.stringify({ user_id: actorUserId }),
         });
+        stopProgressSync();
         stopRaceTimer();
         el.typingInput.disabled = true;
-        if (Array.isArray(data?.leaderboard)) renderLeaderboard(data.leaderboard);
+        if (Array.isArray(data?.leaderboard)) renderLeaderboard(data.leaderboard, true);
         const report = data?.report || null;
         if (report) {
             const win = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
@@ -771,6 +804,7 @@
     async function finishRace(stats) {
         if (state.finished || state.isSpectator) return;
         state.finished = true;
+        stopProgressSync();
         el.typingInput.disabled = true;
 
         const result = await api(`/rooms/${state.roomCode}/finish`, {
@@ -788,27 +822,36 @@
             }),
         });
 
-        renderLeaderboard(result.leaderboard || []);
+        renderLeaderboard(result.leaderboard || [], result.room_status === 'finished');
     }
 
-    function renderLeaderboard(leaderboard) {
+    function renderLeaderboard(leaderboard, isFinal = false) {
+        const rows = leaderboard
+            .filter((row) => !row.is_spectator && !row.isSpectator)
+            .map((row) => ({
+                userName: row.userName || row.user_name || '',
+                progress: Number(row.progress || 0),
+                wpm: Number(row.wpm || 0),
+                accuracy: Number(row.accuracy || 0),
+            }))
+            .sort((a, b) => (b.progress - a.progress) || (b.wpm - a.wpm) || (b.accuracy - a.accuracy));
         el.leaderboardWrap.style.display = 'block';
         el.leaderboard.classList.add('result-fade');
-        el.leaderboard.innerHTML = leaderboard.map((row, index) => `
+        el.leaderboard.innerHTML = rows.map((row, index) => `
             <div style="border-radius:10px;border:1px solid rgba(56,189,248,.35);background:rgba(15,23,42,.72);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div><span style="font-weight:900;color:#67e8f9">#${index + 1}</span> ${row.userName}</div>
                 <div style="font-size:13px;color:#cbd5e1">Tamamlanma: ${Number(row.progress).toFixed(1)}% | Hız: ${Number(row.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(row.accuracy).toFixed(1)}%</div>
             </div>
         `).join('');
 
-        const winner = leaderboard[0]?.userName;
+        const winner = rows[0]?.userName;
         if (winner) {
-            el.winnerText.textContent = winner === state.userName
-                ? 'Tebrikler! En Hizli Klavyesor Sensin!'
-                : `Kazanan: ${winner}`;
+            el.winnerText.textContent = isFinal
+                ? (winner === state.userName ? 'Tebrikler! En Hizli Klavyesor Sensin!' : `Kazanan: ${winner}`)
+                : `Anlik lider: ${winner}`;
         }
 
-        if (winner === state.userName && typeof confetti === 'function') {
+        if (isFinal && winner === state.userName && typeof confetti === 'function') {
             confetti({
                 particleCount: 180,
                 spread: 90,
