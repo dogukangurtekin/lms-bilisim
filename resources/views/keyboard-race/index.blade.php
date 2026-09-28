@@ -425,6 +425,23 @@
         syncRoomSnapshot();
     }
 
+    function monitorRoom(roomCode) {
+        state.roomCode = String(roomCode || '').trim().toUpperCase();
+        if (!state.roomCode) return;
+        state.userName = el.userName.value.trim();
+        el.roomCode.value = state.roomCode;
+        connectSocket();
+        if (state.userName) {
+            state.socket?.emit('join_room', { roomCode: state.roomCode, userName: state.userName });
+        }
+        startRoomPolling();
+    }
+
+    async function resumeActiveRoom() {
+        const data = await api('/rooms/active');
+        if (data?.active?.roomCode) monitorRoom(data.active.roomCode);
+    }
+
     function stopRoomPolling() {
         if (!state.roomPollTimer) return;
         clearInterval(state.roomPollTimer);
@@ -618,10 +635,11 @@
         renderRoomMeta(state.roomCode, data.room.status || 'waiting');
         renderTypingText('', state.roomText);
         el.roomCode.value = state.roomCode;
+        const roomUrl = new URL(window.location.href);
+        roomUrl.searchParams.set('room', state.roomCode);
+        window.history.replaceState(null, '', `${roomUrl.pathname}${roomUrl.search}${roomUrl.hash}`);
 
-        connectSocket();
-        state.socket?.emit('join_room', { roomCode: state.roomCode, userName });
-        startRoomPolling();
+        monitorRoom(state.roomCode);
 
         el.startRaceBtn.disabled = false;
         el.endRaceBtn.disabled = true;
@@ -925,6 +943,11 @@
         el.joinRoomBtn.title = 'Ogretmen yalnizca oda olusturur.';
         el.endRaceBtn.disabled = true;
         setStatus('Ogretmen modu: oda olusturup yarisi baslatabilirsiniz.');
+        if (params.get('room')) {
+            monitorRoom(params.get('room'));
+        } else {
+            resumeActiveRoom().catch((error) => setStatus(error.message));
+        }
     } else {
         el.teacherTextConfig.style.display = 'none';
         el.teacherRaceActions.style.display = 'none';
