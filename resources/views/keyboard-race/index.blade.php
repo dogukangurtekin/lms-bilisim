@@ -748,7 +748,7 @@
             .replaceAll('<', '<')
             .replaceAll('>', '>')
             .replaceAll('"', '"')
-            .replaceAll("'", ''');
+            .replaceAll("'", '&#039;');
     }
 
     function upsertOpponent(userName, progress, wpm, accuracy) {
