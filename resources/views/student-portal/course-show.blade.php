@@ -555,11 +555,14 @@
                     if (slideTimer) clearInterval(slideTimer);
                     slideTimer = null;
                     pendingAutoAdvanceIndex = null;
+                    const isSummarySlide = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
                     const isQuestionSlide = !!slides[idx]?.querySelector('[data-sqz-question]');
+                    const isLastSlide = idx === slides.length - 1;
+                    const skipSlideTimer = isQuestionSlide || isSummarySlide || isLastSlide;
                     const wasAlreadyUnlocked = unlockedSlideIndexes.has(idx);
-                    slideUnlocked = previewMode || isQuestionSlide || wasAlreadyUnlocked;
+                    slideUnlocked = previewMode || skipSlideTimer || wasAlreadyUnlocked;
 
-                    if (timerBox) timerBox.style.display = isQuestionSlide ? 'none' : '';
+                    if (timerBox) timerBox.style.display = skipSlideTimer ? 'none' : '';
                     if (slideUnlocked) {
                         if (timerBox) timerBox.classList.toggle('is-ready', wasAlreadyUnlocked);
                         if (timerLabel && wasAlreadyUnlocked) timerLabel.textContent = 'Bu sayfayı tamamladın';
