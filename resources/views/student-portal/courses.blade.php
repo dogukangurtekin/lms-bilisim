@@ -162,6 +162,7 @@
                     :primary-label="'Derse Git'"
                     primary-variant="success"
                     :course-id="$c->id"
+                    :completion-status="$cp?->completed ? 'completed' : 'pending'"
                     :is-favorite="in_array($c->id, $favoriteCourseIds ?? [])"
                 />
             </div>

@@ -17,6 +17,7 @@
     'assignCurrentClass' => 0,
     'isFavorite' => false,
     'courseId' => null,
+    'completionStatus' => null,
     'downloadUrl' => null,
     'creatorLabel' => '',
 ])
@@ -78,6 +79,25 @@
             @endif
 
             <div style="position:absolute;top:14px;right:14px;left:auto;z-index:60;display:flex;gap:10px;align-items:center;pointer-events:auto;">
+                @if(in_array($completionStatus, ['pending', 'completed'], true))
+                    <span
+                        title="{{ $completionStatus === 'completed' ? 'Ders tamamlandı' : 'Ders bekliyor' }}"
+                        aria-label="{{ $completionStatus === 'completed' ? 'Ders tamamlandı' : 'Ders bekliyor' }}"
+                        role="img"
+                        style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:999px;background:{{ $completionStatus === 'completed' ? '#dcfce7' : '#fef3c7' }};color:{{ $completionStatus === 'completed' ? '#15803d' : '#b45309' }};border:2px solid rgba(255,255,255,.92);box-shadow:0 12px 28px rgba(15,23,42,.18);"
+                    >
+                        @if($completionStatus === 'completed')
+                            <svg viewBox="0 0 24 24" aria-hidden="true" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round">
+                                <path d="m5 12 4 4L19 6"/>
+                            </svg>
+                        @else
+                            <svg viewBox="0 0 24 24" aria-hidden="true" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 7v5l3 2"/>
+                            </svg>
+                        @endif
+                    </span>
+                @endif
                 @if($courseId)
                     <button
                         type="button"
