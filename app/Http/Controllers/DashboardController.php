@@ -373,6 +373,7 @@ class DashboardController extends Controller
             $supportClass = $classDistribution->sortBy('total')->first();
             $focusClass = $classDistribution->first();
             $topCompletion = $gradeByClass->first();
+            $studentsWithProgressCount = $studentsWithAnyProgress->count();
 
             return [
                 'headline_name' => $this->normalizeDashboardText($user?->name ?? 'Öğretmen'),
@@ -413,12 +414,22 @@ class DashboardController extends Controller
                 'highlights' => [
                     'focus_title' => $activeStudents < max(1, (int) round($totalStudents * 0.4)) ? 'Katılımı artırın' : 'Ritim dengede',
                     'focus_desc' => max(0, $totalStudents - $activeStudents) . ' öğrenci beklemede.',
-                    'power_title' => $xpLeader ? "{$xpLeader->class_name} önde" : 'Henüz lider sınıf yok',
-                    'power_desc' => $xpLeader ? "Ortalama {$xpLeader->avg_score} puan ile güçlü sinyal veriyor." : 'Not verisi oluştuğunda otomatik hesaplanır.',
-                    'rhythm_title' => Grade::query()
-                        ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
-                        ->count() . ' toplam puan girdisi',
-                    'rhythm_desc' => $absentToday > 0 ? "Bugün {$absentToday} devamsız var." : 'Devamsızlık sinyali düşük.',
+                    'power_title' => $xpLeader
+                        ? "{$xpLeader->class_name} önde"
+                        : ($studentsWithProgressCount > 0 ? 'Öğrenci ilerlemesi var' : 'Henüz lider sınıf yok'),
+                    'power_desc' => $xpLeader
+                        ? "Ortalama {$xpLeader->avg_score} puan ile güçlü sinyal veriyor."
+                        : ($studentsWithProgressCount > 0
+                            ? "{$studentsWithProgressCount} öğrencide tamamlanmış ders, ödev veya oyun ilerlemesi var."
+                            : 'Öğrenci ilerlemesi veya not verisi oluştuğunda otomatik hesaplanır.'),
+                    'rhythm_title' => $gradeCount > 0
+                        ? $gradeCount . ' toplam puan girdisi'
+                        : ($studentsWithProgressCount > 0
+                            ? $studentsWithProgressCount . ' öğrenci ilerlemesi'
+                            : 'Henüz ilerleme verisi yok'),
+                    'rhythm_desc' => $studentsWithProgressCount > 0
+                        ? "{$studentsWithProgressCount} öğrencinin tamamlanmış ders, ödev veya oyun verisi sisteme kaydedildi."
+                        : ($absentToday > 0 ? "Bugün {$absentToday} devamsız var." : 'Devamsızlık sinyali düşük.'),
                 ],
                 'weekly' => [
                     'most_active' => $focusClass?->class_name ?? '-',
