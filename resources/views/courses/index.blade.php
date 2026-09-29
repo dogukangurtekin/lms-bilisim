@@ -476,7 +476,7 @@
             @endif
             <div id="bulk-course-class-wrap" style="grid-column:{{ ($isAdmin ?? false) ? 'auto' : '1 / -1' }};display:{{ ($isAdmin ?? false) ? 'block' : 'block' }};">
                 <label style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Sınıf Seç</label>
-                <div id="bulk-course-classes" style="border:1px solid #cbd5e1;border-radius:14px;padding:10px;background:#f8fafc;">
+                <div id="bulk-course-classes" style="max-height:min(36vh,360px);overflow-y:auto;border:1px solid #cbd5e1;border-radius:14px;padding:10px;background:#f8fafc;">
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
                         @foreach($bulkAssignableClasses as $class)
                             <label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;min-width:0;min-height:72px;">
