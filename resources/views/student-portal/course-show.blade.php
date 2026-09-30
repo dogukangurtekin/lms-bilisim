@@ -60,7 +60,7 @@
     .course-show-page{position:relative;z-index:1;display:grid;gap:14px}
     .course-show-topbar{
         display:grid;
-        grid-template-columns:auto minmax(0,1fr) auto;
+        grid-template-columns:auto minmax(0,1fr);
         align-items:center;
         gap:14px;
         padding:14px 16px;
@@ -107,11 +107,20 @@
         white-space:nowrap;
     }
     .course-show-metrics{
+        display:grid;
+        grid-template-columns:auto minmax(0,1fr);
+        align-items:center;
+        grid-column:2;
+        gap:10px;
+        width:100%;
+    }
+    .course-show-controls{
         display:flex;
         align-items:center;
-        justify-content:flex-start;
+        justify-content:flex-end;
         gap:10px;
         flex-wrap:wrap;
+        width:100%;
     }
     .course-show-metric{
         display:inline-flex;
@@ -256,7 +265,7 @@
         .course-show-brand{width:100%}
         .course-show-brand img{width:46px;height:46px}
         .course-show-title{white-space:normal;overflow:visible;text-overflow:clip;font-size:15px;line-height:1.35}
-        .course-show-metrics{justify-content:flex-start}
+        .course-show-metrics{grid-column:1 / -1;grid-template-columns:1fr}
         .course-show-stage{min-height:auto}
         .course-show-stage-frame{padding:10px;border-radius:22px}
         /* Kucuk ekranda ileri/geri butonlarinin metnini gizleyip sadece
@@ -310,21 +319,23 @@
                         Derslerime Dön
                     </a>
 
-                    <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
-                    <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
-                    <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
+                    <div class="course-show-controls">
+                        <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
+                        <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
+                        <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
 
-                    <span id="student-course-counter" class="course-show-metric course-show-counter">1 / {{ max(1, $slideCount) }}</span>
-                    <div class="course-show-nav">
-                        <button class="btn" type="button" id="student-course-prev" title="Geri" aria-label="Geri">
-                            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-                            <span class="course-show-nav-label">Geri</span>
-                        </button>
+                        <span id="student-course-counter" class="course-show-metric course-show-counter">1 / {{ max(1, $slideCount) }}</span>
+                        <div class="course-show-nav">
+                            <button class="btn" type="button" id="student-course-prev" title="Geri" aria-label="Geri">
+                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                                <span class="course-show-nav-label">Geri</span>
+                            </button>
 
-                        <button class="btn" type="button" id="student-course-next" title="İleri" aria-label="İleri">
-                            <span id="student-course-next-label" class="course-show-nav-label">İleri</span>
-                            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
-                        </button>
+                            <button class="btn" type="button" id="student-course-next" title="İleri" aria-label="İleri">
+                                <span id="student-course-next-label" class="course-show-nav-label">İleri</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m8.59 16.59 4.58-4.59-4.58-4.59L10 6l6 6-6 6z"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
