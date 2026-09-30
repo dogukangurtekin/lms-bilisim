@@ -109,7 +109,7 @@
     .course-show-metrics{
         display:flex;
         align-items:center;
-        justify-content:flex-end;
+        justify-content:flex-start;
         gap:10px;
         flex-wrap:wrap;
     }
@@ -300,6 +300,16 @@
                 </div>
 
                 <div class="course-show-metrics">
+                    <a
+                        class="btn"
+                        href="{{ auth()->check() && auth()->user()->hasRole('admin', 'teacher') ? route('courses.index') : route('student.portal.courses') }}"
+                        style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;padding:10px 16px;border-radius:16px;background:#f59e0b;border-color:#f59e0b;color:#fff;text-decoration:none;white-space:nowrap;"
+                        aria-label="Derslerime dön"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19z"/></svg>
+                        Derslerime Dön
+                    </a>
+
                     <span class="course-show-metric">Slayt <strong>{{ $slideCount }}</strong></span>
                     <span class="course-show-metric">Soru <strong>{{ $questionCountPreview }}</strong></span>
                     <span class="course-show-metric">XP <strong>{{ $totalXpPreview }}</strong></span>
@@ -317,15 +327,6 @@
                         </button>
                     </div>
 
-                    <a
-                        class="btn"
-                        href="{{ auth()->check() && auth()->user()->hasRole('admin', 'teacher') ? route('courses.index') : route('student.portal.courses') }}"
-                        style="display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:800;padding:10px 16px;border-radius:16px;background:#f59e0b;border-color:#f59e0b;color:#fff;text-decoration:none;white-space:nowrap;"
-                        aria-label="Derslerime dön"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19z"/></svg>
-                        Derslerime Dön
-                    </a>
                 </div>
             </div>
 
