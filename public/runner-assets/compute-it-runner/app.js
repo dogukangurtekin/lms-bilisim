@@ -936,6 +936,231 @@
 
   defaultLevels.push(...buildComputeLevels61to120());
 
+  const introductoryLevels = defaultLevels.slice(0, 14);
+  defaultLevels.splice(0, defaultLevels.length, ...introductoryLevels);
+
+  const TRAIL_COLORS = [
+    { id: 1, name: "turkuaz" },
+    { id: 2, name: "yeşil" },
+    { id: 3, name: "pembe" }
+  ];
+  const MOVE_LABELS = { right: "sag", left: "sol", up: "yukari", down: "asagi" };
+
+  function createSeededRandom(seed) {
+    let value = seed >>> 0;
+    return () => {
+      value = (Math.imul(value, 1664525) + 1013904223) >>> 0;
+      return value / 4294967296;
+    };
+  }
+
+  function buildCampaignPath(start, size, stepCount, seed) {
+    const random = createSeededRandom(seed);
+    const moves = [];
+    const visited = new Set([keyXY(start[0], start[1])]);
+    const directions = [
+      { name: "right", dx: 1, dy: 0 },
+      { name: "left", dx: -1, dy: 0 },
+      { name: "up", dx: 0, dy: -1 },
+      { name: "down", dx: 0, dy: 1 }
+    ];
+
+    function search(x, y) {
+      if (moves.length === stepCount) return true;
+      const shuffled = directions.slice().sort(() => random() - 0.5);
+      for (const direction of shuffled) {
+        const nx = x + direction.dx;
+        const ny = y + direction.dy;
+        const key = keyXY(nx, ny);
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size || visited.has(key)) continue;
+        visited.add(key);
+        moves.push(direction.name);
+        if (search(nx, ny)) return true;
+        moves.pop();
+        visited.delete(key);
+      }
+      return false;
+    }
+
+    if (!search(start[0], start[1])) {
+      throw new Error(`Compute It seviyesi için ${stepCount} adımlı yol üretilemedi.`);
+    }
+
+    let x = start[0];
+    let y = start[1];
+    const path = new Set([keyXY(x, y)]);
+    moves.forEach((direction) => {
+      if (direction === "right") x++;
+      else if (direction === "left") x--;
+      else if (direction === "up") y--;
+      else y++;
+      path.add(keyXY(x, y));
+    });
+    return { moves, path, goal: [x, y] };
+  }
+
+  function buildCampaignCounters(moves) {
+    const counters = { a: 0, b: 0, c: 0 };
+    moves.forEach((direction) => {
+      if (direction === "right") counters.a++;
+      else if (direction === "left") counters.a--;
+      else if (direction === "up") counters.b++;
+      else counters.b--;
+    });
+    return counters;
+  }
+
+  function compileCampaignMoves(moves, indent, useNestedLoops) {
+    const lines = [];
+    const stepToLine = [];
+    let index = 0;
+    while (index < moves.length) {
+      let runEnd = index + 1;
+      while (runEnd < moves.length && moves[runEnd] === moves[index]) runEnd++;
+      const runLength = runEnd - index;
+
+      if (useNestedLoops && runLength >= 4 && runLength % 2 === 0) {
+        lines.push(`${indent}tekrarla (${runLength / 2}) {`);
+        lines.push(`${indent}  tekrarla (2) {`);
+        const commandLine = lines.length;
+        lines.push(`${indent}    ${MOVE_LABELS[moves[index]]}()`);
+        lines.push(`${indent}  }`, `${indent}}`);
+        for (let i = index; i < runEnd; i++) stepToLine.push(commandLine);
+      } else if (runLength > 1) {
+        lines.push(`${indent}tekrarla (${runLength}) {`);
+        const commandLine = lines.length;
+        lines.push(`${indent}  ${MOVE_LABELS[moves[index]]}()`);
+        lines.push(`${indent}}`);
+        for (let i = index; i < runEnd; i++) stepToLine.push(commandLine);
+      } else {
+        stepToLine.push(lines.length);
+        lines.push(`${indent}${MOVE_LABELS[moves[index]]}()`);
+      }
+      index = runEnd;
+    }
+    return { lines, stepToLine };
+  }
+
+  function buildCampaignBoardColors(size, seed, start, goal, signalColor) {
+    const random = createSeededRandom(seed);
+    const colors = {};
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        colors[keyXY(x, y)] = 1 + Math.floor(random() * 3);
+      }
+    }
+    colors[keyXY(start[0], start[1])] = signalColor;
+    colors[keyXY(goal[0], goal[1])] = (signalColor % 3) + 1;
+    return colors;
+  }
+
+  function buildCampaignLevel(id) {
+    const phase = id < 45 ? 0 : id < 91 ? 1 : id < 151 ? 2 : id < 221 ? 3 : 4;
+    const size = 8 + (id % 3);
+    const seed = (id * 7919 + 104729) >>> 0;
+    const random = createSeededRandom(seed);
+    const start = [1 + Math.floor(random() * (size - 2)), 1 + Math.floor(random() * (size - 2))];
+    const stepCount = Math.min(18, 6 + phase * 2 + (id % (phase < 2 ? 5 : 7)));
+    const primary = buildCampaignPath(start, size, stepCount, seed);
+    const secondary = phase > 0
+      ? buildCampaignPath(start, size, Math.max(5, stepCount - 1 + (id % 3)), seed ^ 0x9e3779b9)
+      : null;
+    const useColorCondition = phase >= 3 || (phase === 2 && id % 2 === 0);
+    const condition = phase > 0
+      ? { var: useColorCondition ? "color" : "A", op: "==", value: 0 }
+      : null;
+    const aValue = 2 + (id % 9);
+    const signalColor = 1 + (id % 3);
+    const wantsTrue = id % 2 === 0;
+
+    if (condition?.var === "color") {
+      condition.value = wantsTrue ? signalColor : (signalColor % 3) + 1;
+    } else if (condition) {
+      condition.value = wantsTrue ? aValue : aValue + 1;
+      condition.op = id % 3 === 0 ? ">=" : "==";
+    }
+
+    const conditionMatches = condition?.var === "color"
+      ? signalColor === condition.value
+      : !condition || (condition.op === ">=" ? aValue >= condition.value : aValue === condition.value);
+    const activePath = conditionMatches ? primary : (secondary || primary);
+    const boardColors = buildCampaignBoardColors(size, seed ^ 0x85ebca6b, start, activePath.goal, signalColor);
+    const nestedLoops = phase >= 2;
+    let codeLines;
+    let stepToLine;
+
+    if (condition) {
+      const trueCode = compileCampaignMoves(primary.moves, "  ", nestedLoops);
+      const falseCode = compileCampaignMoves(secondary.moves, "  ", nestedLoops);
+      const conditionLine = condition.var === "color"
+        ? `eger (renk == "${TRAIL_COLORS[condition.value - 1].name}") {`
+        : `eger (A ${condition.op} ${condition.value}) {`;
+      codeLines = [conditionLine, ...trueCode.lines, "}", "degilse {"];
+      const falseOffset = codeLines.length;
+      codeLines.push(...falseCode.lines, "}");
+      stepToLine = {
+        true: trueCode.stepToLine.map((line) => line + 1),
+        false: falseCode.stepToLine.map((line) => line + falseOffset)
+      };
+    } else {
+      const routeCode = compileCampaignMoves(primary.moves, "", nestedLoops);
+      codeLines = routeCode.lines;
+      stepToLine = routeCode.stepToLine;
+    }
+
+    const reservedPath = new Set(primary.path);
+    secondary?.path.forEach((cell) => reservedPath.add(cell));
+    const walls = buildComputeWalls(size, reservedPath, start, activePath.goal, id, Math.min(18, 3 + phase * 3 + (id % 5)));
+    const tip = condition?.var === "color"
+      ? `Başlangıç sinyali ${TRAIL_COLORS[signalColor - 1].name}. Rengi ${TRAIL_COLORS[condition.value - 1].name} ise ilk yolu, değilse diğer yolu izle.`
+      : condition
+        ? `A = ${aValue}. Koşulu değerlendir; doğruysa ilk dalı, degilse dalını izle.`
+        : "Renkli rotayı takip et; her adımda kod satırını ve A/B sayaçlarını kontrol et.";
+    const trueCounters = buildCampaignCounters(primary.moves);
+    const falseCounters = secondary ? buildCampaignCounters(secondary.moves) : null;
+
+    return {
+      id,
+      name: `Seviye ${id} · ${["Rota", "Karar", "Renkli karar", "Renk ve döngü", "Usta kodlama"][phase]}`,
+      size,
+      start,
+      goal: activePath.goal,
+      walls,
+      xp: getComputeLevelXPByLevelNo(id),
+      aValue,
+      signalColor,
+      boardColors,
+      hideSolutionTrail: true,
+      countersStart: { a: 0, b: 0, c: 0 },
+      counterRules: { right: { a: 1 }, left: { a: -1 }, up: { b: 1 }, down: { b: -1 } },
+      codeLines,
+      expectedMoves: condition ? undefined : primary.moves,
+      stepToLine: condition ? undefined : stepToLine,
+      expectedMovesTrue: condition ? primary.moves : undefined,
+      expectedMovesFalse: condition ? secondary?.moves : undefined,
+      stepToLineTrue: condition ? stepToLine.true : undefined,
+      stepToLineFalse: condition ? stepToLine.false : undefined,
+      condition,
+      goalTrue: condition ? primary.goal : undefined,
+      goalFalse: condition ? secondary?.goal : undefined,
+      targetCounters: condition ? undefined : trueCounters,
+      targetCountersTrue: condition ? trueCounters : undefined,
+      targetCountersFalse: condition ? falseCounters : undefined,
+      tip
+    };
+  }
+
+  const campaignLevels = Array.from({ length: 286 }, (_, index) => buildCampaignLevel(index + 15));
+  const campaignColorSignatures = new Set();
+  campaignLevels.forEach((level) => {
+    const signature = JSON.stringify(level.boardColors);
+    if (campaignColorSignatures.has(signature)) {
+      throw new Error(`Compute It seviye renkleri benzersiz değil: ${level.id}`);
+    }
+    campaignColorSignatures.add(signature);
+  });
+  defaultLevels.push(...campaignLevels);
+
   let levels = defaultLevels.map((l) => ({ ...l }));
   let levelIndex = 0;
   let pos = [0, 0];
@@ -1047,6 +1272,9 @@
 
   function evalCondition(level) {
     if (!level.condition) return null;
+    if (level.condition.var === "color") {
+      return Number(level.signalColor) === Number(level.condition.value);
+    }
     const aVal = toInt(level.aValue, toInt(level.countersStart?.a, 0));
     const right = toInt(level.condition.value, 0);
     const op = String(level.condition.op || "==");
@@ -1064,6 +1292,8 @@
         moves: Array.isArray(level.expectedMoves) ? level.expectedMoves.slice() : [],
         stepToLine: Array.isArray(level.stepToLine) ? level.stepToLine.slice() : [],
         goal: Array.isArray(level.goal) ? level.goal.slice() : [0, 0],
+        targetCounters: level.targetCounters,
+        trailColors: level.trailColors,
         conditionResult: null
       };
     }
@@ -1071,27 +1301,24 @@
       moves: conditionResult ? (level.expectedMovesTrue || []) : (level.expectedMovesFalse || []),
       stepToLine: conditionResult ? (level.stepToLineTrue || []) : (level.stepToLineFalse || []),
       goal: conditionResult ? (level.goalTrue || level.goal || [0, 0]) : (level.goalFalse || level.goal || [0, 0]),
+      targetCounters: conditionResult ? level.targetCountersTrue : level.targetCountersFalse,
+      trailColors: conditionResult ? level.trailColorsTrue : level.trailColorsFalse,
       conditionResult
     };
   }
 
   function getDisplayCode(level) {
-    const base = Array.isArray(level.codeLines) ? level.codeLines.slice() : ["sag()", "asagi()", "sol()", "yukari()"];
-    const wrapped = ["tekrarla (1) {", ...base.map((l) => `  ${l}`), "}"];
-    if (wrapped.length < 10) {
-      wrapped.push("tekrarla (1) {");
-      wrapped.push("  // adim sirasini takip et");
-      wrapped.push("}");
-    }
-    return wrapped;
+    return Array.isArray(level.codeLines) && level.codeLines.length
+      ? level.codeLines.slice()
+      : ["sag()", "asagi()", "sol()", "yukari()"];
   }
 
   function renderCode(activeStep = -1, badLine = -1) {
     const level = levels[levelIndex];
     const lines = getDisplayCode(level);
     const baseActive = activeStep >= 0 ? toInt(activeProgram.stepToLine?.[activeStep], -1) : -1;
-    const activeLine = baseActive >= 0 ? baseActive + 1 : -1;
-    const shiftedBadLine = badLine >= 0 ? badLine + 1 : -1;
+    const activeLine = baseActive;
+    const shiftedBadLine = badLine;
     let indent = 0;
     cmdListEl.innerHTML = lines.map((rawLine, idx) => {
       const line = String(rawLine || "");
@@ -1102,6 +1329,7 @@
       const styledLine = line
         .replace(/\btekrarla\b/gi, '<span class="kw-red">tekrarla</span>')
         .replace(/\beger\b/gi, '<span class="kw-red">eger</span>')
+        .replace(/\bdegilse\b/gi, '<span class="kw-blue">degilse</span>')
         .replace(/\bfonksiyon\b/gi, '<span class="kw-red">fonksiyon</span>');
       const html = `<div class="line i${Math.min(3, Math.max(0, indent))} ${cls}">${styledLine}</div>`;
       const opens = (trimmed.match(/\{/g) || []).length;
@@ -1113,8 +1341,11 @@
 
   function renderBoard() {
     const level = levels[levelIndex];
-    const sizePx = window.innerWidth <= 1024 ? 64 : 92;
+    const gapPx = window.innerWidth <= 1024 ? 8 : 12;
+    const sizePx = Math.max(24, Math.min(92, Math.floor((boardEl.clientWidth - (level.size - 1) * gapPx) / level.size)));
+    boardEl.style.setProperty("--cell-size", `${sizePx}px`);
     boardEl.style.gridTemplateColumns = `repeat(${level.size}, ${sizePx}px)`;
+    boardEl.classList.toggle("solved", showDoneTick);
     boardEl.innerHTML = "";
     const walls = wallSet(level);
     const goal = activeProgram.goal || level.goal;
@@ -1123,13 +1354,17 @@
         const cell = document.createElement("div");
         cell.className = "cell";
         if (walls.has(`${x},${y}`)) cell.classList.add("wall");
-        const trailKind = trailByCell.get(keyXY(x, y));
+        if (x === goal[0] && y === goal[1]) cell.classList.add("goal");
+        const trailKind = level.hideSolutionTrail
+          ? level.boardColors?.[keyXY(x, y)]
+          : trailByCell.get(keyXY(x, y));
         if (trailKind === 1) cell.classList.add("trail-a");
         if (trailKind === 2) cell.classList.add("trail-b");
         if (trailKind === 3) cell.classList.add("trail-c");
         if (x === pos[0] && y === pos[1]) {
           const ball = document.createElement("div");
           ball.className = "ball";
+          if (level.hideSolutionTrail) ball.classList.add(`signal-${level.signalColor}`);
           if (showDoneTick) ball.classList.add("done");
           cell.appendChild(ball);
         }
@@ -1148,12 +1383,13 @@
   }
 
   function isCounterTargetMet() {
-    const t = levels[levelIndex].targetCounters || {};
+    const t = activeProgram.targetCounters || levels[levelIndex].targetCounters || {};
     return counters.a === toInt(t.a, counters.a) && counters.b === toInt(t.b, counters.b) && counters.c === toInt(t.c, counters.c);
   }
 
   function buildTrail(level, program) {
     const map = new Map();
+    if (level?.hideSolutionTrail) return map;
     const walls = wallSet(level);
     let x = toInt(level.start?.[0], 0);
     let y = toInt(level.start?.[1], 0);
@@ -1169,7 +1405,9 @@
       if (walls.has(keyXY(nx, ny))) continue;
       x = nx;
       y = ny;
-      if (!map.has(keyXY(x, y))) map.set(keyXY(x, y), (i % 3) + 1);
+      if (!map.has(keyXY(x, y))) {
+        map.set(keyXY(x, y), Number(program?.trailColors?.[i] ?? level?.trailColors?.[i] ?? ((i % 3) + 1)));
+      }
     }
     map.delete(keyXY(level.start?.[0], level.start?.[1]));
     return map;
@@ -1192,7 +1430,7 @@
     const hasCondition = !!level.condition;
     if (varsBoxEl) varsBoxEl.style.display = hasCondition ? "inline-flex" : "none";
     if (hasCondition && varAEl) varAEl.textContent = String(toInt(level.aValue, 0));
-    if (tipEl) tipEl.textContent = "";
+    if (tipEl) tipEl.textContent = level.tip || "";
   }
 
   function updateTop() {
@@ -1263,7 +1501,7 @@
       c.c += toInt(r.c, 0);
     }
     const goal = Array.isArray(prog.goal) ? prog.goal : [0, 0];
-    const tc = level.targetCounters || {};
+    const tc = prog.targetCounters || level.targetCounters || {};
     const goalOk = x === toInt(goal[0], x) && y === toInt(goal[1], y);
     const counterOk =
       c.a === toInt(tc.a, c.a) &&
@@ -1271,6 +1509,24 @@
       c.c === toInt(tc.c, c.c);
     return goalOk && counterOk;
   }
+
+  const campaignSignatures = new Set();
+  campaignLevels.forEach((level) => {
+    const program = buildProgram(level);
+    const signature = JSON.stringify({
+      moves: program.moves,
+      goal: program.goal,
+      walls: level.walls,
+      colors: program.trailColors
+    });
+    if (campaignSignatures.has(signature)) {
+      throw new Error(`Compute It seviyesinin rotası benzersiz değil: ${level.id}`);
+    }
+    if (!simulateLevel(level)) {
+      throw new Error(`Compute It seviyesi çözülemiyor: ${level.id}`);
+    }
+    campaignSignatures.add(signature);
+  });
 
   function animateNextLevel() {
     boardEl.classList.add("advance");

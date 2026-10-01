@@ -64,7 +64,7 @@ function resolveAppLink(link = "") {
 }
 
 const DEFAULT_BLOCK_LEVEL_COUNT = 32;
-const DEFAULT_COMPUTE_LEVEL_COUNT = 60;
+const DEFAULT_COMPUTE_LEVEL_COUNT = 300;
 const MAX_QUESTION_XP = 9;
 const MAX_APP_LEVEL_XP = 20;
 const BLOCK_XP_EASY = 5;
@@ -115,9 +115,12 @@ function getComputeLevelXPByLevelNo(levelNo) {
   const n = Math.max(1, Math.round(Number(levelNo || 1)));
   if (n <= 10) return 5;
   if (n <= 21) return 10;
-  if (n <= 35) return 17;
-  if (n <= 42) return 22;
-  return 30;
+  if (n <= 34) return 17;
+  if (n <= 60) return 26;
+  if (n <= 75) return 38;
+  if (n <= 90) return 46;
+  if (n <= 105) return 55;
+  return 65;
 }
 
 function getComputeLevelXP(level = {}, fallbackIndex = 0) {
@@ -8964,7 +8967,6 @@ function profileTimestampToMs(ts) {
 }
 
 function setProfileModalRoleMode() {
-  const isAdmin = userRole === "admin";
   const teacherTools = document.getElementById("profile-teacher-tools");
   const isAdmin = isSystemAdminUser(userData);
   if (teacherTools) teacherTools.style.display = isAdmin ? "block" : "none";
@@ -12786,7 +12788,6 @@ onAuthStateChanged(auth, (user) => {
     renderStudentAdventureBoard();
     syncMobileOpenMenuPlacement();
 
-    const isAdmin = userRole === "admin";
     const sideMenu = document.getElementById("side-menu");
     if (sideMenu) sideMenu.classList.toggle("student-minimal", !isTeacher);
     if (appScreen) {

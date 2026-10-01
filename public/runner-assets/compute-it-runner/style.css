@@ -75,8 +75,8 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   filter: blur(1px);
 }
 .cell {
-  width: 92px;
-  height: 92px;
+  width: var(--cell-size, 92px);
+  height: var(--cell-size, 92px);
   border-radius: 999px;
   background: #89c6f6;
   display: flex;
@@ -87,6 +87,12 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
 .cell.trail-a { background: #7dd3fc; }
 .cell.trail-b { background: #86efac; }
 .cell.trail-c { background: #fbcfe8; }
+.board.solved .cell.trail-a,
+.board.solved .cell.trail-b,
+.board.solved .cell.trail-c {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, .2);
+}
 .cell.goal {
   background: #e2e8f0;
   border: 5px solid var(--pink);
@@ -99,6 +105,9 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   border: 6px solid var(--pink);
   position: relative;
 }
+.ball.signal-1 { border-color: #0ea5e9; }
+.ball.signal-2 { border-color: #16a34a; }
+.ball.signal-3 { border-color: #db2777; }
 .ball.done {
   animation: ballDonePop 0.5s ease;
   border-color: #16a34a;
@@ -135,6 +144,10 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   font-family: "Consolas", "Courier New", monospace;
   font-size: clamp(16px, 1.9vw, 34px);
   line-height: 1.25;
+  max-height: min(55vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 8px;
 }
 .cmd-list .line {
   display: block;
@@ -142,6 +155,10 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
 }
 .cmd-list .kw-red {
   color: #8b1e1e;
+  font-weight: 800;
+}
+.cmd-list .kw-blue {
+  color: #1d4ed8;
   font-weight: 800;
 }
 .cmd-list .i0 { padding-left: 0; }
@@ -174,6 +191,8 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   margin-top: 16px;
   color: #334155;
   font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .actions {
   margin-top: 14px;
@@ -264,7 +283,7 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   .counter-bubble {
     min-width: 88px;
   }
-  .cell { width: 64px; height: 64px; }
+  .cell { width: var(--cell-size, 64px); height: var(--cell-size, 64px); }
   .ball { width: 24px; height: 24px; border-width: 5px; }
   .code-wrap { justify-content: flex-start; }
   .cmd-list { font-size: clamp(15px, 4.5vw, 28px); }
