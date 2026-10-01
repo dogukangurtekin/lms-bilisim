@@ -215,19 +215,8 @@
 
     let lastSessionId = null;
     let busy = false;
-    let pollingStopped = false;
-    let pollTimer = null;
-
-    const stopQuizPolling = () => {
-        pollingStopped = true;
-        if (pollTimer) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
-    };
 
     async function checkActiveQuiz() {
-        if (pollingStopped) return;
         if (busy) return;
         busy = true;
         try {
@@ -237,7 +226,6 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (response.status === 401 || response.status === 419) {
-                stopQuizPolling();
                 overlay.classList.remove('show');
                 return;
             }
@@ -268,10 +256,6 @@
     }
 
     checkActiveQuiz();
-    pollTimer = setInterval(checkActiveQuiz, 4000);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !pollingStopped) checkActiveQuiz();
-    });
 })();
 </script>
 @endif
@@ -624,45 +608,6 @@
 })();
 </script>
 @endif
-@auth
-<script>
-(() => {
-    // "Aktif Siniflar" widget'indeki "Cikis Yap" tetiklendiginde, sayfa
-    // yenilemesi/baska bir tikrama beklemeden ekranin ANINDA login'e
-    // dusmesi icin sik araliklarla hafif bir uc nokta yokluyoruz. Asil
-    // cikis mantigi sunucu tarafindaki CheckForcedLogout middleware'inde -
-    // force_logout_at isaretlenmisse bu istek zaten sunucu tarafindan
-    // /login'e yonlendiriliyor; fetch() bu yonlendirmeyi otomatik takip
-    // edip response.redirected=true olarak bildiriyor, biz de tum
-    // sayfayi login ekranina yonlendiriyoruz.
-    const heartbeatUrl = @json(route('session.heartbeat'));
-    const checkForcedLogout = async () => {
-        try {
-            const res = await fetch(heartbeatUrl, {
-                headers: { 'Accept': 'application/json' },
-                cache: 'no-store',
-                credentials: 'same-origin',
-            });
-            if (res.redirected) {
-                window.location.href = res.url;
-            }
-        } catch (_) { /* aginfi bir sorun varsa bir sonraki denemede tekrar denenecek */ }
-    };
-    // Mobil tarayicilar (ve arka plandaki/aktif olmayan masaustu sekmeleri)
-    // pil tasarrufu icin setInterval'i agresif sekilde yavaslatiyor/
-    // durduruyor - sadece interval'a guvenmek, telefon kilitliyken veya
-    // sekme arka plandayken kontrolun gecikmesine/hic calismamasina yol
-    // aciyordu. Bu yuzden sekme/telefon tekrar govrunur/odakli oldugu anda
-    // da AYRICA hemen bir kontrol tetikleniyor.
-    setInterval(checkForcedLogout, 4000);
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') checkForcedLogout();
-    });
-    window.addEventListener('focus', checkForcedLogout);
-    window.addEventListener('pageshow', checkForcedLogout);
-})();
-</script>
-@endauth
 @if(auth()->check() && auth()->user()?->hasRole('student'))
 <script>
 (() => {
