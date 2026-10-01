@@ -262,7 +262,11 @@ class CompetitionController extends Controller
                 'homework_id' => 'competition-' . $room->id,
                 'expires_at' => now()->addHours(6)->timestamp,
             ]);
-            $iframeSrc = url("/{$room->game_slug}?from={$room->level_from}&to={$room->level_to}");
+            $iframeSrc = url("/{$room->game_slug}") . '?' . http_build_query([
+                'from' => (int) $room->level_from,
+                'to' => (int) $room->level_to,
+                'assignmentId' => 'competition-' . $room->id,
+            ]);
         }
 
         return view('student-portal.competition-play', [
@@ -375,8 +379,10 @@ class CompetitionController extends Controller
             ->map(function ($p) use ($startedAtMs, $defaultAvatarUrl) {
                 $avatar = $p->studentUser?->student?->currentAvatar;
                 $finishedAtMs = $p->finished_at_ms !== null ? (int) $p->finished_at_ms : null;
-                $completedSeconds = ($finishedAtMs !== null && $startedAtMs > 0)
-                    ? max(0, (int) round(($finishedAtMs - $startedAtMs) / 1000))
+                $joinedAtMs = (int) ($p->joined_at_ms ?? 0);
+                $participantStartedAtMs = max($startedAtMs, $joinedAtMs);
+                $completedSeconds = ($finishedAtMs !== null && $participantStartedAtMs > 0)
+                    ? max(0, (int) round(($finishedAtMs - $participantStartedAtMs) / 1000))
                     : null;
 
                 return [

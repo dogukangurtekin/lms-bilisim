@@ -129,6 +129,7 @@
     if (status !== 'live') return;
 
     // --- Canli: sunucu saatiyle senkron sayac + kendi siralamam ----------
+    const levelStart = {{ (int) $room->level_from }};
     const totalLevels = Math.max(1, {{ (int) ($room->level_to - $room->level_from + 1) }});
     const durationMs = {{ (int) $room->duration_seconds * 1000 }};
     let endsAtMs = {{ (int) ($room->ends_at_ms ?? 0) }};
@@ -197,17 +198,21 @@
     const countedLevelIds = new Set();
 
     const computePercent = (payload) => {
-        const explicit = payload.progressPercent ?? payload.percent;
-        if (explicit !== undefined && explicit !== null && Number.isFinite(Number(explicit))) {
-            return Number(explicit);
+        const index = Number(payload.currentLevelIndex);
+        if (Number.isFinite(index)) {
+            const currentLevel = Math.floor(index) + 1;
+            const reachedLevels = Math.max(0, Math.min(totalLevels, currentLevel - levelStart + 1));
+            return Math.round((reachedLevels / totalLevels) * 100);
         }
-        const idx = Number(payload.currentLevelIndex ?? 0);
-        return Math.round(((idx + 1) / totalLevels) * 100);
+        const explicit = payload.progressPercent ?? payload.percent;
+        return Number.isFinite(Number(explicit)) ? Number(explicit) : 0;
     };
 
-    const sendProgress = (payload, force) => {
+    const sendProgress = (payload, force, rangeCompleted = false) => {
         const now = Date.now();
-        const pct = Math.max(0, Math.min(100, computePercent(payload)));
+        const pct = rangeCompleted
+            ? 100
+            : Math.max(0, Math.min(99, computePercent(payload)));
         if (!force && now - lastSentAt < 1500 && Math.abs(pct - lastSentPct) < 1) return;
         lastSentAt = now;
         lastSentPct = pct;
@@ -310,18 +315,18 @@
         if (!data || typeof data !== 'object') return;
         if (data.type === 'GAME_UPDATE') {
             sendProgress(data, false);
-        } else if (data.type === 'LEVEL_COMPLETED') {
-            const levelId = data.levelId ?? data.currentLevelIndex;
+        } else if (data.type === 'LEVEL_COMPLETED' || data.type === 'LINE_TRACE_LEVEL_COMPLETE') {
+            const currentLevelIndex = data.currentLevelIndex ?? (Number.isFinite(Number(data.level)) ? Number(data.level) - 1 : undefined);
+            const progressData = { ...data, currentLevelIndex };
+            const levelId = data.levelId ?? currentLevelIndex;
             if (levelId !== undefined && levelId !== null && !countedLevelIds.has(levelId)) {
                 countedLevelIds.add(levelId);
                 accumulatedXp += Math.max(0, Number(data.xp ?? 0));
             }
-            sendProgress(data, true);
+            sendProgress(progressData, true);
         } else if (data.type === 'ASSIGNMENT_RANGE_COMPLETED') {
-            // Oyunun kendi hesapladigi kumulatif toplam ile senkronla (en guvenilir kaynak).
-            if (Number.isFinite(Number(data.xp))) accumulatedXp = Math.max(accumulatedXp, Number(data.xp));
             if (xpEl) xpEl.textContent = String(accumulatedXp);
-            sendProgress({ ...data, progressPercent: 100 }, true);
+            sendProgress(data, true, true);
             showDoneStage();
         }
     });

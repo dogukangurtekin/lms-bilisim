@@ -22,6 +22,9 @@
     const codeGutter = document.getElementById('bgCodeGutter');
 
     const STORAGE_KEY = 'bee_garden_progress_v1';
+    const query = new URLSearchParams(window.location.search);
+    const competitionId = query.get('assignmentId') || '';
+    const competitionMode = /^competition-\d+$/.test(competitionId);
 
     // Blockly/Scratch tarzı blok parçalarının kural kategorisine göre rengi.
     const PROP_COLORS = {
@@ -233,7 +236,17 @@
         },
     ];
 
-    let currentLevelIndex = 0;
+    const requestedStart = Math.floor(Number(query.get('from') || 1));
+    const requestedEnd = Math.floor(Number(query.get('to') || LEVELS.length));
+    const competitionStartIndex = competitionMode
+        ? Math.max(0, Math.min(LEVELS.length - 1, requestedStart - 1))
+        : 0;
+    const competitionEndIndex = competitionMode
+        ? Math.max(competitionStartIndex, Math.min(LEVELS.length - 1, requestedEnd - 1))
+        : LEVELS.length - 1;
+    let currentLevelIndex = competitionStartIndex;
+    let levelStartedAt = Date.now();
+    let rangeCompletionSent = false;
     let currentState = {};
     let currentTargetBee = 1;
     let currentTargets = [];
@@ -382,10 +395,31 @@
         if (solvedForLevel) return;
         solvedForLevel = true;
         winToastEl.classList.add('show');
+        if (competitionMode) {
+            const level = LEVELS[currentLevelIndex];
+            const levelXp = Math.max(0, Number(level?.xp ?? 0));
+            window.parent?.postMessage({
+                type: 'LEVEL_COMPLETED',
+                source: 'bee-garden-runner',
+                levelId: currentLevelIndex + 1,
+                currentLevelIndex,
+                xp: levelXp,
+                duration: Math.max(0, Date.now() - levelStartedAt),
+            }, '*');
+            if (currentLevelIndex >= competitionEndIndex && !rangeCompletionSent) {
+                rangeCompletionSent = true;
+                window.parent?.postMessage({
+                    type: 'ASSIGNMENT_RANGE_COMPLETED',
+                    source: 'bee-garden-runner',
+                    currentLevelIndex,
+                    xp: 0,
+                }, '*');
+            }
+        }
         saveProgress(Math.min(LEVELS.length - 1, currentLevelIndex + 1));
         updateNav();
         setTimeout(() => {
-            if (currentLevelIndex < LEVELS.length - 1) {
+            if (currentLevelIndex < competitionEndIndex) {
                 goToLevel(currentLevelIndex + 1);
             }
         }, 1400);
@@ -674,12 +708,13 @@
     function updateNav() {
         const unlockedIndex = loadProgress();
         levelLabelEl.textContent = 'Seviye ' + (currentLevelIndex + 1) + ' / ' + LEVELS.length;
-        prevBtn.disabled = currentLevelIndex <= 0;
-        nextBtn.disabled = currentLevelIndex >= unlockedIndex;
+        prevBtn.disabled = currentLevelIndex <= competitionStartIndex;
+        nextBtn.disabled = currentLevelIndex >= Math.min(unlockedIndex, competitionEndIndex);
     }
 
     function goToLevel(index, forceReset) {
-        currentLevelIndex = Math.max(0, Math.min(LEVELS.length - 1, index));
+        currentLevelIndex = Math.max(competitionStartIndex, Math.min(competitionEndIndex, index));
+        levelStartedAt = Date.now();
         const level = LEVELS[currentLevelIndex];
         solvedForLevel = false;
         winToastEl.classList.remove('show');
@@ -714,7 +749,7 @@
     prevBtn.addEventListener('click', () => goToLevel(currentLevelIndex - 1));
     nextBtn.addEventListener('click', () => {
         const unlockedIndex = loadProgress();
-        if (currentLevelIndex < unlockedIndex) goToLevel(currentLevelIndex + 1);
+        if (currentLevelIndex < Math.min(unlockedIndex, competitionEndIndex)) goToLevel(currentLevelIndex + 1);
     });
 
     window.addEventListener('resize', () => {
@@ -723,7 +758,7 @@
         checkSolved();
     });
 
-    goToLevel(loadProgress());
+    goToLevel(competitionMode ? competitionStartIndex : loadProgress());
 
     // Açılış tanıtım kutusu: oyun her açıldığında animasyonlu şekilde belirir
     // ve kullanıcı "Anladım, Başla!" demeden altındaki oyunla etkileşime
