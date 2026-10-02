@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Services\LessonPresentation\SlidePresentationService;
 use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class TeacherAssignmentController extends Controller
@@ -20,6 +21,29 @@ class TeacherAssignmentController extends Controller
     {
     }
 
+    private function assignedClassIds(): ?array
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('admin')) {
+            return null;
+        }
+
+        $teacher = $user?->teacher;
+        abort_unless($user?->hasRole('teacher') && $teacher, 403);
+
+        return $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    private function classIdRule(?array $assignedClassIds): array
+    {
+        $rule = Rule::exists('school_classes', 'id');
+        if ($assignedClassIds !== null) {
+            $rule->whereIn('id', $assignedClassIds);
+        }
+
+        return ['integer', $rule];
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -28,7 +52,8 @@ class TeacherAssignmentController extends Controller
         $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($user?->hasRole('admin') ? 'admin' : 'teacher');
         $courseHomeworksQuery = CourseHomework::with(['course', 'schoolClass']);
         if ($user?->hasRole('teacher')) {
-            $courseHomeworksQuery->where(function ($query) use ($teacherId, $user): void {
+            $courseHomeworksQuery->where('created_by', (int) $user->id)
+                ->where(function ($query) use ($teacherId, $user): void {
                 $query->where(function ($lessonQuery) use ($teacherId): void {
                     $lessonQuery->where('assignment_type', 'lesson')
                         ->whereNotNull('course_id')
@@ -54,20 +79,26 @@ class TeacherAssignmentController extends Controller
             })
             ->latest()
             ->paginate(20, ['*'], 'game_page');
-        $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $assignedClassIds = $this->assignedClassIds();
+        $classes = SchoolClass::query()
+            ->when($assignedClassIds !== null, fn ($query) => $query->whereIn('id', $assignedClassIds))
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
 
         return view('teacher-assignments.index', compact('courseHomeworks', 'gameAssignments', 'classes', 'ownerFilter'));
     }
 
     public function storeHomework(Request $request)
     {
+        $assignedClassIds = $this->assignedClassIds();
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'details' => ['nullable', 'string'],
             'due_date' => ['nullable', 'date', 'after_or_equal:today'],
             'all_classes' => ['nullable', 'boolean'],
             'class_ids' => ['nullable', 'array'],
-            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+            'class_ids.*' => $this->classIdRule($assignedClassIds),
             'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,webp', 'max:10240'],
         ]);
 
@@ -81,7 +112,7 @@ class TeacherAssignmentController extends Controller
 
         $allClasses = filter_var($request->input('all_classes', false), FILTER_VALIDATE_BOOL);
         $targetClassIds = $allClasses
-            ? SchoolClass::query()->pluck('id')->all()
+            ? ($assignedClassIds ?? SchoolClass::query()->pluck('id')->map(fn ($id) => (int) $id)->all())
             : array_values(array_unique(array_map('intval', (array) ($validated['class_ids'] ?? []))));
 
         if ($targetClassIds === []) {
@@ -191,7 +222,12 @@ class TeacherAssignmentController extends Controller
             abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
         }
 
-        $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $assignedClassIds = $this->assignedClassIds();
+        $classes = SchoolClass::query()
+            ->when($assignedClassIds !== null, fn ($query) => $query->whereIn('id', $assignedClassIds))
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
         $games = ActivityController::games();
         return view('teacher-assignments.edit-course-homework', compact('homework', 'classes', 'games'));
     }
@@ -204,11 +240,12 @@ class TeacherAssignmentController extends Controller
             abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
         }
 
+        $assignedClassIds = $this->assignedClassIds();
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'details' => ['nullable', 'string'],
             'due_date' => ['nullable', 'date'],
-            'school_class_id' => ['required', 'integer', 'exists:school_classes,id'],
+            'school_class_id' => ['required', ...$this->classIdRule($assignedClassIds)],
             'assignment_type' => ['required', 'in:lesson,game,application,homework'],
             'target_slug' => ['nullable', 'string', 'max:120'],
             'level_from' => ['nullable', 'integer', 'min:1'],
@@ -285,19 +322,25 @@ class TeacherAssignmentController extends Controller
 
     public function editGameAssignment(GameAssignment $assignment)
     {
-        $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $assignedClassIds = $this->assignedClassIds();
+        $classes = SchoolClass::query()
+            ->when($assignedClassIds !== null, fn ($query) => $query->whereIn('id', $assignedClassIds))
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
         return view('teacher-assignments.edit-game-assignment', compact('assignment', 'classes'));
     }
 
     public function updateGameAssignment(Request $request, GameAssignment $assignment)
     {
+        $assignedClassIds = $this->assignedClassIds();
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'due_date' => ['required', 'date'],
             'level_from' => ['required', 'integer', 'min:1', 'max:999'],
             'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
-            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+            'class_ids.*' => $this->classIdRule($assignedClassIds),
         ], [
             'title.required' => 'Odev adi zorunludur.',
             'due_date.required' => 'Odev teslim tarihi zorunludur.',

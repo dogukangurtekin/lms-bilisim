@@ -39,7 +39,11 @@ class GameAssignmentController extends Controller
         $ownerFilter = (string) request()->query('owner', $isAdmin ? 'admin' : 'teacher');
         $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($isAdmin ? 'admin' : 'teacher');
         $classFilterId = (int) request()->query('class_id', 0);
-        $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $classesQuery = SchoolClass::query();
+        if ($isTeacher) {
+            $classesQuery->where('teacher_id', $user->teacher->id);
+        }
+        $classes = $classesQuery->orderBy('name')->orderBy('section')->get();
         $recentAssignments = GameAssignment::with(['classes', 'levels', 'creator.role'])
             ->where('game_slug', $gameSlug)
             ->when(! $isAdmin, function ($query) use ($user) {
@@ -93,13 +97,18 @@ class GameAssignmentController extends Controller
         $games = ActivityController::games();
         abort_unless(isset($games[$gameSlug]), 404);
 
+        $classIdRule = Rule::exists('school_classes', 'id');
+        if ($isTeacher) {
+            $classIdRule->where('teacher_id', $user->teacher->id);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:150'],
             'due_date' => ['required', 'date', 'after_or_equal:today'],
             'level_from' => ['required', 'integer', 'min:1', 'max:999'],
             'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
-            'class_ids.*' => ['integer', Rule::exists('school_classes', 'id')],
+            'class_ids.*' => ['integer', $classIdRule],
         ], [
             'title.required' => 'Ödev adı zorunludur.',
             'due_date.required' => 'Ödev teslim tarihi zorunludur.',

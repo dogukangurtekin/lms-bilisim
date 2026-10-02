@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CourseHomeworkController extends Controller
 {
@@ -16,9 +17,27 @@ class CourseHomeworkController extends Controller
     {
     }
 
+    private function assignedClassIds(): ?array
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('admin')) {
+            return null;
+        }
+
+        $teacher = $user?->teacher;
+        abort_unless($user?->hasRole('teacher') && $teacher, 403);
+
+        return $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all();
+    }
+
     public function create(Course $course)
     {
-        $classes = SchoolClass::orderBy('name')->orderBy('section')->get();
+        $assignedClassIds = $this->assignedClassIds();
+        $classes = SchoolClass::query()
+            ->when($assignedClassIds !== null, fn ($query) => $query->whereIn('id', $assignedClassIds))
+            ->orderBy('name')
+            ->orderBy('section')
+            ->get();
         $homeworks = CourseHomework::with('schoolClass')->where('course_id', $course->id)->latest()->limit(20)->get();
         $games = ActivityController::games();
 
@@ -27,12 +46,18 @@ class CourseHomeworkController extends Controller
 
     public function store(Request $request, Course $course)
     {
+        $assignedClassIds = $this->assignedClassIds();
+        $classIdRule = Rule::exists('school_classes', 'id');
+        if ($assignedClassIds !== null) {
+            $classIdRule->whereIn('id', $assignedClassIds);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
             'details' => ['nullable', 'string'],
             'due_date' => ['nullable', 'date', 'after_or_equal:today'],
             'class_ids' => ['required', 'array', 'min:1'],
-            'class_ids.*' => ['integer', 'exists:school_classes,id'],
+            'class_ids.*' => ['integer', $classIdRule],
             'assignment_type' => ['required', 'in:lesson,game,application'],
             'target_slug' => ['nullable', 'string', 'max:120'],
             'level_from' => ['nullable', 'integer', 'min:1'],

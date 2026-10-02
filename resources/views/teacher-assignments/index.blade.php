@@ -127,7 +127,7 @@
             <label>Sınıf / Şube</label>
             <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
                 <input type="checkbox" id="all_classes_toggle" name="all_classes" value="1" @checked(old('all_classes')) style="width:auto;margin:0">
-                <span>Tüm Sınıflara Ver</span>
+                <span>{{ auth()->user()?->hasRole('teacher') ? 'Tüm Atandığım Sınıflara Ver' : 'Tüm Sınıflara Ver' }}</span>
             </label>
             @php $oldClassIds = collect(old('class_ids', []))->map(fn ($id) => (int) $id)->all(); @endphp
             <select name="class_ids[]" id="homework_class_ids" multiple size="8" style="min-height:180px" @disabled(old('all_classes'))>
@@ -135,7 +135,7 @@
                     <option value="{{ $class->id }}" @selected(in_array((int) $class->id, $oldClassIds, true))>{{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}</option>
                 @endforeach
             </select>
-            <small style="display:block;color:#6b7280;margin-top:-6px;margin-bottom:10px">Tek, çoklu veya tüm sınıfları seçebilirsiniz.</small>
+            <small style="display:block;color:#6b7280;margin-top:-6px;margin-bottom:10px">Tek, çoklu veya {{ auth()->user()?->hasRole('teacher') ? 'atanmış olduğunuz tüm sınıfları' : 'tüm sınıfları' }} seçebilirsiniz.</small>
 
             <label>Son Teslim Tarihi</label>
             <input type="date" name="due_date" value="{{ old('due_date') }}">
