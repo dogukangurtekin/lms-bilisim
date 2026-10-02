@@ -1041,7 +1041,7 @@
     return { lines, stepToLine };
   }
 
-  function buildCampaignBoardColors(size, seed, start, goal, signalColor) {
+  function buildCampaignBoardColors(size, seed) {
     const random = createSeededRandom(seed);
     const colors = {};
     for (let y = 0; y < size; y++) {
@@ -1049,8 +1049,6 @@
         colors[keyXY(x, y)] = 1 + Math.floor(random() * 3);
       }
     }
-    colors[keyXY(start[0], start[1])] = signalColor;
-    colors[keyXY(goal[0], goal[1])] = (signalColor % 3) + 1;
     return colors;
   }
 
@@ -1065,12 +1063,13 @@
     const secondary = phase > 0
       ? buildCampaignPath(start, size, Math.max(5, stepCount - 1 + (id % 3)), seed ^ 0x9e3779b9)
       : null;
+    const boardColors = buildCampaignBoardColors(size, seed ^ 0x85ebca6b);
     const useColorCondition = phase >= 3 || (phase === 2 && id % 2 === 0);
     const condition = phase > 0
       ? { var: useColorCondition ? "color" : "A", op: "==", value: 0 }
       : null;
     const aValue = 2 + (id % 9);
-    const signalColor = 1 + (id % 3);
+    const signalColor = boardColors[keyXY(start[0], start[1])];
     const wantsTrue = id % 2 === 0;
 
     if (condition?.var === "color") {
@@ -1084,7 +1083,6 @@
       ? signalColor === condition.value
       : !condition || (condition.op === ">=" ? aValue >= condition.value : aValue === condition.value);
     const activePath = conditionMatches ? primary : (secondary || primary);
-    const boardColors = buildCampaignBoardColors(size, seed ^ 0x85ebca6b, start, activePath.goal, signalColor);
     const nestedLoops = phase >= 2;
     let codeLines;
     let stepToLine;
@@ -1160,6 +1158,25 @@
     campaignColorSignatures.add(signature);
   });
   defaultLevels.push(...campaignLevels);
+  function ensureRandomBoardColors(level, index) {
+    const size = Math.max(1, toInt(level.size, 1));
+    if (!level.boardColors) {
+      level.boardColors = buildCampaignBoardColors(
+        size,
+        (Number(level.id || index + 1) * 7919 + 104729) >>> 0
+      );
+    }
+    level.hideSolutionTrail = true;
+    level.signalColor = Number(level.boardColors[keyXY(level.start[0], level.start[1])]);
+    return level;
+  }
+
+  defaultLevels.forEach((level, index) => {
+    ensureRandomBoardColors(level, index);
+  });
+  if (defaultLevels.length !== 300) {
+    throw new Error(`Compute It seviye sayısı 300 değil: ${defaultLevels.length}`);
+  }
 
   let levels = defaultLevels.map((l) => ({ ...l }));
   let levelIndex = 0;
@@ -1712,14 +1729,17 @@
         const id = Number(l.id);
         if (!Number.isFinite(id)) return;
         const fallback = defaultsById.get(id) || null;
-        const candidate = { ...l };
-        byId.set(id, simulateLevel(candidate) ? candidate : (fallback || candidate));
+        const candidate = ensureRandomBoardColors({ ...(fallback || {}), ...l }, id - 1);
+        const safeFallback = fallback ? ensureRandomBoardColors({ ...fallback }, id - 1) : null;
+        byId.set(id, simulateLevel(candidate) ? candidate : (safeFallback || candidate));
       });
       defaultLevels.forEach((d) => {
         const id = Number(d.id);
         if (!byId.has(id)) byId.set(id, { ...d });
       });
-      levels = Array.from(byId.values()).sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+      levels = Array.from(byId.values())
+        .sort((a, b) => Number(a.id || 0) - Number(b.id || 0))
+        .map((level, index) => ensureRandomBoardColors(level, index));
       enforceAssignmentSlice();
       completed = new Set(levels.filter((l) => !!l.completed).map((l) => Number(l.id)));
       loadLevel(toInt(data.currentLevelIndex, 0));
