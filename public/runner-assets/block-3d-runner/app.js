@@ -291,7 +291,7 @@ function buildTrees(seed, reservedCells, treeCount) {
       const key = `${x},${y}`;
       if (reservedCells.has(key)) continue;
       const score = (x * 3 + y * 11 + seed * 5) % 13;
-      if (score <= 2) {
+      if (score <= 4) {
         out.push({ x, y });
         reservedCells.add(key);
         if (out.length >= treeCount) return out;
@@ -321,53 +321,33 @@ function createLevel(name, start, goal, seed, obstacleCount, treeCount, xpValue 
   };
 }
 
-function createBandLevels(label, goals, start, obstacleBase, treeBase, seedBase, bandXp = DEFAULT_LEVEL_XP) {
-  const out = [];
-  for (let i = 0; i < 5; i++) {
-    out.push(
-      createLevel(
-        `${label} ${i + 1}`,
-        start,
-        goals[i],
-        seedBase + i * 7,
-        obstacleBase + i,
-        treeBase + (i % 3),
-        bandXp
-      )
-    );
-  }
-  return out;
-}
-
-const BASE_LEVELS = [
-  ...createBandLevels(
-    "Kolay",
-    [{ x: 5, y: 4 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 7, y: 3 }, { x: 7, y: 2 }],
-    { x: 1, y: 8, dir: 0 },
-    6,
-    5,
-    10,
-    EASY_LEVEL_XP
-  ),
-  ...createBandLevels(
-    "Orta",
-    [{ x: 6, y: 3 }, { x: 7, y: 3 }, { x: 7, y: 2 }, { x: 8, y: 2 }, { x: 8, y: 1 }],
-    { x: 0, y: 9, dir: 0 },
-    10,
-    6,
-    100,
-    MEDIUM_LEVEL_XP
-  ),
-  ...createBandLevels(
-    "Zor",
-    [{ x: 7, y: 2 }, { x: 8, y: 2 }, { x: 8, y: 1 }, { x: 9, y: 1 }, { x: 9, y: 0 }],
-    { x: 0, y: 9, dir: 0 },
-    14,
-    7,
-    200,
-    HARD_LEVEL_XP
-  )
+const BASE_LEVEL_SPECS = [
+  { group: "Kolay", start: { x: 1, y: 8, dir: 0 }, goal: { x: 4, y: 8 }, obstacles: 3, trees: 1, xp: EASY_LEVEL_XP },
+  { group: "Kolay", start: { x: 8, y: 8, dir: 3 }, goal: { x: 8, y: 4 }, obstacles: 5, trees: 2, xp: EASY_LEVEL_XP },
+  { group: "Kolay", start: { x: 1, y: 1, dir: 0 }, goal: { x: 6, y: 1 }, obstacles: 7, trees: 3, xp: EASY_LEVEL_XP },
+  { group: "Kolay", start: { x: 1, y: 8, dir: 3 }, goal: { x: 1, y: 2 }, obstacles: 9, trees: 4, xp: EASY_LEVEL_XP },
+  { group: "Kolay", start: { x: 1, y: 1, dir: 0 }, goal: { x: 8, y: 1 }, obstacles: 11, trees: 5, xp: EASY_LEVEL_XP },
+  { group: "Orta", start: { x: 0, y: 9, dir: 0 }, goal: { x: 7, y: 8 }, obstacles: 13, trees: 6, xp: MEDIUM_LEVEL_XP },
+  { group: "Orta", start: { x: 9, y: 9, dir: 3 }, goal: { x: 5, y: 4 }, obstacles: 15, trees: 7, xp: MEDIUM_LEVEL_XP },
+  { group: "Orta", start: { x: 0, y: 0, dir: 0 }, goal: { x: 6, y: 4 }, obstacles: 17, trees: 8, xp: MEDIUM_LEVEL_XP },
+  { group: "Orta", start: { x: 0, y: 9, dir: 1 }, goal: { x: 6, y: 4 }, obstacles: 19, trees: 9, xp: MEDIUM_LEVEL_XP },
+  { group: "Orta", start: { x: 9, y: 0, dir: 2 }, goal: { x: 3, y: 6 }, obstacles: 21, trees: 10, xp: MEDIUM_LEVEL_XP },
+  { group: "Zor", start: { x: 0, y: 0, dir: 0 }, goal: { x: 7, y: 6 }, obstacles: 23, trees: 11, xp: HARD_LEVEL_XP },
+  { group: "Zor", start: { x: 9, y: 9, dir: 2 }, goal: { x: 1, y: 3 }, obstacles: 25, trees: 12, xp: HARD_LEVEL_XP },
+  { group: "Zor", start: { x: 0, y: 9, dir: 1 }, goal: { x: 8, y: 2 }, obstacles: 27, trees: 13, xp: HARD_LEVEL_XP },
+  { group: "Zor", start: { x: 9, y: 0, dir: 2 }, goal: { x: 1, y: 8 }, obstacles: 29, trees: 14, xp: HARD_LEVEL_XP },
+  { group: "Zor", start: { x: 0, y: 0, dir: 0 }, goal: { x: 9, y: 8 }, obstacles: 31, trees: 15, xp: HARD_LEVEL_XP },
 ];
+
+const BASE_LEVELS = BASE_LEVEL_SPECS.map((spec, index) => createLevel(
+  `${spec.group} ${index % 5 + 1}`,
+  spec.start,
+  spec.goal,
+  23 + (index * 37),
+  spec.obstacles,
+  spec.trees,
+  spec.xp
+));
 
 function normalizeLevel(raw, fallbackId) {
   const w = Math.max(4, Math.min(20, Number(raw?.gridWidth || raw?.gridSize || DEFAULT_GRID_SIZE)));
