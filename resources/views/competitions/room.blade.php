@@ -7,15 +7,22 @@
 .comp-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .comp-big-clock{font-size:34px;font-weight:800;color:#1e293b}
 .comp-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
-.comp-rank-row{display:grid;grid-template-columns:40px 36px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:#f8fafc;margin-bottom:6px;will-change:transform;border-left:4px solid transparent}
+.comp-student-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-content:start;justify-items:stretch}
+.comp-rank-row{display:grid;grid-template-columns:26px 32px minmax(0,1fr);grid-template-rows:auto auto;gap:5px 6px;align-items:center;align-content:start;min-width:0;padding:8px;border-radius:10px;background:#f8fafc;will-change:transform;border-left:3px solid transparent}
 .comp-rank-row.leader{border-left-color:#f59e0b}
 .comp-rank-row .comp-rank-no{font-weight:900;color:#64748b}
 .comp-rank-row.leader .comp-rank-no{color:#b45309}
-.comp-rank-avatar{width:36px;height:36px;border-radius:8px;object-fit:cover;background:#e2e8f0}
+.comp-rank-avatar{grid-column:2;grid-row:1;width:32px;height:32px;border-radius:8px;object-fit:cover;background:#e2e8f0}
 .comp-rank-avatar.empty{display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8}
+.comp-rank-name{grid-column:3;grid-row:1;min-width:0;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
+.comp-rank-status{grid-column:2 / 4;grid-row:2;color:#64748b;font-size:11px;line-height:1.25;overflow-wrap:anywhere}
 .comp-rank-row.status-green{background:#dcfce7}
 .comp-rank-row.status-orange{background:#ffedd5}
 .comp-rank-row.status-red{background:#fee2e2}
+@media(max-width:1100px){.comp-student-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:800px){.comp-student-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.comp-student-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.comp-rank-row{padding:6px}}
+@media(max-width:360px){.comp-student-grid{grid-template-columns:minmax(0,1fr)}}
 </style>
 <div class="modal" id="compDeleteModal">
     <div class="modal-card">
@@ -47,7 +54,7 @@
 </div>
 <div class="card">
     <h3>Katılan Öğrenciler <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
-    <div id="compLeaderboard">
+    <div id="compLeaderboard" class="comp-student-grid">
         @forelse($rows as $row)
             <div class="comp-rank-row" data-student="{{ $row['student_user_id'] }}">
                 <div class="comp-rank-no">•</div>
@@ -56,8 +63,8 @@
                 @else
                     <div class="comp-rank-avatar empty">?</div>
                 @endif
-                <div>{{ $row['name'] }}</div>
-                <div style="color:#64748b;font-size:13px">Bekliyor</div>
+                <div class="comp-rank-name">{{ $row['name'] }}</div>
+                <div class="comp-rank-status">Bekliyor</div>
             </div>
         @empty
             <p style="color:#64748b">Henüz katılan öğrenci yok.</p>
@@ -88,7 +95,7 @@
 
 <div class="card">
     <h3>Canlı Sıralama <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
-    <div id="compLeaderboard">
+    <div id="compLeaderboard" class="comp-student-grid">
         @forelse($rows as $i => $row)
             @php($statusClass = $row['finished'] ? 'status-green' : ($row['progress_percent'] >= 50 ? 'status-orange' : 'status-red'))
             <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }} {{ $statusClass }}" data-student="{{ $row['student_user_id'] }}">
@@ -98,8 +105,8 @@
                 @else
                     <div class="comp-rank-avatar empty">?</div>
                 @endif
-                <div>{{ $row['name'] }}</div>
-                <div>%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['completed_seconds'] !== null ? ' — '.$row['completed_seconds'].' sn' : '' }}{{ $row['finished'] ? ' ✅' : '' }}</div>
+                <div class="comp-rank-name">{{ $row['name'] }}</div>
+                <div class="comp-rank-status">%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['completed_seconds'] !== null ? ' — '.$row['completed_seconds'].' sn' : '' }}{{ $row['finished'] ? ' ✅' : '' }}</div>
             </div>
         @empty
             <p style="color:#64748b">Henüz ilerleme verisi yok.</p>
@@ -214,8 +221,8 @@
                 el.innerHTML = `
                     <div class="comp-rank-no">•</div>
                     ${avatarHtml}
-                    <div>${row.name}</div>
-                    <div style="color:#64748b;font-size:13px">Bekliyor</div>
+                    <div class="comp-rank-name">${row.name}</div>
+                    <div class="comp-rank-status">Bekliyor</div>
                 `;
             } else {
                 el.classList.toggle('leader', i === 0);
@@ -225,8 +232,8 @@
                 el.innerHTML = `
                     <div class="comp-rank-no">#${i + 1}</div>
                     ${avatarHtml}
-                    <div>${row.name}</div>
-                    <div>%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${timeSuffix}${row.finished ? ' ✅' : ''}</div>
+                    <div class="comp-rank-name">${row.name}</div>
+                    <div class="comp-rank-status">%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${timeSuffix}${row.finished ? ' ✅' : ''}</div>
                 `;
             }
             el.dataset.duration = String(durationMs);
