@@ -870,8 +870,24 @@
     const listEl = document.getElementById('active-classes-list');
     if (!listEl) return;
     const activeClassesUrl = @json(route('dashboard.active-classes'));
+    const activeStudentsUrlTemplate = @json(route('dashboard.class.active-students', ['class' => '__CLASS_ID__']));
+    const studentLogoutUrlTemplate = @json(route('dashboard.student.force-logout', ['class' => '__CLASS_ID__', 'student' => '__STUDENT_ID__']));
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const modal = document.getElementById('active-class-logout-modal');
+    const studentsModal = document.getElementById('active-class-students-modal');
+    // Onay pop-up'i, ogrenci listesi pop-up'inin (ve tum widget'larin) arkasinda
+    // kaliyordu: ikisi de ayni stacking context icinde oldugu icin DOM'da sonra
+    // gelen ogrenci listesi pop-up'i uste cikiyordu. Bu yuzden ikisi de body'ye
+    // tasinir ve onay pop-up'i her zaman daha yuksek z-index alir.
+    const STUDENTS_MODAL_Z = 10000;
+    const CONFIRM_MODAL_Z = 10010;
+    const bringToFront = (el, zIndex) => {
+        if (!el) return;
+        if (el.parentElement !== document.body) document.body.appendChild(el);
+        el.style.zIndex = String(zIndex);
+    };
+    bringToFront(studentsModal, STUDENTS_MODAL_Z);
+    bringToFront(modal, CONFIRM_MODAL_Z);
     const modalTitle = document.getElementById('active-class-logout-title');
     const modalText = document.getElementById('active-class-logout-text');
     const cancelBtn = document.getElementById('active-class-logout-cancel');
@@ -886,7 +902,6 @@
     cancelBtn?.addEventListener('click', closeModal);
     modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-    const studentsModal = document.getElementById('active-class-students-modal');
     const studentsTitle = document.getElementById('active-class-students-title');
     const studentsList = document.getElementById('active-class-students-list');
     const studentsCloseBtn = document.getElementById('active-class-students-close');
@@ -907,7 +922,8 @@
         if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#64748b;font-size:13px;">Yükleniyor...</p>';
         studentsModal?.classList.add('open');
         try {
-            const res = await fetch(`/dashboard/sinif/${classId}/aktif-ogrenciler`, { headers: { 'Accept': 'application/json' } });
+            const studentsUrl = activeStudentsUrlTemplate.replace('__CLASS_ID__', encodeURIComponent(classId));
+            const res = await fetch(studentsUrl, { headers: { 'Accept': 'application/json' } });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#dc2626;font-size:13px;">Liste yüklenemedi.</p>';
@@ -939,6 +955,8 @@
                         };
                         if (modalTitle) modalTitle.textContent = 'Öğrenciden Çıkış Yaptır';
                         if (modalText) modalText.textContent = `${button.dataset.studentName} öğrencisinin oturumu kapatılacak. Emin misiniz?`;
+                        bringToFront(studentsModal, STUDENTS_MODAL_Z);
+                        bringToFront(modal, CONFIRM_MODAL_Z);
                         modal?.classList.add('open');
                     });
                 });
@@ -974,6 +992,8 @@
                 };
                 if (modalTitle) modalTitle.textContent = 'Sınıftan Çıkış Yaptır';
                 if (modalText) modalText.textContent = `${btn.dataset.className} sınıfındaki tüm öğrenci hesaplarından şu an çıkış yaptırılacak. Diğer sınıflar etkilenmez. Emin misiniz?`;
+                bringToFront(studentsModal, STUDENTS_MODAL_Z);
+                bringToFront(modal, CONFIRM_MODAL_Z);
                 modal?.classList.add('open');
             });
         });
@@ -1000,8 +1020,11 @@
         confirmBtn.disabled = true;
         try {
             const endpoint = action.type === 'student'
-                ? `/dashboard/sinif/${action.classId}/ogrenci/${action.studentId}/oturum-kapat`
-                : `/dashboard/sinif/${action.classId}/oturumlari-kapat`;
+                ? studentLogoutUrlTemplate
+                    .replace('__CLASS_ID__', encodeURIComponent(action.classId))
+                    .replace('__STUDENT_ID__', encodeURIComponent(action.studentId))
+                : @json(route('dashboard.class.force-logout', ['class' => '__CLASS_ID__']))
+                    .replace('__CLASS_ID__', encodeURIComponent(action.classId));
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
