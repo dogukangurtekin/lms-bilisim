@@ -51,6 +51,17 @@ class TeacherAssignmentController extends Controller
         $ownerFilter = (string) request()->query('owner', $user?->hasRole('admin') ? 'admin' : 'teacher');
         $ownerFilter = in_array($ownerFilter, ['admin', 'teacher', 'all'], true) ? $ownerFilter : ($user?->hasRole('admin') ? 'admin' : 'teacher');
         $courseHomeworksQuery = CourseHomework::with(['course', 'schoolClass']);
+        // Admin, ders ödevlerini de aynı "Gösterim Filtresi" ile (admin/öğretmen/tüm)
+        // süzebilir - tıpkı Oyun ve Uygulama ödevlerindeki gibi.
+        if ($user?->hasRole('admin')) {
+            $courseHomeworksQuery
+                ->when($ownerFilter === 'admin', function ($query) {
+                    $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'admin'));
+                })
+                ->when($ownerFilter === 'teacher', function ($query) {
+                    $query->whereHas('creator.role', fn ($roleQuery) => $roleQuery->where('slug', 'teacher'));
+                });
+        }
         if ($user?->hasRole('teacher')) {
             $courseHomeworksQuery->where('created_by', (int) $user->id)
                 ->where(function ($query) use ($teacherId, $user): void {

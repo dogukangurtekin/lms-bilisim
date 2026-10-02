@@ -6,6 +6,26 @@
     <button class="btn" type="button" data-open-modal="homework-create-modal">Ödev Ver</button>
 </div>
 
+@php
+    $ownerFilter = $ownerFilter ?? (auth()->user()?->hasRole('admin') ? 'admin' : 'teacher');
+    $isAdmin = auth()->user()?->hasRole('admin') === true;
+@endphp
+@if($isAdmin)
+    <div class="card">
+        <form method="GET" action="{{ route('teacher.assignments.index') }}" style="margin:0;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+            <div>
+                <label style="display:block;margin-bottom:6px;font-weight:700;">Gösterim Filtresi</label>
+                <select name="owner" onchange="this.form.submit()" style="min-width:240px;height:42px;padding:0 12px;border:1px solid #cfd8e3;border-radius:12px;background:#fff;">
+                    <option value="admin" @selected($ownerFilter === 'admin')>Admin ödevleri</option>
+                    <option value="teacher" @selected($ownerFilter === 'teacher')>Öğretmen ödevleri</option>
+                    <option value="all" @selected($ownerFilter === 'all')>Tüm ödevler</option>
+                </select>
+            </div>
+            <small style="color:#6b7280;max-width:460px;">Hem "ÖDEV" (ders ödevleri) hem "Oyun ve Uygulama Ödevleri" tablosunu süzer.</small>
+        </form>
+    </div>
+@endif
+
 <div class="card">
     <h3>ÖDEV</h3>
     @php
@@ -69,22 +89,6 @@
 
 <div class="card">
     <h3>Oyun ve Uygulama Ödevleri</h3>
-    @php
-        $ownerFilter = $ownerFilter ?? (auth()->user()?->hasRole('admin') ? 'admin' : 'teacher');
-        $isAdmin = auth()->user()?->hasRole('admin') === true;
-    @endphp
-    @if($isAdmin)
-        <form method="GET" action="{{ route('teacher.assignments.index') }}" style="margin:0 0 12px;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
-            <div>
-                <label style="display:block;margin-bottom:6px;font-weight:700;">Gösterim Filtresi</label>
-                <select name="owner" onchange="this.form.submit()" style="min-width:240px;height:42px;padding:0 12px;border:1px solid #cfd8e3;border-radius:12px;background:#fff;">
-                    <option value="admin" @selected($ownerFilter === 'admin')>Admin ödevleri</option>
-                    <option value="teacher" @selected($ownerFilter === 'teacher')>Öğretmen ödevleri</option>
-                    <option value="all" @selected($ownerFilter === 'all')>Tüm ödevler</option>
-                </select>
-            </div>
-        </form>
-    @endif
     <table>
         <thead><tr><th>İçerik</th><th>Başlık</th><th>Teslim</th><th>Level</th><th>Veren</th><th>İşlemler</th></tr></thead>
         <tbody>
