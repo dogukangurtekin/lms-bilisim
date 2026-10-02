@@ -14,11 +14,15 @@
 .comp-wait-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
 .comp-wait-title{margin:0 0 8px;font-size:32px;font-weight:900}
 .comp-wait-count{font-size:64px;line-height:1;font-weight:900;margin:10px 0;color:#4f46e5}
-.comp-joined-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;max-width:520px}
-.comp-joined-tile{width:64px;display:flex;flex-direction:column;align-items:center;gap:4px}
-.comp-joined-tile img{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid #e5e7eb;background:#f1f5f9}
-.comp-joined-tile .empty{width:44px;height:44px;border-radius:10px;border:1px solid #e5e7eb;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;font-weight:800}
-.comp-joined-tile span{font-size:11px;color:#475569;text-align:center;max-width:64px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comp-joined-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));justify-items:stretch;align-content:start;gap:8px;margin-top:16px;width:100%;max-width:none;text-align:left}
+.comp-joined-tile{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:7px;min-width:0;padding:7px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc}
+.comp-joined-tile img{width:32px;height:32px;border-radius:8px;object-fit:cover;border:1px solid #e5e7eb;background:#f1f5f9}
+.comp-joined-tile .empty{width:32px;height:32px;border-radius:8px;border:1px solid #e5e7eb;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;font-weight:800}
+.comp-joined-tile span{min-width:0;font-size:12px;color:#475569;text-align:left;overflow-wrap:anywhere;line-height:1.25}
+@media(max-width:1100px){.comp-joined-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:800px){.comp-joined-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.comp-joined-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.comp-joined-tile{padding:6px}}
+@media(max-width:360px){.comp-joined-grid{grid-template-columns:minmax(0,1fr)}}
 
 /* --- Bolum tamamlandi gecisi: konfeti + yumusak fade/scale ----------- */
 .comp-celebrate-wrap{position:relative}
