@@ -32,7 +32,6 @@ class DashboardController extends Controller
         'chart_success_distribution' => ['visible' => true, 'span' => 4, 'order' => 85, 'title' => 'Başarı Dağılımı', 'type' => 'chart'],
         'chart_student_lesson_completion' => ['visible' => true, 'span' => 12, 'order' => 95, 'title' => 'Öğrenci Ders Tamamlama', 'type' => 'chart'],
         'signals' => ['visible' => true, 'span' => 6, 'order' => 80, 'title' => 'Sınıf Sinyalleri', 'type' => 'signals'],
-        'notes' => ['visible' => true, 'span' => 6, 'order' => 90, 'title' => 'Öğretmen Notları', 'type' => 'notes'],
         'leaderboard' => ['visible' => true, 'span' => 12, 'order' => 100, 'title' => 'Başarı Listesi', 'type' => 'leaderboard'],
         'quick_qr' => ['visible' => true, 'span' => 12, 'order' => 110, 'title' => 'Mobil QR Girişi', 'type' => 'qr'],
         'active_classes' => ['visible' => true, 'span' => 6, 'order' => 75, 'title' => 'Aktif Sınıflar', 'type' => 'active_classes'],
@@ -411,26 +410,6 @@ class DashboardController extends Controller
                     'focus_value' => $focusClass ? min(100, max(0, (int) round(($focusClass->total / max(1, $totalStudents)) * 100))) : 0,
                     'status' => $totalClasses > 0 ? "{$totalClasses} sınıf izleniyor." : 'Henüz sınıf verisi yok.',
                 ],
-                'highlights' => [
-                    'focus_title' => $activeStudents < max(1, (int) round($totalStudents * 0.4)) ? 'Katılımı artırın' : 'Ritim dengede',
-                    'focus_desc' => max(0, $totalStudents - $activeStudents) . ' öğrenci beklemede.',
-                    'power_title' => $xpLeader
-                        ? "{$xpLeader->class_name} önde"
-                        : ($studentsWithProgressCount > 0 ? 'Öğrenci ilerlemesi var' : 'Henüz lider sınıf yok'),
-                    'power_desc' => $xpLeader
-                        ? "Ortalama {$xpLeader->avg_score} puan ile güçlü sinyal veriyor."
-                        : ($studentsWithProgressCount > 0
-                            ? "{$studentsWithProgressCount} öğrencide tamamlanmış ders, ödev veya oyun ilerlemesi var."
-                            : 'Öğrenci ilerlemesi veya not verisi oluştuğunda otomatik hesaplanır.'),
-                    'rhythm_title' => $gradeCount > 0
-                        ? $gradeCount . ' toplam puan girdisi'
-                        : ($studentsWithProgressCount > 0
-                            ? $studentsWithProgressCount . ' öğrenci ilerlemesi'
-                            : 'Henüz ilerleme verisi yok'),
-                    'rhythm_desc' => $studentsWithProgressCount > 0
-                        ? "{$studentsWithProgressCount} öğrencinin tamamlanmış ders, ödev veya oyun verisi sisteme kaydedildi."
-                        : ($absentToday > 0 ? "Bugün {$absentToday} devamsız var." : 'Devamsızlık sinyali düşük.'),
-                ],
                 'weekly' => [
                     'most_active' => $focusClass?->class_name ?? '-',
                     'best_completion' => $topCompletion?->class_name ?? '-',
@@ -575,6 +554,31 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function forceLogoutStudent(Request $request, SchoolClass $class, Student $student): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
+
+        if (! $user->hasRole('admin')) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $ownsClass = $teacher && $teacher->classes()->where('school_classes.id', $class->id)->exists();
+            abort_unless($ownsClass, 403);
+        }
+
+        abort_unless((int) $student->school_class_id === (int) $class->id, 404);
+
+        $affected = User::query()
+            ->whereKey($student->user_id)
+            ->update(['force_logout_at' => now()]);
+
+        return response()->json([
+            'ok' => $affected > 0,
+            'message' => $affected > 0
+                ? "{$student->student_no} numarali ogrencinin oturumu kapatildi."
+                : 'Öğrenci oturumu bulunamadı.',
+        ]);
+    }
+
     public function saveLayout(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -590,6 +594,9 @@ class DashboardController extends Controller
 
         $layout = [];
         foreach ($data['layout'] as $key => $config) {
+            if ($key === 'notes') {
+                continue;
+            }
             $base = self::DEFAULT_WIDGETS[$key] ?? ['title' => $key, 'type' => 'custom'];
             $layout[$key] = array_merge($base, [
                 'visible' => (bool) ($config['visible'] ?? false),
@@ -609,6 +616,7 @@ class DashboardController extends Controller
     private function resolveLayout($user): array
     {
         $saved = is_array($user?->dashboard_layout ?? null) ? $user->dashboard_layout : [];
+        unset($saved['notes']);
         $merged = [];
 
         foreach (self::DEFAULT_WIDGETS as $key => $widget) {

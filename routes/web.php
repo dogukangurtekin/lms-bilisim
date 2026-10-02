@@ -154,6 +154,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
     Route::get('/dashboard/aktif-siniflar', [DashboardController::class, 'activeClasses'])->name('dashboard.active-classes');
     Route::get('/dashboard/sinif/{class}/aktif-ogrenciler', [DashboardController::class, 'activeClassStudents'])->name('dashboard.class.active-students');
+    Route::post('/dashboard/sinif/{class}/ogrenci/{student}/oturum-kapat', [DashboardController::class, 'forceLogoutStudent'])->name('dashboard.student.force-logout');
     Route::post('/dashboard/sinif/{class}/oturumlari-kapat', [DashboardController::class, 'forceLogoutClass'])->name('dashboard.class.force-logout');
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');

@@ -157,20 +157,6 @@
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
 
-                <article class="dashboard-widget widget-span-4 dashboard-notes-widget" data-widget-key="notes" draggable="true">
-                    <div class="widget-head">
-                        <div><strong>Öğretmen Notları</strong><span>Hızlı öneriler</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="notes" aria-label="Gizle" title="Gizle">-</button>
-                    </div>
-                    <div class="note-list">
-                        <article><span>Odak</span><p>{{ $dashboard['highlights']['focus_title'] }}: {{ $dashboard['highlights']['focus_desc'] }}</p></article>
-                        <article><span>Güç</span><p>{{ $dashboard['highlights']['power_title'] }}: {{ $dashboard['highlights']['power_desc'] }}</p></article>
-                        <article><span>Ritim</span><p>{{ $dashboard['highlights']['rhythm_title'] }}: {{ $dashboard['highlights']['rhythm_desc'] }}</p></article>
-                        <article><span>Devamsızlık</span><p>Bugün {{ $dashboard['summary']['absent_today'] }} öğrenci devamsız görünüyor.</p></article>
-                    </div>
-                    <span class="widget-resize-handle" aria-hidden="true"></span>
-                </article>
-
                 <article class="dashboard-widget widget-span-4" data-widget-key="classes" draggable="true">
                     <div class="widget-head">
                         <div><strong>Sınıf Sayısı</strong><span>İzlenen sınıflar</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
@@ -232,7 +218,7 @@
 
                 <div class="modal" id="active-class-logout-modal">
                     <div class="modal-card">
-                        <div class="modal-head"><strong>Sınıftan Çıkış Yaptır</strong></div>
+                        <div class="modal-head"><strong id="active-class-logout-title">Sınıftan Çıkış Yaptır</strong></div>
                         <p id="active-class-logout-text" style="margin:0 0 14px;color:#475569;"></p>
                         <div style="display:flex;gap:8px;justify-content:flex-end;">
                             <button type="button" class="btn" id="active-class-logout-cancel">Vazgeç</button>
@@ -469,7 +455,6 @@
 
     const defs = {
         quick_qr: { title: 'Mobil QR Girişi', span: 6, order: 10 },
-        notes: { title: 'Öğretmen Notları', span: 4, order: 20 },
         students: { title: 'Toplam Öğrenci', span: 4, order: 30 },
         active_students: { title: 'Aktif Öğrenci', span: 4, order: 40 },
         classes: { title: 'Sınıf Sayısı', span: 4, order: 50 },
@@ -887,12 +872,17 @@
     const activeClassesUrl = @json(route('dashboard.active-classes'));
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const modal = document.getElementById('active-class-logout-modal');
+    const modalTitle = document.getElementById('active-class-logout-title');
     const modalText = document.getElementById('active-class-logout-text');
     const cancelBtn = document.getElementById('active-class-logout-cancel');
     const confirmBtn = document.getElementById('active-class-logout-confirm');
-    let pendingClassId = null;
+    let pendingLogout = null;
 
-    const closeModal = () => { modal?.classList.remove('open'); pendingClassId = null; };
+    const closeModal = () => {
+        modal?.classList.remove('open');
+        pendingLogout = null;
+        if (modalTitle) modalTitle.textContent = 'Sınıftan Çıkış Yaptır';
+    };
     cancelBtn?.addEventListener('click', closeModal);
     modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
@@ -904,6 +894,13 @@
     const closeStudentsModal = () => { studentsModal?.classList.remove('open'); };
     studentsCloseBtn?.addEventListener('click', closeStudentsModal);
     studentsModal?.addEventListener('click', (e) => { if (e.target === studentsModal) closeStudentsModal(); });
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    })[char]);
 
     async function openStudentsModal(classId, className) {
         if (studentsTitle) studentsTitle.textContent = `${className} - Aktif Öğrenciler`;
@@ -924,10 +921,27 @@
             if (studentsList) {
                 studentsList.innerHTML = students.map((s) => `
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
-                        <span style="font-size:13px;">${s.name}</span>
-                        <span style="font-size:12px;color:#64748b;">${s.student_no ?? ''}</span>
+                        <div style="display:grid;gap:2px;min-width:0;">
+                            <strong style="font-size:13px;overflow-wrap:anywhere;">${escapeHtml(s.name)}</strong>
+                            <span style="font-size:12px;color:#64748b;">${escapeHtml(s.student_no)}</span>
+                        </div>
+                        <button type="button" class="btn btn-danger active-student-logout-btn" data-student-id="${Number(s.student_id)}" data-student-name="${escapeHtml(s.name)}" style="padding:5px 9px;font-size:12px;white-space:nowrap;">Çıkış Yap</button>
                     </div>
                 `).join('');
+                studentsList.querySelectorAll('.active-student-logout-btn').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        pendingLogout = {
+                            type: 'student',
+                            classId: String(classId),
+                            className,
+                            studentId: button.dataset.studentId,
+                            studentName: button.dataset.studentName,
+                        };
+                        if (modalTitle) modalTitle.textContent = 'Öğrenciden Çıkış Yaptır';
+                        if (modalText) modalText.textContent = `${button.dataset.studentName} öğrencisinin oturumu kapatılacak. Emin misiniz?`;
+                        modal?.classList.add('open');
+                    });
+                });
             }
         } catch (e) {
             if (studentsList) studentsList.innerHTML = '<p style="margin:0;color:#dc2626;font-size:13px;">Bağlantı hatası oluştu.</p>';
@@ -953,7 +967,12 @@
         `).join('');
         listEl.querySelectorAll('.active-class-logout-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
-                pendingClassId = btn.dataset.classId;
+                pendingLogout = {
+                    type: 'class',
+                    classId: btn.dataset.classId,
+                    className: btn.dataset.className,
+                };
+                if (modalTitle) modalTitle.textContent = 'Sınıftan Çıkış Yaptır';
                 if (modalText) modalText.textContent = `${btn.dataset.className} sınıfındaki tüm öğrenci hesaplarından şu an çıkış yaptırılacak. Diğer sınıflar etkilenmez. Emin misiniz?`;
                 modal?.classList.add('open');
             });
@@ -976,11 +995,14 @@
     }
 
     confirmBtn?.addEventListener('click', async () => {
-        if (!pendingClassId) return;
-        const classId = pendingClassId;
+        if (!pendingLogout) return;
+        const action = { ...pendingLogout };
         confirmBtn.disabled = true;
         try {
-            const res = await fetch(`/dashboard/sinif/${classId}/oturumlari-kapat`, {
+            const endpoint = action.type === 'student'
+                ? `/dashboard/sinif/${action.classId}/ogrenci/${action.studentId}/oturum-kapat`
+                : `/dashboard/sinif/${action.classId}/oturumlari-kapat`;
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrf,
@@ -991,6 +1013,7 @@
             if (res.ok && data.ok) {
                 closeModal();
                 load();
+                if (action.type === 'student') openStudentsModal(action.classId, action.className);
             } else {
                 window.alert(data.message || 'Işlem basarisiz oldu.');
             }
