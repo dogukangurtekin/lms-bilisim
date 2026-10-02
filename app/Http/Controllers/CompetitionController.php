@@ -9,7 +9,6 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\UserProfile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class CompetitionController extends Controller
 {
@@ -29,6 +28,20 @@ class CompetitionController extends Controller
         'connect-the-dots-runner',
         'bee-garden-runner',
     ];
+
+    private const JOIN_CODE_CHARACTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+    private function generateJoinCode(): string
+    {
+        do {
+            $code = '';
+            for ($index = 0; $index < 6; $index++) {
+                $code .= self::JOIN_CODE_CHARACTERS[random_int(0, strlen(self::JOIN_CODE_CHARACTERS) - 1)];
+            }
+        } while (CompetitionRoom::query()->where('join_code', $code)->exists());
+
+        return $code;
+    }
 
     private function eligibleGames(): array
     {
@@ -81,7 +94,7 @@ class CompetitionController extends Controller
             'level_from' => (int) $data['level_from'],
             'level_to' => (int) $data['level_to'],
             'duration_seconds' => (int) $data['duration_minutes'] * 60,
-            'join_code' => strtoupper(Str::random(6)),
+            'join_code' => $this->generateJoinCode(),
             'status' => 'lobby',
         ]);
 

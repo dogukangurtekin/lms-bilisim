@@ -1496,7 +1496,7 @@ async function resolveAssignmentRangeFromGrant() {
   if (runnerRole !== "student") return;
   try {
     const base = (window.RUNNER_APP_BASE || "").replace(/\/$/, "");
-    const res = await fetch(base + "/runner-grant/block-3d-runner", {
+    const res = await fetch(base + "/runner-grant/block-3d-runner" + window.location.search, {
       credentials: "same-origin",
       headers: { Accept: "application/json" }
     });

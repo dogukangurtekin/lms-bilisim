@@ -419,7 +419,7 @@
   async function checkGrant() {
     if (!needsGrantCheck) return true;
     try {
-      const grantUrl = appBase + "/runner-grant/connect-the-dots-runner";
+      const grantUrl = appBase + "/runner-grant/connect-the-dots-runner" + window.location.search;
       const res = await fetch(grantUrl, { credentials: "same-origin" });
       if (!res.ok && res.status !== 403) {
         showFatalError("Yetki kontrolü başarısız oldu (HTTP " + res.status + "). Sayfayı yenileyin veya öğretmeninize bildirin.");

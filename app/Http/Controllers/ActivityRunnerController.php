@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompetitionParticipant;
+use App\Models\CompetitionRoom;
 use App\Services\StudentGameAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -94,7 +96,7 @@ class ActivityRunnerController extends Controller
         return redirect(url("/{$slug}?from={$from}&to={$to}"));
     }
 
-    public function grant(string $slug): JsonResponse
+    public function grant(Request $request, string $slug): JsonResponse
     {
         $slug = trim($slug, "/ \t\n\r\0\x0B");
         $user = auth()->user();
@@ -112,6 +114,19 @@ class ActivityRunnerController extends Controller
                 'homework_id' => '',
                 'expires_at' => now()->addDays(3650)->timestamp,
             ]);
+        }
+
+        $assignmentId = (string) $request->query('assignmentId', '');
+        if (str_starts_with($assignmentId, 'competition-')) {
+            $competitionGrant = $this->competitionGrant($request, $slug);
+            if (! $competitionGrant) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Bu canlı yarışma katılımı doğrulanamadı.',
+                ], 403);
+            }
+
+            return response()->json($competitionGrant);
         }
 
         $grant = session('runner_grant');
@@ -150,6 +165,52 @@ class ActivityRunnerController extends Controller
         ]);
     }
 
+    private function competitionGrant(Request $request, string $slug): ?array
+    {
+        $assignmentId = (string) $request->query('assignmentId', '');
+        if (! preg_match('/^competition-(\d+)$/', $assignmentId, $matches)) {
+            return null;
+        }
+
+        $user = $request->user();
+        $student = $user?->student;
+        if (! $user || ! $student || ! $user->hasRole('student')) {
+            return null;
+        }
+
+        $room = CompetitionRoom::query()
+            ->whereKey((int) $matches[1])
+            ->where('game_slug', $slug)
+            ->where('status', 'live')
+            ->first();
+        if (! $room || ((int) ($room->ends_at_ms ?? 0) > 0 && (int) floor(microtime(true) * 1000) >= (int) $room->ends_at_ms)) {
+            return null;
+        }
+
+        if ($room->school_class_id && (int) $student->school_class_id !== (int) $room->school_class_id) {
+            return null;
+        }
+
+        $isParticipant = CompetitionParticipant::query()
+            ->where('competition_room_id', $room->id)
+            ->where('student_user_id', $user->id)
+            ->where('is_spectator', false)
+            ->exists();
+        if (! $isParticipant) {
+            return null;
+        }
+
+        return [
+            'ok' => true,
+            'role' => 'student',
+            'slug' => $slug,
+            'from' => (int) $room->level_from,
+            'to' => (int) $room->level_to,
+            'homework_id' => $assignmentId,
+            'expires_at' => now()->addHours(6)->timestamp,
+        ];
+    }
+
     private function serveRunner(string $slug)
     {
         $request = request();
@@ -186,9 +247,28 @@ class ActivityRunnerController extends Controller
             $grant = session('runner_grant');
             $from = (int) request('from', 0);
             $to = (int) request('to', 0);
-            $isCompetitionGrant = is_array($grant)
-                && str_starts_with((string) ($grant['homework_id'] ?? ''), 'competition-');
-            $valid = is_array($grant)
+            $assignmentId = (string) $request->query('assignmentId', '');
+            $isCompetitionRequest = str_starts_with($assignmentId, 'competition-');
+            $competitionGrant = $isCompetitionRequest
+                ? $this->competitionGrant($request, $slug)
+                : null;
+            if ($isCompetitionRequest && ! $competitionGrant) {
+                abort(403, 'Bu canlı yarışma katılımı doğrulanamadı.');
+            }
+            if ($competitionGrant && (
+                $from !== (int) $competitionGrant['from']
+                || $to !== (int) $competitionGrant['to']
+            )) {
+                return redirect()->to(url("/{$slug}") . '?' . http_build_query([
+                    'from' => (int) $competitionGrant['from'],
+                    'to' => (int) $competitionGrant['to'],
+                    'assignmentId' => $assignmentId,
+                ]));
+            }
+
+            $isCompetitionGrant = $competitionGrant !== null || (is_array($grant)
+                && str_starts_with((string) ($grant['homework_id'] ?? ''), 'competition-'));
+            $valid = $competitionGrant !== null || (is_array($grant)
                 && ($grant['slug'] ?? null) === $slug
                 && (($grant['expires_at'] ?? 0) >= time())
                 // Canli yarisma icin verilen izin, oyunun kendi ic navigasyonu
@@ -197,7 +277,7 @@ class ActivityRunnerController extends Controller
                 // (sinifa atanmamis) erisim kontrolune dusup "atanmadi" hatasi
                 // aliyordu. Normal odev/atama tabanli izinlerde ise from/to
                 // hala birebir eslesmek zorunda.
-                && ($isCompetitionGrant || (($grant['from'] ?? null) === $from && ($grant['to'] ?? null) === $to));
+                && ($isCompetitionGrant || (($grant['from'] ?? null) === $from && ($grant['to'] ?? null) === $to)));
 
             if (! $valid) {
                 $student = $user->student;

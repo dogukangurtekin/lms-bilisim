@@ -1330,6 +1330,38 @@
       : ["sag()", "asagi()", "sol()", "yukari()"];
   }
 
+  function fitCodeToPanel() {
+    if (!cmdListEl) return;
+    const panel = cmdListEl.closest(".code-wrap");
+    if (!panel || panel.clientHeight <= 0) return;
+
+    const occupiedHeight = Array.from(panel.children)
+      .filter((element) => element !== cmdListEl)
+      .reduce((total, element) => {
+        const style = getComputedStyle(element);
+        return total + element.getBoundingClientRect().height
+          + (parseFloat(style.marginTop) || 0)
+          + (parseFloat(style.marginBottom) || 0);
+      }, 0);
+    const lineCount = Math.max(1, cmdListEl.childElementCount);
+    const useColumns = lineCount > 28 && panel.clientHeight < 460;
+    cmdListEl.classList.toggle("compact-columns", useColumns);
+    const renderedRows = useColumns ? Math.ceil(lineCount / 2) : lineCount;
+    const availableHeight = Math.max(1, panel.clientHeight - occupiedHeight);
+    let fontSize = Math.max(6, Math.min(22, availableHeight / (renderedRows * 1.12)));
+    const applySize = () => {
+      cmdListEl.style.setProperty("--code-font-size", `${fontSize}px`);
+      cmdListEl.style.setProperty("--code-line-height", `${fontSize * 1.12}px`);
+      cmdListEl.style.setProperty("--code-indent", `${fontSize * 0.72}px`);
+    };
+
+    applySize();
+    while (cmdListEl.clientWidth > 0 && cmdListEl.scrollWidth > cmdListEl.clientWidth && fontSize > 6) {
+      fontSize = Math.max(6, fontSize - 0.5);
+      applySize();
+    }
+  }
+
   function renderCode(activeStep = -1, badLine = -1) {
     const level = levels[levelIndex];
     const lines = getDisplayCode(level);
@@ -1354,13 +1386,21 @@
       indent = Math.max(0, indent + opens - closes);
       return html;
     }).join("");
+    fitCodeToPanel();
   }
+
+  window.addEventListener("resize", fitCodeToPanel);
 
   function renderBoard() {
     const level = levels[levelIndex];
-    const gapPx = window.innerWidth <= 1024 ? 8 : 12;
-    const sizePx = Math.max(24, Math.min(92, Math.floor((boardEl.clientWidth - (level.size - 1) * gapPx) / level.size)));
+    const gapPx = window.innerWidth <= 1024 ? 4 : 12;
+    const widthLimit = Math.floor((boardEl.clientWidth - (level.size - 1) * gapPx) / level.size);
+    const heightLimit = boardEl.clientHeight > 0
+      ? Math.floor((boardEl.clientHeight - (level.size - 1) * gapPx) / level.size)
+      : 92;
+    const sizePx = Math.max(8, Math.min(92, widthLimit, heightLimit));
     boardEl.style.setProperty("--cell-size", `${sizePx}px`);
+    boardEl.style.gap = `${gapPx}px`;
     boardEl.style.gridTemplateColumns = `repeat(${level.size}, ${sizePx}px)`;
     boardEl.classList.toggle("solved", showDoneTick);
     boardEl.innerHTML = "";
@@ -1851,7 +1891,7 @@
       return;
     }
     try {
-      const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/compute-it-runner";
+      const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/compute-it-runner" + window.location.search;
       const res = await fetch(grantUrl, {
         method: "GET",
         credentials: "same-origin",

@@ -8,21 +8,25 @@
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Trebuchet MS", "Segoe UI", sans-serif; background: var(--bg); }
 .app {
   width: 100%;
-  height: 100%;
+  height: 100dvh;
+  min-height: 0;
   display: grid;
   grid-template-columns: 1fr minmax(280px, 34%);
   gap: 22px;
   padding: 18px 20px;
+  overflow: hidden;
 }
 .board-wrap {
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 .board-stage {
   flex: 1;
   display: grid;
   grid-template-columns: 130px 1fr;
   gap: 16px;
+  min-height: 0;
 }
 .counter-col {
   display: flex;
@@ -68,6 +72,8 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   align-content: center;
   justify-content: center;
   transition: transform 0.45s ease, opacity 0.45s ease, filter 0.45s ease;
+  min-width: 0;
+  min-height: 0;
 }
 .board.advance {
   transform: scale(1.03);
@@ -132,8 +138,10 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
 .code-wrap {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 .code-wrap h2 {
   margin: 0 0 10px;
@@ -142,16 +150,23 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
 .cmd-list {
   color: var(--ink);
   font-family: "Consolas", "Courier New", monospace;
-  font-size: clamp(16px, 1.9vw, 34px);
-  line-height: 1.25;
-  max-height: min(55vh, 620px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-right: 8px;
+  font-size: var(--code-font-size, 18px);
+  line-height: var(--code-line-height, 20px);
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: visible;
+  padding: 0;
 }
 .cmd-list .line {
   display: block;
   white-space: pre;
+  min-width: 0;
+}
+.cmd-list.compact-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 8px;
+  align-content: start;
 }
 .cmd-list .kw-red {
   color: #8b1e1e;
@@ -162,9 +177,9 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   font-weight: 800;
 }
 .cmd-list .i0 { padding-left: 0; }
-.cmd-list .i1 { padding-left: 22px; }
-.cmd-list .i2 { padding-left: 44px; }
-.cmd-list .i3 { padding-left: 66px; }
+.cmd-list .i1 { padding-left: var(--code-indent, 13px); }
+.cmd-list .i2 { padding-left: calc(var(--code-indent, 13px) * 2); }
+.cmd-list .i3 { padding-left: calc(var(--code-indent, 13px) * 3); }
 .cmd-list .active {
   color: inherit;
   text-decoration: none;
@@ -270,23 +285,61 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
 @media (max-width: 1024px) {
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-    gap: 10px;
+    grid-template-rows: minmax(0, 34vh) minmax(0, 1fr);
+    gap: 6px;
+    padding: 8px;
   }
   .board-stage {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 6px;
   }
   .counter-col {
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: stretch;
+    gap: 4px;
   }
   .counter-bubble {
-    min-width: 88px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 3px;
+    border-width: 1px;
+    border-radius: 8px;
   }
-  .cell { width: var(--cell-size, 64px); height: var(--cell-size, 64px); }
+  .counter-label {
+    font-size: 10px;
+  }
+  .counter-value {
+    margin-top: 1px;
+    font-size: 16px;
+  }
+  .board { gap: 4px; }
+  .cell { width: var(--cell-size, 28px); height: var(--cell-size, 28px); }
   .ball { width: 24px; height: 24px; border-width: 5px; }
-  .code-wrap { justify-content: flex-start; }
-  .cmd-list { font-size: clamp(15px, 4.5vw, 28px); }
+  .code-wrap { justify-content: space-between; }
+  .code-wrap h2 { margin-bottom: 4px; font-size: 16px; }
+  .vars-box { margin-top: 4px; padding: 3px 8px; font-size: 12px; }
+  .help { margin-top: 4px; font-size: 11px; line-height: 1.2; }
+  .actions { margin-top: 4px; }
+  .actions button { padding: 6px 9px; font-size: 12px; }
+}
+@media (max-width: 1024px) and (orientation: landscape) {
+  .app {
+    grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 4px;
+    padding: 6px;
+  }
+  .top-row { gap: 4px; margin-bottom: 4px; }
+  .level-pill, .progress-pill { padding: 4px 8px; font-size: 11px; }
+  .board-stage {
+    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .counter-col { flex-direction: column; gap: 4px; }
+  .counter-bubble { padding: 3px 2px; }
+  .counter-value { font-size: 14px; }
 }
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
