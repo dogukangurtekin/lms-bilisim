@@ -269,7 +269,7 @@
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo">
             <span class="brand-eyebrow">Bilişim Kod</span>
             <h1>Dijital Bilişim Eğitim Platformu</h1>
-            <p>Kodlama oyunları ve ders defteriyle öğrenmeyi somutlaştıran platform. Özelsin çünkü gelecek sensin.</p>
+            <p>Bilişim Kod Yapay Zeka ve Kodlama Sistemleri ile geleceği kodla.</p>
         </div>
     </section>
 

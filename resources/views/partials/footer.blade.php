@@ -1,1 +1,1 @@
-<div class='footer'>Özelsin Koleji Bilişim Yönetim Sistemleri</div>
+<div class='footer'>Bilişim Kod Yapay Zeka ve Kodlama Sistemleri</div>

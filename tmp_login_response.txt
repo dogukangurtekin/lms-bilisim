@@ -242,7 +242,7 @@ Content-Type: text/html; charset=utf-8
         <div class="brand-content">
             <img src="http://localhost/okul-laravel-yeni/school-management-system/public/logo.png" alt="Logo">
             <h1>Dijital Bilişim Eğitim Platformu</h1>
-            <p>Özelsin Çünkü Gelecek Sensin</p>
+            <p>Bilişim Kod Yapay Zeka ve Kodlama Sistemleri</p>
         </div>
     </section>
 
