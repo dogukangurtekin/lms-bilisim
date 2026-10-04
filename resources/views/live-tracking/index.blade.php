@@ -3,7 +3,7 @@
 @section('title', 'Canlı Takip')
 
 @section('content')
-<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
     <div>
         <h1 style="margin:0;font-size:1.5rem;font-weight:700;color:var(--app-text);">
             <span style="display:inline-flex;align-items:center;gap:8px;">
@@ -12,16 +12,48 @@
             </span>
         </h1>
         <p style="margin:4px 0 0;color:var(--app-muted);font-size:.875rem;">
-            Son 2 saatte sisteme giren öğrenciler · <span id="student-count">{{ $students->count() }}</span> öğrenci aktif
+            Son 2 saatte aktif · <span id="student-count">{{ $students->count() }}</span> öğrenci
         </p>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
-        <span id="last-refresh" style="font-size:.75rem;color:var(--app-muted);">Şimdi güncellendi</span>
+        <span id="last-refresh" style="font-size:.75rem;color:var(--app-muted);">Şimdi yüklendi</span>
         <button id="auto-refresh-toggle" onclick="toggleAutoRefresh()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);cursor:pointer;font-size:.8rem;">
-            ⏸ Otomatik Yenile: Açık
+            ⏸ Otomatik: Açık
         </button>
     </div>
 </div>
+
+{{-- Filtreler --}}
+<form method="GET" action="{{ route('live-tracking.index') }}"
+      style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
+    <div style="flex:1;min-width:160px;">
+        <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Sınıf</label>
+        <select name="class_id" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;">
+            <option value="">Tüm Sınıflar</option>
+            @foreach($classes as $class)
+                <option value="{{ $class->id }}" {{ (string)$classId === (string)$class->id ? 'selected' : '' }}>
+                    {{ $class->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+    <div style="flex:2;min-width:200px;">
+        <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Öğrenci Adı</label>
+        <input type="text" name="search" value="{{ $search }}" placeholder="İsme göre ara..."
+               style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;box-sizing:border-box;">
+    </div>
+    <div style="display:flex;gap:8px;">
+        <button type="submit" style="padding:8px 18px;border-radius:8px;background:var(--app-primary);color:#fff;border:none;cursor:pointer;font-size:.875rem;font-weight:600;">
+            Filtrele
+        </button>
+        @if($classId || $search)
+        <a href="{{ route('live-tracking.index') }}"
+           style="padding:8px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.875rem;">
+            Temizle
+        </a>
+        @endif
+    </div>
+</form>
 
 <style>
 @keyframes pulse-dot {
@@ -50,14 +82,9 @@
     content:''; width:6px; height:6px; border-radius:50%; background:#22c55e;
     animation:pulse-dot 1.5s infinite;
 }
-.student-link {
-    color:var(--app-primary); text-decoration:none; font-weight:600;
-}
+.student-link { color:var(--app-primary); text-decoration:none; font-weight:600; }
 .student-link:hover { text-decoration:underline; }
-.empty-state {
-    text-align:center; padding:60px 20px;
-    color:var(--app-muted); font-size:.95rem;
-}
+.empty-state { text-align:center; padding:60px 20px; color:var(--app-muted); font-size:.95rem; }
 </style>
 
 <div style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;overflow:hidden;">
@@ -68,8 +95,8 @@
                 <th>Sınıf</th>
                 <th>Son İşlem</th>
                 <th>Son Görülme</th>
-                <th>Sisteme Giriş</th>
-                <th>İşlem Sayısı</th>
+                <th>Giriş Saati</th>
+                <th style="text-align:center;">İşlem</th>
                 <th></th>
             </tr>
         </thead>
@@ -86,14 +113,11 @@
                 <td>
                     @if($row['last_seen'])
                         <span class="badge-online">{{ $row['last_seen']->diffForHumans() }}</span>
-                    @else
-                        -
+                    @else -
                     @endif
                 </td>
                 <td>{{ $row['first_seen'] ? $row['first_seen']->format('H:i') : '-' }}</td>
-                <td style="text-align:center;">
-                    <strong>{{ $row['log_count'] }}</strong>
-                </td>
+                <td style="text-align:center;"><strong>{{ $row['log_count'] }}</strong></td>
                 <td>
                     <a href="{{ route('live-tracking.show', $row['student']) }}"
                        style="padding:5px 12px;border-radius:7px;background:var(--app-primary);color:#fff;text-decoration:none;font-size:.78rem;font-weight:600;">
@@ -102,11 +126,7 @@
                 </td>
             </tr>
             @empty
-            <tr>
-                <td colspan="7" class="empty-state">
-                    Son 2 saatte sisteme giren öğrenci yok.
-                </td>
-            </tr>
+            <tr><td colspan="7" class="empty-state">Son 2 saatte aktif öğrenci bulunamadı.</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -115,15 +135,17 @@
 <script>
 let autoRefresh = true;
 let refreshInterval = null;
+const currentClassId = '{{ $classId ?? "" }}';
+const currentSearch  = '{{ addslashes($search) }}';
 
 function toggleAutoRefresh() {
     autoRefresh = !autoRefresh;
     const btn = document.getElementById('auto-refresh-toggle');
     if (autoRefresh) {
-        btn.textContent = '⏸ Otomatik Yenile: Açık';
+        btn.textContent = '⏸ Otomatik: Açık';
         startRefresh();
     } else {
-        btn.textContent = '▶ Otomatik Yenile: Kapalı';
+        btn.textContent = '▶ Otomatik: Kapalı';
         clearInterval(refreshInterval);
     }
 }
@@ -135,18 +157,20 @@ function startRefresh() {
 
 async function fetchData() {
     try {
-        const res = await fetch('{{ route("live-tracking.refresh") }}');
+        const params = new URLSearchParams();
+        if (currentClassId) params.set('class_id', currentClassId);
+        if (currentSearch)  params.set('search', currentSearch);
+
+        const res  = await fetch('{{ route("live-tracking.refresh") }}?' + params.toString());
         const rows = await res.json();
 
-        const countEl = document.getElementById('student-count');
-        const bodyEl  = document.getElementById('tracking-body');
-        const lastEl  = document.getElementById('last-refresh');
+        document.getElementById('student-count').textContent = rows.length;
+        document.getElementById('last-refresh').textContent  = 'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
 
-        countEl.textContent = rows.length;
-        lastEl.textContent  = 'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
+        const bodyEl = document.getElementById('tracking-body');
 
         if (rows.length === 0) {
-            bodyEl.innerHTML = '<tr><td colspan="7" class="empty-state">Son 2 saatte sisteme giren öğrenci yok.</td></tr>';
+            bodyEl.innerHTML = '<tr><td colspan="7" class="empty-state">Son 2 saatte aktif öğrenci bulunamadı.</td></tr>';
             return;
         }
 

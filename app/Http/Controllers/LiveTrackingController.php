@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentActivityLog;
 use Illuminate\Http\Request;
@@ -10,15 +11,27 @@ class LiveTrackingController extends Controller
 {
     /**
      * Canlı Takip ana sayfası — son 2 saatte aktif olan öğrenciler
+     * Filtreler: sınıf, öğrenci adı
      */
     public function index(Request $request)
     {
-        $since = now()->subHours(2);
+        $since      = now()->subHours(2);
+        $classId    = $request->input('class_id');
+        $search     = trim($request->input('search', ''));
+        $classes    = SchoolClass::orderBy('name')->get();
 
-        // Son 2 saatte en az 1 log girişi olan öğrencileri çek
-        $students = Student::with(['user', 'schoolClass'])
-            ->whereHas('activityLogs', fn($q) => $q->where('logged_at', '>=', $since))
-            ->get()
+        $query = Student::with(['user', 'schoolClass'])
+            ->whereHas('activityLogs', fn($q) => $q->where('logged_at', '>=', $since));
+
+        if ($classId) {
+            $query->where('school_class_id', $classId);
+        }
+
+        if ($search !== '') {
+            $query->whereHas('user', fn($q) => $q->where('name', 'like', "%{$search}%"));
+        }
+
+        $students = $query->get()
             ->map(function (Student $student) use ($since) {
                 $logs = StudentActivityLog::where('student_id', $student->id)
                     ->where('logged_at', '>=', $since)
@@ -26,17 +39,17 @@ class LiveTrackingController extends Controller
                     ->get();
 
                 return [
-                    'student'       => $student,
-                    'log_count'     => $logs->count(),
-                    'last_seen'     => $logs->first()?->logged_at,
-                    'last_action'   => $logs->first()?->action_label,
-                    'first_seen'    => $logs->last()?->logged_at,
+                    'student'     => $student,
+                    'log_count'   => $logs->count(),
+                    'last_seen'   => $logs->first()?->logged_at,
+                    'last_action' => $logs->first()?->action_label,
+                    'first_seen'  => $logs->last()?->logged_at,
                 ];
             })
             ->sortByDesc('last_seen')
             ->values();
 
-        return view('live-tracking.index', compact('students', 'since'));
+        return view('live-tracking.index', compact('students', 'since', 'classes', 'classId', 'search'));
     }
 
     /**
@@ -59,21 +72,29 @@ class LiveTrackingController extends Controller
     /**
      * AJAX — canlı güncelleme için öğrenci listesi (JSON)
      */
-    public function refresh()
+    public function refresh(Request $request)
     {
-        $since = now()->subHours(2);
+        $since   = now()->subHours(2);
+        $classId = $request->input('class_id');
+        $search  = trim($request->input('search', ''));
 
-        $rows = Student::with(['user', 'schoolClass'])
-            ->whereHas('activityLogs', fn($q) => $q->where('logged_at', '>=', $since))
-            ->get()
+        $query = Student::with(['user', 'schoolClass'])
+            ->whereHas('activityLogs', fn($q) => $q->where('logged_at', '>=', $since));
+
+        if ($classId) {
+            $query->where('school_class_id', $classId);
+        }
+
+        if ($search !== '') {
+            $query->whereHas('user', fn($q) => $q->where('name', 'like', "%{$search}%"));
+        }
+
+        $rows = $query->get()
             ->map(function (Student $student) use ($since) {
-                $logs = StudentActivityLog::where('student_id', $student->id)
+                $last = StudentActivityLog::where('student_id', $student->id)
                     ->where('logged_at', '>=', $since)
                     ->orderByDesc('logged_at')
-                    ->limit(1)
-                    ->get();
-
-                $last = $logs->first();
+                    ->first();
 
                 return [
                     'id'          => $student->id,

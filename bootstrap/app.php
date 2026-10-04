@@ -54,5 +54,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('notifications:attendance-reminders')->everyMinute();
+        $schedule->command('activity-logs:purge')->dailyAt('00:30');
     })
     ->create();
