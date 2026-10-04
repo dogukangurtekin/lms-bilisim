@@ -12,7 +12,7 @@
             </span>
         </h1>
         <p style="margin:4px 0 0;color:var(--app-muted);font-size:.875rem;">
-            Son 2 saatte aktif · <span id="student-count">{{ $students->count() }}</span> öğrenci
+            Son 10 günde aktif · <span id="student-count">{{ $students->count() }}</span> öğrenci
         </p>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
@@ -126,7 +126,7 @@
                 </td>
             </tr>
             @empty
-            <tr><td colspan="7" class="empty-state">Son 2 saatte aktif öğrenci bulunamadı.</td></tr>
+            <tr><td colspan="7" class="empty-state">Son 10 günde aktif öğrenci bulunamadı.</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -170,7 +170,7 @@ async function fetchData() {
         const bodyEl = document.getElementById('tracking-body');
 
         if (rows.length === 0) {
-            bodyEl.innerHTML = '<tr><td colspan="7" class="empty-state">Son 2 saatte aktif öğrenci bulunamadı.</td></tr>';
+            bodyEl.innerHTML = '<tr><td colspan="7" class="empty-state">Son 10 günde aktif öğrenci bulunamadı.</td></tr>';
             return;
         }
 

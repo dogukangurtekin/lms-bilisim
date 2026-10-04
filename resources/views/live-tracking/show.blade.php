@@ -25,7 +25,7 @@
     <div style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;padding:20px 24px;min-width:160px;text-align:center;">
         <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--app-muted);margin-bottom:6px;">İşlem Sayısı</div>
         <div style="font-size:2rem;font-weight:800;color:var(--app-primary);">{{ $logs->count() }}</div>
-        <div style="color:var(--app-muted);font-size:.75rem;">son 2 saat</div>
+        <div style="color:var(--app-muted);font-size:.75rem;">son 10 gün</div>
     </div>
 
     <div style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;padding:20px 24px;min-width:200px;">
@@ -54,7 +54,7 @@
     <div style="padding:20px;">
         @if($logs->isEmpty())
             <div style="text-align:center;padding:40px;color:var(--app-muted);">
-                Son 2 saatte aktivite kaydı bulunamadı.
+                Son 10 günde aktivite kaydı bulunamadı.
             </div>
         @else
         <div class="timeline">

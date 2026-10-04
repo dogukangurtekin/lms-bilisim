@@ -33,7 +33,7 @@ class LiveTrackingController extends Controller
      */
     public function index(Request $request)
     {
-        $since          = now()->subHours(2);
+        $since          = now()->subDays(10);
         $allowedClassIds = $this->allowedClassIds();
         $classId        = $request->input('class_id');
         $search         = trim($request->input('search', ''));
@@ -103,7 +103,7 @@ class LiveTrackingController extends Controller
             abort(403, 'Bu öğrenciye erişim yetkiniz yok.');
         }
 
-        $since = now()->subHours(2);
+        $since = now()->subDays(10);
 
         $logs = StudentActivityLog::where('student_id', $student->id)
             ->where('logged_at', '>=', $since)
@@ -120,7 +120,7 @@ class LiveTrackingController extends Controller
      */
     public function refresh(Request $request)
     {
-        $since           = now()->subHours(2);
+        $since           = now()->subDays(10);
         $allowedClassIds = $this->allowedClassIds();
         $classId         = $request->input('class_id');
         $search          = trim($request->input('search', ''));
