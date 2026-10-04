@@ -83,6 +83,84 @@
         padding: .32rem .5rem;
         white-space: nowrap;
     }
+    .leaderboard-head-actions{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        flex:0 0 auto;
+    }
+    .leaderboard-full-btn{
+        display:inline-flex;
+        align-items:center;
+        gap:4px;
+        font-size:11px;
+        font-weight:600;
+        color:#2563eb;
+        background:#eff6ff;
+        border:1px solid #bfdbfe;
+        border-radius:999px;
+        padding:5px 10px;
+        cursor:pointer;
+        white-space:nowrap;
+        transition:background .15s ease;
+    }
+    .leaderboard-full-btn:hover{background:#dbeafe;}
+    .dashboard-shell.is-editing .leaderboard-full-btn{display:none;}
+    .leaderboard-modal-card{
+        width:min(94vw,720px);
+        max-width:720px;
+        max-height:86vh;
+        display:flex;
+        flex-direction:column;
+        padding:20px;
+    }
+    .leaderboard-modal-close{
+        border:none;
+        background:#f1f5f9;
+        color:#475569;
+        width:32px;
+        height:32px;
+        border-radius:10px;
+        font-size:20px;
+        line-height:1;
+        cursor:pointer;
+        display:grid;
+        place-items:center;
+        flex:0 0 auto;
+    }
+    .leaderboard-modal-close:hover{background:#e2e8f0;}
+    .leaderboard-modal-body{
+        margin-top:12px;
+        overflow-y:auto;
+        display:flex;
+        flex-direction:column;
+        gap:18px;
+        padding-right:6px;
+    }
+    .leaderboard-class-group{
+        border:1px solid #e2e8f0;
+        border-radius:16px;
+        padding:14px;
+        background:#f8fafc;
+    }
+    .leaderboard-class-head{
+        display:flex;
+        align-items:baseline;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:10px;
+        flex-wrap:wrap;
+    }
+    .leaderboard-class-head strong{font-size:15px;color:#0f172a;}
+    .leaderboard-class-head span{font-size:12px;color:#64748b;font-weight:600;}
+    .leaderboard-class-list{
+        display:grid;
+        gap:8px;
+    }
+    .leaderboard-class-row{
+        grid-template-columns:28px 1fr auto;
+        padding:8px 10px;
+    }
 </style>
 <div class="dashboard-shell" data-dashboard-shell>
     <section class="class-tabs-strip" aria-label="Sınıf sekmeleri">
@@ -238,6 +316,41 @@
                     </div>
                 </div>
 
+                <div class="modal leaderboard-modal" id="leaderboard-full-modal">
+                    <div class="modal-card leaderboard-modal-card">
+                        <div class="modal-head">
+                            <strong>Tüm Sıralama</strong>
+                            <button type="button" class="leaderboard-modal-close" id="leaderboard-full-close" aria-label="Kapat" title="Kapat">&times;</button>
+                        </div>
+                        <div class="leaderboard-modal-body">
+                            @forelse(($dashboard['class_rankings'] ?? []) as $classGroup)
+                                <section class="leaderboard-class-group">
+                                    <header class="leaderboard-class-head">
+                                        <strong>{{ $classGroup['class_name'] }}</strong>
+                                        <span>{{ $classGroup['student_count'] }} öğrenci · {{ $classGroup['total_xp'] }} XP</span>
+                                    </header>
+                                    <div class="leaderboard-class-list">
+                                        @forelse(($classGroup['students'] ?? []) as $row)
+                                            <div class="teacher-top10-item leaderboard-class-row">
+                                                <div class="teacher-top10-rank rank-{{ (int) ($row['rank'] ?? 0) }}">{{ $row['rank'] }}</div>
+                                                <div class="teacher-top10-main">
+                                                    <strong>{{ $row['name'] }}</strong>
+                                                    <span>{{ $row['class_name'] }}</span>
+                                                </div>
+                                                <div class="teacher-top10-xp">{{ $row['xp'] }} XP</div>
+                                            </div>
+                                        @empty
+                                            <p style="margin:0;color:#64748b;font-size:13px;">Bu sınıfta öğrenci verisi yok.</p>
+                                        @endforelse
+                                    </div>
+                                </section>
+                            @empty
+                                <p style="margin:0;color:#64748b;font-size:13px;">Görüntülenecek sınıf verisi bulunamadı.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
                 @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
                     @php
                         $chartItems = (array) ($chart['items'] ?? []);
@@ -385,7 +498,10 @@
                 <article class="dashboard-widget dashboard-widget-wide widget-span-12 dashboard-leaderboard-panel" data-widget-key="leaderboard" draggable="true">
                     <div class="widget-head">
                         <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf' }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
-                        <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">-</button>
+                        <div class="leaderboard-head-actions">
+                            <button type="button" class="leaderboard-full-btn" data-leaderboard-full>Tüm Sıralamayı Göster</button>
+                            <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">-</button>
+                        </div>
                     </div>
                     <div class="teacher-top10-list">
                         @forelse(array_slice(($dashboard['top_students'] ?? []), 0, 5) as $row)
@@ -1049,6 +1165,27 @@
 
     load();
     setInterval(load, 20000);
+})();
+
+// Başarı listesi: "Tüm Sıralamayı Göster" pop-up'ı
+(() => {
+    const modal = document.getElementById('leaderboard-full-modal');
+    const openBtn = document.querySelector('[data-leaderboard-full]');
+    const closeBtn = document.getElementById('leaderboard-full-close');
+    if (!modal || !openBtn) return;
+
+    const open = () => modal.classList.add('open');
+    const close = () => modal.classList.remove('open');
+
+    openBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        open();
+    });
+    closeBtn?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
 })();
 </script>
 @endpush

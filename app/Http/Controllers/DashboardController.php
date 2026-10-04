@@ -333,6 +333,41 @@ class DashboardController extends Controller
                 ],
             ];
 
+            $classOrder = [];
+            foreach ($classTabs as $tabIndex => $classTab) {
+                $classOrder[(int) ($classTab['id'] ?? 0)] = $tabIndex;
+            }
+
+            // "Tüm Sıralamayı Göster" pop-up'ı için her sınıfın öğrencilerini
+            // en yüksek XP'den en düşüğe doğru sıralayıp hazırlıyoruz.
+            $classRankings = $studentXpRows
+                ->groupBy('school_class_id')
+                ->map(function ($rows, $classId) {
+                    $sorted = $rows
+                        ->sortByDesc('xp')
+                        ->values()
+                        ->map(function (array $row, int $index) {
+                            $row['rank'] = $index + 1;
+                            $row['name'] = $this->normalizeDashboardText((string) ($row['name'] ?? '-'));
+                            $row['class_name'] = $this->normalizeDashboardText((string) ($row['class_name'] ?? '-'));
+
+                            return $row;
+                        });
+
+                    $first = $sorted->first();
+
+                    return [
+                        'class_id' => (int) $classId,
+                        'class_name' => $this->normalizeDashboardText((string) ($first['class_name'] ?? '-')),
+                        'student_count' => $sorted->count(),
+                        'total_xp' => (int) $sorted->sum('xp'),
+                        'students' => $sorted->values()->all(),
+                    ];
+                })
+                ->sortBy(fn (array $group) => $classOrder[$group['class_id']] ?? 999)
+                ->values()
+                ->all();
+
             $totalXp = (int) $studentXpRows->sum('xp');
             $topStudents = $studentXpRows
                 ->when($activeClassId > 0, fn ($rows) => $rows->where('school_class_id', $activeClassId))
@@ -418,6 +453,7 @@ class DashboardController extends Controller
                 ],
                 'chart_widgets' => $chartWidgets,
                 'top_students' => $topStudents,
+                'class_rankings' => $classRankings,
             ];
         });
 

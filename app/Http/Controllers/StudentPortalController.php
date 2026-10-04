@@ -413,7 +413,7 @@ class StudentPortalController extends Controller
                 ->exists()
             : false;
         $questionTotal = collect($slides)->filter(function ($slide) {
-            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+            return trim((string) data_get($slide, 'question_prompt', '')) !== '';
         })->count();
         $summarySlide = [
             '__summary' => true,
@@ -505,7 +505,7 @@ class StudentPortalController extends Controller
 
         $slides = $this->presentation->prepareCourseSlides($course, false);
         $questionTotal = collect($slides)->filter(function ($slide) {
-            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+            return trim((string) data_get($slide, 'question_prompt', '')) !== '';
         })->count();
         $slideXp = collect($slides)->sum(function ($s) {
             $xp = (int) data_get($s, 'xp', 0);

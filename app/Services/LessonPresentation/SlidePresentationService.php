@@ -183,7 +183,7 @@ class SlidePresentationService
             ];
         }
 
-        if ($questionPrompt !== '' || $interactionType !== 'none') {
+        if ($questionPrompt !== '') {
             $blocks[] = [
                 'type' => 'question',
                 'prompt' => $questionPrompt,
@@ -216,7 +216,7 @@ class SlidePresentationService
     {
         $curriculum = (array) data_get($payload, 'curriculum', []);
         $questionTotal = collect($slides)->filter(function (array $slide): bool {
-            return !empty(data_get($slide, 'question_prompt')) || (string) data_get($slide, 'interaction_type', 'none') !== 'none';
+            return trim((string) data_get($slide, 'question_prompt', '')) !== '';
         })->count();
 
         return [
