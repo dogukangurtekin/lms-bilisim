@@ -322,31 +322,22 @@
                             <strong>Tüm Sıralama</strong>
                             <button type="button" class="leaderboard-modal-close" id="leaderboard-full-close" aria-label="Kapat" title="Kapat">&times;</button>
                         </div>
-                        <div class="leaderboard-modal-body">
-                            @forelse(($dashboard['class_rankings'] ?? []) as $classGroup)
-                                <section class="leaderboard-class-group">
-                                    <header class="leaderboard-class-head">
-                                        <strong>{{ $classGroup['class_name'] }}</strong>
-                                        <span>{{ $classGroup['student_count'] }} öğrenci · {{ $classGroup['total_xp'] }} XP</span>
-                                    </header>
-                                    <div class="leaderboard-class-list">
-                                        @forelse(($classGroup['students'] ?? []) as $row)
-                                            <div class="teacher-top10-item leaderboard-class-row">
-                                                <div class="teacher-top10-rank rank-{{ (int) ($row['rank'] ?? 0) }}">{{ $row['rank'] }}</div>
-                                                <div class="teacher-top10-main">
-                                                    <strong>{{ $row['name'] }}</strong>
-                                                    <span>{{ $row['class_name'] }}</span>
-                                                </div>
-                                                <div class="teacher-top10-xp">{{ $row['xp'] }} XP</div>
-                                            </div>
-                                        @empty
-                                            <p style="margin:0;color:#64748b;font-size:13px;">Bu sınıfta öğrenci verisi yok.</p>
-                                        @endforelse
-                                    </div>
-                                </section>
-                            @empty
-                                <p style="margin:0;color:#64748b;font-size:13px;">Görüntülenecek sınıf verisi bulunamadı.</p>
-                            @endforelse
+                        {{-- Sınıf tabları --}}
+                        <div id="lb-class-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0;padding-bottom:10px;border-bottom:1px solid var(--app-border,#e2e8f0);">
+                            @foreach(($dashboard['class_tabs'] ?? []) as $tab)
+                                <button type="button"
+                                    class="lb-tab-btn"
+                                    data-class-id="{{ $tab['id'] }}"
+                                    style="padding:5px 12px;border-radius:999px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;">
+                                    {{ $tab['label'] }}
+                                </button>
+                            @endforeach
+                        </div>
+                        {{-- Sıralama içeriği --}}
+                        <div class="leaderboard-modal-body" id="lb-modal-body">
+                            <p style="color:#64748b;font-size:13px;text-align:center;padding:30px 0;">
+                                Görüntülemek istediğiniz sınıfı seçin.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1169,18 +1160,79 @@
 
 // Başarı listesi: "Tüm Sıralamayı Göster" pop-up'ı
 (() => {
-    const modal = document.getElementById('leaderboard-full-modal');
+    const modal   = document.getElementById('leaderboard-full-modal');
     const openBtn = document.querySelector('[data-leaderboard-full]');
     const closeBtn = document.getElementById('leaderboard-full-close');
+    const body    = document.getElementById('lb-modal-body');
     if (!modal || !openBtn) return;
 
-    const open = () => modal.classList.add('open');
+    const RANK_URL = '{{ route("dashboard.ranking-by-class") }}';
+    let activeTab  = null;
+
+    const open  = () => modal.classList.add('open');
     const close = () => modal.classList.remove('open');
+
+    function renderRows(students) {
+        if (!students || students.length === 0) {
+            return '<p style="margin:0;color:#64748b;font-size:13px;text-align:center;padding:20px;">Bu sınıfta öğrenci verisi yok.</p>';
+        }
+        return students.map(r => `
+            <div class="teacher-top10-item leaderboard-class-row">
+                <div class="teacher-top10-rank rank-${r.rank}">${r.rank}</div>
+                <div class="teacher-top10-main">
+                    <strong>${r.name}</strong>
+                    <span>${r.class_name}</span>
+                </div>
+                <div class="teacher-top10-xp">${r.xp} XP</div>
+            </div>
+        `).join('');
+    }
+
+    async function loadClass(classId, btn) {
+        if (activeTab === classId) return;
+        activeTab = classId;
+
+        // Tab aktif stili
+        document.querySelectorAll('.lb-tab-btn').forEach(b => {
+            b.style.background = '#eff6ff';
+            b.style.color      = '#1d4ed8';
+            b.style.borderColor = '#bfdbfe';
+        });
+        if (btn) {
+            btn.style.background  = '#1d4ed8';
+            btn.style.color       = '#fff';
+            btn.style.borderColor = '#1d4ed8';
+        }
+
+        body.innerHTML = '<p style="text-align:center;padding:30px 0;color:#64748b;">Yükleniyor...</p>';
+
+        try {
+            const res  = await fetch(`${RANK_URL}?class_id=${classId}`);
+            const data = await res.json();
+            body.innerHTML = `<section class="leaderboard-class-group"><div class="leaderboard-class-list">${renderRows(data.students)}</div></section>`;
+        } catch(e) {
+            body.innerHTML = '<p style="text-align:center;padding:20px;color:#ef4444;">Veri yüklenemedi.</p>';
+        }
+    }
+
+    // Tab click
+    document.querySelectorAll('.lb-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadClass(parseInt(btn.dataset.classId), btn));
+    });
 
     openBtn.addEventListener('click', (e) => {
         e.preventDefault();
         open();
+        // Açılışta aktif sınıfı otomatik seç
+        const selectedClassId = {{ $selectedClassId ?? 0 }};
+        const firstTab = document.querySelector('.lb-tab-btn');
+        if (selectedClassId > 0) {
+            const activeTabBtn = document.querySelector(`.lb-tab-btn[data-class-id="${selectedClassId}"]`);
+            if (activeTabBtn) { loadClass(selectedClassId, activeTabBtn); return; }
+        }
+        if (firstTab) loadClass(parseInt(firstTab.dataset.classId), firstTab);
     });
+
     closeBtn?.addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
     document.addEventListener('keydown', (e) => {

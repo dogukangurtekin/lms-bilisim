@@ -615,6 +615,69 @@ class DashboardController extends Controller
         ]);
     }
 
+    /**
+     * Tüm Sıralama pop-up'ı için: seçili sınıfın öğrenci sıralamasını döner.
+     * class_id=0 → aktif sınıf filtresiyle ilk 50 öğrenci (tüm sınıflar geneli).
+     */
+    public function rankingByClass(Request $request): JsonResponse
+    {
+        $user    = $request->user();
+        abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
+        $isAdmin = $user->hasRole('admin');
+
+        $teacher         = null;
+        $teacherClassIds = [];
+        if (!$isAdmin) {
+            $teacher         = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn($id) => (int)$id)->all()
+                : [];
+        }
+
+        $classId = (int) $request->input('class_id', 0);
+
+        // Yetki kontrolü
+        if ($classId > 0 && !$isAdmin && !in_array($classId, $teacherClassIds, true)) {
+            abort(403);
+        }
+
+        $studentsQuery = Student::query()
+            ->with(['user', 'schoolClass'])
+            ->when(!$isAdmin, fn($q) => $q->whereIn('school_class_id', $teacherClassIds))
+            ->when($classId > 0, fn($q) => $q->where('school_class_id', $classId));
+
+        $students      = $studentsQuery->get();
+        $studentIds    = $students->pluck('id');
+        $studentUserIds = $students->pluck('user_id');
+
+        $gradeXp   = Grade::selectRaw('student_id, ROUND(SUM(score)) as xp')->whereIn('student_id', $studentIds)->groupBy('student_id')->pluck('xp', 'student_id');
+        $contentXp = \App\Models\ContentProgress::selectRaw('user_id, SUM(xp_awarded) as xp')->whereIn('user_id', $studentUserIds)->groupBy('user_id')->pluck('xp', 'user_id');
+        $quizXp    = \App\Models\LiveQuizAnswer::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
+        $compXp    = \App\Models\CompetitionParticipant::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
+        $profileXp = UserProfile::selectRaw('user_id, xp')->whereIn('user_id', $studentUserIds)->pluck('xp', 'user_id');
+
+        $rows = $students->map(function (Student $s) use ($gradeXp, $contentXp, $quizXp, $compXp, $profileXp) {
+            $computed = max(0,
+                (int)($gradeXp[$s->id] ?? 0) +
+                (int)($contentXp[$s->user_id] ?? 0) +
+                (int)($quizXp[$s->user_id] ?? 0) +
+                (int)($compXp[$s->user_id] ?? 0)
+            );
+            $xp = max(0, max($computed, (int)($profileXp[$s->user_id] ?? 0)) - (int)($s->avatar_xp_spent ?? 0));
+
+            return [
+                'name'       => $this->normalizeDashboardText($s->user?->name ?? '-'),
+                'class_name' => $s->schoolClass ? $this->normalizeDashboardText($s->schoolClass->name . '/' . $s->schoolClass->section) : '-',
+                'xp'         => $xp,
+            ];
+        })
+        ->sortByDesc('xp')
+        ->values()
+        ->map(fn($row, $i) => array_merge($row, ['rank' => $i + 1]));
+
+        return response()->json(['students' => $rows->values()->all()]);
+    }
+
     public function saveLayout(Request $request): JsonResponse
     {
         $user = $request->user();
