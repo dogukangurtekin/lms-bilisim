@@ -85,6 +85,9 @@
         <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
         </a>
+        <a class="{{ request()->routeIs('live-tracking.*') ? 'active' : '' }}" href="{{ route('live-tracking.index') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/><path d="M12 6v2m0 8v2M6 12H4m16 0h-2"/></svg></span>Canlı Takip
+        </a>
         <a class="{{ request()->routeIs('coding.activities.*') ? 'active' : '' }}" href="{{ route('coding.activities.manage') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Günlük Çalışmalar
         </a>

@@ -28,6 +28,7 @@ use App\Http\Controllers\SystemMaintenanceController;
 use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\LiveTrackingController;
 use App\Http\Controllers\TeacherClassAssignmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -156,6 +157,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/sinif/{class}/aktif-ogrenciler', [DashboardController::class, 'activeClassStudents'])->name('dashboard.class.active-students');
     Route::post('/dashboard/sinif/{class}/ogrenci/{student}/oturum-kapat', [DashboardController::class, 'forceLogoutStudent'])->name('dashboard.student.force-logout');
     Route::post('/dashboard/sinif/{class}/oturumlari-kapat', [DashboardController::class, 'forceLogoutClass'])->name('dashboard.class.force-logout');
+
+    // Canlı Takip
+    Route::middleware('role:admin,teacher')->group(function () {
+        Route::get('/canli-takip', [LiveTrackingController::class, 'index'])->name('live-tracking.index');
+        Route::get('/canli-takip/guncelle', [LiveTrackingController::class, 'refresh'])->name('live-tracking.refresh');
+        Route::get('/canli-takip/ogrenci/{student}', [LiveTrackingController::class, 'show'])->name('live-tracking.show');
+    });
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');

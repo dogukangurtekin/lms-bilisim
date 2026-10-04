@@ -53,4 +53,9 @@ class Student extends Model
     {
         return $this->belongsToMany(Badge::class, 'student_badge');
     }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(StudentActivityLog::class);
+    }
 }
