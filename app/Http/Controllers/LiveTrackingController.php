@@ -137,8 +137,8 @@ class LiveTrackingController extends Controller
             $logsQuery->where('action_label', 'like', "%{$actionSearch}%");
         }
 
-        $totalLogs = $logsQuery->count();
         $logs      = $logsQuery->paginate(20)->withQueryString();
+        $totalLogs = $logs->total();
 
         $student->load(['user', 'schoolClass']);
 

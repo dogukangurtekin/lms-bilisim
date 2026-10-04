@@ -35,7 +35,7 @@
             {{ $logs->currentPage() }} / {{ $logs->lastPage() }}
         </div>
         <div style="color:var(--app-muted);font-size:.75rem;margin-top:2px;">
-            Sayfa başına 20 kayıt
+            Sayfa başına 20 kayıt · en yeni önce
         </div>
     </div>
 </div>
@@ -142,7 +142,6 @@
         </div>
 
         {{-- Sayfalama --}}
-        @if($logs->lastPage() > 1)
         <div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:24px;padding-top:16px;border-top:1px solid var(--app-border);flex-wrap:wrap;">
             {{-- Önceki --}}
             @if($logs->onFirstPage())
@@ -191,7 +190,6 @@
                 <span style="padding:7px 14px;border-radius:8px;border:1px solid var(--app-border);color:var(--app-muted);font-size:.85rem;cursor:not-allowed;">Sonraki →</span>
             @endif
         </div>
-        @endif
 
         @endif
     </div>
