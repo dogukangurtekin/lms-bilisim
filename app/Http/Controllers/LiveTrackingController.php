@@ -188,7 +188,7 @@ class LiveTrackingController extends Controller
                 return [
                     'id'          => $student->id,
                     'name'        => $student->user->name ?? '-',
-                    'class'       => $student->schoolClass->name ?? '-',
+                    'class'       => ($student->schoolClass->name ?? '') . ($student->schoolClass->section ? '-'.$student->schoolClass->section : '') ?: '-',
                     'last_seen'   => $last?->logged_at?->diffForHumans() ?? '-',
                     'last_action' => $last?->action_label ?? '-',
                     'detail_url'  => route('live-tracking.show', $student),

@@ -16,7 +16,7 @@
         <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--app-muted);margin-bottom:6px;">Öğrenci</div>
         <div style="font-size:1.25rem;font-weight:700;color:var(--app-text);">{{ $student->user->name ?? '-' }}</div>
         <div style="color:var(--app-muted);font-size:.85rem;margin-top:4px;">
-            {{ $student->schoolClass->name ?? 'Sınıf atanmamış' }}
+            {{ ($student->schoolClass->name ?? '') . ($student->schoolClass->section ? '-'.$student->schoolClass->section : '') ?: 'Sınıf atanmamış' }}
             @if($student->student_no)
                 · No: {{ $student->student_no }}
             @endif
@@ -41,28 +41,26 @@
 </div>
 
 {{-- Filtreler --}}
-<form method="GET" action="{{ route('live-tracking.show', $student) }}"
+<form id="detail-filter-form" method="GET" action="{{ route('live-tracking.show', $student) }}"
       style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
     <div style="flex:1;min-width:150px;">
         <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Başlangıç Tarihi</label>
         <input type="date" name="date_from" value="{{ $dateFrom }}"
+               onchange="document.getElementById('detail-filter-form').submit()"
                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;box-sizing:border-box;">
     </div>
     <div style="flex:1;min-width:150px;">
         <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Bitiş Tarihi</label>
         <input type="date" name="date_to" value="{{ $dateTo }}"
+               onchange="document.getElementById('detail-filter-form').submit()"
                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;box-sizing:border-box;">
     </div>
     <div style="flex:2;min-width:200px;">
         <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">İşlem Ara</label>
-        <input type="text" name="action_search" value="{{ $actionSearch }}" placeholder="ör: quiz, ders, ödev..."
+        <input type="text" name="action_search" id="action-search-input" value="{{ $actionSearch }}" placeholder="ör: quiz, ders, ödev..."
                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;box-sizing:border-box;">
     </div>
-    <div style="display:flex;gap:8px;">
-        <button type="submit"
-                style="padding:8px 18px;border-radius:8px;background:var(--app-primary);color:#fff;border:none;cursor:pointer;font-size:.875rem;font-weight:600;">
-            Filtrele
-        </button>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
         @if($dateFrom || $dateTo || $actionSearch)
         <a href="{{ route('live-tracking.show', $student) }}"
            style="padding:8px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.875rem;">
@@ -71,6 +69,19 @@
         @endif
     </div>
 </form>
+
+<script>
+let detailDebounce = null;
+const actionSearchInput = document.getElementById('action-search-input');
+if (actionSearchInput) {
+    actionSearchInput.addEventListener('input', function() {
+        clearTimeout(detailDebounce);
+        detailDebounce = setTimeout(function() {
+            document.getElementById('detail-filter-form').submit();
+        }, 500);
+    });
+}
+</script>
 
 {{-- Timeline --}}
 <div style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;overflow:hidden;">

@@ -24,28 +24,26 @@
 </div>
 
 {{-- Filtreler --}}
-<form method="GET" action="{{ route('live-tracking.index') }}"
+<form id="filter-form" method="GET" action="{{ route('live-tracking.index') }}"
       style="background:var(--app-panel);border:1px solid var(--app-border);border-radius:12px;padding:14px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
     <div style="flex:1;min-width:160px;">
         <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Sınıf</label>
-        <select name="class_id" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;">
+        <select name="class_id" onchange="document.getElementById('filter-form').submit()"
+                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;">
             <option value="">Tüm Sınıflar</option>
             @foreach($classes as $class)
                 <option value="{{ $class->id }}" {{ (string)$classId === (string)$class->id ? 'selected' : '' }}>
-                    {{ $class->name }}
+                    {{ $class->name }}{{ $class->section ? '-'.$class->section : '' }}
                 </option>
             @endforeach
         </select>
     </div>
     <div style="flex:2;min-width:200px;">
         <label style="font-size:.75rem;color:var(--app-muted);display:block;margin-bottom:4px;font-weight:600;">Öğrenci Adı</label>
-        <input type="text" name="search" value="{{ $search }}" placeholder="İsme göre ara..."
+        <input type="text" name="search" id="search-input" value="{{ $search }}" placeholder="İsme göre ara..."
                style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-surface);color:var(--app-text);font-size:.875rem;box-sizing:border-box;">
     </div>
-    <div style="display:flex;gap:8px;">
-        <button type="submit" style="padding:8px 18px;border-radius:8px;background:var(--app-primary);color:#fff;border:none;cursor:pointer;font-size:.875rem;font-weight:600;">
-            Filtrele
-        </button>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
         @if($classId || $search)
         <a href="{{ route('live-tracking.index') }}"
            style="padding:8px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.875rem;">
@@ -108,7 +106,7 @@
                         {{ $row['student']->user->name ?? '-' }}
                     </a>
                 </td>
-                <td>{{ $row['student']->schoolClass->name ?? '-' }}</td>
+                <td>{{ ($row['student']->schoolClass->name ?? '') . ($row['student']->schoolClass->section ? '-'.$row['student']->schoolClass->section : '') ?: '-' }}</td>
                 <td style="max-width:260px;">{{ $row['last_action'] ?? '-' }}</td>
                 <td>
                     @if($row['last_seen'])
@@ -242,6 +240,18 @@ if (currentPage > 1) {
     autoRefresh = false;
     document.getElementById('auto-refresh-toggle').textContent = '▶ Otomatik: Kapalı';
     document.getElementById('auto-refresh-toggle').title = 'Sayfalama aktifken otomatik yenileme devre dışı';
+}
+
+// Öğrenci adı arama — yazarken 500ms debounce ile form submit
+let searchDebounce = null;
+const searchInput = document.getElementById('search-input');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(function() {
+            document.getElementById('filter-form').submit();
+        }, 500);
+    });
 }
 </script>
 @endsection
