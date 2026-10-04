@@ -66,7 +66,8 @@ class LiveTrackingController extends Controller
             $query->whereHas('user', fn($q) => $q->where('name', 'like', "%{$search}%"));
         }
 
-        $students = $query->get()
+        // Tüm öğrencileri çek, son aktiviteye göre sırala, sonra paginate
+        $allStudents = $query->get()
             ->map(function (Student $student) use ($since) {
                 $logs = StudentActivityLog::where('student_id', $student->id)
                     ->where('logged_at', '>=', $since)
@@ -84,6 +85,18 @@ class LiveTrackingController extends Controller
             ->sortByDesc('last_seen')
             ->values();
 
+        // Manuel paginate
+        $perPage     = 20;
+        $currentPage = (int) $request->input('page', 1);
+        $total       = $allStudents->count();
+        $students    = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allStudents->forPage($currentPage, $perPage),
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->except('page')]
+        );
+
         $isTeacher = auth()->user()->hasRole('teacher');
 
         return view('live-tracking.index', compact(
@@ -94,7 +107,7 @@ class LiveTrackingController extends Controller
     /**
      * Öğrenci detay sayfası — erişim kontrolü dahil
      */
-    public function show(Student $student)
+    public function show(Student $student, Request $request)
     {
         $allowedClassIds = $this->allowedClassIds();
 
@@ -105,14 +118,34 @@ class LiveTrackingController extends Controller
 
         $since = now()->subDays(10);
 
-        $logs = StudentActivityLog::where('student_id', $student->id)
+        // Filtreler
+        $dateFrom   = $request->input('date_from');   // YYYY-MM-DD
+        $dateTo     = $request->input('date_to');     // YYYY-MM-DD
+        $actionSearch = trim($request->input('action_search', ''));
+
+        $logsQuery = StudentActivityLog::where('student_id', $student->id)
             ->where('logged_at', '>=', $since)
-            ->orderByDesc('logged_at')
-            ->get();
+            ->orderByDesc('logged_at');
+
+        if ($dateFrom) {
+            $logsQuery->where('logged_at', '>=', \Carbon\Carbon::parse($dateFrom)->startOfDay());
+        }
+        if ($dateTo) {
+            $logsQuery->where('logged_at', '<=', \Carbon\Carbon::parse($dateTo)->endOfDay());
+        }
+        if ($actionSearch !== '') {
+            $logsQuery->where('action_label', 'like', "%{$actionSearch}%");
+        }
+
+        $totalLogs = $logsQuery->count();
+        $logs      = $logsQuery->paginate(20)->withQueryString();
 
         $student->load(['user', 'schoolClass']);
 
-        return view('live-tracking.show', compact('student', 'logs', 'since'));
+        return view('live-tracking.show', compact(
+            'student', 'logs', 'since', 'totalLogs',
+            'dateFrom', 'dateTo', 'actionSearch'
+        ));
     }
 
     /**

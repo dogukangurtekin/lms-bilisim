@@ -132,6 +132,51 @@
     </table>
 </div>
 
+{{-- Sayfalama --}}
+@if($students->lastPage() > 1)
+<div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:16px;flex-wrap:wrap;">
+    @if($students->onFirstPage())
+        <span style="padding:7px 14px;border-radius:8px;border:1px solid var(--app-border);color:var(--app-muted);font-size:.85rem;cursor:not-allowed;">← Önceki</span>
+    @else
+        <a href="{{ $students->previousPageUrl() }}"
+           style="padding:7px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.85rem;">← Önceki</a>
+    @endif
+
+    @php
+        $start = max(1, $students->currentPage() - 2);
+        $end   = min($students->lastPage(), $students->currentPage() + 2);
+    @endphp
+
+    @if($start > 1)
+        <a href="{{ $students->url(1) }}"
+           style="padding:7px 12px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.85rem;">1</a>
+        @if($start > 2)<span style="color:var(--app-muted);padding:0 4px;">…</span>@endif
+    @endif
+
+    @for($p = $start; $p <= $end; $p++)
+        @if($p === $students->currentPage())
+            <span style="padding:7px 12px;border-radius:8px;background:var(--app-primary);color:#fff;font-size:.85rem;font-weight:700;">{{ $p }}</span>
+        @else
+            <a href="{{ $students->url($p) }}"
+               style="padding:7px 12px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.85rem;">{{ $p }}</a>
+        @endif
+    @endfor
+
+    @if($end < $students->lastPage())
+        @if($end < $students->lastPage() - 1)<span style="color:var(--app-muted);padding:0 4px;">…</span>@endif
+        <a href="{{ $students->url($students->lastPage()) }}"
+           style="padding:7px 12px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.85rem;">{{ $students->lastPage() }}</a>
+    @endif
+
+    @if($students->hasMorePages())
+        <a href="{{ $students->nextPageUrl() }}"
+           style="padding:7px 14px;border-radius:8px;border:1px solid var(--app-border);background:var(--app-panel);color:var(--app-text);text-decoration:none;font-size:.85rem;">Sonraki →</a>
+    @else
+        <span style="padding:7px 14px;border-radius:8px;border:1px solid var(--app-border);color:var(--app-muted);font-size:.85rem;cursor:not-allowed;">Sonraki →</span>
+    @endif
+</div>
+@endif
+
 <script>
 let autoRefresh = true;
 let refreshInterval = null;
@@ -191,5 +236,12 @@ async function fetchData() {
 }
 
 if (autoRefresh) startRefresh();
+// Sayfalama varsa ve 1. sayfada değilsek otomatik yenilemeyi kapat
+const currentPage = {{ $students->currentPage() }};
+if (currentPage > 1) {
+    autoRefresh = false;
+    document.getElementById('auto-refresh-toggle').textContent = '▶ Otomatik: Kapalı';
+    document.getElementById('auto-refresh-toggle').title = 'Sayfalama aktifken otomatik yenileme devre dışı';
+}
 </script>
 @endsection
