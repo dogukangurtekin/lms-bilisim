@@ -133,7 +133,6 @@
     if (status !== 'live') return;
 
     // --- Canli: sunucu saatiyle senkron sayac + kendi siralamam ----------
-    const levelStart = {{ (int) $room->level_from }};
     const totalLevels = Math.max(1, {{ (int) ($room->level_to - $room->level_from + 1) }});
     const durationMs = {{ (int) $room->duration_seconds * 1000 }};
     let endsAtMs = {{ (int) ($room->ends_at_ms ?? 0) }};
@@ -190,8 +189,7 @@
     // TEK bir bolumun odulu olarak gonderiyor (toplam degil). Bu yuzden
     // ilerleme yuzdesini ve toplam XP'yi burada, oyunun ic mantigina
     // guvenmeden kendimiz hesapliyoruz:
-    //  - Yuzde: currentLevelIndex / verilen toplam seviye sayisi (her oyun
-    //    bu alani tutarli sekilde gonderiyor).
+    //  - Yuzde: bu yarisma oturumunda tamamlanan benzersiz seviye sayisi.
     //  - XP: her LEVEL_COMPLETED olayinda gelen levelId'yi bir kez sayarak
     //    (ayni seviye tekrar oynanirsa ikinci kez eklenmesin diye) kendi
     //    biriktirdigimiz toplam; ASSIGNMENT_RANGE_COMPLETED geldiginde ise
@@ -201,22 +199,16 @@
     let accumulatedXp = 0;
     const countedLevelIds = new Set();
 
-    const computePercent = (payload) => {
-        const index = Number(payload.currentLevelIndex);
-        if (Number.isFinite(index)) {
-            const currentLevel = Math.floor(index) + 1;
-            const reachedLevels = Math.max(0, Math.min(totalLevels, currentLevel - levelStart + 1));
-            return Math.round((reachedLevels / totalLevels) * 100);
-        }
-        const explicit = payload.progressPercent ?? payload.percent;
-        return Number.isFinite(Number(explicit)) ? Number(explicit) : 0;
+    const computePercent = () => {
+        const completedLevels = Math.min(totalLevels, countedLevelIds.size);
+        return Math.round((completedLevels / totalLevels) * 100);
     };
 
     const sendProgress = (payload, force, rangeCompleted = false) => {
         const now = Date.now();
         const pct = rangeCompleted
             ? 100
-            : Math.max(0, Math.min(99, computePercent(payload)));
+            : Math.max(0, Math.min(99, computePercent()));
         if (!force && now - lastSentAt < 1500 && Math.abs(pct - lastSentPct) < 1) return;
         lastSentAt = now;
         lastSentPct = pct;

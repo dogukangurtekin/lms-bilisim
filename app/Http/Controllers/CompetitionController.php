@@ -428,15 +428,12 @@ class CompetitionController extends Controller
             ->where('competition_room_id', $room->id)
             ->where('is_spectator', false)
             ->with('studentUser.student.currentAvatar')
-            // Siralama: en yuksek XP once, esitlikte en hizli (en erken
-            // bitiren) once. finished_at_ms hala bos olanlar (yarismayi
-            // henuz bitirmemis ogrenciler) her zaman en sona atiliyor -
-            // aksi halde MySQL NULL degerleri varsayilan ASC siralamada
-            // en basa alip bitirmemis ogrencileri yanlislikla one cikarirdi.
+            // Siralama: once ilerleme, esitlikte XP, sonra tamamlayanlarda
+            // daha kisa sure. NULL bitis zamani olanlar tamamlayanlarin ardinda kalir.
+            ->orderByDesc('progress_percent')
             ->orderByDesc('xp_earned')
             ->orderByRaw('finished_at_ms IS NULL')
             ->orderBy('finished_at_ms')
-            ->orderByDesc('progress_percent')
             ->get()
             ->map(function ($p) use ($startedAtMs, $defaultAvatarUrl) {
                 $avatar = $p->studentUser?->student?->currentAvatar;
