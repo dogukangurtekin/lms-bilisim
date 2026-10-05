@@ -118,6 +118,7 @@
 @push('scripts')
 <script>
 (() => {
+    window.__COMPETITION_ROOM_ID__ = {{ $room->id }};
     const deleteModal = document.getElementById('compDeleteModal');
     const deleteCancel = document.getElementById('compDeleteCancel');
     document.querySelectorAll('.comp-delete-trigger').forEach((btn) => {

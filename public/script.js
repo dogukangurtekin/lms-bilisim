@@ -1123,16 +1123,33 @@ window.addEventListener('message', async function(e){
         // teacher dashboard'ta manual veya interval ile çağrılabilir.)
         if (userRole === "teacher" || userRole === "admin") {
           try {
+            const roomId = window.__COMPETITION_ROOM_ID__ || null;
             const studentUserId = uid !== 'guest' ? Number(uid) : null;
-            if (studentUserId) {
-              // roomId assignment context'inden gelmez; teacher dashboard veya
-              // interval-based job tarafından /ogretmen/canli-yarismalar/{room}/ilerleme
-              // endpoint'i ile belirli room/ogrenci için manuel sync yapılabilir.
-              // Aksi takdirde Firestore computeStates verisi leaderboard'da gösterilebilir.
-              console.log("COMPUTE: progress stored in Firestore, sync to MySQL via teacherReportProgress endpoint.");
+            if (studentUserId && roomId) {
+              await fetch(
+                `/ogretmen/canli-yarismalar/${roomId}/ilerleme`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                  },
+                  body: JSON.stringify({
+                    student_user_id: studentUserId,
+                    progress_percent: data.progressPercent,
+                    current_level_index: data.currentLevelIndex,
+                    xp_earned: data.xpEarned,
+                    completed_seconds: data.elapsedSeconds
+                  })
+                }
+              ).catch(() => {/* silently fail if network/error */});
+            } else if (studentUserId && !roomId) {
+              // Room ID bulunamadı - teacher dashboard'ndan veya URL parametresiyle
+              // manually sync yapması gerekebilir. Endpoint: /ogretmen/canli-yarismalar/{room}/ilerleme
+              console.log("COMPUTE: progress stored in Firestore - roomId not found for auto-sync. Use manual sync via teacherReportProgress endpoint with room ID.");
             }
           } catch (e) {
-            console.warn("COMPUTE sync note", e);
+            console.warn("COMPUTE auto-sync error", e);
           }
         }
       } catch (err) {
