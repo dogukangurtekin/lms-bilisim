@@ -1429,7 +1429,11 @@
         const cell = document.createElement("div");
         cell.className = "cell";
         if (walls.has(`${x},${y}`)) cell.classList.add("wall");
-        if (x === goal[0] && y === goal[1]) cell.classList.add("goal");
+        if (x === goal[0] && y === goal[1]) {
+          cell.classList.add("goal");
+          const goalColorIdx = ((toInt(level.id, levelIndex + 1) - 1) % 3) + 1;
+          cell.classList.add(`goal-color-${goalColorIdx}`);
+        }
         const trailKind = level.hideSolutionTrail
           ? level.boardColors?.[keyXY(x, y)]
           : trailByCell.get(keyXY(x, y));
