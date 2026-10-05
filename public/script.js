@@ -1098,7 +1098,11 @@ window.addEventListener('message', async function(e){
             updatedBy: currentUserId || null,
             payload: {
               levels: Array.isArray(data.levels) ? data.levels : [],
-              currentLevelIndex: Number(data.currentLevelIndex || 0)
+              currentLevelIndex: Number(data.currentLevelIndex || 0),
+              elapsedSeconds: Math.max(0, Number(data.elapsedSeconds || 0)),
+              completedLevelIds: Array.isArray(data.completedLevelIds) ? data.completedLevelIds : [],
+              xpEarned: Math.max(0, Number(data.xpEarned || 0)),
+              progressPercent: Math.max(0, Math.min(100, Number(data.progressPercent || 0)))
             }
           }, { merge: true });
         } else {
@@ -1106,9 +1110,30 @@ window.addEventListener('message', async function(e){
             updatedAt: serverTimestamp(),
             payload: {
               levels: Array.isArray(data.levels) ? data.levels : [],
-              currentLevelIndex: Number(data.currentLevelIndex || 0)
+              currentLevelIndex: Number(data.currentLevelIndex || 0),
+              elapsedSeconds: Math.max(0, Number(data.elapsedSeconds || 0)),
+              completedLevelIds: Array.isArray(data.completedLevelIds) ? data.completedLevelIds : [],
+              xpEarned: Math.max(0, Number(data.xpEarned || 0)),
+              progressPercent: Math.max(0, Math.min(100, Number(data.progressPercent || 0)))
             }
           }, { merge: true });
+        }
+        // Teacher/admin: selected student'ın progress'ini MySQL competition participant'a kaydet
+        // (Bu işlem competition room context'i varsa yapılır; odaklı sync için
+        // teacher dashboard'ta manual veya interval ile çağrılabilir.)
+        if (userRole === "teacher" || userRole === "admin") {
+          try {
+            const studentUserId = uid !== 'guest' ? Number(uid) : null;
+            if (studentUserId) {
+              // roomId assignment context'inden gelmez; teacher dashboard veya
+              // interval-based job tarafından /ogretmen/canli-yarismalar/{room}/ilerleme
+              // endpoint'i ile belirli room/ogrenci için manuel sync yapılabilir.
+              // Aksi takdirde Firestore computeStates verisi leaderboard'da gösterilebilir.
+              console.log("COMPUTE: progress stored in Firestore, sync to MySQL via teacherReportProgress endpoint.");
+            }
+          } catch (e) {
+            console.warn("COMPUTE sync note", e);
+          }
         }
       } catch (err) {
         console.warn("COMPUTE GAME_UPDATE save error", err);

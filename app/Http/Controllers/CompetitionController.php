@@ -366,6 +366,55 @@ class CompetitionController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function teacherReportProgress(Request $request, CompetitionRoom $room): JsonResponse
+    {
+        abort_unless(auth()->user()?->hasRole('admin') || auth()->user()?->hasRole('teacher'), 403);
+
+        $data = $request->validate([
+            'student_user_id' => ['required', 'integer'],
+            'progress_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'current_level_index' => ['nullable', 'integer', 'min:0'],
+            'xp_earned' => ['nullable', 'integer', 'min:0'],
+            'completed_seconds' => ['nullable', 'integer'],
+        ]);
+
+        $participant = CompetitionParticipant::query()
+            ->where('competition_room_id', $room->id)
+            ->where('student_user_id', $data['student_user_id'])
+            ->first();
+
+        if (!$participant) {
+            return response()->json(['ok' => true]);
+        }
+
+        $update = [];
+
+        if (isset($data['progress_percent'])) {
+            $update['progress_percent'] = min(100, (float) $data['progress_percent']);
+        }
+
+        if (isset($data['current_level_index'])) {
+            $update['current_level_index'] = max(
+                (int) $participant->current_level_index,
+                (int) $data['current_level_index']
+            );
+        }
+
+        if (isset($data['xp_earned'])) {
+            $update['xp_earned'] = max((int) $participant->xp_earned, (int) $data['xp_earned']);
+        }
+
+        if (isset($data['completed_seconds']) && $data['completed_seconds'] !== null) {
+            $update['completed_seconds'] = (int) $data['completed_seconds'];
+        }
+
+        if (!empty($update)) {
+            $participant->update($update);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     private function leaderboardRows(CompetitionRoom $room): array
     {
         $startedAtMs = (int) ($room->started_at_ms ?? 0);

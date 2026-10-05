@@ -357,6 +357,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/canli-yarismalar/{room}/durum', [CompetitionController::class, 'studentStatus'])->name('student.competitions.status');
         Route::post('/ogrenci/canli-yarismalar/{room}/ilerleme', [CompetitionController::class, 'reportProgress'])->name('student.competitions.progress');
 
+        Route::post('/ogretmen/canli-yarismalar/{room}/ilerleme', [CompetitionController::class, 'teacherReportProgress'])->name('teacher.competitions.progress');
+
         Route::get('/ogrenci/panelim', [StudentPortalController::class, 'dashboard'])->name('student.portal.dashboard');
         Route::get('/ogrenci/derslerim', [StudentPortalController::class, 'courses'])->name('student.portal.courses');
         Route::post('/ogrenci/derslerim/{course}/tamamla', [StudentPortalController::class, 'completeCourse'])->name('student.portal.course.complete');

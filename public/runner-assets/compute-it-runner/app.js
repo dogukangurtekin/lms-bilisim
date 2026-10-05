@@ -4,6 +4,8 @@
   const role = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";
   const uid = params.get("uid") || "";
   const initialRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
+  let sessionBaseSeconds = 0;
+  let sessionStartedAt = Date.now();
   const initialRangeEndRaw = Math.max(initialRangeStart, Number(params.get("levelEnd") || params.get("to") || initialRangeStart));
   const hasInitialRange = Number.isFinite(initialRangeStart) && initialRangeStart > 0;
   const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
@@ -1259,7 +1261,13 @@
 
   function emitGameUpdate() {
     try {
-      window.parent.postMessage({ type: "GAME_UPDATE", source: "compute-it", levels, currentLevelIndex: levelIndex }, "*");
+      const totalLevels = levels.length;
+      const completedLevelIds = Array.from(completed);
+      const completedLevels = completedLevelIds.length;
+      const progressPercent = totalLevels > 0 ? Math.round((completedLevels / totalLevels) * 100) : 0;
+      const xpEarned = completedLevelIds.reduce((sum, levelNo) => sum + getComputeLevelXPByLevelNo(levelNo), 0);
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - sessionStartedAt) / 1000));
+      window.parent.postMessage({ type: "GAME_UPDATE", source: "compute-it", levels, currentLevelIndex: levelIndex, elapsedSeconds, completedLevelIds, xpEarned, progressPercent }, "*");
     } catch (e) {}
   }
 
