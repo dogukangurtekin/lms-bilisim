@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101426">
+  <title>Web Atölyesi</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">&lt;/&gt;</span><div><strong>Web Atölyesi</strong><small>HTML · CSS · JavaScript</small></div></div>
+      <div class="progress-wrap"><span id="progressText">0 / 12 tamamlandı</span><div class="progress"><i id="progressBar"></i></div></div>
+      <button id="levelsToggle" class="icon-btn" type="button" aria-label="Seviyeler">☰</button>
+    </header>
+
+    <main class="workspace">
+      <aside id="sidebar" class="sidebar">
+        <div class="course-title">Öğrenme yolu</div>
+        <nav id="levelList" class="level-list"></nav>
+      </aside>
+
+      <section class="lesson">
+        <div class="lesson-head">
+          <div><span id="levelTag" class="tag">HTML · Seviye 1</span><h1 id="levelTitle">İlk web sayfan</h1></div>
+          <div class="xp"><strong id="xpTotal">0</strong><span>XP</span></div>
+        </div>
+        <p id="levelStory" class="story"></p>
+        <div class="goal"><span>🎯 Görev</span><p id="levelGoal"></p></div>
+        <div id="hints" class="hints"></div>
+
+        <div class="editor-card">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-file="html" type="button">index.html</button>
+            <button class="tab" data-file="css" type="button">style.css</button>
+            <button class="tab" data-file="js" type="button">script.js</button>
+          </div>
+          <div class="editor-shell"><div id="lineNumbers" class="lines">1</div><textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea></div>
+          <div class="actions">
+            <button id="resetBtn" class="btn ghost" type="button">Başa al</button>
+            <button id="runBtn" class="btn run" type="button">▶ Çalıştır</button>
+            <button id="checkBtn" class="btn check" type="button">Görevi kontrol et</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview-panel">
+        <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><span>sayfam.local</span><button id="refreshBtn" type="button" title="Yenile">↻</button></div>
+        <iframe id="preview" sandbox="allow-scripts" title="Canlı web sayfası önizlemesi"></iframe>
+        <div id="result" class="result" aria-live="polite"></div>
+        <div class="pager"><button id="prevBtn" class="btn ghost" type="button">← Önceki</button><button id="nextBtn" class="btn next" type="button">Sonraki seviye →</button></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="welcome" class="modal">
+    <div class="modal-card"><span class="modal-icon">🌐</span><h2>Kendi web siteni kodla</h2><p>HTML ile içeriği kur, CSS ile tasarla, JavaScript ile canlandır. Her görevi tamamladığında yeni seviye açılır.</p><button id="startBtn" class="btn check" type="button">Atölyeye başla</button></div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>

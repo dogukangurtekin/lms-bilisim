@@ -32,6 +32,7 @@ class ActivityController extends Controller
             'connect-the-dots-runner' => ['name' => 'Noktaları Birleştir', 'image' => 'connect-the-dots.svg', 'url' => '/connect-the-dots-runner'],
             'python-editor' => ['name' => 'Python Kod Editörü', 'image' => 'python.png', 'url' => '/python-editor'],
             'bee-garden-runner' => ['name' => 'Arı Bahçesi (CSS Kodlama)', 'image' => 'bee-garden-icon.png', 'url' => '/bee-garden-runner'],
+            'web-lab-runner' => ['name' => 'Web Atölyesi (HTML, CSS, JS)', 'image' => 'web-lab-icon.svg', 'url' => '/web-lab-runner'],
         ];
     }
 

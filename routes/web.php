@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/lightbot-runner', [ActivityRunnerController::class, 'lightbot']);
     Route::get('/line-trace-runner', [ActivityRunnerController::class, 'lineTrace']);
     Route::get('/silent-teacher-runner', [ActivityRunnerController::class, 'silentTeacher']);
+    Route::get('/web-lab-runner', [ActivityRunnerController::class, 'webLab']);
     Route::get('/connect-the-dots-runner', [ActivityRunnerController::class, 'connectTheDots']);
     Route::get('/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'feed'])->name('dot-connect.feed');
     Route::get('/python-editor', [ActivityRunnerController::class, 'pythonEditor']);
@@ -406,7 +407,6 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
-
 
 
 

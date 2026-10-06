@@ -61,6 +61,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('bee-garden-runner');
     }
 
+    public function webLab()
+    {
+        return $this->serveRunner('web-lab-runner');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());
