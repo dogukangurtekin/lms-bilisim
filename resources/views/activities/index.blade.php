@@ -213,7 +213,7 @@
                 </article>
 
                 <article class="activity-item activity-card">
-                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <img src="{{ asset('klavye.jpg') }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
                         <h3>Canlı Yarışmalar</h3>
                         <div class="actions">
@@ -248,7 +248,7 @@
         @elseif($isTeacher)
             <div class="activity-grid" style="margin-bottom:14px;">
                 <article class="activity-item activity-card">
-                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <img src="{{ asset('klavye.jpg') }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
                         <h3>Canlı Yarışmalar</h3>
                         <div class="actions">
@@ -290,7 +290,7 @@
         @else
             <div class="activity-grid" style="margin-bottom:14px;">
                 <article class="activity-item activity-card">
-                    <img src="{{ asset('keyboard-runner.png') }}" alt="Canlı Yarışmalar">
+                    <img src="{{ asset('klavye.jpg') }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
                         <h3>Canlı Yarışmalar</h3>
                         <div class="actions">
