@@ -669,8 +669,9 @@
                         if (earnedEl) earnedEl.textContent = 'Kazanılan XP: ' + Math.max(earnedXpTotal, totalXp);
                         const solvedEl = stage.querySelector('[data-summary-solved-questions]');
                         if (solvedEl) {
+                            const correctQuestions = Math.min(totalQuestions, Math.max(0, correctQuestionsTotal));
                             solvedEl.textContent = totalQuestions > 0
-                                ? 'Doğru: ' + correctQuestionsTotal + ' / ' + totalQuestions
+                                ? 'Doğru: ' + totalQuestions + ' / ' + correctQuestions
                                 : 'Çözülen soru sayısı: 0';
                         }
                         const wrongEl = stage.querySelector('[data-summary-wrong-questions]');
