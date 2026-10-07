@@ -40,6 +40,14 @@
 .race-join-grid{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(190px,.8fr) minmax(240px,1fr);gap:10px;align-items:end}
 .race-field label{display:block;margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.02em;opacity:.78}
 .race-room-code{text-transform:uppercase;letter-spacing:.18em;font-size:20px;font-weight:900;text-align:center}
+.race-code-entry{max-width:760px;margin:18px auto 0}
+.race-code-entry.student-entry{padding:28px}.race-code-entry.student-entry .race-join-grid{grid-template-columns:1fr}.race-code-entry.student-entry .race-field:first-child{display:none}.race-code-entry.student-entry #roomJoinActions{grid-column:auto}.race-code-entry.student-entry .race-room-code{height:70px;font-size:32px;letter-spacing:.3em}
+.race-lobby{display:none;margin-top:14px;padding:24px;text-align:center;border-radius:18px;background:linear-gradient(145deg,#eef2ff,#fff 58%,#fdf2f8);border:1px solid #c7d2fe;color:#0f172a}
+.race-lobby-code{font-size:clamp(42px,8vw,72px);font-weight:950;letter-spacing:.16em;line-height:1;color:#4f46e5;margin:10px 0 12px;text-shadow:0 6px 20px rgba(79,70,229,.16)}
+.race-lobby-students{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:16px;text-align:left}
+.race-lobby-student{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;font-weight:800;box-shadow:0 5px 15px rgba(15,23,42,.05)}
+.race-lobby-avatar{width:38px;height:38px;border-radius:10px;object-fit:cover;background:#e2e8f0;display:grid;place-items:center;flex:0 0 auto}
+.race-arena{display:none}
 .race-dashboard{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:14px;margin-top:14px}
 .race-stat-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
 .race-stat{padding:11px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(148,163,184,.2);text-align:center}
@@ -162,13 +170,15 @@
             <div class="race-hero-icon" aria-hidden="true">⌨️</div>
         </div>
 
-        <div class="race-panel race-join-grid">
+        <div id="joinPanel" class="race-panel race-code-entry">
+        <div class="race-join-grid">
             <div class="race-field"><label>Katılımcı</label><input id="userName" type="text" placeholder="Kullanıcı adın" class="race-input" readonly /></div>
             <div class="race-field"><label>6 Haneli Oda Kodu</label><input id="roomCode" type="text" maxlength="6" placeholder="ABC123" class="race-input race-room-code" /></div>
             <div id="roomJoinActions" style="display:flex;gap:8px;flex-wrap:wrap">
                 <button id="createRoomBtn" class="btn race-btn race-btn-primary" style="flex:1">Oda Oluştur</button>
                 <button id="joinRoomBtn" class="btn race-btn" style="flex:1">Katıl</button>
             </div>
+        </div>
         </div>
 
         <div id="teacherTextConfig" class="race-meta" style="margin-top:12px;display:none">
@@ -186,6 +196,13 @@
         </div>
 
         <div id="roomMeta" class="race-meta" style="margin-top:12px;display:none"></div>
+        <div id="lobbyPanel" class="race-lobby">
+            <div style="font-size:13px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.12em">Katılım Kodu</div>
+            <div id="lobbyCode" class="race-lobby-code">------</div>
+            <h3 id="lobbyTitle" style="margin:0">Öğrenciler bekleniyor</h3>
+            <p style="margin:7px 0 0;color:#64748b">Katılan öğrenciler aşağıda görünecek. Admin yarışmayı başlattığında ekran otomatik açılır.</p>
+            <div id="lobbyParticipants" class="race-lobby-students"></div>
+        </div>
 
         <div id="teacherRaceActions" style="margin-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px">
             <button id="startRaceBtn" class="btn race-btn race-btn-primary" disabled>Yarışı Başlat</button>
@@ -195,6 +212,7 @@
             <div id="statusText" class="race-status"></div>
         </div>
 
+        <div id="raceArena" class="race-arena">
         <div class="race-dashboard"><div class="race-panel" style="margin-top:0">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><strong>Yarış Metni</strong><span class="race-xp-note" id="liveXpText">0 XP</span></div>
             <div id="typingText" class="typing-box" style="line-height:1.8;font-size:18px"></div>
@@ -231,6 +249,7 @@
             <h3 style="margin:0;font-size:24px;font-weight:900">Sonuçlar</h3>
             <div id="winnerText" style="margin-top:6px;font-size:24px;font-weight:900;color:#6ee7b7"></div>
             <div id="leaderboard" style="margin-top:8px;display:grid;gap:8px"></div>
+        </div>
         </div>
     </div>
 </div>
@@ -310,14 +329,20 @@
         themeToggle: document.getElementById('themeToggle'),
         raceShell: document.getElementById('raceShell'),
         selfSeconds: document.getElementById('selfSeconds'),
+        joinPanel: document.getElementById('joinPanel'),
+        lobbyPanel: document.getElementById('lobbyPanel'),
+        lobbyCode: document.getElementById('lobbyCode'),
+        lobbyTitle: document.getElementById('lobbyTitle'),
+        lobbyParticipants: document.getElementById('lobbyParticipants'),
+        raceArena: document.getElementById('raceArena'),
     };
 
     const raceTextTemplates = [
-        'kod yazarken once problemi parcalara ayir sonra her adimi dikkatle uygula ve sonucu test etmeyi unutma',
-        'robotik calismalarda sabirli olmak onemlidir cunku kucuk hatalari bulmak buyuk basarilarin kapisini acar',
-        'yazilim gelistirirken okunabilir kod yazmak ekip calismasini kolaylastirir ve bakim suresini kisaltir',
-        'dogru algoritma secimi ayni isi daha kisa surede yapmayi saglar ve bilgisayar kaynaklarini verimli kullanir',
-        'her gun duzenli pratik yapmak klavye hizini artirir dogrulugu yukseltir ve uretkenligi gorulur bicimde gelistirir',
+        'çocuklar bugün özgün bir şiir okuyup güçlü sözcükleri özenle seçti ve sınıftaki tüm arkadaşlarıyla güzel düşüncelerini paylaştı',
+        'öğretmen küçük bir ışık altında çalışan öğrencilerin çözüm üretirken sabırlı olmasını ve hiçbir ayrıntıyı gözden kaçırmamasını istedi',
+        'bilgisayar kullanırken doğru tuşlara özenle basmak yazı hızını geliştirir çünkü düzenli çalışma güçlü bir alışkanlık oluşturur',
+        'yağmurlu bir öğleden sonra gökyüzündeki renkli gökkuşağını izleyen çocuklar doğanın şaşırtıcı güzelliği üzerine konuştu',
+        'özgür düşünceyle üretilen yaratıcı projeler iş birliğini güçlendirir ve öğrencilerin çözüm odaklı çalışmasına önemli katkı sağlar',
     ];
     const raceSample = raceTextTemplates[0];
 
@@ -560,8 +585,48 @@
     }
 
     function renderRoomMeta(roomCode, status) {
-        el.roomMeta.style.display = 'block';
-        el.roomMeta.innerHTML = `<b>Oda:</b> ${roomCode} | <b>Durum:</b> ${status}`;
+        el.roomMeta.style.display = 'none';
+        el.lobbyCode.textContent = roomCode || '------';
+        updateRaceView(status);
+    }
+
+    function updateRaceView(status) {
+        const hasRoom = !!state.roomCode;
+        const isWaiting = status === 'waiting';
+        const isRaceVisible = status === 'active' || status === 'finished';
+
+        el.joinPanel.style.display = hasRoom ? 'none' : 'block';
+        el.teacherTextConfig.style.display = actorRole === 'teacher' && !hasRoom ? 'block' : 'none';
+        el.lobbyPanel.style.display = hasRoom && isWaiting ? 'block' : 'none';
+        el.raceArena.style.display = isRaceVisible ? 'block' : 'none';
+
+        if (actorRole === 'teacher') {
+            el.startRaceBtn.style.display = hasRoom && isWaiting ? 'inline-flex' : 'none';
+            el.endRaceBtn.style.display = status === 'active' ? 'inline-flex' : 'none';
+        }
+
+        if (hasRoom && isWaiting) {
+            el.lobbyTitle.textContent = actorRole === 'teacher'
+                ? 'Öğrenciler bekleniyor'
+                : 'Lobidesin, yarışmanın başlamasını bekle';
+        }
+    }
+
+    function renderLobbyParticipants(results = []) {
+        const participants = results.filter((row) => !(row?.is_spectator || row?.isSpectator));
+        if (!participants.length) {
+            el.lobbyParticipants.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:12px">Henüz katılan öğrenci yok.</div>';
+            return;
+        }
+
+        el.lobbyParticipants.innerHTML = participants.map((row) => {
+            const name = escapeHtml(String(row?.user_name || row?.userName || 'Öğrenci'));
+            const avatarUrl = row?.avatar_url || row?.avatarUrl || '';
+            const avatar = avatarUrl
+                ? `<img class="race-lobby-avatar" src="${avatarUrl}" alt="">`
+                : '<span class="race-lobby-avatar">⌨️</span>';
+            return `<div class="race-lobby-student">${avatar}<span>${name}</span></div>`;
+        }).join('');
     }
 
     function setStatus(message) {
@@ -580,6 +645,7 @@
             }
             renderRoomMeta(room.code || state.roomCode, room.status || '-');
             const liveResults = room.race_results || room.raceResults || data.results || [];
+            if (room.status === 'waiting') renderLobbyParticipants(liveResults);
             renderOpponentsFromResults(liveResults);
             if (room.status === 'active' && !state.startHandled) {
                 // "rooms" tablosunda duration_seconds/ends_at kolonlari hic yok, bu yuzden
@@ -623,6 +689,7 @@
         state.raceDurationSeconds = Number(payload.durationSeconds || state.raceDurationSeconds || 120);
         state.raceEndsAtMs = payload.endsAt ? new Date(payload.endsAt).getTime() : (Date.now() + (state.raceDurationSeconds * 1000));
         state.startedAtMs = state.raceEndsAtMs - (state.raceDurationSeconds * 1000);
+        updateRaceView('active');
 
         if (!payload.skipCountdown) {
             await startCountdown();
@@ -666,6 +733,7 @@
         state.startHandled = false;
         state.finished = false;
         renderRoomMeta(state.roomCode, data.room.status || 'waiting');
+        renderLobbyParticipants([]);
         renderTypingText('', state.roomText);
         el.roomCode.value = state.roomCode;
         const roomUrl = new URL(window.location.href);
@@ -696,6 +764,7 @@
         state.roomText = data.race_text;
         state.isSpectator = !!data.user.spectator;
         renderRoomMeta(roomCode, data.status);
+        renderLobbyParticipants([]);
         renderTypingText('', state.roomText);
         connectSocket();
         state.socket?.emit('join_room', { roomCode, userName });
@@ -830,11 +899,11 @@
     }
 
     function escapeHtml(value) {
-        return value
-            .replaceAll('&', '&')
-            .replaceAll('<', '<')
-            .replaceAll('>', '>')
-            .replaceAll('"', '"')
+        return String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
     }
 
@@ -845,7 +914,7 @@
         el.opponents.innerHTML = entries.map(([name, stats]) => `
             <div class="opponent-card">
                 <div style="margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
-                    <span style="display:flex;align-items:center;gap:7px">${stats.avatarUrl ? `<img src="${stats.avatarUrl}" alt="" style="width:30px;height:30px;border-radius:9px;object-fit:cover">` : '<span style="width:30px;height:30px;border-radius:9px;background:#e2e8f0;display:grid;place-items:center">⌨️</span>'}<b>${name}</b></span>
+                    <span style="display:flex;align-items:center;gap:7px">${stats.avatarUrl ? `<img src="${stats.avatarUrl}" alt="" style="width:30px;height:30px;border-radius:9px;object-fit:cover">` : '<span style="width:30px;height:30px;border-radius:9px;background:#e2e8f0;display:grid;place-items:center">⌨️</span>'}<b>${escapeHtml(name)}</b></span>
                     <span>${Number(stats.progress).toFixed(1)}%</span>
                 </div>
                 <div style="height:8px;overflow:hidden;border-radius:999px;background:#1e293b">
@@ -895,7 +964,7 @@
         el.leaderboard.classList.add('result-fade');
         el.leaderboard.innerHTML = rows.map((row, index) => `
             <div class="leaderboard-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-                <div><span style="font-weight:900;color:#67e8f9">#${index + 1}</span> ${row.userName}</div>
+                <div><span style="font-weight:900;color:#67e8f9">#${index + 1}</span> ${escapeHtml(row.userName)}</div>
                 <div style="font-size:13px;opacity:.8">Tamamlanma: ${Number(row.progress).toFixed(1)}% | Hız: ${Number(row.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(row.accuracy).toFixed(1)}% | <b>${row.xpEarned} XP</b></div>
             </div>
         `).join('');
@@ -983,6 +1052,9 @@
         el.joinRoomBtn.style.display = 'inline-flex';
         el.joinRoomBtn.disabled = true;
         el.joinRoomBtn.title = 'Ogretmen yalnizca oda olusturur.';
+        el.roomCode.closest('.race-field').style.display = 'none';
+        el.startRaceBtn.style.display = 'none';
+        el.endRaceBtn.style.display = 'none';
         el.endRaceBtn.disabled = true;
         setStatus('Ogretmen modu: oda olusturup yarisi baslatabilirsiniz.');
         if (params.get('room')) {
@@ -991,6 +1063,7 @@
             resumeActiveRoom().catch((error) => setStatus(error.message));
         }
     } else {
+        el.joinPanel.classList.add('student-entry');
         el.teacherTextConfig.style.display = 'none';
         el.teacherRaceActions.style.display = 'flex';
         el.createRoomBtn.style.display = 'none';
