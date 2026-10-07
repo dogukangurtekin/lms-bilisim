@@ -1397,22 +1397,6 @@
       return html;
     }).join("");
     fitCodeToPanel();
-    updateHelpStepTracker(activeStep, activeLine, lines);
-  }
-
-  function updateHelpStepTracker(activeStep, activeLine, lines) {
-    const trackerEl = document.getElementById("help-step-tracker");
-    if (!trackerEl) return;
-    if (activeStep < 0 || activeLine < 0 || !lines) {
-      trackerEl.innerHTML = "<span>Henüz adım atılmadı.</span>";
-      return;
-    }
-    const totalMoves = activeProgram.moves?.length || 0;
-    const lineText = lines[activeLine] ? String(lines[activeLine]).trim() : "?";
-    trackerEl.innerHTML =
-      `<span>Adım: <strong>${activeStep + 1} / ${totalMoves}</strong></span>` +
-      `<span style="margin-top:4px">Şu an çalıştırılacak satır <span class="hl">${activeLine + 1}</span>:</span>` +
-      `<span class="hl" style="margin-top:2px; padding-left:8px">${lineText}</span>`;
   }
 
   window.addEventListener("resize", fitCodeToPanel);
@@ -1891,21 +1875,6 @@
     loadLevel(levelIndex);
   });
 
-  const btnHelp = document.getElementById("btn-help");
-  const helpPanel = document.getElementById("help-panel");
-  const helpBackdrop = document.getElementById("help-backdrop");
-  const btnHelpClose = document.getElementById("btn-help-close");
-  function openHelp() {
-    if (helpPanel) helpPanel.classList.add("open");
-    if (helpBackdrop) helpBackdrop.classList.add("open");
-  }
-  function closeHelp() {
-    if (helpPanel) helpPanel.classList.remove("open");
-    if (helpBackdrop) helpBackdrop.classList.remove("open");
-  }
-  if (btnHelp) btnHelp.addEventListener("click", openHelp);
-  if (btnHelpClose) btnHelpClose.addEventListener("click", closeHelp);
-  if (helpBackdrop) helpBackdrop.addEventListener("click", closeHelp);
   if (btnNext) {
     btnNext.style.display = "none";
     btnNext.disabled = true;
@@ -1969,5 +1938,4 @@
     loadLevel(initialIndex);
   })();
 })();
-
 
