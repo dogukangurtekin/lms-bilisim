@@ -12,6 +12,7 @@ use App\Models\CourseHomework;
 use App\Models\GameAssignment;
 use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
+use App\Models\RaceResult;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
@@ -808,8 +809,9 @@ class StudentPortalController extends Controller
         // Canli Yarisma'da kazanilan XP de diger kaynaklar gibi (not, ders/
         // icerik tamamlama) ogrencinin toplam XP'sine dahil ediliyor.
         $competitionXp = (int) CompetitionParticipant::where('student_user_id', $student->user_id)->sum('xp_earned');
+        $keyboardRaceXp = (int) RaceResult::where('user_id', $student->user_id)->sum('xp_earned');
 
-        return max(0, $gradeXp + $contentXp + $competitionXp);
+        return max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp);
     }
 
     private function classBoardMessages(): array
@@ -1331,4 +1333,3 @@ class StudentPortalController extends Controller
         return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
     }
 }
-

@@ -17,6 +17,7 @@ class RaceResult extends Model
         'progress',
         'wpm',
         'accuracy',
+        'correct_characters',
         'elapsed_seconds',
         'completion_seconds',
         'xp_earned',
@@ -29,6 +30,7 @@ class RaceResult extends Model
         return [
             'finished_at' => 'datetime',
             'is_spectator' => 'boolean',
+            'correct_characters' => 'integer',
             'elapsed_seconds' => 'integer',
             'completion_seconds' => 'integer',
             'xp_earned' => 'integer',

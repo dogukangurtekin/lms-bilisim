@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Redis;
 class RaceController extends Controller
 {
     private const RACE_DURATION_SECONDS = 120;
+    public const XP_PER_CORRECT_CHARACTER = 5;
 
     public function start(Room $room): JsonResponse
     {
@@ -76,6 +77,7 @@ class RaceController extends Controller
             'progress' => ['required', 'numeric', 'min:0', 'max:100'],
             'wpm' => ['required', 'numeric', 'min:0', 'max:400'],
             'accuracy' => ['required', 'numeric', 'min:0', 'max:100'],
+            'correct_characters' => ['required', 'integer', 'min:0', 'max:1000'],
             'elapsed_seconds' => ['required', 'integer', 'min:0', 'max:36000'],
         ]);
 
@@ -97,6 +99,7 @@ class RaceController extends Controller
             'progress' => $payload['progress'],
             'wpm' => $payload['wpm'],
             'accuracy' => $payload['accuracy'],
+            'correct_characters' => $this->normalizeCorrectCharacters($room, (int) $payload['correct_characters']),
             'elapsed_seconds' => $payload['elapsed_seconds'],
         ]);
 
@@ -114,9 +117,9 @@ class RaceController extends Controller
             'progress' => ['required', 'numeric', 'min:0', 'max:100'],
             'wpm' => ['required', 'numeric', 'min:0', 'max:400'],
             'accuracy' => ['required', 'numeric', 'min:0', 'max:100'],
+            'correct_characters' => ['required', 'integer', 'min:0', 'max:1000'],
             'elapsed_seconds' => ['nullable', 'integer', 'min:0', 'max:36000'],
             'completion_seconds' => ['nullable', 'integer', 'min:0', 'max:36000'],
-            'xp_earned' => ['nullable', 'integer', 'min:0', 'max:10000'],
             'is_spectator' => ['sometimes', 'boolean'],
         ]);
 
@@ -126,33 +129,31 @@ class RaceController extends Controller
 
         $elapsedSeconds = (int) ($payload['elapsed_seconds'] ?? 0);
         $completionSeconds = isset($payload['completion_seconds']) ? (int) $payload['completion_seconds'] : null;
-        $xpEarned = (int) ($payload['xp_earned'] ?? $this->calculateXp(
-            (float) $payload['progress'],
-            (float) $payload['wpm'],
-            (float) $payload['accuracy'],
-            $completionSeconds
-        ));
+        $correctCharacters = $this->normalizeCorrectCharacters($room, (int) $payload['correct_characters']);
+        $xpEarned = $this->calculateXp($correctCharacters);
 
-        DB::transaction(function () use ($room, $payload, $elapsedSeconds, $completionSeconds, $xpEarned): void {
-            $result = RaceResult::updateOrCreate(
+        DB::transaction(function () use ($room, $payload, $elapsedSeconds, $completionSeconds, $correctCharacters, $xpEarned): void {
+            $result = RaceResult::query()->firstOrNew(
                 [
                     'room_id' => $room->id,
-                    'user_name' => $payload['user_name'],
-                ],
-                [
                     'user_id' => $payload['user_id'] ?? null,
-                    'progress' => $payload['progress'],
-                    'wpm' => $payload['wpm'],
-                    'accuracy' => $payload['accuracy'],
-                    'elapsed_seconds' => $elapsedSeconds,
-                    'completion_seconds' => $completionSeconds,
-                    'xp_earned' => $xpEarned,
-                    'is_spectator' => (bool) ($payload['is_spectator'] ?? false),
-                    'finished_at' => Carbon::now(),
                 ]
             );
+            $previousXp = (int) ($result->xp_earned ?? 0);
+            $result->fill([
+                'user_name' => $payload['user_name'],
+                'progress' => $payload['progress'],
+                'wpm' => $payload['wpm'],
+                'accuracy' => $payload['accuracy'],
+                'correct_characters' => $correctCharacters,
+                'elapsed_seconds' => $elapsedSeconds,
+                'completion_seconds' => $completionSeconds,
+                'xp_earned' => $xpEarned,
+                'is_spectator' => (bool) ($payload['is_spectator'] ?? false),
+                'finished_at' => Carbon::now(),
+            ])->save();
 
-            $this->syncRaceXpToStudentReport($result);
+            $this->syncRaceXpToStudentReport($result, max(0, $xpEarned - $previousXp));
 
             $allParticipantsDone = RaceResult::query()
                 ->where('room_id', $room->id)
@@ -207,10 +208,29 @@ class RaceController extends Controller
             ]);
         }
 
-        $room->update([
-            'status' => 'finished',
-            'finished_at' => now(),
-        ]);
+        DB::transaction(function () use ($room): void {
+            RaceResult::query()
+                ->where('room_id', $room->id)
+                ->where('is_spectator', false)
+                ->lockForUpdate()
+                ->get()
+                ->each(function (RaceResult $result) use ($room): void {
+                    $previousXp = (int) $result->xp_earned;
+                    $xpEarned = $this->calculateXp(
+                        $this->normalizeCorrectCharacters($room, (int) $result->correct_characters)
+                    );
+                    $result->update([
+                        'xp_earned' => $xpEarned,
+                        'finished_at' => $result->finished_at ?: now(),
+                    ]);
+                    $this->syncRaceXpToStudentReport($result, max(0, $xpEarned - $previousXp));
+                });
+
+            $room->update([
+                'status' => 'finished',
+                'finished_at' => now(),
+            ]);
+        });
         Cache::forget('race:active_room');
         Cache::forget("race:leaderboard:{$room->id}");
         Cache::forget("race:report:{$room->id}");
@@ -278,20 +298,28 @@ class RaceController extends Controller
         return RaceResult::query()
             ->where('room_id', $room->id)
             ->where('is_spectator', false)
+            ->with('user.student.currentAvatar')
             ->orderByDesc('progress')
             ->orderByDesc('wpm')
             ->orderByDesc('accuracy')
-            ->get(['user_name', 'progress', 'wpm', 'accuracy', 'elapsed_seconds', 'completion_seconds', 'xp_earned', 'finished_at'])
-            ->map(fn (RaceResult $result) => [
+            ->get(['id', 'user_id', 'user_name', 'progress', 'wpm', 'accuracy', 'correct_characters', 'elapsed_seconds', 'completion_seconds', 'xp_earned', 'finished_at'])
+            ->map(function (RaceResult $result): array {
+                $avatar = $result->user?->student?->currentAvatar;
+
+                return [
                 'userName' => $result->user_name,
                 'progress' => (float) $result->progress,
                 'wpm' => (float) $result->wpm,
                 'accuracy' => (float) $result->accuracy,
+                'correctCharacters' => (int) $result->correct_characters,
                 'elapsedSeconds' => (int) ($result->elapsed_seconds ?? 0),
                 'completionSeconds' => $result->completion_seconds !== null ? (int) $result->completion_seconds : null,
                 'xpEarned' => (int) ($result->xp_earned ?? 0),
                 'finishedAt' => $result->finished_at?->toIso8601String(),
-            ])
+                'avatarUrl' => $avatar?->image_path ? asset($avatar->image_path) : null,
+                'avatarName' => $avatar?->name,
+                ];
+            })
             ->toArray();
     }
 
@@ -362,12 +390,13 @@ class RaceController extends Controller
             ->orderByDesc('progress')
             ->orderByDesc('wpm')
             ->orderByDesc('accuracy')
-            ->get(['user_name', 'progress', 'wpm', 'accuracy', 'elapsed_seconds', 'completion_seconds', 'xp_earned', 'finished_at'])
+            ->get(['user_name', 'progress', 'wpm', 'accuracy', 'correct_characters', 'elapsed_seconds', 'completion_seconds', 'xp_earned', 'finished_at'])
             ->map(fn (RaceResult $r) => [
                 'userName' => $r->user_name,
                 'progress' => (float) $r->progress,
                 'wpm' => (float) $r->wpm,
                 'accuracy' => (float) $r->accuracy,
+                'correctCharacters' => (int) $r->correct_characters,
                 'elapsedSeconds' => (int) ($r->elapsed_seconds ?? 0),
                 'completionSeconds' => $r->completion_seconds !== null ? (int) $r->completion_seconds : null,
                 'xpEarned' => (int) ($r->xp_earned ?? 0),
@@ -387,26 +416,27 @@ class RaceController extends Controller
         ];
     }
 
-    private function calculateXp(float $progress, float $wpm, float $accuracy, ?int $completionSeconds): int
+    private function calculateXp(int $correctCharacters): int
     {
-        $base = (int) round(($progress * 0.4) + ($wpm * 1.2) + ($accuracy * 0.6));
-        $speedBonus = $completionSeconds !== null && $completionSeconds > 0
-            ? (int) round(max(0, 90 - min(90, $completionSeconds)) * 0.5)
-            : 0;
-        return max(0, min(500, $base + $speedBonus));
+        return max(0, $correctCharacters) * self::XP_PER_CORRECT_CHARACTER;
     }
 
-    private function syncRaceXpToStudentReport(RaceResult $result): void
+    private function normalizeCorrectCharacters(Room $room, int $correctCharacters): int
+    {
+        return max(0, min(mb_strlen((string) $room->text, 'UTF-8'), $correctCharacters));
+    }
+
+    private function syncRaceXpToStudentReport(RaceResult $result, int $xpDelta): void
     {
         if (! $result->user_id) {
             return;
         }
-        if ((int) ($result->xp_earned ?? 0) <= 0) {
+        if ($xpDelta <= 0) {
             return;
         }
 
         $uid = (int) $result->user_id;
-        $xp = (int) $result->xp_earned;
+        $xp = $xpDelta;
         $elapsedMs = ((int) ($result->elapsed_seconds ?? 0)) * 1000;
 
         $profile = UserProfile::query()->firstOrCreate(

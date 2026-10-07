@@ -11,6 +11,7 @@ use App\Models\GameAssignment;
 use App\Models\Grade;
 use App\Models\ActivityAttempt;
 use App\Models\LiveQuizAnswer;
+use App\Models\RaceResult;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
@@ -120,6 +121,9 @@ class StudentProgressReportService
             ->where('student_user_id', $student->user_id)
             ->get();
         $competitionXp = (int) $competitionParticipantRows->sum('xp_earned');
+        $keyboardRaceXp = (int) RaceResult::query()
+            ->where('user_id', $student->user_id)
+            ->sum('xp_earned');
         $competitionJoinedCount = $competitionParticipantRows
             ->unique('competition_room_id')
             ->count();
@@ -154,7 +158,7 @@ class StudentProgressReportService
         // Rapordaki siralama (asagida) avatar harcamasi dusulerek
         // hesaplandigindan, ayni raporun basligindaki XP de tutarli olmasi
         // icin ayni sekilde netleniyor.
-        $totalXp = max(0, $gradeXp + $contentXp + $competitionXp - (int) ($student->avatar_xp_spent ?? 0));
+        $totalXp = max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp - (int) ($student->avatar_xp_spent ?? 0));
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
         $completedLessonRows = ContentProgress::where('user_id', $student->user_id)
@@ -230,12 +234,18 @@ class StudentProgressReportService
             ->whereIn('student_user_id', $studentUserIdsAll)
             ->groupBy('student_user_id')
             ->pluck('xp', 'user_id');
+        $keyboardRaceXpByUserAll = RaceResult::query()
+            ->selectRaw('user_id, SUM(xp_earned) as xp')
+            ->whereIn('user_id', $studentUserIdsAll)
+            ->groupBy('user_id')
+            ->pluck('xp', 'user_id');
         $xpMap = [];
         foreach ($students as $s) {
             $sx = (int) round((float) Grade::where('student_id', $s->id)->sum('score'));
             $cx = (int) ContentProgress::where('user_id', $s->user_id)->sum('xp_awarded');
             $compx = (int) ($competitionXpByUserAll[$s->user_id] ?? 0);
-            $xpMap[$s->id] = max(0, $sx + $cx + $compx - (int) ($s->avatar_xp_spent ?? 0));
+            $keyboardRaceXp = (int) ($keyboardRaceXpByUserAll[$s->user_id] ?? 0);
+            $xpMap[$s->id] = max(0, $sx + $cx + $compx + $keyboardRaceXp - (int) ($s->avatar_xp_spent ?? 0));
         }
 
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);

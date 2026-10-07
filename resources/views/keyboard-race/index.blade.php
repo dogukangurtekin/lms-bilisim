@@ -23,6 +23,34 @@
     pointer-events: none;
 }
 .race-content { position: relative; z-index: 1; }
+.race-hero {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:18px;
+    align-items:center;
+    padding:22px;
+    border-radius:18px;
+    color:#fff;
+    background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#db2777 100%);
+    box-shadow:0 18px 45px rgba(79,70,229,.22);
+}
+.race-hero-icon{width:76px;height:76px;border-radius:20px;display:grid;place-items:center;font-size:38px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+.race-rule{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.16);font-size:13px;font-weight:800}
+.race-panel{margin-top:14px;padding:16px;border:1px solid rgba(148,163,184,.28);border-radius:16px;background:rgba(255,255,255,.07);box-shadow:0 8px 25px rgba(15,23,42,.08)}
+.race-join-grid{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(190px,.8fr) minmax(240px,1fr);gap:10px;align-items:end}
+.race-field label{display:block;margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.02em;opacity:.78}
+.race-room-code{text-transform:uppercase;letter-spacing:.18em;font-size:20px;font-weight:900;text-align:center}
+.race-dashboard{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:14px;margin-top:14px}
+.race-stat-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
+.race-stat{padding:11px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(148,163,184,.2);text-align:center}
+.race-stat span{display:block;font-size:11px;opacity:.72;margin-bottom:4px}.race-stat b{font-size:19px}
+.race-status{min-height:34px;display:flex;align-items:center;padding:8px 11px;border-radius:10px;background:rgba(15,23,42,.2);font-size:13px;font-weight:700}
+.race-xp-note{color:#fde68a;font-weight:900}
+.opponent-card,.leaderboard-row{border-radius:12px;border:1px solid rgba(129,140,248,.28);background:rgba(255,255,255,.08);padding:11px}
+.race-shell[data-theme="light"] .race-panel,.race-shell[data-theme="light"] .race-stat,.race-shell[data-theme="light"] .opponent-card,.race-shell[data-theme="light"] .leaderboard-row{background:#fff;border-color:#e2e8f0}
+.race-shell[data-theme="light"] .race-status{background:#eef2ff;color:#3730a3}
+@media(max-width:900px){.race-dashboard{grid-template-columns:1fr}.race-join-grid{grid-template-columns:1fr 1fr}.race-join-grid #roomJoinActions{grid-column:1/-1}.race-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.race-hero{grid-template-columns:1fr;padding:17px}.race-hero-icon{display:none}.race-join-grid{grid-template-columns:1fr}.race-join-grid #roomJoinActions{grid-column:auto}.race-stat-grid{grid-template-columns:1fr 1fr}}
 .neon-title {
     color: #e2e8f0;
     text-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
@@ -125,12 +153,18 @@
 <div id="raceShell" class="card race-shell" data-theme="light">
     <div class="race-bg"></div>
     <div class="race-content">
-        <h2 class="neon-title" style="margin:0;font-size:34px;font-weight:900">Klavye Hız Yarışması</h2>
-        <p style="margin:8px 0 0;color:inherit;opacity:.85">Gerçek zamanlı yarış: oda oluştur, katıl, yaz ve zirveye çık.</p>
+        <div class="race-hero">
+            <div>
+                <h2 style="margin:0;font-size:clamp(27px,4vw,40px);font-weight:900">Klavye Hız Yarışması</h2>
+                <p style="margin:8px 0 0;opacity:.9">Canlı yarışma mantığıyla aynı anda yaz, rakiplerini izle ve sıralamada yüksel.</p>
+                <div class="race-rule">⚡ Her doğru harf = 5 XP</div>
+            </div>
+            <div class="race-hero-icon" aria-hidden="true">⌨️</div>
+        </div>
 
-        <div style="margin-top:18px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));align-items:center">
-            <input id="userName" type="text" placeholder="Kullanıcı adın" class="race-input" />
-            <input id="roomCode" type="text" placeholder="Oda kodu" class="race-input" />
+        <div class="race-panel race-join-grid">
+            <div class="race-field"><label>Katılımcı</label><input id="userName" type="text" placeholder="Kullanıcı adın" class="race-input" readonly /></div>
+            <div class="race-field"><label>6 Haneli Oda Kodu</label><input id="roomCode" type="text" maxlength="6" placeholder="ABC123" class="race-input race-room-code" /></div>
             <div id="roomJoinActions" style="display:flex;gap:8px;flex-wrap:wrap">
                 <button id="createRoomBtn" class="btn race-btn race-btn-primary" style="flex:1">Oda Oluştur</button>
                 <button id="joinRoomBtn" class="btn race-btn" style="flex:1">Katıl</button>
@@ -158,13 +192,14 @@
             <button id="endRaceBtn" class="btn race-btn" disabled>Yarışı Bitir ve Rapor Al</button>
             <div id="countdown" style="font-size:38px;font-weight:900;color:#67e8f9"></div>
             <div id="raceTimer" style="font-size:22px;font-weight:900;color:#fde68a"></div>
-            <div id="statusText" style="font-size:13px;color:#cbd5e1"></div>
+            <div id="statusText" class="race-status"></div>
         </div>
 
-        <div style="margin-top:16px">
+        <div class="race-dashboard"><div class="race-panel" style="margin-top:0">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><strong>Yarış Metni</strong><span class="race-xp-note" id="liveXpText">0 XP</span></div>
             <div id="typingText" class="typing-box" style="line-height:1.8;font-size:18px"></div>
             <textarea id="typingInput" rows="3" class="race-input" style="margin-top:8px" placeholder="Yarış başlayınca buraya yaz..." disabled></textarea>
-        </div>
+        </div><div class="race-panel" style="margin-top:0"><strong>Anlık Performans</strong>
 
         <div style="margin-top:14px">
             <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px">
@@ -177,20 +212,15 @@
             </div>
         </div>
 
-        <div style="margin-top:12px;display:grid;gap:8px;grid-template-columns:1fr;max-width:520px">
-            <div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08)">
-                <span>Toplam Yazılan Kelime</span><b id="metricTotalWords">0</b>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08)">
-                <span>Doğru Yazılan Kelime</span><b id="metricCorrectWords" style="color:#22c55e">0</b>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08)">
-                <span>Yanlış Yazılan Kelime</span><b id="metricWrongWords" style="color:#ef4444">0</b>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.08)">
-                <span>Hata Oranı</span><b id="metricErrorRate">% 0,00</b>
-            </div>
+        <div class="race-stat-grid">
+            <div class="race-stat"><span>Toplam Kelime</span><b id="metricTotalWords">0</b></div>
+            <div class="race-stat"><span>Doğru Kelime</span><b id="metricCorrectWords" style="color:#16a34a">0</b></div>
+            <div class="race-stat"><span>Yanlış Kelime</span><b id="metricWrongWords" style="color:#ef4444">0</b></div>
+            <div class="race-stat"><span>Doğru Harf</span><b id="metricCorrectChars">0</b></div>
+            <div class="race-stat"><span>Kazanılan XP</span><b id="metricXp" style="color:#f59e0b">0</b></div>
         </div>
+        <div style="display:none"><b id="metricErrorRate">% 0,00</b></div>
+        </div></div>
 
         <div style="margin-top:14px">
             <h3 style="margin:0;font-size:20px">Canlı Rakipler</h3>
@@ -268,6 +298,9 @@
         metricTotalWords: document.getElementById('metricTotalWords'),
         metricCorrectWords: document.getElementById('metricCorrectWords'),
         metricWrongWords: document.getElementById('metricWrongWords'),
+        metricCorrectChars: document.getElementById('metricCorrectChars'),
+        metricXp: document.getElementById('metricXp'),
+        liveXpText: document.getElementById('liveXpText'),
         metricErrorRate: document.getElementById('metricErrorRate'),
         opponents: document.getElementById('opponents'),
         leaderboardWrap: document.getElementById('leaderboardWrap'),
@@ -409,7 +442,7 @@
 
         state.socket.on('typing_progress', (payload) => {
             if (!payload?.userName || payload.userName === state.userName) return;
-            upsertOpponent(payload.userName, payload.progress, payload.wpm, payload.accuracy);
+            upsertOpponent(payload.userName, payload.progress, payload.wpm, payload.accuracy, payload.xpEarned || 0);
         });
 
         state.socket.on('race_finished', (payload) => {
@@ -522,7 +555,7 @@
         for (const row of results) {
             const name = String(row?.user_name || row?.userName || '').trim();
             if (!name || name === state.userName || row?.is_spectator) continue;
-            upsertOpponent(name, Number(row?.progress || 0), Number(row?.wpm || 0), Number(row?.accuracy || 100));
+            upsertOpponent(name, Number(row?.progress || 0), Number(row?.wpm || 0), Number(row?.accuracy || 100), Number(row?.xp_earned || row?.xpEarned || 0), row?.avatar_url || row?.avatarUrl || '');
         }
     }
 
@@ -691,6 +724,7 @@
                 <td>${Number(r.progress || 0).toFixed(1)}%</td>
                 <td>${Number(r.wpm || 0).toFixed(1)}</td>
                 <td>${Number(r.accuracy || 0).toFixed(1)}%</td>
+                <td>${r.correctCharacters ?? 0}</td>
                 <td>${r.completionSeconds ?? '-'}</td>
                 <td>${r.elapsedSeconds ?? 0}</td>
                 <td>${r.xpEarned ?? 0}</td>
@@ -704,7 +738,7 @@
 <h2>Klavye Yarisi Raporu</h2>
 <p><b>Oda:</b> ${report?.roomCode || '-'} | <b>Ad:</b> ${report?.roomName || '-'}</p>
 <p><b>Baslangic:</b> ${report?.startedAt || '-'} | <b>Bitis:</b> ${report?.finishedAt || '-'} | <b>Toplam Sure:</b> ${report?.durationSeconds ?? '-'} sn</p>
-<table><thead><tr><th>#</th><th>Ogrenci</th><th>Ilerleme</th><th>WPM</th><th>Dogruluk</th><th>Bitiris (sn)</th><th>Gecen Sure (sn)</th><th>XP</th></tr></thead><tbody>${list}</tbody></table>
+<table><thead><tr><th>#</th><th>Ogrenci</th><th>Ilerleme</th><th>WPM</th><th>Dogruluk</th><th>Dogru Harf</th><th>Bitiris (sn)</th><th>Gecen Sure (sn)</th><th>XP</th></tr></thead><tbody>${list}</tbody></table>
 <script>window.onload=()=>window.print();<\/script>
 </body></html>`;
     }
@@ -757,6 +791,8 @@
             progress: Number(progress.toFixed(2)),
             accuracy: Number(accuracy.toFixed(2)),
             wpm: Number(wpm.toFixed(2)),
+            correct_characters: matched,
+            xp_earned: matched * 5,
         };
     }
 
@@ -802,19 +838,20 @@
             .replaceAll("'", '&#039;');
     }
 
-    function upsertOpponent(userName, progress, wpm, accuracy) {
-        state.opponents.set(userName, { progress, wpm, accuracy });
+    function upsertOpponent(userName, progress, wpm, accuracy, xpEarned = 0, avatarUrl = '') {
+        const previous = state.opponents.get(userName) || {};
+        state.opponents.set(userName, { progress, wpm, accuracy, xpEarned, avatarUrl: avatarUrl || previous.avatarUrl || '' });
         const entries = [...state.opponents.entries()];
         el.opponents.innerHTML = entries.map(([name, stats]) => `
-            <div style="border-radius:10px;border:1px solid rgba(217,70,239,.35);background:rgba(15,23,42,.62);padding:10px">
+            <div class="opponent-card">
                 <div style="margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;font-size:13px">
-                    <span>${name}</span>
+                    <span style="display:flex;align-items:center;gap:7px">${stats.avatarUrl ? `<img src="${stats.avatarUrl}" alt="" style="width:30px;height:30px;border-radius:9px;object-fit:cover">` : '<span style="width:30px;height:30px;border-radius:9px;background:#e2e8f0;display:grid;place-items:center">⌨️</span>'}<b>${name}</b></span>
                     <span>${Number(stats.progress).toFixed(1)}%</span>
                 </div>
                 <div style="height:8px;overflow:hidden;border-radius:999px;background:#1e293b">
                     <div style="height:100%;background:linear-gradient(90deg,#d946ef,#22d3ee);transition:width .25s;width:${Math.min(100, Math.max(0, stats.progress))}%"></div>
                 </div>
-                <div style="margin-top:6px;font-size:12px;color:#cbd5e1">Hız: ${Number(stats.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(stats.accuracy).toFixed(1)}%</div>
+                <div style="margin-top:6px;font-size:12px;opacity:.78">Hız: ${Number(stats.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(stats.accuracy).toFixed(1)}% | <b>${Number(stats.xpEarned || 0)} XP</b></div>
             </div>
         `).join('');
     }
@@ -835,7 +872,7 @@
                 accuracy: stats.accuracy,
                 elapsed_seconds: Math.max(0, Math.floor((Date.now() - (state.startedAtMs || Date.now())) / 1000)),
                 completion_seconds: stats.progress >= 100 ? Math.max(0, Math.floor((Date.now() - (state.startedAtMs || Date.now())) / 1000)) : null,
-                xp_earned: Math.max(0, Math.round((stats.progress * 0.4) + (stats.wpm * 1.2) + (stats.accuracy * 0.6))),
+                correct_characters: stats.correct_characters,
                 is_spectator: false,
             }),
         });
@@ -851,14 +888,15 @@
                 progress: Number(row.progress || 0),
                 wpm: Number(row.wpm || 0),
                 accuracy: Number(row.accuracy || 0),
+                xpEarned: Number(row.xpEarned || row.xp_earned || 0),
             }))
             .sort((a, b) => (b.progress - a.progress) || (b.wpm - a.wpm) || (b.accuracy - a.accuracy));
         el.leaderboardWrap.style.display = 'block';
         el.leaderboard.classList.add('result-fade');
         el.leaderboard.innerHTML = rows.map((row, index) => `
-            <div style="border-radius:10px;border:1px solid rgba(56,189,248,.35);background:rgba(15,23,42,.72);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div class="leaderboard-row" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
                 <div><span style="font-weight:900;color:#67e8f9">#${index + 1}</span> ${row.userName}</div>
-                <div style="font-size:13px;color:#cbd5e1">Tamamlanma: ${Number(row.progress).toFixed(1)}% | Hız: ${Number(row.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(row.accuracy).toFixed(1)}%</div>
+                <div style="font-size:13px;opacity:.8">Tamamlanma: ${Number(row.progress).toFixed(1)}% | Hız: ${Number(row.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(row.accuracy).toFixed(1)}% | <b>${row.xpEarned} XP</b></div>
             </div>
         `).join('');
 
@@ -898,12 +936,16 @@
         el.metricCorrectWords.textContent = String(wordMetrics.correctWords);
         el.metricWrongWords.textContent = String(wordMetrics.wrongWords);
         el.metricErrorRate.textContent = `% ${wordMetrics.errorRate.toFixed(2).replace('.', ',')}`;
+        el.metricCorrectChars.textContent = String(stats.correct_characters);
+        el.metricXp.textContent = String(stats.xp_earned);
+        el.liveXpText.textContent = `${stats.xp_earned} XP`;
 
         if (state.socketAvailable && state.socket?.connected) {
             state.socket.emit('typing_progress', {
                 roomCode: state.roomCode,
                 userName: state.userName,
                 ...stats,
+                xpEarned: stats.xp_earned,
             });
         }
 
@@ -950,13 +992,15 @@
         }
     } else {
         el.teacherTextConfig.style.display = 'none';
-        el.teacherRaceActions.style.display = 'none';
+        el.teacherRaceActions.style.display = 'flex';
         el.createRoomBtn.style.display = 'none';
         el.joinRoomBtn.style.display = 'inline-flex';
         el.createRoomBtn.disabled = true;
         el.createRoomBtn.title = 'Ogrenci oda olusturamaz.';
         el.startRaceBtn.disabled = true;
         el.endRaceBtn.disabled = true;
+        el.startRaceBtn.style.display = 'none';
+        el.endRaceBtn.style.display = 'none';
         setStatus('Ogrenci modu: oda kodu ile katilin.');
         if (params.get('room')) {
             if (!el.userName.value.trim()) {

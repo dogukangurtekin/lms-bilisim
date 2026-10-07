@@ -73,11 +73,32 @@ class RoomController extends Controller
 
     public function show(Room $room): JsonResponse
     {
-        $room->load(['raceResults' => fn ($query) => $query->orderByDesc('wpm')]);
+        $results = RaceResult::query()
+            ->where('room_id', $room->id)
+            ->with('user.student.currentAvatar')
+            ->orderByDesc('progress')
+            ->orderByDesc('wpm')
+            ->get()
+            ->map(function (RaceResult $result): array {
+                $avatar = $result->user?->student?->currentAvatar;
+
+                return [
+                    'user_name' => $result->user_name,
+                    'progress' => (float) $result->progress,
+                    'wpm' => (float) $result->wpm,
+                    'accuracy' => (float) $result->accuracy,
+                    'correct_characters' => (int) $result->correct_characters,
+                    'xp_earned' => (int) $result->xp_earned,
+                    'is_spectator' => (bool) $result->is_spectator,
+                    'avatar_url' => $avatar?->image_path ? asset($avatar->image_path) : null,
+                    'avatar_name' => $avatar?->name,
+                ];
+            })
+            ->values();
 
         return response()->json([
             'room' => $room,
-            'results' => $room->raceResults,
+            'results' => $results,
         ]);
     }
 

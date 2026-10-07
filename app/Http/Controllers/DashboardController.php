@@ -7,6 +7,7 @@ use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
+use App\Models\RaceResult;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
@@ -216,6 +217,13 @@ class DashboardController extends Controller
                 ->groupBy('student_user_id')
                 ->pluck('xp', 'user_id');
 
+            $keyboardRaceXpByUser = RaceResult::query()
+                ->selectRaw('user_id, SUM(xp_earned) as xp')
+                ->whereNotNull('user_id')
+                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
+                ->groupBy('user_id')
+                ->pluck('xp', 'user_id');
+
             $profileXpByUser = UserProfile::query()
                 ->selectRaw('user_id, xp')
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
@@ -233,13 +241,14 @@ class DashboardController extends Controller
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
                 ->get();
 
-            $studentXpRows = $students->map(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $quizXpByUser, $competitionXpByUser, $profileXpByUser) {
+            $studentXpRows = $students->map(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $quizXpByUser, $competitionXpByUser, $keyboardRaceXpByUser, $profileXpByUser) {
                 $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
                 $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
                 $quizXp = (int) ($quizXpByUser[$student->user_id] ?? 0);
                 $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
+                $keyboardRaceXp = (int) ($keyboardRaceXpByUser[$student->user_id] ?? 0);
                 $profileXp = (int) ($profileXpByUser[$student->user_id] ?? 0);
-                $computedXp = max(0, $gradeXp + $contentXp + $quizXp + $competitionXp);
+                $computedXp = max(0, $gradeXp + $contentXp + $quizXp + $competitionXp + $keyboardRaceXp);
                 // Avatar magazasinda harcanan XP burada da dusuluyor; boylece
                 // admin/ogretmen panelindeki "Basari Listesi" (ilk 5), basari
                 // dagilimi grafigi ve toplam XP, ogrenci tarafinda gosterilen
@@ -654,14 +663,16 @@ class DashboardController extends Controller
         $contentXp = \App\Models\ContentProgress::selectRaw('user_id, SUM(xp_awarded) as xp')->whereIn('user_id', $studentUserIds)->groupBy('user_id')->pluck('xp', 'user_id');
         $quizXp    = \App\Models\LiveQuizAnswer::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
         $compXp    = \App\Models\CompetitionParticipant::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
+        $keyboardRaceXp = RaceResult::selectRaw('user_id, SUM(xp_earned) as xp')->whereIn('user_id', $studentUserIds)->groupBy('user_id')->pluck('xp', 'user_id');
         $profileXp = UserProfile::selectRaw('user_id, xp')->whereIn('user_id', $studentUserIds)->pluck('xp', 'user_id');
 
-        $rows = $students->map(function (Student $s) use ($gradeXp, $contentXp, $quizXp, $compXp, $profileXp) {
+        $rows = $students->map(function (Student $s) use ($gradeXp, $contentXp, $quizXp, $compXp, $keyboardRaceXp, $profileXp) {
             $computed = max(0,
                 (int)($gradeXp[$s->id] ?? 0) +
                 (int)($contentXp[$s->user_id] ?? 0) +
                 (int)($quizXp[$s->user_id] ?? 0) +
-                (int)($compXp[$s->user_id] ?? 0)
+                (int)($compXp[$s->user_id] ?? 0) +
+                (int)($keyboardRaceXp[$s->user_id] ?? 0)
             );
             $xp = max(0, max($computed, (int)($profileXp[$s->user_id] ?? 0)) - (int)($s->avatar_xp_spent ?? 0));
 

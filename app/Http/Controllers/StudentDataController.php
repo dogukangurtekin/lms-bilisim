@@ -8,6 +8,7 @@ use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Grade;
 use App\Models\PushDeviceStatus;
+use App\Models\RaceResult;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentCredential;
@@ -98,14 +99,22 @@ class StudentDataController extends Controller
             ->groupBy('student_user_id')
             ->pluck('xp', 'user_id');
 
-        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $competitionXpByUser) {
+        $keyboardRaceXpByUser = RaceResult::query()
+            ->selectRaw('user_id, SUM(xp_earned) as xp')
+            ->whereNotNull('user_id')
+            ->when(!empty($userIds), fn ($q) => $q->whereIn('user_id', $userIds))
+            ->groupBy('user_id')
+            ->pluck('xp', 'user_id');
+
+        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $competitionXpByUser, $keyboardRaceXpByUser) {
             $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
             $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
             $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
+            $keyboardRaceXp = (int) ($keyboardRaceXpByUser[$student->user_id] ?? 0);
             // Diger tum XP gosterimleriyle (anasayfa, Basari Listesi, gelisim
             // raporu) tutarli olmasi icin avatar magazasinda harcanan XP
             // burada da dusuluyor.
-            $xp = max(0, $gradeXp + $contentXp + $competitionXp - (int) ($student->avatar_xp_spent ?? 0));
+            $xp = max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp - (int) ($student->avatar_xp_spent ?? 0));
 
             return [
                 $student->id => [
@@ -456,8 +465,9 @@ class StudentDataController extends Controller
     {
         $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
+        $keyboardRaceXp = (int) RaceResult::where('user_id', $student->user_id)->sum('xp_earned');
 
-        return max(0, $gradeXp + $contentXp);
+        return max(0, $gradeXp + $contentXp + $keyboardRaceXp);
     }
 
     private function syncRewardsAndCredentials(Student $student, int $xp): void
