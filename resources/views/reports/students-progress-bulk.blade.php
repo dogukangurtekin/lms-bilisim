@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     @include('partials.pwa-head')
-    <title>Gelişim Raporları</title>
+    <title>{{ $reportTitle ?? 'Gelişim Karneleri' }}</title>
     <style>
         @page { size: A4; margin: 10mm; }
         * { box-sizing: border-box; }
@@ -242,10 +242,10 @@
 <body>
 <div class="tools">
     @if(!empty($downloadUrl))
-        <a class="btn" href="{{ $downloadUrl }}">Gelişim Raporlarını İndir</a>
+        <a class="btn" href="{{ $downloadUrl }}">Gelişim Karnelerini İndir</a>
     @endif
-    <button class="btn" onclick="window.print()">Yazdır / PDF Kaydet</button>
-    <button class="btn" onclick="window.close()">Ekranı Kapat</button>
+    <button class="btn" type="button" onclick="window.print()">Yazdır / PDF Kaydet</button>
+    <button class="btn" type="button" onclick="window.close()">Kapat</button>
 </div>
 
 @foreach($reports as $item)

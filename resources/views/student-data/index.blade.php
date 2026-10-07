@@ -57,6 +57,9 @@
                 @endforeach
             </select>
         </div>
+        <div class="field-wrap" style="min-width:230px">
+            <button class="btn" type="button" id="class-report-preview-btn" disabled>Sınıf Gelişim Karnesini Önizle</button>
+        </div>
     </form>
 
     <div class="student-table-wrap"><table>
@@ -234,6 +237,7 @@
 (() => {
     const previewBtn = document.getElementById('bulk-report-preview-btn');
     const downloadBtn = document.getElementById('bulk-report-download-btn');
+    const classPreviewBtn = document.getElementById('class-report-preview-btn');
     const smsListBtn = document.getElementById('parent-sms-list-btn');
     const smsSendBtn = document.getElementById('parent-sms-send-btn');
     const filterForm = document.getElementById('student-data-filter-form');
@@ -261,11 +265,25 @@
         text.textContent = `%${percent} tamamlandi (${processed}/${total})`;
     }
 
-    async function start(mode) {
+    function selectedClassPayload() {
+        return {
+            class_name: document.getElementById('student-data-class-name')?.value || '',
+            section: document.getElementById('student-data-section')?.value || ''
+        };
+    }
+
+    function syncClassPreviewButton() {
+        if (!classPreviewBtn) return;
+        const selected = selectedClassPayload();
+        classPreviewBtn.disabled = selected.class_name === '' || selected.section === '';
+    }
+
+    async function start(mode, filters = {}) {
         let previewWin = null;
         try {
             previewBtn.disabled = true;
             downloadBtn.disabled = true;
+            if (classPreviewBtn) classPreviewBtn.disabled = true;
             title.textContent = 'Raporlar hazirlaniyor...';
             setUi(0, 0, 1);
 
@@ -277,7 +295,7 @@
                 }
             }
 
-            const startData = await postJson('{{ route('student-data.reports.bulk-start') }}', {mode});
+            const startData = await postJson('{{ route('student-data.reports.bulk-start') }}', {mode, ...filters});
             let done = false;
             while (!done) {
                 const step = await postJson('{{ url('/ogrenci-verileri/gelisim-raporlari/toplu-adim') }}/' + startData.task_id, {});
@@ -307,6 +325,7 @@
         } finally {
             previewBtn.disabled = false;
             downloadBtn.disabled = false;
+            syncClassPreviewButton();
         }
     }
 
@@ -346,6 +365,8 @@
 
     previewBtn?.addEventListener('click', () => start('preview'));
     downloadBtn?.addEventListener('click', () => start('download'));
+    classPreviewBtn?.addEventListener('click', () => start('preview', selectedClassPayload()));
+    syncClassPreviewButton();
     smsSendBtn?.addEventListener('click', () => startParentSms());
     if (smsListBtn && filterForm) {
         smsListBtn.addEventListener('click', (event) => {

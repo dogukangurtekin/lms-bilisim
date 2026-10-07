@@ -326,14 +326,45 @@ class StudentDataController extends Controller
 
     public function bulkProgressStart(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'mode' => ['required', 'in:preview,download'],
+            'class_name' => ['nullable', 'string', 'max:100', 'required_with:section'],
+            'section' => ['nullable', 'string', 'max:100', 'required_with:class_name'],
         ]);
 
-        $studentIds = Student::query()->orderBy('id')->pluck('id')->all();
+        $className = trim((string) ($validated['class_name'] ?? ''));
+        $section = trim((string) ($validated['section'] ?? ''));
+        $user = $request->user();
+        $isAdmin = $user?->role?->slug === 'admin';
+        $teacherClassIds = [];
+
+        if (! $isAdmin && $user) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
+            $teacherClassIds = $teacher
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+                : [];
+        }
+
+        $studentIds = Student::query()
+            ->when(! $isAdmin, fn ($query) => $query->whereIn('school_class_id', $teacherClassIds))
+            ->when($className !== '', fn ($query) => $query->whereHas('schoolClass', fn ($class) => $class
+                ->where('name', $className)
+                ->where('section', $section)))
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        if ($className !== '' && $studentIds === []) {
+            return response()->json([
+                'message' => 'Seçilen sınıf ve şubede öğrenci bulunamadı.',
+            ], 422);
+        }
+
         $task = [
             'id' => (string) Str::uuid(),
             'mode' => (string) $request->input('mode'),
+            'class_name' => $className,
+            'section' => $section,
             'student_ids' => $studentIds,
             'total' => count($studentIds),
             'processed' => 0,
@@ -399,7 +430,9 @@ class StudentDataController extends Controller
 
         $reports = $this->buildBulkTaskViewData($task);
         $downloadUrl = route('student-data.reports.bulk-download.task', $taskId);
-        return view('reports.students-progress-bulk', compact('reports', 'downloadUrl'));
+        $reportTitle = $this->bulkTaskReportTitle($task);
+
+        return view('reports.students-progress-bulk', compact('reports', 'downloadUrl', 'reportTitle'));
     }
 
     public function bulkProgressDownloadTask(string $taskId): StreamedResponse
@@ -410,11 +443,13 @@ class StudentDataController extends Controller
         }
 
         $reports = $this->buildBulkTaskViewData($task);
-        $html = view('reports.students-progress-bulk', compact('reports'))->render();
+        $reportTitle = $this->bulkTaskReportTitle($task);
+        $html = view('reports.students-progress-bulk', compact('reports', 'reportTitle'))->render();
+        $filename = $this->bulkTaskDownloadFilename($task);
 
         return response()->streamDownload(function () use ($html) {
             echo $html;
-        }, 'tum-ogrenci-gelisim-raporlari.html', ['Content-Type' => 'text/html; charset=UTF-8']);
+        }, $filename, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 
     private function calculateXp(Student $student): int
@@ -538,6 +573,30 @@ class StudentDataController extends Controller
         }
 
         return $out;
+    }
+
+    private function bulkTaskReportTitle(array $task): string
+    {
+        $className = trim((string) ($task['class_name'] ?? ''));
+        $section = trim((string) ($task['section'] ?? ''));
+
+        return $className !== ''
+            ? $className . '/' . $section . ' Sınıfı Gelişim Karneleri'
+            : 'Tüm Öğrenci Gelişim Karneleri';
+    }
+
+    private function bulkTaskDownloadFilename(array $task): string
+    {
+        $className = trim((string) ($task['class_name'] ?? ''));
+        $section = trim((string) ($task['section'] ?? ''));
+
+        if ($className === '') {
+            return 'tum-ogrenci-gelisim-raporlari.html';
+        }
+
+        $classSlug = Str::slug($className . '-' . $section);
+
+        return ($classSlug !== '' ? $classSlug : 'sinif') . '-gelisim-karneleri.html';
     }
 
     private function passwordTaskPath(string $taskId): string
