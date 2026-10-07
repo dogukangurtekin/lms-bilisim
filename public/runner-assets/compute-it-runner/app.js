@@ -17,7 +17,7 @@
   const levelNoEl = document.getElementById("level-no");
   const doneNoEl = document.getElementById("done-no");
   const totalNoEl = document.getElementById("total-no");
-  const tipEl = document.getElementById("level-tip");
+  const runnerStatusEl = document.getElementById("runner-status");
   const varsBoxEl = document.getElementById("vars-box");
   const varAEl = document.getElementById("var-a");
   const btnReset = document.getElementById("btn-reset");
@@ -1500,7 +1500,7 @@
     return map;
   }
 
-  function resetLevel(showHint = false) {
+  function resetLevel() {
     const level = levels[levelIndex];
     pos = [...level.start];
     counters = cloneCounters(level.countersStart || { a: 0, b: 0, c: 0 });
@@ -1517,7 +1517,6 @@
     const hasCondition = !!level.condition;
     if (varsBoxEl) varsBoxEl.style.display = hasCondition ? "inline-flex" : "none";
     if (hasCondition && varAEl) varAEl.textContent = String(toInt(level.aValue, 0));
-    if (tipEl) tipEl.textContent = level.tip || "";
   }
 
   function updateTop() {
@@ -1534,7 +1533,6 @@
     totalNoEl.textContent = String(total);
     doneNoEl.textContent = String(done);
     levelNoEl.textContent = `${level.id} - ${level.name || "Seviye"}`;
-    if (tipEl) tipEl.textContent = "";
   }
 
   function loadLevel(index) {
@@ -1551,7 +1549,7 @@
     levelIndex = clamp(index, minIdx, maxIdx);
     activeProgram = buildProgram(levels[levelIndex]);
     updateTop();
-    resetLevel(false);
+    resetLevel();
   }
 
   function wrapMove(x, y, size) {
@@ -1642,7 +1640,7 @@
     boardEl.classList.add("reset-flash");
     setTimeout(() => {
       boardEl.classList.remove("reset-flash");
-      resetLevel(true);
+      resetLevel();
     }, 420);
   }
 
@@ -1922,9 +1920,9 @@
   function denyRunnerAccess(message) {
     grantDenied = true;
     grantReady = false;
-    if (tipEl) {
-      tipEl.style.display = "block";
-      tipEl.textContent = message || "Bu icerige erisim izniniz yok.";
+    if (runnerStatusEl) {
+      runnerStatusEl.hidden = false;
+      runnerStatusEl.textContent = message || "Bu icerige erisim izniniz yok.";
     }
     if (btnReset) btnReset.disabled = true;
     if (btnNext) btnNext.disabled = true;
@@ -1971,6 +1969,5 @@
     loadLevel(initialIndex);
   })();
 })();
-
 
 

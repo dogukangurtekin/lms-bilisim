@@ -289,9 +289,14 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   padding: 6px 12px;
   font-weight: 800;
 }
-.help {
+.runner-status {
   margin-top: 16px;
-  color: #334155;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 700;
   font-size: 14px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -406,7 +411,7 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Tre
   .code-wrap { justify-content: space-between; }
   .code-wrap h2 { margin-bottom: 4px; font-size: 16px; }
   .vars-box { margin-top: 4px; padding: 3px 8px; font-size: 12px; }
-  .help { margin-top: 4px; font-size: 11px; line-height: 1.2; }
+  .runner-status { margin-top: 4px; padding: 6px 8px; font-size: 11px; line-height: 1.2; }
   .actions { margin-top: 4px; }
   .actions button { padding: 6px 9px; font-size: 12px; }
 }
