@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     @include('partials.pwa-head')
     <title>Öğrenci Gelişim Raporu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         @page { size: A4; margin: 10mm; }
         * { box-sizing: border-box; }
@@ -293,6 +296,10 @@
             const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const pageWidth = 210;
             const pageHeight = 297;
+
+            if (document.fonts?.ready) {
+                await document.fonts.ready;
+            }
 
             for (let i = 0; i < pages.length; i += 1) {
                 const canvas = await html2canvas(pages[i], {

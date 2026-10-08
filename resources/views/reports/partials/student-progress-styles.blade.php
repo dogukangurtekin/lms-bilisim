@@ -13,7 +13,7 @@
 body {
     background: #e8edf5;
     color: var(--report-ink);
-    font-family: "DejaVu Sans", "Segoe UI", Arial, sans-serif;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
     font-size: 11px;
     line-height: 1.35;
     -webkit-print-color-adjust: exact;
