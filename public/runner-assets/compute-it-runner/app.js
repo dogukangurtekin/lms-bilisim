@@ -1828,11 +1828,25 @@
     if (dir === "right" || dir === "left" || dir === "up" || dir === "down") move(dir);
   }
 
+  function focusGameControls() {
+    if (!boardEl || !grantReady || grantDenied) return;
+    try {
+      window.focus();
+      boardEl.focus({ preventScroll: true });
+    } catch (e) {
+      boardEl.focus();
+    }
+  }
+
   document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") triggerMoveFromInput("right");
-    else if (e.key === "ArrowLeft") triggerMoveFromInput("left");
-    else if (e.key === "ArrowUp") triggerMoveFromInput("up");
-    else if (e.key === "ArrowDown") triggerMoveFromInput("down");
+    let direction = "";
+    if (e.key === "ArrowRight") direction = "right";
+    else if (e.key === "ArrowLeft") direction = "left";
+    else if (e.key === "ArrowUp") direction = "up";
+    else if (e.key === "ArrowDown") direction = "down";
+    if (!direction) return;
+    e.preventDefault();
+    triggerMoveFromInput(direction);
   });
 
   let swipeStartX = 0;
@@ -1842,6 +1856,7 @@
 
   if (boardEl) {
     boardEl.style.touchAction = "none";
+    boardEl.addEventListener("pointerdown", focusGameControls);
     boardEl.addEventListener("touchstart", (e) => {
       const t = e.touches && e.touches[0];
       if (!t) return;
@@ -1936,6 +1951,7 @@
       ? Math.max(0, Number(levelRange.startIdx || 0))
       : 0;
     loadLevel(initialIndex);
+    requestAnimationFrame(focusGameControls);
+    setTimeout(focusGameControls, 150);
   })();
 })();
-
