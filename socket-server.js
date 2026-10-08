@@ -47,6 +47,8 @@ io.on('connection', (socket) => {
       progress: Number(payload.progress || 0),
       wpm: Number(payload.wpm || 0),
       accuracy: Number(payload.accuracy || 100),
+      correctCharacters: Number(payload.correct_characters || payload.correctCharacters || 0),
+      xpEarned: Number(payload.xpEarned || payload.xp_earned || 0),
     });
   });
 });
@@ -55,4 +57,3 @@ server.listen(port, host, () => {
   // eslint-disable-next-line no-console
   console.log(`[socket] running on ${host}:${port}`);
 });
-

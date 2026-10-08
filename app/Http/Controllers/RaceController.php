@@ -205,6 +205,7 @@ class RaceController extends Controller
             return response()->json([
                 'message' => 'Race already finished.',
                 'leaderboard' => $this->buildLeaderboard($room),
+                'report' => $this->buildRoomReport($room),
             ]);
         }
 
@@ -314,7 +315,7 @@ class RaceController extends Controller
                 'correctCharacters' => (int) $result->correct_characters,
                 'elapsedSeconds' => (int) ($result->elapsed_seconds ?? 0),
                 'completionSeconds' => $result->completion_seconds !== null ? (int) $result->completion_seconds : null,
-                'xpEarned' => (int) ($result->xp_earned ?? 0),
+                'xpEarned' => max((int) ($result->xp_earned ?? 0), (int) $result->correct_characters * self::XP_PER_CORRECT_CHARACTER),
                 'finishedAt' => $result->finished_at?->toIso8601String(),
                 'avatarUrl' => $avatar?->image_path ? asset($avatar->image_path) : null,
                 'avatarName' => $avatar?->name,

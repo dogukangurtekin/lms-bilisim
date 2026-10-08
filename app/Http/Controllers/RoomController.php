@@ -88,7 +88,7 @@ class RoomController extends Controller
                     'wpm' => (float) $result->wpm,
                     'accuracy' => (float) $result->accuracy,
                     'correct_characters' => (int) $result->correct_characters,
-                    'xp_earned' => (int) $result->xp_earned,
+                    'xp_earned' => max((int) $result->xp_earned, (int) $result->correct_characters * RaceController::XP_PER_CORRECT_CHARACTER),
                     'is_spectator' => (bool) $result->is_spectator,
                     'avatar_url' => $avatar?->image_path ? asset($avatar->image_path) : null,
                     'avatar_name' => $avatar?->name,

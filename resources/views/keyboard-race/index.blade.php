@@ -48,6 +48,11 @@
 .race-lobby-student{display:flex;align-items:center;gap:9px;padding:10px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;font-weight:800;box-shadow:0 5px 15px rgba(15,23,42,.05)}
 .race-lobby-avatar{width:38px;height:38px;border-radius:10px;object-fit:cover;background:#e2e8f0;display:grid;place-items:center;flex:0 0 auto}
 .race-arena{display:none}
+.race-time-progress{flex:1 1 260px;min-width:220px;height:12px;border-radius:999px;background:rgba(148,163,184,.28);overflow:hidden}
+.race-time-progress span{display:block;width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#4f46e5);transition:width .4s linear}
+.race-time-progress span.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.race-complete{display:none;margin-top:14px;padding:22px;text-align:center;border-radius:18px;background:linear-gradient(135deg,#dcfce7,#ecfeff);border:1px solid #86efac;color:#14532d}
+.race-complete h3{margin:0;font-size:clamp(24px,4vw,36px)}.race-complete p{margin:7px 0 0}
 .race-dashboard{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:14px;margin-top:14px}
 .race-stat-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
 .race-stat{padding:11px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(148,163,184,.2);text-align:center}
@@ -209,7 +214,14 @@
             <button id="endRaceBtn" class="btn race-btn" disabled>Yarışı Bitir ve Rapor Al</button>
             <div id="countdown" style="font-size:38px;font-weight:900;color:#67e8f9"></div>
             <div id="raceTimer" style="font-size:22px;font-weight:900;color:#fde68a"></div>
+            <div class="race-time-progress"><span id="raceTimeBar"></span></div>
             <div id="statusText" class="race-status"></div>
+        </div>
+
+        <div id="completionPanel" class="race-complete">
+            <h3 id="completionTitle">Tebrikler, tamamladın!</h3>
+            <p id="completionText">Sonucun kaydedildi. Canlı sıralamayı aşağıdan takip edebilirsin.</p>
+            <button id="openReportBtn" class="btn race-btn race-btn-primary" type="button" style="display:none;margin:14px auto 0">Raporu Aç / Yazdır</button>
         </div>
 
         <div id="raceArena" class="race-arena">
@@ -217,7 +229,7 @@
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><strong>Yarış Metni</strong><span class="race-xp-note" id="liveXpText">0 XP</span></div>
             <div id="typingText" class="typing-box" style="line-height:1.8;font-size:18px"></div>
             <textarea id="typingInput" rows="3" class="race-input" style="margin-top:8px" placeholder="Yarış başlayınca buraya yaz..." disabled></textarea>
-        </div><div class="race-panel" style="margin-top:0"><strong>Anlık Performans</strong>
+        </div><div id="selfPerformancePanel" class="race-panel" style="margin-top:0"><strong>Anlık Performans</strong>
 
         <div style="margin-top:14px">
             <div style="margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px">
@@ -241,7 +253,7 @@
         </div></div>
 
         <div style="margin-top:14px">
-            <h3 style="margin:0;font-size:20px">Canlı Rakipler</h3>
+            <h3 id="liveDataTitle" style="margin:0;font-size:20px">Canlı Rakipler</h3>
             <div id="opponents" style="margin-top:8px;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
         </div>
 
@@ -293,6 +305,8 @@
         opponents: new Map(),
         finished: false,
         roomPollTimer: null,
+        finalReport: null,
+        reportLoaded: false,
     };
 
     const el = {
@@ -335,6 +349,13 @@
         lobbyTitle: document.getElementById('lobbyTitle'),
         lobbyParticipants: document.getElementById('lobbyParticipants'),
         raceArena: document.getElementById('raceArena'),
+        raceTimeBar: document.getElementById('raceTimeBar'),
+        completionPanel: document.getElementById('completionPanel'),
+        completionTitle: document.getElementById('completionTitle'),
+        completionText: document.getElementById('completionText'),
+        openReportBtn: document.getElementById('openReportBtn'),
+        selfPerformancePanel: document.getElementById('selfPerformancePanel'),
+        liveDataTitle: document.getElementById('liveDataTitle'),
     };
 
     const raceTextTemplates = [
@@ -443,7 +464,7 @@
         });
 
         state.socket.on('room_joined', (payload) => {
-            if (typeof payload.spectator === 'boolean') {
+            if (payload?.userName === state.userName && actorRole === 'student' && typeof payload.spectator === 'boolean') {
                 state.isSpectator = payload.spectator;
                 if (state.isSpectator) {
                     setStatus('Yaris baslamis. Spectator modundasin.');
@@ -467,13 +488,18 @@
 
         state.socket.on('typing_progress', (payload) => {
             if (!payload?.userName || payload.userName === state.userName) return;
-            upsertOpponent(payload.userName, payload.progress, payload.wpm, payload.accuracy, payload.xpEarned || 0);
+            upsertOpponent(payload.userName, payload.progress, payload.wpm, payload.accuracy, payload.xpEarned || 0, '', payload.correctCharacters || 0);
         });
 
         state.socket.on('race_finished', (payload) => {
             if (Array.isArray(payload?.leaderboard)) {
                 renderLeaderboard(payload.leaderboard, true);
             }
+            stopRaceTimer();
+            updateRaceView('finished');
+            showCompletion(actorRole === 'teacher' ? 'Yarışma tamamlandı' : 'Tebrikler, yarışma tamamlandı!',
+                actorRole === 'teacher' ? 'Sonuçlar ve yarışma raporu hazır.' : 'Canlı sıralamayı aşağıdan görebilirsin.');
+            if (actorRole === 'teacher') loadFinishedReport();
         });
     }
 
@@ -556,6 +582,11 @@
         const elapsed = Math.max(0, Math.floor((Date.now() - state.startedAtMs) / 1000));
         const remaining = state.raceEndsAtMs ? Math.max(0, Math.floor((state.raceEndsAtMs - Date.now()) / 1000)) : 0;
         el.raceTimer.textContent = `Kalan: ${remaining}s | Suren: ${elapsed}s`;
+        if (el.raceTimeBar) {
+            const percent = state.raceDurationSeconds > 0 ? Math.max(0, Math.min(100, (remaining / state.raceDurationSeconds) * 100)) : 0;
+            el.raceTimeBar.style.width = `${percent}%`;
+            el.raceTimeBar.classList.toggle('warn', remaining <= 20);
+        }
         if (el.selfSeconds) el.selfSeconds.textContent = `Geçen Süre: ${elapsed} sn | Kalan: ${remaining} sn`;
     }
 
@@ -566,7 +597,9 @@
             updateRaceTimerLabel();
             if (state.raceEndsAtMs && Date.now() >= state.raceEndsAtMs) {
                 stopRaceTimer();
-                if (!state.finished && !state.isSpectator) {
+                if (actorRole === 'teacher') {
+                    endRaceAndDownloadReport(true).catch((err) => setStatus(err.message));
+                } else if (!state.finished && !state.isSpectator) {
                     const input = el.typingInput.value;
                     const stats = computeStats(input);
                     finishRace(stats).catch((err) => setStatus(err.message));
@@ -580,7 +613,7 @@
         for (const row of results) {
             const name = String(row?.user_name || row?.userName || '').trim();
             if (!name || name === state.userName || row?.is_spectator) continue;
-            upsertOpponent(name, Number(row?.progress || 0), Number(row?.wpm || 0), Number(row?.accuracy || 100), Number(row?.xp_earned || row?.xpEarned || 0), row?.avatar_url || row?.avatarUrl || '');
+            upsertOpponent(name, Number(row?.progress || 0), Number(row?.wpm || 0), Number(row?.accuracy || 100), Number(row?.xp_earned || row?.xpEarned || 0), row?.avatar_url || row?.avatarUrl || '', Number(row?.correct_characters || row?.correctCharacters || 0));
         }
     }
 
@@ -674,7 +707,13 @@
                 el.typingInput.disabled = true;
                 stopRaceTimer();
                 stopProgressSync();
-                stopRoomPolling();
+                showCompletion(actorRole === 'teacher'
+                    ? 'Yarışma tamamlandı'
+                    : 'Tebrikler, yarışma tamamlandı!',
+                    actorRole === 'teacher'
+                        ? 'Süre doldu. Sonuçlar ve yarışma raporu hazır.'
+                        : 'Sonucun kaydedildi. Canlı sıralamayı aşağıdan görebilirsin.');
+                if (actorRole === 'teacher') loadFinishedReport();
             }
         } catch (error) {
             setStatus(error.message);
@@ -690,6 +729,7 @@
         state.raceEndsAtMs = payload.endsAt ? new Date(payload.endsAt).getTime() : (Date.now() + (state.raceDurationSeconds * 1000));
         state.startedAtMs = state.raceEndsAtMs - (state.raceDurationSeconds * 1000);
         updateRaceView('active');
+        el.completionPanel.style.display = 'none';
 
         if (!payload.skipCountdown) {
             await startCountdown();
@@ -812,7 +852,7 @@
 </body></html>`;
     }
 
-    async function endRaceAndDownloadReport() {
+    async function endRaceAndDownloadReport(automatic = false) {
         if (!state.roomCode) return;
         const data = await api(`/rooms/${state.roomCode}/end`, {
             method: 'POST',
@@ -820,18 +860,46 @@
         });
         stopProgressSync();
         stopRaceTimer();
+        state.finished = true;
         el.typingInput.disabled = true;
         if (Array.isArray(data?.leaderboard)) renderLeaderboard(data.leaderboard, true);
         const report = data?.report || null;
         if (report) {
-            const win = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
-            if (win) {
-                win.document.open();
-                win.document.write(buildRaceReportHtml(report));
-                win.document.close();
-            }
+            state.finalReport = report;
+            state.reportLoaded = true;
+            el.openReportBtn.style.display = 'inline-flex';
+            if (!automatic) openRaceReport();
         }
-        setStatus('Yaris ogretmen tarafindan sonlandirildi.');
+        updateRaceView('finished');
+        showCompletion('Yarışma tamamlandı', automatic
+            ? 'Süre doldu. Sonuçlar ve yarışma raporu otomatik olarak hazırlandı.'
+            : 'Yarışma sonlandırıldı. Sonuçlar ve rapor hazır.');
+        setStatus(automatic ? 'Süre doldu. Yarışma otomatik tamamlandı.' : 'Yarışma öğretmen tarafından sonlandırıldı.');
+    }
+
+    function showCompletion(title, message) {
+        el.completionTitle.textContent = title;
+        el.completionText.textContent = message;
+        el.completionPanel.style.display = 'block';
+        el.completionPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function openRaceReport() {
+        if (!state.finalReport) return;
+        const win = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
+        if (!win) return;
+        win.document.open();
+        win.document.write(buildRaceReportHtml(state.finalReport));
+        win.document.close();
+    }
+
+    async function loadFinishedReport() {
+        if (state.reportLoaded || !state.roomCode) return;
+        const data = await api(`/rooms/${state.roomCode}/report`);
+        if (!data?.report) return;
+        state.finalReport = data.report;
+        state.reportLoaded = true;
+        el.openReportBtn.style.display = 'inline-flex';
     }
 
     async function startCountdown() {
@@ -907,9 +975,9 @@
             .replaceAll("'", '&#039;');
     }
 
-    function upsertOpponent(userName, progress, wpm, accuracy, xpEarned = 0, avatarUrl = '') {
+    function upsertOpponent(userName, progress, wpm, accuracy, xpEarned = 0, avatarUrl = '', correctCharacters = 0) {
         const previous = state.opponents.get(userName) || {};
-        state.opponents.set(userName, { progress, wpm, accuracy, xpEarned, avatarUrl: avatarUrl || previous.avatarUrl || '' });
+        state.opponents.set(userName, { progress, wpm, accuracy, xpEarned, correctCharacters, avatarUrl: avatarUrl || previous.avatarUrl || '' });
         const entries = [...state.opponents.entries()];
         el.opponents.innerHTML = entries.map(([name, stats]) => `
             <div class="opponent-card">
@@ -920,7 +988,7 @@
                 <div style="height:8px;overflow:hidden;border-radius:999px;background:#1e293b">
                     <div style="height:100%;background:linear-gradient(90deg,#d946ef,#22d3ee);transition:width .25s;width:${Math.min(100, Math.max(0, stats.progress))}%"></div>
                 </div>
-                <div style="margin-top:6px;font-size:12px;opacity:.78">Hız: ${Number(stats.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(stats.accuracy).toFixed(1)}% | <b>${Number(stats.xpEarned || 0)} XP</b></div>
+                <div style="margin-top:6px;font-size:12px;opacity:.78">Doğru harf: ${Number(stats.correctCharacters || 0)} | Hız: ${Number(stats.wpm).toFixed(1)} kelime/dk | Doğruluk: ${Number(stats.accuracy).toFixed(1)}% | <b>${Number(stats.xpEarned || 0)} XP</b></div>
             </div>
         `).join('');
     }
@@ -929,6 +997,7 @@
         if (state.finished || state.isSpectator) return;
         state.finished = true;
         stopProgressSync();
+        stopRaceTimer();
         el.typingInput.disabled = true;
 
         const result = await api(`/rooms/${state.roomCode}/finish`, {
@@ -947,6 +1016,7 @@
         });
 
         renderLeaderboard(result.leaderboard || [], result.room_status === 'finished');
+        showCompletion('Tebrikler, tamamladın!', 'Sonucun kaydedildi. Canlı sıralamayı aşağıdan takip edebilirsin.');
     }
 
     function renderLeaderboard(leaderboard, isFinal = false) {
@@ -1028,6 +1098,7 @@
     el.startRaceBtn.addEventListener('click', () => startRace().catch((err) => setStatus(err.message)));
     el.endRaceBtn.addEventListener('click', () => endRaceAndDownloadReport().catch((err) => setStatus(err.message)));
     el.typingInput.addEventListener('input', onTyping);
+    el.openReportBtn?.addEventListener('click', openRaceReport);
     el.themeToggle?.addEventListener('click', () => {
         const current = el.raceShell?.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
         const next = current === 'dark' ? 'light' : 'dark';
@@ -1046,6 +1117,7 @@
     }
 
     if (actorRole === 'teacher') {
+        state.isSpectator = true;
         el.teacherTextConfig.style.display = 'block';
         el.teacherRaceActions.style.display = 'flex';
         el.createRoomBtn.style.display = 'inline-flex';
@@ -1055,6 +1127,10 @@
         el.roomCode.closest('.race-field').style.display = 'none';
         el.startRaceBtn.style.display = 'none';
         el.endRaceBtn.style.display = 'none';
+        el.typingInput.style.display = 'none';
+        el.selfPerformancePanel.style.display = 'none';
+        el.raceArena.querySelector('.race-dashboard').style.gridTemplateColumns = '1fr';
+        el.liveDataTitle.textContent = 'Canlı Öğrenci Verileri';
         el.endRaceBtn.disabled = true;
         setStatus('Ogretmen modu: oda olusturup yarisi baslatabilirsiniz.');
         if (params.get('room')) {
