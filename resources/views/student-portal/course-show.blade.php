@@ -678,7 +678,7 @@
                         if (solvedEl) {
                             const correctQuestions = Math.min(totalQuestions, Math.max(0, correctQuestionsTotal));
                             solvedEl.textContent = totalQuestions > 0
-                                ? 'Doğru: ' + totalQuestions + ' / ' + correctQuestions
+                                ? 'Doğru: ' + correctQuestions + ' / ' + totalQuestions
                                 : 'Çözülen soru sayısı: 0';
                         }
                         const wrongEl = stage.querySelector('[data-summary-wrong-questions]');

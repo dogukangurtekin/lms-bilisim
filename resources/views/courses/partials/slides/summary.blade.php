@@ -16,7 +16,7 @@
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <span data-summary-earned-xp style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:900;white-space:nowrap">Kazanılan XP: {{ (int) ($summary['lesson_total_xp'] ?? 0) }}</span>
                 @if($questionTotal > 0)
-                    <span data-summary-solved-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900;white-space:nowrap">Doğru: {{ $questionTotal }} / {{ $solvedQuestions }}</span>
+                    <span data-summary-solved-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-weight:900;white-space:nowrap">Doğru: {{ $solvedQuestions }} / {{ $questionTotal }}</span>
                     <span data-summary-wrong-questions style="display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:900;white-space:nowrap">Yanlış: 0</span>
                 @endif
             </div>
