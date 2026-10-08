@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\UserProfile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CompetitionController extends Controller
 {
@@ -339,29 +340,35 @@ class CompetitionController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $participant = CompetitionParticipant::query()
-            ->where('competition_room_id', $room->id)
-            ->where('student_user_id', auth()->id())
-            ->first();
-        if (! $participant || $participant->is_spectator) {
-            return response()->json(['ok' => true]);
-        }
+        DB::transaction(function () use ($data, $room): void {
+            $participant = CompetitionParticipant::query()
+                ->where('competition_room_id', $room->id)
+                ->where('student_user_id', auth()->id())
+                ->lockForUpdate()
+                ->first();
+            if (! $participant || $participant->is_spectator) {
+                return;
+            }
 
-        $progress = max((float) $participant->progress_percent, (float) ($data['progress_percent'] ?? 0));
-        $levelIdx = max((int) $participant->current_level_index, (int) ($data['current_level_index'] ?? 0));
-        $xp = (int) ($data['xp'] ?? 0);
+            $progress = min(100, max(
+                (float) $participant->progress_percent,
+                (float) ($data['progress_percent'] ?? 0)
+            ));
+            $levelIdx = max((int) $participant->current_level_index, (int) ($data['current_level_index'] ?? 0));
+            $xp = (int) ($data['xp'] ?? 0);
 
-        $update = [
-            'progress_percent' => min(100, $progress),
-            'current_level_index' => $levelIdx,
-        ];
-        if ($xp > (int) $participant->xp_earned) {
-            $update['xp_earned'] = $xp;
-        }
-        if ($progress >= 100 && ! $participant->finished_at_ms) {
-            $update['finished_at_ms'] = $this->nowMs();
-        }
-        $participant->update($update);
+            $update = [
+                'progress_percent' => $progress,
+                'current_level_index' => $levelIdx,
+            ];
+            if ($xp > (int) $participant->xp_earned) {
+                $update['xp_earned'] = $xp;
+            }
+            if ($progress >= 100 && ! $participant->finished_at_ms) {
+                $update['finished_at_ms'] = $this->nowMs();
+            }
+            $participant->update($update);
+        });
 
         return response()->json(['ok' => true]);
     }
@@ -390,7 +397,14 @@ class CompetitionController extends Controller
         $update = [];
 
         if (isset($data['progress_percent'])) {
-            $update['progress_percent'] = min(100, (float) $data['progress_percent']);
+            $progress = min(100, max(
+                (float) $participant->progress_percent,
+                (float) $data['progress_percent']
+            ));
+            $update['progress_percent'] = $progress;
+            if ($progress >= 100 && ! $participant->finished_at_ms) {
+                $update['finished_at_ms'] = $this->nowMs();
+            }
         }
 
         if (isset($data['current_level_index'])) {
@@ -428,12 +442,13 @@ class CompetitionController extends Controller
             ->where('competition_room_id', $room->id)
             ->where('is_spectator', false)
             ->with('studentUser.student.currentAvatar')
-            // Siralama: once ilerleme, esitlikte XP, sonra tamamlayanlarda
-            // daha kisa sure. NULL bitis zamani olanlar tamamlayanlarin ardinda kalir.
+            // Siralama: once ilerleme; %100'e ulasanlarda bitirme zamani,
+            // diger esitliklerde XP. Boylece yarisi ilk bitiren ogrenci,
+            // daha sonra bitiren bir ogrencinin XP'si yuksek diye geriye dusmez.
             ->orderByDesc('progress_percent')
-            ->orderByDesc('xp_earned')
             ->orderByRaw('finished_at_ms IS NULL')
             ->orderBy('finished_at_ms')
+            ->orderByDesc('xp_earned')
             ->get()
             ->map(function ($p) use ($startedAtMs, $defaultAvatarUrl) {
                 $avatar = $p->studentUser?->student?->currentAvatar;

@@ -204,11 +204,27 @@
         return Math.round((completedLevels / totalLevels) * 100);
     };
 
+    const syncCompletedLevels = (payload) => {
+        const completedLevelIds = Array.isArray(payload?.completedLevelIds)
+            ? payload.completedLevelIds
+            : [];
+        completedLevelIds.forEach((levelId) => {
+            if (levelId !== undefined && levelId !== null) countedLevelIds.add(String(levelId));
+        });
+        accumulatedXp = Math.max(
+            accumulatedXp,
+            Math.max(0, Number(payload?.xpEarned ?? payload?.xp_earned ?? 0))
+        );
+    };
+
     const sendProgress = (payload, force, rangeCompleted = false) => {
         const now = Date.now();
-        const pct = rangeCompleted
-            ? 100
-            : Math.max(0, Math.min(99, computePercent()));
+        syncCompletedLevels(payload);
+        const computedPct = computePercent();
+        const completionReported = rangeCompleted
+            || computedPct >= 100
+            || Number(payload?.progressPercent ?? payload?.progress_percent ?? 0) >= 100;
+        const pct = completionReported ? 100 : Math.max(0, Math.min(99, computedPct));
         if (!force && now - lastSentAt < 1500 && Math.abs(pct - lastSentPct) < 1) return;
         lastSentAt = now;
         lastSentPct = pct;
@@ -310,13 +326,15 @@
         const data = ev.data;
         if (!data || typeof data !== 'object') return;
         if (data.type === 'GAME_UPDATE') {
+            syncCompletedLevels(data);
             sendProgress(data, false);
         } else if (data.type === 'LEVEL_COMPLETED' || data.type === 'LINE_TRACE_LEVEL_COMPLETE') {
             const currentLevelIndex = data.currentLevelIndex ?? (Number.isFinite(Number(data.level)) ? Number(data.level) - 1 : undefined);
             const progressData = { ...data, currentLevelIndex };
             const levelId = data.levelId ?? currentLevelIndex;
-            if (levelId !== undefined && levelId !== null && !countedLevelIds.has(levelId)) {
-                countedLevelIds.add(levelId);
+            const levelKey = levelId !== undefined && levelId !== null ? String(levelId) : null;
+            if (levelKey !== null && !countedLevelIds.has(levelKey)) {
+                countedLevelIds.add(levelKey);
                 accumulatedXp += Math.max(0, Number(data.xp ?? 0));
             }
             sendProgress(progressData, true);
