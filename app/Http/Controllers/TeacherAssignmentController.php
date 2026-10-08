@@ -295,16 +295,44 @@ class TeacherAssignmentController extends Controller
         return redirect()->route('teacher.assignments.index')->with('ok', 'Ders odevi guncellendi.');
     }
 
-    public function destroyCourseHomework(CourseHomework $homework)
+    public function destroyCourseHomework(Request $request, CourseHomework $homework)
     {
         $user = auth()->user();
         $teacherId = (int) (optional($user?->teacher)->id ?? 0);
         if ($user?->hasRole('teacher') && (string) $homework->assignment_type === 'lesson') {
             abort_unless($homework->course()->where('teacher_id', $teacherId)->exists(), 403);
+        } elseif ($user?->hasRole('teacher')) {
+            abort_unless((int) $homework->created_by === (int) $user->id, 403);
         }
 
-        $homework->delete();
-        return redirect()->route('teacher.assignments.index')->with('ok', 'Ders odevi silindi. Ogrenci kayitlari korunur.');
+        $homeworkIds = collect((array) $request->input('homework_ids', []))
+            ->map(fn ($id) => filter_var($id, FILTER_VALIDATE_INT))
+            ->filter(fn ($id) => is_int($id) && $id > 0)
+            ->push((int) $homework->id)
+            ->unique()
+            ->values();
+
+        $deleteQuery = CourseHomework::query()->whereKey($homeworkIds);
+        if ($user?->hasRole('teacher')) {
+            $deleteQuery->where(function ($query) use ($teacherId, $user): void {
+                $query->where(function ($lessonQuery) use ($teacherId): void {
+                    $lessonQuery->where('assignment_type', 'lesson')
+                        ->whereHas('course', fn ($courseQuery) => $courseQuery->where('teacher_id', $teacherId));
+                })->orWhere(function ($ownQuery) use ($user): void {
+                    $ownQuery->where('assignment_type', '!=', 'lesson')
+                        ->where('created_by', (int) $user->id);
+                });
+            });
+        }
+
+        $deletedCount = $deleteQuery->delete();
+
+        return redirect()->route('teacher.assignments.index')->with(
+            'ok',
+            $deletedCount > 1
+                ? "Odev ve bagli {$deletedCount} sinif kaydi silindi. Ogrenci kayitlari korunur."
+                : 'Ders odevi silindi. Ogrenci kayitlari korunur.'
+        );
     }
 
     public function showGameAssignment(GameAssignment $assignment)

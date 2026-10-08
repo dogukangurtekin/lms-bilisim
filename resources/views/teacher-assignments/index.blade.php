@@ -38,6 +38,8 @@
                 (string) ($h->target_slug ?? ''),
                 (string) ($h->level_from ?? ''),
                 (string) ($h->level_to ?? ''),
+                (string) ($h->created_by ?? 0),
+                optional($h->created_at)->format('Y-m-d H:i:s'),
                 md5((string) ($h->details ?? '')),
             ]);
         });
@@ -75,6 +77,9 @@
                     <form method="POST" action="{{ route('teacher.assignments.course.destroy', $h) }}" data-confirm="Bu ödevi silmek istediğinize emin misiniz? Öğrenci kayıtları korunur.">
                         @csrf
                         @method('DELETE')
+                        @foreach($rows as $groupedHomework)
+                            <input type="hidden" name="homework_ids[]" value="{{ $groupedHomework->id }}">
+                        @endforeach
                         <button class="btn" type="submit">Sil</button>
                     </form>
                 </td>
