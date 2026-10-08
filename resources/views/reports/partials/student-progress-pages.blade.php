@@ -20,6 +20,7 @@
 @endphp
 
 <section class="report-page">
+    <div class="report-course-heading">Bilişim Teknolojileri Dersi</div>
     <div class="hero">
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
@@ -119,6 +120,33 @@
         <p class="chart-note">Bu grafikte %100 tamamlanan kategori/ödev sayısı: <strong>{{ $fullCount }}</strong></p>
     </div>
 
+    <div class="parent-insight-grid">
+        <article class="parent-insight parent-insight--blue">
+            <span>Akademik Ortalama</span>
+            <strong>{{ number_format((float) data_get($report, 'kpi.grade_avg', 0), 1, ',', '.') }}</strong>
+            <small>Ders puanlarının genel ortalaması</small>
+        </article>
+        <article class="parent-insight parent-insight--amber">
+            <span>Günlük Egzersiz Başarısı</span>
+            <strong>%{{ (int) data_get($report, 'kpi.daily_success_rate', 0) }}</strong>
+            <small>{{ (int) data_get($report, 'kpi.daily_correct_count', 0) }} doğru · {{ (int) data_get($report, 'kpi.daily_wrong_count', 0) }} yanlış</small>
+        </article>
+        <article class="parent-insight parent-insight--rose">
+            <span>Canlı Yarışma Katılımı</span>
+            <strong>{{ (int) data_get($report, 'kpi.competition_joined_count', 0) }}</strong>
+            <small>{{ (int) data_get($report, 'kpi.competition_total_xp', 0) }} XP kazanıldı</small>
+        </article>
+    </div>
+
+    <article class="panel parent-recommendations">
+        <h3>Veli İçin Gelişim Önerileri</h3>
+        <div class="recommendation-grid">
+            @foreach((array) data_get($report, 'recommendations', []) as $recommendation)
+                <div class="recommendation-item"><span>✓</span><p>{{ $recommendation }}</p></div>
+            @endforeach
+        </div>
+    </article>
+
     <div class="page-no">Sayfa 1 / 2</div>
 </section>
 
@@ -136,7 +164,15 @@
 
     <article class="panel">
         <h3>Ders Ödevleri / Slayt Görevleri</h3>
-        <table class="report-table">
+        <table class="report-table report-table--courses">
+            <colgroup>
+                <col class="course-title-col">
+                <col class="course-date-col">
+                <col class="course-status-col">
+                <col class="course-xp-col">
+                <col class="course-result-col">
+                <col class="course-review-col">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Başlık</th>
