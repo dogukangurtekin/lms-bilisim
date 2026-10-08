@@ -4,6 +4,12 @@
     $donePct = (int) round(($completed / $total) * 100);
     $pending = max(0, $total - $completed);
     $doneAngle = max(0, min(360, (int) round(($completed / $total) * 360)));
+    $taskTrend = collect((array) data_get($report, 'task_trend', []))->values();
+    $appTrend = collect((array) data_get($report, 'app_trend', []))->values();
+    $trendMax = max(1, (int) max(
+        $taskTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0,
+        $appTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0
+    ));
     $fmtDate = function ($value): string {
         if (! $value) {
             return '-';
@@ -29,9 +35,6 @@
                 <h1>{{ $student->user?->name }}</h1>
                 <p class="subtitle">{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · Rapor tarihi {{ now()->format('d.m.Y') }}</p>
             </div>
-        </div>
-        <div class="hero-right">
-            <div class="score-pill">Genel İlerleme %{{ $donePct }}</div>
         </div>
     </div>
 
@@ -123,8 +126,8 @@
     <div class="parent-insight-grid">
         <article class="parent-insight parent-insight--blue">
             <span>Akademik Ortalama</span>
-            <strong>{{ number_format((float) data_get($report, 'kpi.grade_avg', 0), 1, ',', '.') }}</strong>
-            <small>Ders puanlarının genel ortalaması</small>
+            <strong>%{{ $donePct }}</strong>
+            <small>Genel ilerleme oranıyla eşleştirildi</small>
         </article>
         <article class="parent-insight parent-insight--amber">
             <span>Günlük Egzersiz Başarısı</span>
@@ -138,12 +141,29 @@
         </article>
     </div>
 
-    <article class="panel parent-recommendations">
-        <h3>Veli İçin Gelişim Önerileri</h3>
-        <div class="recommendation-grid">
-            @foreach((array) data_get($report, 'recommendations', []) as $recommendation)
-                <div class="recommendation-item"><span>✓</span><p>{{ $recommendation }}</p></div>
-            @endforeach
+    <article class="panel weekly-trend-panel">
+        <div class="weekly-trend-head">
+            <h3>Son 7 Günlük Çalışma Ritmi</h3>
+            <div class="weekly-trend-legend"><span class="is-task">Görev</span><span class="is-app">Uygulama</span></div>
+        </div>
+        <div class="weekly-trend-chart" aria-label="Son yedi günlük görev ve uygulama tamamlama grafiği">
+            @for($trendIndex = 0; $trendIndex < 7; $trendIndex++)
+                @php
+                    $taskItem = $taskTrend->get($trendIndex, []);
+                    $appItem = $appTrend->get($trendIndex, []);
+                    $taskValue = max(0, (int) data_get($taskItem, 'value', 0));
+                    $appValue = max(0, (int) data_get($appItem, 'value', 0));
+                    $trendLabel = (string) data_get($taskItem, 'label', data_get($appItem, 'label', '-'));
+                @endphp
+                <div class="weekly-trend-day">
+                    <div class="weekly-trend-values"><b>{{ $taskValue }}</b><b>{{ $appValue }}</b></div>
+                    <div class="weekly-trend-bars">
+                        <i class="trend-bar trend-bar--task" style="height:{{ max(3, (int) round(($taskValue / $trendMax) * 100)) }}%"></i>
+                        <i class="trend-bar trend-bar--app" style="height:{{ max(3, (int) round(($appValue / $trendMax) * 100)) }}%"></i>
+                    </div>
+                    <small>{{ $trendLabel }}</small>
+                </div>
+            @endfor
         </div>
     </article>
 
