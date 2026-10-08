@@ -11,6 +11,13 @@
     }
     $courseName = trim((string) ($course->name ?? 'Ders İçeriği'));
     $courseLogo = \App\Support\Brand::logoUrl();
+    $studentGradeLevel = (int) ($student?->schoolClass?->grade_level ?? 0);
+    $slideWaitSeconds = match ($studentGradeLevel) {
+        3, 4, 5 => 10,
+        6 => 13,
+        7, 9, 10 => 15,
+        default => 15,
+    };
     $slideCount = count(array_filter($slides, static fn ($slide) => empty($slide['__summary'])));
     $totalXpPreview = array_sum(array_map(static fn ($slide) => max(0, (int) ($slide['xp'] ?? 0)), $slides));
     $questionCountPreview = 0;
@@ -347,7 +354,7 @@
                     <div class="course-show-timer-bar" aria-hidden="true">
                         <div id="student-course-timer-fill" class="course-show-timer-fill"></div>
                     </div>
-                    <span id="student-course-timer-clock" class="course-show-timer-clock">15 sn</span>
+                    <span id="student-course-timer-clock" class="course-show-timer-clock">{{ $slideWaitSeconds }} sn</span>
                 </div>
             @endif
 
@@ -443,7 +450,7 @@
                 let solvedQuestionsTotal = 0;
                 let correctQuestionsTotal = 0;
                 let wrongQuestionsTotal = 0;
-                const slideWaitMs = 15000;
+                const slideWaitMs = @json($slideWaitSeconds * 1000);
                 let slideUnlockAt = 0;
                 let slideTimer = null;
                 let slideUnlocked = previewMode;
