@@ -237,6 +237,7 @@
                 border-radius: 0;
             }
         }
+        @include('reports.partials.student-progress-styles')
     </style>
 </head>
 <body>

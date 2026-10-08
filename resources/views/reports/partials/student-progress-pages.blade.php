@@ -24,8 +24,9 @@
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
             <div>
-                <h1>Öğrenci Gelişim Raporu</h1>
-                <p class="subtitle">{{ $student->user?->name }} · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · {{ now()->format('d.m.Y') }}</p>
+                <p class="report-eyebrow">ÖĞRENCİ GELİŞİM RAPORU</p>
+                <h1>{{ $student->user?->name }}</h1>
+                <p class="subtitle">{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · Rapor tarihi {{ now()->format('d.m.Y') }}</p>
             </div>
         </div>
         <div class="hero-right">
@@ -126,6 +127,7 @@
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo small">
             <div>
+                <p class="report-eyebrow">{{ $student->user?->name }} · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</p>
                 <h2>Detaylı Görev Raporu</h2>
                 <p class="subtitle">Ödevler, oyunlar, kazanımlar ve tarihler</p>
             </div>

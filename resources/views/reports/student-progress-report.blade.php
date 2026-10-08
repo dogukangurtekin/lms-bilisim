@@ -252,6 +252,7 @@
                 border-radius: 0;
             }
         }
+        @include('reports.partials.student-progress-styles')
     </style>
 </head>
 <body>
@@ -295,7 +296,7 @@
 
             for (let i = 0; i < pages.length; i += 1) {
                 const canvas = await html2canvas(pages[i], {
-                    scale: 2,
+                    scale: 3,
                     useCORS: true,
                     backgroundColor: '#ffffff',
                 });
