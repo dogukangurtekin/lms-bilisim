@@ -1,0 +1,96 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\CompetitionParticipant;
+use App\Models\CompetitionRoom;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class CompetitionBulkDeleteTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_admin_can_delete_all_competition_sessions_and_participants(): void
+    {
+        $adminRole = Role::query()->create(['name' => 'Admin', 'slug' => 'admin']);
+        $teacherRole = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
+        $studentRole = Role::query()->create(['name' => 'Student', 'slug' => 'student']);
+        $admin = $this->user($adminRole->id, 'Admin', 'bulk-admin@example.test');
+        $teacher = $this->user($teacherRole->id, 'Öğretmen', 'bulk-teacher@example.test');
+        $student = $this->user($studentRole->id, 'Öğrenci', 'bulk-student@example.test');
+
+        $firstRoom = $this->room($admin, 'BULK01');
+        $secondRoom = $this->room($teacher, 'BULK02');
+        CompetitionParticipant::query()->create([
+            'competition_room_id' => $firstRoom->id,
+            'student_user_id' => $student->id,
+            'user_name' => $student->name,
+            'joined_at_ms' => 1,
+        ]);
+        CompetitionParticipant::query()->create([
+            'competition_room_id' => $secondRoom->id,
+            'student_user_id' => $student->id,
+            'user_name' => $student->name,
+            'joined_at_ms' => 2,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('competitions.index'))
+            ->assertOk()
+            ->assertSee('Tüm Oturumları Sil');
+
+        $this->actingAs($admin)
+            ->delete(route('competitions.rooms.destroy-all'))
+            ->assertRedirect(route('competitions.index'))
+            ->assertSessionHas('ok', '2 canlı yarışma oturumu silindi.');
+
+        $this->assertDatabaseCount('competition_rooms', 0);
+        $this->assertDatabaseCount('competition_participants', 0);
+    }
+
+    public function test_teacher_cannot_bulk_delete_competition_sessions(): void
+    {
+        $teacherRole = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
+        $teacher = $this->user($teacherRole->id, 'Öğretmen', 'bulk-forbidden@example.test');
+        $this->room($teacher, 'BULK03');
+
+        $this->actingAs($teacher)
+            ->get(route('competitions.index'))
+            ->assertOk()
+            ->assertDontSee('Tüm Oturumları Sil');
+
+        $this->actingAs($teacher)
+            ->delete(route('competitions.rooms.destroy-all'))
+            ->assertForbidden();
+
+        $this->assertDatabaseCount('competition_rooms', 1);
+    }
+
+    private function room(User $owner, string $joinCode): CompetitionRoom
+    {
+        return CompetitionRoom::query()->create([
+            'teacher_user_id' => $owner->id,
+            'game_slug' => 'compute-it-runner',
+            'game_name' => 'Compute It',
+            'level_from' => 1,
+            'level_to' => 3,
+            'duration_seconds' => 300,
+            'join_code' => $joinCode,
+            'status' => 'finished',
+        ]);
+    }
+
+    private function user(int $roleId, string $name, string $email): User
+    {
+        return User::query()->create([
+            'role_id' => $roleId,
+            'name' => $name,
+            'email' => $email,
+            'password' => 'secret123',
+            'is_active' => true,
+        ]);
+    }
+}

@@ -47,6 +47,7 @@ class CompetitionController extends Controller
     private function eligibleGames(): array
     {
         $all = ActivityController::games();
+
         return array_intersect_key($all, array_flip(self::ELIGIBLE_SLUGS));
     }
 
@@ -153,6 +154,26 @@ class CompetitionController extends Controller
         $room->delete();
 
         return redirect()->route('competitions.index')->with('ok', 'Yarisma odasi silindi.');
+    }
+
+    public function destroyAll()
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+
+        $deletedRoomCount = DB::transaction(function (): int {
+            $roomCount = CompetitionRoom::query()->count();
+
+            CompetitionParticipant::query()->delete();
+            CompetitionRoom::query()->delete();
+
+            return $roomCount;
+        });
+
+        return redirect()
+            ->route('competitions.index')
+            ->with('ok', $deletedRoomCount > 0
+                ? "{$deletedRoomCount} canlı yarışma oturumu silindi."
+                : 'Silinecek canlı yarışma oturumu bulunamadı.');
     }
 
     public function roomStatus(CompetitionRoom $room)
@@ -273,13 +294,13 @@ class CompetitionController extends Controller
                 'slug' => $room->game_slug,
                 'from' => (int) $room->level_from,
                 'to' => (int) $room->level_to,
-                'homework_id' => 'competition-' . $room->id,
+                'homework_id' => 'competition-'.$room->id,
                 'expires_at' => now()->addHours(6)->timestamp,
             ]);
-            $iframeSrc = url("/{$room->game_slug}") . '?' . http_build_query([
+            $iframeSrc = url("/{$room->game_slug}").'?'.http_build_query([
                 'from' => (int) $room->level_from,
                 'to' => (int) $room->level_to,
-                'assignmentId' => 'competition-' . $room->id,
+                'assignmentId' => 'competition-'.$room->id,
             ]);
         }
 
@@ -395,7 +416,7 @@ class CompetitionController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$participant) {
+            if (! $participant) {
                 return;
             }
 
@@ -428,7 +449,7 @@ class CompetitionController extends Controller
                 $update['completed_seconds'] = (int) $data['completed_seconds'];
             }
 
-            if (!empty($update)) {
+            if (! empty($update)) {
                 $participant->update($update);
             }
 
@@ -509,6 +530,7 @@ class CompetitionController extends Controller
                 'status' => 'finished',
                 'finished_at_ms' => $endsAtMs,
             ]);
+
             return $room->fresh();
         }
 
