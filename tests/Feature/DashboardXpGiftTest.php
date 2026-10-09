@@ -27,7 +27,9 @@ class DashboardXpGiftTest extends TestCase
             ->assertOk()
             ->assertSee('XP Hediyesi Gönder')
             ->assertSee('Tüm öğrenciler')
-            ->assertSee('Ayşe');
+            ->assertSee('Ayşe')
+            ->assertSee('data-widget-key="xp_gift" draggable="false"', false)
+            ->assertSee('XP Gönderiliyor...');
 
         $this->actingAs($admin)
             ->post(route('dashboard.xp-gifts.store'), [

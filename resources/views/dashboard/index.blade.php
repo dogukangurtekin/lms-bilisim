@@ -295,7 +295,7 @@
                 </article>
 
                 @if(auth()->user()?->hasRole('admin'))
-                    <article class="dashboard-widget widget-span-12 xp-gift-widget" data-widget-key="xp_gift" draggable="true">
+                    <article class="dashboard-widget widget-span-12 xp-gift-widget" data-widget-key="xp_gift" draggable="false">
                         <div class="widget-head">
                             <div><strong>XP Hediyesi Gönder</strong><span>Tüm öğrencilere, sınıfa veya seçilen öğrencilere XP yükle</span></div>
                             <button type="button" class="widget-toggle" data-widget-toggle="xp_gift" aria-label="Gizle" title="Gizle">-</button>
@@ -625,11 +625,18 @@
     };
     scope?.addEventListener('change', syncTargetFields);
     syncTargetFields();
+    form.addEventListener('pointerdown', (event) => event.stopPropagation());
     form.addEventListener('submit', (event) => {
         const amount = Number(form.querySelector('[name="amount"]')?.value || 0);
         const targetLabel = scope?.selectedOptions?.[0]?.textContent?.trim() || 'seçilen hedefe';
         if (!window.confirm(`${targetLabel} için öğrenci başına ${amount} XP gönderilecek. Onaylıyor musunuz?`)) {
             event.preventDefault();
+            return;
+        }
+        const button = form.querySelector('[type="submit"]');
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'XP Gönderiliyor...';
         }
     });
 })();
@@ -913,7 +920,7 @@
         if (!editMode) return;
         const widget = e.target.closest('.dashboard-widget');
         if (!widget || widget.style.display === 'none') return;
-        if (e.target.closest('.widget-toggle') || e.target.closest('.widget-resize-handle')) return;
+        if (e.target.closest('.widget-toggle, .widget-resize-handle, form, input, select, textarea, button, a, label')) return;
         dragSource = widget;
         dragKey = widget.dataset.widgetKey;
         widget.classList.add('is-dragging');
