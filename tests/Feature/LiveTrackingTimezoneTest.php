@@ -64,12 +64,13 @@ class LiveTrackingTimezoneTest extends TestCase
             $this->actingAs($admin)
                 ->get(route('live-tracking.index'))
                 ->assertOk()
-                ->assertSee('12:15');
+                ->assertSee('Son Giriş Saati')
+                ->assertSee('13:30');
 
             $this->actingAs($admin)
                 ->getJson(route('live-tracking.refresh'))
                 ->assertOk()
-                ->assertJsonPath('0.first_seen', '12:15')
+                ->assertJsonPath('0.last_seen_time', '13:30')
                 ->assertJsonPath('0.log_count', 2);
 
             $this->actingAs($admin)

@@ -93,7 +93,7 @@
                 <th>Sınıf</th>
                 <th>Son İşlem</th>
                 <th>Son Görülme</th>
-                <th>Giriş Saati</th>
+                <th>Son Giriş Saati</th>
                 <th style="text-align:center;">İşlem</th>
                 <th></th>
             </tr>
@@ -114,7 +114,7 @@
                     @else -
                     @endif
                 </td>
-                <td>{{ $row['first_seen'] ? $row['first_seen']->copy()->setTimezone('Europe/Istanbul')->format('H:i') : '-' }}</td>
+                <td>{{ $row['last_seen_time'] ? $row['last_seen_time']->copy()->setTimezone('Europe/Istanbul')->format('H:i') : '-' }}</td>
                 <td style="text-align:center;"><strong>{{ $row['log_count'] }}</strong></td>
                 <td>
                     <a href="{{ route('live-tracking.show', $row['student']) }}"
@@ -228,7 +228,7 @@ async function fetchData() {
                 <td>${r.class}</td>
                 <td style="max-width:260px;">${r.last_action}</td>
                 <td><span class="badge-online">${r.last_seen}</span></td>
-                <td>${r.first_seen}</td>
+                <td>${r.last_seen_time}</td>
                 <td style="text-align:center;"><strong>${r.log_count}</strong></td>
                 <td><a href="${r.detail_url}" style="padding:5px 12px;border-radius:7px;background:var(--app-primary);color:#fff;text-decoration:none;font-size:.78rem;font-weight:600;">Detay →</a></td>
             </tr>

@@ -87,7 +87,7 @@ class LiveTrackingController extends Controller
                     'log_count'   => $logs->count(),
                     'last_seen'   => $logs->first()?->logged_at,
                     'last_action' => $logs->first()?->action_label,
-                    'first_seen'  => $logs->last()?->logged_at,
+                    'last_seen_time' => $logs->first()?->logged_at,
                 ];
             })
             ->sortByDesc('last_seen')
@@ -194,8 +194,6 @@ class LiveTrackingController extends Controller
                     ->get();
 
                 $last = $logs->first();
-                $first = $logs->last();
-
                 return [
                     'id'          => $student->id,
                     'name'        => $student->user->name ?? '-',
@@ -203,7 +201,7 @@ class LiveTrackingController extends Controller
                     'last_seen'   => $last?->logged_at?->diffForHumans() ?? '-',
                     'last_seen_at' => $last?->logged_at?->getTimestamp() ?? 0,
                     'last_action' => $last?->action_label ?? '-',
-                    'first_seen'  => $first?->logged_at?->copy()->setTimezone(self::DISPLAY_TIMEZONE)->format('H:i') ?? '-',
+                    'last_seen_time' => $last?->logged_at?->copy()->setTimezone(self::DISPLAY_TIMEZONE)->format('H:i') ?? '-',
                     'log_count'   => $logs->count(),
                     'detail_url'  => route('live-tracking.show', $student),
                 ];
