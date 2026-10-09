@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ContentProgress;
 use App\Models\Avatar;
 use App\Models\Badge;
 use App\Models\ClassBoardPost;
 use App\Models\CompetitionParticipant;
+use App\Models\ContentProgress;
 use App\Models\Course;
+use App\Models\CourseFavorite;
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
 use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
-use App\Models\RaceResult;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
-use App\Services\StudentProgressReportService;
-use App\Services\CodingActivityService;
-use Carbon\Carbon;
-use App\Models\UserStreak;
 use App\Models\UserXpLog;
+use App\Services\CodingActivityService;
 use App\Services\LessonPresentation\SlidePresentationService;
+use App\Services\StudentProgressReportService;
+use App\Services\StudentXpService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -32,10 +32,9 @@ class StudentPortalController extends Controller
     public function __construct(
         private StudentProgressReportService $reportService,
         private SlidePresentationService $presentation,
-        private CodingActivityService $codingActivityService
-    )
-    {
-    }
+        private CodingActivityService $codingActivityService,
+        private StudentXpService $xpService,
+    ) {}
 
     public function dashboard()
     {
@@ -63,6 +62,7 @@ class StudentPortalController extends Controller
             ->get();
         $courseSlideAssignments = $courses->filter(function ($course) {
             $slides = (array) data_get($course->lesson_payload, 'slides', []);
+
             return count($slides) > 0;
         });
         $assignmentHomeworks = $courseHomeworks
@@ -81,7 +81,7 @@ class StudentPortalController extends Controller
             ->count();
         $completedCourseSlideCount = ContentProgress::where('user_id', $student->user_id)
             ->where('completed', true)
-            ->whereIn('content_id', $courseSlideAssignments->map(fn ($c) => 'course-' . $c->id)->values())
+            ->whereIn('content_id', $courseSlideAssignments->map(fn ($c) => 'course-'.$c->id)->values())
             ->count();
 
         $gameHomeworkCount = $assignmentHomeworks
@@ -121,10 +121,13 @@ class StudentPortalController extends Controller
         $allCourseAssignmentIds = $lessonHomeworkCourseIds->unique()->values();
         $completedCourseIds = ContentProgress::where('user_id', $student->user_id)
             ->where('completed', true)
-            ->whereIn('content_id', $allCourseAssignmentIds->map(fn ($id) => 'course-' . $id)->values())
+            ->whereIn('content_id', $allCourseAssignmentIds->map(fn ($id) => 'course-'.$id)->values())
             ->pluck('content_id')
             ->map(function ($cid) {
-                if (preg_match('/^course-(\d+)$/', (string) $cid, $m)) return (int) $m[1];
+                if (preg_match('/^course-(\d+)$/', (string) $cid, $m)) {
+                    return (int) $m[1];
+                }
+
                 return 0;
             })
             ->filter(fn ($v) => $v > 0)
@@ -145,14 +148,7 @@ class StudentPortalController extends Controller
         $this->syncStudentBadges($student, $xp);
 
         $students = Student::with(['user', 'schoolClass', 'currentAvatar'])->get();
-        $xpMap = [];
-        foreach ($students as $s) {
-            // Bu harita hem sinif/okul siralamasini hem de "Ilk 7" listesini
-            // besliyor; avatar magazasinda harcanan XP burada da dusulmezse
-            // avatar alan ogrenci listede hala eski (harcamadan onceki) XP
-            // ile gorunmeye devam eder.
-            $xpMap[$s->id] = max(0, $this->xp($s) - (int) ($s->avatar_xp_spent ?? 0));
-        }
+        $xpMap = $this->xpService->availableFor($students);
 
         $schoolRank = collect($xpMap)->sortDesc()->keys()->search($student->id);
         $schoolRank = $schoolRank === false ? null : $schoolRank + 1;
@@ -221,9 +217,16 @@ class StudentPortalController extends Controller
                 ->whereBetween('created_at', [$day, $next])
                 ->sum('xp_awarded');
             $level = 0;
-            if ($completed >= 1) $level = 1;
-            if ($completed >= 2) $level = 2;
-            if ($completed >= 4) $level = 3;
+            if ($completed >= 1) {
+                $level = 1;
+            }
+            if ($completed >= 2) {
+                $level = 2;
+            }
+            if ($completed >= 4) {
+                $level = 3;
+            }
+
             return [
                 'label' => $day->format('d.m'),
                 'completed' => $completed,
@@ -321,7 +324,7 @@ class StudentPortalController extends Controller
         $spent = (int) ($student->avatar_xp_spent ?? 0);
         $availableXp = max(0, $totalXp - $spent);
         if ($availableXp < $cost) {
-            return back()->withErrors(['avatar' => 'Yetersiz XP. Bu avatar icin gereken XP: ' . $cost]);
+            return back()->withErrors(['avatar' => 'Yetersiz XP. Bu avatar icin gereken XP: '.$cost]);
         }
 
         DB::transaction(function () use ($student, $avatar, $cost) {
@@ -375,7 +378,7 @@ class StudentPortalController extends Controller
             ->where('content_id', 'like', 'course-%')
             ->get()
             ->keyBy('content_id');
-        $favoriteCourseIds = \App\Models\CourseFavorite::query()
+        $favoriteCourseIds = CourseFavorite::query()
             ->where('user_id', $userId)
             ->pluck('course_id')
             ->map(fn ($id) => (int) $id)
@@ -399,7 +402,7 @@ class StudentPortalController extends Controller
 
         $courseProgress = $student
             ? ContentProgress::where('user_id', $student->user_id)
-                ->where('content_id', 'course-' . $course->id)
+                ->where('content_id', 'course-'.$course->id)
                 ->first()
             : null;
         $slides = $this->presentation->prepareCourseSlides($course, false);
@@ -409,7 +412,7 @@ class StudentPortalController extends Controller
         $mainCourseCompleted = $student
             ? ContentProgress::query()
                 ->where('user_id', $student->user_id)
-                ->where('content_id', 'course-' . $course->id)
+                ->where('content_id', 'course-'.$course->id)
                 ->where('completed', true)
                 ->exists()
             : false;
@@ -497,7 +500,7 @@ class StudentPortalController extends Controller
             'correct_questions' => ['nullable', 'integer', 'min:0'],
             'wrong_questions' => ['nullable', 'integer', 'min:0'],
         ]);
-        $existing = ContentProgress::where('content_id', 'course-' . $course->id)
+        $existing = ContentProgress::where('content_id', 'course-'.$course->id)
             ->where('user_id', $student->user_id)
             ->first();
         if ($existing?->completed) {
@@ -546,7 +549,7 @@ class StudentPortalController extends Controller
         $wrongQuestions = min($wrongQuestions, $questionTotal);
 
         ContentProgress::updateOrCreate(
-            ['content_id' => 'course-' . $course->id, 'user_id' => $student->user_id],
+            ['content_id' => 'course-'.$course->id, 'user_id' => $student->user_id],
             [
                 'completed' => true,
                 'xp_awarded' => $earnedXp,
@@ -563,7 +566,7 @@ class StudentPortalController extends Controller
             ]
         );
 
-        return redirect()->route('student.portal.dashboard')->with('ok', 'Ders tamamlandi. Kazanilan XP: ' . $earnedXp);
+        return redirect()->route('student.portal.dashboard')->with('ok', 'Ders tamamlandi. Kazanilan XP: '.$earnedXp);
     }
 
     public function assignments()
@@ -598,20 +601,10 @@ class StudentPortalController extends Controller
             ->where('id', '!=', $student->id)
             ->get();
 
-        $gradeXpByStudentId = Grade::query()
-            ->selectRaw('student_id, ROUND(SUM(score)) as total_score')
-            ->whereIn('student_id', $classmates->pluck('id'))
-            ->groupBy('student_id')
-            ->pluck('total_score', 'student_id');
-
-        $contentXpByUserId = ContentProgress::query()
-            ->selectRaw('user_id, SUM(xp_awarded) as total_xp')
-            ->whereIn('user_id', $classmates->pluck('user_id'))
-            ->groupBy('user_id')
-            ->pluck('total_xp', 'user_id');
+        $classmateXp = $this->xpService->availableFor($classmates);
 
         $friends = $classmates
-            ->map(function (Student $classmate) use ($gradeXpByStudentId, $contentXpByUserId, $defaultAvatarPath) {
+            ->map(function (Student $classmate) use ($classmateXp, $defaultAvatarPath) {
                 $fullName = trim((string) ($classmate->user?->name ?? ''));
                 $nameParts = preg_split('/\s+/', $fullName, 2) ?: [];
                 $firstName = trim((string) ($nameParts[0] ?? ''));
@@ -621,12 +614,7 @@ class StudentPortalController extends Controller
                     'first_name' => $firstName !== '' ? $firstName : '-',
                     'last_name' => $lastName !== '' ? $lastName : '-',
                     'avatar_path' => $classmate->currentAvatar?->image_path ?: $defaultAvatarPath,
-                    'xp' => max(
-                        0,
-                        (int) ($gradeXpByStudentId[$classmate->id] ?? 0)
-                        + (int) ($contentXpByUserId[$classmate->user_id] ?? 0)
-                        - (int) ($classmate->avatar_xp_spent ?? 0)
-                    ),
+                    'xp' => $classmateXp[$classmate->id] ?? 0,
                 ];
             })
             ->sortByDesc('xp')
@@ -743,7 +731,7 @@ class StudentPortalController extends Controller
         // ile bilfiil atadigi bir dersi bile ogrenciye 403 olarak gosteriyordu -
         // ders atama sistemi zaten tek basina yeterli/dogru yetki kontrolu,
         // teacher_id'nin dolu olup olmamasinin bununla ilgisi yok.
-        if (!empty($course->parent_course_id)) {
+        if (! empty($course->parent_course_id)) {
             if ((int) ($course->school_class_id ?? 0) > 0 && (int) $course->school_class_id === (int) $student->school_class_id) {
                 return true;
             }
@@ -804,15 +792,7 @@ class StudentPortalController extends Controller
 
     private function xp(Student $student): int
     {
-        $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
-        $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
-        $quizXp = (int) LiveQuizAnswer::where('student_user_id', $student->user_id)->sum('xp_earned');
-        // Canli Yarisma'da kazanilan XP de diger kaynaklar gibi (not, ders/
-        // icerik tamamlama) ogrencinin toplam XP'sine dahil ediliyor.
-        $competitionXp = (int) CompetitionParticipant::where('student_user_id', $student->user_id)->sum('xp_earned');
-        $keyboardRaceXp = (int) RaceResult::where('user_id', $student->user_id)->sum('xp_earned');
-
-        return max(0, $gradeXp + $contentXp + $quizXp + $competitionXp + $keyboardRaceXp);
+        return $this->xpService->earned($student);
     }
 
     private function classBoardMessages(): array
@@ -868,6 +848,7 @@ class StudentPortalController extends Controller
             ['name' => 'Demir İrade', 'icon' => '💪', 'description' => 'En az 2400 dakika sistemde aktif kal.', 'metric' => 'minutes', 'target' => 2400],
         ];
     }
+
     private function syncStudentBadges(Student $student, int $xp): array
     {
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
@@ -899,10 +880,7 @@ class StudentPortalController extends Controller
         // Siralama, admin/ogretmen panelindeki "Basari Listesi" ile tutarli
         // olmasi icin avatar magazasinda harcanan XP dusulerek hesaplaniyor.
         $allStudents = Student::with('schoolClass')->get();
-        $xpMap = [];
-        foreach ($allStudents as $s) {
-            $xpMap[$s->id] = max(0, $this->xp($s) - (int) ($s->avatar_xp_spent ?? 0));
-        }
+        $xpMap = $this->xpService->availableFor($allStudents);
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);
         $schoolRank = $schoolRankPos === false ? 999 : ($schoolRankPos + 1);
         $gradePeers = $allStudents->filter(fn ($s) => $s->schoolClass?->name === $student->schoolClass?->name);
@@ -964,6 +942,7 @@ class StudentPortalController extends Controller
         }
 
         $earnedCount = collect($items)->where('earned', true)->count();
+
         return [$items, $earnedCount];
     }
 
@@ -1025,17 +1004,20 @@ class StudentPortalController extends Controller
             $cid = (string) $cid;
             if (preg_match('/^course-(\d+)$/', $cid, $m)) {
                 $item = $courses->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Ders: ' . $item->name) : $cid;
+                $labels[$cid] = $item ? ('Ders: '.$item->name) : $cid;
+
                 continue;
             }
             if (preg_match('/^homework-(\d+)$/', $cid, $m)) {
                 $item = $homeworks->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Ders Ödevi: ' . $item->title) : $cid;
+                $labels[$cid] = $item ? ('Ders Ödevi: '.$item->title) : $cid;
+
                 continue;
             }
             if (preg_match('/^game-assignment-(\d+)$/', $cid, $m)) {
                 $item = $gameAssignments->get((int) $m[1]);
-                $labels[$cid] = $item ? ('Oyun/Uygulama: ' . $item->game_name . ' - ' . $item->title) : $cid;
+                $labels[$cid] = $item ? ('Oyun/Uygulama: '.$item->game_name.' - '.$item->title) : $cid;
+
                 continue;
             }
             $labels[$cid] = $cid;
@@ -1085,7 +1067,7 @@ class StudentPortalController extends Controller
                     'levelStart' => $from,
                     'levelEnd' => $to,
                 ]);
-                $gameUrl = url($games[$homework->target_slug]['url']) . '?' . $query;
+                $gameUrl = url($games[$homework->target_slug]['url']).'?'.$query;
             }
         }
 
@@ -1152,7 +1134,7 @@ class StudentPortalController extends Controller
         $progress->save();
 
         ContentProgress::updateOrCreate(
-            ['content_id' => 'homework-' . $homework->id, 'user_id' => $student->user_id],
+            ['content_id' => 'homework-'.$homework->id, 'user_id' => $student->user_id],
             ['completed' => true, 'xp_awarded' => $progress->xp_awarded, 'payload' => ['source' => 'course_homework']]
         );
         request()->session()->forget('runner_grant');
@@ -1204,7 +1186,7 @@ class StudentPortalController extends Controller
             'slug' => $assignment->game_slug,
             'from' => $from,
             'to' => $to,
-            'homework_id' => 'game-assignment-' . $assignment->id,
+            'homework_id' => 'game-assignment-'.$assignment->id,
             'expires_at' => now()->addHours(3)->timestamp,
         ]);
 
@@ -1215,7 +1197,7 @@ class StudentPortalController extends Controller
             'levelEnd' => $to,
         ]);
 
-        $gameUrl = url('/' . $assignment->game_slug) . '?' . $query;
+        $gameUrl = url('/'.$assignment->game_slug).'?'.$query;
 
         return view('student-portal.game-assignment-play', compact('assignment', 'student', 'gameUrl'));
     }
@@ -1280,7 +1262,7 @@ class StudentPortalController extends Controller
         $progress->save();
 
         ContentProgress::updateOrCreate(
-            ['content_id' => 'game-assignment-' . $assignment->id, 'user_id' => $student->user_id],
+            ['content_id' => 'game-assignment-'.$assignment->id, 'user_id' => $student->user_id],
             [
                 'completed' => true,
                 'xp_awarded' => $progress->xp_awarded,

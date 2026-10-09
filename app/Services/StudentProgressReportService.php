@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ActivityAttempt;
 use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
@@ -9,7 +10,6 @@ use App\Models\CourseHomework;
 use App\Models\DailyActivityAssignment;
 use App\Models\GameAssignment;
 use App\Models\Grade;
-use App\Models\ActivityAttempt;
 use App\Models\LiveQuizAnswer;
 use App\Models\RaceResult;
 use App\Models\Student;
@@ -20,6 +20,8 @@ use Carbon\Carbon;
 
 class StudentProgressReportService
 {
+    public function __construct(private StudentXpService $xpService) {}
+
     public function build(Student $student): array
     {
         $student->loadMissing(['user', 'schoolClass', 'currentAvatar', 'badges', 'avatars']);
@@ -79,12 +81,12 @@ class StudentProgressReportService
 
         $homeworkProgress = StudentHomeworkProgress::where('student_id', $student->id)->get()->keyBy('course_homework_id');
         $completedHomeworkIds = $homeworkProgress
-            ->filter(fn ($p) => !empty($p->course_homework_id))
+            ->filter(fn ($p) => ! empty($p->course_homework_id))
             ->keys()
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        if (!empty($completedHomeworkIds)) {
+        if (! empty($completedHomeworkIds)) {
             $progressHomeworks = CourseHomework::withTrashed()
                 ->with(['course', 'schoolClass'])
                 ->whereIn('id', $completedHomeworkIds)
@@ -128,7 +130,7 @@ class StudentProgressReportService
             ->unique('competition_room_id')
             ->count();
         $competitionCompletedCount = $competitionParticipantRows
-            ->filter(fn ($participant) => !empty($participant->finished_at_ms) || (float) $participant->progress_percent >= 100)
+            ->filter(fn ($participant) => ! empty($participant->finished_at_ms) || (float) $participant->progress_percent >= 100)
             ->unique('competition_room_id')
             ->count();
 
@@ -158,7 +160,7 @@ class StudentProgressReportService
         // Rapordaki siralama (asagida) avatar harcamasi dusulerek
         // hesaplandigindan, ayni raporun basligindaki XP de tutarli olmasi
         // icin ayni sekilde netleniyor.
-        $totalXp = max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp - (int) ($student->avatar_xp_spent ?? 0));
+        $totalXp = $this->xpService->available($student);
         $avgGrade = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
 
         $completedLessonRows = ContentProgress::where('user_id', $student->user_id)
@@ -184,7 +186,7 @@ class StudentProgressReportService
             ->where(function ($q) use ($classId) {
                 // target_class_ids JSON dizisinde sınıf ID'si var mı?
                 $q->whereJsonContains('target_class_ids', $classId)
-                  ->orWhereNull('target_class_ids');
+                    ->orWhereNull('target_class_ids');
             })
             ->with('activity')
             ->get()
@@ -200,16 +202,16 @@ class StudentProgressReportService
             ->all();
 
         // Toplam görev = ödevler + tüm sınıf oyunları + tüm sınıf etkinlikleri + ders slaytları
-        $totalAssignments = $courseHomeworks->count() 
-            + $allClassGameAssignments->count() 
-            + $classActivityAssignments->count() 
+        $totalAssignments = $courseHomeworks->count()
+            + $allClassGameAssignments->count()
+            + $classActivityAssignments->count()
             + $lessonCourseAssignmentsTotal;
-            
-        $completedHomework = $homeworkProgress->filter(fn ($p) => !empty($p->completed_at))->count();
+
+        $completedHomework = $homeworkProgress->filter(fn ($p) => ! empty($p->completed_at))->count();
         // Tamamlanan oyunlar: hem progress kaydı olanlar
-        $completedGames = $gameProgress->filter(fn ($p) => !empty($p->completed_at))->count();
+        $completedGames = $gameProgress->filter(fn ($p) => ! empty($p->completed_at))->count();
         $completedActivities = count($completedActivityIds);
-        
+
         $completedTotal = $completedHomework + $completedGames + $completedActivities + $completedSlides;
         $overallProgress = $totalAssignments > 0 ? (int) round(($completedTotal / $totalAssignments) * 100) : 0;
 
@@ -228,25 +230,7 @@ class StudentProgressReportService
         // "Basari Listesi" ve ogrencinin kendi anasayfasindaki guncel
         // (kalan) XP ile tutarli kaliyor.
         $students = Student::with(['user', 'schoolClass'])->get();
-        $studentUserIdsAll = $students->pluck('user_id');
-        $competitionXpByUserAll = CompetitionParticipant::query()
-            ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
-            ->whereIn('student_user_id', $studentUserIdsAll)
-            ->groupBy('student_user_id')
-            ->pluck('xp', 'user_id');
-        $keyboardRaceXpByUserAll = RaceResult::query()
-            ->selectRaw('user_id, SUM(xp_earned) as xp')
-            ->whereIn('user_id', $studentUserIdsAll)
-            ->groupBy('user_id')
-            ->pluck('xp', 'user_id');
-        $xpMap = [];
-        foreach ($students as $s) {
-            $sx = (int) round((float) Grade::where('student_id', $s->id)->sum('score'));
-            $cx = (int) ContentProgress::where('user_id', $s->user_id)->sum('xp_awarded');
-            $compx = (int) ($competitionXpByUserAll[$s->user_id] ?? 0);
-            $keyboardRaceXp = (int) ($keyboardRaceXpByUserAll[$s->user_id] ?? 0);
-            $xpMap[$s->id] = max(0, $sx + $cx + $compx + $keyboardRaceXp - (int) ($s->avatar_xp_spent ?? 0));
-        }
+        $xpMap = $this->xpService->availableFor($students);
 
         $schoolRankPos = collect($xpMap)->sortDesc()->keys()->search($student->id);
         $schoolRank = $schoolRankPos === false ? null : ($schoolRankPos + 1);
@@ -280,7 +264,7 @@ class StudentProgressReportService
         $lessonHomeworkTotal = $courseHomeworks->filter(fn ($h) => (string) ($h->assignment_type ?? 'lesson') === 'lesson')->count();
         $lessonHomeworkCompleted = $courseHomeworks
             ->filter(fn ($h) => (string) ($h->assignment_type ?? 'lesson') === 'lesson')
-            ->filter(fn ($h) => !empty($homeworkProgress->get($h->id)?->completed_at))
+            ->filter(fn ($h) => ! empty($homeworkProgress->get($h->id)?->completed_at))
             ->count();
 
         $computeTotal = 0;
@@ -295,13 +279,14 @@ class StudentProgressReportService
         foreach ($gameAssignments as $a) {
             $slug = strtolower((string) ($a->game_slug ?? ''));
             $name = strtolower((string) ($a->game_name ?? ''));
-            $isCompleted = !empty($gameProgress->get($a->id)?->completed_at);
+            $isCompleted = ! empty($gameProgress->get($a->id)?->completed_at);
 
             if (str_contains($slug, 'compute') || str_contains($name, 'compute')) {
                 $computeTotal++;
                 if ($isCompleted) {
                     $computeCompleted++;
                 }
+
                 continue;
             }
 
@@ -310,6 +295,7 @@ class StudentProgressReportService
                 if ($isCompleted) {
                     $block3dCompleted++;
                 }
+
                 continue;
             }
 
@@ -318,6 +304,7 @@ class StudentProgressReportService
                 if ($isCompleted) {
                     $blockCompleted++;
                 }
+
                 continue;
             }
 
@@ -449,7 +436,7 @@ class StudentProgressReportService
             if (preg_match('/^(?:course|homework)-(\d+)$/', (string) $row->content_id, $m)) {
                 $courseId = (int) $m[1];
             }
-            $fallbackCourseName = $courseName !== '' ? $courseName : ($lessonTitle !== '' ? $lessonTitle : 'Ders #' . ($courseId > 0 ? $courseId : substr((string) $row->content_id, -6)));
+            $fallbackCourseName = $courseName !== '' ? $courseName : ($lessonTitle !== '' ? $lessonTitle : 'Ders #'.($courseId > 0 ? $courseId : substr((string) $row->content_id, -6)));
 
             $courseItems[] = [
                 'course_name' => $fallbackCourseName,

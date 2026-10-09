@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\Grade;
-use App\Models\LiveQuizAnswer;
-use App\Models\RaceResult;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
@@ -15,13 +12,15 @@ use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
 use App\Models\Teacher;
 use App\Models\User;
-use App\Models\UserProfile;
+use App\Services\StudentXpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
+    public function __construct(private StudentXpService $xpService) {}
+
     private const DEFAULT_WIDGETS = [
         'summary' => ['visible' => true, 'span' => 12, 'order' => 10, 'title' => 'Özet', 'type' => 'summary'],
         'attendance' => ['visible' => true, 'span' => 4, 'order' => 20, 'title' => 'Katılım', 'type' => 'stat'],
@@ -47,7 +46,7 @@ class DashboardController extends Controller
             return redirect()->route('student.portal.dashboard');
         }
 
-        $dashboard = Cache::remember('dashboard.teacher.' . ($user?->id ?? 'guest') . '.class.' . $selectedClassId, now()->addSeconds(20), function () use ($user, $selectedClassId) {
+        $dashboard = Cache::remember('dashboard.teacher.'.($user?->id ?? 'guest').'.class.'.$selectedClassId, now()->addSeconds(20), function () use ($user, $selectedClassId) {
             $isAdmin = $user?->hasRole('admin') === true;
             $teacher = null;
             $teacherClassIds = [];
@@ -75,7 +74,7 @@ class DashboardController extends Controller
                 ->get()
                 ->map(fn ($class) => [
                     'id' => (int) $class->id,
-                    'label' => $this->normalizeDashboardText(trim($class->name . '/' . $class->section)),
+                    'label' => $this->normalizeDashboardText(trim($class->name.'/'.$class->section)),
                 ])
                 ->values()
                 ->all();
@@ -189,46 +188,6 @@ class DashboardController extends Controller
             $participationRate = $totalStudents > 0 ? (int) round(($activeStudents / $totalStudents) * 100) : 0;
             $progressRate = max(0, min(100, (int) round($blendedSuccessRate)));
 
-            $gradeXpByStudent = Grade::query()
-                ->selectRaw('student_id, ROUND(SUM(score)) as xp')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
-                ->groupBy('student_id')
-                ->pluck('xp', 'student_id');
-
-            $contentXpByUser = ContentProgress::query()
-                ->selectRaw('user_id, SUM(xp_awarded) as xp')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
-                ->groupBy('user_id')
-                ->pluck('xp', 'user_id');
-
-            $quizXpByUser = LiveQuizAnswer::query()
-                ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_user_id', $studentUserIds))
-                ->groupBy('student_user_id')
-                ->pluck('xp', 'user_id');
-
-            // Canli Yarisma'da kazanilan XP daha once hicbir XP toplamina dahil
-            // edilmiyordu - ogrenci yarismada XP kazansa bile genel XP'sine
-            // yansimiyordu. Diger kaynaklarla (not/icerik/canli quiz) ayni
-            // sekilde toplaniyor.
-            $competitionXpByUser = CompetitionParticipant::query()
-                ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_user_id', $studentUserIds))
-                ->groupBy('student_user_id')
-                ->pluck('xp', 'user_id');
-
-            $keyboardRaceXpByUser = RaceResult::query()
-                ->selectRaw('user_id, SUM(xp_earned) as xp')
-                ->whereNotNull('user_id')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
-                ->groupBy('user_id')
-                ->pluck('xp', 'user_id');
-
-            $profileXpByUser = UserProfile::query()
-                ->selectRaw('user_id, xp')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
-                ->pluck('xp', 'user_id');
-
             $completedContentCountByUser = ContentProgress::query()
                 ->selectRaw('user_id, COUNT(*) as completed_count')
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
@@ -240,27 +199,17 @@ class DashboardController extends Controller
                 ->with(['user', 'schoolClass'])
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
                 ->get();
+            $availableXp = $this->xpService->availableFor($students);
 
-            $studentXpRows = $students->map(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $quizXpByUser, $competitionXpByUser, $keyboardRaceXpByUser, $profileXpByUser) {
-                $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
-                $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
-                $quizXp = (int) ($quizXpByUser[$student->user_id] ?? 0);
-                $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
-                $keyboardRaceXp = (int) ($keyboardRaceXpByUser[$student->user_id] ?? 0);
-                $profileXp = (int) ($profileXpByUser[$student->user_id] ?? 0);
-                $computedXp = max(0, $gradeXp + $contentXp + $quizXp + $competitionXp + $keyboardRaceXp);
-                // Avatar magazasinda harcanan XP burada da dusuluyor; boylece
-                // admin/ogretmen panelindeki "Basari Listesi" (ilk 5), basari
-                // dagilimi grafigi ve toplam XP, ogrenci tarafinda gosterilen
-                // guncel (kalan) XP ile birebir tutarli oluyor.
-                $xp = max(0, max($computedXp, $profileXp) - (int) ($student->avatar_xp_spent ?? 0));
-                $className = $student->schoolClass ? ($student->schoolClass->name . '/' . $student->schoolClass->section) : '-';
+            $studentXpRows = $students->map(function (Student $student) use ($availableXp) {
+                $xp = $availableXp[$student->id] ?? 0;
+                $className = $student->schoolClass ? ($student->schoolClass->name.'/'.$student->schoolClass->section) : '-';
 
                 return [
                     'student_id' => $student->id,
                     'user_id' => $student->user_id,
                     'school_class_id' => (int) $student->school_class_id,
-                    'name' => $this->normalizeDashboardText($student->user?->name ?? ('user_' . $student->user_id)),
+                    'name' => $this->normalizeDashboardText($student->user?->name ?? ('user_'.$student->user_id)),
                     'class_name' => $className,
                     'xp' => $xp,
                     'avg_grade' => (float) ($avgGradeByStudent[$student->id] ?? 0),
@@ -270,10 +219,15 @@ class DashboardController extends Controller
             $gradeBuckets = ['Çok İyi (75+)' => 0, 'İyi (50-74)' => 0, 'Orta (25-49)' => 0, 'Düşük (0-24)' => 0];
             foreach ($studentXpRows as $row) {
                 $xp = (int) ($row['xp'] ?? 0);
-                if ($xp >= 75) $gradeBuckets['Çok İyi (75+)']++;
-                elseif ($xp >= 50) $gradeBuckets['İyi (50-74)']++;
-                elseif ($xp >= 25) $gradeBuckets['Orta (25-49)']++;
-                else $gradeBuckets['Düşük (0-24)']++;
+                if ($xp >= 75) {
+                    $gradeBuckets['Çok İyi (75+)']++;
+                } elseif ($xp >= 50) {
+                    $gradeBuckets['İyi (50-74)']++;
+                } elseif ($xp >= 25) {
+                    $gradeBuckets['Orta (25-49)']++;
+                } else {
+                    $gradeBuckets['Düşük (0-24)']++;
+                }
             }
             $gradeTotal = max(1, array_sum($gradeBuckets));
             $gradeDistribution = collect($gradeBuckets)->map(fn ($count, $label) => [
@@ -285,10 +239,15 @@ class DashboardController extends Controller
             $activityBuckets = ['Çok Aktif (20+)' => 0, 'Aktif (11-20)' => 0, 'Orta (6-10)' => 0, 'Pasif (0-5)' => 0];
             foreach ($students as $student) {
                 $contentCount = (int) ($completedContentCountByUser[$student->user_id] ?? 0);
-                if ($contentCount >= 21) $activityBuckets['Çok Aktif (20+)']++;
-                elseif ($contentCount >= 11) $activityBuckets['Aktif (11-20)']++;
-                elseif ($contentCount >= 6) $activityBuckets['Orta (6-10)']++;
-                else $activityBuckets['Pasif (0-5)']++;
+                if ($contentCount >= 21) {
+                    $activityBuckets['Çok Aktif (20+)']++;
+                } elseif ($contentCount >= 11) {
+                    $activityBuckets['Aktif (11-20)']++;
+                } elseif ($contentCount >= 6) {
+                    $activityBuckets['Orta (6-10)']++;
+                } else {
+                    $activityBuckets['Pasif (0-5)']++;
+                }
             }
             $activityTotal = max(1, array_sum($activityBuckets));
             $activityDistribution = collect($activityBuckets)->map(fn ($count, $label) => [
@@ -312,7 +271,7 @@ class DashboardController extends Controller
             $studentLessonCompletion = $studentLessonBase
                 ->map(function (Student $student) use ($completedContentCountByUser) {
                     return [
-                        'label' => $this->normalizeDashboardText($student->user?->name ?? ('user_' . $student->user_id)),
+                        'label' => $this->normalizeDashboardText($student->user?->name ?? ('user_'.$student->user_id)),
                         'value' => (int) ($completedContentCountByUser[$student->user_id] ?? 0),
                     ];
                 })
@@ -518,7 +477,7 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($row) => [
                 'class_id' => (int) $row->class_id,
-                'class_name' => $this->normalizeDashboardText($row->name . '/' . $row->section),
+                'class_name' => $this->normalizeDashboardText($row->name.'/'.$row->section),
                 'active_count' => (int) $row->active_count,
             ])
             ->values();
@@ -562,7 +521,7 @@ class DashboardController extends Controller
             ->values();
 
         return response()->json([
-            'class_name' => $this->normalizeDashboardText($class->name . '/' . $class->section),
+            'class_name' => $this->normalizeDashboardText($class->name.'/'.$class->section),
             'students' => $rows,
         ]);
     }
@@ -630,61 +589,45 @@ class DashboardController extends Controller
      */
     public function rankingByClass(Request $request): JsonResponse
     {
-        $user    = $request->user();
+        $user = $request->user();
         abort_unless($user && $user->hasRole('admin', 'teacher'), 403);
         $isAdmin = $user->hasRole('admin');
 
-        $teacher         = null;
+        $teacher = null;
         $teacherClassIds = [];
-        if (!$isAdmin) {
-            $teacher         = Teacher::query()->where('user_id', $user->id)->first();
+        if (! $isAdmin) {
+            $teacher = Teacher::query()->where('user_id', $user->id)->first();
             $teacherClassIds = $teacher
-                ? $teacher->classes()->pluck('school_classes.id')->map(fn($id) => (int)$id)->all()
+                ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
                 : [];
         }
 
         $classId = (int) $request->input('class_id', 0);
 
         // Yetki kontrolü
-        if ($classId > 0 && !$isAdmin && !in_array($classId, $teacherClassIds, true)) {
+        if ($classId > 0 && ! $isAdmin && ! in_array($classId, $teacherClassIds, true)) {
             abort(403);
         }
 
         $studentsQuery = Student::query()
             ->with(['user', 'schoolClass'])
-            ->when(!$isAdmin, fn($q) => $q->whereIn('school_class_id', $teacherClassIds))
-            ->when($classId > 0, fn($q) => $q->where('school_class_id', $classId));
+            ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
+            ->when($classId > 0, fn ($q) => $q->where('school_class_id', $classId));
 
-        $students      = $studentsQuery->get();
-        $studentIds    = $students->pluck('id');
-        $studentUserIds = $students->pluck('user_id');
-
-        $gradeXp   = Grade::selectRaw('student_id, ROUND(SUM(score)) as xp')->whereIn('student_id', $studentIds)->groupBy('student_id')->pluck('xp', 'student_id');
-        $contentXp = \App\Models\ContentProgress::selectRaw('user_id, SUM(xp_awarded) as xp')->whereIn('user_id', $studentUserIds)->groupBy('user_id')->pluck('xp', 'user_id');
-        $quizXp    = \App\Models\LiveQuizAnswer::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
-        $compXp    = \App\Models\CompetitionParticipant::selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')->whereIn('student_user_id', $studentUserIds)->groupBy('student_user_id')->pluck('xp', 'user_id');
-        $keyboardRaceXp = RaceResult::selectRaw('user_id, SUM(xp_earned) as xp')->whereIn('user_id', $studentUserIds)->groupBy('user_id')->pluck('xp', 'user_id');
-        $profileXp = UserProfile::selectRaw('user_id, xp')->whereIn('user_id', $studentUserIds)->pluck('xp', 'user_id');
-
-        $rows = $students->map(function (Student $s) use ($gradeXp, $contentXp, $quizXp, $compXp, $keyboardRaceXp, $profileXp) {
-            $computed = max(0,
-                (int)($gradeXp[$s->id] ?? 0) +
-                (int)($contentXp[$s->user_id] ?? 0) +
-                (int)($quizXp[$s->user_id] ?? 0) +
-                (int)($compXp[$s->user_id] ?? 0) +
-                (int)($keyboardRaceXp[$s->user_id] ?? 0)
-            );
-            $xp = max(0, max($computed, (int)($profileXp[$s->user_id] ?? 0)) - (int)($s->avatar_xp_spent ?? 0));
+        $students = $studentsQuery->get();
+        $availableXp = $this->xpService->availableFor($students);
+        $rows = $students->map(function (Student $s) use ($availableXp) {
+            $xp = $availableXp[$s->id] ?? 0;
 
             return [
-                'name'       => $this->normalizeDashboardText($s->user?->name ?? '-'),
-                'class_name' => $s->schoolClass ? $this->normalizeDashboardText($s->schoolClass->name . '/' . $s->schoolClass->section) : '-',
-                'xp'         => $xp,
+                'name' => $this->normalizeDashboardText($s->user?->name ?? '-'),
+                'class_name' => $s->schoolClass ? $this->normalizeDashboardText($s->schoolClass->name.'/'.$s->schoolClass->section) : '-',
+                'xp' => $xp,
             ];
         })
-        ->sortByDesc('xp')
-        ->values()
-        ->map(fn($row, $i) => array_merge($row, ['rank' => $i + 1]));
+            ->sortByDesc('xp')
+            ->values()
+            ->map(fn ($row, $i) => array_merge($row, ['rank' => $i + 1]));
 
         return response()->json(['students' => $rows->values()->all()]);
     }
@@ -772,7 +715,7 @@ class DashboardController extends Controller
         }
 
         foreach (array_values(array_unique($classIds)) as $classId) {
-            Cache::forget('dashboard.teacher.' . $userId . '.class.' . $classId);
+            Cache::forget('dashboard.teacher.'.$userId.'.class.'.$classId);
         }
     }
 

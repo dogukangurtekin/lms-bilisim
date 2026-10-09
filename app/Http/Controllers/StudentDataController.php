@@ -3,32 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\Avatar;
-use App\Models\Badge;
-use App\Models\CompetitionParticipant;
-use App\Models\ContentProgress;
-use App\Models\Grade;
 use App\Models\PushDeviceStatus;
-use App\Models\RaceResult;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentCredential;
 use App\Models\Teacher;
+use App\Models\UserProfile;
 use App\Services\StudentProgressReportService;
+use App\Services\StudentXpService;
+use App\Support\Brand;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class StudentDataController extends Controller
 {
-    public function __construct(private StudentProgressReportService $reportService)
-    {
-    }
+    public function __construct(
+        private StudentProgressReportService $reportService,
+        private StudentXpService $xpService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -47,7 +46,7 @@ class StudentDataController extends Controller
         $className = trim($request->string('class_name')->toString());
         $section = trim($request->string('section')->toString());
         $perPage = (int) $request->input('per_page', 50);
-        if (!in_array($perPage, [20, 50, 100, 200], true)) {
+        if (! in_array($perPage, [20, 50, 100, 200], true)) {
             $perPage = 50;
         }
         $search = $q !== '' ? $q : $name;
@@ -63,12 +62,12 @@ class StudentDataController extends Controller
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                     )
-                    ->orWhereHas('credential', fn ($c) => $c->where('username', 'like', "%{$search}%"))
-                    ->orWhere('student_no', 'like', "%{$search}%")
-                    ->orWhereHas('schoolClass', fn ($c) => $c
-                        ->where('name', 'like', "%{$search}%")
-                        ->orWhere('section', 'like', "%{$search}%")
-                    );
+                        ->orWhereHas('credential', fn ($c) => $c->where('username', 'like', "%{$search}%"))
+                        ->orWhere('student_no', 'like', "%{$search}%")
+                        ->orWhereHas('schoolClass', fn ($c) => $c
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('section', 'like', "%{$search}%")
+                        );
                 });
             })
             ->when($className !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('name', $className)))
@@ -77,43 +76,11 @@ class StudentDataController extends Controller
 
         $students = $hasFilter ? $studentsQuery->simplePaginate($perPage)->withQueryString() : collect();
         $studentItems = method_exists($students, 'getCollection') ? $students->getCollection() : $students;
-        $studentIds = $studentItems->pluck('id')->all();
         $userIds = $studentItems->pluck('user_id')->all();
+        $availableXp = $this->xpService->availableFor($studentItems);
 
-        $gradeXpByStudent = Grade::query()
-            ->selectRaw('student_id, ROUND(SUM(score)) as xp')
-            ->when(!empty($studentIds), fn ($q) => $q->whereIn('student_id', $studentIds))
-            ->groupBy('student_id')
-            ->pluck('xp', 'student_id');
-
-        $contentXpByUser = ContentProgress::query()
-            ->selectRaw('user_id, SUM(xp_awarded) as xp')
-            ->when(!empty($userIds), fn ($q) => $q->whereIn('user_id', $userIds))
-            ->groupBy('user_id')
-            ->pluck('xp', 'user_id');
-
-        $competitionXpByUser = CompetitionParticipant::query()
-            ->selectRaw('student_user_id as user_id, SUM(xp_earned) as xp')
-            ->when(!empty($userIds), fn ($q) => $q->whereIn('student_user_id', $userIds))
-            ->groupBy('student_user_id')
-            ->pluck('xp', 'user_id');
-
-        $keyboardRaceXpByUser = RaceResult::query()
-            ->selectRaw('user_id, SUM(xp_earned) as xp')
-            ->whereNotNull('user_id')
-            ->when(!empty($userIds), fn ($q) => $q->whereIn('user_id', $userIds))
-            ->groupBy('user_id')
-            ->pluck('xp', 'user_id');
-
-        $stats = $studentItems->mapWithKeys(function (Student $student) use ($gradeXpByStudent, $contentXpByUser, $competitionXpByUser, $keyboardRaceXpByUser) {
-            $gradeXp = (int) ($gradeXpByStudent[$student->id] ?? 0);
-            $contentXp = (int) ($contentXpByUser[$student->user_id] ?? 0);
-            $competitionXp = (int) ($competitionXpByUser[$student->user_id] ?? 0);
-            $keyboardRaceXp = (int) ($keyboardRaceXpByUser[$student->user_id] ?? 0);
-            // Diger tum XP gosterimleriyle (anasayfa, Basari Listesi, gelisim
-            // raporu) tutarli olmasi icin avatar magazasinda harcanan XP
-            // burada da dusuluyor.
-            $xp = max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp - (int) ($student->avatar_xp_spent ?? 0));
+        $stats = $studentItems->mapWithKeys(function (Student $student) use ($availableXp) {
+            $xp = $availableXp[$student->id] ?? 0;
 
             return [
                 $student->id => [
@@ -237,6 +204,7 @@ class StudentDataController extends Controller
                 $student = $students->get($id);
                 if (! $student || ! $student->user) {
                     $task['processed'] = (int) $task['processed'] + 1;
+
                     continue;
                 }
 
@@ -279,7 +247,7 @@ class StudentDataController extends Controller
             in_array($gradeLevel, [9, 10], true) => 'highschool',
             default => 'secondary',
         };
-        $profile = \App\Models\UserProfile::query()->firstOrNew(['user_id' => $student->user_id]);
+        $profile = UserProfile::query()->firstOrNew(['user_id' => $student->user_id]);
         $meta = (array) ($profile->meta ?? []);
         $principalName = trim((string) ($meta['principal_name'] ?? ''));
 
@@ -290,9 +258,9 @@ class StudentDataController extends Controller
             'principalName' => $principalName !== '' ? $principalName : 'Okul Müdürü',
             'schoolName' => env('SCHOOL_NAME', env('APP_NAME', 'Okul')),
             'certificateStyle' => $certificateStyle,
-            'certificateNo' => 'CERT-' . str_pad((string) $student->id, 6, '0', STR_PAD_LEFT),
+            'certificateNo' => 'CERT-'.str_pad((string) $student->id, 6, '0', STR_PAD_LEFT),
             'certificateDate' => now()->timezone('Europe/Istanbul')->format('d.m.Y'),
-            'logoUrl' => \App\Support\Brand::logoUrl(),
+            'logoUrl' => Brand::logoUrl(),
         ]);
     }
 
@@ -413,6 +381,7 @@ class StudentDataController extends Controller
                 $student = $students->get($id);
                 if (! $student) {
                     $task['processed'] = (int) $task['processed'] + 1;
+
                     continue;
                 }
                 $task['reports'][(string) $id] = $this->reportService->build($student);
@@ -462,11 +431,7 @@ class StudentDataController extends Controller
 
     private function calculateXp(Student $student): int
     {
-        $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
-        $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
-        $keyboardRaceXp = (int) RaceResult::where('user_id', $student->user_id)->sum('xp_earned');
-
-        return max(0, $gradeXp + $contentXp + $keyboardRaceXp);
+        return $this->xpService->earned($student);
     }
 
     private function syncRewardsAndCredentials(Student $student, int $xp): void
@@ -524,7 +489,8 @@ class StudentDataController extends Controller
     private function bulkTaskPath(string $taskId): string
     {
         $safe = preg_replace('/[^a-zA-Z0-9\\-]/', '', $taskId) ?: 'task';
-        return storage_path('app/reports/bulk-progress-' . $safe . '.json');
+
+        return storage_path('app/reports/bulk-progress-'.$safe.'.json');
     }
 
     private function readBulkTask(string $taskId): ?array
@@ -535,6 +501,7 @@ class StudentDataController extends Controller
         }
         $json = @file_get_contents($path);
         $data = is_string($json) ? json_decode($json, true) : null;
+
         return is_array($data) ? $data : null;
     }
 
@@ -598,7 +565,7 @@ class StudentDataController extends Controller
         $section = trim((string) ($task['section'] ?? ''));
 
         return $className !== ''
-            ? $className . '/' . $section . ' Sınıfı Gelişim Karneleri'
+            ? $className.'/'.$section.' Sınıfı Gelişim Karneleri'
             : 'Tüm Öğrenci Gelişim Karneleri';
     }
 
@@ -611,15 +578,16 @@ class StudentDataController extends Controller
             return 'tum-ogrenci-gelisim-raporlari.html';
         }
 
-        $classSlug = Str::slug($className . '-' . $section);
+        $classSlug = Str::slug($className.'-'.$section);
 
-        return ($classSlug !== '' ? $classSlug : 'sinif') . '-gelisim-karneleri.html';
+        return ($classSlug !== '' ? $classSlug : 'sinif').'-gelisim-karneleri.html';
     }
 
     private function passwordTaskPath(string $taskId): string
     {
         $safe = preg_replace('/[^a-zA-Z0-9\\-]/', '', $taskId) ?: 'task';
-        return storage_path('app/reports/password-reset-' . $safe . '.json');
+
+        return storage_path('app/reports/password-reset-'.$safe.'.json');
     }
 
     private function readPasswordTask(string $taskId): ?array
@@ -630,6 +598,7 @@ class StudentDataController extends Controller
         }
         $json = @file_get_contents($path);
         $data = is_string($json) ? json_decode($json, true) : null;
+
         return is_array($data) ? $data : null;
     }
 
