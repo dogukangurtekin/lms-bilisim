@@ -178,6 +178,24 @@ class LiveQuizController extends Controller
         return redirect()->route('live-quiz.index')->with('ok', "{$deleted} geçmiş oturum ve bağlı rapor silindi.");
     }
 
+    public function closeAllSessions()
+    {
+        $query = LiveQuizSession::query()->whereIn('status', ['lobby', 'live']);
+        if (!auth()->user()?->hasRole('admin')) {
+            $query->where('teacher_user_id', auth()->id());
+        }
+
+        $closed = 0;
+        $query->orderBy('id')->chunkById(50, function ($sessions) use (&$closed): void {
+            foreach ($sessions as $session) {
+                $this->completeSession($session);
+                $closed++;
+            }
+        });
+
+        return redirect()->route('live-quiz.index')->with('ok', "{$closed} aktif quiz oturumu kapatıldı ve raporları hazırlandı.");
+    }
+
     public function start(LiveQuiz $quiz)
     {
         $this->authorizeQuizManagement($quiz);
@@ -335,14 +353,7 @@ class LiveQuizController extends Controller
     {
         $this->authorizeSessionManagement($session);
 
-        if ($session->status !== 'finished') {
-            $session->update([
-                'status' => 'finished',
-                'is_locked' => true,
-                'finished_at_ms' => $this->nowMs(),
-            ]);
-            $this->writeQuizToStudentReports($session->fresh('quiz'));
-        }
+        $this->completeSession($session);
 
         return redirect()->route('live-quiz.index')->with('ok', 'Quiz tamamlandi ve quiz listesine yonlendirildiniz.');
     }
@@ -881,6 +892,20 @@ class LiveQuizController extends Controller
                 'xp' => (int) $r->xp,
             ];
         })->values()->all();
+    }
+
+    private function completeSession(LiveQuizSession $session): void
+    {
+        if ($session->status === 'finished') {
+            return;
+        }
+
+        $session->update([
+            'status' => 'finished',
+            'is_locked' => true,
+            'finished_at_ms' => $this->nowMs(),
+        ]);
+        $this->writeQuizToStudentReports($session->fresh('quiz'));
     }
 
     private function writeQuizToStudentReports(LiveQuizSession $session): void

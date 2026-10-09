@@ -122,6 +122,38 @@ class LiveQuizManagementTest extends TestCase
         $this->actingAs($other)->delete(route('live-quiz.destroy', $quiz))->assertForbidden();
     }
 
+    public function test_teacher_can_close_all_owned_active_sessions_without_closing_another_teachers_session(): void
+    {
+        $role = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
+        $teacher = $this->user($role->id, 'Öğretmen', 'close-all-owner@test.local');
+        $other = $this->user($role->id, 'Diğer Öğretmen', 'close-all-other@test.local');
+        $quiz = $this->quiz($teacher);
+        $otherQuiz = $this->quiz($other);
+
+        $live = $this->createQuizSession($quiz, $teacher, 'CLS001', 'live');
+        $lobby = $this->createQuizSession($quiz, $teacher, 'CLS002', 'lobby');
+        $alreadyFinished = $this->createQuizSession($quiz, $teacher, 'CLS003', 'finished');
+        $otherLive = $this->createQuizSession($otherQuiz, $other, 'CLS004', 'live');
+
+        $this->actingAs($teacher)
+            ->post(route('live-quiz.sessions.close-all'))
+            ->assertRedirect(route('live-quiz.index'));
+
+        foreach ([$live, $lobby] as $session) {
+            $session->refresh();
+            $this->assertSame('finished', $session->status);
+            $this->assertTrue($session->is_locked);
+            $this->assertNotNull($session->finished_at_ms);
+        }
+        $this->assertSame('finished', $alreadyFinished->fresh()->status);
+        $this->assertSame('live', $otherLive->fresh()->status);
+
+        $this->actingAs($teacher)
+            ->get(route('live-quiz.index'))
+            ->assertOk()
+            ->assertSee('Tüm Oturumları Kapat');
+    }
+
     private function quiz(User $teacher): LiveQuiz
     {
         $quiz = LiveQuiz::query()->create([

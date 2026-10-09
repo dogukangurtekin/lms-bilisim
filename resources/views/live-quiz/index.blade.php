@@ -173,10 +173,16 @@
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <h3>Gecmis Oturumlar / Raporlar</h3>
-            <form method="POST" action="{{ route('live-quiz.sessions.history.destroy') }}" data-confirm="Tamamlanmış tüm quiz oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?">
-                @csrf @method('DELETE')
-                <button class="btn quiz-danger" type="submit">Tüm Geçmiş Raporları Sil</button>
-            </form>
+            <div class="quiz-actions">
+                <form method="POST" action="{{ route('live-quiz.sessions.close-all') }}" data-confirm="Lobide veya canlı durumdaki tüm quiz oturumları kapatılıp raporları oluşturulacak. Devam edilsin mi?">
+                    @csrf
+                    <button class="btn quiz-warning" type="submit">Tüm Oturumları Kapat</button>
+                </form>
+                <form method="POST" action="{{ route('live-quiz.sessions.history.destroy') }}" data-confirm="Tamamlanmış tüm quiz oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?">
+                    @csrf @method('DELETE')
+                    <button class="btn quiz-danger" type="submit">Tüm Geçmiş Raporları Sil</button>
+                </form>
+            </div>
         </div>
         <div class="quiz-table-wrap">
             <table>
