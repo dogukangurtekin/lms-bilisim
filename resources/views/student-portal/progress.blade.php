@@ -25,8 +25,15 @@
         @forelse($rows as $r)
             @php
                 $solvedQuestions = (int) data_get($r->payload, 'solved_questions', 0);
-                $questionTotal = (int) data_get($r->payload, 'question_total', 0);
-                $wrongQuestions = (int) data_get($r->payload, 'wrong_questions', 0);
+                $courseId = preg_match('/^course-(\d+)$/', (string) $r->content_id, $matches) ? (int) $matches[1] : 0;
+                $questionTotal = $courseId > 0 && isset($courseQuestionTotals[$courseId])
+                    ? (int) $courseQuestionTotals[$courseId]
+                    : (int) data_get($r->payload, 'question_total', 0);
+                $solvedQuestions = min($questionTotal, $solvedQuestions);
+                $wrongQuestions = min(
+                    max(0, $questionTotal - $solvedQuestions),
+                    max(0, (int) data_get($r->payload, 'wrong_questions', 0))
+                );
                 $contentLabel = $contentLabels[$r->content_id] ?? $r->content_id;
                 $courseName = (string) data_get($r->payload, 'course_name', '');
                 if ($courseName !== '' && str_starts_with((string) $r->content_id, 'course-')) {

@@ -50,6 +50,14 @@ class SlidePresentationService
         });
     }
 
+    public function questionCount(Course $course): int
+    {
+        return collect($this->prepareCourseSlides($course, false))
+            ->filter(fn (array $slide): bool => empty($slide['__summary'])
+                && trim((string) data_get($slide, 'question_prompt', '')) !== '')
+            ->count();
+    }
+
     public function normalizeSlide(array $slide, int $index = 0, array $payload = []): array
     {
         $title = trim((string) ($slide['title'] ?? $slide['lesson_title'] ?? 'Sayfa ' . ($index + 1)));

@@ -409,9 +409,7 @@ class StudentPortalController extends Controller
                 ->where('completed', true)
                 ->exists()
             : false;
-        $questionTotal = collect($slides)->filter(function ($slide) {
-            return trim((string) data_get($slide, 'question_prompt', '')) !== '';
-        })->count();
+        $questionTotal = $this->presentation->questionCount($course);
         $summarySlide = [
             '__summary' => true,
             'title' => 'Ders Özeti',
@@ -447,6 +445,7 @@ class StudentPortalController extends Controller
     public function coursePreview(Course $course)
     {
         $slides = $this->presentation->prepareCourseSlides($course, false);
+        $questionTotal = $this->presentation->questionCount($course);
         $payload = (array) ($course->lesson_payload ?? []);
         $curriculum = (array) data_get($payload, 'curriculum', []);
         $subCourses = $course->subCourses()->with(['teacher.user', 'schoolClass'])->get();
@@ -501,9 +500,7 @@ class StudentPortalController extends Controller
         }
 
         $slides = $this->presentation->prepareCourseSlides($course, false);
-        $questionTotal = collect($slides)->filter(function ($slide) {
-            return trim((string) data_get($slide, 'question_prompt', '')) !== '';
-        })->count();
+        $questionTotal = $this->presentation->questionCount($course);
         $slideXp = collect($slides)->sum(function ($s) {
             $xp = (int) data_get($s, 'xp', 0);
             if ($xp > 0) {
@@ -674,8 +671,17 @@ class StudentPortalController extends Controller
         $xp = max(0, $this->xp($student) - (int) ($student->avatar_xp_spent ?? 0));
         $avg = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
         $contentLabels = $this->resolveContentLabels($rows->getCollection()->pluck('content_id')->all());
+        $courseIds = $rows->getCollection()
+            ->pluck('content_id')
+            ->map(fn ($contentId) => preg_match('/^course-(\d+)$/', (string) $contentId, $matches) ? (int) $matches[1] : 0)
+            ->filter()
+            ->unique();
+        $courseQuestionTotals = Course::withTrashed()
+            ->whereIn('id', $courseIds)
+            ->get()
+            ->mapWithKeys(fn (Course $course) => [$course->id => $this->presentation->questionCount($course)]);
 
-        return view('student-portal.progress', compact('student', 'rows', 'xp', 'avg', 'contentLabels'));
+        return view('student-portal.progress', compact('student', 'rows', 'xp', 'avg', 'contentLabels', 'courseQuestionTotals'));
     }
 
     public function progressReport()

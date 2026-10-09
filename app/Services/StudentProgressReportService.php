@@ -15,11 +15,15 @@ use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
 use App\Models\StudentTimeStat;
+use App\Services\LessonPresentation\SlidePresentationService;
 use Carbon\Carbon;
 
 class StudentProgressReportService
 {
-    public function __construct(private StudentXpService $xpService) {}
+    public function __construct(
+        private StudentXpService $xpService,
+        private SlidePresentationService $presentation,
+    ) {}
 
     public function build(Student $student): array
     {
@@ -452,6 +456,17 @@ class StudentProgressReportService
             ->unique('content_id')
             ->values();
 
+        $reportCourseIds = $courseRows
+            ->map(function ($row): int {
+                return preg_match('/^course-(\d+)$/', (string) $row->content_id, $matches)
+                    ? (int) $matches[1]
+                    : 0;
+            })
+            ->filter()
+            ->unique()
+            ->values();
+        $reportCourses = Course::withTrashed()->whereIn('id', $reportCourseIds)->get()->keyBy('id');
+
         foreach ($courseRows as $row) {
             $payload = (array) ($row->payload ?? []);
             $courseName = trim((string) data_get($payload, 'course_name', ''));
@@ -461,6 +476,19 @@ class StudentProgressReportService
                 $courseId = (int) $m[1];
             }
             $fallbackCourseName = $courseName !== '' ? $courseName : ($lessonTitle !== '' ? $lessonTitle : 'Ders #'.($courseId > 0 ? $courseId : substr((string) $row->content_id, -6)));
+            $storedQuestionTotal = max(0, (int) data_get($payload, 'question_total', 0));
+            $questionTotal = str_starts_with((string) $row->content_id, 'course-') && $reportCourses->has($courseId)
+                ? $this->presentation->questionCount($reportCourses->get($courseId))
+                : $storedQuestionTotal;
+            $correctQuestions = min($questionTotal, max(0, (int) data_get(
+                $payload,
+                'correct_questions',
+                data_get($payload, 'solved_questions', 0)
+            )));
+            $wrongQuestions = min(
+                max(0, $questionTotal - $correctQuestions),
+                max(0, (int) data_get($payload, 'wrong_questions', 0))
+            );
 
             $courseItems[] = [
                 'course_name' => $fallbackCourseName,
@@ -471,9 +499,9 @@ class StudentProgressReportService
                 'status' => 'Tamamlandı',
                 'xp' => (int) ($row->xp_awarded ?? 0),
                 'solved_questions' => (int) data_get($payload, 'solved_questions', 0),
-                'question_total' => (int) data_get($payload, 'question_total', 0),
-                'correct_questions' => (int) data_get($payload, 'correct_questions', data_get($payload, 'solved_questions', 0)),
-                'wrong_questions' => (int) data_get($payload, 'wrong_questions', 0),
+                'question_total' => $questionTotal,
+                'correct_questions' => $correctQuestions,
+                'wrong_questions' => $wrongQuestions,
                 'sort_date' => $row->updated_at ?? $row->created_at,
             ];
         }
