@@ -71,6 +71,7 @@
         @forelse($courses as $c)
             @php
                 $cp = $courseProgress['course-'.$c->id] ?? null;
+                $isCourseCompleted = (bool) ($courseCompletion[$c->id] ?? false);
                 $slides = (array) data_get($c->lesson_payload, 'slides', []);
                 $firstSlide = $slides[0] ?? [];
                 $desc = trim((string) data_get($c->lesson_payload, 'lesson_description', ''));
@@ -81,7 +82,7 @@
                     $desc = $c->name . ' dersi için hazırlanan konu anlatımı ve etkinlik içerikleri.';
                 }
                 $solvedQuestions = (int) data_get($cp?->payload, 'solved_questions', 0);
-                $isCompleted = (bool) $cp?->completed;
+                $isCompleted = $isCourseCompleted;
                 $assignedAt = $c->student_assigned_at ? \Carbon\Carbon::parse($c->student_assigned_at) : $c->created_at;
                 $isNew = ! $isCompleted && $assignedAt?->gte(now()->subDays(7));
             @endphp
@@ -104,7 +105,7 @@
                 </td>
                 <td class="actions" data-label="İşlem">
                     <a class="btn" href="{{ route('course.detail', ['id' => $c->id]) }}">İçerik</a>
-                    <a class="btn student-course-start-link" href="{{ route('student.portal.course-show', $c) }}">{{ $cp?->completed ? 'Tamamlandı' : 'Derse Başla' }}</a>
+                    <a class="btn student-course-start-link" href="{{ route('student.portal.course-show', $c) }}">{{ $isCompleted ? 'Tamamlandı' : 'Derse Başla' }}</a>
                 </td>
             </tr>
         @empty

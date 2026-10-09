@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\CourseHomework;
 use App\Models\Role;
@@ -38,6 +39,14 @@ class StudentPendingAssignmentVisibilityTest extends TestCase
             'school_class_id' => $class->id,
             'weekly_hours' => 2,
         ]);
+        $subCourse = Course::query()->create([
+            'name' => 'Robotik Alt Dersi',
+            'code' => 'PENDING-SUB-LESSON',
+            'teacher_id' => $teacher->id,
+            'school_class_id' => $class->id,
+            'weekly_hours' => 1,
+            'parent_course_id' => $course->id,
+        ]);
         CourseHomework::query()->create([
             'course_id' => $course->id,
             'school_class_id' => $class->id,
@@ -66,6 +75,31 @@ class StudentPendingAssignmentVisibilityTest extends TestCase
             ->assertOk()
             ->assertSee('YENİ DERS')
             ->assertSee('BEKLİYOR');
+
+        ContentProgress::query()->create([
+            'content_id' => 'course-'.$course->id,
+            'user_id' => $studentUser->id,
+            'completed' => true,
+            'xp_awarded' => 10,
+        ]);
+
+        $this->actingAs($studentUser)
+            ->get(route('student.portal.courses'))
+            ->assertOk()
+            ->assertSee('Ders bekliyor');
+
+        ContentProgress::query()->create([
+            'content_id' => 'course-'.$subCourse->id,
+            'user_id' => $studentUser->id,
+            'completed' => true,
+            'xp_awarded' => 10,
+        ]);
+
+        $this->actingAs($studentUser)
+            ->get(route('student.portal.courses'))
+            ->assertOk()
+            ->assertSee('Ders tamamlandı')
+            ->assertDontSee('Ders bekliyor');
     }
 
     private function user(int $roleId, string $name, string $email): User

@@ -137,6 +137,7 @@
         @forelse($courses as $c)
             @php
                 $cp = $courseProgress['course-'.$c->id] ?? null;
+                $isCourseCompleted = (bool) ($courseCompletion[$c->id] ?? false);
                 $slides = (array) data_get($c->lesson_payload, 'slides', []);
                 $firstSlide = $slides[0] ?? [];
                 $desc = trim((string) data_get($c->lesson_payload, 'lesson_description', ''));
@@ -150,7 +151,7 @@
                 $difficulty = (string) (data_get($c->lesson_payload, 'difficulty') ?: (((int) ($c->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($c->schoolClass?->name ?? 5) + 5) . '+';
                 $assignedAt = $c->student_assigned_at ? \Carbon\Carbon::parse($c->student_assigned_at) : $c->created_at;
-                $isNewAssignment = ! $cp?->completed && $assignedAt?->gte(now()->subDays(7));
+                $isNewAssignment = ! $isCourseCompleted && $assignedAt?->gte(now()->subDays(7));
             @endphp
             <div class="course-card-cell">
                 <x-course-card
@@ -164,7 +165,7 @@
                     :primary-label="'Derse Git'"
                     primary-variant="success"
                     :course-id="$c->id"
-                    :completion-status="$cp?->completed ? 'completed' : 'pending'"
+                    :completion-status="$isCourseCompleted ? 'completed' : 'pending'"
                     :is-new="$isNewAssignment"
                     :is-favorite="in_array($c->id, $favoriteCourseIds ?? [])"
                 />

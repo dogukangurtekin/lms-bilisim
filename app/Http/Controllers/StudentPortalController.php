@@ -24,6 +24,7 @@ use App\Services\StudentProgressReportService;
 use App\Services\StudentXpService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -53,6 +54,11 @@ class StudentPortalController extends Controller
         }
         $showDailyAssignment = $hasDailyAssignment && ! $completedTodayDaily;
         $courses = $this->studentCourses($student)->get();
+        $dashboardCourseProgress = ContentProgress::where('user_id', $student->user_id)
+            ->whereIn('content_id', $courses->flatMap(fn (Course $course) => collect([$course->id])->concat($course->subCourses->pluck('id')))->map(fn ($id) => 'course-'.$id))
+            ->get()
+            ->keyBy('content_id');
+        $courseCompletion = $this->courseCompletionMap($courses, $dashboardCourseProgress);
         $gameAssignments = $this->studentAssignments($student)->get();
         $courseHomeworks = $this->studentCourseHomeworks($student)->get();
         $assignedLessonHomeworks = CourseHomework::query()
@@ -79,9 +85,8 @@ class StudentPortalController extends Controller
             ->whereIn('game_assignment_id', $gameAssignments->pluck('id'))
             ->whereNotNull('completed_at')
             ->count();
-        $completedCourseSlideCount = ContentProgress::where('user_id', $student->user_id)
-            ->where('completed', true)
-            ->whereIn('content_id', $courseSlideAssignments->map(fn ($c) => 'course-'.$c->id)->values())
+        $completedCourseSlideCount = $courseSlideAssignments
+            ->filter(fn (Course $course) => $courseCompletion[$course->id] ?? false)
             ->count();
 
         $gameHomeworkCount = $assignmentHomeworks
@@ -119,23 +124,10 @@ class StudentPortalController extends Controller
             ->unique()
             ->values();
         $allCourseAssignmentIds = $lessonHomeworkCourseIds->unique()->values();
-        $completedCourseIds = ContentProgress::where('user_id', $student->user_id)
-            ->where('completed', true)
-            ->whereIn('content_id', $allCourseAssignmentIds->map(fn ($id) => 'course-'.$id)->values())
-            ->pluck('content_id')
-            ->map(function ($cid) {
-                if (preg_match('/^course-(\d+)$/', (string) $cid, $m)) {
-                    return (int) $m[1];
-                }
-
-                return 0;
-            })
-            ->filter(fn ($v) => $v > 0)
-            ->unique()
-            ->values();
-
         $totalCourseAssignments = $allCourseAssignmentIds->count();
-        $completedCourseAssignments = $completedCourseIds->count();
+        $completedCourseAssignments = $allCourseAssignmentIds
+            ->filter(fn ($courseId) => $courseCompletion[(int) $courseId] ?? false)
+            ->count();
         $pendingCourses = max($totalCourseAssignments - $completedCourseAssignments, 0);
         $pendingHomeworkAssignments = max($assignmentHomeworks->count() - $completedCourseHomeworkCount, 0);
 
@@ -383,8 +375,9 @@ class StudentPortalController extends Controller
             ->pluck('course_id')
             ->map(fn ($id) => (int) $id)
             ->all();
+        $courseCompletion = $this->courseCompletionMap($courses->getCollection(), $courseProgress);
 
-        return view('student-portal.courses', compact('student', 'courses', 'courseProgress', 'q', 'category', 'difficulty', 'educationStage', 'favoritesOnly', 'favoriteCourseIds'));
+        return view('student-portal.courses', compact('student', 'courses', 'courseProgress', 'courseCompletion', 'q', 'category', 'difficulty', 'educationStage', 'favoritesOnly', 'favoriteCourseIds'));
     }
 
     public function courseShow(Course $course)
@@ -584,8 +577,9 @@ class StudentPortalController extends Controller
             ->paginate(20, ['*'], 'course_page');
         $progress = StudentHomeworkProgress::where('student_id', $student->id)->get()->keyBy('course_homework_id');
         $gameProgress = StudentGameAssignmentProgress::where('student_id', $student->id)->get()->keyBy('game_assignment_id');
+        $courseCompletion = $this->courseCompletionMap($courses, $courseProgress);
 
-        return view('student-portal.assignments', compact('student', 'courses', 'courseProgress', 'assignments', 'courseHomeworks', 'progress', 'gameProgress'));
+        return view('student-portal.assignments', compact('student', 'courses', 'courseProgress', 'courseCompletion', 'assignments', 'courseHomeworks', 'progress', 'gameProgress'));
     }
 
     public function friends()
@@ -709,7 +703,7 @@ class StudentPortalController extends Controller
 
     private function studentCourses(Student $student)
     {
-        return Course::with(['teacher.user', 'schoolClass'])
+        return Course::with(['teacher.user', 'schoolClass', 'subCourses:id,parent_course_id'])
             ->withMax([
                 'homeworks as student_assigned_at' => fn ($query) => $query
                     ->where('school_class_id', $student->school_class_id)
@@ -725,6 +719,22 @@ class StudentPortalController extends Controller
                     ->whereNull('course_homeworks.deleted_at');
             })
             ->orderBy('name');
+    }
+
+    private function courseCompletionMap(Collection $courses, Collection $courseProgress): array
+    {
+        return $courses->mapWithKeys(function (Course $course) use ($courseProgress) {
+            $requiredCourseIds = collect([$course->id])
+                ->concat($course->subCourses->pluck('id'))
+                ->map(fn ($id) => (int) $id)
+                ->unique();
+
+            $completed = $requiredCourseIds->every(
+                fn ($courseId) => (bool) $courseProgress->get('course-'.$courseId)?->completed
+            );
+
+            return [$course->id => $completed];
+        })->all();
     }
 
     private function canStudentAccessCourse(Student $student, Course $course): bool
