@@ -29,11 +29,11 @@
                 $questionTotal = $courseId > 0 && isset($courseQuestionTotals[$courseId])
                     ? (int) $courseQuestionTotals[$courseId]
                     : (int) data_get($r->payload, 'question_total', 0);
+                $wrongQuestions = max(0, (int) data_get($r->payload, 'wrong_questions', 0));
+                $answeredQuestionTotal = $solvedQuestions + $wrongQuestions;
+                $questionTotal = $answeredQuestionTotal > 0 ? $answeredQuestionTotal : $questionTotal;
                 $solvedQuestions = min($questionTotal, $solvedQuestions);
-                $wrongQuestions = min(
-                    max(0, $questionTotal - $solvedQuestions),
-                    max(0, (int) data_get($r->payload, 'wrong_questions', 0))
-                );
+                $wrongQuestions = min(max(0, $questionTotal - $solvedQuestions), $wrongQuestions);
                 $contentLabel = $contentLabels[$r->content_id] ?? $r->content_id;
                 $courseName = (string) data_get($r->payload, 'course_name', '');
                 if ($courseName !== '' && str_starts_with((string) $r->content_id, 'course-')) {

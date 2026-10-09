@@ -477,18 +477,24 @@ class StudentProgressReportService
             }
             $fallbackCourseName = $courseName !== '' ? $courseName : ($lessonTitle !== '' ? $lessonTitle : 'Ders #'.($courseId > 0 ? $courseId : substr((string) $row->content_id, -6)));
             $storedQuestionTotal = max(0, (int) data_get($payload, 'question_total', 0));
-            $questionTotal = str_starts_with((string) $row->content_id, 'course-') && $reportCourses->has($courseId)
+            $canonicalQuestionTotal = str_starts_with((string) $row->content_id, 'course-') && $reportCourses->has($courseId)
                 ? $this->presentation->questionCount($reportCourses->get($courseId))
                 : $storedQuestionTotal;
-            $correctQuestions = min($questionTotal, max(0, (int) data_get(
+            $storedCorrectQuestions = max(0, (int) data_get(
                 $payload,
                 'correct_questions',
                 data_get($payload, 'solved_questions', 0)
-            )));
-            $wrongQuestions = min(
-                max(0, $questionTotal - $correctQuestions),
-                max(0, (int) data_get($payload, 'wrong_questions', 0))
-            );
+            ));
+            $storedWrongQuestions = max(0, (int) data_get($payload, 'wrong_questions', 0));
+            $answeredQuestionTotal = $storedCorrectQuestions + $storedWrongQuestions;
+            // Eski ders kayitlarinda ozet slaydi da soru sanilip question_total bir
+            // fazla yazilabiliyordu (ornegin 5 dogru + 0 yanlis, toplam 6). Sonuc
+            // sayilari varsa bunlar tamamlanan denemenin guvenilir kaynagidir.
+            $questionTotal = $answeredQuestionTotal > 0
+                ? $answeredQuestionTotal
+                : $canonicalQuestionTotal;
+            $correctQuestions = min($questionTotal, $storedCorrectQuestions);
+            $wrongQuestions = min(max(0, $questionTotal - $correctQuestions), $storedWrongQuestions);
 
             $courseItems[] = [
                 'course_name' => $fallbackCourseName,

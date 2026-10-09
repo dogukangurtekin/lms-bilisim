@@ -16,7 +16,7 @@ class StudentProgressCourseQuestionCountTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_report_repairs_legacy_question_total_from_current_course_questions(): void
+    public function test_report_repairs_inconsistent_legacy_question_total_from_answer_results(): void
     {
         $teacherRole = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
         $studentRole = Role::query()->create(['name' => 'Student', 'slug' => 'student']);
@@ -33,7 +33,7 @@ class StudentProgressCourseQuestionCountTest extends TestCase
         $student = $studentUser->student()->firstOrFail();
         $student->update(['school_class_id' => $class->id]);
 
-        $slides = collect(range(1, 5))->map(fn (int $number) => [
+        $slides = collect(range(1, 6))->map(fn (int $number) => [
             'title' => 'Soru '.$number,
             'question_prompt' => 'Soru metni '.$number,
             'interaction_type' => 'multiple_choice',
