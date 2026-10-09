@@ -150,10 +150,9 @@ class CompetitionController extends Controller
     {
         abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
 
-        $room->participants()->delete();
         $room->delete();
 
-        return redirect()->route('competitions.index')->with('ok', 'Yarisma odasi silindi.');
+        return redirect()->route('competitions.index')->with('ok', 'Yarışma oturumu listeden kaldırıldı. Öğrenci geçmişi korundu.');
     }
 
     public function destroyAll()
@@ -163,8 +162,7 @@ class CompetitionController extends Controller
         $deletedRoomCount = DB::transaction(function (): int {
             $roomCount = CompetitionRoom::query()->count();
 
-            CompetitionParticipant::query()->delete();
-            CompetitionRoom::query()->delete();
+            CompetitionRoom::query()->eachById(fn (CompetitionRoom $room) => $room->delete());
 
             return $roomCount;
         });

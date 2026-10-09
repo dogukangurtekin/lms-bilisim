@@ -13,7 +13,7 @@ class CompetitionBulkDeleteTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_delete_all_competition_sessions_and_participants(): void
+    public function test_admin_can_remove_all_competition_sessions_without_deleting_student_history(): void
     {
         $adminRole = Role::query()->create(['name' => 'Admin', 'slug' => 'admin']);
         $teacherRole = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
@@ -29,12 +29,18 @@ class CompetitionBulkDeleteTest extends TestCase
             'student_user_id' => $student->id,
             'user_name' => $student->name,
             'joined_at_ms' => 1,
+            'finished_at_ms' => 100,
+            'progress_percent' => 100,
+            'xp_earned' => 25,
         ]);
         CompetitionParticipant::query()->create([
             'competition_room_id' => $secondRoom->id,
             'student_user_id' => $student->id,
             'user_name' => $student->name,
             'joined_at_ms' => 2,
+            'finished_at_ms' => 200,
+            'progress_percent' => 100,
+            'xp_earned' => 35,
         ]);
 
         $this->actingAs($admin)
@@ -45,10 +51,13 @@ class CompetitionBulkDeleteTest extends TestCase
         $this->actingAs($admin)
             ->delete(route('competitions.rooms.destroy-all'))
             ->assertRedirect(route('competitions.index'))
-            ->assertSessionHas('ok', '2 canlı yarışma oturumu silindi.');
+            ->assertSessionHas('ok');
 
-        $this->assertDatabaseCount('competition_rooms', 0);
-        $this->assertDatabaseCount('competition_participants', 0);
+        $this->assertSame(0, CompetitionRoom::query()->count());
+        $this->assertSame(2, CompetitionRoom::withTrashed()->count());
+        $this->assertDatabaseCount('competition_participants', 2);
+        $this->assertSoftDeleted($firstRoom);
+        $this->assertSoftDeleted($secondRoom);
     }
 
     public function test_teacher_cannot_bulk_delete_competition_sessions(): void

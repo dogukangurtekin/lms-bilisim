@@ -90,8 +90,8 @@ class LiveQuizManagementTest extends TestCase
         $this->actingAs($teacher)
             ->delete(route('live-quiz.sessions.history.destroy'))
             ->assertRedirect(route('live-quiz.index'));
-        $this->assertDatabaseMissing('live_quiz_sessions', ['id' => $finished->id]);
-        $this->assertDatabaseMissing('live_quiz_answers', ['live_quiz_session_id' => $finished->id]);
+        $this->assertSoftDeleted($finished);
+        $this->assertDatabaseHas('live_quiz_answers', ['live_quiz_session_id' => $finished->id]);
         $this->assertDatabaseHas('live_quiz_sessions', ['id' => $live->id, 'status' => 'live']);
 
         $this->actingAs($teacher)
@@ -102,13 +102,13 @@ class LiveQuizManagementTest extends TestCase
         $this->actingAs($teacher)
             ->delete(route('live-quiz.session.destroy', $live))
             ->assertRedirect(route('live-quiz.index'));
-        $this->assertDatabaseMissing('live_quiz_sessions', ['id' => $live->id]);
+        $this->assertSoftDeleted($live);
 
         $this->actingAs($teacher)
             ->delete(route('live-quiz.destroy', $quiz))
             ->assertRedirect(route('live-quiz.index'));
-        $this->assertDatabaseMissing('live_quizzes', ['id' => $quiz->id]);
-        $this->assertDatabaseMissing('live_quiz_questions', ['live_quiz_id' => $quiz->id]);
+        $this->assertSoftDeleted($quiz);
+        $this->assertDatabaseHas('live_quiz_questions', ['live_quiz_id' => $quiz->id]);
     }
 
     public function test_teacher_cannot_manage_another_teachers_quiz(): void

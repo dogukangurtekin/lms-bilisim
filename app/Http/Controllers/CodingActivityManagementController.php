@@ -161,6 +161,17 @@ class CodingActivityManagementController extends Controller
 
     public function update(UpdateCodingActivityRequest $request, CodingActivity $activity): RedirectResponse
     {
+        $hasCompletedAttempts = ActivityAttempt::query()
+            ->where('coding_activity_id', $activity->id)
+            ->whereNotNull('submitted_at')
+            ->exists();
+
+        if ($hasCompletedAttempts) {
+            return redirect()
+                ->route('coding.activities.manage', ['edit' => $activity->id])
+                ->with('error', 'Bu etkinlik tamamlanmış öğrenci kayıtları içerdiği için düzenlenemez. Yeni bir etkinlik oluşturabilirsiniz.');
+        }
+
         $data = $request->validated();
         $hasTeacherColumn = $this->canUseTeacherColumn();
         $hasAdminLockColumn = $this->canUseAdminLockColumn();
@@ -251,14 +262,10 @@ class CodingActivityManagementController extends Controller
             );
 
             DailyActivityAssignment::query()->where('coding_activity_id', $activity->id)->delete();
-            $activity->questions()->each(function (ActivityQuestion $question): void {
-                $question->options()->delete();
-                $question->delete();
-            });
             $activity->delete();
         });
 
-        return redirect()->route('coding.activities.manage')->with('ok', 'Etkinlik silindi.');
+        return redirect()->route('coding.activities.manage')->with('ok', 'Etkinlik listeden kaldırıldı. Tamamlanan öğrenci kayıtları korundu.');
     }
 
     public function assignToday(CodingActivity $activity): RedirectResponse
@@ -486,11 +493,12 @@ class CodingActivityManagementController extends Controller
 
             $this->purgeUnfinishedStudentDailyCodingTraces($deletableIds);
             DailyActivityAssignment::query()->whereIn('coding_activity_id', $deletableIds)->delete();
-            ActivityQuestion::query()->whereIn('coding_activity_id', $deletableIds)->delete();
-            CodingActivity::query()->whereIn('id', $deletableIds)->delete();
+            CodingActivity::query()
+                ->whereIn('id', $deletableIds)
+                ->eachById(fn (CodingActivity $activity) => $activity->delete());
         });
 
-        return redirect()->route('coding.activities.manage')->with('ok', 'Tum gunluk calismalar silindi.');
+        return redirect()->route('coding.activities.manage')->with('ok', 'Tüm günlük çalışmalar listeden kaldırıldı. Tamamlanan öğrenci kayıtları korundu.');
     }
 
     public function assignTeacherBulk(Request $request): RedirectResponse

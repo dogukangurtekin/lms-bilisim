@@ -7,9 +7,12 @@ use App\Support\Brand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['name', 'code', 'teacher_id', 'created_by', 'school_class_id', 'weekly_hours', 'parent_course_id', 'sort_order', 'is_active', 'lesson_payload'];
 
     public function getLessonPayloadAttribute($value): array

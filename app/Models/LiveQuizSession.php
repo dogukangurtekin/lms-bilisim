@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LiveQuizSession extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'live_quiz_id',
         'teacher_user_id',
@@ -28,7 +31,7 @@ class LiveQuizSession extends Model
 
     public function quiz(): BelongsTo
     {
-        return $this->belongsTo(LiveQuiz::class, 'live_quiz_id');
+        return $this->belongsTo(LiveQuiz::class, 'live_quiz_id')->withTrashed();
     }
 
     public function teacher(): BelongsTo

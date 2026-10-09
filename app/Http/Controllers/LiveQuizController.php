@@ -150,9 +150,12 @@ class LiveQuizController extends Controller
     public function destroy(LiveQuiz $quiz)
     {
         $this->authorizeQuizManagement($quiz);
-        $quiz->delete();
+        DB::transaction(function () use ($quiz): void {
+            $quiz->sessions()->eachById(fn (LiveQuizSession $session) => $session->delete());
+            $quiz->delete();
+        });
 
-        return redirect()->route('live-quiz.index')->with('ok', 'Quiz, oturumları ve raporları silindi.');
+        return redirect()->route('live-quiz.index')->with('ok', 'Quiz ve oturumları listeden kaldırıldı. Öğrenci geçmişi korundu.');
     }
 
     public function destroySession(LiveQuizSession $session)
@@ -160,7 +163,7 @@ class LiveQuizController extends Controller
         $this->authorizeSessionManagement($session);
         $session->delete();
 
-        return redirect()->route('live-quiz.index')->with('ok', 'Quiz oturumu ve bağlı raporu silindi.');
+        return redirect()->route('live-quiz.index')->with('ok', 'Quiz oturumu listeden kaldırıldı. Öğrenci raporu korundu.');
     }
 
     public function destroyHistory()
@@ -177,7 +180,7 @@ class LiveQuizController extends Controller
             ->doesntHave('sessions')
             ->delete();
 
-        return redirect()->route('live-quiz.index')->with('ok', "{$deleted} geçmiş oturum ve bağlı rapor silindi.");
+        return redirect()->route('live-quiz.index')->with('ok', "{$deleted} geçmiş oturum listeden kaldırıldı. Öğrenci raporları korundu.");
     }
 
     public function closeAllSessions()

@@ -23,7 +23,7 @@ class LiveQuizAnswer extends Model
 
     public function session(): BelongsTo
     {
-        return $this->belongsTo(LiveQuizSession::class, 'live_quiz_session_id');
+        return $this->belongsTo(LiveQuizSession::class, 'live_quiz_session_id')->withTrashed();
     }
 
     public function studentUser(): BelongsTo
@@ -31,4 +31,3 @@ class LiveQuizAnswer extends Model
         return $this->belongsTo(User::class, 'student_user_id');
     }
 }
-

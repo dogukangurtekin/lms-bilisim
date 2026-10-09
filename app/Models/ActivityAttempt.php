@@ -19,6 +19,6 @@ class ActivityAttempt extends Model
 
     public function activity()
     {
-        return $this->belongsTo(CodingActivity::class, 'coding_activity_id');
+        return $this->belongsTo(CodingActivity::class, 'coding_activity_id')->withTrashed();
     }
 }

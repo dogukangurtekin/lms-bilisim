@@ -26,7 +26,7 @@ class CompetitionParticipant extends Model
 
     public function room(): BelongsTo
     {
-        return $this->belongsTo(CompetitionRoom::class, 'competition_room_id');
+        return $this->belongsTo(CompetitionRoom::class, 'competition_room_id')->withTrashed();
     }
 
     public function studentUser(): BelongsTo
