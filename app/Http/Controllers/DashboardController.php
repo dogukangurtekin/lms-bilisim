@@ -221,9 +221,66 @@ class DashboardController extends Controller
                 ];
             });
 
+            // Basari skoru: not ortalamasi (varsa), ders tamamlama orani ve
+            // odev tamamlama orani. Bekleyen odev/ders skoru dogal olarak dusurur.
+            $classIdsForScore = $students->pluck('school_class_id')->filter()->unique()->values();
+            $lessonIdsByClass = [];
+            $parentCourses = Course::query()
+                ->whereIn('school_class_id', $classIdsForScore)
+                ->get(['id', 'school_class_id']);
+            $subCourses = Course::query()
+                ->whereIn('parent_course_id', $parentCourses->pluck('id'))
+                ->get(['id', 'parent_course_id']);
+            foreach ($parentCourses as $c) {
+                $lessonIdsByClass[$c->school_class_id][] = 'course-'.$c->id;
+            }
+            $classByParent = $parentCourses->pluck('school_class_id', 'id');
+            foreach ($subCourses as $c) {
+                $lessonIdsByClass[$classByParent[$c->parent_course_id]][] = 'course-'.$c->id;
+            }
+
+            $homeworkIdsByClass = \App\Models\CourseHomework::query()
+                ->whereIn('school_class_id', $classIdsForScore)
+                ->get(['id', 'school_class_id'])
+                ->groupBy('school_class_id')
+                ->map(fn ($rows) => $rows->pluck('id')->all());
+
+            $doneLessonsByUser = ContentProgress::query()
+                ->whereIn('user_id', $students->pluck('user_id'))
+                ->where('completed', true)
+                ->where('content_id', 'like', 'course-%')
+                ->get(['user_id', 'content_id'])
+                ->groupBy('user_id')
+                ->map(fn ($rows) => $rows->pluck('content_id')->unique()->all());
+            $doneHomeworksByStudent = StudentHomeworkProgress::query()
+                ->whereIn('student_id', $students->pluck('id'))
+                ->whereNotNull('completed_at')
+                ->get(['student_id', 'course_homework_id'])
+                ->groupBy('student_id')
+                ->map(fn ($rows) => $rows->pluck('course_homework_id')->unique()->all());
+
             $gradeBuckets = ['Çok İyi (75+)' => 0, 'İyi (50-74)' => 0, 'Orta (25-49)' => 0, 'Düşük (0-24)' => 0];
-            foreach ($studentXpRows as $row) {
-                $xp = (int) ($row['xp'] ?? 0);
+            foreach ($students as $student) {
+                $classId = (int) $student->school_class_id;
+                $signals = [];
+
+                if (isset($avgGradeByStudent[$student->id])) {
+                    $signals[] = (float) $avgGradeByStudent[$student->id];
+                }
+
+                $lessonIds = $lessonIdsByClass[$classId] ?? [];
+                if ($lessonIds) {
+                    $done = count(array_intersect($lessonIds, $doneLessonsByUser[$student->user_id] ?? []));
+                    $signals[] = ($done / count($lessonIds)) * 100;
+                }
+
+                $homeworkIds = $homeworkIdsByClass[$classId] ?? [];
+                if ($homeworkIds) {
+                    $done = count(array_intersect($homeworkIds, $doneHomeworksByStudent[$student->id] ?? []));
+                    $signals[] = ($done / count($homeworkIds)) * 100;
+                }
+
+                $xp = $signals ? array_sum($signals) / count($signals) : 0;
                 if ($xp >= 75) {
                     $gradeBuckets['Çok İyi (75+)']++;
                 } elseif ($xp >= 50) {
@@ -288,7 +345,7 @@ class DashboardController extends Controller
             $chartWidgets = [
                 'success_distribution' => [
                     'title' => 'Başarı Dağılımı',
-                    'subtitle' => 'Öğrenci XP verisine göre',
+                    'subtitle' => 'Not, ders ve ödev tamamlamaya göre',
                     'type' => 'donut',
                     'span' => 4,
                     'order' => 85,
