@@ -123,16 +123,26 @@ class StudentProgressReportService
             ->where('student_user_id', $student->user_id)
             ->get();
         $competitionXp = (int) $competitionParticipantRows->sum('xp_earned');
+        $keyboardRaceRows = RaceResult::query()
+            ->where('user_id', $student->user_id)
+            ->where(fn ($q) => $q->whereNull('is_spectator')->orWhere('is_spectator', false))
+            ->get();
         $keyboardRaceXp = (int) RaceResult::query()
             ->where('user_id', $student->user_id)
             ->sum('xp_earned');
+        // Klavye yarisi da canli yarisma sayilir: katilim ve tamamlama sayilarina dahil.
         $competitionJoinedCount = $competitionParticipantRows
             ->unique('competition_room_id')
-            ->count();
+            ->count()
+            + $keyboardRaceRows->unique('room_id')->count();
         $competitionCompletedCount = $competitionParticipantRows
             ->filter(fn ($participant) => ! empty($participant->finished_at_ms) || (float) $participant->progress_percent >= 100)
             ->unique('competition_room_id')
-            ->count();
+            ->count()
+            + $keyboardRaceRows
+                ->filter(fn ($race) => ! empty($race->finished_at) || (float) $race->progress >= 100)
+                ->unique('room_id')
+                ->count();
 
         $dailyAttemptRows = ActivityAttempt::query()
             ->with(['answers.activityQuestion'])
@@ -385,9 +395,9 @@ class StudentProgressReportService
             ],
             [
                 'label' => 'Derslerim',
-                'value' => $completedSlides > 0 ? 100 : 0,
-                'done' => $completedSlides,
-                'total' => $courseProgressRows->count(),
+                'value' => $pct($completedCourseAssignments, $assignedCourses->count()),
+                'done' => $completedCourseAssignments,
+                'total' => $assignedCourses->count(),
                 'color' => '#10b981',
             ],
             [
@@ -678,7 +688,7 @@ class StudentProgressReportService
                 'quiz_joined_count' => $quizJoinedCount,
                 'quiz_total_xp' => $quizXp,
                 'competition_joined_count' => $competitionJoinedCount,
-                'competition_total_xp' => $competitionXp,
+                'competition_total_xp' => $competitionXp + $keyboardRaceXp,
                 'daily_attempt_count' => $dailyAttemptCount,
                 'daily_correct_count' => $dailyCorrectCount,
                 'daily_wrong_count' => $dailyWrongCount,
