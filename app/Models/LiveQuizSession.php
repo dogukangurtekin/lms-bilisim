@@ -13,11 +13,13 @@ class LiveQuizSession extends Model
         'teacher_user_id',
         'join_code',
         'status',
+        'phase',
         'current_index',
         'is_locked',
         'started_at_ms',
         'ends_at_ms',
         'finished_at_ms',
+        'xp_awarded_at_ms',
     ];
 
     protected $casts = [

@@ -39,13 +39,14 @@ class LiveQuizXpAwardTest extends TestCase
             'correct_answer' => 'A',
             'duration_sec' => 30,
             'xp' => 20,
-            'double_xp' => false,
+            'double_xp' => true,
         ]);
         $session = LiveQuizSession::query()->create([
             'live_quiz_id' => $quiz->id,
             'teacher_user_id' => $teacher->id,
             'join_code' => 'QZXP01',
             'status' => 'live',
+            'phase' => 'question',
             'current_index' => 0,
             'is_locked' => false,
             'started_at_ms' => $this->nowMs(),
@@ -68,11 +69,8 @@ class LiveQuizXpAwardTest extends TestCase
 
         $answer = LiveQuizAnswer::query()->firstOrFail();
         $this->assertTrue($answer->is_correct);
-        $this->assertGreaterThan(0, $answer->xp_earned);
-        $this->assertSame(
-            (int) $answer->xp_earned,
-            (int) UserProfile::query()->findOrFail($student->id)->xp
-        );
+        $this->assertGreaterThan(20, $answer->xp_earned);
+        $this->assertNull(UserProfile::query()->find($student->id));
 
         $this->actingAs($student)
             ->post(route('student.live-quiz.answer', $session), [
@@ -81,10 +79,16 @@ class LiveQuizXpAwardTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertSame(
-            (int) $answer->xp_earned,
-            (int) UserProfile::query()->findOrFail($student->id)->xp
-        );
+        $this->actingAs($teacher)
+            ->post(route('live-quiz.session.finish', $session))
+            ->assertRedirect(route('live-quiz.index'));
+
+        $this->assertSame((int) $answer->xp_earned, (int) UserProfile::query()->findOrFail($student->id)->xp);
+        $this->assertNotNull($session->fresh()->xp_awarded_at_ms);
+
+        // Bitirme isteği tekrar gelse de oturum XP'si ikinci kez eklenmez.
+        $this->actingAs($teacher)->post(route('live-quiz.session.finish', $session))->assertRedirect();
+        $this->assertSame((int) $answer->xp_earned, (int) UserProfile::query()->findOrFail($student->id)->xp);
     }
 
     private function user(int $roleId, string $name, string $email): User

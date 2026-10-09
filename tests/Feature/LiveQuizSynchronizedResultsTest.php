@@ -41,7 +41,7 @@ class LiveQuizSynchronizedResultsTest extends TestCase
                 'correct_answer' => 'A',
                 'duration_sec' => 30,
                 'xp' => 10,
-                'double_xp' => false,
+                'double_xp' => $index === 1,
             ]);
         }
 
@@ -103,12 +103,25 @@ class LiveQuizSynchronizedResultsTest extends TestCase
             ->getJson(route('live-quiz.session.status', $session))
             ->assertOk()
             ->assertJsonPath('current_index', 1)
-            ->assertJsonPath('is_locked', false);
+            ->assertJsonPath('phase', 'intro')
+            ->assertJsonPath('is_locked', true);
+
+        $this->actingAs($teacher)
+            ->get(route('live-quiz.session.show', $session))
+            ->assertOk()
+            ->assertSee('2 Kat Puanlı Soru');
+        $this->actingAs($fastStudent)
+            ->get(route('student.live-quiz.play', $session))
+            ->assertOk()
+            ->assertSee('2 Kat Puanlı Soru');
+
+        $session->refresh()->update(['ends_at_ms' => $this->nowMs() - 1]);
 
         $this->actingAs($fastStudent)
             ->getJson(route('student.live-quiz.status', $session))
             ->assertOk()
             ->assertJsonPath('current_index', 1)
+            ->assertJsonPath('phase', 'question')
             ->assertJsonPath('is_locked', false);
     }
 

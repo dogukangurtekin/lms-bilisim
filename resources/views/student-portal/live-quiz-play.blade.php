@@ -4,7 +4,7 @@
 @php
     $questions = $session->quiz?->questions ?? collect();
     $q = $questions->get($session->current_index);
-    $isLive = $session->status === 'live' && !$session->is_locked;
+    $isLive = $session->status === 'live' && $session->phase === 'question' && !$session->is_locked;
     $feedback = session('answer_feedback');
     $isAnsweredCurrent = (!empty($alreadyAnsweredCurrent))
         || (is_array($feedback) && (int) ($feedback['question_index'] ?? -1) === (int) $session->current_index);
@@ -18,7 +18,8 @@
 .lq-title{margin:0;font-size:24px;font-weight:900}
 .lq-badges{display:flex;gap:8px;flex-wrap:wrap}
 .lq-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
-.lq-question-card{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:14px;margin-bottom:12px}
+.lq-question-card{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:14px;margin-bottom:12px;animation:lqQuestionIn .55s cubic-bezier(.2,.8,.2,1) both}
+.lq-answer-grid,.lq-drag-list{animation:lqAnswersIn .65s .12s both}
 .lq-question{margin:0;font-size:34px;line-height:1.2;font-weight:900;color:#fff;text-align:center}
 .lq-meta{margin:10px 0 0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
 .lq-answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -59,6 +60,10 @@
 .lq-winner{min-width:130px;padding:12px;border-radius:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);animation:lqWinnerIn .55s both;animation-delay:calc(var(--rank) * .12s)}
 .lq-winner:first-child{background:linear-gradient(145deg,#f59e0b,#f97316);padding:18px;min-width:170px}
 .lq-winner-rank{font-size:23px;font-weight:900}.lq-winner-name{font-size:22px;font-weight:900;overflow-wrap:anywhere}.lq-winner-state{margin-top:4px;font-size:12px;font-weight:800}
+.lq-double-stage{text-align:center;animation:lqQuestionIn .5s both}.lq-double-icon{font-size:84px;font-weight:950;animation:lqDoublePulse .7s ease-in-out infinite alternate}.lq-double-title{font-size:48px;font-weight:950;margin:10px 0;text-shadow:0 6px 20px rgba(0,0,0,.35)}
+@keyframes lqQuestionIn{from{opacity:0;transform:translateX(55px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes lqAnswersIn{from{opacity:0;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
+@keyframes lqDoublePulse{from{transform:scale(.82) rotate(-6deg)}to{transform:scale(1.13) rotate(6deg)}}
 @keyframes lqWinnerIn{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media (max-width:900px){
   .lq-question{font-size:24px}
@@ -76,7 +81,7 @@
         <div class="lq-badges">
             <span class="lq-badge">Soru {{ $session->current_index + 1 }}/{{ $questions->count() }}</span>
             <span class="lq-badge">Durum: {{ $session->status }} {{ $session->is_locked ? '(Kilitli)' : '' }}</span>
-            @if($session->status === 'live' && !$session->is_locked)
+            @if($session->status === 'live' && $session->phase === 'question')
                 <span class="lq-badge">Kalan Sure: <strong id="lq-countdown">--</strong> sn</span>
             @endif
         </div>
@@ -103,7 +108,16 @@
         <div class="lq-state">Bu oturumda soru bulunamadi.</div>
     @elseif($session->status !== 'live')
         <div class="lq-state">Quiz tamamlandi.</div>
-    @elseif($session->is_locked)
+    @elseif($session->phase === 'intro')
+        <div class="lq-center-stage lq-double-stage">
+            <div class="lq-wait-box">
+                <div class="lq-double-icon">⚡ 2X</div>
+                <h3 class="lq-double-title">2 Kat Puanlı Soru!</h3>
+                <p>Hazır ol! Bu sorunun XP ödülü iki katına çıkıyor.</p>
+                <div class="lq-wait-count" id="lq-next-countdown">3</div>
+            </div>
+        </div>
+    @elseif($session->phase === 'results')
         <div class="lq-center-stage">
             <div class="lq-wait-box">
                 @php
@@ -278,7 +292,7 @@
     @if($session->status === 'live')
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
     const initialIndex = {{ (int) $session->current_index }};
-    const initialLocked = @json((bool) $session->is_locked);
+    const initialPhase = @json((string) $session->phase);
     const countdownEl = document.getElementById('lq-countdown');
     const answerCountdownEl = document.getElementById('lq-answer-countdown');
     const nextCountdownEl = document.getElementById('lq-next-countdown');
@@ -299,7 +313,7 @@
                 window.location.reload();
                 return;
             }
-            if (Number(data.current_index) !== initialIndex || Boolean(data.is_locked) !== initialLocked) {
+            if (Number(data.current_index) !== initialIndex || String(data.phase || '') !== initialPhase) {
                 window.location.reload();
             }
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }

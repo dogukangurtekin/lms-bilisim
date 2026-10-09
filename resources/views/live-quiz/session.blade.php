@@ -22,6 +22,8 @@
 .lq-winner{min-width:150px;padding:14px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);animation:lqWinnerIn .55s both;animation-delay:calc(var(--rank) * .12s)}
 .lq-winner:first-child{transform-origin:center bottom;background:linear-gradient(145deg,#f59e0b,#f97316);padding:20px;min-width:190px}
 .lq-winner-rank{font-size:24px;font-weight:900}.lq-winner-name{font-size:24px;font-weight:900;overflow-wrap:anywhere}.lq-winner-state{font-size:13px;font-weight:800;margin-top:5px}
+.lq-double-stage{text-align:center;padding:42px 24px;background:radial-gradient(circle at center,#fbbf24,#f97316 45%,#7c2d12);color:#fff;overflow:hidden}.lq-double-icon{font-size:72px;animation:lqDoublePulse .7s ease-in-out infinite alternate}.lq-double-title{font-size:46px;font-weight:950;margin:8px 0;text-shadow:0 5px 18px rgba(0,0,0,.3)}
+@keyframes lqDoublePulse{from{transform:scale(.82) rotate(-5deg)}to{transform:scale(1.12) rotate(5deg)}}
 @keyframes lqWinnerIn{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 <div class="top"><h1>Canli Quiz Oturumu</h1></div>
@@ -54,19 +56,25 @@
 
     @if($session->status === 'live')
     <div>
-        <span class="lq-big-clock">{{ $session->is_locked ? 'Sıradaki soruya' : 'Kalan süre' }}: <span id="lqCountdown">--</span> sn</span>
+        <span class="lq-big-clock">{{ $session->phase === 'intro' ? 'Soru açılıyor' : ($session->phase === 'results' ? 'Sıradaki soruya' : 'Kalan süre') }}: <span id="lqCountdown">--</span> sn</span>
         <div class="lq-timer-bar"><div class="lq-timer-fill" id="lqTimerFill"></div></div>
     </div>
     @endif
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-        <form method="POST" action="{{ route('live-quiz.session.next', $session) }}">@csrf<button class="btn btn-primary" type="submit" {{ $session->is_locked ? 'disabled' : '' }}>Cevapları Kapat / Sonraki Soru</button></form>
+        <form method="POST" action="{{ route('live-quiz.session.next', $session) }}">@csrf<button class="btn btn-primary" type="submit" {{ $session->phase !== 'question' ? 'disabled' : '' }}>Cevapları Kapat / Sonraki Soru</button></form>
         <form method="POST" action="{{ route('live-quiz.session.finish', $session) }}">@csrf<button class="btn btn-danger" type="submit">Quizi Bitir</button></form>
         <a class="btn" href="{{ route('live-quiz.session.report', $session) }}">Detayli Rapor</a>
     </div>
 </div>
 
-@if($session->status === 'live' && $session->is_locked)
+@if($session->status === 'live' && $session->phase === 'intro')
+<div class="card lq-double-stage" style="margin-bottom:12px;">
+    <div class="lq-double-icon">⚡ 2X</div>
+    <div class="lq-double-title">2 Kat Puanlı Soru!</div>
+    <p>Bu soruda kazanılan XP iki kat olarak hesaplanacak.</p>
+</div>
+@elseif($session->status === 'live' && $session->phase === 'results')
 <div class="card lq-results-stage" style="margin-bottom:12px;">
     <h2>Soru Sonuçları</h2>
     <p>İlk 5 öğrenci gösteriliyor. Yeni soru tüm ekranlarda aynı anda açılacak.</p>
@@ -93,7 +101,7 @@
         <div class="card" style="padding:10px;"><strong>Yanlis:</strong> <span id="lqStatWrong">{{ $currentQuestionStats['wrong'] }}</span></div>
     </div>
 
-    @if($current)
+    @if($current && $session->phase !== 'intro')
         <div style="margin-top:10px;">
             <strong>Aktif Soru ({{ strtoupper($current->type) }})</strong>
             <p>{{ $current->question_text }}</p>
@@ -153,7 +161,7 @@
 <script>
 (() => {
     const sessionStatus = @json($session->status);
-    const initialLocked = @json((bool) $session->is_locked);
+    const initialPhase = @json((string) $session->phase);
     if (sessionStatus === 'finished') return;
 
     const statusUrl = @json(route('live-quiz.session.status', $session));
@@ -173,7 +181,7 @@
     const leaderboardBody = document.getElementById('lqLeaderboardBody');
 
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
-    let durationMs = {{ $session->is_locked ? 5000 : (int) (($current?->duration_sec ?? 30) * 1000) }};
+    let durationMs = {{ $session->phase === 'intro' ? 3000 : ($session->phase === 'results' ? 5000 : (int) (($current?->duration_sec ?? 30) * 1000)) }};
 
     function renderParticipants(participants) {
         if (!Array.isArray(participants)) return;
@@ -250,7 +258,7 @@
                 return;
             }
 
-            if (Boolean(data.is_locked) !== initialLocked) {
+            if (String(data.phase || '') !== initialPhase) {
                 window.location.reload();
                 return;
             }
