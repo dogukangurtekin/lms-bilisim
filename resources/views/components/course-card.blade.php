@@ -168,7 +168,7 @@
         </div>
 
         <div class="course-card-action-row mt-auto grid gap-2.5" style="grid-template-columns:repeat(1,minmax(0,1fr));">
-            <a href="{{ $launchUrl }}" class="course-card-action course-card-action--launch">{{ $primaryLabelValue }}</a>
+            <a href="{{ $launchUrl }}" class="course-card-action course-card-action--launch{{ $primaryLabelValue === 'Derse Başla' ? ' student-course-cta' : '' }}">{{ $primaryLabelValue }}</a>
         </div>
     </div>
 </article>

@@ -80,6 +80,7 @@ class StudentPendingAssignmentVisibilityTest extends TestCase
             ->get(route('course.detail', $course))
             ->assertOk()
             ->assertSee('Derslerime Geri Dön')
+            ->assertSee('student-course-cta', false)
             ->assertSee(route('student.portal.courses'), false);
 
         ContentProgress::query()->create([

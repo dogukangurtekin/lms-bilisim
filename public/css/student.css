@@ -457,6 +457,34 @@ body.role-student .detail-grid p{margin:0 0 8px}
   align-items:center;
   padding:18px 18px;
 }
+.student-course-cta{
+  display:inline-flex !important;
+  min-height:48px !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  padding:0 20px !important;
+  border:1px solid #f59e0b !important;
+  border-radius:12px !important;
+  background:#FDBA12 !important;
+  color:#fff !important;
+  box-shadow:0 12px 24px rgba(245,158,11,.25) !important;
+  font-size:16px !important;
+  font-weight:800 !important;
+  line-height:1.2 !important;
+  text-decoration:none !important;
+  transition:transform .18s ease,filter .18s ease,box-shadow .18s ease !important;
+}
+.student-course-cta:hover{
+  filter:brightness(.96);
+  transform:translateY(-2px);
+  box-shadow:0 16px 28px rgba(245,158,11,.32) !important;
+}
+.student-course-cta.is-completed{
+  border-color:#16a34a !important;
+  background:#16a34a !important;
+  box-shadow:0 12px 24px rgba(22,163,74,.24) !important;
+}
 .student-assignment-alert.is-urgent{
   border:2px solid #f97316;
   background:linear-gradient(120deg,#fff7ed 0%,#ffedd5 100%);

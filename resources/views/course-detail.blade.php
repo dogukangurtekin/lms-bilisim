@@ -21,7 +21,7 @@
             @if($viewer?->hasRole('student'))
                 <a
                     href="{{ route('student.portal.courses') }}"
-                    class="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-base font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-95"
+                    class="student-course-cta"
                     style="background:#FDBA12 !important;border:1px solid #F59E0B !important;color:#fff !important;box-shadow:0 12px 24px rgba(245,158,11,.25) !important;text-decoration:none !important;"
                     aria-label="Derslerime geri dön"
                 >
@@ -50,7 +50,7 @@
                 @endif
                 <a
                     href="{{ $startUrl ?? '#' }}"
-                    class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $mainCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}"
+                    class="student-course-cta {{ $mainCompleted ? 'is-completed' : '' }}"
                     data-course-fullscreen-start="1"
                     data-page-loading="Ders yükleniyor..."
                 >
@@ -129,7 +129,7 @@
                                     Alt Dersi Sil
                                 </a>
                             @endif
-                            <a href="{{ route('student.portal.course-show', $subCourse) }}" class="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white transition hover:brightness-95 {{ $subCompleted ? 'bg-emerald-600' : 'bg-[#FDBA12]' }}" data-course-fullscreen-start="1" data-page-loading="Ders yükleniyor...">
+                            <a href="{{ route('student.portal.course-show', $subCourse) }}" class="student-course-cta {{ $subCompleted ? 'is-completed' : '' }}" data-course-fullscreen-start="1" data-page-loading="Ders yükleniyor...">
                                 {{ $subCompleted ? 'Tamamlandı' : 'Derse Başla' }}
                             </a>
                         </div>

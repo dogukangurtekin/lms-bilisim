@@ -105,7 +105,7 @@
                 </td>
                 <td class="actions" data-label="İşlem">
                     <a class="btn" href="{{ route('course.detail', ['id' => $c->id]) }}">İçerik</a>
-                    <a class="btn student-course-start-link" href="{{ route('student.portal.course-show', $c) }}">{{ $isCompleted ? 'Tamamlandı' : 'Derse Başla' }}</a>
+                    <a class="student-course-cta student-course-start-link {{ $isCompleted ? 'is-completed' : '' }}" href="{{ route('student.portal.course-show', $c) }}">{{ $isCompleted ? 'Tamamlandı' : 'Derse Başla' }}</a>
                 </td>
             </tr>
         @empty
