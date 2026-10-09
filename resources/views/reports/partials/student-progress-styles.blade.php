@@ -226,7 +226,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 
 .parent-insight-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
     margin-bottom: 6px;
 }
@@ -258,6 +258,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 .parent-insight--blue { color: #1746a2; border-color: #9bb9f4; background: #edf4ff; }
 .parent-insight--amber { color: #a25b08; border-color: #f2c673; background: #fff8e8; }
 .parent-insight--rose { color: #aa3151; border-color: #efafc0; background: #fff1f5; }
+.parent-insight--green { color: #147a45; border-color: #8fd3ad; background: #eefbf3; }
 
 .weekly-trend-panel { border-color: #b8c9ed; background: linear-gradient(135deg, #f6f9ff, #fff); }
 .weekly-trend-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

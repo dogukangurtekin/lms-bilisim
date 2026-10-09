@@ -139,6 +139,11 @@
             <strong>{{ (int) data_get($report, 'kpi.competition_joined_count', 0) }}</strong>
             <small>{{ (int) data_get($report, 'kpi.competition_total_xp', 0) }} XP kazanıldı</small>
         </article>
+        <article class="parent-insight parent-insight--green">
+            <span>Canlı Quiz Katılımı</span>
+            <strong>{{ (int) data_get($report, 'kpi.quiz_joined_count', 0) }}</strong>
+            <small>{{ (int) data_get($report, 'kpi.quiz_total_xp', 0) }} XP kazanıldı</small>
+        </article>
     </div>
 
     <article class="panel weekly-trend-panel">
