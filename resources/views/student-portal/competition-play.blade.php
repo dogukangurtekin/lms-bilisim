@@ -213,7 +213,7 @@
         });
         accumulatedXp = Math.max(
             accumulatedXp,
-            Math.max(0, Number(payload?.xpEarned ?? payload?.xp_earned ?? 0))
+            Math.max(0, Number(payload?.xpEarned ?? payload?.xp_earned ?? payload?.xp ?? 0))
         );
     };
 

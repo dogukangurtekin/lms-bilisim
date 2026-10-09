@@ -263,6 +263,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/kodlama-etkinlikleri/{activity}/bugune-ata', [CodingActivityManagementController::class, 'assignToday'])->name('coding.activities.assign.today');
         Route::post('/kodlama-etkinlikleri/{activity}/ogrenciden-kaldir', [CodingActivityManagementController::class, 'unassignToday'])->name('coding.activities.unassign.today');
         Route::post('/canli-quiz', [LiveQuizController::class, 'store'])->name('live-quiz.store');
+        Route::delete('/canli-quiz/gecmis-oturumlar', [LiveQuizController::class, 'destroyHistory'])->name('live-quiz.sessions.history.destroy');
+        Route::get('/canli-quiz/{quiz}/duzenle', [LiveQuizController::class, 'edit'])->name('live-quiz.edit');
+        Route::put('/canli-quiz/{quiz}', [LiveQuizController::class, 'update'])->name('live-quiz.update');
+        Route::delete('/canli-quiz/{quiz}', [LiveQuizController::class, 'destroy'])->name('live-quiz.destroy');
         Route::post('/canli-quiz/{quiz}/baslat', [LiveQuizController::class, 'start'])->name('live-quiz.start');
         Route::get('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'showSession'])->name('live-quiz.session.show');
         Route::post('/canli-quiz/oturum/{session}/herkese-baslat', [LiveQuizController::class, 'launch'])->name('live-quiz.session.launch');
@@ -270,6 +274,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/canli-quiz/oturum/{session}/sonraki', [LiveQuizController::class, 'next'])->name('live-quiz.session.next');
         Route::post('/canli-quiz/oturum/{session}/kilit', [LiveQuizController::class, 'toggleLock'])->name('live-quiz.session.lock');
         Route::post('/canli-quiz/oturum/{session}/bitir', [LiveQuizController::class, 'finish'])->name('live-quiz.session.finish');
+        Route::delete('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'destroySession'])->name('live-quiz.session.destroy');
         Route::get('/canli-quiz/oturum/{session}/rapor', [LiveQuizController::class, 'sessionReport'])->name('live-quiz.session.report');
 
         Route::get('/canli-yarismalar', [CompetitionController::class, 'index'])->name('competitions.index');
@@ -407,6 +412,5 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/webpush/public-key', [NotificationController::class, 'publicKey'])->name('notifications.public-key');
-
 
 

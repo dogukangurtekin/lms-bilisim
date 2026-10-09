@@ -33,6 +33,9 @@
 .quiz-row .form-control,.quiz-row input,.quiz-row select,.quiz-row textarea{margin:0}
 .quiz-right .btn{width:100%}
 .quiz-save{display:flex;justify-content:flex-end}
+.quiz-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.quiz-actions form{margin:0}.quiz-actions .btn{white-space:nowrap}
+.quiz-danger{background:#dc2626!important;color:#fff!important;border-color:#dc2626!important}
+.quiz-warning{background:#f59e0b!important;color:#fff!important;border-color:#f59e0b!important}
 .quiz-table-wrap{overflow:auto}
 @media (max-width:1200px){.quiz-shell{grid-template-columns:1fr}.quiz-left-list{max-height:220px}.quiz-answers{grid-template-columns:1fr}}
 </style>
@@ -42,8 +45,16 @@
         <h1>Canli Quiz Merkezi</h1>
     </div>
 
-    <form method="POST" action="{{ route('live-quiz.store') }}" id="quizBuilderForm" class="quiz-shell">
+    @if($editingQuiz)
+        <div class="card" style="border-left:5px solid #4f46e5;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <div><strong>Quiz düzenleniyor:</strong> {{ $editingQuiz->title }}</div>
+            <a class="btn" href="{{ route('live-quiz.index') }}">Düzenlemeyi İptal Et</a>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ $editingQuiz ? route('live-quiz.update', $editingQuiz) : route('live-quiz.store') }}" id="quizBuilderForm" class="quiz-shell">
         @csrf
+        @if($editingQuiz) @method('PUT') @endif
         <input type="hidden" name="questions_json" id="questions_json">
 
         <aside class="quiz-card quiz-left">
@@ -53,11 +64,12 @@
             </div>
             <div id="questionList" class="quiz-left-list"></div>
             <button type="button" class="btn quiz-left-add" id="addQuestionBtn">+ Yeni Soru</button>
+            <button type="button" class="btn quiz-danger quiz-left-add" id="removeQuestionBtn">Seçili Soruyu Sil</button>
         </aside>
 
         <section class="quiz-card quiz-center">
             <div class="quiz-center-main">
-                <input class="quiz-question-input" type="text" name="title" placeholder="Quiz basligi..." required>
+                <input class="quiz-question-input" type="text" name="title" value="{{ old('title', $editingQuiz?->title) }}" placeholder="Quiz basligi..." required>
                 <div id="editorEmpty" class="quiz-media-box">Soldan bir soru secin veya yeni soru ekleyin</div>
 
                 <div id="questionEditor" style="display:none;gap:12px">
@@ -89,15 +101,15 @@
                 <select class="form-control" name="school_class_id">
                     <option value="">Tum siniflar</option>
                     @foreach($classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}/{{ $class->section }}</option>
+                        <option value="{{ $class->id }}" @selected((string) old('school_class_id', $editingQuiz?->school_class_id) === (string) $class->id)>{{ $class->name }}/{{ $class->section }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="quiz-row">
                 <label>Katilim Yontemi</label>
                 <select class="form-control" name="join_mode" required>
-                    <option value="code">Kodla Katilim</option>
-                    <option value="instant">Anlik Bildirim (Ekran Kilidi)</option>
+                    <option value="code" @selected(old('join_mode', $editingQuiz?->join_mode ?? 'code') === 'code')>Kodla Katilim</option>
+                    <option value="instant" @selected(old('join_mode', $editingQuiz?->join_mode ?? 'code') === 'instant')>Anlik Bildirim (Ekran Kilidi)</option>
                 </select>
             </div>
             <div class="quiz-row">
@@ -121,7 +133,7 @@
                 <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qDouble" style="width:auto;margin:0"> Etkin</label>
             </div>
             <div class="quiz-save">
-                <button class="btn" type="submit">Quizi Kaydet</button>
+                <button class="btn" type="submit">{{ $editingQuiz ? 'Değişiklikleri Kaydet' : 'Quizi Kaydet' }}</button>
             </div>
         </aside>
     </form>
@@ -138,12 +150,17 @@
                         <td>{{ $quiz->schoolClass ? $quiz->schoolClass->name.'/'.$quiz->schoolClass->section : 'Tumu' }}</td>
                         <td>{{ ($quiz->join_mode ?? 'code') === 'instant' ? 'Anlik Bildirim' : 'Kodla' }}</td>
                         <td>{{ $quiz->questions_count }}</td>
-                        <td>
+                        <td><div class="quiz-actions">
                             <form method="POST" action="{{ route('live-quiz.start', $quiz) }}">
                                 @csrf
                                 <button class="btn" type="submit">Canli Quizi Baslat</button>
                             </form>
-                        </td>
+                            <a class="btn" href="{{ route('live-quiz.edit', $quiz) }}">Düzenle</a>
+                            <form method="POST" action="{{ route('live-quiz.destroy', $quiz) }}" onsubmit="return confirm('Bu quiz, tüm oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?')">
+                                @csrf @method('DELETE')
+                                <button class="btn quiz-danger" type="submit">Sil</button>
+                            </form>
+                        </div></td>
                     </tr>
                 @empty
                     <tr><td colspan="5">Quiz yok.</td></tr>
@@ -154,7 +171,13 @@
     </div>
 
     <div class="card">
-        <h3>Gecmis Oturumlar / Raporlar</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h3>Gecmis Oturumlar / Raporlar</h3>
+            <form method="POST" action="{{ route('live-quiz.sessions.history.destroy') }}" onsubmit="return confirm('Tamamlanmış tüm quiz oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?')">
+                @csrf @method('DELETE')
+                <button class="btn quiz-danger" type="submit">Tüm Geçmiş Raporları Sil</button>
+            </form>
+        </div>
         <div class="quiz-table-wrap">
             <table>
                 <thead><tr><th>Quiz</th><th>Kod</th><th>Durum</th><th>Islem</th></tr></thead>
@@ -169,13 +192,21 @@
                             @else Canli
                             @endif
                         </td>
-                        <td>
+                        <td><div class="quiz-actions">
                             @if($s->status === 'finished')
                                 <a class="btn" href="{{ route('live-quiz.session.report', $s) }}">Raporu Gor</a>
                             @else
                                 <a class="btn" href="{{ route('live-quiz.session.show', $s) }}">Oturuma Git</a>
+                                <form method="POST" action="{{ route('live-quiz.session.finish', $s) }}" onsubmit="return confirm('Canlı oturum kapatılsın mı?')">
+                                    @csrf
+                                    <button class="btn quiz-warning" type="submit">Oturumu Kapat</button>
+                                </form>
                             @endif
-                        </td>
+                            <form method="POST" action="{{ route('live-quiz.session.destroy', $s) }}" onsubmit="return confirm('Bu oturum ve bağlı rapor kalıcı olarak silinsin mi?')">
+                                @csrf @method('DELETE')
+                                <button class="btn quiz-danger" type="submit">Oturumu Sil</button>
+                            </form>
+                        </div></td>
                     </tr>
                 @empty
                     <tr><td colspan="4">Henuz oturum yok.</td></tr>
@@ -190,12 +221,13 @@
 @push('scripts')
 <script>
 (() => {
-    const questions = [];
+    const questions = @json($editingQuestions ?? []);
     let selectedIndex = -1;
 
     const listEl = document.getElementById('questionList');
     const countBadge = document.getElementById('questionCountBadge');
     const addBtn = document.getElementById('addQuestionBtn');
+    const removeBtn = document.getElementById('removeQuestionBtn');
     const editor = document.getElementById('questionEditor');
     const editorEmpty = document.getElementById('editorEmpty');
     const jsonInput = document.getElementById('questions_json');
@@ -399,6 +431,21 @@
         renderList();
     });
 
+    removeBtn.addEventListener('click', () => {
+        if (selectedIndex < 0 || !questions.length) return;
+        if (!window.confirm('Seçili soru silinsin mi?')) return;
+        questions.splice(selectedIndex, 1);
+        if (!questions.length) {
+            selectedIndex = -1;
+            editor.style.display = 'none';
+            editorEmpty.style.display = 'grid';
+            renderList();
+            syncJson();
+            return;
+        }
+        selectQuestion(Math.min(selectedIndex, questions.length - 1));
+    });
+
     qText.addEventListener('input', () => {
         if (selectedIndex < 0) return;
         questions[selectedIndex].question = qText.value;
@@ -448,7 +495,7 @@
         syncJson();
     });
 
-    questions.push(baseQuestion());
+    if (!questions.length) questions.push(baseQuestion());
     selectQuestion(0);
     renderList();
 })();

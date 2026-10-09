@@ -356,6 +356,7 @@ class CompetitionController extends Controller
             ));
             $levelIdx = max((int) $participant->current_level_index, (int) ($data['current_level_index'] ?? 0));
             $xp = (int) ($data['xp'] ?? 0);
+            $previousXp = (int) $participant->xp_earned;
 
             $update = [
                 'progress_percent' => $progress,
@@ -368,6 +369,8 @@ class CompetitionController extends Controller
                 $update['finished_at_ms'] = $this->nowMs();
             }
             $participant->update($update);
+
+            $this->awardCompetitionXp($participant->student_user_id, max(0, $xp - $previousXp));
         });
 
         return response()->json(['ok' => true]);
@@ -385,46 +388,53 @@ class CompetitionController extends Controller
             'completed_seconds' => ['nullable', 'integer'],
         ]);
 
-        $participant = CompetitionParticipant::query()
-            ->where('competition_room_id', $room->id)
-            ->where('student_user_id', $data['student_user_id'])
-            ->first();
+        DB::transaction(function () use ($data, $room): void {
+            $participant = CompetitionParticipant::query()
+                ->where('competition_room_id', $room->id)
+                ->where('student_user_id', $data['student_user_id'])
+                ->lockForUpdate()
+                ->first();
 
-        if (!$participant) {
-            return response()->json(['ok' => true]);
-        }
-
-        $update = [];
-
-        if (isset($data['progress_percent'])) {
-            $progress = min(100, max(
-                (float) $participant->progress_percent,
-                (float) $data['progress_percent']
-            ));
-            $update['progress_percent'] = $progress;
-            if ($progress >= 100 && ! $participant->finished_at_ms) {
-                $update['finished_at_ms'] = $this->nowMs();
+            if (!$participant) {
+                return;
             }
-        }
 
-        if (isset($data['current_level_index'])) {
-            $update['current_level_index'] = max(
-                (int) $participant->current_level_index,
-                (int) $data['current_level_index']
-            );
-        }
+            $update = [];
+            $previousXp = (int) $participant->xp_earned;
 
-        if (isset($data['xp_earned'])) {
-            $update['xp_earned'] = max((int) $participant->xp_earned, (int) $data['xp_earned']);
-        }
+            if (isset($data['progress_percent'])) {
+                $progress = min(100, max(
+                    (float) $participant->progress_percent,
+                    (float) $data['progress_percent']
+                ));
+                $update['progress_percent'] = $progress;
+                if ($progress >= 100 && ! $participant->finished_at_ms) {
+                    $update['finished_at_ms'] = $this->nowMs();
+                }
+            }
 
-        if (isset($data['completed_seconds']) && $data['completed_seconds'] !== null) {
-            $update['completed_seconds'] = (int) $data['completed_seconds'];
-        }
+            if (isset($data['current_level_index'])) {
+                $update['current_level_index'] = max(
+                    (int) $participant->current_level_index,
+                    (int) $data['current_level_index']
+                );
+            }
 
-        if (!empty($update)) {
-            $participant->update($update);
-        }
+            if (isset($data['xp_earned'])) {
+                $update['xp_earned'] = max($previousXp, (int) $data['xp_earned']);
+            }
+
+            if (isset($data['completed_seconds']) && $data['completed_seconds'] !== null) {
+                $update['completed_seconds'] = (int) $data['completed_seconds'];
+            }
+
+            if (!empty($update)) {
+                $participant->update($update);
+            }
+
+            $newXp = (int) ($update['xp_earned'] ?? $previousXp);
+            $this->awardCompetitionXp($participant->student_user_id, max(0, $newXp - $previousXp));
+        });
 
         return response()->json(['ok' => true]);
     }
@@ -473,6 +483,19 @@ class CompetitionController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    private function awardCompetitionXp(int $studentUserId, int $xpDelta): void
+    {
+        if ($xpDelta <= 0) {
+            return;
+        }
+
+        $profile = UserProfile::query()->firstOrCreate(
+            ['user_id' => $studentUserId],
+            ['role' => 'student', 'xp' => 0]
+        );
+        $profile->increment('xp', $xpDelta);
     }
 
     private function syncRoomByTimer(CompetitionRoom $room): CompetitionRoom

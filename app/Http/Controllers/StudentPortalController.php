@@ -806,12 +806,13 @@ class StudentPortalController extends Controller
     {
         $gradeXp = (int) round((float) Grade::where('student_id', $student->id)->sum('score'));
         $contentXp = (int) ContentProgress::where('user_id', $student->user_id)->sum('xp_awarded');
+        $quizXp = (int) LiveQuizAnswer::where('student_user_id', $student->user_id)->sum('xp_earned');
         // Canli Yarisma'da kazanilan XP de diger kaynaklar gibi (not, ders/
         // icerik tamamlama) ogrencinin toplam XP'sine dahil ediliyor.
         $competitionXp = (int) CompetitionParticipant::where('student_user_id', $student->user_id)->sum('xp_earned');
         $keyboardRaceXp = (int) RaceResult::where('user_id', $student->user_id)->sum('xp_earned');
 
-        return max(0, $gradeXp + $contentXp + $competitionXp + $keyboardRaceXp);
+        return max(0, $gradeXp + $contentXp + $quizXp + $competitionXp + $keyboardRaceXp);
     }
 
     private function classBoardMessages(): array

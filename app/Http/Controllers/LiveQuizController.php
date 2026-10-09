@@ -20,22 +20,59 @@ class LiveQuizController extends Controller
 {
     public function index()
     {
+        return $this->renderIndex();
+    }
+
+    public function edit(LiveQuiz $quiz)
+    {
+        $this->authorizeQuizManagement($quiz);
+        $quiz->load('questions');
+
+        return $this->renderIndex($quiz);
+    }
+
+    private function renderIndex(?LiveQuiz $editingQuiz = null)
+    {
         $teacherId = auth()->id();
+        $isAdmin = (bool) auth()->user()?->hasRole('admin');
         $classes = SchoolClass::query()->orderBy('name')->orderBy('section')->get();
         $quizzes = LiveQuiz::query()
             ->withCount('questions')
-            ->where('teacher_user_id', $teacherId)
+            ->when(!$isAdmin, fn ($query) => $query->where('teacher_user_id', $teacherId))
             ->where('status', '!=', 'archived')
             ->latest()
             ->get();
         $sessions = LiveQuizSession::query()
             ->with('quiz')
-            ->where('teacher_user_id', $teacherId)
+            ->when(!$isAdmin, fn ($query) => $query->where('teacher_user_id', $teacherId))
             ->latest()
             ->limit(25)
             ->get();
 
-        return view('live-quiz.index', compact('classes', 'quizzes', 'sessions'));
+        $editingQuestions = $editingQuiz
+            ? $editingQuiz->questions->sortBy('sort_order')->values()->map(function (LiveQuizQuestion $question) {
+                $options = (array) $question->options;
+                $correctMap = $question->type === 'dragdrop'
+                    ? (json_decode((string) $question->correct_answer, true) ?: [])
+                    : [];
+
+                return [
+                    'type' => $question->type,
+                    'question' => $question->question_text,
+                    'durationSec' => (int) $question->duration_sec,
+                    'xp' => (int) $question->xp,
+                    'doubleXp' => (bool) $question->double_xp,
+                    'options' => $question->type === 'dragdrop' ? [] : $options,
+                    'correctIndex' => max(0, ord((string) $question->correct_answer ?: 'A') - 65),
+                    'correct' => (string) $question->correct_answer,
+                    'leftItems' => (array) ($options['left'] ?? []),
+                    'rightItems' => (array) ($options['right'] ?? []),
+                    'correctMap' => $correctMap,
+                ];
+            })->all()
+            : [];
+
+        return view('live-quiz.index', compact('classes', 'quizzes', 'sessions', 'editingQuiz', 'editingQuestions'));
     }
 
     public function store(Request $request)
@@ -61,29 +98,89 @@ class LiveQuizController extends Controller
                 'status' => 'active',
             ]);
 
-            foreach (array_values($questions) as $i => $rawQuestion) {
-                $normalized = $this->normalizeQuestion($rawQuestion);
-
-                LiveQuizQuestion::query()->create([
-                    'live_quiz_id' => $quiz->id,
-                    'sort_order' => $i,
-                    'type' => $normalized['type'],
-                    'question_text' => $normalized['question_text'],
-                    'options' => $normalized['options'],
-                    'correct_answer' => $normalized['correct_answer'],
-                    'duration_sec' => $normalized['duration_sec'],
-                    'xp' => $normalized['xp'],
-                    'double_xp' => $normalized['double_xp'],
-                ]);
-            }
+            $this->replaceQuizQuestions($quiz, $questions);
         });
 
         return redirect()->route('live-quiz.index')->with('ok', 'Quiz kaydedildi.');
     }
 
+    public function update(Request $request, LiveQuiz $quiz)
+    {
+        $this->authorizeQuizManagement($quiz);
+        $data = $this->validateQuizPayload($request);
+        $questions = json_decode($data['questions_json'], true);
+        if (!is_array($questions) || count($questions) < 1) {
+            return back()->withErrors(['questions_json' => 'En az 1 soru gerekli.'])->withInput();
+        }
+
+        $versioned = $quiz->sessions()->exists();
+        DB::transaction(function () use ($quiz, $data, $questions, $versioned): void {
+            $targetQuiz = $quiz;
+            if ($versioned) {
+                // Geçmiş raporlar soru sırasına bağlıdır. Daha önce kullanılmış bir
+                // quiz düzenlenirken eski sürümü arşivleyip yeni sürüm oluşturmak,
+                // geçmiş oturumların soru/cevap eşleşmelerini korur.
+                $quiz->update(['status' => 'archived']);
+                $targetQuiz = LiveQuiz::query()->create([
+                    'teacher_user_id' => $quiz->teacher_user_id,
+                    'title' => $data['title'],
+                    'school_class_id' => $data['school_class_id'] ?: null,
+                    'join_mode' => (string) ($data['join_mode'] ?? 'code'),
+                    'status' => 'active',
+                ]);
+            } else {
+                $quiz->update([
+                    'title' => $data['title'],
+                    'school_class_id' => $data['school_class_id'] ?: null,
+                    'join_mode' => (string) ($data['join_mode'] ?? 'code'),
+                ]);
+            }
+            $this->replaceQuizQuestions($targetQuiz, $questions);
+        });
+
+        $message = $versioned
+            ? 'Quiz güncellendi. Geçmiş raporların bozulmaması için yeni bir quiz sürümü oluşturuldu.'
+            : 'Quiz ve soruları güncellendi.';
+
+        return redirect()->route('live-quiz.index')->with('ok', $message);
+    }
+
+    public function destroy(LiveQuiz $quiz)
+    {
+        $this->authorizeQuizManagement($quiz);
+        $quiz->delete();
+
+        return redirect()->route('live-quiz.index')->with('ok', 'Quiz, oturumları ve raporları silindi.');
+    }
+
+    public function destroySession(LiveQuizSession $session)
+    {
+        $this->authorizeSessionManagement($session);
+        $session->delete();
+
+        return redirect()->route('live-quiz.index')->with('ok', 'Quiz oturumu ve bağlı raporu silindi.');
+    }
+
+    public function destroyHistory()
+    {
+        $query = LiveQuizSession::query()->where('status', 'finished');
+        if (!auth()->user()?->hasRole('admin')) {
+            $query->where('teacher_user_id', auth()->id());
+        }
+        $deleted = $query->delete();
+
+        LiveQuiz::query()
+            ->where('status', 'archived')
+            ->when(!auth()->user()?->hasRole('admin'), fn ($quizQuery) => $quizQuery->where('teacher_user_id', auth()->id()))
+            ->doesntHave('sessions')
+            ->delete();
+
+        return redirect()->route('live-quiz.index')->with('ok', "{$deleted} geçmiş oturum ve bağlı rapor silindi.");
+    }
+
     public function start(LiveQuiz $quiz)
     {
-        abort_unless($quiz->teacher_user_id === auth()->id(), 403);
+        $this->authorizeQuizManagement($quiz);
         abort_unless($quiz->questions()->exists(), 422);
 
         // Once soru sayaci baslatilmiyor: ogrenciler once bir "lobi" ekraninda
@@ -105,7 +202,7 @@ class LiveQuizController extends Controller
 
     public function launch(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         if ($session->status !== 'lobby') {
             return back();
         }
@@ -127,7 +224,7 @@ class LiveQuizController extends Controller
 
     public function showSession(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         $session = $this->syncSessionByTimer($session);
         if ($session->status === 'finished') {
             return redirect()->route('live-quiz.session.report', $session)->with('ok', 'Quiz tamamlandi. Rapor asagida.');
@@ -147,7 +244,7 @@ class LiveQuizController extends Controller
      */
     public function sessionStatus(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         $session = $this->syncSessionByTimer($session);
         $session->load('quiz.questions');
         $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
@@ -171,7 +268,7 @@ class LiveQuizController extends Controller
 
     public function sessionReport(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         $session->load(['quiz.questions', 'participants.studentUser']);
 
         $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
@@ -203,7 +300,7 @@ class LiveQuizController extends Controller
 
     public function next(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         $session = $this->syncSessionByTimer($session);
         if ($session->status !== 'live') {
             return redirect()->route('live-quiz.index')->with('ok', 'Quiz tamamlandi. Quiz listesine yonlendirildiniz.');
@@ -220,7 +317,7 @@ class LiveQuizController extends Controller
 
     public function toggleLock(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
         $session = $this->syncSessionByTimer($session);
         if ($session->status !== 'live') {
             return back();
@@ -236,7 +333,7 @@ class LiveQuizController extends Controller
 
     public function finish(LiveQuizSession $session)
     {
-        abort_unless($session->teacher_user_id === auth()->id(), 403);
+        $this->authorizeSessionManagement($session);
 
         if ($session->status !== 'finished') {
             $session->update([
@@ -417,7 +514,11 @@ class LiveQuizController extends Controller
         ]);
 
         if ($xp > 0) {
-            UserProfile::query()->where('user_id', $studentUserId)->increment('xp', $xp);
+            $profile = UserProfile::query()->firstOrCreate(
+                ['user_id' => $studentUserId],
+                ['role' => 'student', 'xp' => 0]
+            );
+            $profile->increment('xp', $xp);
         }
 
         $rank = $this->studentRankInSession($session, $studentUserId);
@@ -477,6 +578,52 @@ class LiveQuizController extends Controller
             'join_url' => route('student.live-quiz.instant-join', $session),
             'joined' => $joined,
         ]);
+    }
+
+    private function validateQuizPayload(Request $request): array
+    {
+        return $request->validate([
+            'title' => ['required', 'string', 'max:190'],
+            'school_class_id' => ['nullable', 'exists:school_classes,id'],
+            'join_mode' => ['required', 'in:code,instant'],
+            'questions_json' => ['required', 'string'],
+        ]);
+    }
+
+    private function replaceQuizQuestions(LiveQuiz $quiz, array $questions): void
+    {
+        $quiz->questions()->delete();
+
+        foreach (array_values($questions) as $index => $rawQuestion) {
+            $normalized = $this->normalizeQuestion((array) $rawQuestion);
+            LiveQuizQuestion::query()->create([
+                'live_quiz_id' => $quiz->id,
+                'sort_order' => $index,
+                'type' => $normalized['type'],
+                'question_text' => $normalized['question_text'],
+                'options' => $normalized['options'],
+                'correct_answer' => $normalized['correct_answer'],
+                'duration_sec' => $normalized['duration_sec'],
+                'xp' => $normalized['xp'],
+                'double_xp' => $normalized['double_xp'],
+            ]);
+        }
+    }
+
+    private function authorizeQuizManagement(LiveQuiz $quiz): void
+    {
+        abort_unless(
+            (int) $quiz->teacher_user_id === (int) auth()->id() || auth()->user()?->hasRole('admin'),
+            403
+        );
+    }
+
+    private function authorizeSessionManagement(LiveQuizSession $session): void
+    {
+        abort_unless(
+            (int) $session->teacher_user_id === (int) auth()->id() || auth()->user()?->hasRole('admin'),
+            403
+        );
     }
 
     private function normalizeQuestion(array $raw): array
