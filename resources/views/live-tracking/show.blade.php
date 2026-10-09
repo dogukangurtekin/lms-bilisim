@@ -140,7 +140,7 @@ if (actionSearchInput) {
                     </div>
                     <div style="margin-top:3px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                         <span style="font-size:.78rem;color:var(--app-muted);">
-                            🕐 {{ $log->logged_at->format('d.m.Y H:i:s') }}
+                            🕐 {{ $log->logged_at->copy()->setTimezone('Europe/Istanbul')->format('d.m.Y H:i:s') }}
                             · {{ $log->logged_at->diffForHumans() }}
                         </span>
                         <span style="font-size:.75rem;color:var(--app-muted);font-family:monospace;opacity:.7;">

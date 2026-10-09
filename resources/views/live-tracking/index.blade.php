@@ -114,7 +114,7 @@
                     @else -
                     @endif
                 </td>
-                <td>{{ $row['first_seen'] ? $row['first_seen']->format('H:i') : '-' }}</td>
+                <td>{{ $row['first_seen'] ? $row['first_seen']->copy()->setTimezone('Europe/Istanbul')->format('H:i') : '-' }}</td>
                 <td style="text-align:center;"><strong>{{ $row['log_count'] }}</strong></td>
                 <td>
                     <a href="{{ route('live-tracking.show', $row['student']) }}"
@@ -208,7 +208,12 @@ async function fetchData() {
         const rows = await res.json();
 
         document.getElementById('student-count').textContent = rows.length;
-        document.getElementById('last-refresh').textContent  = 'Son güncelleme: ' + new Date().toLocaleTimeString('tr-TR');
+        document.getElementById('last-refresh').textContent  = 'Son güncelleme: ' + new Intl.DateTimeFormat('tr-TR', {
+            timeZone: 'Europe/Istanbul',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }).format(new Date());
 
         const bodyEl = document.getElementById('tracking-body');
 
@@ -223,8 +228,8 @@ async function fetchData() {
                 <td>${r.class}</td>
                 <td style="max-width:260px;">${r.last_action}</td>
                 <td><span class="badge-online">${r.last_seen}</span></td>
-                <td>-</td>
-                <td style="text-align:center;"><strong>-</strong></td>
+                <td>${r.first_seen}</td>
+                <td style="text-align:center;"><strong>${r.log_count}</strong></td>
                 <td><a href="${r.detail_url}" style="padding:5px 12px;border-radius:7px;background:var(--app-primary);color:#fff;text-decoration:none;font-size:.78rem;font-weight:600;">Detay →</a></td>
             </tr>
         `).join('');

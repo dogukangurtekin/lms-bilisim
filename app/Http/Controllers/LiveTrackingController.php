@@ -6,10 +6,18 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentActivityLog;
 use App\Models\Teacher;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class LiveTrackingController extends Controller
 {
+    private const DISPLAY_TIMEZONE = 'Europe/Istanbul';
+
+    private function activitySince(): Carbon
+    {
+        return now(self::DISPLAY_TIMEZONE)->subDays(10)->utc();
+    }
+
     /**
      * Öğretmense sadece kendi sınıflarını, adminde tümünü döner.
      */
@@ -33,7 +41,7 @@ class LiveTrackingController extends Controller
      */
     public function index(Request $request)
     {
-        $since          = now()->subDays(10);
+        $since          = $this->activitySince();
         $allowedClassIds = $this->allowedClassIds();
         $classId        = $request->input('class_id');
         $search         = trim($request->input('search', ''));
@@ -116,7 +124,7 @@ class LiveTrackingController extends Controller
             abort(403, 'Bu öğrenciye erişim yetkiniz yok.');
         }
 
-        $since = now()->subDays(10);
+        $since = $this->activitySince();
 
         // Filtreler
         $dateFrom   = $request->input('date_from');   // YYYY-MM-DD
@@ -128,10 +136,10 @@ class LiveTrackingController extends Controller
             ->orderByDesc('logged_at');
 
         if ($dateFrom) {
-            $logsQuery->where('logged_at', '>=', \Carbon\Carbon::parse($dateFrom)->startOfDay());
+            $logsQuery->where('logged_at', '>=', Carbon::parse($dateFrom, self::DISPLAY_TIMEZONE)->startOfDay()->utc());
         }
         if ($dateTo) {
-            $logsQuery->where('logged_at', '<=', \Carbon\Carbon::parse($dateTo)->endOfDay());
+            $logsQuery->where('logged_at', '<=', Carbon::parse($dateTo, self::DISPLAY_TIMEZONE)->endOfDay()->utc());
         }
         if ($actionSearch !== '') {
             $logsQuery->where('action_label', 'like', "%{$actionSearch}%");
@@ -153,7 +161,7 @@ class LiveTrackingController extends Controller
      */
     public function refresh(Request $request)
     {
-        $since           = now()->subDays(10);
+        $since           = $this->activitySince();
         $allowedClassIds = $this->allowedClassIds();
         $classId         = $request->input('class_id');
         $search          = trim($request->input('search', ''));
@@ -180,21 +188,27 @@ class LiveTrackingController extends Controller
 
         $rows = $query->get()
             ->map(function (Student $student) use ($since) {
-                $last = StudentActivityLog::where('student_id', $student->id)
+                $logs = StudentActivityLog::where('student_id', $student->id)
                     ->where('logged_at', '>=', $since)
                     ->orderByDesc('logged_at')
-                    ->first();
+                    ->get();
+
+                $last = $logs->first();
+                $first = $logs->last();
 
                 return [
                     'id'          => $student->id,
                     'name'        => $student->user->name ?? '-',
                     'class'       => ($student->schoolClass->name ?? '') . ($student->schoolClass->section ? '-'.$student->schoolClass->section : '') ?: '-',
                     'last_seen'   => $last?->logged_at?->diffForHumans() ?? '-',
+                    'last_seen_at' => $last?->logged_at?->getTimestamp() ?? 0,
                     'last_action' => $last?->action_label ?? '-',
+                    'first_seen'  => $first?->logged_at?->copy()->setTimezone(self::DISPLAY_TIMEZONE)->format('H:i') ?? '-',
+                    'log_count'   => $logs->count(),
                     'detail_url'  => route('live-tracking.show', $student),
                 ];
             })
-            ->sortByDesc(fn($r) => $r['last_seen'])
+            ->sortByDesc('last_seen_at')
             ->values();
 
         return response()->json($rows);
