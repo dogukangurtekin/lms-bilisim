@@ -56,9 +56,9 @@ body {
 .report-course-heading {
     margin: 1.5mm 0 0;
     color: #173a8f;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: .35px;
+    font-size: 14px;
+    font-weight: 850;
+    letter-spacing: .3px;
     line-height: 1.2;
     text-align: center;
 }

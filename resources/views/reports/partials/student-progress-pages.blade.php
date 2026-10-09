@@ -26,7 +26,7 @@
 @endphp
 
 <section class="report-page">
-    <div class="report-course-heading">Bilişim Teknolojileri Dersi</div>
+    <div class="report-course-heading">Bilişim Teknolojileri ve Yazılım Dersi</div>
     <div class="hero">
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
