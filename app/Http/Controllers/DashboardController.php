@@ -260,6 +260,26 @@ class DashboardController extends Controller
                 ->map(fn ($rows) => $rows->pluck('course_homework_id')->unique()->all());
 
             $gradeBuckets = ['Çok İyi (75+)' => 0, 'İyi (50-74)' => 0, 'Orta (25-49)' => 0, 'Düşük (0-24)' => 0];
+            // Ders/odev oranlari sinif icindeki en iyi ogrenciye gore olceklenir;
+            // aksi halde cok dersli siniflarda herkes dusuk gorunur.
+            $lessonRatio = [];
+            $homeworkRatio = [];
+            $lessonMaxByClass = [];
+            $homeworkMaxByClass = [];
+            foreach ($students as $student) {
+                $classId = (int) $student->school_class_id;
+                $lessonIds = $lessonIdsByClass[$classId] ?? [];
+                $homeworkIds = $homeworkIdsByClass[$classId] ?? [];
+                $lessonRatio[$student->id] = $lessonIds
+                    ? count(array_intersect($lessonIds, $doneLessonsByUser[$student->user_id] ?? [])) / count($lessonIds)
+                    : null;
+                $homeworkRatio[$student->id] = $homeworkIds
+                    ? count(array_intersect($homeworkIds, $doneHomeworksByStudent[$student->id] ?? [])) / count($homeworkIds)
+                    : null;
+                $lessonMaxByClass[$classId] = max($lessonMaxByClass[$classId] ?? 0, $lessonRatio[$student->id] ?? 0);
+                $homeworkMaxByClass[$classId] = max($homeworkMaxByClass[$classId] ?? 0, $homeworkRatio[$student->id] ?? 0);
+            }
+
             foreach ($students as $student) {
                 $classId = (int) $student->school_class_id;
                 $signals = [];
@@ -268,16 +288,14 @@ class DashboardController extends Controller
                     $signals[] = (float) $avgGradeByStudent[$student->id];
                 }
 
-                $lessonIds = $lessonIdsByClass[$classId] ?? [];
-                if ($lessonIds) {
-                    $done = count(array_intersect($lessonIds, $doneLessonsByUser[$student->user_id] ?? []));
-                    $signals[] = ($done / count($lessonIds)) * 100;
+                if ($lessonRatio[$student->id] !== null) {
+                    $max = $lessonMaxByClass[$classId];
+                    $signals[] = $max > 0 ? ($lessonRatio[$student->id] / $max) * 100 : 0;
                 }
 
-                $homeworkIds = $homeworkIdsByClass[$classId] ?? [];
-                if ($homeworkIds) {
-                    $done = count(array_intersect($homeworkIds, $doneHomeworksByStudent[$student->id] ?? []));
-                    $signals[] = ($done / count($homeworkIds)) * 100;
+                if ($homeworkRatio[$student->id] !== null) {
+                    $max = $homeworkMaxByClass[$classId];
+                    $signals[] = $max > 0 ? ($homeworkRatio[$student->id] / $max) * 100 : 0;
                 }
 
                 $xp = $signals ? array_sum($signals) / count($signals) : 0;
