@@ -513,6 +513,77 @@ class StudentProgressReportService
             ->sortByDesc('sort_date')
             ->values();
 
+        // Canli quiz, canli yarisma ve gunluk egzersiz katilimlari karnede
+        // sadece kutucuk sayisi olarak degil, tek tek satir olarak da listelenir.
+        $liveItems = collect();
+
+        $quizSessionIds = \App\Models\LiveQuizParticipant::query()
+            ->where('student_user_id', $student->user_id)
+            ->pluck('live_quiz_session_id')
+            ->merge(LiveQuizAnswer::query()->where('student_user_id', $student->user_id)->pluck('live_quiz_session_id'))
+            ->unique()
+            ->values();
+        if ($quizSessionIds->isNotEmpty()) {
+            $quizSessions = \App\Models\LiveQuizSession::withTrashed()
+                ->with('quiz')
+                ->whereIn('id', $quizSessionIds)
+                ->get();
+            $quizAnswersBySession = LiveQuizAnswer::query()
+                ->where('student_user_id', $student->user_id)
+                ->whereIn('live_quiz_session_id', $quizSessionIds)
+                ->get()
+                ->groupBy('live_quiz_session_id');
+            foreach ($quizSessions as $quizSession) {
+                $answers = $quizAnswersBySession->get($quizSession->id, collect());
+                $correct = $answers->where('is_correct', true)->count();
+                $answered = $answers->whereNotNull('selected_answer')->count();
+                $liveItems->push([
+                    'kind' => 'Canlı Quiz',
+                    'title' => (string) ($quizSession->quiz?->title ?? 'Canlı Quiz'),
+                    'status' => $quizSession->status === 'finished' ? 'Tamamlandı' : 'Katıldı',
+                    'xp' => (int) $answers->sum('xp_earned'),
+                    'result' => $answered > 0 ? $correct.'/'.max(0, $answered - $correct).' ('.$answered.' soru)' : '-',
+                    'sort_date' => $quizSession->finished_at_ms
+                        ? Carbon::createFromTimestampMs((int) $quizSession->finished_at_ms)
+                        : $quizSession->created_at,
+                ]);
+            }
+        }
+
+        $competitionRooms = \App\Models\CompetitionRoom::query()
+            ->whereIn('id', $competitionParticipantRows->pluck('competition_room_id')->unique())
+            ->get()
+            ->keyBy('id');
+        foreach ($competitionParticipantRows->unique('competition_room_id') as $participant) {
+            $room = $competitionRooms->get($participant->competition_room_id);
+            $finished = ! empty($participant->finished_at_ms) || (float) $participant->progress_percent >= 100;
+            $liveItems->push([
+                'kind' => 'Canlı Yarışma',
+                'title' => (string) ($room?->game_name ?: 'Canlı Yarışma'),
+                'status' => $finished ? 'Tamamlandı' : 'Katıldı',
+                'xp' => (int) $participant->xp_earned,
+                'result' => '%'.(int) round((float) $participant->progress_percent),
+                'sort_date' => $participant->finished_at_ms
+                    ? Carbon::createFromTimestampMs((int) $participant->finished_at_ms)
+                    : ($room?->started_at_ms ? Carbon::createFromTimestampMs((int) $room->started_at_ms) : $participant->created_at),
+            ]);
+        }
+
+        foreach ($dailyAttemptRows as $attemptRow) {
+            $questionsCount = (int) $attemptRow->answers->count();
+            $correctCount = (int) $attemptRow->answers->filter(fn ($answer) => (float) $answer->awarded_points > 0)->count();
+            $liveItems->push([
+                'kind' => 'Günlük Egzersiz',
+                'title' => (string) ($attemptRow->activity?->title ?? 'Günlük Egzersiz'),
+                'status' => $attemptRow->submitted_at ? 'Tamamlandı' : 'Devam Ediyor',
+                'xp' => (int) round((float) $attemptRow->score),
+                'result' => $questionsCount > 0 ? $correctCount.'/'.max(0, $questionsCount - $correctCount).' ('.$questionsCount.' soru)' : '-',
+                'sort_date' => $attemptRow->submitted_at ?? $attemptRow->created_at,
+            ]);
+        }
+
+        $liveItems = $liveItems->sortByDesc('sort_date')->values();
+
         return [
             'kpi' => [
                 'total_xp' => $totalXp,
@@ -548,6 +619,7 @@ class StudentProgressReportService
             'analysis' => $analysis,
             'recommendations' => $recommendations,
             'course_items' => $courseItems,
+            'live_items' => $liveItems,
         ];
     }
 }
