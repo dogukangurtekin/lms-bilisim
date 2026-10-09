@@ -12,49 +12,32 @@
     <article class="card"><span>Avatar</span><strong>{{ $student->currentAvatar?->name ?? '-' }}</strong></article>
 </div>
 <div class="card">
+    <h3 style="margin-top:0">İçerikler — Sistemde Yaptıkların</h3>
     <table>
         <thead>
             <tr>
+                <th>Tür</th>
                 <th>İçerik</th>
-                <th>Tamamlandı</th>
+                <th>Durum</th>
+                <th>Sonuç</th>
                 <th>Kazanılan XP</th>
                 <th>Tarih</th>
             </tr>
         </thead>
         <tbody>
-        @forelse($rows as $r)
-            @php
-                $solvedQuestions = (int) data_get($r->payload, 'solved_questions', 0);
-                $courseId = preg_match('/^course-(\d+)$/', (string) $r->content_id, $matches) ? (int) $matches[1] : 0;
-                $questionTotal = $courseId > 0 && isset($courseQuestionTotals[$courseId])
-                    ? (int) $courseQuestionTotals[$courseId]
-                    : (int) data_get($r->payload, 'question_total', 0);
-                $wrongQuestions = max(0, (int) data_get($r->payload, 'wrong_questions', 0));
-                $answeredQuestionTotal = $solvedQuestions + $wrongQuestions;
-                $questionTotal = $answeredQuestionTotal > 0 ? $answeredQuestionTotal : $questionTotal;
-                $solvedQuestions = min($questionTotal, $solvedQuestions);
-                $wrongQuestions = min(max(0, $questionTotal - $solvedQuestions), $wrongQuestions);
-                $contentLabel = $contentLabels[$r->content_id] ?? $r->content_id;
-                $courseName = (string) data_get($r->payload, 'course_name', '');
-                if ($courseName !== '' && str_starts_with((string) $r->content_id, 'course-')) {
-                    $contentLabel = 'Ders: ' . $courseName;
-                    if ($questionTotal > 0) {
-                        $contentLabel .= ' • Doğru: ' . $solvedQuestions . ' / ' . $questionTotal . ' • Yanlış: ' . $wrongQuestions;
-                        $contentLabel .= $wrongQuestions <= 1 ? ' • Bu dersi çok iyi anladı' : ' • Bu dersi tekrar çalışmalı';
-                    }
-                }
-            @endphp
+        @forelse($activityLog as $item)
             <tr>
-                <td>{{ $contentLabel }}</td>
-                <td>{{ $r->completed ? 'Evet' : 'Hayır' }}</td>
-                <td>{{ $r->xp_awarded }}</td>
-                <td>{{ $r->created_at?->format('Y-m-d H:i') }}</td>
+                <td>{{ $item['kind'] }}</td>
+                <td>{{ $item['title'] }}</td>
+                <td>{{ $item['status'] }}</td>
+                <td>{{ $item['result'] }}</td>
+                <td>{{ (int) $item['xp'] }}</td>
+                <td>{{ $item['sort_date'] ? \Carbon\Carbon::parse($item['sort_date'])->format('d.m.Y H:i') : '-' }}</td>
             </tr>
         @empty
-            <tr><td colspan="4">Kayıt yok.</td></tr>
+            <tr><td colspan="6">Kayıt yok.</td></tr>
         @endforelse
         </tbody>
     </table>
-    {{ $rows->links('partials.pagination') }}
 </div>
 @endsection

@@ -665,23 +665,14 @@ class StudentPortalController extends Controller
     public function progress()
     {
         $student = $this->getStudent();
-        $rows = ContentProgress::where('user_id', $student->user_id)->latest()->paginate(30);
+        $report = $this->reportService->build($student);
+        $activityLog = collect($report['activity_log'] ?? []);
         // Anasayfa ve diger tum XP gosterimleriyle tutarli olmasi icin
         // burada da avatar magazasinda harcanan XP dusuluyor.
         $xp = max(0, $this->xp($student) - (int) ($student->avatar_xp_spent ?? 0));
         $avg = round((float) Grade::where('student_id', $student->id)->avg('score'), 1);
-        $contentLabels = $this->resolveContentLabels($rows->getCollection()->pluck('content_id')->all());
-        $courseIds = $rows->getCollection()
-            ->pluck('content_id')
-            ->map(fn ($contentId) => preg_match('/^course-(\d+)$/', (string) $contentId, $matches) ? (int) $matches[1] : 0)
-            ->filter()
-            ->unique();
-        $courseQuestionTotals = Course::withTrashed()
-            ->whereIn('id', $courseIds)
-            ->get()
-            ->mapWithKeys(fn (Course $course) => [$course->id => $this->presentation->questionCount($course)]);
 
-        return view('student-portal.progress', compact('student', 'rows', 'xp', 'avg', 'contentLabels', 'courseQuestionTotals'));
+        return view('student-portal.progress', compact('student', 'xp', 'avg', 'activityLog'));
     }
 
     public function progressReport()

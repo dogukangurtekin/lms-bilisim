@@ -584,6 +584,93 @@ class StudentProgressReportService
 
         $liveItems = $liveItems->sortByDesc('sort_date')->values();
 
+        // Ogrencinin sistemde yaptigi her seyin tek, tarih sirali dokumu:
+        // ders, odev, oyun/uygulama, canli quiz, canli yarisma, gunluk egzersiz,
+        // klavye yarisi. Gelisim Karnem sayfasi ve detayli rapor bunu kullanir.
+        $activityLog = collect();
+
+        foreach ($courseItems as $item) {
+            $activityLog->push([
+                'kind' => 'Ders',
+                'title' => (string) ($item['course_name'] ?? $item['title'] ?? 'Ders'),
+                'status' => 'Tamamlandı',
+                'xp' => (int) ($item['xp'] ?? 0),
+                'result' => ((int) ($item['question_total'] ?? 0)) > 0
+                    ? ($item['correct_questions'] ?? 0).'/'.($item['wrong_questions'] ?? 0).' ('.$item['question_total'].' soru)'
+                    : '-',
+                'sort_date' => $item['sort_date'] ?? null,
+            ]);
+        }
+
+        $homeworkTypeLabels = ['homework' => 'Ödev', 'lesson' => 'Ders Ödevi', 'game' => 'Oyun Ödevi', 'application' => 'Uygulama Ödevi'];
+        $progressHomeworks = CourseHomework::withTrashed()
+            ->with('course')
+            ->whereIn('id', $homeworkProgress->keys())
+            ->get()
+            ->keyBy('id');
+        foreach ($homeworkProgress as $homeworkId => $progress) {
+            $homework = $progressHomeworks->get((int) $homeworkId);
+            $activityLog->push([
+                'kind' => $homeworkTypeLabels[(string) ($homework?->assignment_type ?? 'homework')] ?? 'Ödev',
+                'title' => (string) ($homework?->title ?: ($homework?->course?->name ?? 'Ödev #'.$homeworkId)),
+                'status' => $progress->completed_at ? 'Tamamlandı' : 'Devam Ediyor',
+                'xp' => (int) ($progress->xp_awarded ?? 0),
+                'result' => $progress->reached_level ? 'Seviye '.$progress->reached_level : '-',
+                'sort_date' => $progress->completed_at ?? $progress->started_at ?? $progress->created_at,
+            ]);
+        }
+
+        $gameAssignmentsById = GameAssignment::withTrashed()
+            ->whereIn('id', $gameProgress->keys())
+            ->get()
+            ->keyBy('id');
+        foreach ($gameProgress as $assignmentId => $progress) {
+            $assignment = $gameAssignmentsById->get((int) $assignmentId);
+            $activityLog->push([
+                'kind' => 'Oyun / Uygulama',
+                'title' => trim((string) ($assignment?->game_name ?? '').' '.($assignment?->title ? '- '.$assignment->title : '')) ?: 'Oyun #'.$assignmentId,
+                'status' => $progress->completed_at ? 'Tamamlandı' : ($progress->started_at ? 'Devam Ediyor' : 'Bekliyor'),
+                'xp' => (int) ($progress->xp_awarded ?? 0),
+                'result' => $progress->reached_level ? 'Seviye '.$progress->reached_level : '-',
+                'sort_date' => $progress->completed_at ?? $progress->started_at ?? $progress->created_at,
+            ]);
+        }
+
+        // Ders/odev/oyun disindaki diger icerik kayitlari (ContentProgress).
+        foreach ($contentRows as $row) {
+            $contentId = (string) $row->content_id;
+            if (str_starts_with($contentId, 'course-') || str_starts_with($contentId, 'homework-') || str_starts_with($contentId, 'game-assignment-')) {
+                continue;
+            }
+            $activityLog->push([
+                'kind' => 'Etkinlik',
+                'title' => (string) (data_get($row->payload, 'title') ?: data_get($row->payload, 'lesson_title') ?: $contentId),
+                'status' => $row->completed ? 'Tamamlandı' : 'Devam Ediyor',
+                'xp' => (int) ($row->xp_awarded ?? 0),
+                'result' => '-',
+                'sort_date' => $row->updated_at ?? $row->created_at,
+            ]);
+        }
+
+        foreach ($liveItems as $item) {
+            $activityLog->push($item);
+        }
+
+        foreach (RaceResult::query()->where('user_id', $student->user_id)->get() as $race) {
+            $activityLog->push([
+                'kind' => 'Klavye Yarışı',
+                'title' => 'Klavye Yarışı',
+                'status' => 'Katıldı',
+                'xp' => (int) ($race->xp_earned ?? 0),
+                'result' => ($race->wpm ?? 0).' WPM · %'.(int) round((float) ($race->accuracy ?? 0)),
+                'sort_date' => $race->created_at,
+            ]);
+        }
+
+        $activityLog = $activityLog
+            ->sortByDesc(fn ($item) => $item['sort_date'] ? Carbon::parse($item['sort_date'])->timestamp : 0)
+            ->values();
+
         return [
             'kpi' => [
                 'total_xp' => $totalXp,
@@ -620,6 +707,7 @@ class StudentProgressReportService
             'recommendations' => $recommendations,
             'course_items' => $courseItems,
             'live_items' => $liveItems,
+            'activity_log' => $activityLog,
         ];
     }
 }
