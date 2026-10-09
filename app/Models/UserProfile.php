@@ -25,4 +25,23 @@ class UserProfile extends Model
     protected $casts = [
         'meta' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (UserProfile $profile): void {
+            if (! $profile->exists || ! $profile->isDirty('xp')) {
+                return;
+            }
+
+            $previousXp = (int) $profile->getOriginal('xp');
+            $nextXp = (int) $profile->xp;
+
+            // XP bir ömür boyu kazanım sayacıdır. Avatar harcaması ayrı
+            // avatar_xp_spent alanında tutulduğu için profil XP'si normal
+            // kayıt/güncelleme akışında hiçbir zaman geriye düşmemelidir.
+            if ($nextXp < $previousXp) {
+                $profile->xp = $previousXp;
+            }
+        });
+    }
 }

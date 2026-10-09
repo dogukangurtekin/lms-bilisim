@@ -7,6 +7,7 @@ use App\Models\LiveQuiz;
 use App\Models\LiveQuizAnswer;
 use App\Models\LiveQuizSession;
 use App\Models\Role;
+use App\Models\StudentReport;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\StudentProgressReportService;
@@ -72,6 +73,29 @@ class StudentXpConsistencyTest extends TestCase
             ->getJson(route('dashboard.ranking-by-class'))
             ->assertOk()
             ->assertJsonPath('students.0.xp', 1064);
+    }
+
+    public function test_preserved_student_report_restores_a_profile_xp_that_was_previously_lowered(): void
+    {
+        $studentRole = Role::query()->create(['name' => 'Student', 'slug' => 'student']);
+        $studentUser = $this->user($studentRole->id, 'XP Koruma', 'xp-guard@example.test');
+        $student = $studentUser->student()->firstOrFail();
+
+        $profile = UserProfile::query()->updateOrCreate(
+            ['user_id' => $studentUser->id],
+            ['role' => 'student', 'xp' => 1700],
+        );
+        StudentReport::query()->create([
+            'user_id' => $studentUser->id,
+            'total_xp' => 4200,
+        ]);
+
+        $this->assertSame(4200, app(StudentXpService::class)->earned($student));
+
+        $profile->xp = 0;
+        $profile->save();
+        $this->assertSame(1700, (int) $profile->fresh()->xp);
+        $this->assertSame(4200, app(StudentXpService::class)->available($student));
     }
 
     private function user(int $roleId, string $name, string $email): User

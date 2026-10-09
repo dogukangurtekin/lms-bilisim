@@ -8,6 +8,7 @@ use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
 use App\Models\RaceResult;
 use App\Models\Student;
+use App\Models\StudentReport;
 use App\Models\UserProfile;
 use Illuminate\Support\Collection;
 
@@ -65,8 +66,11 @@ class StudentXpService
         $profileXp = UserProfile::query()
             ->whereIn('user_id', $userIds)
             ->pluck('xp', 'user_id');
+        $reportXp = StudentReport::query()
+            ->whereIn('user_id', $userIds)
+            ->pluck('total_xp', 'user_id');
 
-        return $students->mapWithKeys(function (Student $student) use ($gradeXp, $contentXp, $quizXp, $competitionXp, $keyboardRaceXp, $profileXp) {
+        return $students->mapWithKeys(function (Student $student) use ($gradeXp, $contentXp, $quizXp, $competitionXp, $keyboardRaceXp, $profileXp, $reportXp) {
             $computed =
                 (int) ($gradeXp[$student->id] ?? 0)
                 + (int) ($contentXp[$student->user_id] ?? 0)
@@ -74,7 +78,12 @@ class StudentXpService
                 + (int) ($competitionXp[$student->user_id] ?? 0)
                 + (int) ($keyboardRaceXp[$student->user_id] ?? 0);
 
-            return [$student->id => max(0, $computed, (int) ($profileXp[$student->user_id] ?? 0))];
+            return [$student->id => max(
+                0,
+                $computed,
+                (int) ($profileXp[$student->user_id] ?? 0),
+                (int) ($reportXp[$student->user_id] ?? 0),
+            )];
         })->all();
     }
 
