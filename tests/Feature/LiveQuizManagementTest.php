@@ -63,6 +63,15 @@ class LiveQuizManagementTest extends TestCase
 
         $finished = $this->createQuizSession($quiz, $teacher, 'OLD001', 'finished');
         $live = $this->createQuizSession($quiz, $teacher, 'LIVE01', 'live');
+
+        $this->actingAs($teacher)
+            ->get(route('live-quiz.index'))
+            ->assertOk()
+            ->assertSee('data-confirm=', false)
+            ->assertDontSee('onsubmit=', false)
+            ->assertSee('Oturumu Kapat')
+            ->assertSee('Tüm Geçmiş Raporları Sil');
+
         LiveQuizParticipant::query()->create([
             'live_quiz_session_id' => $finished->id,
             'student_user_id' => $student->id,

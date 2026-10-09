@@ -156,7 +156,7 @@
                                 <button class="btn" type="submit">Canli Quizi Baslat</button>
                             </form>
                             <a class="btn" href="{{ route('live-quiz.edit', $quiz) }}">Düzenle</a>
-                            <form method="POST" action="{{ route('live-quiz.destroy', $quiz) }}" onsubmit="return confirm('Bu quiz, tüm oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?')">
+                            <form method="POST" action="{{ route('live-quiz.destroy', $quiz) }}" data-confirm="Bu quiz, tüm oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?">
                                 @csrf @method('DELETE')
                                 <button class="btn quiz-danger" type="submit">Sil</button>
                             </form>
@@ -173,7 +173,7 @@
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <h3>Gecmis Oturumlar / Raporlar</h3>
-            <form method="POST" action="{{ route('live-quiz.sessions.history.destroy') }}" onsubmit="return confirm('Tamamlanmış tüm quiz oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?')">
+            <form method="POST" action="{{ route('live-quiz.sessions.history.destroy') }}" data-confirm="Tamamlanmış tüm quiz oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?">
                 @csrf @method('DELETE')
                 <button class="btn quiz-danger" type="submit">Tüm Geçmiş Raporları Sil</button>
             </form>
@@ -197,12 +197,12 @@
                                 <a class="btn" href="{{ route('live-quiz.session.report', $s) }}">Raporu Gor</a>
                             @else
                                 <a class="btn" href="{{ route('live-quiz.session.show', $s) }}">Oturuma Git</a>
-                                <form method="POST" action="{{ route('live-quiz.session.finish', $s) }}" onsubmit="return confirm('Canlı oturum kapatılsın mı?')">
+                                <form method="POST" action="{{ route('live-quiz.session.finish', $s) }}" data-confirm="Canlı oturum kapatılsın mı?">
                                     @csrf
                                     <button class="btn quiz-warning" type="submit">Oturumu Kapat</button>
                                 </form>
                             @endif
-                            <form method="POST" action="{{ route('live-quiz.session.destroy', $s) }}" onsubmit="return confirm('Bu oturum ve bağlı rapor kalıcı olarak silinsin mi?')">
+                            <form method="POST" action="{{ route('live-quiz.session.destroy', $s) }}" data-confirm="Bu oturum ve bağlı rapor kalıcı olarak silinsin mi?">
                                 @csrf @method('DELETE')
                                 <button class="btn quiz-danger" type="submit">Oturumu Sil</button>
                             </form>
@@ -431,9 +431,12 @@
         renderList();
     });
 
-    removeBtn.addEventListener('click', () => {
+    removeBtn.addEventListener('click', async () => {
         if (selectedIndex < 0 || !questions.length) return;
-        if (!window.confirm('Seçili soru silinsin mi?')) return;
+        const confirmed = window.AppDialog?.confirm
+            ? await window.AppDialog.confirm('Seçili soru silinsin mi?')
+            : true;
+        if (!confirmed) return;
         questions.splice(selectedIndex, 1);
         if (!questions.length) {
             selectedIndex = -1;
