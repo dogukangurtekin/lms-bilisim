@@ -13,6 +13,16 @@
 .lq-timer-fill.lq-warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 .lq-big-clock{font-size:34px;font-weight:800;color:#1e293b}
 .lq-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
+.lq-participant-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px auto;max-width:900px}
+.lq-participant-chip{padding:9px 13px;border-radius:999px;background:#eef2ff;border:1px solid #c7d2fe;color:#312e81;font-weight:800}
+.lq-participant-empty{color:#64748b;font-weight:700}
+.lq-results-stage{overflow:hidden;text-align:center;padding:28px;background:linear-gradient(135deg,#312e81,#6d28d9);color:#fff}
+.lq-results-stage h2{margin:0 0 8px;font-size:34px}.lq-results-stage p{margin:6px 0 18px}
+.lq-top-five{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:12px}
+.lq-winner{min-width:150px;padding:14px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);animation:lqWinnerIn .55s both;animation-delay:calc(var(--rank) * .12s)}
+.lq-winner:first-child{transform-origin:center bottom;background:linear-gradient(145deg,#f59e0b,#f97316);padding:20px;min-width:190px}
+.lq-winner-rank{font-size:24px;font-weight:900}.lq-winner-name{font-size:24px;font-weight:900;overflow-wrap:anywhere}.lq-winner-state{font-size:13px;font-weight:800;margin-top:5px}
+@keyframes lqWinnerIn{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 <div class="top"><h1>Canli Quiz Oturumu</h1></div>
 
@@ -23,6 +33,13 @@
     <p style="margin-top:8px;">Ogrenciler koda girip lobiye katilsin. Herkes hazir oldugunda asagidaki butona basin,
        soru suresi <strong>o an</strong> tum ogrenciler icin ayni anda baslar.</p>
     <p><strong>Lobide bekleyen ogrenci: <span id="lqLobbyJoined">{{ $session->participants()->count() }}</span></strong></p>
+    <div class="lq-participant-grid" id="lqParticipantList">
+        @forelse($participantRows as $participant)
+            <span class="lq-participant-chip">{{ $participant['student_name'] }}</span>
+        @empty
+            <span class="lq-participant-empty">Henüz katılan öğrenci yok.</span>
+        @endforelse
+    </div>
     <form method="POST" action="{{ route('live-quiz.session.launch', $session) }}">
         @csrf
         <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Baslat</button>
@@ -37,18 +54,35 @@
 
     @if($session->status === 'live')
     <div>
-        <span class="lq-big-clock"><span id="lqCountdown">--</span> sn</span>
+        <span class="lq-big-clock">{{ $session->is_locked ? 'Sıradaki soruya' : 'Kalan süre' }}: <span id="lqCountdown">--</span> sn</span>
         <div class="lq-timer-bar"><div class="lq-timer-fill" id="lqTimerFill"></div></div>
     </div>
     @endif
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-        <form method="POST" action="{{ route('live-quiz.session.lock', $session) }}">@csrf<button class="btn" type="submit">{{ $session->is_locked ? 'Kilidi Ac' : 'Kilitle' }}</button></form>
-        <form method="POST" action="{{ route('live-quiz.session.next', $session) }}">@csrf<button class="btn btn-primary" type="submit">Sonraki Soru</button></form>
+        <form method="POST" action="{{ route('live-quiz.session.next', $session) }}">@csrf<button class="btn btn-primary" type="submit" {{ $session->is_locked ? 'disabled' : '' }}>Cevapları Kapat / Sonraki Soru</button></form>
         <form method="POST" action="{{ route('live-quiz.session.finish', $session) }}">@csrf<button class="btn btn-danger" type="submit">Quizi Bitir</button></form>
         <a class="btn" href="{{ route('live-quiz.session.report', $session) }}">Detayli Rapor</a>
     </div>
 </div>
+
+@if($session->status === 'live' && $session->is_locked)
+<div class="card lq-results-stage" style="margin-bottom:12px;">
+    <h2>Soru Sonuçları</h2>
+    <p>İlk 5 öğrenci gösteriliyor. Yeni soru tüm ekranlarda aynı anda açılacak.</p>
+    <div class="lq-top-five">
+        @forelse($topFive as $student)
+            <div class="lq-winner" style="--rank:{{ $student['rank'] }}">
+                <div class="lq-winner-rank">#{{ $student['rank'] }}</div>
+                <div class="lq-winner-name">{{ $student['student_name'] }}</div>
+                <div class="lq-winner-state">{{ $student['answered'] ? ($student['is_correct'] ? 'Doğru' : 'Yanlış') : 'Cevaplamadı' }} · {{ $student['xp'] }} XP</div>
+            </div>
+        @empty
+            <strong>Bu soruda katılımcı bulunmuyor.</strong>
+        @endforelse
+    </div>
+</div>
+@endif
 
 <div class="card" style="margin-bottom:12px;">
     <h3>Anlik Durum</h3>
@@ -80,12 +114,12 @@
     <h3>Katilan Ogrenciler</h3>
     <table>
         <thead><tr><th>#</th><th>Ogrenci</th><th>Katilim</th></tr></thead>
-        <tbody>
-        @forelse($session->participants as $i => $participant)
+        <tbody id="lqParticipantBody">
+        @forelse($participantRows as $i => $participant)
             <tr>
                 <td>{{ $i+1 }}</td>
-                <td>{{ $participant->studentUser?->name ?? ('user_'.$participant->student_user_id) }}</td>
-                <td>{{ $participant->created_at?->format('H:i:s') }}</td>
+                <td>{{ $participant['student_name'] }}</td>
+                <td>{{ $participant['joined_at'] ?? '-' }}</td>
             </tr>
         @empty
             <tr><td colspan="3">Henuz katilan yok.</td></tr>
@@ -119,6 +153,7 @@
 <script>
 (() => {
     const sessionStatus = @json($session->status);
+    const initialLocked = @json((bool) $session->is_locked);
     if (sessionStatus === 'finished') return;
 
     const statusUrl = @json(route('live-quiz.session.status', $session));
@@ -129,6 +164,8 @@
     const countdownEl = document.getElementById('lqCountdown');
     const timerFillEl = document.getElementById('lqTimerFill');
     const lobbyJoinedEl = document.getElementById('lqLobbyJoined');
+    const participantListEl = document.getElementById('lqParticipantList');
+    const participantBodyEl = document.getElementById('lqParticipantBody');
     const statJoined = document.getElementById('lqStatJoined');
     const statAnswered = document.getElementById('lqStatAnswered');
     const statCorrect = document.getElementById('lqStatCorrect');
@@ -136,7 +173,45 @@
     const leaderboardBody = document.getElementById('lqLeaderboardBody');
 
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
-    let durationMs = {{ (int) (($current?->duration_sec ?? 30) * 1000) }};
+    let durationMs = {{ $session->is_locked ? 5000 : (int) (($current?->duration_sec ?? 30) * 1000) }};
+
+    function renderParticipants(participants) {
+        if (!Array.isArray(participants)) return;
+
+        if (participantListEl) {
+            participantListEl.replaceChildren();
+            if (participants.length === 0) {
+                const empty = document.createElement('span');
+                empty.className = 'lq-participant-empty';
+                empty.textContent = 'Henüz katılan öğrenci yok.';
+                participantListEl.appendChild(empty);
+            } else {
+                participants.forEach((participant) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'lq-participant-chip';
+                    chip.textContent = participant.student_name || 'Öğrenci';
+                    participantListEl.appendChild(chip);
+                });
+            }
+        }
+
+        if (participantBodyEl) {
+            participantBodyEl.replaceChildren();
+            if (participants.length === 0) {
+                const row = participantBodyEl.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 3;
+                cell.textContent = 'Henüz katılan yok.';
+            } else {
+                participants.forEach((participant, index) => {
+                    const row = participantBodyEl.insertRow();
+                    row.insertCell().textContent = String(index + 1);
+                    row.insertCell().textContent = participant.student_name || 'Öğrenci';
+                    row.insertCell().textContent = participant.joined_at || '-';
+                });
+            }
+        }
+    }
 
     function tickClock() {
         if (!countdownEl || sessionStatus !== 'live' && !document.getElementById('lqCountdown')) return;
@@ -167,9 +242,15 @@
             }
 
             if (lobbyJoinedEl) lobbyJoinedEl.textContent = String(data.stats?.joined ?? 0);
+            renderParticipants(data.participants);
 
             if (data.current_index !== currentIndex) {
                 // Soru degisti: sayfayi yenileyip yeni soru metnini/secenekleri gostermek en guvenlisi.
+                window.location.reload();
+                return;
+            }
+
+            if (Boolean(data.is_locked) !== initialLocked) {
                 window.location.reload();
                 return;
             }

@@ -36,7 +36,7 @@ return new class extends Migration
             $table->foreignId('live_quiz_id')->constrained('live_quizzes')->cascadeOnDelete();
             $table->foreignId('teacher_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('join_code', 12)->unique();
-            $table->enum('status', ['live', 'finished'])->default('live')->index();
+            $table->enum('status', ['lobby', 'live', 'finished'])->default('lobby')->index();
             $table->unsignedInteger('current_index')->default(0);
             $table->boolean('is_locked')->default(false);
             $table->unsignedBigInteger('started_at_ms')->nullable();
@@ -67,4 +67,3 @@ return new class extends Migration
         Schema::dropIfExists('live_quizzes');
     }
 };
-

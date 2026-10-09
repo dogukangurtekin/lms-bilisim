@@ -43,6 +43,9 @@
 .lq-wait-box{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
 .lq-wait-title{margin:0 0 8px;font-size:36px;font-weight:900}
 .lq-wait-count{font-size:86px;line-height:1;font-weight:900;margin:10px 0}
+.lq-student-list{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px}
+.lq-student-chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);font-weight:800}
+.lq-student-empty{font-size:13px;font-weight:700;opacity:.85}
 .lq-result-title{font-size:42px;font-weight:900;margin:0}
 .lq-result-good{color:#86efac}
 .lq-result-bad{color:#fca5a5}
@@ -51,6 +54,12 @@
 .lq-result-box{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:10px}
 .lq-result-box span{display:block;font-size:12px;opacity:.9}
 .lq-result-box strong{display:block;font-size:20px;margin-top:4px}
+.lq-top-five-title{margin:22px 0 10px;font-size:24px;font-weight:900}
+.lq-top-five{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:10px}
+.lq-winner{min-width:130px;padding:12px;border-radius:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);animation:lqWinnerIn .55s both;animation-delay:calc(var(--rank) * .12s)}
+.lq-winner:first-child{background:linear-gradient(145deg,#f59e0b,#f97316);padding:18px;min-width:170px}
+.lq-winner-rank{font-size:23px;font-weight:900}.lq-winner-name{font-size:22px;font-weight:900;overflow-wrap:anywhere}.lq-winner-state{margin-top:4px;font-size:12px;font-weight:800}
+@keyframes lqWinnerIn{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media (max-width:900px){
   .lq-question{font-size:24px}
   .lq-answer-grid{grid-template-columns:1fr}
@@ -81,46 +90,51 @@
                    herkes icin ayni anda baslayacak.</p>
                 <div class="lq-wait-count" id="lqLobbyCount">{{ $joinedCount ?? 0 }}</div>
                 <p class="lq-auto-note">Lobide bekleyen ogrenci sayisi</p>
+                <div class="lq-student-list" id="lqStudentParticipantList">
+                    @forelse(($participantRows ?? []) as $participant)
+                        <span class="lq-student-chip">{{ $participant['student_name'] }}</span>
+                    @empty
+                        <span class="lq-student-empty">Henüz katılan öğrenci yok.</span>
+                    @endforelse
+                </div>
             </div>
         </div>
     @elseif(!$q)
         <div class="lq-state">Bu oturumda soru bulunamadi.</div>
     @elseif($session->status !== 'live')
         <div class="lq-state">Quiz tamamlandi.</div>
+    @elseif($session->is_locked)
+        <div class="lq-center-stage">
+            <div class="lq-wait-box">
+                @php
+                    $answered = $currentAnswer && $currentAnswer->selected_answer !== null && $currentAnswer->selected_answer !== '';
+                    $correct = $answered && (bool) $currentAnswer->is_correct;
+                @endphp
+                <h3 class="lq-result-title {{ $correct ? 'lq-result-good' : 'lq-result-bad' }}">
+                    {{ !$answered ? 'Cevaplamadın' : ($correct ? 'Doğru Cevap!' : 'Yanlış Cevap') }}
+                </h3>
+                <p class="lq-result-sub">{{ $correct ? '+' . (int) $currentAnswer->xp_earned . ' XP kazandın' : 'Bu sorudan XP kazanamadın' }}</p>
+                <div class="lq-top-five-title">Bu Sorunun İlk 5'i</div>
+                <div class="lq-top-five">
+                    @forelse($topFive as $student)
+                        <div class="lq-winner" style="--rank:{{ $student['rank'] }}">
+                            <div class="lq-winner-rank">#{{ $student['rank'] }}</div>
+                            <div class="lq-winner-name">{{ $student['student_name'] }}</div>
+                            <div class="lq-winner-state">{{ $student['answered'] ? ($student['is_correct'] ? 'Doğru' : 'Yanlış') : 'Cevaplamadı' }}</div>
+                        </div>
+                    @empty
+                        <strong>Henüz sonuç bulunmuyor.</strong>
+                    @endforelse
+                </div>
+                <p class="lq-auto-note">Sıradaki soru <strong id="lq-next-countdown">5</strong> saniye sonra tüm öğrencilerde aynı anda açılacak.</p>
+            </div>
+        </div>
     @elseif($isAnsweredCurrent)
         <div class="lq-center-stage" id="lqWaitingStage">
             <div class="lq-wait-box">
-                <h3 class="lq-wait-title">Sonraki Soruya Hazirlaniyor</h3>
+                <h3 class="lq-wait-title">Cevabın Kaydedildi</h3>
                 <div class="lq-wait-count" id="lq-answer-countdown">--</div>
-                <p class="lq-auto-note">Kalan sure bitince sonucun ve siralaman gosterilecek.</p>
-            </div>
-        </div>
-        <div class="lq-center-stage" id="lqResultStage" style="display:none;">
-            <div class="lq-wait-box">
-                <h3 class="lq-result-title {{ !empty($feedback['is_correct']) ? 'lq-result-good' : 'lq-result-bad' }}">
-                    {{ is_array($feedback) ? (!empty($feedback['is_correct']) ? 'Dogru Cevap' : 'Yanlis Cevap') : 'Cevap Kaydedildi' }}
-                </h3>
-                @if(is_array($feedback))
-                    <div class="lq-result-grid">
-                        <div class="lq-result-box">
-                            <span>Ogrencinin Cevabi</span>
-                            <strong>{{ (string) ($feedback['student_answer_text'] ?? '-') }}</strong>
-                        </div>
-                        <div class="lq-result-box">
-                            <span>Dogru Cevap</span>
-                            <strong>{{ (string) ($feedback['correct_answer_text'] ?? '-') }}</strong>
-                        </div>
-                        <div class="lq-result-box">
-                            <span>Toplam Quiz XP</span>
-                            <strong>{{ (int) ($feedback['session_total_xp'] ?? 0) }}</strong>
-                        </div>
-                        <div class="lq-result-box">
-                            <span>Siralama</span>
-                            <strong>{{ (int) ($feedback['rank'] ?? 0) }}/{{ (int) ($feedback['total'] ?? 0) }}</strong>
-                        </div>
-                    </div>
-                @endif
-                <p class="lq-auto-note">Sonraki soruya <strong id="lq-next-countdown">5</strong> saniye sonra geciliyor (5 4 3 2 1)...</p>
+                <p class="lq-auto-note">Süre bittiğinde doğru/yanlış sonucun ve ilk 5 öğrenci gösterilecek.</p>
             </div>
         </div>
     @else
@@ -223,6 +237,24 @@
 
     @if($session->status === 'lobby')
     const lobbyCountEl = document.getElementById('lqLobbyCount');
+    const participantListEl = document.getElementById('lqStudentParticipantList');
+    const renderParticipants = (participants) => {
+        if (!participantListEl || !Array.isArray(participants)) return;
+        participantListEl.replaceChildren();
+        if (participants.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'lq-student-empty';
+            empty.textContent = 'Henüz katılan öğrenci yok.';
+            participantListEl.appendChild(empty);
+            return;
+        }
+        participants.forEach((participant) => {
+            const chip = document.createElement('span');
+            chip.className = 'lq-student-chip';
+            chip.textContent = participant.student_name || 'Öğrenci';
+            participantListEl.appendChild(chip);
+        });
+    };
     const pollLobby = async () => {
         try {
             const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
@@ -232,6 +264,7 @@
             if (lobbyCountEl && typeof data.joined_count === 'number') {
                 lobbyCountEl.textContent = String(data.joined_count);
             }
+            renderParticipants(data.participants);
             if (data.status === 'live') {
                 // Ogretmen "Herkese Baslat" dedi: soru ekranina gecmek icin yenile.
                 window.location.reload();
@@ -244,29 +277,11 @@
 
     @if($session->status === 'live')
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
+    const initialIndex = {{ (int) $session->current_index }};
+    const initialLocked = @json((bool) $session->is_locked);
     const countdownEl = document.getElementById('lq-countdown');
     const answerCountdownEl = document.getElementById('lq-answer-countdown');
-    const waitingStage = document.getElementById('lqWaitingStage');
-    const resultStage = document.getElementById('lqResultStage');
     const nextCountdownEl = document.getElementById('lq-next-countdown');
-    let resultShown = false;
-    let nextInterval = null;
-
-    const startNextCountdown = () => {
-        if (!nextCountdownEl || nextInterval) return;
-        let sec = 5;
-        nextCountdownEl.textContent = String(sec);
-        nextInterval = window.setInterval(() => {
-            sec -= 1;
-            if (sec <= 0) {
-                window.clearInterval(nextInterval);
-                nextInterval = null;
-                window.location.reload();
-                return;
-            }
-            nextCountdownEl.textContent = String(sec);
-        }, 1000);
-    };
 
     // Ogrencinin cihaz saati sunucudan farkli olabilir; periyodik senkronizasyon
     // ile sayacin gercek kalan sureyi gostermesi saglanir (Kahoot'taki gibi
@@ -280,26 +295,24 @@
             if (typeof data.ends_at_ms === 'number' && data.ends_at_ms > 0) {
                 endsAtMs = data.ends_at_ms;
             }
+            if (data.status === 'finished') {
+                window.location.reload();
+                return;
+            }
+            if (Number(data.current_index) !== initialIndex || Boolean(data.is_locked) !== initialLocked) {
+                window.location.reload();
+            }
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
     syncClock();
-    setInterval(syncClock, 4000);
+    setInterval(syncClock, 1000);
 
     const tick = () => {
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
         const leftSec = Math.max(0, Math.ceil(leftMs / 1000));
         if (countdownEl) countdownEl.textContent = String(leftSec);
         if (answerCountdownEl) answerCountdownEl.textContent = String(leftSec);
-        if (leftSec <= 0) {
-            if (waitingStage && resultStage && !resultShown) {
-                waitingStage.style.display = 'none';
-                resultStage.style.display = 'grid';
-                resultShown = true;
-                startNextCountdown();
-                return;
-            }
-            window.location.reload();
-        }
+        if (nextCountdownEl) nextCountdownEl.textContent = String(leftSec);
     };
     tick();
     setInterval(tick, 300);

@@ -135,8 +135,10 @@ class LiveQuizController extends Controller
         $session->load(['quiz.questions', 'participants.studentUser']);
         $rows = $this->leaderboardRows($session);
         $currentQuestionStats = $this->currentQuestionStats($session);
+        $participantRows = $this->participantRows($session);
+        $topFive = $this->questionTopFive($session);
 
-        return view('live-quiz.session', compact('session', 'rows', 'currentQuestionStats'));
+        return view('live-quiz.session', compact('session', 'rows', 'currentQuestionStats', 'participantRows', 'topFive'));
     }
 
     /**
@@ -160,6 +162,8 @@ class LiveQuizController extends Controller
             'ends_at_ms' => (int) ($session->ends_at_ms ?? 0),
             'server_now_ms' => $this->nowMs(),
             'stats' => $this->currentQuestionStats($session),
+            'participants' => $this->participantRows($session),
+            'top_five' => $this->questionTopFive($session),
             'rows' => $this->leaderboardRows($session),
             'report_url' => route('live-quiz.session.report', $session),
         ]);
@@ -205,28 +209,29 @@ class LiveQuizController extends Controller
             return redirect()->route('live-quiz.index')->with('ok', 'Quiz tamamlandi. Quiz listesine yonlendirildiniz.');
         }
 
-        $questions = $session->quiz->questions()->sortBy('sort_order')->values();
-        $next = (int) $session->current_index + 1;
-        if ($next >= $questions->count()) {
-            return $this->finish($session);
+        if ($session->is_locked) {
+            return back()->with('ok', 'Sonuçlar gösteriliyor. Sıradaki soru 5 saniye sonunda tüm öğrencilerde aynı anda açılacak.');
         }
 
-        $duration = max(5, (int) ($questions[$next]->duration_sec ?? 30));
-        $session->update([
-            'current_index' => $next,
-            'is_locked' => false,
-            'ends_at_ms' => $this->nowMs() + ($duration * 1000),
-        ]);
+        $this->beginQuestionResults($session, $this->nowMs());
 
-        return back()->with('ok', 'Sonraki soruya gecildi.');
+        return back()->with('ok', 'Cevaplar kapatıldı. İlk 5 öğrenci gösteriliyor; sıradaki soru 5 saniye sonra herkeste aynı anda açılacak.');
     }
 
     public function toggleLock(LiveQuizSession $session)
     {
         abort_unless($session->teacher_user_id === auth()->id(), 403);
-        $session->update(['is_locked' => !$session->is_locked]);
+        $session = $this->syncSessionByTimer($session);
+        if ($session->status !== 'live') {
+            return back();
+        }
+        if ($session->is_locked) {
+            return back()->with('ok', 'Sonuç aşaması devam ediyor; sıradaki soru tüm ekranlarda otomatik açılacak.');
+        }
 
-        return back()->with('ok', $session->is_locked ? 'Soru kilitlendi.' : 'Soru acildi.');
+        $this->beginQuestionResults($session, $this->nowMs());
+
+        return back()->with('ok', 'Cevaplar kapatıldı ve 5 saniyelik sonuç aşaması başlatıldı.');
     }
 
     public function finish(LiveQuizSession $session)
@@ -325,8 +330,22 @@ class LiveQuizController extends Controller
             ->where('question_index', (int) $session->current_index)
             ->exists();
         $joinedCount = $session->status === 'lobby' ? $session->participants()->count() : 0;
+        $participantRows = $this->participantRows($session);
+        $currentAnswer = LiveQuizAnswer::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('student_user_id', auth()->id())
+            ->where('question_index', (int) $session->current_index)
+            ->first();
+        $topFive = $this->questionTopFive($session);
 
-        return view('student-portal.live-quiz-play', compact('session', 'alreadyAnsweredCurrent', 'joinedCount'));
+        return view('student-portal.live-quiz-play', compact(
+            'session',
+            'alreadyAnsweredCurrent',
+            'joinedCount',
+            'participantRows',
+            'currentAnswer',
+            'topFive'
+        ));
     }
 
     /**
@@ -346,6 +365,8 @@ class LiveQuizController extends Controller
             'ends_at_ms' => (int) ($session->ends_at_ms ?? 0),
             'server_now_ms' => $this->nowMs(),
             'joined_count' => $session->status === 'lobby' ? $session->participants()->count() : null,
+            'participants' => $this->participantRows($session),
+            'top_five' => $this->questionTopFive($session),
         ]);
     }
 
@@ -609,6 +630,90 @@ class LiveQuizController extends Controller
         ];
     }
 
+    private function participantRows(LiveQuizSession $session): array
+    {
+        return $session->participants()
+            ->with('studentUser:id,name')
+            ->oldest('id')
+            ->get()
+            ->map(fn (LiveQuizParticipant $participant) => [
+                'user_id' => (int) $participant->student_user_id,
+                'student_name' => (string) ($participant->studentUser?->name ?: 'Öğrenci'),
+                'joined_at' => $participant->created_at?->format('H:i:s'),
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function questionTopFive(LiveQuizSession $session): array
+    {
+        if ($session->status !== 'live' || !$session->is_locked) {
+            return [];
+        }
+
+        return LiveQuizAnswer::query()
+            ->with('studentUser:id,name')
+            ->where('live_quiz_session_id', $session->id)
+            ->where('question_index', (int) $session->current_index)
+            ->whereNotNull('selected_answer')
+            ->orderByDesc('is_correct')
+            ->orderByDesc('xp_earned')
+            ->orderByRaw('answered_at_ms IS NULL')
+            ->orderBy('answered_at_ms')
+            ->limit(5)
+            ->get()
+            ->map(fn (LiveQuizAnswer $answer, int $index) => [
+                'rank' => $index + 1,
+                'student_name' => (string) ($answer->studentUser?->name ?: 'Öğrenci'),
+                'is_correct' => (bool) $answer->is_correct,
+                'answered' => $answer->selected_answer !== null && $answer->selected_answer !== '',
+                'xp' => (int) $answer->xp_earned,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function finalizeCurrentQuestion(LiveQuizSession $session): void
+    {
+        $participantIds = $session->participants()->pluck('student_user_id');
+        if ($participantIds->isEmpty()) {
+            return;
+        }
+
+        $answeredIds = LiveQuizAnswer::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('question_index', (int) $session->current_index)
+            ->pluck('student_user_id');
+
+        $now = now();
+        $missingRows = $participantIds->diff($answeredIds)->map(fn ($studentUserId) => [
+            'live_quiz_session_id' => $session->id,
+            'student_user_id' => (int) $studentUserId,
+            'question_index' => (int) $session->current_index,
+            'selected_answer' => null,
+            'is_correct' => false,
+            'xp_earned' => 0,
+            'answered_at_ms' => null,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->values()->all();
+
+        if ($missingRows !== []) {
+            LiveQuizAnswer::query()->insertOrIgnore($missingRows);
+        }
+    }
+
+    private function beginQuestionResults(LiveQuizSession $session, int $nowMs): LiveQuizSession
+    {
+        $this->finalizeCurrentQuestion($session);
+        $session->update([
+            'is_locked' => true,
+            'ends_at_ms' => $nowMs + 5000,
+        ]);
+
+        return $session->fresh(['quiz.questions']);
+    }
+
     private function leaderboardRows(LiveQuizSession $session): array
     {
         $rows = LiveQuizAnswer::query()
@@ -692,7 +797,11 @@ class LiveQuizController extends Controller
             return $session->fresh(['quiz.questions']);
         }
 
-        while ($session->status === 'live' && $nowMs >= $endsAtMs) {
+        if ($session->is_locked) {
+            if ($nowMs < $endsAtMs) {
+                return $session;
+            }
+
             $nextIndex = $currentIndex + 1;
             if ($nextIndex >= $questions->count()) {
                 $session->update([
@@ -701,18 +810,27 @@ class LiveQuizController extends Controller
                     'finished_at_ms' => $nowMs,
                 ]);
                 $this->writeQuizToStudentReports($session->fresh('quiz'));
-                break;
+                return $session->fresh(['quiz.questions']);
             }
 
             $duration = max(5, (int) ($questions[$nextIndex]->duration_sec ?? 30));
-            $currentIndex = $nextIndex;
-            $endsAtMs = $endsAtMs + ($duration * 1000);
-
             $session->update([
-                'current_index' => $currentIndex,
+                'current_index' => $nextIndex,
                 'is_locked' => false,
-                'ends_at_ms' => $endsAtMs,
+                'ends_at_ms' => $nowMs + ($duration * 1000),
             ]);
+
+            return $session->fresh(['quiz.questions']);
+        }
+
+        $joinedCount = $session->participants()->count();
+        $answeredCount = LiveQuizAnswer::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('question_index', $currentIndex)
+            ->count();
+
+        if ($nowMs >= $endsAtMs || ($joinedCount > 0 && $answeredCount >= $joinedCount)) {
+            return $this->beginQuestionResults($session, $nowMs);
         }
 
         return $session->fresh(['quiz.questions']);
