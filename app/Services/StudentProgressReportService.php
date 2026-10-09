@@ -115,10 +115,7 @@ class StudentProgressReportService
         $quizXp = (int) LiveQuizAnswer::query()
             ->where('student_user_id', $student->user_id)
             ->sum('xp_earned');
-        $quizJoinedCount = (int) LiveQuizAnswer::query()
-            ->where('student_user_id', $student->user_id)
-            ->distinct('live_quiz_session_id')
-            ->count('live_quiz_session_id');
+        $quizJoinedCount = \App\Models\LiveQuizSession::joinedCountForUser((int) $student->user_id);
         // Canli Yarisma'da kazanilan XP daha once hicbir yerde ogrencinin
         // toplam XP'sine dahil edilmiyordu; Canli Quiz ile ayni sekilde
         // (katilim sayisi + kazanilan XP) burada da takip ediliyor.

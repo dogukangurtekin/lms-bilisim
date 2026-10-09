@@ -908,9 +908,7 @@ class StudentPortalController extends Controller
         $gradeRankPos = $gradePeers->mapWithKeys(fn ($s) => [$s->id => $xpMap[$s->id] ?? 0])->sortDesc()->keys()->search($student->id);
         $classRank = $gradeRankPos === false ? 999 : ($gradeRankPos + 1);
 
-        $quizJoinedCount = LiveQuizAnswer::where('student_user_id', $student->user_id)
-            ->distinct('live_quiz_session_id')
-            ->count('live_quiz_session_id');
+        $quizJoinedCount = \App\Models\LiveQuizSession::joinedCountForUser((int) $student->user_id);
         $competitionJoinedCount = CompetitionParticipant::where('student_user_id', $student->user_id)
             ->distinct('competition_room_id')
             ->count('competition_room_id');

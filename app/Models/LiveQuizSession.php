@@ -48,4 +48,24 @@ class LiveQuizSession extends Model
     {
         return $this->hasMany(LiveQuizParticipant::class, 'live_quiz_session_id');
     }
+
+    /**
+     * Ogrencinin katildigi canli quiz oturumu sayisi. Hem katilim (participants)
+     * hem cevap (answers) kayitlari sayilir; yalniz cevaplara bakmak, katilip
+     * hicbir soruya cevap kaydi olusmayan ogrenciyi dusuruyordu.
+     */
+    public static function joinedCountForUser(int $userId): int
+    {
+        return (int) LiveQuizParticipant::query()
+            ->where('student_user_id', $userId)
+            ->select('live_quiz_session_id')
+            ->union(
+                LiveQuizAnswer::query()
+                    ->where('student_user_id', $userId)
+                    ->select('live_quiz_session_id')
+            )
+            ->get()
+            ->unique('live_quiz_session_id')
+            ->count();
+    }
 }
