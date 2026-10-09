@@ -18,6 +18,7 @@
     'isFavorite' => false,
     'courseId' => null,
     'completionStatus' => null,
+    'isNew' => false,
     'downloadUrl' => null,
     'creatorLabel' => '',
 ])
@@ -59,7 +60,7 @@
     $launchUrl = filled($primaryUrl) && $primaryUrl !== '#' ? $primaryUrl : '#';
 @endphp
 
-<article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:1.5px solid rgba(124,58,237,.18);border-radius:24px;box-shadow:0 16px 42px rgba(15,23,42,.11), 0 0 0 1px rgba(167,139,250,.12) inset;">
+<article class="group relative flex h-full w-full min-w-0 flex-col overflow-hidden bg-white shadow-[0_16px_42px_rgba(15,23,42,.11)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(91,33,182,.16)]" style="box-sizing:border-box;border:{{ $completionStatus === 'pending' ? '3px solid #fb923c' : '1.5px solid rgba(124,58,237,.18)' }};border-radius:24px;box-shadow:{{ $completionStatus === 'pending' ? '0 18px 42px rgba(249,115,22,.18),0 0 0 1px #fed7aa inset' : '0 16px 42px rgba(15,23,42,.11),0 0 0 1px rgba(167,139,250,.12) inset' }};">
     <div class="relative overflow-hidden bg-slate-100 course-card-nav" data-nav-url="{{ $launchUrl }}" style="aspect-ratio:3/2;flex:0 0 auto;width:100%;cursor:pointer;">
             @if($hasCover)
                     <img
@@ -84,7 +85,7 @@
                         title="{{ $completionStatus === 'completed' ? 'Ders tamamlandı' : 'Ders bekliyor' }}"
                         aria-label="{{ $completionStatus === 'completed' ? 'Ders tamamlandı' : 'Ders bekliyor' }}"
                         role="img"
-                        style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:999px;background:{{ $completionStatus === 'completed' ? '#dcfce7' : '#fef3c7' }};color:{{ $completionStatus === 'completed' ? '#15803d' : '#b45309' }};border:2px solid rgba(255,255,255,.92);box-shadow:0 12px 28px rgba(15,23,42,.18);"
+                        style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:{{ $completionStatus === 'completed' ? '48px' : '150px' }};height:50px;padding:0 13px;border-radius:999px;background:{{ $completionStatus === 'completed' ? '#dcfce7' : '#f97316' }};color:{{ $completionStatus === 'completed' ? '#15803d' : '#fff' }};border:3px solid rgba(255,255,255,.96);box-shadow:0 12px 28px {{ $completionStatus === 'completed' ? 'rgba(22,163,74,.22)' : 'rgba(234,88,12,.34)' }};font-size:12px;font-weight:900;letter-spacing:.04em;"
                     >
                         @if($completionStatus === 'completed')
                             <svg viewBox="0 0 24 24" aria-hidden="true" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round">
@@ -95,6 +96,7 @@
                                 <circle cx="12" cy="12" r="9"/>
                                 <path d="M12 7v5l3 2"/>
                             </svg>
+                            <span style="line-height:1.1;text-align:left">{{ $isNew ? 'YENİ DERS' : 'DERS' }}<br><b>BEKLİYOR</b></span>
                         @endif
                     </span>
                 @endif

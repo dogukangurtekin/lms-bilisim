@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\Course\CourseImageExtractor;
+use App\Support\Brand;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,11 +33,11 @@ class Course extends Model
             $decoded = is_array($decodedAgain) ? $decodedAgain : [];
         }
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return [];
         }
 
-        if (!empty($decoded['cover_image']) && is_string($decoded['cover_image'])) {
+        if (! empty($decoded['cover_image']) && is_string($decoded['cover_image'])) {
             $decoded['cover_image'] = $this->normalizeCoverPath((string) $decoded['cover_image']);
         }
 
@@ -52,7 +54,7 @@ class Course extends Model
         $cover = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
         $cover = preg_replace('#^(?:course-covers/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
 
-        $relative = 'kapak-gorseli/' . ltrim($cover, '/');
+        $relative = 'kapak-gorseli/'.ltrim($cover, '/');
         $relative = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $relative) ?? $relative;
         $appendVersion = static function (string $url, string $path): string {
             $stamp = is_file($path) ? (string) filemtime($path) : '';
@@ -60,39 +62,40 @@ class Course extends Model
                 return $url;
             }
 
-            return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . $stamp;
+            return $url.(str_contains($url, '?') ? '&' : '?').'v='.$stamp;
         };
         if (is_file(public_path($relative))) {
             return $appendVersion(asset($relative), public_path($relative));
         }
 
-        if (is_file(public_path('public/' . $relative))) {
+        if (is_file(public_path('public/'.$relative))) {
             return $appendVersion(asset($relative), public_path($relative));
         }
 
-        if (is_file(storage_path('app/public/' . $relative))) {
+        if (is_file(storage_path('app/public/'.$relative))) {
             return route('courses.cover', ['path' => $relative]);
         }
 
-        if (is_file(storage_path('app/public/course-covers/' . basename($relative)))) {
-            return route('courses.cover', ['path' => 'course-covers/' . basename($relative)]);
+        if (is_file(storage_path('app/public/course-covers/'.basename($relative)))) {
+            return route('courses.cover', ['path' => 'course-covers/'.basename($relative)]);
         }
 
         $baseName = pathinfo($relative, PATHINFO_FILENAME);
         foreach (['png', 'webp', 'jpg', 'jpeg'] as $ext) {
-            $altRelative = 'kapak-gorseli/' . $baseName . '.' . $ext;
-            if (is_file(public_path($altRelative)) || is_file(public_path('public/' . $altRelative))) {
-                $candidate = is_file(public_path($altRelative)) ? public_path($altRelative) : public_path('public/' . $altRelative);
+            $altRelative = 'kapak-gorseli/'.$baseName.'.'.$ext;
+            if (is_file(public_path($altRelative)) || is_file(public_path('public/'.$altRelative))) {
+                $candidate = is_file(public_path($altRelative)) ? public_path($altRelative) : public_path('public/'.$altRelative);
+
                 return $appendVersion(asset($altRelative), $candidate);
             }
-            if (is_file(storage_path('app/public/' . $altRelative))) {
+            if (is_file(storage_path('app/public/'.$altRelative))) {
                 return route('courses.cover', ['path' => $altRelative]);
             }
         }
 
         return is_file(public_path($relative))
             ? $appendVersion(asset($relative), public_path($relative))
-            : \App\Support\Brand::logoUrl();
+            : Brand::logoUrl();
     }
 
     private function normalizeCoverPath(string $cover): string
@@ -111,13 +114,13 @@ class Course extends Model
         $cover = preg_replace('#^storage/#i', '', $cover) ?? $cover;
 
         if (str_starts_with($cover, 'course-covers/')) {
-            $cover = 'kapak-gorseli/' . substr($cover, strlen('course-covers/'));
+            $cover = 'kapak-gorseli/'.substr($cover, strlen('course-covers/'));
         } elseif (str_starts_with($cover, 'kapak-gorseli/')) {
             $cover = $cover;
         } elseif (str_starts_with($cover, 'courses/cover/')) {
-            $cover = 'kapak-gorseli/' . substr($cover, strlen('courses/cover/'));
+            $cover = 'kapak-gorseli/'.substr($cover, strlen('courses/cover/'));
         } elseif (str_contains($cover, '/course-covers/')) {
-            $cover = 'kapak-gorseli/' . basename($cover);
+            $cover = 'kapak-gorseli/'.basename($cover);
         }
 
         $cover = preg_replace('#^(?:kapak-gorseli/)+#i', 'kapak-gorseli/', $cover) ?? $cover;
@@ -144,7 +147,7 @@ class Course extends Model
         // symlink. storage/ survives this host's git-based deploys (unlike
         // public/, which gets reset to whatever is committed on every push),
         // so this is safe to run unattended.
-        $value = app(\App\Services\Course\CourseImageExtractor::class)->extract($value)['payload'];
+        $value = app(CourseImageExtractor::class)->extract($value)['payload'];
 
         $this->attributes['lesson_payload'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
@@ -167,6 +170,11 @@ class Course extends Model
     public function grades(): HasMany
     {
         return $this->hasMany(Grade::class);
+    }
+
+    public function homeworks(): HasMany
+    {
+        return $this->hasMany(CourseHomework::class);
     }
 
     public function parentCourse(): BelongsTo

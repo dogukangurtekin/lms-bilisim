@@ -710,6 +710,11 @@ class StudentPortalController extends Controller
     private function studentCourses(Student $student)
     {
         return Course::with(['teacher.user', 'schoolClass'])
+            ->withMax([
+                'homeworks as student_assigned_at' => fn ($query) => $query
+                    ->where('school_class_id', $student->school_class_id)
+                    ->where('assignment_type', 'lesson'),
+            ], 'created_at')
             ->whereNull('parent_course_id')
             ->whereExists(function ($sq) use ($student) {
                 $sq->select(DB::raw(1))

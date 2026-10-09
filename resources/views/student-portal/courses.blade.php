@@ -149,6 +149,8 @@
                 $thumb = (string) ($c->coverImageUrl() ?: data_get($firstSlide, 'image_url') ?: '');
                 $difficulty = (string) (data_get($c->lesson_payload, 'difficulty') ?: (((int) ($c->weekly_hours ?? 0) >= 4) ? 'Orta' : 'Kolay'));
                 $age = ((int) ($c->schoolClass?->name ?? 5) + 5) . '+';
+                $assignedAt = $c->student_assigned_at ? \Carbon\Carbon::parse($c->student_assigned_at) : $c->created_at;
+                $isNewAssignment = ! $cp?->completed && $assignedAt?->gte(now()->subDays(7));
             @endphp
             <div class="course-card-cell">
                 <x-course-card
@@ -163,6 +165,7 @@
                     primary-variant="success"
                     :course-id="$c->id"
                     :completion-status="$cp?->completed ? 'completed' : 'pending'"
+                    :is-new="$isNewAssignment"
                     :is-favorite="in_array($c->id, $favoriteCourseIds ?? [])"
                 />
             </div>

@@ -3,6 +3,17 @@
 @section('content')
 <div class="top"><h1>Ödevlerim</h1></div>
 <style>
+    .student-assignment-table tbody tr.assignment-pending{background:linear-gradient(90deg,#fff7ed 0%,#fffbeb 100%);box-shadow:inset 5px 0 0 #f97316}
+    .student-assignment-table tbody tr.assignment-in-progress{background:#eff6ff;box-shadow:inset 5px 0 0 #3b82f6}
+    .assignment-status{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:8px 13px;border-radius:12px;font-size:14px;font-weight:900;letter-spacing:.01em;white-space:nowrap}
+    .assignment-status svg{width:25px;height:25px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+    .assignment-status--pending{color:#9a3412;background:#ffedd5;border:2px solid #fb923c;box-shadow:0 6px 15px rgba(249,115,22,.18)}
+    .assignment-status--progress{color:#1d4ed8;background:#dbeafe;border:2px solid #60a5fa}
+    .assignment-status--completed{color:#166534;background:#dcfce7;border:2px solid #4ade80}
+    .assignment-new-label{display:inline-flex;align-items:center;margin-left:3px;padding:3px 7px;border-radius:999px;background:#ea580c;color:#fff;font-size:10px;font-weight:900;letter-spacing:.08em;animation:assignment-pulse 1.8s ease-in-out infinite}
+    .assignment-title-cell strong{display:block;color:#0f172a;font-size:15px}
+    .assignment-title-cell small{display:block;margin-top:4px;color:#c2410c;font-weight:800}
+    @keyframes assignment-pulse{0%,100%{box-shadow:0 0 0 0 rgba(234,88,12,.28)}50%{box-shadow:0 0 0 7px rgba(234,88,12,0)}}
     @media (max-width:768px){
         .student-assignment-table thead{display:none}
         .student-assignment-table,
@@ -16,6 +27,7 @@
             margin-bottom:10px;
             background:#fff;
         }
+        .student-assignment-table tr.assignment-pending{border:2px solid #fb923c;box-shadow:inset 5px 0 0 #f97316,0 8px 18px rgba(249,115,22,.12)}
         .student-assignment-table td{
             border-bottom:1px dashed #e2e8f0;
             padding:8px 0;
@@ -69,13 +81,26 @@
                     $desc = $c->name . ' dersi için hazırlanan konu anlatımı ve etkinlik içerikleri.';
                 }
                 $solvedQuestions = (int) data_get($cp?->payload, 'solved_questions', 0);
+                $isCompleted = (bool) $cp?->completed;
+                $assignedAt = $c->student_assigned_at ? \Carbon\Carbon::parse($c->student_assigned_at) : $c->created_at;
+                $isNew = ! $isCompleted && $assignedAt?->gte(now()->subDays(7));
             @endphp
-            <tr>
-                <td data-label="Ders">{{ $c->name }}</td>
+            <tr class="{{ $isCompleted ? '' : 'assignment-pending' }}">
+                <td data-label="Ders" class="assignment-title-cell">
+                    <strong>{{ $c->name }}</strong>
+                    @if($isNew)<small>Yeni verilen ders</small>@endif
+                </td>
                 <td data-label="Açıklama">{{ \Illuminate\Support\Str::limit($desc, 120) }}</td>
                 <td data-label="Çözülen Soru">{{ $solvedQuestions > 0 ? $solvedQuestions : '-' }}</td>
                 <td data-label="Durum">
-                    <span class="badge">{{ $cp?->completed ? 'Tamamlandı' : 'Bekliyor' }}</span>
+                    <span class="assignment-status {{ $isCompleted ? 'assignment-status--completed' : 'assignment-status--pending' }}">
+                        @if($isCompleted)
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg> Tamamlandı
+                        @else
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            Bekliyor @if($isNew)<span class="assignment-new-label">YENİ</span>@endif
+                        @endif
+                    </span>
                 </td>
                 <td class="actions" data-label="İşlem">
                     <a class="btn" href="{{ route('course.detail', ['id' => $c->id]) }}">İçerik</a>
@@ -116,12 +141,28 @@ document.addEventListener('DOMContentLoaded', () => {
         </thead>
         <tbody>
         @forelse($courseHomeworks as $h)
-            @php $p = $progress[$h->id] ?? null; @endphp
-            <tr>
-                <td data-label="Başlık">{{ $h->title }}</td>
+            @php
+                $p = $progress[$h->id] ?? null;
+                $state = $p?->completed_at ? 'completed' : ($p?->started_at ? 'progress' : 'pending');
+                $isNew = $state === 'pending' && $h->created_at?->gte(now()->subDays(7));
+            @endphp
+            <tr class="assignment-{{ $state === 'progress' ? 'in-progress' : $state }}">
+                <td data-label="Başlık" class="assignment-title-cell">
+                    <strong>{{ $h->title }}</strong>
+                    @if($isNew)<small>Yeni verilen ödev</small>@endif
+                </td>
                 <td data-label="Teslim">{{ $h->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td data-label="Durum">
-                    <span class="badge">{{ $p?->completed_at ? 'Tamamlandı' : ($p?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
+                    <span class="assignment-status assignment-status--{{ $state }}">
+                        @if($state === 'completed')
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg> Tamamlandı
+                        @elseif($state === 'progress')
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg> Devam Ediyor
+                        @else
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            Bekliyor @if($isNew)<span class="assignment-new-label">YENİ</span>@endif
+                        @endif
+                    </span>
                 </td>
                 <td class="actions" data-label="İşlem">
                     <button
@@ -167,14 +208,30 @@ document.addEventListener('DOMContentLoaded', () => {
         </thead>
         <tbody>
         @forelse($assignments as $a)
-            @php $gp = $gameProgress[$a->id] ?? null; @endphp
-            <tr>
+            @php
+                $gp = $gameProgress[$a->id] ?? null;
+                $state = $gp?->completed_at ? 'completed' : ($gp?->started_at ? 'progress' : 'pending');
+                $isNew = $state === 'pending' && $a->created_at?->gte(now()->subDays(7));
+            @endphp
+            <tr class="assignment-{{ $state === 'progress' ? 'in-progress' : $state }}">
                 <td data-label="Uygulama">{{ $a->game_name }}</td>
-                <td data-label="Ödev">{{ $a->title }}</td>
+                <td data-label="Ödev" class="assignment-title-cell">
+                    <strong>{{ $a->title }}</strong>
+                    @if($isNew)<small>Yeni verilen oyun / etkinlik</small>@endif
+                </td>
                 <td data-label="Teslim">{{ $a->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td data-label="Level">{{ $a->level_from ?? '-' }} - {{ $a->level_to ?? '-' }}</td>
                 <td data-label="Durum">
-                    <span class="badge">{{ $gp?->completed_at ? 'Tamamlandı' : ($gp?->started_at ? 'Devam Ediyor' : 'Bekliyor') }}</span>
+                    <span class="assignment-status assignment-status--{{ $state }}">
+                        @if($state === 'completed')
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg> Tamamlandı
+                        @elseif($state === 'progress')
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M14 7l5 5-5 5"/></svg> Devam Ediyor
+                        @else
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            Bekliyor @if($isNew)<span class="assignment-new-label">YENİ</span>@endif
+                        @endif
+                    </span>
                 </td>
                 <td data-label="Başla">
                     @if($gp?->completed_at)
