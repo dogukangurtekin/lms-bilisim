@@ -9,13 +9,17 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentGameAssignmentProgress;
 use App\Models\StudentHomeworkProgress;
+use App\Models\StudentReport;
 use App\Models\StudentTimeStat;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Models\UserProfile;
 use App\Services\StudentXpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -35,6 +39,7 @@ class DashboardController extends Controller
         'leaderboard' => ['visible' => true, 'span' => 12, 'order' => 100, 'title' => 'Başarı Listesi', 'type' => 'leaderboard'],
         'quick_qr' => ['visible' => true, 'span' => 12, 'order' => 110, 'title' => 'Mobil QR Girişi', 'type' => 'qr'],
         'active_classes' => ['visible' => true, 'span' => 6, 'order' => 75, 'title' => 'Aktif Sınıflar', 'type' => 'active_classes'],
+        'xp_gift' => ['visible' => true, 'span' => 12, 'order' => 72, 'title' => 'XP Hediyesi', 'type' => 'xp_gift'],
     ];
 
     public function index()
@@ -426,12 +431,94 @@ class DashboardController extends Controller
         });
 
         $layout = $this->resolveLayout($user);
+        $xpGiftClasses = collect();
+        $xpGiftStudents = collect();
+        if ($user?->hasRole('admin')) {
+            $xpGiftClasses = SchoolClass::query()
+                ->select(['id', 'name', 'section'])
+                ->orderBy('name')
+                ->orderBy('section')
+                ->get();
+            $xpGiftStudents = Student::query()
+                ->with(['user:id,name,is_active', 'schoolClass:id,name,section'])
+                ->whereHas('user', fn ($query) => $query->where('is_active', true))
+                ->get()
+                ->sortBy(fn (Student $student) => ($student->schoolClass?->name ?? '').'/'.($student->schoolClass?->section ?? '').'/'.($student->user?->name ?? ''))
+                ->values();
+        }
 
         return view('dashboard.index', [
             'dashboard' => $dashboard,
             'dashboardLayout' => $layout,
             'selectedClassId' => $dashboard['selected_class_id'] ?? 0,
+            'xpGiftClasses' => $xpGiftClasses,
+            'xpGiftStudents' => $xpGiftStudents,
         ]);
+    }
+
+    public function grantXp(Request $request)
+    {
+        $admin = $request->user();
+        abort_unless($admin?->hasRole('admin'), 403);
+
+        $data = $request->validate([
+            'target_scope' => ['required', 'in:all,class,students'],
+            'class_id' => ['nullable', 'required_if:target_scope,class', 'integer', 'exists:school_classes,id'],
+            'student_ids' => ['nullable', 'required_if:target_scope,students', 'array', 'min:1'],
+            'student_ids.*' => ['integer', 'distinct', 'exists:students,id'],
+            'amount' => ['required', 'integer', 'min:1', 'max:10000'],
+            'description' => ['required', 'string', 'min:3', 'max:255'],
+        ]);
+
+        $students = Student::query()
+            ->with('user')
+            ->whereHas('user', fn ($query) => $query->where('is_active', true))
+            ->when($data['target_scope'] === 'class', fn ($query) => $query->where('school_class_id', (int) $data['class_id']))
+            ->when($data['target_scope'] === 'students', fn ($query) => $query->whereIn('id', $data['student_ids'] ?? []))
+            ->get();
+
+        if ($students->isEmpty()) {
+            return back()->withInput()->with('error', 'XP gönderilecek aktif öğrenci bulunamadı.');
+        }
+
+        $amount = (int) $data['amount'];
+        $description = trim((string) $data['description']);
+        $batchUuid = (string) Str::uuid();
+        $earnedXp = $this->xpService->earnedFor($students);
+
+        DB::transaction(function () use ($students, $earnedXp, $amount, $description, $batchUuid, $admin): void {
+            foreach ($students as $student) {
+                $baselineXp = (int) ($earnedXp[$student->id] ?? 0);
+                $profile = UserProfile::query()->lockForUpdate()->firstOrCreate(
+                    ['user_id' => $student->user_id],
+                    ['username' => $student->user?->name, 'role' => 'student', 'xp' => 0, 'meta' => []],
+                );
+                $profile->xp = max((int) $profile->xp, $baselineXp) + $amount;
+                $profile->save();
+
+                $report = StudentReport::query()->lockForUpdate()->firstOrCreate(
+                    ['user_id' => $student->user_id],
+                    ['total_xp' => 0, 'total_duration_ms' => 0, 'completion_percent' => 0, 'meta' => []],
+                );
+                $report->total_xp = max((int) $report->total_xp, $baselineXp) + $amount;
+                $report->save();
+
+                DB::table('student_xp_grants')->insert([
+                    'batch_uuid' => $batchUuid,
+                    'student_id' => $student->id,
+                    'user_id' => $student->user_id,
+                    'amount' => $amount,
+                    'description' => $description,
+                    'granted_by' => $admin->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        $this->forgetDashboardCaches($admin);
+
+        return redirect()->route('dashboard')->with('ok', $students->count()." öğrenciye {$amount} XP hediyesi gönderildi.");
     }
 
     /**

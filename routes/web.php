@@ -153,6 +153,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/widget-layout', [DashboardController::class, 'saveLayout'])->name('dashboard.widget-layout.save');
+    Route::post('/dashboard/xp-hediyesi', [DashboardController::class, 'grantXp'])->middleware('throttle:10,1')->name('dashboard.xp-gifts.store');
     Route::get('/dashboard/aktif-siniflar', [DashboardController::class, 'activeClasses'])->name('dashboard.active-classes');
     Route::get('/dashboard/sinif/{class}/aktif-ogrenciler', [DashboardController::class, 'activeClassStudents'])->name('dashboard.class.active-students');
     Route::get('/dashboard/siralama', [DashboardController::class, 'rankingByClass'])->name('dashboard.ranking-by-class');

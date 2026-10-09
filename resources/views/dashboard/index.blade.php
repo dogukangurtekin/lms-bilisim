@@ -161,6 +161,17 @@
         grid-template-columns:28px 1fr auto;
         padding:8px 10px;
     }
+    .xp-gift-widget{background:linear-gradient(135deg,#f0fdf4 0%,#ffffff 48%,#eff6ff 100%);border-color:#86efac!important}
+    .xp-gift-form{display:grid;grid-template-columns:1.1fr 1.1fr .75fr 1.4fr auto;gap:12px;align-items:end;margin-top:12px}
+    .xp-gift-field{display:grid;gap:6px;min-width:0}
+    .xp-gift-field label{font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#166534}
+    .xp-gift-field input,.xp-gift-field select{width:100%;min-height:43px;padding:9px 11px;border:1.5px solid #bbf7d0;border-radius:12px;background:#fff;color:#0f172a;font:inherit;font-size:13px;box-sizing:border-box}
+    .xp-gift-field select[multiple]{min-height:118px}
+    .xp-gift-submit{min-height:43px;padding:10px 18px;border:0;border-radius:12px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:900;cursor:pointer;box-shadow:0 10px 24px rgba(22,163,74,.24)}
+    .xp-gift-note{grid-column:1/-1;margin:0;color:#475569;font-size:11px}
+    .xp-gift-errors{grid-column:1/-1;padding:10px 12px;border-radius:12px;background:#fff1f2;color:#be123c;font-size:12px;font-weight:700}
+    @media(max-width:1050px){.xp-gift-form{grid-template-columns:1fr 1fr}.xp-gift-submit{width:100%}}
+    @media(max-width:680px){.xp-gift-form{grid-template-columns:1fr}}
 </style>
 <div class="dashboard-shell" data-dashboard-shell>
     <section class="class-tabs-strip" aria-label="Sınıf sekmeleri">
@@ -282,6 +293,59 @@
                     </div>
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
+
+                @if(auth()->user()?->hasRole('admin'))
+                    <article class="dashboard-widget widget-span-12 xp-gift-widget" data-widget-key="xp_gift" draggable="true">
+                        <div class="widget-head">
+                            <div><strong>XP Hediyesi Gönder</strong><span>Tüm öğrencilere, sınıfa veya seçilen öğrencilere XP yükle</span></div>
+                            <button type="button" class="widget-toggle" data-widget-toggle="xp_gift" aria-label="Gizle" title="Gizle">-</button>
+                        </div>
+                        <form method="POST" action="{{ route('dashboard.xp-gifts.store') }}" class="xp-gift-form" data-xp-gift-form>
+                            @csrf
+                            @if($errors->any())
+                                <div class="xp-gift-errors">{{ $errors->first() }}</div>
+                            @endif
+                            <div class="xp-gift-field">
+                                <label for="xp-gift-scope">Hedef</label>
+                                <select id="xp-gift-scope" name="target_scope" data-xp-gift-scope required>
+                                    <option value="all" @selected(old('target_scope', 'all') === 'all')>Tüm öğrenciler</option>
+                                    <option value="class" @selected(old('target_scope') === 'class')>Sınıf ve şube</option>
+                                    <option value="students" @selected(old('target_scope') === 'students')>Öğrenci seç</option>
+                                </select>
+                            </div>
+                            <div class="xp-gift-field" data-xp-gift-class hidden>
+                                <label for="xp-gift-class">Sınıf / Şube</label>
+                                <select id="xp-gift-class" name="class_id">
+                                    <option value="">Sınıf seçin</option>
+                                    @foreach($xpGiftClasses as $class)
+                                        <option value="{{ $class->id }}" @selected((int) old('class_id') === (int) $class->id)>{{ $class->name }}/{{ $class->section }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="xp-gift-field" data-xp-gift-students hidden>
+                                <label for="xp-gift-students">Öğrenciler</label>
+                                <select id="xp-gift-students" name="student_ids[]" multiple>
+                                    @foreach($xpGiftStudents as $student)
+                                        <option value="{{ $student->id }}" @selected(in_array($student->id, array_map('intval', (array) old('student_ids', [])), true))>
+                                            {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} — {{ $student->user?->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="xp-gift-field">
+                                <label for="xp-gift-amount">XP Miktarı</label>
+                                <input id="xp-gift-amount" type="number" name="amount" min="1" max="10000" value="{{ old('amount') }}" placeholder="Örn. 100" required>
+                            </div>
+                            <div class="xp-gift-field">
+                                <label for="xp-gift-description">Hediye Açıklaması</label>
+                                <input id="xp-gift-description" type="text" name="description" maxlength="255" value="{{ old('description') }}" placeholder="Örn. Dönem sonu başarı hediyesi" required>
+                            </div>
+                            <button type="submit" class="xp-gift-submit">XP Gönder</button>
+                            <p class="xp-gift-note">Gönderim kalıcıdır ve açıklamasıyla birlikte işlem geçmişine kaydedilir. Çoklu öğrenci seçmek için Ctrl tuşunu kullanabilirsiniz.</p>
+                        </form>
+                        <span class="widget-resize-handle" aria-hidden="true"></span>
+                    </article>
+                @endif
 
                 <article class="dashboard-widget widget-span-6" data-widget-key="active_classes" draggable="true">
                     <div class="widget-head">
@@ -545,6 +609,32 @@
 @push('scripts')
 <script>
 (() => {
+    const form = document.querySelector('[data-xp-gift-form]');
+    if (!form) return;
+    const scope = form.querySelector('[data-xp-gift-scope]');
+    const classField = form.querySelector('[data-xp-gift-class]');
+    const studentField = form.querySelector('[data-xp-gift-students]');
+    const classSelect = classField?.querySelector('select');
+    const studentSelect = studentField?.querySelector('select');
+    const syncTargetFields = () => {
+        const value = scope?.value || 'all';
+        if (classField) classField.hidden = value !== 'class';
+        if (studentField) studentField.hidden = value !== 'students';
+        if (classSelect) classSelect.required = value === 'class';
+        if (studentSelect) studentSelect.required = value === 'students';
+    };
+    scope?.addEventListener('change', syncTargetFields);
+    syncTargetFields();
+    form.addEventListener('submit', (event) => {
+        const amount = Number(form.querySelector('[name="amount"]')?.value || 0);
+        const targetLabel = scope?.selectedOptions?.[0]?.textContent?.trim() || 'seçilen hedefe';
+        if (!window.confirm(`${targetLabel} için öğrenci başına ${amount} XP gönderilecek. Onaylıyor musunuz?`)) {
+            event.preventDefault();
+        }
+    });
+})();
+
+(() => {
     const shell = document.querySelector('[data-dashboard-shell]');
     if (!shell) return;
     const grid = document.getElementById('dashboard-widget-grid');
@@ -568,6 +658,9 @@
         courses: { title: 'Ders Sayısı', span: 4, order: 60 },
         avg_completion: { title: 'Ortalama Not', span: 4, order: 70 },
         xp: { title: 'Toplam XP', span: 4, order: 80 },
+        @if(auth()->user()?->hasRole('admin'))
+        xp_gift: { title: 'XP Hediyesi', span: 12, order: 72 },
+        @endif
         active_classes: { title: 'Aktif Sınıflar', span: 6, order: 75 },
         chart_success_distribution: { title: 'Başarı Dağılımı', span: 4, order: 85 },
         chart_student_lesson_completion: { title: 'Öğrenci Ders Tamamlama', span: 6, order: 95, zone: 'grid' },
