@@ -76,6 +76,12 @@ class StudentPendingAssignmentVisibilityTest extends TestCase
             ->assertSee('YENİ DERS')
             ->assertSee('BEKLİYOR');
 
+        $this->actingAs($studentUser)
+            ->get(route('course.detail', $course))
+            ->assertOk()
+            ->assertSee('Derslerime Geri Dön')
+            ->assertSee(route('student.portal.courses'), false);
+
         ContentProgress::query()->create([
             'content_id' => 'course-'.$course->id,
             'user_id' => $studentUser->id,

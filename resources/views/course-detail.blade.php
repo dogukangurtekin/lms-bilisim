@@ -17,7 +17,19 @@
 
 <section class="space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-900">{{ $safeTitle }}</h1>
+        <div class="flex flex-wrap items-center gap-3">
+            @if($viewer?->hasRole('student'))
+                <a
+                    href="{{ route('student.portal.courses') }}"
+                    class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 text-base font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-amber-600"
+                    aria-label="Derslerime geri dön"
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19z"/></svg>
+                    Derslerime Geri Dön
+                </a>
+            @endif
+            <h1 class="text-2xl font-bold text-gray-900">{{ $safeTitle }}</h1>
+        </div>
     </div>
 
     <article class="w-full rounded-2xl bg-white p-6 shadow-lg" style="border:1px solid #e5eef9">
