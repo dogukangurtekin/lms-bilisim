@@ -340,7 +340,7 @@
                                 <label for="xp-gift-description">Hediye Açıklaması</label>
                                 <input id="xp-gift-description" type="text" name="description" maxlength="255" value="{{ old('description') }}" placeholder="Örn. Dönem sonu başarı hediyesi" required>
                             </div>
-                            <button type="submit" class="xp-gift-submit">XP Gönder</button>
+                            <button type="submit" name="submit_xp_gift" value="1" class="xp-gift-submit">XP Gönder</button>
                             <p class="xp-gift-note">Gönderim kalıcıdır ve açıklamasıyla birlikte işlem geçmişine kaydedilir. Çoklu öğrenci seçmek için Ctrl tuşunu kullanabilirsiniz.</p>
                         </form>
                         <span class="widget-resize-handle" aria-hidden="true"></span>
@@ -626,19 +626,6 @@
     scope?.addEventListener('change', syncTargetFields);
     syncTargetFields();
     form.addEventListener('pointerdown', (event) => event.stopPropagation());
-    form.addEventListener('submit', (event) => {
-        const amount = Number(form.querySelector('[name="amount"]')?.value || 0);
-        const targetLabel = scope?.selectedOptions?.[0]?.textContent?.trim() || 'seçilen hedefe';
-        if (!window.confirm(`${targetLabel} için öğrenci başına ${amount} XP gönderilecek. Onaylıyor musunuz?`)) {
-            event.preventDefault();
-            return;
-        }
-        const button = form.querySelector('[type="submit"]');
-        if (button) {
-            button.disabled = true;
-            button.textContent = 'XP Gönderiliyor...';
-        }
-    });
 })();
 
 (() => {
