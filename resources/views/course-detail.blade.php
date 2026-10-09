@@ -21,7 +21,8 @@
             @if($viewer?->hasRole('student'))
                 <a
                     href="{{ route('student.portal.courses') }}"
-                    class="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 text-base font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-amber-600"
+                    class="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-base font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-95"
+                    style="background:#FDBA12 !important;border:1px solid #F59E0B !important;color:#fff !important;box-shadow:0 12px 24px rgba(245,158,11,.25) !important;text-decoration:none !important;"
                     aria-label="Derslerime geri dön"
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H19z"/></svg>
