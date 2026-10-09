@@ -30,6 +30,9 @@
     <div class="hero">
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
+            @if($student->currentAvatar)
+                <img src="{{ asset($student->currentAvatar->image_path) }}" alt="Avatar" style="width:72px;height:72px;object-fit:cover;border-radius:16px;border:2px solid #e2e8f0;flex:0 0 auto">
+            @endif
             <div>
                 <p class="report-eyebrow">ÖĞRENCİ GELİŞİM RAPORU</p>
                 <h1>{{ $student->user?->name }}</h1>
@@ -326,33 +329,26 @@
             @forelse($student->badges as $badge)
                 @php
                     $name = (string) ($badge->name ?? 'Rozet');
-                    $safeIconMap = [
-                        'Ilk Adim' => '🚀',
-                        'Odev Ustasi' => '📝',
-                        'Oyun Avcisi' => '🎮',
-                        'Ders Kesifi' => '📚',
-                        'XP 100' => '⭐',
-                        'XP 300' => '💎',
-                        'Maratoncu' => '⏱️',
-                        'Sinif Birincisi' => '🥇',
-                        'Okul Birincisi' => '🏆',
-                        'Efsane Tamamlayici' => '🌟',
-                        'Gorev Serisi 10' => '🔥',
-                        'Gorev Serisi 25' => '🏅',
-                        'Ders Ustasi' => '🧠',
-                        'Ders Efsanesi' => '🎓',
-                        'Oyun Uzmani' => '🕹️',
-                        'Oyun Sampiyonu' => '🎯',
-                        'XP 500' => '🌟',
-                        'XP 1000' => '🚀',
-                        'Disiplinli Calisma' => '🗃️',
-                        'Panel Ustasi' => '📈',
-                        'Istikrar Madalyasi' => '🥈',
+                    $iconMap = [
+                        'Ilk Adim' => '🚀', 'Odev Ustasi' => '📝', 'Oyun Avcisi' => '🎮', 'Ders Kesifi' => '📚',
+                        'XP 100' => '⭐', 'XP 300' => '💎', 'Maratoncu' => '⏱️', 'Sinif Birincisi' => '🥇',
+                        'Okul Birincisi' => '🏆', 'Efsane Tamamlayici' => '🌟', 'Gorev Serisi 10' => '🔥',
+                        'Gorev Serisi 25' => '🏅', 'Ders Ustasi' => '🧠', 'Ders Efsanesi' => '🎓',
+                        'Oyun Uzmani' => '🕹️', 'Oyun Sampiyonu' => '🎯', 'XP 500' => '🌟', 'XP 1000' => '🚀',
+                        'Disiplinli Calisma' => '🗃️', 'Panel Ustasi' => '📈', 'Istikrar Madalyasi' => '🥈',
                         'Tamamlama Zirvesi' => '🏔️',
                     ];
-                    $safeIcon = $safeIconMap[$name] ?? '🏅';
+                    $rawIcon = trim((string) ($badge->icon ?? ''));
+                    $safeIcon = $iconMap[$name] ?? ($rawIcon !== '' && ! preg_match('/[\/\.]/', $rawIcon) ? $rawIcon : '🏅');
+                    $desc = trim((string) ($badge->description ?? ''));
+                    if ($desc === '' && (int) ($badge->xp_threshold ?? 0) > 0) {
+                        $desc = $badge->xp_threshold.' XP değerine ulaşınca kazanılır.';
+                    }
                 @endphp
-                <span class="badge-item">{{ $safeIcon }} {{ $name }}</span>
+                <span class="badge-item" style="display:inline-flex;align-items:flex-start;gap:8px;text-align:left;max-width:100%">
+                    <span style="font-size:22px;line-height:1.1">{{ $safeIcon }}</span>
+                    <span><strong style="display:block">{{ $name }}</strong>@if($desc !== '')<small style="display:block;opacity:.75;font-weight:400">{{ $desc }}</small>@endif</span>
+                </span>
             @empty
                 <span class="badge-item">Henüz rozet kazanılmadı</span>
             @endforelse

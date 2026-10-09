@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#042f2e"/><stop offset="1" stop-color="#0e7490"/></linearGradient>
+    <radialGradient id="face" cx="0.4" cy="0.35" r="0.8"><stop offset="0" stop-color="#cbd5e1"/><stop offset="1" stop-color="#94a3b8"/></radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#475569"/><stop offset="1" stop-color="#0f172a"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="180" height="180" rx="24" fill="url(#bg)"/>
+  <circle cx="90" cy="80" r="70" fill="url(#glow)"/>
+  <path d="M26 180c4-34 28-52 64-52s60 18 64 52z" fill="url(#body)"/>
+  <path d="M74 126h32v14c0 8-7 14-16 14s-16-6-16-14z" fill="#94a3b8"/>
+  <path d="M54 82c0-30 14-44 36-44s36 14 36 44z" fill="#334155"/>
+  <ellipse cx="90" cy="82" rx="30" ry="36" fill="url(#face)"/>
+  <path d="M62 66c10-10 46-10 56 0v-8c-10-12-46-12-56 0z" fill="#475569"/>
+  <ellipse cx="78" cy="84" rx="4.2" ry="5" fill="#fff"/><ellipse cx="102" cy="84" rx="4.2" ry="5" fill="#fff"/>
+  <circle cx="78.6" cy="85" r="2.8" fill="#0891b2"/><circle cx="102.6" cy="85" r="2.8" fill="#0891b2"/>
+  <circle cx="79.4" cy="84" r="0.9" fill="#fff"/><circle cx="103.4" cy="84" r="0.9" fill="#fff"/>
+  <path d="M71 76q7-4 13 0M96 76q7-4 13 0" stroke="#334155" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M90 88v10q-3 2-1 3" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M80 106q10 7 20 0" stroke="#7c2d12" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M60 84h60" stroke="#22d3ee" stroke-width="2" opacity=".6"/><circle cx="62" cy="96" r="3" fill="#22d3ee"/><circle cx="118" cy="96" r="3" fill="#22d3ee"/><path d="M86 28v-12m8 12v-12" stroke="#94a3b8" stroke-width="3"/><circle cx="86" cy="14" r="3" fill="#22d3ee"/><circle cx="94" cy="14" r="3" fill="#22d3ee"/><rect x="74" y="148" width="32" height="8" rx="4" fill="#22d3ee"/>
+</svg>
