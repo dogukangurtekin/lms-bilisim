@@ -7,7 +7,6 @@ use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
 use App\Models\CourseHomework;
-use App\Models\DailyActivityAssignment;
 use App\Models\GameAssignment;
 use App\Models\Grade;
 use App\Models\LiveQuizAnswer;
@@ -172,47 +171,72 @@ class StudentProgressReportService
             ->values();
         $completedSlides = $completedLessonRows->count();
 
-        $lessonCourseAssignmentsTotal = $courseProgressRows->count();
+        // İlerleme oranı öğrenci paneliyle aynı aktif atama kümesinden hesaplanır.
+        // Yalnızca progress kaydı olan içerikleri saymak, hiç başlanmamış bekleyen
+        // ders ve ödevleri dışarıda bırakıp raporu hatalı biçimde %100 gösterebilir.
+        $activeCourseHomeworks = CourseHomework::query()
+            ->where('school_class_id', $student->school_class_id)
+            ->get();
+        $assignmentHomeworks = $activeCourseHomeworks
+            ->filter(fn ($homework) => in_array((string) $homework->assignment_type, ['homework', 'game', 'application'], true));
+        $gameHomeworkIds = $assignmentHomeworks
+            ->filter(fn ($homework) => in_array((string) $homework->assignment_type, ['game', 'application'], true))
+            ->pluck('id');
+        $lessonCourseIds = $activeCourseHomeworks
+            ->filter(fn ($homework) => (string) $homework->assignment_type === 'lesson')
+            ->pluck('course_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
 
-        // Sınıfa atanmış tüm oyunları getir (öğrenci hiç açmamış olsalar bile)
-        $allClassGameAssignments = GameAssignment::query()
-            ->whereHas('classes', fn ($q) => $q->where('school_classes.id', $student->school_class_id))
+        $startedGameAssignmentIds = $gameProgress->keys()->map(fn ($id) => (int) $id)->values();
+        $currentGameAssignments = GameAssignment::withTrashed()
+            ->whereHas('classes', fn ($query) => $query->where('school_classes.id', $student->school_class_id))
+            ->where(function ($query) use ($startedGameAssignmentIds): void {
+                $query->whereNull('deleted_at')->orWhereIn('id', $startedGameAssignmentIds);
+            })
             ->get();
 
-        // Sınıfa atanmış etkinlikleri getir (DailyActivityAssignment)
-        $classId = (int) $student->school_class_id;
-        $classActivityAssignments = DailyActivityAssignment::query()
-            ->where('target_role', 'student')
-            ->where(function ($q) use ($classId) {
-                // target_class_ids JSON dizisinde sınıf ID'si var mı?
-                $q->whereJsonContains('target_class_ids', $classId)
-                    ->orWhereNull('target_class_ids');
-            })
-            ->with('activity')
-            ->get()
-            ->unique('coding_activity_id');
+        $completedGameAssignmentCount = $gameProgress
+            ->only($currentGameAssignments->pluck('id')->all())
+            ->filter(fn ($progress) => ! empty($progress->completed_at))
+            ->count();
+        $completedCourseHomeworkCount = $homeworkProgress
+            ->only($assignmentHomeworks->pluck('id')->all())
+            ->filter(fn ($progress) => ! empty($progress->completed_at))
+            ->count();
+        $completedCourseGameHomeworkCount = $homeworkProgress
+            ->only($gameHomeworkIds->all())
+            ->filter(fn ($progress) => ! empty($progress->completed_at))
+            ->count();
 
-        // Öğrencinin tamamladığı etkinlik attemptlerini say
-        $completedActivityIds = ActivityAttempt::query()
-            ->where('user_id', $student->user_id)
-            ->whereIn('coding_activity_id', $classActivityAssignments->pluck('coding_activity_id')->filter()->values())
-            ->whereNotNull('submitted_at')
-            ->distinct('coding_activity_id')
-            ->pluck('coding_activity_id')
-            ->all();
+        $assignedCourses = Course::query()
+            ->with('subCourses:id,parent_course_id')
+            ->whereIn('id', $lessonCourseIds)
+            ->whereNull('parent_course_id')
+            ->get();
+        $courseProgressByContentId = $courseProgressRows->keyBy('content_id');
+        $completedCourseAssignments = $assignedCourses->filter(function (Course $course) use ($courseProgressByContentId): bool {
+            $requiredCourseIds = collect([$course->id])
+                ->concat($course->subCourses->pluck('id'))
+                ->map(fn ($id) => (int) $id)
+                ->unique();
 
-        // Toplam görev = ödevler + tüm sınıf oyunları + tüm sınıf etkinlikleri + ders slaytları
-        $totalAssignments = $courseHomeworks->count()
-            + $allClassGameAssignments->count()
-            + $classActivityAssignments->count()
-            + $lessonCourseAssignmentsTotal;
+            return $requiredCourseIds->every(
+                fn ($courseId) => (bool) $courseProgressByContentId->get('course-'.$courseId)?->completed
+            );
+        })->count();
 
-        $completedHomework = $homeworkProgress->filter(fn ($p) => ! empty($p->completed_at))->count();
-        // Tamamlanan oyunlar: hem progress kaydı olanlar
-        $completedGames = $gameProgress->filter(fn ($p) => ! empty($p->completed_at))->count();
-        $completedActivities = count($completedActivityIds);
-
-        $completedTotal = $completedHomework + $completedGames + $completedActivities + $completedSlides;
+        $gameHomeworkCount = $gameHomeworkIds->count();
+        $totalAssignments = $currentGameAssignments->count()
+            + $gameHomeworkCount
+            + $lessonCourseIds->count()
+            + $assignmentHomeworks->count();
+        $completedTotal = $completedGameAssignmentCount
+            + $completedCourseGameHomeworkCount
+            + $completedCourseAssignments
+            + $completedCourseHomeworkCount;
         $overallProgress = $totalAssignments > 0 ? (int) round(($completedTotal / $totalAssignments) * 100) : 0;
 
         $timeStat = StudentTimeStat::where('student_id', $student->id)->first();

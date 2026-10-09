@@ -9,6 +9,7 @@ use App\Models\Role;
 use App\Models\SchoolClass;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Services\StudentProgressReportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -107,6 +108,17 @@ class StudentPendingAssignmentVisibilityTest extends TestCase
             ->assertOk()
             ->assertSee('Ders tamamlandı')
             ->assertDontSee('Ders bekliyor');
+
+        $this->actingAs($studentUser)
+            ->get(route('student.portal.dashboard'))
+            ->assertOk()
+            ->assertViewHas('overallProgress', 50);
+
+        $student = $studentUser->student()->firstOrFail();
+        $report = app(StudentProgressReportService::class)->build($student);
+        $this->assertSame(1, $report['kpi']['completed_total']);
+        $this->assertSame(2, $report['kpi']['total_assignments']);
+        $this->assertSame(50, $report['kpi']['overall_progress']);
     }
 
     private function user(int $roleId, string $name, string $email): User
