@@ -203,16 +203,6 @@
 
             <div class="activity-grid">
                 <article class="activity-item activity-card">
-                    <img src="{{ asset('quiz.png') }}" alt="Canlı Quiz">
-                    <div class="activity-body">
-                        <h3>Canlı Quiz</h3>
-                        <div class="actions">
-                            <a class="btn" href="{{ route('live-quiz.index') }}">Oyunu Aç</a>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="activity-item activity-card">
                     <img src="{{ asset('klavye.jpg') }}?v={{ @filemtime(public_path('klavye.jpg')) ?: 1 }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
                         <h3>Canlı Yarışmalar</h3>
@@ -238,8 +228,12 @@
                         <div class="activity-body">
                             <h3>{{ $game['name'] }}</h3>
                             <div class="actions">
-                                <a class="btn" href="{{ route('activities.play', ['target' => $game['url']]) }}">Oyunu Aç</a>
-                                <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Ödevi Oluştur</a>
+                                @if($slug === 'live-quiz')
+                                    <a class="btn" href="{{ route('live-quiz.index') }}">Oyunu Aç</a>
+                                @else
+                                    <a class="btn" href="{{ route('activities.play', ['target' => $game['url']]) }}">Oyunu Aç</a>
+                                    <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Ödevi Oluştur</a>
+                                @endif
                             </div>
                         </div>
                     </article>
@@ -270,7 +264,9 @@
                     @foreach($assigned as $assignment)
                         @php
                             $game = $games[$assignment->game_slug] ?? null;
-                            $gameUrl = $game ? route('activities.play', ['target' => $game['url'] . '?role=teacher']) : '#';
+                            $gameUrl = $assignment->game_slug === 'live-quiz'
+                                ? route('live-quiz.index')
+                                : ($game ? route('activities.play', ['target' => $game['url'] . '?role=teacher']) : '#');
                             $assignedByName = trim((string) ($assignment->assignedBy?->name ?? ''));
                         @endphp
                         <article class="activity-item activity-card">
@@ -279,7 +275,9 @@
                                 <h3>{{ $assignment->game_name }}</h3>
                                 <div class="actions">
                                     <a class="btn" href="{{ $gameUrl }}">Oyunu Aç</a>
-                                    <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
+                                    @if($assignment->game_slug !== 'live-quiz')
+                                        <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
+                                    @endif
                                 </div>
                                 <p style="margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.35;">Atayan: {{ $assignedByName !== '' ? $assignedByName : '-' }}</p>
                             </div>
@@ -289,6 +287,16 @@
             @endif
         @else
             <div class="activity-grid" style="margin-bottom:14px;">
+                <article class="activity-item activity-card">
+                    <img src="{{ asset('quiz.png') }}" alt="Canlı Quiz">
+                    <div class="activity-body">
+                        <h3>Canlı Quiz</h3>
+                        <div class="actions">
+                            <a class="btn" href="{{ route('student.live-quiz.join.form') }}">Kod ile Katıl</a>
+                        </div>
+                    </div>
+                </article>
+
                 <article class="activity-item activity-card">
                     <img src="{{ asset('klavye.jpg') }}?v={{ @filemtime(public_path('klavye.jpg')) ?: 1 }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
@@ -313,6 +321,7 @@
             @endif
             <div class="activity-grid">
                 @foreach($games as $slug => $game)
+                    @continue($slug === 'live-quiz')
                     <article class="activity-item activity-card">
                         <img src="{{ asset($game['image']) }}" alt="{{ $game['name'] }}">
                         <div class="activity-body">

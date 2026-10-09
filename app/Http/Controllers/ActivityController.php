@@ -20,6 +20,7 @@ class ActivityController extends Controller
     public static function games(): array
     {
         return [
+            'live-quiz' => ['name' => 'Canlı Quiz', 'image' => 'quiz.png', 'url' => '/canli-quiz'],
             'block-grid-runner' => ['name' => 'Blok Kodlama', 'image' => 'blok-kodlama.png', 'url' => '/block-grid-runner'],
             'block-3d-runner' => ['name' => '3D Blok Kodlama', 'image' => '3d-blok-kodlama.png', 'url' => '/block-3d-runner'],
             'compute-it-runner' => ['name' => 'Compute It Runner', 'image' => 'compute-it.png', 'url' => '/compute-it-runner'],

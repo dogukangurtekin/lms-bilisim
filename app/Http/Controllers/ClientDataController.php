@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentRecord;
 use App\Models\GameState;
+use App\Models\StudentCredential;
 use App\Models\StudentReport;
 use App\Models\User;
 use App\Models\UserProfile;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -72,8 +74,21 @@ class ClientDataController extends Controller
         if (! $user || $newPassword === '') {
             return response()->json(['message' => 'invalid input'], 422);
         }
-        $user->password = Hash::make($newPassword);
-        $user->save();
+        DB::transaction(function () use ($user, $newPassword): void {
+            $user->password = $newPassword;
+            $user->save();
+
+            $student = $user->student()->first();
+            if ($student) {
+                StudentCredential::query()->updateOrCreate(
+                    ['student_id' => $student->id],
+                    [
+                        'username' => Str::before((string) $user->email, '@'),
+                        'plain_password' => $newPassword,
+                    ],
+                );
+            }
+        });
         return response()->json(['ok' => true]);
     }
 

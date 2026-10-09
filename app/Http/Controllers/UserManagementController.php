@@ -220,7 +220,7 @@ class UserManagementController extends Controller
                     $user = User::query()->create([
                         'name' => $name,
                         'email' => $email,
-                        'password' => Hash::make($password, ['rounds' => 10]),
+                        'password' => $password,
                         'role_id' => $role->id,
                         'is_active' => true,
                     ]);

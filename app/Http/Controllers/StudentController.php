@@ -14,7 +14,6 @@ use App\Services\Domain\StudentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -95,9 +94,19 @@ class StudentController extends Controller
             if ($user) {
                 $user->name = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
                 if (! empty($data['password'])) {
-                    $user->password = Hash::make($data['password'], ['rounds' => 10]);
+                    $user->password = $data['password'];
                 }
                 $user->save();
+
+                if (! empty($data['password'])) {
+                    \App\Models\StudentCredential::query()->updateOrCreate(
+                        ['student_id' => $student->id],
+                        [
+                            'username' => \Illuminate\Support\Str::before((string) $user->email, '@'),
+                            'plain_password' => $data['password'],
+                        ],
+                    );
+                }
             }
         });
 
@@ -214,7 +223,7 @@ class StudentController extends Controller
                         'role_id' => $studentRole->id,
                         'name' => $name,
                         'email' => $email,
-                        'password' => Hash::make($password, ['rounds' => 10]),
+                        'password' => $password,
                         'is_active' => true,
                     ]);
 

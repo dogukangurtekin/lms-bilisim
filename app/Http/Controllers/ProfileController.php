@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserProfile;
+use App\Models\StudentCredential;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -78,24 +79,38 @@ class ProfileController extends Controller
             return back()->withErrors(['username' => 'Bu kullanici adi zaten kullanilmada.'])->withInput();
         }
 
-        $user->name = $fullName;
-        $user->email = $newEmail;
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
-        $user->save();
+        DB::transaction(function () use ($user, $validated, $fullName, $newEmail): void {
+            $user->name = $fullName;
+            $user->email = $newEmail;
+            if (! empty($validated['password'])) {
+                $user->password = $validated['password'];
+            }
+            $user->save();
 
-        $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
-        $meta = (array) ($profile->meta ?? []);
-        $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
-        $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
-        $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
-        $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: \App\Support\Brand::logoUrl();
-        $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
-        $themeKey = (string) ($validated['theme_key'] ?? 'default');
-        $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';
-        $profile->meta = $meta;
-        $profile->save();
+            $student = $user->student()->first();
+            if ($student) {
+                $credential = StudentCredential::query()->firstOrNew(['student_id' => $student->id]);
+                $credential->username = strtolower(trim($validated['username']));
+                if (! empty($validated['password'])) {
+                    $credential->plain_password = $validated['password'];
+                }
+                if ($credential->exists || ! empty($validated['password'])) {
+                    $credential->save();
+                }
+            }
+
+            $profile = UserProfile::query()->firstOrNew(['user_id' => $user->id]);
+            $meta = (array) ($profile->meta ?? []);
+            $meta['pwa_enabled'] = (bool) ($validated['pwa_enabled'] ?? false);
+            $meta['pwa_title'] = trim((string) ($validated['pwa_title'] ?? '')) ?: config('app.name', 'Egitim Portali');
+            $meta['pwa_subtitle'] = trim((string) ($validated['pwa_subtitle'] ?? '')) ?: 'Yukleniyor...';
+            $meta['pwa_logo_url'] = trim((string) ($validated['pwa_logo_url'] ?? '')) ?: \App\Support\Brand::logoUrl();
+            $meta['principal_name'] = trim((string) ($validated['principal_name'] ?? ''));
+            $themeKey = (string) ($validated['theme_key'] ?? 'default');
+            $meta['theme_key'] = array_key_exists($themeKey, self::THEMES) ? $themeKey : 'default';
+            $profile->meta = $meta;
+            $profile->save();
+        });
 
         return back()->with('success', 'Profil bilgileriniz guncellendi.');
     }

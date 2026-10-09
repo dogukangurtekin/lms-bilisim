@@ -20,7 +20,6 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -174,7 +173,7 @@ class StudentDataController extends Controller
                     continue;
                 }
 
-                $user->password = Hash::make($plain, ['rounds' => 10]);
+                $user->password = $plain;
                 $user->save();
 
                 $username = $student->credential?->username
@@ -241,7 +240,7 @@ class StudentDataController extends Controller
                     continue;
                 }
 
-                $student->user->password = Hash::make($plain, ['rounds' => 10]);
+                $student->user->password = $plain;
                 $student->user->save();
 
                 $username = $student->credential?->username
@@ -473,20 +472,28 @@ class StudentDataController extends Controller
     private function syncRewardsAndCredentials(Student $student, int $xp): void
     {
         $credential = $student->credential;
-        if (! $credential) {
+        $username = trim((string) ($credential?->username ?? ''));
+        $plain = trim((string) ($credential?->plain_password ?? ''));
+
+        if ($username === '') {
             $username = Str::before((string) $student->user?->email, '@');
+        }
+
+        if ($plain === '') {
+            // Hashlenmis bir parola geri dondurulemez. Kartta eksik parola varsa
+            // yeni bir giris parolasi uretilip kullanici hesabi ile birlikte saklanir.
             $plain = (string) random_int(100000, 999999);
-
-            StudentCredential::create([
-                'student_id' => $student->id,
-                'username' => $username,
-                'plain_password' => $plain,
-            ]);
-
             if ($student->user) {
-                $student->user->password = Hash::make($plain, ['rounds' => 10]);
+                $student->user->password = $plain;
                 $student->user->save();
             }
+        }
+
+        if (! $credential || $credential->username !== $username || $credential->plain_password !== $plain) {
+            StudentCredential::query()->updateOrCreate(
+                ['student_id' => $student->id],
+                ['username' => $username, 'plain_password' => $plain],
+            );
         }
 
         // Satin alma modelinde avatarlar otomatik acilmaz; sadece varsayilan avatar tanimlanir.
