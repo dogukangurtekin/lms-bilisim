@@ -295,32 +295,7 @@
 
     <article class="panel">
         <h3>Tüm Etkinlikler (Ders, Ödev, Oyun, Quiz, Yarışma)</h3>
-        <table class="report-table">
-            <thead>
-                <tr>
-                    <th>Tür</th>
-                    <th>Başlık</th>
-                    <th>Tarih</th>
-                    <th>Durum</th>
-                    <th>XP</th>
-                    <th>Sonuç</th>
-                </tr>
-            </thead>
-            <tbody>
-            @forelse(collect(data_get($report, 'activity_log', [])) as $liveItem)
-                <tr>
-                    <td>{{ data_get($liveItem, 'kind', '-') }}</td>
-                    <td>{{ data_get($liveItem, 'title', '-') }}</td>
-                    <td>{{ $fmtDate(data_get($liveItem, 'sort_date')) }}</td>
-                    <td>{{ data_get($liveItem, 'status', '-') }}</td>
-                    <td>{{ (int) data_get($liveItem, 'xp', 0) }}</td>
-                    <td>{{ data_get($liveItem, 'result', '-') }}</td>
-                </tr>
-            @empty
-                <tr><td colspan="6">Bu öğrenci için etkinlik kaydı bulunmuyor.</td></tr>
-            @endforelse
-            </tbody>
-        </table>
+        @include('reports.partials.activity-log-grouped', ['log' => data_get($report, 'activity_log', []), 'tableClass' => 'report-table'])
     </article>
 
     <article class="panel">

@@ -13,31 +13,6 @@
 </div>
 <div class="card">
     <h3 style="margin-top:0">İçerikler — Sistemde Yaptıkların</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Tür</th>
-                <th>İçerik</th>
-                <th>Durum</th>
-                <th>Sonuç</th>
-                <th>Kazanılan XP</th>
-                <th>Tarih</th>
-            </tr>
-        </thead>
-        <tbody>
-        @forelse($activityLog as $item)
-            <tr>
-                <td>{{ $item['kind'] }}</td>
-                <td>{{ $item['title'] }}</td>
-                <td>{{ $item['status'] }}</td>
-                <td>{{ $item['result'] }}</td>
-                <td>{{ (int) $item['xp'] }}</td>
-                <td>{{ $item['sort_date'] ? \Carbon\Carbon::parse($item['sort_date'])->format('d.m.Y H:i') : '-' }}</td>
-            </tr>
-        @empty
-            <tr><td colspan="6">Kayıt yok.</td></tr>
-        @endforelse
-        </tbody>
-    </table>
+    @include('reports.partials.activity-log-grouped', ['log' => $activityLog])
 </div>
 @endsection
