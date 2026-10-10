@@ -6,6 +6,7 @@
             <a href="{{ route('legal.terms') }}">Kullanım Şartları</a>
             <a href="{{ route('legal.cookies') }}">Çerez Politikası</a>
             <a href="{{ url('/#sss') }}">SSS</a>
+            <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a>
         </nav>
     </div>
 </footer>

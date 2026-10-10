@@ -40,6 +40,8 @@
         'url' => 'https://bilisimkod.com/',
         'logo' => url('/logo512.png'),
         'description' => 'Okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.',
+        'email' => config('app.contact_email'),
+        'contactPoint' => ['@@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => config('app.contact_email'), 'availableLanguage' => 'Turkish'],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 
     <script type="application/ld+json">{!! json_encode(array (
@@ -408,7 +410,7 @@
             <div class="cta-band">
                 <div class="cta-band-copy">
                     <h2>Okulunuz için kısa bir demo ayarlayalım.</h2>
-                    <p>Panele girmeden önce nasıl çalıştığını görmek isterseniz, size özel 15 dakikalık bir gösterim planlayalım.</p>
+                    <p>Panele girmeden önce nasıl çalıştığını görmek isterseniz, size özel 15 dakikalık bir gösterim planlayalım. Bize ayrıca <a href="mailto:{{ config('app.contact_email') }}" style="color:#fff;text-decoration:underline">{{ config('app.contact_email') }}</a> adresinden de ulaşabilirsiniz.</p>
                 </div>
                 <div class="cta-band-actions">
                     <button type="button" class="btn btn-primary" @click="demoOpen = true">Demo Talep Et</button>
@@ -429,6 +431,7 @@
                 <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>
                 <a href="{{ route('legal.terms') }}">Kullanım Şartları</a>
                 <a href="{{ route('legal.cookies') }}">Çerez Politikası</a>
+                <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a>
             </nav>
         </div>
     </footer>

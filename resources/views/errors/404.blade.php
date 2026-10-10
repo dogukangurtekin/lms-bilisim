@@ -6,5 +6,6 @@
     <h1>Aradığınız sayfa bulunamadı</h1>
     <p class="meta">Bağlantı hatalı olabilir ya da sayfa taşınmış olabilir.</p>
     <p><a href="/" class="btn">Ana sayfaya dön</a></p>
+    <p class="meta">Sorun devam ederse: <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a></p>
 </div>
 @endsection

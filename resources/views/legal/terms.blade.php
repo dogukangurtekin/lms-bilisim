@@ -40,4 +40,7 @@
 
 <h2>8. Değişiklikler ve uygulanacak hukuk</h2>
 <p>Bu şartlar güncellenebilir; güncel sürüm bu sayfada yayımlanır. Şartlara Türkiye Cumhuriyeti hukuku uygulanır ve uyuşmazlıklarda Türkiye mahkemeleri yetkilidir.</p>
+
+<h2>9. İletişim</h2>
+<p>Şartlarla ilgili sorularınız için <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a> adresine yazabilirsiniz.</p>
 @endsection

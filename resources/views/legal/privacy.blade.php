@@ -7,7 +7,7 @@
 <p>Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında Bilişim Kod platformunu (bilisimkod.com) kullanırken kişisel verilerinizin nasıl işlendiğini açıklar.</p>
 
 <h2>1. Veri sorumlusu ve okulların rolü</h2>
-<p>Platform, okullara kodlama ve yapay zekâ eğitimi altyapısı sağlar. Okul tarafından platforma tanımlanan öğrenci, öğretmen ve sınıf verileri bakımından veri sorumlusu ilgili okuldur; Bilişim Kod bu verileri okulun talimatları doğrultusunda veri işleyen olarak işler. Demo talebi gibi doğrudan Bilişim Kod’a ilettiğiniz bilgilerde veri sorumlusu Bilişim Kod’dur.</p>
+<p>Platform, okullara kodlama ve yapay zekâ eğitimi altyapısı sağlar. Okul tarafından platforma tanımlanan öğrenci, öğretmen ve sınıf verileri bakımından veri sorumlusu ilgili okuldur; Bilişim Kod bu verileri okulun talimatları doğrultusunda veri işleyen olarak işler. Demo talebi gibi doğrudan Bilişim Kod’a ilettiğiniz bilgilerde veri sorumlusu Bilişim Kod’dur. İletişim: <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a></p>
 
 <h2>2. İşlenen veriler</h2>
 <div class="table-wrap">
@@ -38,7 +38,7 @@
 <p>Veriler, hizmetin sürdüğü süre ve ilgili mevzuatın gerektirdiği süre boyunca saklanır. Okulun sözleşmesi sona erdiğinde veya silme talebi geldiğinde veriler silinir ya da anonimleştirilir.</p>
 
 <h2>6. Haklarınız</h2>
-<p>KVKK’nın 11. maddesi uyarınca; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, düzeltme, silme, işlemeye itiraz etme ve zarara uğramanız halinde tazminat talep etme haklarına sahipsiniz. Öğrenci verileriyle ilgili talepler için önce okulunuza başvurmanızı, diğer talepler için ana sayfadaki <a href="{{ url('/#iletisim') }}">demo/iletişim formunu</a> kullanmanızı rica ederiz.@if(config('app.contact_email')) Ayrıca <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a> adresine yazabilirsiniz.@endif</p>
+<p>KVKK’nın 11. maddesi uyarınca; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, düzeltme, silme, işlemeye itiraz etme ve zarara uğramanız halinde tazminat talep etme haklarına sahipsiniz. Öğrenci verileriyle ilgili talepler için önce okulunuza başvurmanızı, diğer talepler için ana sayfadaki <a href="{{ url('/#iletisim') }}">demo/iletişim formunu</a> kullanmanızı rica ederiz. Ayrıca <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a> adresine yazabilirsiniz.</p>
 
 <h2>7. Güvenlik</h2>
 <p>Bağlantılar HTTPS ile şifrelenir, parolalar geri döndürülemez biçimde saklanır, yönetim ekranlarına rol bazlı erişim uygulanır.</p>

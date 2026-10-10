@@ -4,6 +4,8 @@
 
 Hedef kitle: ilkokul, ortaokul ve lise düzeyindeki okullar, öğretmenler ve öğrenciler. Dil: Türkçe.
 
+İletişim: info@bilisimkod.com
+
 ## Sayfalar
 
 - [Ana sayfa](https://bilisimkod.com/): Platformun tanıtımı, modüller, SSS ve demo talep formu

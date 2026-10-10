@@ -16,7 +16,7 @@ return [
     'name' => env('APP_NAME', 'Bilişim Kod'),
 
     // Gizlilik politikasında gösterilecek iletişim e-postası (opsiyonel).
-    'contact_email' => env('CONTACT_EMAIL'),
+    'contact_email' => env('CONTACT_EMAIL', 'info@bilisimkod.com'),
 
     /*
     |--------------------------------------------------------------------------

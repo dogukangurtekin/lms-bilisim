@@ -24,5 +24,5 @@
 <h2>Çerezleri yönetme</h2>
 <p>Tarayıcı ayarlarından çerezleri silebilir veya engelleyebilirsiniz; ancak zorunlu çerezler engellenirse giriş yapamazsınız.</p>
 
-<p>Daha fazla bilgi için <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>’na bakın.</p>
+<p>Daha fazla bilgi için <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>’na bakın. Sorularınız için <a href="mailto:{{ config('app.contact_email') }}">{{ config('app.contact_email') }}</a> adresine yazabilirsiniz.</p>
 @endsection
