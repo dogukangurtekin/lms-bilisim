@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityAttempt;
+use App\Models\Badge;
 use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\Course;
@@ -416,13 +417,6 @@ class StudentProgressReportService
             ],
         ];
 
-        $analysis = [];
-        $analysis[] = $overallProgress >= 80 ? 'Genel görev tamamlama oranı çok iyi seviyede.' : 'Genel görev tamamlama oranı artırılmalı.';
-        $analysis[] = $totalXp >= 300 ? 'XP performansı sınıf ortalamasının üzerinde.' : 'XP gelişimi için düzenli görev tamamlama önerilir.';
-        $analysis[] = $schoolRank === 1 ? 'Öğrenci okul genelinde birinci sıradadır.' : 'Okul sıralamasında üst sıralara çıkmak için haftalık düzenli çalışma önerilir.';
-        $analysis[] = $classRank === 1 ? 'Öğrenci sınıfında birinci sıradadır.' : 'Sınıf sıralamasında yükseliş için eksik görevlerin tamamlanması gerekir.';
-        $analysis[] = $totalSeconds >= 7200 ? 'Sistemde geçirilen süre öğrenme istikrarını destekliyor.' : 'Sistemde geçirilen süre artırılarak ilerleme hızlandırılabilir.';
-
         $recommendations = [];
         if ($overallProgress < 60) {
             $recommendations[] = 'Bu hafta için günlük en az 1 görev tamamlama hedefi belirleyin.';
@@ -681,6 +675,20 @@ class StudentProgressReportService
             ->sortByDesc(fn ($item) => $item['sort_date'] ? Carbon::parse($item['sort_date'])->timestamp : 0)
             ->values();
 
+        $classAvgXp = $gradePeers->count() > 1
+            ? (int) round($gradePeers->avg(fn ($peer) => (int) ($xpMap[$peer->id] ?? 0)))
+            : 0;
+        $analysis = $this->buildAnalysis($student, $activityLog, $categoryChart, $courseItems, [
+            'total_xp' => (int) $totalXp,
+            'overall_progress' => (int) $overallProgress,
+            'completed_total' => (int) $completedTotal,
+            'total_assignments' => (int) $totalAssignments,
+            'class_rank' => $classRank,
+            'class_size' => $gradePeers->count(),
+            'class_avg_xp' => $classAvgXp,
+            'quiz_joined' => (int) $quizJoinedCount,
+            'competition_joined' => (int) $competitionJoinedCount,
+        ]);
         return [
             'kpi' => [
                 'total_xp' => $totalXp,
@@ -719,5 +727,182 @@ class StudentProgressReportService
             'live_items' => $liveItems,
             'activity_log' => $activityLog,
         ];
+    }
+    /**
+     * Öğrenciye özel, veriye dayalı analiz maddeleri üretir.
+     * Her madde: ['tone' => good|info|warn, 'title' => kısa başlık, 'text' => cümle].
+     * Veri olmayan maddeler atlanır; en fazla 6 madde döner.
+     *
+     * @param  \Illuminate\Support\Collection  $activityLog
+     * @param  iterable<int, array<string, mixed>>  $categoryChart
+     * @param  iterable<int, array<string, mixed>>  $courseItems
+     * @param  array<string, mixed>  $ctx
+     * @return array<int, array{tone: string, title: string, text: string}>
+     */
+    private function buildAnalysis(Student $student, $activityLog, $categoryChart, $courseItems, array $ctx): array
+    {
+        $items = [];
+        $first = trim((string) (explode(' ', trim((string) ($student->user?->name ?? '')))[0] ?? '')) ?: 'Öğrenci';
+        $totalXp = (int) $ctx['total_xp'];
+
+        // 1) Görev ilerlemesi
+        $total = (int) $ctx['total_assignments'];
+        if ($total > 0) {
+            $done = (int) $ctx['completed_total'];
+            $pct = (int) $ctx['overall_progress'];
+            $pending = max(0, $total - $done);
+            $items[] = [
+                'tone' => $pct >= 75 ? 'good' : ($pct >= 40 ? 'info' : 'warn'),
+                'title' => 'Görev ilerlemesi',
+                'text' => "{$first}, atanan {$total} görevin {$done} tanesini (%{$pct}) tamamladı"
+                    . ($pending > 0 ? "; {$pending} görev hâlâ bekliyor." : '. Bekleyen görevi yok.'),
+            ];
+        }
+
+        // 2) Sınıf karşılaştırması
+        $classSize = (int) $ctx['class_size'];
+        $classAvg = (int) $ctx['class_avg_xp'];
+        $gradeName = trim((string) ($student->schoolClass?->name ?? ''));
+        $levelLabel = $gradeName !== '' ? "{$gradeName}. sınıf" : 'sınıf';
+        if ($classSize > 1 && $classAvg > 0) {
+            $ratio = $totalXp / $classAvg;
+            if ($ratio >= 1.1) {
+                $cmp = "{$levelLabel} ortalamasının (" . $classAvg . ' XP) ' . rtrim(rtrim(number_format($ratio, 1, ',', ''), '0'), ',') . ' katı';
+            } elseif ($ratio >= 0.9) {
+                $cmp = "{$levelLabel} ortalamasına (" . $classAvg . ' XP) yakın';
+            } else {
+                $cmp = "{$levelLabel} ortalamasının (" . $classAvg . ' XP) altında';
+            }
+            $rankText = $ctx['class_rank'] ? " {$gradeName}. sınıfta {$classSize} öğrenci arasında {$ctx['class_rank']}. sırada." : '';
+            $items[] = [
+                'tone' => ($ratio >= 1.1 || ($ctx['class_rank'] && $ctx['class_rank'] <= 3)) ? 'good' : ($ratio < 0.6 ? 'warn' : 'info'),
+                'title' => 'Sınıf karşılaştırması',
+                'text' => "{$totalXp} XP ile {$cmp}." . $rankText,
+            ];
+        }
+        // 3) Güçlü / gelişime açık alan
+        $cats = collect($categoryChart)->filter(fn ($c) => (int) ($c['total'] ?? 0) > 0)->values();
+        if ($cats->isNotEmpty()) {
+            $best = $cats->sortByDesc(fn ($c) => [(int) $c['value'], (int) $c['total']])->first();
+            $weak = $cats->filter(fn ($c) => (int) $c['value'] < 100)->sortBy(fn ($c) => [(int) $c['value'], -(int) $c['total']])->first();
+            $text = "En güçlü alanı {$best['label']} (%{$best['value']}, {$best['done']}/{$best['total']}).";
+            if ($weak && $weak['label'] !== $best['label']) {
+                $text .= " Daha çok destek gereken alan {$weak['label']} (%{$weak['value']}, {$weak['done']}/{$weak['total']}).";
+            } elseif (! $weak) {
+                $text .= ' Görev aldığı tüm alanlarda tam tamamlama var.';
+            }
+            $items[] = ['tone' => $weak && (int) $weak['value'] < 40 ? 'warn' : 'info', 'title' => 'Güçlü ve gelişime açık alan', 'text' => $text];
+        }
+
+        // 4) Ders başarısı (doğru / yanlış)
+        $correct = (int) collect($courseItems)->sum(fn ($i) => (int) ($i['correct_questions'] ?? 0));
+        $wrong = (int) collect($courseItems)->sum(fn ($i) => (int) ($i['wrong_questions'] ?? 0));
+        $answered = $correct + $wrong;
+        if ($answered > 0) {
+            $acc = (int) round($correct / $answered * 100);
+            $note = $acc >= 85 ? 'Konu kavrayışı güçlü.' : ($acc >= 60 ? 'Yanlış yanıtlanan konuların tekrarı başarıyı daha da yükseltir.' : 'Ders slaytlarının tekrar edilmesi ve konu tekrarı önerilir.');
+            $items[] = [
+                'tone' => $acc >= 85 ? 'good' : ($acc >= 60 ? 'info' : 'warn'),
+                'title' => 'Ders başarısı',
+                'text' => "Derslerde {$answered} soru yanıtladı: {$correct} doğru, {$wrong} yanlış (doğruluk oranı %{$acc}). {$note}",
+            ];
+        }
+
+        // 5) Çalışma düzeni ve devamlılık (Türkiye saatine göre)
+        $tz = 'Europe/Istanbul';
+        $stamps = collect($activityLog)
+            ->map(fn ($row) => ! empty($row['sort_date']) ? Carbon::parse($row['sort_date'])->setTimezone($tz) : null)
+            ->filter();
+        if ($stamps->isNotEmpty()) {
+            $parts = ['sabah (06-12)' => 0, 'öğleden sonra (12-18)' => 0, 'akşam (18-24)' => 0, 'gece (00-06)' => 0];
+            $weekdays = [1 => 'Pazartesi', 2 => 'Salı', 3 => 'Çarşamba', 4 => 'Perşembe', 5 => 'Cuma', 6 => 'Cumartesi', 7 => 'Pazar'];
+            $dayCounts = [];
+            foreach ($stamps as $t) {
+                $h = (int) $t->format('G');
+                $key = $h >= 6 && $h < 12 ? 'sabah (06-12)' : ($h >= 12 && $h < 18 ? 'öğleden sonra (12-18)' : ($h >= 18 ? 'akşam (18-24)' : 'gece (00-06)'));
+                $parts[$key]++;
+                $dayCounts[$t->dayOfWeekIso] = ($dayCounts[$t->dayOfWeekIso] ?? 0) + 1;
+            }
+            arsort($parts);
+            arsort($dayCounts);
+            $topPart = array_key_first($parts);
+            $topPartPct = (int) round($parts[$topPart] / $stamps->count() * 100);
+            $topDay = $weekdays[array_key_first($dayCounts)];
+
+            $today = Carbon::now($tz)->startOfDay();
+            $activeDates = $stamps->map(fn ($t) => $t->copy()->startOfDay()->toDateString())->unique()->values();
+            $last30 = $activeDates->filter(fn ($d) => Carbon::parse($d, $tz)->gte($today->copy()->subDays(29)))->count();
+            $streak = 0;
+            $cursor = $today->copy();
+            if (! $activeDates->contains($cursor->toDateString())) {
+                $cursor->subDay();
+            }
+            while ($activeDates->contains($cursor->toDateString())) {
+                $streak++;
+                $cursor->subDay();
+            }
+            $lastActive = Carbon::parse($activeDates->sort()->last(), $tz);
+            $daysAgo = (int) $lastActive->diffInDays($today);
+
+            $text = "Son 30 günde {$last30} farklı günde çalıştı. " . ($topPartPct >= 100 ? 'Etkinliklerin tamamı' : 'Etkinliklerin çoğu') . " {$topPart} saatlerinde (%{$topPartPct}), en verimli gün {$topDay}.";
+            $tone = 'info';
+            if ($streak >= 2) {
+                $text .= " Şu an {$streak} gündür kesintisiz çalışıyor.";
+                $tone = 'good';
+            } elseif ($daysAgo >= 7) {
+                $text .= " Son etkinliği {$daysAgo} gün önceydi; düzenli ritim için kısa günlük görevlerle yeniden başlaması önerilir.";
+                $tone = 'warn';
+            } elseif ($daysAgo >= 1) {
+                $text .= " Son etkinliği {$daysAgo} gün önceydi.";
+            }
+            $items[] = ['tone' => $tone, 'title' => 'Çalışma düzeni', 'text' => $text];
+        }
+
+        // 6) Sıradaki rozet hedefi
+        $badgeCount = (int) $student->badges->count();
+        $nextBadge = Badge::query()->where('xp_threshold', '>', $totalXp)->orderBy('xp_threshold')->first();
+        if ($nextBadge) {
+            $remaining = max(0, (int) $nextBadge->xp_threshold - $totalXp);
+            $items[] = [
+                'tone' => 'info',
+                'title' => 'Sıradaki hedef',
+                'text' => "{$badgeCount} rozet kazandı. “{$nextBadge->name}” rozetine {$remaining} XP kaldı.",
+            ];
+        } elseif ($badgeCount > 0) {
+            $items[] = ['tone' => 'good', 'title' => 'Rozetler', 'text' => "XP rozet eşiklerinin tamamını aştı. Kazanılan rozet sayısı: {$badgeCount}."];
+        }
+
+        // 7) Yarışma / klavye (yeterli madde yoksa tamamlayıcı)
+        if (count($items) < 6) {
+            $bestWpm = 0;
+            $bestAcc = 0;
+            foreach ($activityLog as $row) {
+                if (($row['kind'] ?? '') === 'Klavye Yarışı' && preg_match('/(\d+)\s*WPM\s*·\s*%(\d+)/u', (string) ($row['result'] ?? ''), $m) && (int) $m[1] > $bestWpm) {
+                    $bestWpm = (int) $m[1];
+                    $bestAcc = (int) $m[2];
+                }
+            }
+            $joined = (int) $ctx['competition_joined'];
+            $quiz = (int) $ctx['quiz_joined'];
+            if ($bestWpm > 0 || $joined > 0 || $quiz > 0) {
+                $parts = [];
+                if ($bestWpm > 0) {
+                    $parts[] = "klavye yarışında en iyi hızı {$bestWpm} WPM (%{$bestAcc} doğruluk)";
+                }
+                if ($joined > 0) {
+                    $parts[] = "{$joined} canlı yarışmaya katıldı";
+                }
+                if ($quiz > 0) {
+                    $parts[] = "{$quiz} canlı quize katıldı";
+                }
+                $items[] = ['tone' => 'info', 'title' => 'Yarışma ve etkileşim', 'text' => ucfirst(implode('; ', $parts)) . '.'];
+            }
+        }
+
+        if ($items === []) {
+            $items[] = ['tone' => 'info', 'title' => 'Henüz yeterli veri yok', 'text' => "{$first} için analiz oluşturacak etkinlik kaydı henüz bulunmuyor."];
+        }
+
+        return array_slice($items, 0, 6);
     }
 }

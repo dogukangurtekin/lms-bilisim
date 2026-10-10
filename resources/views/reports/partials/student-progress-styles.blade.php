@@ -286,7 +286,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 .term-months { display: grid; gap: 2px; height: 13px; margin-bottom: 2px; }
 .term-months span { padding-bottom: 1px; border-bottom: 2px solid #bfdbfe; color: #1e3a8a; font-size: 8px; font-weight: 800; text-align: center; line-height: 11px; overflow: hidden; white-space: nowrap; }
 .term-plot { position: relative; display: grid; gap: 2px; padding: 0 1px; border-bottom: 1px solid #cbd5e1; }
-.term-col { display: grid; grid-template-rows: 14px 21mm; min-width: 0; text-align: center; border-radius: 3px 3px 0 0; }
+.term-col { display: grid; grid-template-rows: 14px 21mm auto; min-width: 0; text-align: center; border-radius: 3px 3px 0 0; }
 .term-col--break { background: repeating-linear-gradient(135deg, transparent, transparent 4px, #fff3d6 4px, #fff3d6 8px); }
 .term-col.is-future { background: rgba(148, 163, 184, .07); }
 .term-col--break.is-future, .term-col--break { background: repeating-linear-gradient(135deg, #fffaf0, #fffaf0 4px, #ffedc7 4px, #ffedc7 8px); }
@@ -300,6 +300,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 .term-bar i { display: block; flex: none; min-height: 3px; }
 .term-bar i:first-child { border-radius: 2px 2px 0 0; }
 .term-col.is-empty:not(.is-future) .term-bar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: #dbe4f2; }
+.term-wk { padding-top: 2px; color: #64748b; font-size: 6px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .term-line { position: absolute; left: 0; right: 0; top: 14px; width: 100%; height: 21mm; pointer-events: none; overflow: visible; }
 /* ---- Görev özeti: halka gösterge ---- */
 .task-summary-body { display: flex; align-items: center; gap: 16px; }
@@ -349,3 +350,15 @@ h2 { font-size: 17px; line-height: 1.2; }
     .report-page:last-child { page-break-after: auto; }
     .page-break { page-break-before: always; }
 }
+
+/* ---- Analiz özeti: öğrenciye özel maddeler ---- */
+.analysis-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.analysis-item { position: relative; padding: 4px 6px 4px 11px; border-radius: 6px; background: #f8fafc; font-size: 8.8px; line-height: 1.35; color: #334155; }
+.analysis-item::before { content: ""; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 3px; background: #60a5fa; }
+.analysis-item b { display: inline; margin-right: 3px; color: #0f172a; font-size: 8.8px; font-weight: 800; }
+.analysis-item b::after { content: ":"; }
+.analysis-item span { display: inline; }
+.analysis-item--good { background: #f0fdf4; }
+.analysis-item--good::before { background: #22c55e; }
+.analysis-item--warn { background: #fffbeb; }
+.analysis-item--warn::before { background: #f59e0b; }

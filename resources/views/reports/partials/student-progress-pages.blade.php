@@ -67,6 +67,7 @@
             'type' => $type,
             'future' => $start->gt($todayDate),
             'range' => $start->format('d.m') . ' - ' . $end->format('d.m'),
+            'day' => (int) $start->format('j'),
             'month' => (int) $mid->format('n'),
             'year' => (int) $mid->format('Y'),
             'total' => $rows->count(),
@@ -217,9 +218,12 @@
 
         <article class="panel">
             <h3>Analiz Özeti</h3>
-            <ul class="bullet-list">
-                @foreach((array) data_get($report, 'analysis', []) as $line)
-                    <li>{{ $line }}</li>
+            <ul class="analysis-list">
+                @foreach((array) data_get($report, 'analysis', []) as $item)
+                    <li class="analysis-item analysis-item--{{ data_get($item, 'tone', 'info') }}">
+                        <b>{{ data_get($item, 'title') }}</b>
+                        <span>{{ data_get($item, 'text') }}</span>
+                    </li>
                 @endforeach
             </ul>
         </article>
@@ -324,6 +328,7 @@
                                     @endif
                                 @endforeach
                             </div>
+                            <div class="term-wk" title="{{ $w['range'] }}">{{ $w['day'] }}</div>
                         </div>
                     @endforeach
                     @if($termXp > 0)
