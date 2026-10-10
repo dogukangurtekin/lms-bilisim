@@ -79,6 +79,6 @@ class ModuleCrudTest extends TestCase
         $this->actingAs($admin)
             ->get('/students/bulk/template')
             ->assertStatus(200)
-            ->assertHeader('content-type', 'application/vnd.ms-excel; charset=UTF-8');
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 }

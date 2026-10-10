@@ -266,6 +266,15 @@ class FlowchartExecutionService
             throw new RuntimeException('İzin verilmeyen ifade karakteri.');
         }
 
+        // String/sayı/kapanış parantezinden hemen sonra gelen "(" bir fonksiyon
+        // çağrısıdır ('system'('id'), ('sys'.'tem')('id') gibi). Aritmetik
+        // ifadelerde bu söz diziminin meşru bir kullanımı yok; reddet.
+        $skeleton = preg_replace('/\'[^\']*\'|"[^"]*"/', 'S', $safe) ?? '';
+        $skeleton = preg_replace('/\b(?:and|or)\b/i', '&', $skeleton) ?? '';
+        if (preg_match('/[\w\)]\s*\(/', $skeleton)) {
+            throw new RuntimeException('İzin verilmeyen ifade.');
+        }
+
         set_error_handler(static fn () => true);
         try {
             /** @var mixed $result */

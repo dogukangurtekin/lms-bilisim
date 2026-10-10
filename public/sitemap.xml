@@ -6,8 +6,18 @@
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://bilisimkod.com/login</loc>
-        <changefreq>monthly</changefreq>
+        <loc>https://bilisimkod.com/gizlilik-politikasi</loc>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    <url>
+        <loc>https://bilisimkod.com/kullanim-sartlari</loc>
+        <changefreq>yearly</changefreq>
+        <priority>0.4</priority>
+    </url>
+    <url>
+        <loc>https://bilisimkod.com/cerez-politikasi</loc>
+        <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>
 </urlset>

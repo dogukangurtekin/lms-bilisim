@@ -46,7 +46,9 @@ Route::prefix('client')->group(function () {
     });
 });
 
-Route::prefix('race')->group(function () {
+// user_id istemciden değil oturumdan alınır; aksi halde herhangi biri bir
+// öğretmenin id'sini göndererek oda başlatıp bitirebilirdi.
+Route::prefix('race')->middleware(['web', 'auth', \App\Http\Middleware\UseAuthenticatedUserId::class])->group(function () {
     Route::get('/rooms/active', [RaceController::class, 'active']);
     Route::get('/my-runs', [RaceController::class, 'myRuns']);
     Route::post('/rooms', [RoomController::class, 'store']);

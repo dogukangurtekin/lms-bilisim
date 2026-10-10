@@ -43,6 +43,10 @@ return [
         'default_template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'tr'),
     ],
 
+    'plausible' => [
+        'domain' => env('PLAUSIBLE_DOMAIN'),
+    ],
+
     'webpush' => [
         'subject' => env('WEBPUSH_VAPID_SUBJECT'),
         'public_key' => env('WEBPUSH_VAPID_PUBLIC_KEY'),

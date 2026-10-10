@@ -135,6 +135,11 @@ class SupportRequestController extends Controller
 
     public function storeDemo(Request $request): RedirectResponse
     {
+        // Honeypot: gerçek kullanıcı bu gizli alanı görmez/doldurmaz; botlar doldurur.
+        // Bota hata göstermemek için başarılıymış gibi yanıt veriyoruz.
+        if ($request->filled('website')) {
+            return back()->with('ok', 'Demo talebiniz gönderildi.');
+        }
         $data = $request->validate([
             'guest_name' => ['required', 'string', 'max:190'],
             'guest_email' => ['required', 'email', 'max:190'],

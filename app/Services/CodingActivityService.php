@@ -193,6 +193,17 @@ class CodingActivityService
                 ->filter(fn ($v) => $v !== '')
                 ->values();
 
+            // Cevap şık anahtarı (A/B/...) olarak da gelebilir.
+            $correctOptionKeys = collect($question->options)
+                ->filter(fn ($opt) => (bool) ($opt->is_correct ?? false))
+                ->pluck('option_key')
+                ->map(fn ($v) => strtoupper(trim((string) $v)))
+                ->filter(fn ($v) => $v !== '')
+                ->values();
+            if ($givenKey !== '' && $correctOptionKeys->contains($givenKey)) {
+                return ['awarded_points' => $max, 'is_correct' => true];
+            }
+
             $givenLabel = $this->normalizeAnswerText((string) $given, $question->question_type);
             if ($correctLabels->isNotEmpty()) {
                 $isCorrect = $correctLabels->contains($givenLabel);

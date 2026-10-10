@@ -6,6 +6,14 @@
     RewriteEngine On
     RewriteBase /
 
+    # Block access to framework internals, secrets and stray files.
+    RewriteRule ^(app|bootstrap|config|database|docker|lang|resources|routes|scripts|tests|vendor|node_modules|\.git|\.github)(/|$) - [F,L]
+    RewriteRule ^storage/(logs|framework)(/|$) - [F,L]
+    RewriteRule ^storage/app/(?!public(/|$)) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|vite\.config\.js|socket-server\.js|Dockerfile|docker-compose\.yml)$ - [F,L]
+    RewriteRule ^[^/]*\.(md|log|sql|bak|env|yml|yaml)$ - [F,L]
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+
     # Serve public/ assets when the document root is the project root.
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f [OR]
@@ -19,4 +27,14 @@
 
 <IfModule mod_core.c>
     LimitRequestBody 0
+</IfModule>
+
+# Statik varlıklar için tarayıcı/CDN önbelleği (HTML sayfaları oturum içerdiği için dokunulmaz).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpe?g|gif|svg|webp|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
 </IfModule>

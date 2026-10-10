@@ -1,4 +1,6 @@
 User-agent: *
-Disallow:
+Disallow: /login
+Disallow: /api/
+Disallow: /demo-talep
 
 Sitemap: https://bilisimkod.com/sitemap.xml

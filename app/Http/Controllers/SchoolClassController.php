@@ -81,14 +81,4 @@ class SchoolClassController extends Controller
             ? response()->json(['message' => 'Secili siniflar silindi'])
             : redirect()->route('classes.index')->with('ok', 'Secili siniflar silindi');
     }
-
-    public function destroyAllGet(Request $request): RedirectResponse
-    {
-        return redirect()->route('classes.index');
-    }
-
-    public function destroySelectedGet(Request $request): RedirectResponse
-    {
-        return redirect()->route('classes.index');
-    }
 }

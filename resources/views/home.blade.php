@@ -7,6 +7,7 @@
     <meta name="description" content="Bilişim Kod - okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.">
     <meta name="keywords" content="kodlama eğitimi, okullar için kodlama, bilişim teknolojileri, robotik kodlama, yapay zeka eğitimi, blok kodlama, öğrenci kodlama platformu, öğretmen paneli, Bilişim Kod">
     <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#5B3DF5">
     <meta name="author" content="Bilişim Kod">
     <link rel="canonical" href="https://bilisimkod.com/">
     <title>Bilişim Kod | Okullar için Kodlama &amp; Yapay Zekâ Platformu</title>
@@ -41,9 +42,68 @@
         'description' => 'Okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren modern eğitim altyapısı.',
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="application/ld+json">{!! json_encode(array (
+  '@@context' => 'https://schema.org',
+  '@@type' => 'FAQPage',
+  'mainEntity' => 
+  array (
+    0 => 
+    array (
+      '@@type' => 'Question',
+      'name' => 'Bilişim Kod kimler için uygun?',
+      'acceptedAnswer' => 
+      array (
+        '@@type' => 'Answer',
+        'text' => 'İlkokul, ortaokul ve lise düzeyindeki okullar için hazırlanmıştır. Yönetici, öğretmen ve öğrenci için ayrı paneller bulunur.',
+      ),
+    ),
+    1 => 
+    array (
+      '@@type' => 'Question',
+      'name' => 'Öğrencilerin verileri güvende mi?',
+      'acceptedAnswer' => 
+      array (
+        '@@type' => 'Answer',
+        'text' => 'Bağlantılar HTTPS ile şifrelenir, parolalar geri döndürülemez biçimde saklanır ve panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.',
+      ),
+    ),
+    2 => 
+    array (
+      '@@type' => 'Question',
+      'name' => 'Kurulum gerekiyor mu?',
+      'acceptedAnswer' => 
+      array (
+        '@@type' => 'Answer',
+        'text' => 'Hayır. Platform tarayıcı üzerinden çalışır; öğrenci ve öğretmenler özel bir yazılım kurmadan giriş yapabilir.',
+      ),
+    ),
+    3 => 
+    array (
+      '@@type' => 'Question',
+      'name' => 'Veliler nasıl bilgilendirilir?',
+      'acceptedAnswer' => 
+      array (
+        '@@type' => 'Answer',
+        'text' => 'Okul yönetimi isterse ödev ve ilerleme bilgileri için veli bildirimlerini etkinleştirebilir.',
+      ),
+    ),
+    4 => 
+    array (
+      '@@type' => 'Question',
+      'name' => 'Deneme veya demo alabilir miyim?',
+      'acceptedAnswer' => 
+      array (
+        '@@type' => 'Answer',
+        'text' => 'Evet. Sayfadaki “Demo Talep Et” formunu doldurun, okulunuza özel kısa bir gösterim için size dönüş yapalım.',
+      ),
+    ),
+  ),
+), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    @include('partials.analytics')
+
+    {{-- Yazı tipleri kendi sunucumuzdan (public/fonts); Google'a istek gitmez. --}}
+    <link rel="preload" href="{{ asset('fonts/inter-latin-567244.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('fonts/fonts.css') }}">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         :root{
@@ -71,6 +131,14 @@
         html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
         a{color:inherit}
         img{max-width:100%;display:block}
+        .skip-link{position:absolute;left:-9999px;top:8px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:8px;z-index:300}
+        .skip-link:focus{left:8px}
+        .faq{display:grid;gap:10px;max-width:820px}
+        .faq details{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px}
+        .faq summary{cursor:pointer;font-weight:600;font-size:16px}
+        .faq details[open] summary{margin-bottom:8px}
+        .faq p{margin:0;color:var(--ink-soft);font-size:15px;line-height:1.7}
+        .hp-field{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
         :focus-visible{outline:2.5px solid var(--violet);outline-offset:3px;border-radius:6px}
         .container{width:min(1160px,calc(100% - 40px));margin:0 auto}
         .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;letter-spacing:.02em;color:var(--violet-ink);background:var(--violet-tint);border:1px solid rgba(91,61,245,.16);padding:6px 12px 6px 10px;border-radius:999px}
@@ -81,7 +149,7 @@
         .nav{position:sticky;top:0;z-index:40;background:rgba(247,246,242,.86);backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:border-color .2s ease,box-shadow .2s ease}
         .nav.is-scrolled{border-bottom-color:var(--line);box-shadow:0 1px 0 rgba(22,24,43,.02)}
         .nav-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0}
-        .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px}
+        .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;text-decoration:none;white-space:nowrap}
         .brand img{width:34px;height:34px;border-radius:9px;object-fit:cover;box-shadow:var(--shadow-sm)}
         .nav-links{display:flex;align-items:center;gap:30px;font-size:14.5px;font-weight:500;color:var(--ink-soft)}
         .nav-links a{text-decoration:none;transition:color .15s ease}
@@ -115,7 +183,7 @@
         .ide-line{display:grid;grid-template-columns:22px 1fr;gap:14px;color:var(--ink-soft);opacity:0;transform:translateY(4px);animation:lineIn .5s ease forwards}
         .ide-line span:first-child{text-align:right;color:#B8B4A6}
         .ide-line .key{color:var(--violet-ink);font-weight:600}
-        .ide-line .str{color:var(--mint)}
+        .ide-line .str{color:#087F5E}
         .ide-line .xp{display:inline-flex;align-items:center;gap:6px;margin-left:6px;font-size:11.5px;font-weight:600;color:#B45309;background:var(--signal-tint);padding:2px 8px;border-radius:999px}
         .cursor{display:inline-block;width:7px;height:15px;background:var(--signal);margin-left:2px;vertical-align:-2px;animation:blink 1s step-end infinite}
         @keyframes lineIn{to{opacity:1;transform:translateY(0)}}
@@ -162,7 +230,7 @@
         .cta-band-copy p{color:#B9BAD1;margin:0;font-size:15.5px;line-height:1.65}
         .cta-band-actions{position:relative;display:flex;gap:12px;flex-wrap:wrap}
         .cta-band .btn-primary{background:#fff;color:var(--ink)}
-        .cta-band .btn-primary:hover{background:var(--signal);color:#fff}
+        .cta-band .btn-primary:hover{background:var(--signal);color:var(--ink)}
         .cta-band .btn-ghost{background:transparent;border-color:rgba(255,255,255,.22);color:#fff}
         .cta-band .btn-ghost:hover{border-color:#fff}
 
@@ -202,27 +270,29 @@
     </style>
 </head>
 <body>
+<a href="#icerik" class="skip-link">İçeriğe geç</a>
 <div x-data="{ demoOpen:false, scrolled:false }" x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 8)">
 
-    <nav class="nav" :class="{ 'is-scrolled': scrolled }">
+    <nav class="nav" aria-label="Ana menü" :class="{ 'is-scrolled': scrolled }">
         <div class="container nav-row">
             <a href="/" class="brand">
-                <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Bilişim Kod">
+                <img src="{{ asset('logo.webp') }}" alt="Bilişim Kod" width="34" height="34" fetchpriority="high">
                 Bilişim Kod
             </a>
             <div class="nav-links">
                 <a href="#moduller">Modüller</a>
                 <a href="#kimler-icin">Kimler için</a>
+                <a href="#sss">SSS</a>
                 <a href="#iletisim">İletişim</a>
             </div>
             <div class="nav-cta">
-                <button type="button" class="btn btn-ghost btn-sm" @click="demoOpen = true">Demo Talep Et</button>
+                <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="dialog" @click="demoOpen = true">Demo Talep Et</button>
                 <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Giriş Yap</a>
             </div>
         </div>
     </nav>
 
-    <main>
+    <main id="icerik">
         <section class="container hero">
             <div>
                 <span class="eyebrow">İlkokul · Ortaokul · Lise için hazır müfredat</span>
@@ -320,6 +390,20 @@
             </div>
         </section>
 
+        <section class="section container" id="sss" aria-labelledby="sss-title">
+            <div class="section-head">
+                <span class="section-kicker">// SSS</span>
+                <h2 id="sss-title">Sık sorulan sorular</h2>
+            </div>
+            <div class="faq">
+                <details><summary>Bilişim Kod kimler için uygun?</summary><p>İlkokul, ortaokul ve lise düzeyindeki okullar için hazırlanmıştır. Yönetici, öğretmen ve öğrenci için ayrı paneller bulunur.</p></details>
+                <details><summary>Öğrencilerin verileri güvende mi?</summary><p>Bağlantılar HTTPS ile şifrelenir, parolalar geri döndürülemez biçimde saklanır ve panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.</p></details>
+                <details><summary>Kurulum gerekiyor mu?</summary><p>Hayır. Platform tarayıcı üzerinden çalışır; öğrenci ve öğretmenler özel bir yazılım kurmadan giriş yapabilir.</p></details>
+                <details><summary>Veliler nasıl bilgilendirilir?</summary><p>Okul yönetimi isterse ödev ve ilerleme bilgileri için veli bildirimlerini etkinleştirebilir.</p></details>
+                <details><summary>Deneme veya demo alabilir miyim?</summary><p>Evet. Sayfadaki “Demo Talep Et” formunu doldurun, okulunuza özel kısa bir gösterim için size dönüş yapalım.</p></details>
+            </div>
+        </section>
+
         <section class="section container" id="iletisim">
             <div class="cta-band">
                 <div class="cta-band-copy">
@@ -337,14 +421,19 @@
     <footer>
         <div class="container footer-row">
             <a href="/" class="brand" style="font-weight:700">
-                <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Bilişim Kod" style="width:26px;height:26px;border-radius:7px">
+                <img src="{{ asset('logo.webp') }}" alt="Bilişim Kod" width="26" height="26" loading="lazy" style="width:26px;height:26px;border-radius:7px">
                 Bilişim Kod
             </a>
             <div>© {{ date('Y') }} Bilişim Kod — Okullar için kodlama ve yapay zekâ platformu</div>
+            <nav aria-label="Yasal bağlantılar" style="display:flex;flex-wrap:wrap;gap:8px 18px">
+                <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>
+                <a href="{{ route('legal.terms') }}">Kullanım Şartları</a>
+                <a href="{{ route('legal.cookies') }}">Çerez Politikası</a>
+            </nav>
         </div>
     </footer>
 
-    <div class="modal-backdrop" :class="{ 'is-open': demoOpen }" x-cloak @keydown.escape.window="demoOpen = false" @click.self="demoOpen = false">
+    <div class="modal-backdrop" :class="{ 'is-open': demoOpen }" x-effect="if (demoOpen) $nextTick(() => document.getElementById('guest_name')?.focus())" x-cloak @keydown.escape.window="demoOpen = false" @click.self="demoOpen = false">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="demo-modal-title">
             <h3 id="demo-modal-title">Demo Talebi</h3>
             <p>Ad soyad, e-posta ve kısa bir not bırakın; talebiniz ekibimize düşsün, size dönelim.</p>
@@ -358,13 +447,14 @@
 
             <form method="POST" action="{{ route('support-requests.demo') }}">
                 @csrf
+                <div class="hp-field" aria-hidden="true"><label for="website">Web sitesi</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
                 <div class="field">
                     <label for="guest_name">Ad Soyad</label>
-                    <input id="guest_name" name="guest_name" type="text" required maxlength="190" value="{{ old('guest_name') }}" placeholder="Adınız ve soyadınız">
+                    <input id="guest_name" name="guest_name" type="text" autocomplete="name" required maxlength="190" value="{{ old('guest_name') }}" placeholder="Adınız ve soyadınız">
                 </div>
                 <div class="field">
                     <label for="guest_email">E-posta</label>
-                    <input id="guest_email" name="guest_email" type="email" required maxlength="190" value="{{ old('guest_email') }}" placeholder="ornek@eposta.com">
+                    <input id="guest_email" name="guest_email" type="email" autocomplete="email" required maxlength="190" value="{{ old('guest_email') }}" placeholder="ornek@eposta.com">
                 </div>
                 <div class="field">
                     <label for="message">Mesaj</label>
@@ -378,5 +468,6 @@
         </div>
     </div>
 </div>
+@include('partials.cookie-notice')
 </body>
 </html>

@@ -33,3 +33,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local debug leftovers
+/cookie*.txt
+/tmp_*
+/login.html
+/login_post_headers.txt
+/temp_image_slide.txt
+/subdomains/

@@ -1,0 +1,16 @@
+# Bilişim Kod
+
+> Bilişim Kod, okullar için kodlama, robotik ve yapay zekâ müfredatını tek platformda birleştiren eğitim altyapısıdır. Ders anlatımı, kodlama oyunları, canlı quiz, klavye yarışı, ödev takibi ve veli bildirimi sunar. Yönetici, öğretmen ve öğrenci için ayrı paneller vardır.
+
+Hedef kitle: ilkokul, ortaokul ve lise düzeyindeki okullar, öğretmenler ve öğrenciler. Dil: Türkçe.
+
+## Sayfalar
+
+- [Ana sayfa](https://bilisimkod.com/): Platformun tanıtımı, modüller, SSS ve demo talep formu
+- [Gizlilik Politikası ve KVKK](https://bilisimkod.com/gizlilik-politikasi): Kişisel verilerin işlenmesi
+- [Kullanım Şartları](https://bilisimkod.com/kullanim-sartlari): Platform kullanım kuralları
+- [Çerez Politikası](https://bilisimkod.com/cerez-politikasi): Kullanılan çerezler
+
+## Not
+
+Giriş yapılan paneller (öğrenci, öğretmen, yönetici) herkese açık değildir ve taranmamalıdır.

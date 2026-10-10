@@ -61,7 +61,11 @@ Route::get('/', function () {
 
     return view('home');
 });
-Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->name('support-requests.demo');
+Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->middleware('throttle:5,10')->name('support-requests.demo');
+Route::view('/gizlilik-politikasi', 'legal.privacy')->name('legal.privacy');
+Route::view('/kullanim-sartlari', 'legal.terms')->name('legal.terms');
+Route::view('/cerez-politikasi', 'legal.cookies')->name('legal.cookies');
+Route::redirect('/kvkk', '/gizlilik-politikasi', 301);
 Route::any('/public', fn () => redirect('/'));
 Route::any('/public/', fn () => redirect('/'));
 Route::get('/public/index.php/{asset}', function (Request $request, string $asset) {
@@ -242,8 +246,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/app-notifications/delete-all', [NotificationController::class, 'destroyAllLogs'])->name('notifications.logs.destroy-all.post');
         Route::post('/classes/secili', [SchoolClassController::class, 'destroySelected'])->name('classes.destroy-selected');
         Route::delete('/classes/tumu', [SchoolClassController::class, 'destroyAll'])->name('classes.destroy-all');
-        Route::get('/classes/secili-sil', [SchoolClassController::class, 'destroySelectedGet'])->name('classes.destroy-selected.get');
-        Route::get('/classes/tumu-sil', [SchoolClassController::class, 'destroyAllGet'])->name('classes.destroy-all.get');
         Route::post('/veli-bildirim/whatsapp/baslat', [ParentWhatsappController::class, 'start'])->name('parent-whatsapp.start');
         Route::post('/veli-bildirim/whatsapp/adim/{taskId}', [ParentWhatsappController::class, 'step'])->name('parent-whatsapp.step');
         Route::get('/veli-bildirim/siniflar', [ParentWhatsappController::class, 'classes'])->name('parent-whatsapp.classes');

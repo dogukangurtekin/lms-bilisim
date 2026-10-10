@@ -6,7 +6,7 @@
     <title>Giriş</title>
     <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('{{ asset('fonts/fonts.css') }}');
         :root{
             --paper:#F7F6F2; --surface:#FFFFFF; --ink:#16182B; --ink-soft:#585A72;
             --line:#E4E1D8; --violet:#5B3DF5; --violet-ink:#3E28B8; --violet-tint:#EEEBFD;
