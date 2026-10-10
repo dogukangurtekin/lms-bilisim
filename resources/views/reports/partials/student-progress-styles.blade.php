@@ -269,18 +269,8 @@ h2 { font-size: 17px; line-height: 1.2; }
 .term-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 3px; vertical-align: -1px; background: var(--dot); }
 .term-legend .is-line::before { height: 3px; border-radius: 2px; vertical-align: 2px; width: 12px; }
 
-.term-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 2px 0 8px; }
-.term-kpi { padding: 5px 8px; border: 1px solid #d7e2f5; border-radius: 8px; background: #fff; }
-.term-kpi span { display: block; color: #64748b; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
-.term-kpi strong { display: block; margin-top: 1px; color: #1e3a8a; font-size: 15px; line-height: 1.15; }
-.term-kpi strong small { color: #64748b; font-size: 9px; font-weight: 700; }
-.term-kpi em { display: block; margin-top: 1px; color: #94a3b8; font-size: 7px; font-style: normal; font-weight: 700; }
-.term-kpi--up strong { color: #15803d; }
-.term-kpi--down strong { color: #dc2626; }
-.term-kpi--flat strong { color: #64748b; }
-
 .term-chart { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 4px; }
-.term-yaxis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: 21mm; margin-top: 44px; color: #94a3b8; font-size: 7.5px; font-weight: 700; line-height: 1; }
+.term-yaxis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: 21mm; margin-top: 56px; color: #94a3b8; font-size: 7.5px; font-weight: 700; line-height: 1; }
 
 /* Dönem bandı: 1. Dönem | Yarıyıl Tatili | 2. Dönem */
 .term-bands { display: grid; gap: 2px; margin-bottom: 3px; }

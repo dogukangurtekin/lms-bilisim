@@ -76,10 +76,7 @@
     }
     $termWeekCount = $termWeeks->count();
     $termMax = max(1, (int) $termWeeks->max('total'));
-    $termTotal = (int) $termWeeks->sum('total');
     $termXp = (int) $termWeeks->sum('xp');
-    $elapsedSchoolWeeks = $termWeeks->filter(fn ($w) => ! $w['future'] && $w['type'] !== 'break')->values();
-    $termActiveWeeks = $elapsedSchoolWeeks->filter(fn ($w) => $w['total'] > 0)->count();
     // Sütun genişlikleri: tatil sütunları, "Yarıyıl Tatili" etiketi sığsın diye daha geniş.
     $termGridCols = $termWeeks->map(fn ($w) => $w['type'] === 'break' ? '3fr' : '1fr')->implode(' ');
     // Dönem başlık bandı ve ay başlıkları (aynı ızgarada span ile)
@@ -120,21 +117,6 @@
     }
     $cumMax = max(1, $cum);
     $cumPolyline = collect($cumPoints)->map(fn ($p) => round($p['x'], 2) . ',' . round(100 - ($p['v'] / $cumMax * 96) - 2, 2))->implode(' ');
-    // Trend: geçmiş okul haftalarının son N haftası ile önceki N haftası
-    $trendN = min(8, intdiv($elapsedSchoolWeeks->count(), 2));
-    $lastHalf = $trendN > 0 ? (int) $elapsedSchoolWeeks->slice(-$trendN)->sum('total') : 0;
-    $firstHalf = $trendN > 0 ? (int) $elapsedSchoolWeeks->slice(-2 * $trendN, $trendN)->sum('total') : 0;
-    if ($trendN > 0 && $firstHalf > 0) {
-        $trendPct = (int) round((($lastHalf - $firstHalf) / $firstHalf) * 100);
-        $trendDir = $trendPct > 0 ? 'up' : ($trendPct < 0 ? 'down' : 'flat');
-        $trendText = ($trendPct > 0 ? '▲ %' : ($trendPct < 0 ? '▼ %' : '● %')) . abs($trendPct);
-    } elseif ($trendN > 0 && $lastHalf > 0) {
-        $trendDir = 'up';
-        $trendText = '▲ Yeni ivme';
-    } else {
-        $trendDir = 'flat';
-        $trendText = '-';
-    }
     $fmtDate = function ($value): string {
         if (! $value) {
             return '-';
@@ -305,13 +287,6 @@
                 @endforeach
                 <span class="is-line" style="--dot: #e11d48">Birikimli XP</span>
             </div>
-        </div>
-
-        <div class="term-kpis">
-            <div class="term-kpi"><span>Yıl İçi Etkinlik</span><strong>{{ $termTotal }}</strong></div>
-            <div class="term-kpi"><span>Kazanılan XP</span><strong>{{ $termXp }}</strong></div>
-            <div class="term-kpi"><span>Aktif Hafta</span><strong>{{ $termActiveWeeks }}<small> / {{ $elapsedSchoolWeeks->count() }}</small></strong></div>
-            <div class="term-kpi term-kpi--{{ $trendDir }}"><span>Gelişim Trendi</span><strong>{{ $trendText }}</strong><em>@if($trendN > 0)son {{ $trendN }} hafta / önceki {{ $trendN }} hafta @else yeterli veri yok @endif</em></div>
         </div>
 
         <div class="term-chart" aria-label="Eğitim-öğretim yılı haftalık etkinlik grafiği">
