@@ -273,7 +273,7 @@
 </head>
 <body>
 <a href="#icerik" class="skip-link">İçeriğe geç</a>
-<div x-data="{ demoOpen:false, scrolled:false }" x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 8)">
+<div x-data="{ demoOpen:{{ session('ok') || $errors->any() ? 'true' : 'false' }}, scrolled:false }" x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 8)">
 
     <nav class="nav" aria-label="Ana menü" :class="{ 'is-scrolled': scrolled }">
         <div class="container nav-row">

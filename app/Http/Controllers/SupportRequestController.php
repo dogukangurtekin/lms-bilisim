@@ -146,6 +146,10 @@ class SupportRequestController extends Controller
             'guest_name' => ['required', 'string', 'max:190'],
             'guest_email' => ['required', 'email', 'max:190'],
             'message' => ['required', 'string', 'max:6000'],
+        ], [], [
+            'guest_name' => 'Ad soyad',
+            'guest_email' => 'E-posta',
+            'message' => 'Mesaj',
         ]);
 
         $admin = User::query()->whereHas('role', fn ($q) => $q->where('slug', 'admin'))->orderBy('id')->first();
