@@ -193,7 +193,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 }
 .category-grid span { left: 31px; right: 7px; border-color: #e4ebf5; }
 .category-y { left: 3px; top: 6px; bottom: 24px; font-size: 7px; }
-.category-bars { left: 33px; right: 8px; top: 8px; bottom: 7px; gap: 5px; }
+.category-bars { left: 33px; right: 8px; top: 8px; bottom: 7px; gap: 5px; grid-template-columns: repeat(var(--cat-count, 8), minmax(0, 1fr)); }
 .category-bar { border-radius: 4px 4px 0 0; }
 .category-col small,
 .category-col small[style] { margin-top: 2px; font-size: 7px !important; line-height: 1.05 !important; }
@@ -237,42 +237,6 @@ h2 { font-size: 17px; line-height: 1.2; }
     text-overflow: ellipsis;
     font-size: 7.4px;
 }
-
-.parent-insight-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 6px;
-}
-.parent-insight {
-    position: relative;
-    min-height: 18mm;
-    padding: 7px 9px;
-    overflow: hidden;
-    border: 1.5px solid;
-    border-radius: 8px;
-}
-.parent-insight::after {
-    content: "";
-    position: absolute;
-    right: -9mm;
-    bottom: -10mm;
-    width: 24mm;
-    height: 24mm;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: .07;
-}
-.parent-insight span,
-.parent-insight strong,
-.parent-insight small { display: block; position: relative; z-index: 1; }
-.parent-insight span { margin-bottom: 2px; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .35px; }
-.parent-insight strong { font-size: 17px; line-height: 1.1; }
-.parent-insight small { margin-top: 3px; color: #526078; font-size: 7.5px; }
-.parent-insight--blue { color: #1746a2; border-color: #9bb9f4; background: #edf4ff; }
-.parent-insight--amber { color: #a25b08; border-color: #f2c673; background: #fff8e8; }
-.parent-insight--rose { color: #aa3151; border-color: #efafc0; background: #fff1f5; }
-.parent-insight--green { color: #147a45; border-color: #8fd3ad; background: #eefbf3; }
 
 /* ---- Dönem gelişim grafiği ---- */
 .term-panel { border-color: #b8c9ed; background: linear-gradient(135deg, #f6f9ff, #fff); }

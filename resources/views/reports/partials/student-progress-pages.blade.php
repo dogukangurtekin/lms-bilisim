@@ -239,7 +239,7 @@
                     <em>{{ $i * 10 }}%</em>
                 @endfor
             </div>
-            <div class="category-bars">
+            <div class="category-bars" style="--cat-count: {{ max(1, count((array) data_get($report, 'category_chart', []))) }}">
                 @foreach((array) data_get($report, 'category_chart', []) as $item)
                     <div class="category-col">
                         <div class="category-bar-wrap">
@@ -251,29 +251,6 @@
                 @endforeach
             </div>
         </div>
-    </div>
-
-    <div class="parent-insight-grid">
-        <article class="parent-insight parent-insight--blue">
-            <span>Akademik Ortalama</span>
-            <strong>%{{ $donePct }}</strong>
-            <small>Genel ilerleme oranıyla eşleştirildi</small>
-        </article>
-        <article class="parent-insight parent-insight--amber">
-            <span>Günlük Egzersiz Başarısı</span>
-            <strong>%{{ (int) data_get($report, 'kpi.daily_success_rate', 0) }}</strong>
-            <small>{{ (int) data_get($report, 'kpi.daily_correct_count', 0) }} doğru · {{ (int) data_get($report, 'kpi.daily_wrong_count', 0) }} yanlış</small>
-        </article>
-        <article class="parent-insight parent-insight--rose">
-            <span>Canlı Yarışma Katılımı</span>
-            <strong>{{ (int) data_get($report, 'kpi.competition_joined_count', 0) }}</strong>
-            <small>{{ (int) data_get($report, 'kpi.competition_total_xp', 0) }} XP kazanıldı</small>
-        </article>
-        <article class="parent-insight parent-insight--green">
-            <span>Canlı Quiz Katılımı</span>
-            <strong>{{ (int) data_get($report, 'kpi.quiz_joined_count', 0) }}</strong>
-            <small>{{ (int) data_get($report, 'kpi.quiz_total_xp', 0) }} XP kazanıldı</small>
-        </article>
     </div>
 
     <article class="panel term-panel">

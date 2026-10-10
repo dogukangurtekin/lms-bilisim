@@ -117,6 +117,17 @@ class StudentProgressReportService
             ->where('student_user_id', $student->user_id)
             ->sum('xp_earned');
         $quizJoinedCount = \App\Models\LiveQuizSession::joinedCountForUser((int) $student->user_id);
+        // Kategori grafiği için: katıldığı quizlerden bitmiş olanların sayısı.
+        $quizSessionIdsForChart = \App\Models\LiveQuizParticipant::query()
+            ->where('student_user_id', $student->user_id)
+            ->pluck('live_quiz_session_id')
+            ->merge(LiveQuizAnswer::query()->where('student_user_id', $student->user_id)->pluck('live_quiz_session_id'))
+            ->unique()
+            ->values();
+        $quizCompletedCount = $quizSessionIdsForChart->isEmpty()
+            ? 0
+            : (int) \App\Models\LiveQuizSession::withTrashed()->whereIn('id', $quizSessionIdsForChart)->where('status', 'finished')->count();
+        $quizCompletedCount = min($quizCompletedCount, max($quizJoinedCount, $quizCompletedCount));
         // Canli Yarisma'da kazanilan XP daha once hicbir yerde ogrencinin
         // toplam XP'sine dahil edilmiyordu; Canli Quiz ile ayni sekilde
         // (katilim sayisi + kazanilan XP) burada da takip ediliyor.
@@ -407,6 +418,13 @@ class StudentProgressReportService
                 'done' => $dailyFullCorrectCount,
                 'total' => $dailyAttemptCount,
                 'color' => '#f59e0b',
+            ],
+            [
+                'label' => 'Canlı Quiz',
+                'value' => $pct($quizCompletedCount, max($quizJoinedCount, $quizCompletedCount)),
+                'done' => $quizCompletedCount,
+                'total' => max($quizJoinedCount, $quizCompletedCount),
+                'color' => '#06b6d4',
             ],
             [
                 'label' => 'Canlı Yarışma',
