@@ -361,7 +361,6 @@
     </div>
 
     <article class="panel">
-        <h3>Tüm Etkinlikler (Ders, Ödev, Oyun, Quiz, Yarışma)</h3>
         <div class="activity-columns">
             <div>
                 <h4 class="activity-col-title">Dersler</h4>
