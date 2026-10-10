@@ -249,10 +249,13 @@
         .activity-columns .activity-log-table th,
         .activity-columns .activity-log-table td { font-size: 9.5px; padding: 4px 3px; white-space: normal; }
         .activity-columns .activity-log-table .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .activity-log-table--compact .col-xp { text-align: center; font-weight: 700; }
-        .activity-log-table--compact .col-dy { text-align: center; white-space: nowrap; }
-        .activity-log-table--compact .col-status { text-align: right; white-space: nowrap; }
-        .activity-log-table--compact .tick { display: inline-block; vertical-align: middle; }
+        .activity-columns .activity-log-table--compact td.col-xp { text-align: center; font-weight: 700; }
+        .activity-columns .activity-log-table--compact td.col-dy { text-align: center; white-space: nowrap; }
+        .activity-columns .activity-log-table--compact td.col-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .activity-columns .activity-log-table--compact td.col-status { text-align: center; white-space: nowrap; }
+        .activity-columns .activity-log-table--compact th { white-space: nowrap; }
+        .activity-columns .activity-log-table--compact th.col-xp, .activity-columns .activity-log-table--compact th.col-dy, .activity-columns .activity-log-table--compact th.col-status { text-align: center; }
+        .activity-log-table--compact .status-icon { display: inline-block; vertical-align: middle; }
 
         .page-no {
             position: absolute;

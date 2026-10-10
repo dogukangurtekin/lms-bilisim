@@ -16,7 +16,7 @@
         $sortedKinds = $sortedKinds->reject(fn ($k) => in_array($k, $lessonKinds, true))->values();
     }
     // Kompakt (iki sütunlu) düzen: İçerik | XP | Tarih | D/Y | Durum
-    $widths = $compact ? [44, 8, 18, 14, 16] : [58, 14, 11, 11, 6];
+    $widths = $compact ? [43, 8, 28, 10, 11] : [58, 14, 11, 11, 6];
     $doneStatuses = ['Tamamlandı', 'Katıldı'];
 @endphp
 @forelse($sortedKinds as $kind)
@@ -56,13 +56,15 @@
                 <td class="activity-title" title="{{ $item['title'] }}"><div class="clamp">{{ $item['title'] }}</div></td>
                 @if($compact)
                     <td class="col-xp">{{ (int) $item['xp'] }}</td>
-                    <td>{{ $dateText }}</td>
+                    <td class="col-date">{{ $dateText }}</td>
                     <td class="col-dy">{{ $resultText }}</td>
                     <td class="col-status">
                         @if(in_array($item['status'], $doneStatuses, true))
-                            <svg class="tick" viewBox="0 0 16 16" width="13" height="13" role="img" aria-label="{{ $item['status'] }}"><title>{{ $item['status'] }}</title><circle cx="8" cy="8" r="8" fill="#16a34a"/><path d="M4.4 8.3l2.3 2.3 4.6-4.9" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <svg class="status-icon" viewBox="0 0 20 20" width="17" height="17" role="img" aria-label="{{ $item['status'] }}"><title>{{ $item['status'] }}</title><circle cx="10" cy="10" r="9" fill="#dcfce7" stroke="#4ade80" stroke-width="1.2"/><path d="M5.8 10.4l2.8 2.8 5.6-6" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        @elseif($item['status'] === 'Devam Ediyor')
+                            <svg class="status-icon" viewBox="0 0 20 20" width="17" height="17" role="img" aria-label="{{ $item['status'] }}"><title>{{ $item['status'] }}</title><circle cx="10" cy="10" r="9" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.2"/><path d="M10 5.6V10l3 1.8" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         @else
-                            {{ $item['status'] }}
+                            <svg class="status-icon" viewBox="0 0 20 20" width="17" height="17" role="img" aria-label="{{ $item['status'] }}"><title>{{ $item['status'] }}</title><circle cx="10" cy="10" r="9" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/><circle cx="10" cy="10" r="2.2" fill="#94a3b8"/></svg>
                         @endif
                     </td>
                 @else
