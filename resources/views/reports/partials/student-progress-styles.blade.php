@@ -79,13 +79,14 @@ body {
     height: 15mm;
     flex: 0 0 15mm;
 }
-/* 1. sayfadaki logo daha büyük (geniş oranını korur) */
-.hero-left > .brand-logo:not(.small) {
-    width: 27mm;
-    height: 18mm;
-    flex: 0 0 27mm;
-    object-fit: contain;
-}
+/* 1. sayfa başlığı: logo solda; ders/öğrenci bilgisi ve avatar sağda */
+.hero--cover { justify-content: space-between; align-items: center; }
+.hero--cover > .brand-logo { width: 27mm; height: 18mm; flex: 0 0 27mm; object-fit: contain; }
+.hero-right { display: flex; align-items: center; justify-content: flex-end; gap: 9px; min-width: 0; margin-left: auto; }
+.hero-text { min-width: 0; text-align: right; }
+.hero-text h1 { white-space: nowrap; }
+.hero-class { color: #475569; font-size: 14px; font-weight: 700; letter-spacing: 0; }
+.hero-avatar { width: 50px; height: 50px; flex: 0 0 auto; object-fit: cover; border-radius: 12px; border: 2px solid #e2e8f0; }
 
 h1 { font-size: 20px; line-height: 1.15; letter-spacing: -.25px; }
 h2 { font-size: 17px; line-height: 1.2; }

@@ -134,20 +134,18 @@
 @endphp
 
 <section class="report-page">
-    <div class="hero">
-        <div class="hero-left">
-            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
-            @if($student->currentAvatar)
-                <img src="{{ asset($student->currentAvatar->image_path) }}" alt="Avatar" style="width:50px;height:50px;object-fit:cover;border-radius:12px;border:2px solid #e2e8f0;flex:0 0 auto">
-            @endif
-            <div>
+    <div class="hero hero--cover">
+        <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
+        <div class="hero-right">
+            <div class="hero-text">
                 <p class="report-eyebrow">BİLİŞİM TEKNOLOJİLERİ VE YAZILIM DERSİ · GELİŞİM RAPORU</p>
-                <h1>{{ $student->user?->name }}</h1>
-                <p class="subtitle">{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · Rapor tarihi {{ now()->format('d.m.Y') }}</p>
+                <h1>{{ $student->user?->name }}<span class="hero-class"> · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</span></h1>
             </div>
+            @if($student->currentAvatar)
+                <img src="{{ asset($student->currentAvatar->image_path) }}" alt="Avatar" class="hero-avatar">
+            @endif
         </div>
     </div>
-
     <div class="kpi-grid">
         <article class="kpi-card"><span>Toplam XP</span><strong>{{ data_get($report, 'kpi.total_xp', 0) }}</strong></article>
         <article class="kpi-card"><span>Tamamlanan Görev</span><strong>{{ $completed }}</strong></article>
