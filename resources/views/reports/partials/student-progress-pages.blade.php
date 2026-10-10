@@ -134,15 +134,14 @@
 @endphp
 
 <section class="report-page">
-    <div class="report-course-heading">Bilişim Teknolojileri ve Yazılım Dersi</div>
     <div class="hero">
         <div class="hero-left">
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo">
             @if($student->currentAvatar)
-                <img src="{{ asset($student->currentAvatar->image_path) }}" alt="Avatar" style="width:72px;height:72px;object-fit:cover;border-radius:16px;border:2px solid #e2e8f0;flex:0 0 auto">
+                <img src="{{ asset($student->currentAvatar->image_path) }}" alt="Avatar" style="width:50px;height:50px;object-fit:cover;border-radius:12px;border:2px solid #e2e8f0;flex:0 0 auto">
             @endif
             <div>
-                <p class="report-eyebrow">ÖĞRENCİ GELİŞİM RAPORU</p>
+                <p class="report-eyebrow">BİLİŞİM TEKNOLOJİLERİ VE YAZILIM DERSİ · GELİŞİM RAPORU</p>
                 <h1>{{ $student->user?->name }}</h1>
                 <p class="subtitle">{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }} · Rapor tarihi {{ now()->format('d.m.Y') }}</p>
             </div>

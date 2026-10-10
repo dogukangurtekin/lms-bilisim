@@ -79,15 +79,22 @@ body {
     height: 15mm;
     flex: 0 0 15mm;
 }
+/* 1. sayfadaki logo daha büyük (geniş oranını korur) */
+.hero-left > .brand-logo:not(.small) {
+    width: 27mm;
+    height: 18mm;
+    flex: 0 0 27mm;
+    object-fit: contain;
+}
 
 h1 { font-size: 20px; line-height: 1.15; letter-spacing: -.25px; }
 h2 { font-size: 17px; line-height: 1.2; }
 .report-eyebrow {
     margin: 0 0 2px;
     color: var(--report-blue);
-    font-size: 7.5px;
+    font-size: 8.5px;
     font-weight: 800;
-    letter-spacing: 1.2px;
+    letter-spacing: .7px;
 }
 .subtitle {
     margin: 2px 0 0;
