@@ -175,26 +175,6 @@
         </div>
     </article>
 
-    <div class="page-no">Sayfa 1 / 2</div>
-</section>
-
-<section class="report-page page-break">
-    <div class="hero compact">
-        <div class="hero-left">
-            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo small">
-            <div>
-                <p class="report-eyebrow">{{ $student->user?->name }} · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</p>
-                <h2>Detaylı Görev Raporu</h2>
-                <p class="subtitle">Tüm etkinlikler, kazanımlar ve tarihler</p>
-            </div>
-        </div>
-    </div>
-
-    <article class="panel">
-        <h3>Tüm Etkinlikler (Ders, Ödev, Oyun, Quiz, Yarışma)</h3>
-        @include('reports.partials.activity-log-grouped', ['log' => data_get($report, 'activity_log', []), 'tableClass' => 'report-table'])
-    </article>
-
     <article class="panel">
         <h3>Rozetler</h3>
         <div class="badge-wrap">
@@ -224,6 +204,35 @@
             @empty
                 <span class="badge-item">Henüz rozet kazanılmadı</span>
             @endforelse
+        </div>
+    </article>
+
+    <div class="page-no">Sayfa 1 / 2</div>
+</section>
+
+<section class="report-page page-break">
+    <div class="hero compact">
+        <div class="hero-left">
+            <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="brand-logo small">
+            <div>
+                <p class="report-eyebrow">{{ $student->user?->name }} · {{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</p>
+                <h2>Detaylı Görev Raporu</h2>
+                <p class="subtitle">Tüm etkinlikler, kazanımlar ve tarihler</p>
+            </div>
+        </div>
+    </div>
+
+    <article class="panel">
+        <h3>Tüm Etkinlikler (Ders, Ödev, Oyun, Quiz, Yarışma)</h3>
+        <div class="activity-columns">
+            <div>
+                <h4 class="activity-col-title">Dersler</h4>
+                @include('reports.partials.activity-log-grouped', ['log' => data_get($report, 'activity_log', []), 'tableClass' => 'report-table', 'only' => 'lessons'])
+            </div>
+            <div>
+                <h4 class="activity-col-title">Oyun, Uygulama ve Diğer Etkinlikler</h4>
+                @include('reports.partials.activity-log-grouped', ['log' => data_get($report, 'activity_log', []), 'tableClass' => 'report-table', 'only' => 'others'])
+            </div>
         </div>
     </article>
 

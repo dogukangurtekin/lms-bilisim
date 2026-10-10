@@ -242,6 +242,13 @@
         }
         .activity-log-table { table-layout: fixed; }
         .activity-log-table td, .activity-log-table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .activity-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+        .activity-columns > div { min-width: 0; }
+        .activity-col-title { margin: 0 0 4px; padding-bottom: 4px; border-bottom: 2px solid #bfdbfe; font-size: 13px; color: #1e3a8a; }
+        .activity-columns h4 { font-size: 12px; }
+        .activity-columns .activity-log-table th,
+        .activity-columns .activity-log-table td { font-size: 9.5px; padding: 4px 3px; white-space: normal; }
+        .activity-columns .activity-log-table .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         .page-no {
             position: absolute;

@@ -6,6 +6,15 @@
         return $i === false ? 999 : $i;
     })->values();
     $tableClass = $tableClass ?? '';
+    // $only: 'lessons' => yalnızca ders türleri, 'others' => ders dışındaki her şey, null => hepsi.
+    $only = $only ?? null;
+    $lessonKinds = ['Ders', 'Ders Ödevi'];
+    if ($only === 'lessons') {
+        $sortedKinds = $sortedKinds->filter(fn ($k) => in_array($k, $lessonKinds, true))->values();
+    } elseif ($only === 'others') {
+        $sortedKinds = $sortedKinds->reject(fn ($k) => in_array($k, $lessonKinds, true))->values();
+    }
+    $widths = $only ? [37, 17, 19, 18, 9] : [58, 14, 11, 11, 6];
 @endphp
 @forelse($sortedKinds as $kind)
     @php $rows = $groups->get($kind); @endphp
@@ -13,7 +22,7 @@
     <table class="{{ $tableClass }}{{ $tableClass !== '' ? ' activity-log-table' : '' }}">
         @if($tableClass !== '')
         <colgroup>
-            <col style="width:58%"><col style="width:14%"><col style="width:11%"><col style="width:11%"><col style="width:6%">
+            @foreach($widths as $w)<col style="width:{{ $w }}%">@endforeach
         </colgroup>
         @endif
         <thead>
@@ -28,7 +37,7 @@
         <tbody>
         @foreach($rows as $item)
             <tr>
-                <td class="activity-title" title="{{ $item['title'] }}">{{ $item['title'] }}</td>
+                <td class="activity-title" title="{{ $item['title'] }}"><div class="clamp">{{ $item['title'] }}</div></td>
                 <td>{{ $item['sort_date'] ? \Carbon\Carbon::parse($item['sort_date'])->format('d.m.Y H:i') : '-' }}</td>
                 <td>{{ $item['status'] }}</td>
                 <td>{{ $item['result'] }}</td>
