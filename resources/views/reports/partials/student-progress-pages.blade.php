@@ -150,9 +150,6 @@
         <h3>Kategori Bazlı Tamamlama Oranı</h3>
         @php
             $categoryItems = collect(data_get($report, 'category_chart', []));
-            $fullCount = $categoryItems
-                ->filter(fn ($item) => (int) data_get($item, 'total', 0) > 0 && (int) data_get($item, 'done', 0) >= (int) data_get($item, 'total', 0))
-                ->sum(fn ($item) => (int) data_get($item, 'done', 0));
         @endphp
         <div class="category-chart">
             <div class="category-grid">
@@ -177,7 +174,6 @@
                 @endforeach
             </div>
         </div>
-        <p class="chart-note">Bu grafikte %100 tamamlanan kategori/ödev sayısı: <strong>{{ $fullCount }}</strong></p>
     </div>
 
     <div class="parent-insight-grid">
