@@ -114,8 +114,13 @@ h2 { font-size: 17px; line-height: 1.2; }
 .kpi-card,
 .kpi-card:nth-child(2n),
 .kpi-card:nth-child(3n) {
-    min-height: 18mm;
-    padding: 7px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 4px 6px 5px;
+    text-align: center;
     border: 1.5px solid #b8cdf4;
     border-top: 3px solid var(--report-blue);
     border-radius: 8px;
@@ -124,7 +129,7 @@ h2 { font-size: 17px; line-height: 1.2; }
 
 .kpi-card:nth-child(2n) { border-color: #a9dfd8; border-top-color: var(--report-teal); background: #f2fcfa; }
 .kpi-card:nth-child(3n) { border-color: #d3c8f6; border-top-color: #7c5ce5; background: #f8f6ff; }
-.kpi-card span { margin-bottom: 3px; color: var(--report-muted); font-size: 8.5px; line-height: 1.15; }
+.kpi-card span { margin-bottom: 1px; color: var(--report-muted); font-size: 8.5px; line-height: 1.15; }
 .kpi-card strong,
 .kpi-card strong.small { display: block; font-size: 15px; line-height: 1.12; color: var(--report-ink); }
 .kpi-card strong.small + strong.small { margin-top: 2px; }
