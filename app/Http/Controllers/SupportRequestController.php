@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Services\PushNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -173,7 +175,35 @@ class SupportRequestController extends Controller
             ['ticket_id' => $ticket->id, 'source' => 'demo']
         );
 
+        $this->notifyDemoByMail($data);
+
         return back()->with('ok', 'Demo talebiniz gönderildi.');
+    }
+
+    /**
+     * Demo talebini iletişim adresine e-postayla da iletir. SMTP şifresi tanımlı
+     * değilse sessizce atlanır; mail hatası kullanıcıya talebin gitmediği
+     * izlenimi vermesin diye yalnızca loglanır (talep zaten panele kaydedildi).
+     */
+    private function notifyDemoByMail(array $data): void
+    {
+        $to = (string) config('app.contact_email');
+        if ($to === '' || config('mail.default') !== 'smtp' || ! config('mail.mailers.smtp.password')) {
+            return;
+        }
+
+        try {
+            Mail::raw(
+                "Yeni demo talebi\n\nAd Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\n\nMesaj:\n{$data['message']}\n",
+                function ($message) use ($to, $data) {
+                    $message->to($to)
+                        ->replyTo($data['guest_email'], $data['guest_name'])
+                        ->subject('Demo Talebi: ' . $data['guest_name']);
+                }
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Demo talebi e-postası gönderilemedi: ' . $e->getMessage());
+        }
     }
 
     public function update(Request $request, SupportRequest $supportRequest): RedirectResponse
