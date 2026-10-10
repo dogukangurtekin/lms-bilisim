@@ -10,7 +10,7 @@
         $taskTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0,
         $appTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0
     ));
-    // Dönem gelişimi: son 4 ay (16 hafta), haftalık etkinlik yoğunluğu (ders, ödev, oyun, quiz, yarışma).
+    // Dönem gelişimi: eğitim-öğretim yılı (1. dönem Eylül-Ocak | Yarıyıl tatili | 2. dönem Şubat-Haziran), haftalık etkinlik yoğunluğu.
     $weekKinds = [
         'ders'  => ['label' => 'Ders', 'color' => '#2457d6'],
         'odev'  => ['label' => 'Ödev', 'color' => '#f59e0b'],
@@ -42,32 +42,58 @@
         return ['date' => $date, 'kind' => (string) ($row['kind'] ?? ''), 'xp' => (int) ($row['xp'] ?? 0)];
     })->filter(fn ($row) => $row['date'] !== null);
 
-    $termWeekCount = 16;
-    $thisMonday = \Carbon\Carbon::today()->startOfWeek();
-    $termWeeks = collect(range($termWeekCount - 1, 0))->map(function (int $ago) use ($activityRows, $kindToGroup, $weekKinds, $thisMonday) {
-        $start = (clone $thisMonday)->subWeeks($ago)->startOfDay();
-        $end = (clone $start)->addDays(6)->endOfDay();
+    // Hangi eğitim yılı? Eylül ve sonrası: yeni yıl; Ocak-Ağustos: o an biten/sürmekte olan yıl.
+    $todayDate = \Carbon\Carbon::today();
+    $ayStartYear = $todayDate->month >= (int) config('academic.year_start_month', 9) ? $todayDate->year : $todayDate->year - 1;
+    $academicYearLabel = $ayStartYear . '-' . ($ayStartYear + 1);
+    $yearStart = \Carbon\Carbon::create($ayStartYear, (int) config('academic.year_start_month', 9), (int) config('academic.year_start_day', 1))->startOfWeek();
+    $yearEnd = \Carbon\Carbon::create($ayStartYear + 1, (int) config('academic.year_end_month', 6), (int) config('academic.year_end_day', 30))->endOfDay();
+    $breakRef = \Carbon\Carbon::create($ayStartYear + 1, (int) config('academic.break_month', 1), (int) config('academic.break_day', 19))->startOfDay();
+    $breakStart = $breakRef->isMonday() ? $breakRef : $breakRef->copy()->next(\Carbon\Carbon::MONDAY);
+    $breakEnd = $breakStart->copy()->addWeeks((int) config('academic.break_weeks', 2));
+
+    $termWeeks = collect();
+    for ($cursor = $yearStart->copy(); $cursor->copy()->addDays(3)->lte($yearEnd); $cursor->addWeek()) {
+        $start = $cursor->copy()->startOfDay();
+        $end = $start->copy()->addDays(6)->endOfDay();
+        $type = $start->lt($breakStart) ? 'term1' : ($start->lt($breakEnd) ? 'break' : 'term2');
         $rows = $activityRows->filter(fn ($row) => $row['date']->betweenIncluded($start, $end));
         $byGroup = [];
         foreach (array_keys($weekKinds) as $key) {
             $byGroup[$key] = $rows->filter(fn ($row) => $kindToGroup($row['kind']) === $key)->count();
         }
-        return [
-            'start' => $start,
-            'label' => $start->format('d.m'),
+        $mid = $start->copy()->addDays(3);
+        $termWeeks->push([
+            'type' => $type,
+            'future' => $start->gt($todayDate),
             'range' => $start->format('d.m') . ' - ' . $end->format('d.m'),
-            'month' => (int) $start->format('n'),
-            'year' => (int) $start->format('Y'),
+            'month' => (int) $mid->format('n'),
+            'year' => (int) $mid->format('Y'),
             'total' => $rows->count(),
             'xp' => (int) $rows->sum('xp'),
             'groups' => $byGroup,
-        ];
-    })->values();
+        ]);
+    }
+    $termWeekCount = $termWeeks->count();
     $termMax = max(1, (int) $termWeeks->max('total'));
     $termTotal = (int) $termWeeks->sum('total');
     $termXp = (int) $termWeeks->sum('xp');
-    $termActiveWeeks = $termWeeks->filter(fn ($w) => $w['total'] > 0)->count();
-    // Ay başlıkları: ardışık haftaları başlangıç ayına göre grupla.
+    $elapsedSchoolWeeks = $termWeeks->filter(fn ($w) => ! $w['future'] && $w['type'] !== 'break')->values();
+    $termActiveWeeks = $elapsedSchoolWeeks->filter(fn ($w) => $w['total'] > 0)->count();
+    // Sütun genişlikleri: tatil sütunları, "Yarıyıl Tatili" etiketi sığsın diye daha geniş.
+    $termGridCols = $termWeeks->map(fn ($w) => $w['type'] === 'break' ? '3fr' : '1fr')->implode(' ');
+    // Dönem başlık bandı ve ay başlıkları (aynı ızgarada span ile)
+    $termBands = [];
+    foreach ($termWeeks as $w) {
+        if (! empty($termBands) && end($termBands)['type'] === $w['type']) {
+            $termBands[array_key_last($termBands)]['span']++;
+            $termBands[array_key_last($termBands)]['total'] += $w['total'];
+            $termBands[array_key_last($termBands)]['xp'] += $w['xp'];
+            $termBands[array_key_last($termBands)]['future'] = $termBands[array_key_last($termBands)]['future'] && $w['future'];
+        } else {
+            $termBands[] = ['type' => $w['type'], 'span' => 1, 'total' => $w['total'], 'xp' => $w['xp'], 'future' => $w['future']];
+        }
+    }
     $termMonthSegments = [];
     foreach ($termWeeks as $w) {
         $key = $w['year'] . '-' . $w['month'];
@@ -77,23 +103,32 @@
             $termMonthSegments[] = ['key' => $key, 'name' => $monthNames[$w['month']], 'span' => 1];
         }
     }
-    // Birikimli XP çizgisi (SVG, 0-100 koordinat uzayı)
+    // Birikimli XP çizgisi: yalnızca geçmiş/şimdiki haftalar için (SVG, 0-100 koordinat uzayı, sütun genişliklerine göre)
+    $fr = $termWeeks->map(fn ($w) => $w['type'] === 'break' ? 3 : 1);
+    $frTotal = max(1, $fr->sum());
     $cum = 0;
+    $acc = 0;
     $cumPoints = [];
     foreach ($termWeeks as $i => $w) {
+        $center = ($acc + $fr[$i] / 2) / $frTotal * 100;
+        $acc += $fr[$i];
+        if ($w['future']) {
+            continue;
+        }
         $cum += $w['xp'];
-        $cumPoints[] = ['x' => ($i + 0.5) / $termWeekCount * 100, 'v' => $cum];
+        $cumPoints[] = ['x' => $center, 'v' => $cum];
     }
     $cumMax = max(1, $cum);
     $cumPolyline = collect($cumPoints)->map(fn ($p) => round($p['x'], 2) . ',' . round(100 - ($p['v'] / $cumMax * 96) - 2, 2))->implode(' ');
-    // Trend: son 8 hafta ile önceki 8 haftanın karşılaştırması
-    $firstHalf = (int) $termWeeks->take(8)->sum('total');
-    $lastHalf = (int) $termWeeks->slice(8)->sum('total');
-    if ($firstHalf > 0) {
+    // Trend: geçmiş okul haftalarının son N haftası ile önceki N haftası
+    $trendN = min(8, intdiv($elapsedSchoolWeeks->count(), 2));
+    $lastHalf = $trendN > 0 ? (int) $elapsedSchoolWeeks->slice(-$trendN)->sum('total') : 0;
+    $firstHalf = $trendN > 0 ? (int) $elapsedSchoolWeeks->slice(-2 * $trendN, $trendN)->sum('total') : 0;
+    if ($trendN > 0 && $firstHalf > 0) {
         $trendPct = (int) round((($lastHalf - $firstHalf) / $firstHalf) * 100);
         $trendDir = $trendPct > 0 ? 'up' : ($trendPct < 0 ? 'down' : 'flat');
         $trendText = ($trendPct > 0 ? '▲ %' : ($trendPct < 0 ? '▼ %' : '● %')) . abs($trendPct);
-    } elseif ($lastHalf > 0) {
+    } elseif ($trendN > 0 && $lastHalf > 0) {
         $trendDir = 'up';
         $trendText = '▲ Yeni ivme';
     } else {
@@ -263,7 +298,7 @@
 
     <article class="panel term-panel">
         <div class="term-head">
-            <h3>Dönem Gelişim Grafiği <small>Son 4 ay · haftalık etkinlik yoğunluğu</small></h3>
+            <h3>Dönem Gelişim Grafiği <small>{{ $academicYearLabel }} eğitim-öğretim yılı · haftalık etkinlik yoğunluğu</small></h3>
             <div class="term-legend">
                 @foreach($weekKinds as $kindMeta)
                     <span style="--dot: {{ $kindMeta['color'] }}">{{ $kindMeta['label'] }}</span>
@@ -273,27 +308,39 @@
         </div>
 
         <div class="term-kpis">
-            <div class="term-kpi"><span>Dönem Etkinliği</span><strong>{{ $termTotal }}</strong></div>
-            <div class="term-kpi"><span>Dönem XP</span><strong>{{ $termXp }}</strong></div>
-            <div class="term-kpi"><span>Aktif Hafta</span><strong>{{ $termActiveWeeks }}<small> / {{ $termWeekCount }}</small></strong></div>
-            <div class="term-kpi term-kpi--{{ $trendDir }}"><span>Dönem Trendi</span><strong>{{ $trendText }}</strong><em>son 8 hafta / önceki 8 hafta</em></div>
+            <div class="term-kpi"><span>Yıl İçi Etkinlik</span><strong>{{ $termTotal }}</strong></div>
+            <div class="term-kpi"><span>Kazanılan XP</span><strong>{{ $termXp }}</strong></div>
+            <div class="term-kpi"><span>Aktif Hafta</span><strong>{{ $termActiveWeeks }}<small> / {{ $elapsedSchoolWeeks->count() }}</small></strong></div>
+            <div class="term-kpi term-kpi--{{ $trendDir }}"><span>Gelişim Trendi</span><strong>{{ $trendText }}</strong><em>@if($trendN > 0)son {{ $trendN }} hafta / önceki {{ $trendN }} hafta @else yeterli veri yok @endif</em></div>
         </div>
 
-        <div class="term-chart" aria-label="Son dört aylık haftalık etkinlik grafiği">
+        <div class="term-chart" aria-label="Eğitim-öğretim yılı haftalık etkinlik grafiği">
             <div class="term-yaxis">
                 <span>{{ $termMax }}</span>
                 <span>{{ (int) round($termMax / 2) }}</span>
                 <span>0</span>
             </div>
             <div class="term-plot-wrap">
-                <div class="term-months" style="grid-template-columns: repeat({{ $termWeekCount }}, minmax(0, 1fr))">
+                <div class="term-bands" style="grid-template-columns: {{ $termGridCols }}">
+                    @foreach($termBands as $band)
+                        @if($band['type'] === 'break')
+                            <span class="term-band term-band--break" style="grid-column: span {{ $band['span'] }}">Yarıyıl Tatili</span>
+                        @else
+                            <span class="term-band term-band--{{ $band['type'] }}{{ $band['future'] ? ' is-future' : '' }}" style="grid-column: span {{ $band['span'] }}">
+                                <b>{{ $band['type'] === 'term1' ? '1. Dönem' : '2. Dönem' }}</b>
+                                <em>@if($band['future']) Henüz başlamadı @else {{ $band['total'] }} etkinlik · {{ $band['xp'] }} XP @endif</em>
+                            </span>
+                        @endif
+                    @endforeach
+                </div>
+                <div class="term-months" style="grid-template-columns: {{ $termGridCols }}">
                     @foreach($termMonthSegments as $seg)
                         <span style="grid-column: span {{ $seg['span'] }}">{{ $seg['name'] }}</span>
                     @endforeach
                 </div>
-                <div class="term-plot" style="grid-template-columns: repeat({{ $termWeekCount }}, minmax(0, 1fr))">
+                <div class="term-plot" style="grid-template-columns: {{ $termGridCols }}">
                     @foreach($termWeeks as $w)
-                        <div class="term-col{{ $w['total'] === 0 ? ' is-empty' : '' }}">
+                        <div class="term-col term-col--{{ $w['type'] }}{{ $w['total'] === 0 ? ' is-empty' : '' }}{{ $w['future'] ? ' is-future' : '' }}">
                             <div class="term-count">{{ $w['total'] > 0 ? $w['total'] : '' }}</div>
                             <div class="term-bar" title="{{ $w['range'] }}: {{ $w['total'] }} etkinlik, {{ $w['xp'] }} XP">
                                 @foreach(array_reverse(array_keys($weekKinds)) as $gk)
@@ -302,14 +349,12 @@
                                     @endif
                                 @endforeach
                             </div>
-                            <div class="term-week">{{ $w['label'] }}</div>
                         </div>
                     @endforeach
                     @if($termXp > 0)
                         <svg class="term-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                             <polyline points="{{ $cumPolyline }}" fill="none" stroke="#e11d48" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
                         </svg>
-                        <span class="term-line-end">{{ $termXp }} XP</span>
                     @endif
                 </div>
             </div>

@@ -280,24 +280,37 @@ h2 { font-size: 17px; line-height: 1.2; }
 .term-kpi--flat strong { color: #64748b; }
 
 .term-chart { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 4px; }
-.term-yaxis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: 21mm; margin-top: 29px; color: #94a3b8; font-size: 7.5px; font-weight: 700; line-height: 1; }
+.term-yaxis { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; height: 21mm; margin-top: 44px; color: #94a3b8; font-size: 7.5px; font-weight: 700; line-height: 1; }
+
+/* Dönem bandı: 1. Dönem | Yarıyıl Tatili | 2. Dönem */
+.term-bands { display: grid; gap: 2px; margin-bottom: 3px; }
+.term-band { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; padding: 2px 3px; border-radius: 6px; text-align: center; line-height: 1.2; overflow: hidden; }
+.term-band b { font-size: 9px; font-weight: 800; white-space: nowrap; }
+.term-band em { font-size: 7.5px; font-style: normal; font-weight: 700; white-space: nowrap; }
+.term-band--term1 { background: #e0ebff; color: #1e3a8a; }
+.term-band--term2 { background: #dcf5f0; color: #0f766e; }
+.term-band--term1 em, .term-band--term2 em { opacity: .8; }
+.term-band.is-future { background: #f1f5f9; color: #94a3b8; }
+.term-band--break { background: repeating-linear-gradient(135deg, #fff7e6, #fff7e6 4px, #ffedc7 4px, #ffedc7 8px); color: #b45309; font-size: 7.5px; font-weight: 800; white-space: normal; border: 1px dashed #f5c26b; }
+
 .term-months { display: grid; gap: 2px; height: 13px; margin-bottom: 2px; }
-.term-months span { padding-bottom: 1px; border-bottom: 2px solid #bfdbfe; color: #1e3a8a; font-size: 8.5px; font-weight: 800; text-align: center; line-height: 11px; }
-.term-plot { position: relative; display: grid; gap: 3px; padding: 0 2px; border-bottom: 1px solid #cbd5e1; }
-.term-col { display: grid; grid-template-rows: 14px 21mm auto; min-width: 0; text-align: center; }
-.term-count { align-self: end; padding-bottom: 2px; color: #1e3a8a; font-size: 8.5px; font-weight: 800; }
+.term-months span { padding-bottom: 1px; border-bottom: 2px solid #bfdbfe; color: #1e3a8a; font-size: 8px; font-weight: 800; text-align: center; line-height: 11px; overflow: hidden; white-space: nowrap; }
+.term-plot { position: relative; display: grid; gap: 2px; padding: 0 1px; border-bottom: 1px solid #cbd5e1; }
+.term-col { display: grid; grid-template-rows: 14px 21mm; min-width: 0; text-align: center; border-radius: 3px 3px 0 0; }
+.term-col--break { background: repeating-linear-gradient(135deg, transparent, transparent 4px, #fff3d6 4px, #fff3d6 8px); }
+.term-col.is-future { background: rgba(148, 163, 184, .07); }
+.term-col--break.is-future, .term-col--break { background: repeating-linear-gradient(135deg, #fffaf0, #fffaf0 4px, #ffedc7 4px, #ffedc7 8px); }
+.term-count { align-self: end; padding-bottom: 2px; color: #1e3a8a; font-size: 7.5px; font-weight: 800; line-height: 1; }
 .term-bar {
     position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
-    width: 72%; max-width: 20px; margin: 0 auto;
+    width: 70%; max-width: 12px; margin: 0 auto;
     background: repeating-linear-gradient(to top, transparent 0, transparent calc(50% - 1px), #e5ecf7 50%);
 }
+.term-col--break .term-bar { width: 26%; }
 .term-bar i { display: block; flex: none; min-height: 3px; }
-.term-bar i:first-child { border-radius: 3px 3px 0 0; }
-.term-col.is-empty .term-bar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: #dbe4f2; }
-.term-week { padding-top: 2px; color: #64748b; font-size: 6.5px; font-weight: 700; }
+.term-bar i:first-child { border-radius: 2px 2px 0 0; }
+.term-col.is-empty:not(.is-future) .term-bar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: #dbe4f2; }
 .term-line { position: absolute; left: 0; right: 0; top: 14px; width: 100%; height: 21mm; pointer-events: none; overflow: visible; }
-.term-line-end { position: absolute; right: 2px; top: 1px; padding: 0 4px; border-radius: 999px; background: #fff1f2; color: #be123c; font-size: 8px; font-weight: 800; }
-
 /* ---- Görev özeti: halka gösterge ---- */
 .task-summary-body { display: flex; align-items: center; gap: 16px; }
 .task-ring { position: relative; flex: 0 0 auto; width: 34mm; height: 34mm; }
