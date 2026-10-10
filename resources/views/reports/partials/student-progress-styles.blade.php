@@ -131,7 +131,8 @@ h2 { font-size: 17px; line-height: 1.2; }
 .kpi-card strong.small { font-size: 9px; }
 
 .content-grid {
-    grid-template-columns: .86fr 1.14fr;
+    grid-template-columns: .72fr 1.28fr;
+    align-items: stretch;
     gap: 6px;
     margin-bottom: 0;
 }
@@ -351,14 +352,7 @@ h2 { font-size: 17px; line-height: 1.2; }
     .page-break { page-break-before: always; }
 }
 
-/* ---- Analiz özeti: öğrenciye özel maddeler ---- */
-.analysis-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
-.analysis-item { position: relative; padding: 4px 6px 4px 11px; border-radius: 6px; background: #f8fafc; font-size: 8.8px; line-height: 1.35; color: #334155; }
-.analysis-item::before { content: ""; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 3px; background: #60a5fa; }
-.analysis-item b { display: inline; margin-right: 3px; color: #0f172a; font-size: 8.8px; font-weight: 800; }
-.analysis-item b::after { content: ":"; }
-.analysis-item span { display: inline; }
-.analysis-item--good { background: #f0fdf4; }
-.analysis-item--good::before { background: #22c55e; }
-.analysis-item--warn { background: #fffbeb; }
-.analysis-item--warn::before { background: #f59e0b; }
+/* ---- Analiz özeti: öğrenciye özel maddeler (sade madde listesi) ---- */
+.analysis-list { margin: 0; padding-left: 13px; list-style: disc; font-size: 9px; line-height: 1.4; color: #334155; }
+.analysis-list li { margin-bottom: 3px; padding-left: 1px; }
+.analysis-list li::marker { color: #3b82f6; }

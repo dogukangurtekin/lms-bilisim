@@ -220,10 +220,7 @@
             <h3>Analiz Özeti</h3>
             <ul class="analysis-list">
                 @foreach((array) data_get($report, 'analysis', []) as $item)
-                    <li class="analysis-item analysis-item--{{ data_get($item, 'tone', 'info') }}">
-                        <b>{{ data_get($item, 'title') }}</b>
-                        <span>{{ data_get($item, 'text') }}</span>
-                    </li>
+                    <li>{{ data_get($item, 'text') }}</li>
                 @endforeach
             </ul>
         </article>
