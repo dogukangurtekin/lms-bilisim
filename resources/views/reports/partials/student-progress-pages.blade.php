@@ -246,7 +246,7 @@
                             <span class="category-bar" style="height: {{ max(2, (int) data_get($item, 'value', 0)) }}%; background: {{ data_get($item, 'color', '#3b82f6') }};"></span>
                         </div>
                         <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;word-break:break-word;">{{ data_get($item, 'label', '-') }}</small>
-                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;color:#475569;">{{ (int) data_get($item, 'done', 0) }}/{{ (int) data_get($item, 'total', 0) }}</small>
+                        <small style="font-size:12px;line-height:1.1;text-align:center;display:block;max-width:100%;color:#475569;">{{ data_get($item, 'caption') ?: ((int) data_get($item, 'done', 0).'/'.(int) data_get($item, 'total', 0)) }}</small>
                     </div>
                 @endforeach
             </div>
@@ -344,6 +344,7 @@
         </div>
     </article>
 
+    <div class="page-rule"></div>
     <div class="page-no">Sayfa 1 / 2</div>
 </section>
 
@@ -373,5 +374,6 @@
         </div>
     </article>
 
+    <div class="page-rule"></div>
     <div class="page-no">Sayfa 2 / 2</div>
 </section>

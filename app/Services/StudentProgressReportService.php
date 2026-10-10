@@ -414,9 +414,11 @@ class StudentProgressReportService
             ],
             [
                 'label' => 'Günlük Egzersiz',
-                'value' => $dailySuccessRate,
-                'done' => $dailyFullCorrectCount,
+                // Yalnızca katıldığı egzersiz sayısı gösterilir (oran değil).
+                'value' => $dailyAttemptCount > 0 ? 100 : 0,
+                'done' => $dailyAttemptCount,
                 'total' => $dailyAttemptCount,
+                'caption' => $dailyAttemptCount . ' egzersiz',
                 'color' => '#f59e0b',
             ],
             [

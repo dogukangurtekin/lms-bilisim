@@ -48,10 +48,8 @@ body {
     overflow: hidden;
 }
 
-.report-page::before {
-    height: 3mm;
-    background: linear-gradient(90deg, #2457d6 0 58%, #19a69a 58% 82%, #f59e0b 82% 100%);
-}
+/* Üstteki renkli şerit çıktıda kenarlıktan taşıp kayboluyordu; yerine başlık ayırıcı çizgisi ve alt çizgi kullanılıyor. */
+.report-page::before { content: none; display: none; }
 
 .report-course-heading {
     margin: 1.5mm 0 0;
@@ -64,12 +62,23 @@ body {
 }
 
 .hero {
+    position: relative;
     min-height: 17mm;
     margin: 1mm 0 3.5mm;
-    padding-bottom: 3mm;
-    border-bottom: 1px solid var(--report-line);
+    padding-bottom: 3.2mm;
+    border-bottom: 0;
     gap: 8px;
 }
+.hero::after,
+.page-rule {
+    content: "";
+    display: block;
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #2457d6 0 58%, #19a69a 58% 82%, #f59e0b 82% 100%);
+}
+.hero::after { position: absolute; left: 0; right: 0; bottom: 0; }
+.page-rule { position: absolute; left: 9mm; right: 9mm; bottom: 9mm; }
 
 .hero-left { gap: 9px; min-width: 0; }
 .hero-left > div { min-width: 0; }
