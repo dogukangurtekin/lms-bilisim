@@ -10,7 +10,7 @@
         $taskTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0,
         $appTrend->max(fn ($item) => (int) data_get($item, 'value', 0)) ?? 0
     ));
-    // Son 7 günlük çalışma ritmi: tüm etkinlik kayıtlarından (ders, ödev, oyun, quiz, yarışma) günlük özet.
+    // Dönem gelişimi: son 4 ay (16 hafta), haftalık etkinlik yoğunluğu (ders, ödev, oyun, quiz, yarışma).
     $weekKinds = [
         'ders'  => ['label' => 'Ders', 'color' => '#2457d6'],
         'odev'  => ['label' => 'Ödev', 'color' => '#f59e0b'],
@@ -29,8 +29,7 @@
         }
         return 'oyun';
     };
-    $weekdayNames = [1 => 'Pzt', 2 => 'Sal', 3 => 'Çar', 4 => 'Per', 5 => 'Cum', 6 => 'Cmt', 7 => 'Paz'];
-    $weekdayLong = [1 => 'Pazartesi', 2 => 'Salı', 3 => 'Çarşamba', 4 => 'Perşembe', 5 => 'Cuma', 6 => 'Cumartesi', 7 => 'Pazar'];
+    $monthNames = [1 => 'Ocak', 2 => 'Şubat', 3 => 'Mart', 4 => 'Nisan', 5 => 'Mayıs', 6 => 'Haziran', 7 => 'Temmuz', 8 => 'Ağustos', 9 => 'Eylül', 10 => 'Ekim', 11 => 'Kasım', 12 => 'Aralık'];
     $activityRows = collect(data_get($report, 'activity_log', []))->map(function ($row) {
         try {
             $raw = $row['sort_date'] ?? null;
@@ -42,28 +41,65 @@
         }
         return ['date' => $date, 'kind' => (string) ($row['kind'] ?? ''), 'xp' => (int) ($row['xp'] ?? 0)];
     })->filter(fn ($row) => $row['date'] !== null);
-    $weekDays = collect(range(6, 0))->map(function (int $ago) use ($activityRows, $kindToGroup, $weekKinds, $weekdayNames, $weekdayLong) {
-        $day = \Carbon\Carbon::today()->subDays($ago);
-        $rows = $activityRows->filter(fn ($row) => $row['date']->isSameDay($day));
+
+    $termWeekCount = 16;
+    $thisMonday = \Carbon\Carbon::today()->startOfWeek();
+    $termWeeks = collect(range($termWeekCount - 1, 0))->map(function (int $ago) use ($activityRows, $kindToGroup, $weekKinds, $thisMonday) {
+        $start = (clone $thisMonday)->subWeeks($ago)->startOfDay();
+        $end = (clone $start)->addDays(6)->endOfDay();
+        $rows = $activityRows->filter(fn ($row) => $row['date']->betweenIncluded($start, $end));
         $byGroup = [];
         foreach (array_keys($weekKinds) as $key) {
             $byGroup[$key] = $rows->filter(fn ($row) => $kindToGroup($row['kind']) === $key)->count();
         }
         return [
-            'short' => $weekdayNames[$day->dayOfWeekIso],
-            'long' => $weekdayLong[$day->dayOfWeekIso],
-            'date' => $day->format('d.m'),
-            'is_today' => $ago === 0,
+            'start' => $start,
+            'label' => $start->format('d.m'),
+            'range' => $start->format('d.m') . ' - ' . $end->format('d.m'),
+            'month' => (int) $start->format('n'),
+            'year' => (int) $start->format('Y'),
             'total' => $rows->count(),
             'xp' => (int) $rows->sum('xp'),
             'groups' => $byGroup,
         ];
-    });
-    $weekMax = max(1, (int) $weekDays->max('total'));
-    $weekTotal = (int) $weekDays->sum('total');
-    $weekXp = (int) $weekDays->sum('xp');
-    $weekActiveDays = $weekDays->filter(fn ($d) => $d['total'] > 0)->count();
-    $weekBest = $weekDays->sortByDesc('total')->first();
+    })->values();
+    $termMax = max(1, (int) $termWeeks->max('total'));
+    $termTotal = (int) $termWeeks->sum('total');
+    $termXp = (int) $termWeeks->sum('xp');
+    $termActiveWeeks = $termWeeks->filter(fn ($w) => $w['total'] > 0)->count();
+    // Ay başlıkları: ardışık haftaları başlangıç ayına göre grupla.
+    $termMonthSegments = [];
+    foreach ($termWeeks as $w) {
+        $key = $w['year'] . '-' . $w['month'];
+        if (! empty($termMonthSegments) && end($termMonthSegments)['key'] === $key) {
+            $termMonthSegments[array_key_last($termMonthSegments)]['span']++;
+        } else {
+            $termMonthSegments[] = ['key' => $key, 'name' => $monthNames[$w['month']], 'span' => 1];
+        }
+    }
+    // Birikimli XP çizgisi (SVG, 0-100 koordinat uzayı)
+    $cum = 0;
+    $cumPoints = [];
+    foreach ($termWeeks as $i => $w) {
+        $cum += $w['xp'];
+        $cumPoints[] = ['x' => ($i + 0.5) / $termWeekCount * 100, 'v' => $cum];
+    }
+    $cumMax = max(1, $cum);
+    $cumPolyline = collect($cumPoints)->map(fn ($p) => round($p['x'], 2) . ',' . round(100 - ($p['v'] / $cumMax * 96) - 2, 2))->implode(' ');
+    // Trend: son 8 hafta ile önceki 8 haftanın karşılaştırması
+    $firstHalf = (int) $termWeeks->take(8)->sum('total');
+    $lastHalf = (int) $termWeeks->slice(8)->sum('total');
+    if ($firstHalf > 0) {
+        $trendPct = (int) round((($lastHalf - $firstHalf) / $firstHalf) * 100);
+        $trendDir = $trendPct > 0 ? 'up' : ($trendPct < 0 ? 'down' : 'flat');
+        $trendText = ($trendPct > 0 ? '▲ %' : ($trendPct < 0 ? '▼ %' : '● %')) . abs($trendPct);
+    } elseif ($lastHalf > 0) {
+        $trendDir = 'up';
+        $trendText = '▲ Yeni ivme';
+    } else {
+        $trendDir = 'flat';
+        $trendText = '-';
+    }
     $fmtDate = function ($value): string {
         if (! $value) {
             return '-';
@@ -115,23 +151,49 @@
     </div>
 
     <div class="content-grid">
-        <article class="panel">
+        <article class="panel task-summary">
             <h3>Görev Özeti</h3>
-            <div class="donut-wrap" style="align-items:center;gap:18px;flex-wrap:wrap">
-                <div style="width:132px;height:132px;display:grid;place-items:center;flex:0 0 auto;">
-                    <div style="width:132px;height:132px;border-radius:50%;background:conic-gradient(#16a34a 0 {{ $doneAngle }}deg,#e5e7eb {{ $doneAngle }}deg 360deg);position:relative;box-shadow:inset 0 0 0 1px rgba(15,23,42,.04);">
-                        <div style="position:absolute;inset:16px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center;">
-                            <div>
-                                <div style="font-size:24px;font-weight:900;line-height:1;color:#0f172a;">{{ $completed }}</div>
-                                <div style="font-size:12px;color:#475569;font-weight:700;">/{{ $total }}</div>
-                            </div>
-                        </div>
+            @php
+                $ringPct = max(0, min(100, $donePct));
+                $ringR = 46;
+                $ringC = 2 * M_PI * $ringR;
+                $ringDash = round($ringC * $ringPct / 100, 2);
+                [$ringFrom, $ringTo] = $ringPct >= 75 ? ['#22c55e', '#0d9488'] : ($ringPct >= 40 ? ['#3b82f6', '#6366f1'] : ['#f59e0b', '#ef4444']);
+                $ringLabel = $ringPct >= 75 ? 'Çok iyi' : ($ringPct >= 40 ? 'Gelişiyor' : 'Destek gerekli');
+            @endphp
+            <div class="task-summary-body">
+                <div class="task-ring" role="img" aria-label="Görev tamamlama oranı %{{ $ringPct }}">
+                    <svg viewBox="0 0 120 120" width="100%" height="100%">
+                        <defs>
+                            <linearGradient id="taskRingGrad{{ $ringPct }}" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="{{ $ringFrom }}"/>
+                                <stop offset="100%" stop-color="{{ $ringTo }}"/>
+                            </linearGradient>
+                        </defs>
+                        <circle cx="60" cy="60" r="{{ $ringR }}" fill="none" stroke="#e8edf7" stroke-width="11"/>
+                        @if($ringPct > 0)
+                            <circle cx="60" cy="60" r="{{ $ringR }}" fill="none" stroke="url(#taskRingGrad{{ $ringPct }})" stroke-width="11" stroke-linecap="round" stroke-dasharray="{{ $ringDash }} {{ round($ringC, 2) }}" transform="rotate(-90 60 60)"/>
+                        @endif
+                    </svg>
+                    <div class="task-ring-center">
+                        <strong>%{{ $ringPct }}</strong>
+                        <span>{{ $completed }} / {{ $total }} görev</span>
                     </div>
                 </div>
-                <div style="min-width:180px;flex:1">
-                    <p style="margin:0 0 10px;"><b>{{ $completed }}</b> görev tamamlandı</p>
-                    <p style="margin:0 0 10px;"><b>{{ $pending }}</b> görev bekliyor</p>
-                    <p style="margin:0;"><b>{{ data_get($report, 'kpi.badge_count', 0) }}</b> rozet kazanıldı</p>
+                <div class="task-stats">
+                    <div class="task-stat task-stat--done">
+                        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#dcfce7" stroke="#4ade80" stroke-width="1.2"/><path d="M5.8 10.4l2.8 2.8 5.6-6" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <b>{{ $completed }}</b><span>Tamamlanan</span>
+                    </div>
+                    <div class="task-stat task-stat--wait">
+                        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.2"/><path d="M10 5.6V10l3 1.8" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <b>{{ $pending }}</b><span>Bekleyen</span>
+                    </div>
+                    <div class="task-stat task-stat--badge">
+                        <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#ede9fe" stroke="#a78bfa" stroke-width="1.2"/><path d="M10 4.8l1.5 3.1 3.4.5-2.5 2.4.6 3.4-3-1.6-3 1.6.6-3.4-2.5-2.4 3.4-.5z" fill="#7c3aed"/></svg>
+                        <b>{{ data_get($report, 'kpi.badge_count', 0) }}</b><span>Rozet</span>
+                    </div>
+                    <div class="task-level" style="--c1: {{ $ringFrom }}; --c2: {{ $ringTo }}">{{ $ringLabel }}</div>
                 </div>
             </div>
         </article>
@@ -199,44 +261,57 @@
         </article>
     </div>
 
-    <article class="panel weekly-trend-panel">
-        <div class="weekly-trend-head">
-            <h3>Son 7 Günlük Çalışma Ritmi</h3>
-            <div class="weekly-trend-legend">
+    <article class="panel term-panel">
+        <div class="term-head">
+            <h3>Dönem Gelişim Grafiği <small>Son 4 ay · haftalık etkinlik yoğunluğu</small></h3>
+            <div class="term-legend">
                 @foreach($weekKinds as $kindMeta)
                     <span style="--dot: {{ $kindMeta['color'] }}">{{ $kindMeta['label'] }}</span>
                 @endforeach
+                <span class="is-line" style="--dot: #e11d48">Birikimli XP</span>
             </div>
         </div>
 
-        <div class="weekly-kpis">
-            <div class="weekly-kpi"><span>Toplam Etkinlik</span><strong>{{ $weekTotal }}</strong></div>
-            <div class="weekly-kpi"><span>Kazanılan XP</span><strong>{{ $weekXp }}</strong></div>
-            <div class="weekly-kpi"><span>Aktif Gün</span><strong>{{ $weekActiveDays }}<small> / 7</small></strong></div>
-            <div class="weekly-kpi"><span>En Yoğun Gün</span><strong>@if($weekTotal > 0){{ $weekBest['long'] }}<small> · {{ $weekBest['total'] }}</small>@else - @endif</strong></div>
+        <div class="term-kpis">
+            <div class="term-kpi"><span>Dönem Etkinliği</span><strong>{{ $termTotal }}</strong></div>
+            <div class="term-kpi"><span>Dönem XP</span><strong>{{ $termXp }}</strong></div>
+            <div class="term-kpi"><span>Aktif Hafta</span><strong>{{ $termActiveWeeks }}<small> / {{ $termWeekCount }}</small></strong></div>
+            <div class="term-kpi term-kpi--{{ $trendDir }}"><span>Dönem Trendi</span><strong>{{ $trendText }}</strong><em>son 8 hafta / önceki 8 hafta</em></div>
         </div>
 
-        <div class="weekly-chart" aria-label="Son yedi günlük etkinlik sayısı grafiği">
-            <div class="weekly-yaxis">
-                <span>{{ $weekMax }}</span>
-                <span>{{ (int) round($weekMax / 2) }}</span>
+        <div class="term-chart" aria-label="Son dört aylık haftalık etkinlik grafiği">
+            <div class="term-yaxis">
+                <span>{{ $termMax }}</span>
+                <span>{{ (int) round($termMax / 2) }}</span>
                 <span>0</span>
             </div>
-            <div class="weekly-plot">
-                @foreach($weekDays as $wd)
-                    <div class="weekly-col{{ $wd['is_today'] ? ' is-today' : '' }}{{ $wd['total'] === 0 ? ' is-empty' : '' }}">
-                        <div class="weekly-count">{{ $wd['total'] > 0 ? $wd['total'] : '' }}</div>
-                        <div class="weekly-bar" title="{{ $wd['long'] }} {{ $wd['date'] }}: {{ $wd['total'] }} etkinlik, {{ $wd['xp'] }} XP">
-                            @foreach(array_reverse(array_keys($weekKinds)) as $gk)
-                                @if($wd['groups'][$gk] > 0)
-                                    <i style="height: {{ round($wd['groups'][$gk] / $weekMax * 100, 1) }}%; background: {{ $weekKinds[$gk]['color'] }}" title="{{ $weekKinds[$gk]['label'] }}: {{ $wd['groups'][$gk] }}"></i>
-                                @endif
-                            @endforeach
+            <div class="term-plot-wrap">
+                <div class="term-months" style="grid-template-columns: repeat({{ $termWeekCount }}, minmax(0, 1fr))">
+                    @foreach($termMonthSegments as $seg)
+                        <span style="grid-column: span {{ $seg['span'] }}">{{ $seg['name'] }}</span>
+                    @endforeach
+                </div>
+                <div class="term-plot" style="grid-template-columns: repeat({{ $termWeekCount }}, minmax(0, 1fr))">
+                    @foreach($termWeeks as $w)
+                        <div class="term-col{{ $w['total'] === 0 ? ' is-empty' : '' }}">
+                            <div class="term-count">{{ $w['total'] > 0 ? $w['total'] : '' }}</div>
+                            <div class="term-bar" title="{{ $w['range'] }}: {{ $w['total'] }} etkinlik, {{ $w['xp'] }} XP">
+                                @foreach(array_reverse(array_keys($weekKinds)) as $gk)
+                                    @if($w['groups'][$gk] > 0)
+                                        <i style="height: {{ round($w['groups'][$gk] / $termMax * 100, 1) }}%; background: {{ $weekKinds[$gk]['color'] }}" title="{{ $weekKinds[$gk]['label'] }}: {{ $w['groups'][$gk] }}"></i>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <div class="term-week">{{ $w['label'] }}</div>
                         </div>
-                        <div class="weekly-day"><b>{{ $wd['short'] }}</b><small>{{ $wd['date'] }}</small></div>
-                        <div class="weekly-xp">{{ $wd['xp'] > 0 ? $wd['xp'].' XP' : '–' }}</div>
-                    </div>
-                @endforeach
+                    @endforeach
+                    @if($termXp > 0)
+                        <svg class="term-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                            <polyline points="{{ $cumPolyline }}" fill="none" stroke="#e11d48" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+                        </svg>
+                        <span class="term-line-end">{{ $termXp }} XP</span>
+                    @endif
+                </div>
             </div>
         </div>
     </article>
