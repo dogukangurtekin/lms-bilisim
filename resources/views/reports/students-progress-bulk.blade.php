@@ -233,7 +233,8 @@
         .activity-columns h4 { font-size: 12px; }
         .activity-columns .activity-log-table th,
         .activity-columns .activity-log-table td { font-size: 9.5px; padding: 4px 3px; white-space: normal; }
-        .activity-columns .activity-log-table .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .activity-columns .activity-log-table .clamp { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .activity-columns .activity-log-table td.activity-title { white-space: nowrap; overflow: hidden; }
         .activity-columns .activity-log-table--compact td.col-xp { text-align: center; font-weight: 700; }
         .activity-columns .activity-log-table--compact td.col-dy { text-align: center; white-space: nowrap; }
         .activity-columns .activity-log-table--compact td.col-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
