@@ -16,7 +16,9 @@
         $sortedKinds = $sortedKinds->reject(fn ($k) => in_array($k, $lessonKinds, true))->values();
     }
     // Kompakt (iki sütunlu) düzen: İçerik | XP | Tarih | D/Y | Durum
-    $widths = $compact ? [43, 8, 28, 10, 11] : [58, 14, 11, 11, 6];
+    // Ders dışı sütununda (oyun, ödev, uygulama...) D/Y sütunu gösterilmez.
+    $showDy = $only !== 'others';
+    $widths = $compact ? ($showDy ? [43, 8, 28, 10, 11] : [53, 9, 27, 11]) : [58, 14, 11, 11, 6];
     $doneStatuses = ['Tamamlandı', 'Katıldı'];
 @endphp
 @forelse($sortedKinds as $kind)
@@ -34,7 +36,7 @@
                     <th>İçerik</th>
                     <th class="col-xp">XP</th>
                     <th>Tarih</th>
-                    <th class="col-dy" title="Doğru / Yanlış">D/Y</th>
+                    @if($showDy)<th class="col-dy" title="Doğru / Yanlış">D/Y</th>@endif
                     <th class="col-status">Durum</th>
                 @else
                     <th>İçerik</th>
@@ -57,7 +59,7 @@
                 @if($compact)
                     <td class="col-xp">{{ (int) $item['xp'] }}</td>
                     <td class="col-date">{{ $dateText }}</td>
-                    <td class="col-dy">{{ $resultText }}</td>
+                    @if($showDy)<td class="col-dy">{{ $resultText }}</td>@endif
                     <td class="col-status">
                         @if(in_array($item['status'], $doneStatuses, true))
                             <svg class="status-icon" viewBox="0 0 20 20" width="17" height="17" role="img" aria-label="{{ $item['status'] }}"><title>{{ $item['status'] }}</title><circle cx="10" cy="10" r="9" fill="#dcfce7" stroke="#4ade80" stroke-width="1.2"/><path d="M5.8 10.4l2.8 2.8 5.6-6" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
