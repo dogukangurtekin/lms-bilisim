@@ -212,15 +212,21 @@
         }
         .report-table td { font-size: 12px; }
 
-        .badge-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+        .badge-wrap { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+        .badge-wrap > .badge-item:only-child { grid-column: 1 / -1; }
         .badge-item {
+            box-sizing: border-box;
+            min-width: 0;
             border: 1px solid #bfdbfe;
-            border-radius: 999px;
-            padding: 8px 12px;
+            border-radius: 12px;
+            padding: 8px 10px;
             background: #eff6ff;
             font-weight: 700;
             color: #1d4ed8;
+            overflow-wrap: anywhere;
         }
+        .activity-log-table { table-layout: fixed; }
+        .activity-log-table td, .activity-log-table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .page-no {
             position: absolute;

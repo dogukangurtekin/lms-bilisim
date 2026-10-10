@@ -10,7 +10,12 @@
 @forelse($sortedKinds as $kind)
     @php $rows = $groups->get($kind); @endphp
     <h4 style="margin:14px 0 6px">{{ $kind }} <small style="opacity:.65;font-weight:400">({{ $rows->count() }} kayıt · {{ (int) $rows->sum('xp') }} XP)</small></h4>
-    <table class="{{ $tableClass }}">
+    <table class="{{ $tableClass }}{{ $tableClass !== '' ? ' activity-log-table' : '' }}">
+        @if($tableClass !== '')
+        <colgroup>
+            <col style="width:58%"><col style="width:14%"><col style="width:11%"><col style="width:11%"><col style="width:6%">
+        </colgroup>
+        @endif
         <thead>
             <tr>
                 <th>İçerik</th>
@@ -23,7 +28,7 @@
         <tbody>
         @foreach($rows as $item)
             <tr>
-                <td>{{ $item['title'] }}</td>
+                <td class="activity-title" title="{{ $item['title'] }}">{{ $item['title'] }}</td>
                 <td>{{ $item['sort_date'] ? \Carbon\Carbon::parse($item['sort_date'])->format('d.m.Y H:i') : '-' }}</td>
                 <td>{{ $item['status'] }}</td>
                 <td>{{ $item['result'] }}</td>
