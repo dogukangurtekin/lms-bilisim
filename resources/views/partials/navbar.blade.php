@@ -14,6 +14,31 @@
     </div>
 
     <div class="navbar-actions">
+        @php
+            $msgIsStudent = (bool) $currentUser?->hasRole('student');
+            $msgIsStaff = (bool) $currentUser?->hasRole('admin', 'teacher');
+            $msgBadge = 0;
+            try {
+                if ($msgIsStudent) {
+                    $msgBadge = \App\Models\StudentMessage::query()->where('student_user_id', $uid)->whereNotNull('replied_at')->whereNull('student_read_at')->count();
+                } elseif ($msgIsStaff) {
+                    $msgBadge = \App\Models\StudentMessage::query()->visibleTo($currentUser)->whereNull('replied_at')->count();
+                }
+            } catch (\Throwable $e) {
+                $msgBadge = 0;
+            }
+        @endphp
+        @if($msgIsStudent || $msgIsStaff)
+            <a class="notif-bell" href="{{ $msgIsStudent ? route('student.messages.index') : route('staff.messages.index') }}"
+               aria-label="{{ $msgIsStudent ? 'Öğretmene mesaj' : 'Öğrenci mesajları' }}"
+               title="{{ $msgIsStudent ? 'Öğretmene Mesaj' : 'Öğrenci Mesajları' }}">
+                <span class="notif-bell-icon">💬</span>
+                @if($msgBadge > 0)
+                    <span class="notif-bell-count">{{ $msgBadge > 99 ? '99+' : $msgBadge }}</span>
+                @endif
+            </a>
+        @endif
+
         <div class="notif-menu" id="navNotifMenu">
             <button type="button" class="notif-bell" id="navNotifBellBtn" aria-label="Bildirimler">
                 <span class="notif-bell-icon">🔔</span>

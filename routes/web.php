@@ -24,6 +24,7 @@ use App\Http\Controllers\StudentCodingActivityController;
 use App\Http\Controllers\CodingActivityManagementController;
 use App\Http\Controllers\DotConnectLevelController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentMessageController;
 use App\Http\Controllers\SystemMaintenanceController;
 use App\Http\Controllers\TeacherAssignmentController;
 use App\Http\Controllers\QrLoginController;
@@ -172,6 +173,8 @@ Route::middleware('auth')->group(function () {
 
     // Canlı Takip
     Route::middleware('role:admin,teacher')->group(function () {
+        Route::get('/ogrenci-mesajlari', [StudentMessageController::class, 'staffIndex'])->name('staff.messages.index');
+        Route::post('/ogrenci-mesajlari/{message}/cevapla', [StudentMessageController::class, 'staffReply'])->middleware('throttle:30,1')->name('staff.messages.reply');
         Route::get('/canli-takip', [LiveTrackingController::class, 'index'])->name('live-tracking.index');
         Route::get('/canli-takip/guncelle', [LiveTrackingController::class, 'refresh'])->name('live-tracking.refresh');
         Route::get('/canli-takip/ogrenci/{student}', [LiveTrackingController::class, 'show'])->name('live-tracking.show');
@@ -360,6 +363,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:student')->group(function () {
+        Route::get('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentIndex'])->name('student.messages.index');
+        Route::post('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentSend'])->middleware('throttle:10,1')->name('student.messages.send');
         Route::get('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoinForm'])->name('student.live-quiz.join.form');
         Route::post('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoin'])->name('student.live-quiz.join');
         Route::get('/ogrenci/canli-quiz/anlik-katil/{session}', [LiveQuizController::class, 'studentInstantJoin'])->name('student.live-quiz.instant-join');
