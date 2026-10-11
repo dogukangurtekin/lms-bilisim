@@ -538,6 +538,8 @@ class StudentPortalController extends Controller
             : max(0, $questionTotal - $correctQuestions);
         $wrongQuestions = min($wrongQuestions, $questionTotal);
 
+        $this->xpService->award($student->user_id, $earnedXp - (int) ($existing?->xp_awarded ?? 0));
+
         ContentProgress::updateOrCreate(
             ['content_id' => 'course-'.$course->id, 'user_id' => $student->user_id],
             [
@@ -1143,6 +1145,11 @@ class StudentPortalController extends Controller
         ];
         $progress->save();
 
+        $previousContentXp = (int) ContentProgress::where('content_id', 'homework-'.$homework->id)
+            ->where('user_id', $student->user_id)
+            ->value('xp_awarded');
+        $this->xpService->award($student->user_id, (int) $progress->xp_awarded - $previousContentXp);
+
         ContentProgress::updateOrCreate(
             ['content_id' => 'homework-'.$homework->id, 'user_id' => $student->user_id],
             ['completed' => true, 'xp_awarded' => $progress->xp_awarded, 'payload' => ['source' => 'course_homework']]
@@ -1270,6 +1277,11 @@ class StudentPortalController extends Controller
             'completed_level_ids' => $completedLevelIds,
         ];
         $progress->save();
+
+        $previousContentXp = (int) ContentProgress::where('content_id', 'game-assignment-'.$assignment->id)
+            ->where('user_id', $student->user_id)
+            ->value('xp_awarded');
+        $this->xpService->award($student->user_id, (int) $progress->xp_awarded - $previousContentXp);
 
         ContentProgress::updateOrCreate(
             ['content_id' => 'game-assignment-'.$assignment->id, 'user_id' => $student->user_id],

@@ -306,6 +306,8 @@ class CodingActivityService
 
         $xp = (int) max(0, round($activity->base_xp + ($score * 0.2)));
         UserXpLog::create(['user_id' => $userId, 'coding_activity_id' => $activity->id, 'xp_delta' => $xp, 'reason' => 'coding_activity_complete', 'awarded_on' => $today]);
+        // Rapor sayacı writeStudentReport() içinde artıyor; profil sayacı burada.
+        app(StudentXpService::class)->award($userId, $xp, false);
         $this->updateStreak($userId);
         return $xp;
     }

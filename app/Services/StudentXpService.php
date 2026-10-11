@@ -10,13 +10,42 @@ use App\Models\RaceResult;
 use App\Models\Student;
 use App\Models\StudentReport;
 use App\Models\UserProfile;
+use App\Models\UserXpLog;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class StudentXpService
 {
     public function earned(Student $student): int
     {
         return $this->earnedFor(collect([$student]))[$student->id] ?? 0;
+    }
+
+    /**
+     * Kazanılan XP'yi kalıcı sayaçlara (user_profiles.xp, student_reports.total_xp)
+     * yazar. earnedFor() sayaçlar ile kayıt toplamının en büyüğünü aldığından,
+     * kayıt tablolarına (ContentProgress, Grade, UserXpLog) yazılan her XP buradan
+     * da geçmeli; yoksa sayaç kayıt toplamını aşınca yeni XP hesaba yansımaz.
+     */
+    public function award(?int $userId, int $delta, bool $includeReport = true): void
+    {
+        if (! $userId || $delta <= 0) {
+            return;
+        }
+
+        DB::transaction(function () use ($userId, $delta, $includeReport): void {
+            UserProfile::query()->lockForUpdate()->firstOrCreate(
+                ['user_id' => $userId],
+                ['role' => 'student', 'xp' => 0]
+            )->increment('xp', $delta);
+
+            if ($includeReport) {
+                StudentReport::query()->lockForUpdate()->firstOrCreate(
+                    ['user_id' => $userId],
+                    ['total_xp' => 0, 'total_duration_ms' => 0, 'completion_percent' => 0, 'meta' => []]
+                )->increment('total_xp', $delta);
+            }
+        });
     }
 
     public function available(Student $student): int
@@ -63,6 +92,11 @@ class StudentXpService
             ->whereIn('user_id', $userIds)
             ->groupBy('user_id')
             ->pluck('xp', 'user_id');
+        $codingXp = UserXpLog::query()
+            ->selectRaw('user_id, SUM(xp_delta) as xp')
+            ->whereIn('user_id', $userIds)
+            ->groupBy('user_id')
+            ->pluck('xp', 'user_id');
         $profileXp = UserProfile::query()
             ->whereIn('user_id', $userIds)
             ->pluck('xp', 'user_id');
@@ -70,13 +104,14 @@ class StudentXpService
             ->whereIn('user_id', $userIds)
             ->pluck('total_xp', 'user_id');
 
-        return $students->mapWithKeys(function (Student $student) use ($gradeXp, $contentXp, $quizXp, $competitionXp, $keyboardRaceXp, $profileXp, $reportXp) {
+        return $students->mapWithKeys(function (Student $student) use ($gradeXp, $contentXp, $quizXp, $competitionXp, $keyboardRaceXp, $codingXp, $profileXp, $reportXp) {
             $computed =
                 (int) ($gradeXp[$student->id] ?? 0)
                 + (int) ($contentXp[$student->user_id] ?? 0)
                 + (int) ($quizXp[$student->user_id] ?? 0)
                 + (int) ($competitionXp[$student->user_id] ?? 0)
-                + (int) ($keyboardRaceXp[$student->user_id] ?? 0);
+                + (int) ($keyboardRaceXp[$student->user_id] ?? 0)
+                + (int) ($codingXp[$student->user_id] ?? 0);
 
             return [$student->id => max(
                 0,
