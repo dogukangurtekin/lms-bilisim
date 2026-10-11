@@ -26,6 +26,9 @@ body{
 }
 @keyframes rise{to{transform:translateY(-115vh) rotate(25deg)}}
 .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:28px 16px 48px;display:grid;gap:18px}
+.topbar{display:flex;justify-content:flex-start}
+.home-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--violet);font-weight:800;text-decoration:none;padding:10px 18px;border-radius:999px;box-shadow:0 8px 20px rgba(15,10,70,.3);transition:.15s}
+.home-btn:hover{transform:translateY(-2px);background:#fef3c7;color:#92400e}
 .hero{text-align:center;color:#fff;padding-top:8px}
 .badge{
   display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
@@ -115,6 +118,7 @@ h1{font-size:clamp(26px,5vw,44px);margin:12px 0 8px;line-height:1.15}
 <div class="floaters" id="floaters" aria-hidden="true"></div>
 
 <main class="wrap">
+  <nav class="topbar"><a class="home-btn" href="{{ url('/') }}">🏠 Anasayfa</a></nav>
   <section class="hero">
     <span class="badge">🛠️ BAKIM ÇALIŞMASI</span>
     <h1>Sistem bakım çalışmasındadır</h1>
