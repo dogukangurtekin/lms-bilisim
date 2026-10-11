@@ -130,6 +130,34 @@
         </form>
 
     @if($user->hasRole('admin'))
+        @php($maintenance = \App\Support\MaintenanceMode::state())
+        <div class="card" style="border:1.5px solid {{ $maintenance['enabled'] ? '#fbbf24' : '#dbe5f2' }};{{ $maintenance['enabled'] ? 'background:#fffbeb;' : '' }}">
+            <h3 style="margin:0 0 4px;">🛠️ Bakım Çalışması</h3>
+            @if($maintenance['enabled'])
+                <p style="margin:0 0 10px;color:#92400e"><strong>Sistem şu anda bakım modunda.</strong>
+                   Öğrenci ve öğretmenler giriş yapamaz, bakım sayfasını görür. Siz (admin) sistemi normal kullanmaya devam edersiniz.
+                   Admin girişi için: <code>/login?yonetici=1</code></p>
+                @if($maintenance['message'] !== '')
+                    <p style="margin:0 0 10px;color:#92400e">Yayındaki not: “{{ $maintenance['message'] }}”</p>
+                @endif
+                <form method="POST" action="{{ route('system.maintenance.toggle') }}">
+                    @csrf
+                    <input type="hidden" name="enabled" value="0">
+                    <button type="submit" class="btn">✅ Bakımı Kapat, Sistemi Aç</button>
+                </form>
+            @else
+                <p style="margin:0 0 12px;color:#475569">Bakım çalışmasına aldığınızda öğrenci ve öğretmenler giriş ekranı yerine
+                   “Sistem bakım çalışmasındadır, yakın zamanda açılacaktır” sayfasını görür. Bakımı kapattığınızda sistem normal akışına döner.</p>
+                <form method="POST" action="{{ route('system.maintenance.toggle') }}" style="display:grid;gap:10px"
+                      onsubmit="return confirm('Sistem bakım çalışmasına alınsın mı? Öğrenci ve öğretmenler giriş yapamayacak.')">
+                    @csrf
+                    <input type="hidden" name="enabled" value="1">
+                    <input type="text" name="message" maxlength="200" placeholder="İsteğe bağlı not (örn. Yeni dersler ekleniyor, 15:00'te açılacak)">
+                    <div><button type="submit" class="btn btn-danger">🛠️ Sistemi Bakım Çalışmasına Al</button></div>
+                </form>
+            @endif
+        </div>
+
         <div class="card" style="border:1.5px solid #fecaca;background:#fef2f2;">
             <h3 style="margin:0 0 4px;color:#991b1b;">Tehlikeli Bölge</h3>
             <p style="margin:0 0 10px;color:#7f1d1d;">Bu işlem geri alınamaz. Öğretmenler, öğrenci hesapları ve sınıflar

@@ -46,6 +46,11 @@ Route::get('/__deploy/opcache-clear/{token}', function (string $token) {
     return response()->json(['ok' => (bool) $cleared]);
 });
 
+// Bakım sayfası bu uç noktayı yoklayıp bakım bitince kendiliğinden yenilenir.
+Route::get('/bakim-durumu', fn () => response()
+    ->json(['maintenance' => \App\Support\MaintenanceMode::active()])
+    ->header('Cache-Control', 'no-store'))->name('maintenance.status');
+
 Route::get('/', function () {
     $user = auth()->user();
 
@@ -228,6 +233,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevelUser'])->name('users.classes.assign-level');
             Route::post('/kullanici-yonetimi/kullanici/{user}/sinif-ata/siniflar', [TeacherClassAssignmentController::class, 'assignByClassesUser'])->name('users.classes.assign-classes');
 
+            Route::post('/sistem/bakim-modu', [SystemMaintenanceController::class, 'toggleMaintenance'])->name('system.maintenance.toggle');
             Route::post('/sistem/ogrenci-verilerini-sifirla', [SystemMaintenanceController::class, 'resetStudentData'])->name('system.reset-student-data');
 
             Route::get('/noktalari-birlestir/yonetim', [DotConnectLevelController::class, 'index'])->name('dot-connect.manage');

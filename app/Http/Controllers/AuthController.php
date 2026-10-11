@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Middleware\CheckMaintenanceMode;
+use App\Support\MaintenanceMode;
 
 class AuthController extends Controller
 {
@@ -44,6 +46,10 @@ class AuthController extends Controller
         }
 
         RateLimiter::clear($key);
+
+        if (MaintenanceMode::active() && ! $user->hasRole('admin')) {
+            return CheckMaintenanceMode::respond($request);
+        }
 
         $remember = $request->boolean('remember') || $user->hasRole('student');
         Auth::login($user, $remember);
@@ -142,6 +148,10 @@ class AuthController extends Controller
         $user = $this->resolveLoginUser((string) $validated['email']);
         if (! $user || ! $user->hasRole('student')) {
             return response()->json(['message' => 'Bu yontem yalnizca ogrenci hesaplari icin kullanilabilir.'], 422);
+        }
+
+        if (MaintenanceMode::active()) {
+            return CheckMaintenanceMode::respond($request);
         }
 
         Auth::login($user);

@@ -30,9 +30,34 @@ use App\Models\UserXpLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\MaintenanceMode;
 
 class SystemMaintenanceController extends Controller
 {
+    /**
+     * Admin: sistemi bakım çalışmasına alır ya da bakımı kapatır. Bakım açıkken
+     * öğrenci ve öğretmenler bakım sayfasını görür (bkz. CheckMaintenanceMode).
+     */
+    public function toggleMaintenance(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'message' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        if ($data['enabled']) {
+            MaintenanceMode::enable((string) ($data['message'] ?? ''));
+            $notice = 'Sistem bakım çalışmasına alındı. Öğrenci ve öğretmenler bakım sayfasını görecek.';
+        } else {
+            MaintenanceMode::disable();
+            $notice = 'Bakım çalışması kapatıldı. Sistem normal akışına döndü.';
+        }
+
+        return redirect()->route('profile.edit')->with('ok', $notice);
+    }
+
     /**
      * Sadece admin'e ozel: ogretmenler, ogrenci hesaplari ve siniflar
      * OLDUGU GIBI kalir - ama ogrencilere ait TUM ilerleme/sonuc verisi

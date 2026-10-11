@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateClientApi;
 use App\Http\Middleware\CheckForcedLogout;
+use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
 use App\Http\Middleware\TrackStudentActiveTime;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecureHeaders::class);
         $middleware->web(append: [
+            CheckMaintenanceMode::class,
             CheckForcedLogout::class,
             TrackStudentActiveTime::class,
         ]);
@@ -30,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // dogrulamasindan muaf tutmanin bilinen bir gerekcesi yoktu ve
         // "login CSRF" saldirilarina (saldirganin kendi hesabina otomatik
         // giris yaptirip kurbani kandirmasi) acik kapi birakiyordu.
+        $middleware->api(append: [CheckMaintenanceMode::class]);
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'client.auth' => AuthenticateClientApi::class,
