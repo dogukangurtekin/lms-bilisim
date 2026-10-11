@@ -129,6 +129,25 @@
             </div>
         </form>
 
+    @if($user->hasRole('admin', 'teacher'))
+        @php($slideTimerOn = \App\Support\SlideTimerSetting::enabled())
+        <div class="card" style="border:1.5px solid {{ $slideTimerOn ? '#dbe5f2' : '#a7f3d0' }};">
+            <h3 style="margin:0 0 4px;">⏱️ Ders Slayt Süresi</h3>
+            <p style="margin:0 0 12px;color:#475569">
+                Öğrenciler derste her sayfada belirli bir süre (sınıf düzeyine göre 10-15 sn) beklemeden sonraki sayfaya geçemez.
+                Bu ayar tüm öğrenciler için geçerlidir.
+                Şu an: <strong style="color:{{ $slideTimerOn ? '#1d4ed8' : '#15803d' }}">{{ $slideTimerOn ? 'AÇIK (bekleme süresi var)' : 'KAPALI (öğrenciler beklemeden geçebilir)' }}</strong>
+            </p>
+            <form method="POST" action="{{ route('profile.slide-timer.update') }}">
+                @csrf
+                <input type="hidden" name="enabled" value="{{ $slideTimerOn ? 0 : 1 }}">
+                <button type="submit" class="btn {{ $slideTimerOn ? 'btn-danger' : '' }}">
+                    {{ $slideTimerOn ? '⏱️ Slayt Süresini Kapat' : '⏱️ Slayt Süresini Aç' }}
+                </button>
+            </form>
+        </div>
+    @endif
+
     @if($user->hasRole('admin'))
         @php($maintenance = \App\Support\MaintenanceMode::state())
         <div class="card" style="border:1.5px solid {{ $maintenance['enabled'] ? '#fbbf24' : '#dbe5f2' }};{{ $maintenance['enabled'] ? 'background:#fffbeb;' : '' }}">

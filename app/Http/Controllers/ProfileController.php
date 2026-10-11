@@ -115,6 +115,18 @@ class ProfileController extends Controller
         return back()->with('success', 'Profil bilgileriniz guncellendi.');
     }
 
+    public function updateSlideTimer(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin', 'teacher'), 403);
+
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        \App\Support\SlideTimerSetting::set((bool) $data['enabled']);
+
+        return back()->with('success', $data['enabled']
+            ? 'Slayt süresi açıldı. Öğrenciler sayfalarda bekleme süresine uyacak.'
+            : 'Slayt süresi kapatıldı. Öğrenciler sayfaları beklemeden geçebilir.');
+    }
+
     public function updateBranding(Request $request): RedirectResponse
     {
         $user = $request->user();

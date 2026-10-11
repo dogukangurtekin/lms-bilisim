@@ -158,6 +158,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
+    Route::post('/profilim/slayt-suresi', [ProfileController::class, 'updateSlideTimer'])->name('profile.slide-timer.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

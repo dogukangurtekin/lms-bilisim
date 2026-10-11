@@ -451,6 +451,7 @@
                 let correctQuestionsTotal = 0;
                 let wrongQuestionsTotal = 0;
                 const slideWaitMs = @json($slideWaitSeconds * 1000);
+                const slideTimerEnabled = @json(\App\Support\SlideTimerSetting::enabled());
                 let slideUnlockAt = 0;
                 let slideTimer = null;
                 let slideUnlocked = previewMode;
@@ -577,7 +578,7 @@
                     const isSummarySlide = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
                     const isQuestionSlide = !!slides[idx]?.querySelector('[data-sqz-question]');
                     const isLastSlide = idx === slides.length - 1;
-                    const skipSlideTimer = isQuestionSlide || isSummarySlide || isLastSlide;
+                    const skipSlideTimer = !slideTimerEnabled || isQuestionSlide || isSummarySlide || isLastSlide;
                     const wasAlreadyUnlocked = unlockedSlideIndexes.has(idx);
                     slideUnlocked = previewMode || skipSlideTimer || wasAlreadyUnlocked;
 
