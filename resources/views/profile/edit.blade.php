@@ -149,7 +149,7 @@
                 <p style="margin:0 0 12px;color:#475569">Bakım çalışmasına aldığınızda öğrenci ve öğretmenler giriş ekranı yerine
                    “Sistem bakım çalışmasındadır, yakın zamanda açılacaktır” sayfasını görür. Bakımı kapattığınızda sistem normal akışına döner.</p>
                 <form method="POST" action="{{ route('system.maintenance.toggle') }}" style="display:grid;gap:10px"
-                      onsubmit="return confirm('Sistem bakım çalışmasına alınsın mı? Öğrenci ve öğretmenler giriş yapamayacak.')">
+                      data-confirm="Sistem bakım çalışmasına alınsın mı? Öğrenci ve öğretmenler giriş yapamayacak.">
                     @csrf
                     <input type="hidden" name="enabled" value="1">
                     <input type="text" name="message" maxlength="200" placeholder="İsteğe bağlı not (örn. Yeni dersler ekleniyor, 15:00'te açılacak)">
