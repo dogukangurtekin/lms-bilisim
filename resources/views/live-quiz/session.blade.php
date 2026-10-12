@@ -48,6 +48,8 @@
     </form>
 </div>
 @else
+@include('live-quiz.partials.live-board', ['boardRows' => $boardRows, 'boardMeId' => 0, 'boardKey' => $session->id])
+
 <div class="card" style="margin-bottom:12px;">
     <p><strong>Quiz:</strong> {{ $session->quiz?->title }}</p>
     <p><strong>Katilim Kodu:</strong> <span style="font-size:20px">{{ $session->join_code }}</span></p>
@@ -136,25 +138,6 @@
     </table>
 </div>
 
-<div class="card">
-    <h3>Canli Siralama / Rapor</h3>
-    <table>
-        <thead><tr><th>#</th><th>Ogrenci</th><th>Dogru</th><th>Yanlis</th><th>XP</th></tr></thead>
-        <tbody id="lqLeaderboardBody">
-        @forelse($rows as $i => $row)
-            <tr>
-                <td>{{ $i+1 }}</td>
-                <td>{{ $row['student_name'] }}</td>
-                <td>{{ $row['correct'] }}</td>
-                <td>{{ $row['wrong'] }}</td>
-                <td>{{ $row['xp'] }}</td>
-            </tr>
-        @empty
-            <tr><td colspan="5">Henuz cevap yok.</td></tr>
-        @endforelse
-        </tbody>
-    </table>
-</div>
 @endif
 
 @push('scripts')
@@ -178,7 +161,6 @@
     const statAnswered = document.getElementById('lqStatAnswered');
     const statCorrect = document.getElementById('lqStatCorrect');
     const statWrong = document.getElementById('lqStatWrong');
-    const leaderboardBody = document.getElementById('lqLeaderboardBody');
 
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
     let durationMs = {{ $session->phase === 'intro' ? 3000 : ($session->phase === 'results' ? 5000 : (int) (($current?->duration_sec ?? 30) * 1000)) }};
@@ -269,21 +251,7 @@
             if (statCorrect) statCorrect.textContent = String(data.stats?.correct ?? 0);
             if (statWrong) statWrong.textContent = String(data.stats?.wrong ?? 0);
 
-            if (leaderboardBody && Array.isArray(data.rows)) {
-                if (data.rows.length === 0) {
-                    leaderboardBody.innerHTML = '<tr><td colspan="5">Henuz cevap yok.</td></tr>';
-                } else {
-                    leaderboardBody.innerHTML = data.rows.map((row, i) => `
-                        <tr>
-                            <td>${i + 1}</td>
-                            <td>${row.student_name}</td>
-                            <td>${row.correct}</td>
-                            <td>${row.wrong}</td>
-                            <td>${row.xp}</td>
-                        </tr>
-                    `).join('');
-                }
-            }
+            if (window.LqBoard && Array.isArray(data.board)) window.LqBoard.render(data.board);
         } catch (e) { /* bir sonraki polling denemesinde tekrar denenecek */ }
     }
     poll();

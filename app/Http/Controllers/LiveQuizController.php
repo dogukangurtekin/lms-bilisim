@@ -262,8 +262,9 @@ class LiveQuizController extends Controller
         $currentQuestionStats = $this->currentQuestionStats($session);
         $participantRows = $this->participantRows($session);
         $topFive = $this->questionTopFive($session);
+        $boardRows = $this->liveBoardRows($session);
 
-        return view('live-quiz.session', compact('session', 'rows', 'currentQuestionStats', 'participantRows', 'topFive'));
+        return view('live-quiz.session', compact('session', 'rows', 'currentQuestionStats', 'participantRows', 'topFive', 'boardRows'));
     }
 
     /**
@@ -291,6 +292,7 @@ class LiveQuizController extends Controller
             'participants' => $this->participantRows($session),
             'top_five' => $this->questionTopFive($session),
             'rows' => $this->leaderboardRows($session),
+            'board' => $this->liveBoardRows($session),
             'report_url' => route('live-quiz.session.report', $session),
         ]);
     }
@@ -456,6 +458,7 @@ class LiveQuizController extends Controller
             ->where('question_index', (int) $session->current_index)
             ->first();
         $topFive = $this->questionTopFive($session);
+        $boardRows = $session->status === 'lobby' ? [] : $this->liveBoardRows($session);
 
         return view('student-portal.live-quiz-play', compact(
             'session',
@@ -463,7 +466,8 @@ class LiveQuizController extends Controller
             'joinedCount',
             'participantRows',
             'currentAnswer',
-            'topFive'
+            'topFive',
+            'boardRows'
         ));
     }
 
@@ -487,6 +491,7 @@ class LiveQuizController extends Controller
             'joined_count' => $session->status === 'lobby' ? $session->participants()->count() : null,
             'participants' => $this->participantRows($session),
             'top_five' => $this->questionTopFive($session),
+            'board' => $session->status === 'lobby' ? [] : $this->liveBoardRows($session),
         ]);
     }
 
@@ -897,6 +902,45 @@ class LiveQuizController extends Controller
                 'xp' => (int) $r->xp,
             ];
         })->values()->all();
+    }
+
+    /**
+     * Canli yarisma panosu: oturuma katilan HERKES (henuz cevap vermeyenler 0 XP ile)
+     * XP'ye gore siralanir. Tek sorguyla toplanir; ogrenci ekraninda saniyede bir
+     * cagrildigi icin satir basina sorgu atilmaz.
+     */
+    private function liveBoardRows(LiveQuizSession $session): array
+    {
+        $stats = LiveQuizAnswer::query()
+            ->selectRaw('student_user_id, COUNT(*) as answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct, SUM(xp_earned) as xp')
+            ->where('live_quiz_session_id', $session->id)
+            ->groupBy('student_user_id')
+            ->get()
+            ->keyBy('student_user_id');
+
+        $rows = $session->participants()
+            ->with('studentUser:id,name')
+            ->get()
+            ->map(function (LiveQuizParticipant $participant) use ($stats) {
+                $stat = $stats->get($participant->student_user_id);
+                $answered = (int) ($stat->answered ?? 0);
+                $correct = (int) ($stat->correct ?? 0);
+
+                return [
+                    'user_id' => (int) $participant->student_user_id,
+                    'student_name' => (string) ($participant->studentUser?->name ?: 'Öğrenci'),
+                    'answered' => $answered,
+                    'correct' => $correct,
+                    'wrong' => max(0, $answered - $correct),
+                    'xp' => (int) ($stat->xp ?? 0),
+                ];
+            })
+            ->sort(fn (array $a, array $b) => [$b['xp'], $b['correct'], $a['student_name']] <=> [$a['xp'], $a['correct'], $b['student_name']])
+            ->values()
+            ->map(fn (array $row, int $index) => $row + ['rank' => $index + 1])
+            ->all();
+
+        return $rows;
     }
 
     private function completeSession(LiveQuizSession $session): void

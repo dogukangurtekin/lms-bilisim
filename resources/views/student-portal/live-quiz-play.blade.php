@@ -75,6 +75,10 @@
 }
 </style>
 
+@if($session->status === 'live')
+    @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
+@endif
+
 <div class="lq-stage">
     <div class="lq-header">
         <h1 class="lq-title">{{ $session->quiz?->title ?? 'Canli Quiz' }}</h1>
@@ -306,6 +310,7 @@
             if (!res.ok) return;
             const data = await res.json();
             clockOffsetMs = data.server_now_ms - Date.now();
+            if (window.LqBoard && Array.isArray(data.board)) window.LqBoard.render(data.board);
             if (typeof data.ends_at_ms === 'number' && data.ends_at_ms > 0) {
                 endsAtMs = data.ends_at_ms;
             }
