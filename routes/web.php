@@ -17,6 +17,7 @@ use App\Http\Controllers\ParentWhatsappController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SchoolClassController;
 use App\Http\Controllers\ScoreController;
+use App\Http\Controllers\StudentAnalyticsController;
 use App\Http\Controllers\StudentDataController;
 use App\Http\Controllers\StudentPortalController;
 use App\Http\Controllers\SupportRequestController;
@@ -303,6 +304,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'create'])->name('courses.homeworks.create');
         Route::post('/courses/{course}/odev-ver', [CourseHomeworkController::class, 'store'])->name('courses.homeworks.store');
         Route::get('/ogrenci-verileri', [StudentDataController::class, 'index'])->name('student-data.index');
+        Route::get('/ogrenci-verileri/basari-istatistikleri', [StudentAnalyticsController::class, 'index'])->name('student-data.analytics');
+        Route::get('/ogrenci-verileri/basari-istatistikleri/indir/{format}', [StudentAnalyticsController::class, 'export'])->whereIn('format', ['xlsx', 'pdf'])->middleware('throttle:20,1')->name('student-data.analytics.export');
+        Route::get('/ogrenci-verileri/{student}/analiz', [StudentAnalyticsController::class, 'student'])->name('student-data.analytics.student');
+        Route::get('/ogrenci-verileri/{student}/analiz/indir/{format}', [StudentAnalyticsController::class, 'studentExport'])->whereIn('format', ['xlsx', 'pdf'])->middleware('throttle:20,1')->name('student-data.analytics.student.export');
         Route::post('/ogrenci-verileri/sifreleri-sifirla', [StudentDataController::class, 'resetAllPasswords'])->name('student-data.passwords.reset-all');
         Route::post('/ogrenci-verileri/sifreleri-sifirla/baslat', [StudentDataController::class, 'resetAllPasswordsStart'])->name('student-data.passwords.reset-all.start');
         Route::post('/ogrenci-verileri/sifreleri-sifirla/adim/{taskId}', [StudentDataController::class, 'resetAllPasswordsStep'])->name('student-data.passwords.reset-all.step');

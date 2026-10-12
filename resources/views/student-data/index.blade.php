@@ -16,6 +16,7 @@
 <div class="top">
     <h1>Öğrenci Verileri</h1>
     <div class="actions student-top-actions">
+        <a class="btn" href="{{ route('student-data.analytics') }}" style="background:#5B3DF5;color:#fff;font-weight:800">📊 Başarı İstatistikleri</a>
         <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">Giriş Kartları (A4)</a>
         <button class="btn" type="button" id="bulk-report-preview-btn">Gelişim Raporları Önizle</button>
         <button class="btn" type="button" id="bulk-report-download-btn">Gelişim Raporları İndir</button>
