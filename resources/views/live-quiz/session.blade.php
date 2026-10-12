@@ -287,7 +287,7 @@
         } catch (e) { /* bir sonraki polling denemesinde tekrar denenecek */ }
     }
     poll();
-    setInterval(poll, sessionStatus === 'lobby' ? 2000 : 2500);
+    setInterval(poll, 3000);
 })();
 </script>
 @endpush

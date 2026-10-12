@@ -286,7 +286,7 @@
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
     pollLobby();
-    setInterval(pollLobby, 1500);
+    setInterval(pollLobby, 2500);
     @endif
 
     @if($session->status === 'live')
@@ -318,9 +318,26 @@
             }
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
-    syncClock();
-    setInterval(syncClock, 1000);
-
+    // Eskiden her saniye sorgulanıyordu (17 öğrenci x ~250 sn = binlerce istek). Geri sayım
+    // zaten sunucu saatine göre tarayıcıda işlediği için sık sorgulamaya gerek yok:
+    // normalde 4 sn'de bir, faz bitimine yakın ise tam bitişten
+    // hemen sonra tek seferde (aşama geçişi) sorgulanır. Her öğrenciye küçük rastgele gecikme
+    // eklenerek aynı anda gelen istek yığılması da önlenir.
+    const BASE_SYNC_MS = 4000;
+    const nextSyncDelay = () => {
+        const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
+        if (leftMs <= 0) return 1000;                      // faz bitti, sunucunun ilerlemesini bekle
+        if (leftMs < BASE_SYNC_MS) return leftMs + 150 + Math.random() * 350;
+        return BASE_SYNC_MS;
+    };
+    const syncLoop = async () => {
+        await syncClock();
+        setTimeout(syncLoop, nextSyncDelay());
+    };
+    syncLoop();
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') syncClock();
+    });
     const tick = () => {
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
         const leftSec = Math.max(0, Math.ceil(leftMs / 1000));

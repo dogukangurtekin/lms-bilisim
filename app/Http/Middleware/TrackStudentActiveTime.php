@@ -49,6 +49,16 @@ class TrackStudentActiveTime
                     ['total_seconds' => 0, 'last_seen_at' => now()]
                 );
                 $now = now();
+
+                // Canlı quiz durum sorguları birkaç saniyede bir gelir; her birinde veritabanına
+                // yazmak gereksiz yük. last_seen_at güncellenmediği için atlanan saniyeler bir
+                // sonraki yazımda diff olarak eklenir, toplam süre değişmez.
+                if ($request->route()?->getName() === 'student.live-quiz.status'
+                    && $stat->last_seen_at
+                    && $stat->last_seen_at->diffInSeconds($now) < 15) {
+                    return $next($request);
+                }
+
                 if ($stat->last_seen_at) {
                     $diff = max(0, $stat->last_seen_at->diffInSeconds($now));
                     if ($diff > 0 && $diff <= 900) {

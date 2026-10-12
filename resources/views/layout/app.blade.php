@@ -205,7 +205,7 @@
 </div>
 @endif
 <script src="{{ asset('js/admin.js') }}"></script>
-@if(auth()->user()?->hasRole('student'))
+@if(auth()->user()?->hasRole('student') && !request()->routeIs('student.live-quiz.play'))
 <script>
 (() => {
     const overlay = document.getElementById('liveQuizOverlay');
@@ -259,7 +259,7 @@
 })();
 </script>
 @endif
-@if(auth()->check())
+@if(auth()->check() && !request()->routeIs('student.live-quiz.play', 'live-quiz.session.show'))
 <script>
 (() => {
     window.WEBPUSH_ENABLED = true;
@@ -608,7 +608,7 @@
 })();
 </script>
 @endif
-@if(auth()->check() && auth()->user()?->hasRole('student'))
+@if(auth()->check() && auth()->user()?->hasRole('student') && !request()->routeIs('student.live-quiz.play'))
 <script>
 (() => {
     const pingUrl = @json(route('student.portal.time.ping'));
