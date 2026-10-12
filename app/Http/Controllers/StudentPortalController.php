@@ -1016,10 +1016,28 @@ class StudentPortalController extends Controller
 
     private function studentCourseHomeworks(Student $student)
     {
-        return CourseHomework::query()
+        // Öğretmen bir ödevi / ders atamasını silse bile öğrencinin TAMAMLADIĞI kayıt öğrenciden
+        // eksilmez: silinen atama öğretmenin ekranından kalkar, ama öğrencinin geçmişinde kalır.
+        $completedHomeworkIds = StudentHomeworkProgress::query()
+            ->where('student_id', $student->id)
+            ->whereNotNull('completed_at')
+            ->select('course_homework_id');
+        $completedCourseIds = ContentProgress::query()
+            ->where('user_id', $student->user_id)
+            ->where('completed', true)
+            ->where('content_id', 'like', 'course-%')
+            ->pluck('content_id')
+            ->map(fn ($id) => (int) str_replace('course-', '', (string) $id))
+            ->all();
+
+        return CourseHomework::withTrashed()
             ->with(['course', 'schoolClass'])
             ->where('school_class_id', (int) $student->school_class_id)
-            ->whereNull('deleted_at')
+            ->where(function ($query) use ($completedHomeworkIds, $completedCourseIds): void {
+                $query->whereNull('deleted_at')
+                    ->orWhereIn('id', $completedHomeworkIds)
+                    ->orWhere(fn ($lesson) => $lesson->where('assignment_type', 'lesson')->whereIn('course_id', $completedCourseIds));
+            })
             ->latest();
     }
 

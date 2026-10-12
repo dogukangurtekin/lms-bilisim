@@ -222,93 +222,19 @@ class DashboardController extends Controller
                 ];
             });
 
-            // Basari skoru: not ortalamasi (varsa), ders tamamlama orani ve
-            // odev tamamlama orani. Bekleyen odev/ders skoru dogal olarak dusurur.
-            $classIdsForScore = $students->pluck('school_class_id')->filter()->unique()->values();
-            $lessonIdsByClass = [];
-            $parentCourses = Course::query()
-                ->whereIn('school_class_id', $classIdsForScore)
-                ->get(['id', 'school_class_id']);
-            $subCourses = Course::query()
-                ->whereIn('parent_course_id', $parentCourses->pluck('id'))
-                ->get(['id', 'parent_course_id']);
-            foreach ($parentCourses as $c) {
-                $lessonIdsByClass[$c->school_class_id][] = 'course-'.$c->id;
-            }
-            $classByParent = $parentCourses->pluck('school_class_id', 'id');
-            foreach ($subCourses as $c) {
-                $lessonIdsByClass[$classByParent[$c->parent_course_id]][] = 'course-'.$c->id;
-            }
-
-            $homeworkIdsByClass = \App\Models\CourseHomework::query()
-                ->whereIn('school_class_id', $classIdsForScore)
-                ->get(['id', 'school_class_id'])
-                ->groupBy('school_class_id')
-                ->map(fn ($rows) => $rows->pluck('id')->all());
-
-            $doneLessonsByUser = ContentProgress::query()
-                ->whereIn('user_id', $students->pluck('user_id'))
-                ->where('completed', true)
-                ->where('content_id', 'like', 'course-%')
-                ->get(['user_id', 'content_id'])
-                ->groupBy('user_id')
-                ->map(fn ($rows) => $rows->pluck('content_id')->unique()->all());
-            $doneHomeworksByStudent = StudentHomeworkProgress::query()
-                ->whereIn('student_id', $students->pluck('id'))
-                ->whereNotNull('completed_at')
-                ->get(['student_id', 'course_homework_id'])
-                ->groupBy('student_id')
-                ->map(fn ($rows) => $rows->pluck('course_homework_id')->unique()->all());
-
+            // Başarı puanı artık ortak servisten gelir (StudentSuccessAnalytics): panodaki dağılım,
+            // Başarı İstatistikleri sayfası ve öğrenci analizi hep aynı hesabı kullanır.
+            // Öğretmen bir ders/ödevi silse bile öğrencinin tamamladığı kayıt öğrenciden eksilmez.
             $gradeBuckets = ['Çok İyi (60+)' => 0, 'İyi (40-59)' => 0, 'Orta (20-39)' => 0, 'Düşük (0-19)' => 0];
-            // Ders/odev oranlari sinif icindeki en iyi ogrenciye gore olceklenir;
-            // aksi halde cok dersli siniflarda herkes dusuk gorunur.
-            $lessonRatio = [];
-            $homeworkRatio = [];
-            $lessonMaxByClass = [];
-            $homeworkMaxByClass = [];
-            foreach ($students as $student) {
-                $classId = (int) $student->school_class_id;
-                $lessonIds = $lessonIdsByClass[$classId] ?? [];
-                $homeworkIds = $homeworkIdsByClass[$classId] ?? [];
-                $lessonRatio[$student->id] = $lessonIds
-                    ? count(array_intersect($lessonIds, $doneLessonsByUser[$student->user_id] ?? [])) / count($lessonIds)
-                    : null;
-                $homeworkRatio[$student->id] = $homeworkIds
-                    ? count(array_intersect($homeworkIds, $doneHomeworksByStudent[$student->id] ?? [])) / count($homeworkIds)
-                    : null;
-                $lessonMaxByClass[$classId] = max($lessonMaxByClass[$classId] ?? 0, $lessonRatio[$student->id] ?? 0);
-                $homeworkMaxByClass[$classId] = max($homeworkMaxByClass[$classId] ?? 0, $homeworkRatio[$student->id] ?? 0);
-            }
-
-            foreach ($students as $student) {
-                $classId = (int) $student->school_class_id;
-                $signals = [];
-
-                if (isset($avgGradeByStudent[$student->id])) {
-                    $signals[] = (float) $avgGradeByStudent[$student->id];
-                }
-
-                if ($lessonRatio[$student->id] !== null) {
-                    $max = $lessonMaxByClass[$classId];
-                    $signals[] = $max > 0 ? ($lessonRatio[$student->id] / $max) * 100 : 0;
-                }
-
-                if ($homeworkRatio[$student->id] !== null) {
-                    $max = $homeworkMaxByClass[$classId];
-                    $signals[] = $max > 0 ? ($homeworkRatio[$student->id] / $max) * 100 : 0;
-                }
-
-                $xp = $signals ? array_sum($signals) / count($signals) : 0;
-                if ($xp >= 60) {
-                    $gradeBuckets['Çok İyi (60+)']++;
-                } elseif ($xp >= 40) {
-                    $gradeBuckets['İyi (40-59)']++;
-                } elseif ($xp >= 20) {
-                    $gradeBuckets['Orta (20-39)']++;
-                } else {
-                    $gradeBuckets['Düşük (0-19)']++;
-                }
+            $bucketLabels = ['very_good' => 'Çok İyi (60+)', 'good' => 'İyi (40-59)', 'mid' => 'Orta (20-39)', 'low' => 'Düşük (0-19)'];
+            $scoredStudents = app(\App\Services\StudentSuccessAnalytics::class)->build(
+                $students->pluck('school_class_id')->filter()->unique()->values()->all(),
+                null,
+                null,
+                false
+            )['students'];
+            foreach ($scoredStudents as $scored) {
+                $gradeBuckets[$bucketLabels[$scored['bucket']]]++;
             }
             $gradeTotal = max(1, array_sum($gradeBuckets));
             $gradeDistribution = collect($gradeBuckets)->map(fn ($count, $label) => [

@@ -197,8 +197,17 @@ class StudentProgressReportService
         // İlerleme oranı öğrenci paneliyle aynı aktif atama kümesinden hesaplanır.
         // Yalnızca progress kaydı olan içerikleri saymak, hiç başlanmamış bekleyen
         // ders ve ödevleri dışarıda bırakıp raporu hatalı biçimde %100 gösterebilir.
-        $activeCourseHomeworks = CourseHomework::query()
+        // Silinmiş olsa bile öğrencinin tamamladığı ödev/ders ataması rapordan eksilmez.
+        $completedHwIds = $homeworkProgress->filter(fn ($p) => ! empty($p->completed_at))->keys()->map(fn ($id) => (int) $id)->all();
+        $completedLessonCourseIds = $courseProgressRows->filter(fn ($p) => (bool) $p->completed)
+            ->map(fn ($p) => (int) str_replace('course-', '', (string) $p->content_id))->filter()->values()->all();
+        $activeCourseHomeworks = CourseHomework::withTrashed()
             ->where('school_class_id', $student->school_class_id)
+            ->where(function ($q) use ($completedHwIds, $completedLessonCourseIds): void {
+                $q->whereNull('deleted_at')
+                    ->orWhereIn('id', $completedHwIds)
+                    ->orWhere(fn ($l) => $l->where('assignment_type', 'lesson')->whereIn('course_id', $completedLessonCourseIds));
+            })
             ->get();
         $assignmentHomeworks = $activeCourseHomeworks
             ->filter(fn ($homework) => in_array((string) $homework->assignment_type, ['homework', 'game', 'application'], true));
@@ -301,7 +310,7 @@ class StudentProgressReportService
             $completedAppHomeworkDaily = (int) StudentHomeworkProgress::where('student_id', $student->id)
                 ->whereNotNull('completed_at')
                 ->whereBetween('completed_at', [$day, $next])
-                ->whereHas('homework', fn ($q) => $q->whereIn('assignment_type', ['game', 'application']))
+                ->whereHas('homework', fn ($q) => $q->withTrashed()->whereIn('assignment_type', ['game', 'application']))
                 ->count();
 
             $taskTrend[] = ['label' => $day->format('d.m'), 'value' => ($completedHomeworkDaily + $completedGameDaily)];
