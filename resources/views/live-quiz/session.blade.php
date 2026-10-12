@@ -76,22 +76,6 @@
     <div class="lq-double-title">2 Kat Puanlı Soru!</div>
     <p>Bu soruda kazanılan XP iki kat olarak hesaplanacak.</p>
 </div>
-@elseif($session->status === 'live' && $session->phase === 'results')
-<div class="card lq-results-stage" style="margin-bottom:12px;">
-    <h2>Soru Sonuçları</h2>
-    <p>İlk 5 öğrenci gösteriliyor. Yeni soru tüm ekranlarda aynı anda açılacak.</p>
-    <div class="lq-top-five">
-        @forelse($topFive as $student)
-            <div class="lq-winner" style="--rank:{{ $student['rank'] }}">
-                <div class="lq-winner-rank">#{{ $student['rank'] }}</div>
-                <div class="lq-winner-name">{{ $student['student_name'] }}</div>
-                <div class="lq-winner-state">{{ $student['answered'] ? ($student['is_correct'] ? 'Doğru' : 'Yanlış') : 'Cevaplamadı' }} · {{ $student['xp'] }} XP</div>
-            </div>
-        @empty
-            <strong>Bu soruda katılımcı bulunmuyor.</strong>
-        @endforelse
-    </div>
-</div>
 @endif
 
 <div class="card" style="margin-bottom:12px;">

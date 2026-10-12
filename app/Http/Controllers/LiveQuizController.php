@@ -458,7 +458,9 @@ class LiveQuizController extends Controller
             ->where('question_index', (int) $session->current_index)
             ->first();
         $topFive = $this->questionTopFive($session);
-        $boardRows = $session->status === 'lobby' ? [] : $this->liveBoardRows($session);
+        $showBoard = $session->status === 'live' && $session->phase === 'results';
+        $boardRows = $showBoard ? $this->liveBoardRows($session) : [];
+        $boardPrevRows = $showBoard ? $this->liveBoardRows($session, (int) $session->current_index) : [];
 
         return view('student-portal.live-quiz-play', compact(
             'session',
@@ -467,7 +469,8 @@ class LiveQuizController extends Controller
             'participantRows',
             'currentAnswer',
             'topFive',
-            'boardRows'
+            'boardRows',
+            'boardPrevRows'
         ));
     }
 
@@ -491,7 +494,6 @@ class LiveQuizController extends Controller
             'joined_count' => $session->status === 'lobby' ? $session->participants()->count() : null,
             'participants' => $this->participantRows($session),
             'top_five' => $this->questionTopFive($session),
-            'board' => $session->status === 'lobby' ? [] : $this->liveBoardRows($session),
         ]);
     }
 
@@ -540,6 +542,9 @@ class LiveQuizController extends Controller
             'xp_earned' => $xp,
             'answered_at_ms' => $answeredAtMs,
         ]);
+
+        // Herkes cevapladıysa soru süresini bekleme: sonuç/ara aşamasına hemen geç.
+        $this->syncSessionByTimer($session);
 
         $rank = $this->studentRankInSession($session, $studentUserId);
         $sessionXp = (int) LiveQuizAnswer::query()
@@ -909,11 +914,12 @@ class LiveQuizController extends Controller
      * XP'ye gore siralanir. Tek sorguyla toplanir; ogrenci ekraninda saniyede bir
      * cagrildigi icin satir basina sorgu atilmaz.
      */
-    private function liveBoardRows(LiveQuizSession $session): array
+    private function liveBoardRows(LiveQuizSession $session, ?int $excludeQuestionIndex = null): array
     {
         $stats = LiveQuizAnswer::query()
             ->selectRaw('student_user_id, COUNT(*) as answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct, SUM(xp_earned) as xp')
             ->where('live_quiz_session_id', $session->id)
+            ->when($excludeQuestionIndex !== null, fn ($query) => $query->where('question_index', '!=', $excludeQuestionIndex))
             ->groupBy('student_user_id')
             ->get()
             ->keyBy('student_user_id');

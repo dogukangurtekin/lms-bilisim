@@ -75,8 +75,9 @@
 }
 </style>
 
-@if($session->status === 'live')
-    @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
+{{-- Canlı sıralama sadece sorular arasındaki 5 sn'lik ara ekranda gösterilir. --}}
+@if($session->status === 'live' && $session->phase === 'results')
+    @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardPrevRows' => $boardPrevRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
 @endif
 
 <div class="lq-stage">
@@ -132,18 +133,6 @@
                     {{ !$answered ? 'Cevaplamadın' : ($correct ? 'Doğru Cevap!' : 'Yanlış Cevap') }}
                 </h3>
                 <p class="lq-result-sub">{{ $correct ? '+' . (int) $currentAnswer->xp_earned . ' XP kazandın' : 'Bu sorudan XP kazanamadın' }}</p>
-                <div class="lq-top-five-title">Bu Sorunun İlk 5'i</div>
-                <div class="lq-top-five">
-                    @forelse($topFive as $student)
-                        <div class="lq-winner" style="--rank:{{ $student['rank'] }}">
-                            <div class="lq-winner-rank">#{{ $student['rank'] }}</div>
-                            <div class="lq-winner-name">{{ $student['student_name'] }}</div>
-                            <div class="lq-winner-state">{{ $student['answered'] ? ($student['is_correct'] ? 'Doğru' : 'Yanlış') : 'Cevaplamadı' }}</div>
-                        </div>
-                    @empty
-                        <strong>Henüz sonuç bulunmuyor.</strong>
-                    @endforelse
-                </div>
                 <p class="lq-auto-note">Sıradaki soru <strong id="lq-next-countdown">5</strong> saniye sonra tüm öğrencilerde aynı anda açılacak.</p>
             </div>
         </div>
@@ -310,7 +299,6 @@
             if (!res.ok) return;
             const data = await res.json();
             clockOffsetMs = data.server_now_ms - Date.now();
-            if (window.LqBoard && Array.isArray(data.board)) window.LqBoard.render(data.board);
             if (typeof data.ends_at_ms === 'number' && data.ends_at_ms > 0) {
                 endsAtMs = data.ends_at_ms;
             }
@@ -328,7 +316,8 @@
     // normalde 4 sn'de bir, faz bitimine yakın ise tam bitişten
     // hemen sonra tek seferde (aşama geçişi) sorgulanır. Her öğrenciye küçük rastgele gecikme
     // eklenerek aynı anda gelen istek yığılması da önlenir.
-    const BASE_SYNC_MS = 4000;
+    // Cevabını verip bekleyen öğrenci, herkes bitince ara ekrana çabuk geçsin diye biraz daha sık sorgular.
+    const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 3000 : 4000;
     const nextSyncDelay = () => {
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
         if (leftMs <= 0) return 1000;                      // faz bitti, sunucunun ilerlemesini bekle

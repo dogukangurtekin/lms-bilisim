@@ -168,8 +168,10 @@ window.LqBoard = (() => {
         if (firstPaint) {
             firstPaint = false;
             // Sayfa yenilenince (yeni soru/aşama) animasyon kaybolmasın: önceki sırayı çiz, sonra güncele kaydır.
-            let before = null;
-            try { before = JSON.parse(sessionStorage.getItem(storeKey) || 'null'); } catch (e) { before = null; }
+            let before = @json(isset($boardPrevRows) ? array_values($boardPrevRows) : null);
+            if (!before) {
+                try { before = JSON.parse(sessionStorage.getItem(storeKey) || 'null'); } catch (e) { before = null; }
+            }
             if (Array.isArray(before) && before.length && JSON.stringify(before) !== JSON.stringify(normalized)) {
                 paint(before, false);
                 setTimeout(() => paint(normalized, true), 450);
