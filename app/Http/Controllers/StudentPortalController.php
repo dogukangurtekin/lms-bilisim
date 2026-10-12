@@ -7,6 +7,7 @@ use App\Models\Badge;
 use App\Models\ClassBoardPost;
 use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
+use App\Models\StudentCourseResume;
 use App\Models\Course;
 use App\Models\CourseFavorite;
 use App\Models\CourseHomework;
@@ -398,6 +399,18 @@ class StudentPortalController extends Controller
                 ->where('content_id', 'course-'.$course->id)
                 ->first()
             : null;
+        // Yarım bırakılmış ders: kaldığı sayfadan devam. Ders tamamlandıysa devam kaydı kullanılmaz.
+        $resume = null;
+        if ($student && ! $courseProgress?->completed) {
+            $resumeRow = StudentCourseResume::query()
+                ->where('user_id', $student->user_id)
+                ->where('course_id', $course->id)
+                ->first();
+            if ($resumeRow) {
+                $resume = ['slide_index' => (int) $resumeRow->slide_index, 'state' => (array) ($resumeRow->state ?? [])];
+            }
+        }
+
         $slides = $this->presentation->prepareCourseSlides($course, false);
         $payload = (array) ($course->lesson_payload ?? []);
         $curriculum = (array) data_get($payload, 'curriculum', []);
@@ -439,7 +452,46 @@ class StudentPortalController extends Controller
             'subCourses' => $subCourses,
             'mainCourseCompleted' => $mainCourseCompleted,
             'previewMode' => $previewMode,
+            'resume' => $resume,
         ]);
+    }
+
+    /**
+     * Öğrencinin ders içindeki anlık konumunu (sayfa + cevaplanan sorular, kazanılan XP)
+     * kaydeder; yanlışlıkla çıkınca kaldığı sayfadan devam edebilsin diye.
+     * Tamamlanmış derse kayıt tutulmaz.
+     */
+    public function saveCourseProgress(Course $course)
+    {
+        $student = $this->getStudent();
+        abort_if(! $this->canStudentAccessCourse($student, $course), 403);
+
+        $completed = ContentProgress::query()
+            ->where('user_id', $student->user_id)
+            ->where('content_id', 'course-'.$course->id)
+            ->where('completed', true)
+            ->exists();
+        if ($completed) {
+            StudentCourseResume::query()->where('user_id', $student->user_id)->where('course_id', $course->id)->delete();
+
+            return response()->json(['ok' => true, 'completed' => true]);
+        }
+
+        $data = request()->validate([
+            'slide_index' => ['required', 'integer', 'min:0', 'max:1000'],
+            'state' => ['nullable', 'array'],
+        ]);
+        $state = (array) ($data['state'] ?? []);
+        if (strlen((string) json_encode($state)) > 30000) {
+            return response()->json(['ok' => false, 'message' => 'Kayıt çok büyük.'], 422);
+        }
+
+        StudentCourseResume::query()->updateOrCreate(
+            ['user_id' => $student->user_id, 'course_id' => $course->id],
+            ['slide_index' => (int) $data['slide_index'], 'state' => $state]
+        );
+
+        return response()->json(['ok' => true]);
     }
 
     public function coursePreview(Course $course)
@@ -496,6 +548,8 @@ class StudentPortalController extends Controller
             ->where('user_id', $student->user_id)
             ->first();
         if ($existing?->completed) {
+            StudentCourseResume::query()->where('user_id', $student->user_id)->where('course_id', $course->id)->delete();
+
             return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi zaten tamamladiniz. Tekrar XP kazanamazsiniz.');
         }
 
@@ -557,6 +611,8 @@ class StudentPortalController extends Controller
                 ],
             ]
         );
+
+        StudentCourseResume::query()->where('user_id', $student->user_id)->where('course_id', $course->id)->delete();
 
         return redirect()->route('student.portal.dashboard')->with('ok', 'Ders tamamlandi. Kazanilan XP: '.$earnedXp);
     }

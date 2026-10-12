@@ -445,7 +445,7 @@
                 let lastDirection = 1;
                 let touchStartX = 0;
                 let touchStartY = 0;
-                const startedAt = Date.now();
+                let startedAt = Date.now();
                 let earnedXpTotal = 0;
                 let solvedQuestionsTotal = 0;
                 let correctQuestionsTotal = 0;
@@ -713,6 +713,7 @@
                     if (nextLabel) nextLabel.textContent = isSummary ? 'Dersi Bitir' : 'İleri';
                     bindQuestionInteractions();
                     startSlideTimer();
+                    saveProgress(); // her sayfa değişiminde anlık konum kaydı
                 }
 
                 function bindQuestionInteractions() {
@@ -1002,8 +1003,97 @@
                     else prevBtn.click();
                 }, { passive: true });
 
+                // ---- Kaldığın yerden devam: anlık ilerleme kaydı ----
+                const resumeSaveUrl = previewMode ? '' : @json(route('student.portal.course.progress', $course));
+                const resumeData = previewMode ? null : @json($resume ?? null);
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                let lastSavedKey = '';
+                let progressReady = false;
+
+                function snapshotProgress() {
+                    return {
+                        slide_index: idx,
+                        state: {
+                            earned_xp: earnedXpTotal,
+                            solved: solvedQuestionsTotal,
+                            correct: correctQuestionsTotal,
+                            wrong: wrongQuestionsTotal,
+                            awarded: Array.from(awardedSlideIndexes),
+                            solved_idx: Array.from(solvedQuestionIndexes),
+                            answered: Array.from(answeredQuestionStates.entries()),
+                            unlocked: Array.from(unlockedSlideIndexes),
+                            elapsed: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
+                        },
+                    };
+                }
+
+                function progressKey(snap) {
+                    return JSON.stringify([snap.slide_index, Object.assign({}, snap.state, { elapsed: 0 })]);
+                }
+
+                function saveProgress() {
+                    if (!resumeSaveUrl || !progressReady) return;
+                    // Ders başında henüz bir şey yapılmadıysa gereksiz istek atma.
+                    if (idx === 0 && answeredQuestionStates.size === 0 && awardedSlideIndexes.size === 0) return;
+                    const snap = snapshotProgress();
+                    const key = progressKey(snap);
+                    if (key === lastSavedKey) return;
+                    lastSavedKey = key;
+                    fetch(resumeSaveUrl, {
+                        method: 'POST',
+                        keepalive: true,
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify(snap),
+                    }).catch(() => { lastSavedKey = ''; });
+                }
+
+                let resumed = false;
+                if (resumeData && Number.isInteger(resumeData.slide_index)) {
+                    const st = resumeData.state || {};
+                    const toSet = (arr) => new Set((Array.isArray(arr) ? arr : []).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < slides.length));
+                    idx = Math.max(0, Math.min(slides.length - 1, resumeData.slide_index));
+                    earnedXpTotal = Math.max(0, Number(st.earned_xp) || 0);
+                    solvedQuestionsTotal = Math.max(0, Number(st.solved) || 0);
+                    correctQuestionsTotal = Math.max(0, Number(st.correct) || 0);
+                    wrongQuestionsTotal = Math.max(0, Number(st.wrong) || 0);
+                    toSet(st.awarded).forEach((n) => awardedSlideIndexes.add(n));
+                    toSet(st.solved_idx).forEach((n) => solvedQuestionIndexes.add(n));
+                    toSet(st.unlocked).forEach((n) => unlockedSlideIndexes.add(n));
+                    unlockedSlideIndexes.delete(idx); // şu anki sayfa için geri sayım yeniden başlasın
+                    (Array.isArray(st.answered) ? st.answered : []).forEach((pair) => {
+                        if (!Array.isArray(pair) || pair.length < 2) return;
+                        const qi = Number(pair[0]);
+                        const qs = pair[1] || {};
+                        if (!Number.isInteger(qi) || qi < 0 || qi >= slides.length) return;
+                        answeredQuestionIndexes.add(qi);
+                        answeredQuestionStates.set(qi, {
+                            isCorrect: !!qs.isCorrect,
+                            optionIndex: Number.isInteger(qs.optionIndex) ? qs.optionIndex : null,
+                        });
+                    });
+                    startedAt = Date.now() - Math.max(0, Number(st.elapsed) || 0) * 1000;
+                    resumed = true;
+                    lastSavedKey = progressKey(snapshotProgress());
+                }
+
+                // Sekme kapanırken / arka plana giderken son konumu da kaydet.
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') saveProgress();
+                });
+                window.addEventListener('pagehide', saveProgress);
+
                 window.addEventListener('resize', fitStage);
                 render();
+                progressReady = true;
+                if (resumed && typeof window.appToast === 'function') {
+                    setTimeout(() => window.appToast('success', 'Kaldığın yerden devam ediyorsun (Sayfa ' + Math.min(idx + 1, Math.max(1, lessonSlideCount)) + ' / ' + Math.max(1, lessonSlideCount) + ').'), 500);
+                }
 
                 const slideLoadingEl = document.getElementById('student-course-slide-loading');
                 if (slideLoadingEl) {

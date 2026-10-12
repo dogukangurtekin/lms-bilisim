@@ -104,6 +104,7 @@ class SystemMaintenanceController extends Controller
 
             // --- Icerik/ders tamamlama, favoriler, XP, streak, raporlar ---
             ContentProgress::whereIn('user_id', $studentUserIds)->delete();
+            \App\Models\StudentCourseResume::whereIn('user_id', $studentUserIds)->delete();
             CourseFavorite::whereIn('user_id', $studentUserIds)->delete();
             UserXpLog::whereIn('user_id', $studentUserIds)->delete();
             UserStreak::whereIn('user_id', $studentUserIds)->delete();
