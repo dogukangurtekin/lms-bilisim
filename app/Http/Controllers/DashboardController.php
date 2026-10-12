@@ -259,7 +259,7 @@ class DashboardController extends Controller
                 ->groupBy('student_id')
                 ->map(fn ($rows) => $rows->pluck('course_homework_id')->unique()->all());
 
-            $gradeBuckets = ['Çok İyi (75+)' => 0, 'İyi (50-74)' => 0, 'Orta (25-49)' => 0, 'Düşük (0-24)' => 0];
+            $gradeBuckets = ['Çok İyi (60+)' => 0, 'İyi (40-59)' => 0, 'Orta (20-39)' => 0, 'Düşük (0-19)' => 0];
             // Ders/odev oranlari sinif icindeki en iyi ogrenciye gore olceklenir;
             // aksi halde cok dersli siniflarda herkes dusuk gorunur.
             $lessonRatio = [];
@@ -299,14 +299,14 @@ class DashboardController extends Controller
                 }
 
                 $xp = $signals ? array_sum($signals) / count($signals) : 0;
-                if ($xp >= 75) {
-                    $gradeBuckets['Çok İyi (75+)']++;
-                } elseif ($xp >= 50) {
-                    $gradeBuckets['İyi (50-74)']++;
-                } elseif ($xp >= 25) {
-                    $gradeBuckets['Orta (25-49)']++;
+                if ($xp >= 60) {
+                    $gradeBuckets['Çok İyi (60+)']++;
+                } elseif ($xp >= 40) {
+                    $gradeBuckets['İyi (40-59)']++;
+                } elseif ($xp >= 20) {
+                    $gradeBuckets['Orta (20-39)']++;
                 } else {
-                    $gradeBuckets['Düşük (0-24)']++;
+                    $gradeBuckets['Düşük (0-19)']++;
                 }
             }
             $gradeTotal = max(1, array_sum($gradeBuckets));
