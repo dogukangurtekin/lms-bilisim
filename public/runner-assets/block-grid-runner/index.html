@@ -84,12 +84,21 @@
         <div class="ws-head">
           <h3>🧩 Programın</h3>
           <div class="ws-tools">
-            <span class="ws-help" id="wsHelp">Blokları BAŞLA bloğunun altına bağla</span>
+            <span class="ws-help" id="wsHelp">Blokları BAŞLA kutusunun içine bırak, alt alta yapışsın</span>
             <button id="clearBtn" class="btn btn-ghost btn-compact" title="Blokları temizle">Temizle</button>
           </div>
         </div>
         <div class="palette" id="palette" aria-label="Blok paleti"></div>
         <div id="blocklyDiv" class="blockly-host"></div>
+        <div class="coach hidden" id="coach" role="note">
+          <b>Nasıl oynanır?</b>
+          <ol>
+            <li>Bir bloğa <b>dokun</b> (ya da soldan <b>sürükle</b>).</li>
+            <li>Blok <b>▶ BAŞLA</b> kutusunun içine, <b>alt alta</b> yapışır.</li>
+            <li><b>Çalıştır</b>'a bas: bloklar <b>yukarıdan aşağıya</b> sırayla çalışır.</li>
+          </ol>
+          <button id="coachClose" class="btn btn-ghost btn-compact" type="button">Anladım</button>
+        </div>
         <div class="ws-loading" id="wsLoading">Blok editörü yükleniyor…</div>
       </section>
     </main>

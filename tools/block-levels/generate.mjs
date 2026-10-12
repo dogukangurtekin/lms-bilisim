@@ -321,7 +321,7 @@ const groupFor = (i) => (i <= 24 ? 'Kolay' : i <= 52 ? 'Orta' : i <= 72 ? 'Zor' 
 const XP = { Kolay: 5, Orta: 12, Zor: 21, Uzman: 30 };
 
 const HINTS = {
-  1: 'Karakteri yıldıza götürmek için “İleri git” bloğunu BAŞLA bloğunun altına bağla.',
+  1: 'Karakteri yıldıza götürmek için “İleri git” bloklarını ▶ BAŞLA kutusunun içine, alt alta bırak.',
   4: 'Köşelerde dönmen gerek: “Sola dön” ve “Sağa dön” bloklarını kullan.',
   13: 'Tekrarla bloğunu dene! Aynı bloğu tekrar tekrar koymak yerine sayıyı değiştir.',
   20: 'Engelin etrafından dolaşman gerekiyor. Önce hangi yöne döneceğini düşün.',

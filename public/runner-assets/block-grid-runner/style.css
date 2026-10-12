@@ -208,3 +208,13 @@ button { font-family: inherit; cursor: pointer; }
 .pal-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .22); }
 .pal-motion { background: #3b82f6; } .pal-turn { background: #a855f7; } .pal-loop { background: #f59e0b; } .pal-logic { background: #ec4899; }
 .pal-tip { align-self: center; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+
+/* ---------- ilk açılış yönlendirmesi ---------- */
+.coach {
+  position: absolute; right: 22px; top: 126px; z-index: 6; width: min(270px, calc(100% - 44px)); background: var(--surface); color: var(--ink);
+  border: 2px solid var(--brand); border-radius: 16px; padding: 12px 14px; box-shadow: var(--shadow); animation: pop .3s cubic-bezier(.2, .9, .3, 1.2);
+}
+.coach b:first-child { display: block; margin-bottom: 4px; font-size: 14px; }
+.coach ol { margin: 0 0 8px; padding-left: 18px; font-size: 13px; font-weight: 700; line-height: 1.5; color: var(--ink-soft); }
+.coach.hidden { display: none; }
+@media (max-width: 640px) { .coach { top: auto; bottom: 10px; right: 10px; } }

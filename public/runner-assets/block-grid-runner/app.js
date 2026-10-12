@@ -53,6 +53,7 @@
     try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
     return { v: VERSION, done: {}, ws: {}, last: 0 };
   })();
+  if (prog.wsv !== 3) { prog.ws = {}; prog.wsv = 3; } // BAŞLA bloğu kutu biçimine geçti: eski kayıtlı blok yerleşimleri geçersiz
   try { localStorage.removeItem('levels'); localStorage.removeItem('unlocked'); } catch (e) {} // eski sürümden kalan verileri temizle
   function saveProg() { try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) {} }
   var isDoneLocal = function (lv) { return !!prog.done[lv.id]; };
@@ -123,7 +124,7 @@
 
   function defineBlocks() {
     Blockly.defineBlocksWithJsonArray([
-      { type: 'program_start', message0: '▶ BAŞLA', nextStatement: null, style: 'hat_blocks', tooltip: 'Programın buradan başlar. Blokları altına bağla.' },
+      { type: 'program_start', message0: '▶ BAŞLA %1', args0: [{ type: 'input_statement', name: 'DO' }], style: 'hat_blocks', tooltip: 'Programın buradan başlar. Blokları bu kutunun içine bırak; yukarıdan aşağıya sırayla çalışır.' },
       { type: 'move_forward', message0: '⬆ İleri git', previousStatement: null, nextStatement: null, style: 'motion_blocks', tooltip: 'Karakteri bir kare ileri götürür.' },
       { type: 'turn_left', message0: '↺ Sola dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sola çevirir.' },
       { type: 'turn_right', message0: '↻ Sağa dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sağa çevirir.' },
@@ -199,7 +200,7 @@
     var nb = ws.newBlock(type); nb.initSvg(); nb.render();
     var start = ensureStartBlock(), sel = selectedBlock();
     var target = null, inner = null;
-    // seçili blok bir döngü/koşul ise önce onun içine, değilse seçili bloktan sonra, yoksa zincirin sonuna ekle
+    // seçili blok boş bir kutu (BAŞLA / döngü / koşul) ise önce onun içine, değilse seçili bloktan sonra, yoksa BAŞLA'nın içindeki zincirin sonuna ekle
     if (sel && sel.getInput && sel.getInput('DO') && !sel.getInputTargetBlock('DO')) inner = sel.getInput('DO').connection;
     else if (sel && sel.id !== start.id && sel.nextConnection) target = sel;
     try {
@@ -209,8 +210,9 @@
         target.nextConnection.connect(nb.previousConnection);
         if (after && nb.nextConnection && !nb.getNextBlock()) nb.nextConnection.connect(after.previousConnection);
       } else {
-        var tail = lastInChain(start);
-        if (tail.nextConnection) tail.nextConnection.connect(nb.previousConnection);
+        var first = start.getInputTargetBlock('DO');
+        if (!first) start.getInput('DO').connection.connect(nb.previousConnection);
+        else { var tail = lastInChain(first); if (tail.nextConnection) tail.nextConnection.connect(nb.previousConnection); }
       }
     } catch (e) { nb.moveBy(40, 90); }
     try { nb.select(); } catch (e) {}
@@ -225,7 +227,7 @@
   function ensureStartBlock() {
     var b = startBlock();
     if (!b) {
-      b = ws.newBlock('program_start'); b.initSvg(); b.render(); b.moveBy(36, 24);
+      b = ws.newBlock('program_start'); b.initSvg(); b.render(); b.moveBy(28, 20);
     }
     b.setDeletable(false);
     return b;
@@ -249,7 +251,7 @@
     }
     return out;
   }
-  function buildAst() { var s = startBlock(); return s ? chain(s.getNextBlock()) : []; }
+  function buildAst() { var s = startBlock(); return s ? chain(s.getInputTargetBlock('DO')) : []; }
 
   function orphanCount() {
     if (!ws) return 0;
@@ -257,6 +259,13 @@
   }
 
   function blockLimit() { return Number.isFinite(Number(level.limit)) ? Number(level.limit) : null; }
+  // ---- ilk açılış yönlendirmesi (3 adım) ----
+  function hideCoach(persist) { var c = $('coach'); if (c) c.classList.add('hidden'); if (persist !== false) { try { localStorage.setItem('bgr.coach', '1'); } catch (e) {} } }
+  function showCoachIfNeeded() {
+    var c = $('coach'); if (!c) return;
+    var seen = false; try { seen = localStorage.getItem('bgr.coach') === '1'; } catch (e) {}
+    if (!seen && S.idx === 0 && Engine.countBlocks(buildAst()) === 0) c.classList.remove('hidden');
+  }
   function updateCounter() {
     var el = $('blockCounter'); if (!el || !ws) return;
     var used = Engine.countBlocks(buildAst()), lim = blockLimit();
@@ -265,7 +274,8 @@
     else { el.textContent = used ? '🧱 ' + used + ' blok' : ''; el.className = 'block-counter'; }
     var orphans = orphanCount();
     var help = $('wsHelp');
-    if (help) help.textContent = orphans ? '⚠ ' + orphans + ' blok BAŞLA\'ya bağlı değil' : 'Blokları BAŞLA bloğunun altına bağla';
+    if (help) help.textContent = orphans ? '⚠ ' + orphans + ' blok BAŞLA kutusuna bağlı değil — içine sürükle' : 'Blokları BAŞLA kutusunun içine bırak, alt alta yapışsın';
+    var coach = $('coach'); if (coach && used > 0) hideCoach();
   }
 
   function wsSerialize() { try { return Blockly.serialization.workspaces.save(ws); } catch (e) { return null; } }
@@ -291,6 +301,7 @@
   function initBlockly() {
     if (ws) return;
     defineBlocks();
+    try { Blockly.config.snapRadius = 56; Blockly.config.connectingSnapRadius = 72; Blockly.config.currentConnectionPreference = 12; } catch (e) {} // bloklar daha kolay yapışsın
     var dark = document.body.classList.contains('dark');
     ws = Blockly.inject('blocklyDiv', {
       toolbox: toolboxFor(level), renderer: 'zelos', theme: makeTheme(dark),
@@ -307,6 +318,7 @@
     wsReady = true;
     var l = $('wsLoading'); if (l) l.classList.add('hidden');
     setTimeout(checkFlyout, 800);
+    setTimeout(showCoachIfNeeded, 400);
     loadLevel(S.idx, { force: true });
     window.addEventListener('resize', function () { try { Blockly.svgResize(ws); } catch (e) {} });
     new ResizeObserver(function () { try { Blockly.svgResize(ws); } catch (e) {} }).observe($('blocklyDiv'));
@@ -390,7 +402,7 @@
     if (!wsReady) { toast('Blok editörü henüz hazır değil', 'bad'); return null; }
     if (!isStaff() && !canOpen(S.idx)) { warnLocked(); return null; }
     var ast = buildAst();
-    if (!ast.length) { setStatus('Önce BAŞLA bloğunun altına blok ekle.', 'bad'); toast('Önce blok ekle 🧩', 'bad'); return null; }
+    if (!ast.length) { setStatus('Önce BAŞLA kutusunun içine blok ekle.', 'bad'); toast('Blokları ▶ BAŞLA kutusunun içine bırak 🧩', 'bad', 2800); return null; }
     var lim = blockLimit(), used = Engine.countBlocks(ast);
     if (lim && used > lim) { setStatus('Çok fazla blok: en fazla ' + lim + ' blok kullanabilirsin.', 'bad'); toast('En fazla ' + lim + ' blok! Tekrar bloğunu dene 🔁', 'bad', 2800); return null; }
     return ast;
@@ -587,6 +599,7 @@
     $('runBtn').addEventListener('click', runProgram);
     $('stepBtn').addEventListener('click', stepProgram);
     $('resetBtn').addEventListener('click', function () { resetRun(false); toast('Karakter başa alındı'); });
+    var coachClose = $('coachClose'); if (coachClose) coachClose.addEventListener('click', function () { hideCoach(); });
     $('clearBtn').addEventListener('click', function () {
       if (!ws) return;
       resetRun(true);
