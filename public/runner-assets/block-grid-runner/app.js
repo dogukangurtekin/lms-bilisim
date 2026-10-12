@@ -1,6 +1,6 @@
 /*
- * Blok Kodlama (v2) — oyun mantığı, Blockly editörü ve platform entegrasyonu.
- * Bağımlılıklar: engine.js (yürütme), levels.js (82 bölüm), render.js (tuval), Blockly (kendi sunucumuzdan).
+ * Blok Kodlama (v3) — oyun mantığı, sürükle-bırak blok editörü ve platform entegrasyonu.
+ * Bağımlılıklar: engine.js (yürütme), levels.js (82 bölüm), render.js (tuval), editor.js (sürükle-bırak blok editörü).
  *
  * Platform sözleşmesi (eski sürümle uyumlu):
  *   URL: ?role=teacher|admin  &from=&to= (veya levelStart/levelEnd)  &assignmentId=  &grant=1
@@ -53,7 +53,7 @@
     try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
     return { v: VERSION, done: {}, ws: {}, last: 0 };
   })();
-  if (prog.wsv !== 3) { prog.ws = {}; prog.wsv = 3; } // BAŞLA bloğu kutu biçimine geçti: eski kayıtlı blok yerleşimleri geçersiz
+  if (prog.wsv !== 4) { prog.ws = {}; prog.wsv = 4; } // blok editörü değişti (v3): eski kayıtlı blok yerleşimleri geçersiz
   try { localStorage.removeItem('levels'); localStorage.removeItem('unlocked'); } catch (e) {} // eski sürümden kalan verileri temizle
   function saveProg() { try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) {} }
   var isDoneLocal = function (lv) { return !!prog.done[lv.id]; };
@@ -119,146 +119,19 @@
   var R = window.BlockRender.create(canvas);
   var level = LEVELS[0];
 
-  // ------------------------------------------------------------------ Blockly
-  var ws = null, wsReady = false, loadingWs = false, saveTimer = null;
+  // ------------------------------------------------------------------ blok editörü (editor.js)
+  var editor = null, wsReady = false, loadingWs = false, saveTimer = null;
 
-  function defineBlocks() {
-    Blockly.defineBlocksWithJsonArray([
-      { type: 'program_start', message0: '▶ BAŞLA %1', args0: [{ type: 'input_statement', name: 'DO' }], style: 'hat_blocks', tooltip: 'Programın buradan başlar. Blokları bu kutunun içine bırak; yukarıdan aşağıya sırayla çalışır.' },
-      { type: 'move_forward', message0: '⬆ İleri git', previousStatement: null, nextStatement: null, style: 'motion_blocks', tooltip: 'Karakteri bir kare ileri götürür.' },
-      { type: 'turn_left', message0: '↺ Sola dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sola çevirir.' },
-      { type: 'turn_right', message0: '↻ Sağa dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sağa çevirir.' },
-      {
-        type: 'repeat_times', message0: '🔁 Tekrarla %1 kez', args0: [{ type: 'field_number', name: 'TIMES', value: 2, min: 1, max: 50, precision: 1 }],
-        message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], previousStatement: null, nextStatement: null, style: 'loop_blocks',
-        tooltip: 'İçindeki blokları belirtilen sayıda tekrar eder.',
-      },
-      {
-        type: 'repeat_until_goal', message0: '🔁 Yıldıza ulaşana kadar tekrarla', message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }],
-        previousStatement: null, nextStatement: null, style: 'loop_blocks', tooltip: 'Yıldıza varınca durur.',
-      },
-      {
-        type: 'if_blocked', message0: '❓ Eğer %1 ise', args0: [{ type: 'field_dropdown', name: 'COND', options: [['önüm kapalı', 'blocked'], ['önüm açık', 'open']] }],
-        message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], message2: 'değilse %1', args2: [{ type: 'input_statement', name: 'ELSE' }],
-        previousStatement: null, nextStatement: null, style: 'logic_blocks', tooltip: 'Önündeki kare duvar/kenar mı diye bakar.',
-      },
-    ]);
-  }
-
-  function makeTheme(dark) {
-    var comp = dark
-      ? { workspaceBackgroundColour: '#232650', toolboxBackgroundColour: '#1b1d3a', flyoutBackgroundColour: '#1b1d3a', flyoutOpacity: 1, scrollbarColour: '#4b4f94', insertionMarkerColour: '#a5b4fc', insertionMarkerOpacity: .35, cursorColour: '#a5b4fc' }
-      : { workspaceBackgroundColour: '#f6f7ff', toolboxBackgroundColour: '#eef0ff', flyoutBackgroundColour: '#eef0ff', flyoutOpacity: 1, scrollbarColour: '#c7cbf2', insertionMarkerColour: '#4f46e5', insertionMarkerOpacity: .3, cursorColour: '#4f46e5' };
-    return Blockly.Theme.defineTheme(dark ? 'bgrDark' : 'bgrLight', {
-      name: dark ? 'bgrDark' : 'bgrLight', base: Blockly.Themes.Classic,
-      blockStyles: {
-        hat_blocks: { colourPrimary: '#22c55e', colourSecondary: '#4ade80', colourTertiary: '#15803d', hat: 'cap' },
-        motion_blocks: { colourPrimary: '#3b82f6', colourSecondary: '#60a5fa', colourTertiary: '#1d4ed8' },
-        turn_blocks: { colourPrimary: '#a855f7', colourSecondary: '#c084fc', colourTertiary: '#7e22ce' },
-        loop_blocks: { colourPrimary: '#f59e0b', colourSecondary: '#fbbf24', colourTertiary: '#b45309' },
-        logic_blocks: { colourPrimary: '#ec4899', colourSecondary: '#f472b6', colourTertiary: '#be185d' },
-      },
-      componentStyles: comp,
-      fontStyle: { family: 'Nunito, "Segoe UI", system-ui, sans-serif', weight: '800', size: 12 },
-      startHats: true,
-    });
-  }
-
-  var BLOCK_NAME = { forward: 'move_forward', left: 'turn_left', right: 'turn_right', repeat: 'repeat_times', until: 'repeat_until_goal', if: 'if_blocked' };
   // Her bölümde temel bloklar (ileri, sola, sağa, tekrarla) açıktır; ileri bloklar bölümün kendi listesinden gelir.
   function blockKeysFor(lv) {
     var keys = ['forward', 'left', 'right', 'repeat'];
     ['until', 'if'].forEach(function (k) { if (lv.blocks && lv.blocks.indexOf(k) >= 0) keys.push(k); });
     return keys;
   }
-  function toolboxFor(lv) {
-    return { kind: 'flyoutToolbox', contents: blockKeysFor(lv).map(function (k) { return { kind: 'block', type: BLOCK_NAME[k] }; }) };
-  }
-
-  // ---- blok paleti: Blockly'nin yan paneline bağlı olmadan, dokunarak/tıklayarak blok ekler ----
-  var PALETTE = {
-    forward: { label: '⬆ İleri git', cls: 'pal-motion' }, left: { label: '↺ Sola dön', cls: 'pal-turn' }, right: { label: '↻ Sağa dön', cls: 'pal-turn' },
-    repeat: { label: '🔁 Tekrarla', cls: 'pal-loop' }, until: { label: '🔁 Yıldıza kadar', cls: 'pal-loop' }, if: { label: '❓ Eğer', cls: 'pal-logic' },
-  };
-  function buildPalette(lv) {
-    var host = $('palette'); if (!host) return;
-    host.innerHTML = '';
-    blockKeysFor(lv).forEach(function (k) {
-      var b = document.createElement('button'); b.type = 'button'; b.className = 'pal-btn ' + PALETTE[k].cls; b.textContent = PALETTE[k].label;
-      b.addEventListener('click', function () { addBlockFromPalette(BLOCK_NAME[k]); });
-      host.appendChild(b);
-    });
-    var tip = document.createElement('span'); tip.className = 'pal-tip'; tip.textContent = 'Butona bas: blok programa eklenir (ya da sürükle).'; host.appendChild(tip);
-  }
-  function selectedBlock() {
-    try { return (Blockly.common && Blockly.common.getSelected && Blockly.common.getSelected()) || (Blockly.getSelected && Blockly.getSelected()) || null; } catch (e) { return null; }
-  }
-  function lastInChain(b) { while (b && b.getNextBlock()) b = b.getNextBlock(); return b; }
-  function addBlockFromPalette(type) {
-    if (!wsReady || !ws) { toast('Blok editörü henüz hazır değil', 'bad'); return; }
-    resetRun(true);
-    var nb = ws.newBlock(type); nb.initSvg(); nb.render();
-    var start = ensureStartBlock(), sel = selectedBlock();
-    var target = null, inner = null;
-    // seçili blok boş bir kutu (BAŞLA / döngü / koşul) ise önce onun içine, değilse seçili bloktan sonra, yoksa BAŞLA'nın içindeki zincirin sonuna ekle
-    if (sel && sel.getInput && sel.getInput('DO') && !sel.getInputTargetBlock('DO')) inner = sel.getInput('DO').connection;
-    else if (sel && sel.id !== start.id && sel.nextConnection) target = sel;
-    try {
-      if (inner) inner.connect(nb.previousConnection);
-      else if (target) {
-        var after = target.getNextBlock();
-        target.nextConnection.connect(nb.previousConnection);
-        if (after && nb.nextConnection && !nb.getNextBlock()) nb.nextConnection.connect(after.previousConnection);
-      } else {
-        var first = start.getInputTargetBlock('DO');
-        if (!first) start.getInput('DO').connection.connect(nb.previousConnection);
-        else { var tail = lastInChain(first); if (tail.nextConnection) tail.nextConnection.connect(nb.previousConnection); }
-      }
-    } catch (e) { nb.moveBy(40, 90); }
-    try { nb.select(); } catch (e) {}
-    updateCounter(); scheduleSaveWs();
-  }
-
-  function startBlock() {
-    if (!ws) return null;
-    var b = ws.getTopBlocks(false).find(function (x) { return x.type === 'program_start'; });
-    return b || null;
-  }
-  function ensureStartBlock() {
-    var b = startBlock();
-    if (!b) {
-      b = ws.newBlock('program_start'); b.initSvg(); b.render(); b.moveBy(28, 20);
-    }
-    b.setDeletable(false);
-    return b;
-  }
-
-  function chain(b) {
-    var out = [];
-    while (b) {
-      if (b.isEnabled && !b.isEnabled()) { b = b.getNextBlock(); continue; }
-      var n = null, id = b.id;
-      switch (b.type) {
-        case 'move_forward': n = { t: 'forward', id: id }; break;
-        case 'turn_left': n = { t: 'left', id: id }; break;
-        case 'turn_right': n = { t: 'right', id: id }; break;
-        case 'repeat_times': n = { t: 'repeat', n: Math.max(1, parseInt(b.getFieldValue('TIMES'), 10) || 1), body: chain(b.getInputTargetBlock('DO')), id: id }; break;
-        case 'repeat_until_goal': n = { t: 'until', body: chain(b.getInputTargetBlock('DO')), id: id }; break;
-        case 'if_blocked': n = { t: 'if', cond: b.getFieldValue('COND'), then: chain(b.getInputTargetBlock('DO')), else: chain(b.getInputTargetBlock('ELSE')), id: id }; break;
-      }
-      if (n) out.push(n);
-      b = b.getNextBlock();
-    }
-    return out;
-  }
-  function buildAst() { var s = startBlock(); return s ? chain(s.getInputTargetBlock('DO')) : []; }
-
-  function orphanCount() {
-    if (!ws) return 0;
-    return ws.getTopBlocks(false).filter(function (b) { return b.type !== 'program_start'; }).length;
-  }
-
+  function buildAst() { return editor ? editor.ast() : []; }
+  function highlight(id) { if (editor) editor.highlight(id); }
   function blockLimit() { return Number.isFinite(Number(level.limit)) ? Number(level.limit) : null; }
+
   // ---- ilk açılış yönlendirmesi (3 adım) ----
   function hideCoach(persist) { var c = $('coach'); if (c) c.classList.add('hidden'); if (persist !== false) { try { localStorage.setItem('bgr.coach', '1'); } catch (e) {} } }
   function showCoachIfNeeded() {
@@ -266,62 +139,41 @@
     var seen = false; try { seen = localStorage.getItem('bgr.coach') === '1'; } catch (e) {}
     if (!seen && S.idx === 0 && Engine.countBlocks(buildAst()) === 0) c.classList.remove('hidden');
   }
+
   function updateCounter() {
-    var el = $('blockCounter'); if (!el || !ws) return;
+    var el = $('blockCounter'); if (!el || !editor) return;
     var used = Engine.countBlocks(buildAst()), lim = blockLimit();
     S.used = used;
     if (lim) { el.textContent = '🧱 ' + used + ' / ' + lim + ' blok'; el.className = 'block-counter' + (used > lim ? ' over' : ''); }
     else { el.textContent = used ? '🧱 ' + used + ' blok' : ''; el.className = 'block-counter'; }
-    var orphans = orphanCount();
-    var help = $('wsHelp');
-    if (help) help.textContent = orphans ? '⚠ ' + orphans + ' blok BAŞLA kutusuna bağlı değil — içine sürükle' : 'Blokları BAŞLA kutusunun içine bırak, alt alta yapışsın';
-    var coach = $('coach'); if (coach && used > 0) hideCoach();
+    if (used > 0) hideCoach();
   }
 
-  function wsSerialize() { try { return Blockly.serialization.workspaces.save(ws); } catch (e) { return null; } }
+  function wsSerialize() { try { return editor ? editor.serialize() : null; } catch (e) { return null; } }
   function scheduleSaveWs() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
-      var s = wsSerialize(); if (!s) return;
-      prog.ws[level.id] = s; prog.last = S.idx; saveProg();
+      var data = wsSerialize(); if (!data) return;
+      prog.ws[level.id] = data; prog.last = S.idx; saveProg();
     }, 350);
   }
   function loadWorkspaceFor(lv) {
     loadingWs = true;
-    try {
-      ws.clear();
-      var saved = prog.ws[lv.id];
-      if (saved) { try { Blockly.serialization.workspaces.load(saved, ws); } catch (e) { ws.clear(); } }
-      ensureStartBlock();
-      try { ws.scrollCenter(); } catch (e) {}
-    } finally { loadingWs = false; }
+    try { var saved = prog.ws[lv.id]; if (saved) editor.load(saved); else editor.clear(); }
+    finally { loadingWs = false; }
     updateCounter();
   }
 
-  function initBlockly() {
-    if (ws) return;
-    defineBlocks();
-    try { Blockly.config.snapRadius = 56; Blockly.config.connectingSnapRadius = 72; Blockly.config.currentConnectionPreference = 12; } catch (e) {} // bloklar daha kolay yapışsın
-    var dark = document.body.classList.contains('dark');
-    ws = Blockly.inject('blocklyDiv', {
-      toolbox: toolboxFor(level), renderer: 'zelos', theme: makeTheme(dark),
-      media: window.__BLOCKLY_BASE + 'media/', trashcan: true, sounds: false,
-      zoom: { controls: true, wheel: false, startScale: .95, maxScale: 1.6, minScale: .5, scaleSpeed: 1.1 },
-      move: { scrollbars: true, drag: true, wheel: true },
-      grid: { spacing: 24, length: 3, colour: dark ? 'rgba(165,180,252,.15)' : 'rgba(99,102,241,.14)', snap: true },
-    });
-    ws.addChangeListener(function (e) {
-      if (loadingWs || e.isUiEvent) return;
-      updateCounter();
-      scheduleSaveWs();
+  function initEditor() {
+    if (editor) return;
+    editor = window.BlockEditor.create({
+      workspace: $('editor'), palette: $('palette'),
+      onChange: function () { if (loadingWs) return; resetRunVisuals(); updateCounter(); scheduleSaveWs(); },
     });
     wsReady = true;
     var l = $('wsLoading'); if (l) l.classList.add('hidden');
-    setTimeout(checkFlyout, 800);
-    setTimeout(showCoachIfNeeded, 400);
     loadLevel(S.idx, { force: true });
-    window.addEventListener('resize', function () { try { Blockly.svgResize(ws); } catch (e) {} });
-    new ResizeObserver(function () { try { Blockly.svgResize(ws); } catch (e) {} }).observe($('blocklyDiv'));
+    setTimeout(showCoachIfNeeded, 400);
   }
 
   // ------------------------------------------------------------------ bölüm yükleme / arayüz
@@ -367,16 +219,14 @@
       idx = Math.max(rs, Math.min(re, idx));
     }
     resetRun(true);
-    if (ws && wsReady && level) { var cur = wsSerialize(); if (cur) prog.ws[level.id] = cur; }
+    if (editor && wsReady && level) { var cur = wsSerialize(); if (cur) prog.ws[level.id] = cur; }
     S.idx = idx; level = LEVELS[idx]; S.attemptStart = Date.now();
     R.setLevel(level);
     document.body.dataset.theme = level.theme;
     refreshLevelTexts();
-    buildPalette(level);
-    if (ws && wsReady) {
-      try { ws.updateToolbox(toolboxFor(level)); } catch (e) { console.warn('updateToolbox', e); }
+    if (editor && wsReady) {
+      editor.setKeys(blockKeysFor(level));
       loadWorkspaceFor(level);
-      setTimeout(function () { try { Blockly.svgResize(ws); } catch (e) {} }, 30);
     }
     setStatus('Hazır');
     prog.last = idx; saveProg();
@@ -389,7 +239,8 @@
   var DUR = { turn: 260, move: 340, gap: 70 };
   function dur(ms) { return Math.max(40, ms / S.speed); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  function highlight(id) { try { ws.highlightBlock(id); } catch (e) {} }
+
+  function resetRunVisuals() { if (S.running || S.stepIt) return; try { highlight(null); } catch (e) {} }
 
   function resetRun(silent) {
     S.token++; S.running = false; S.stepIt = null; S.stepAst = null;
@@ -402,7 +253,7 @@
     if (!wsReady) { toast('Blok editörü henüz hazır değil', 'bad'); return null; }
     if (!isStaff() && !canOpen(S.idx)) { warnLocked(); return null; }
     var ast = buildAst();
-    if (!ast.length) { setStatus('Önce BAŞLA kutusunun içine blok ekle.', 'bad'); toast('Blokları ▶ BAŞLA kutusunun içine bırak 🧩', 'bad', 2800); return null; }
+    if (!ast.length) { setStatus('Önce BAŞLA kutusunun içine blok ekle.', 'bad'); toast('Blokları ▶ BAŞLA kutusunun içine sürükle 🧩', 'bad', 2800); return null; }
     var lim = blockLimit(), used = Engine.countBlocks(ast);
     if (lim && used > lim) { setStatus('Çok fazla blok: en fazla ' + lim + ' blok kullanabilirsin.', 'bad'); toast('En fazla ' + lim + ' blok! Tekrar bloğunu dene 🔁', 'bad', 2800); return null; }
     return ast;
@@ -590,7 +441,6 @@
     document.body.classList.toggle('dark', dark);
     $('darkToggle').textContent = dark ? '☀️' : '🌙';
     try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
-    if (ws) { try { ws.setTheme(makeTheme(dark)); } catch (e) {} }
   }
   var SPEEDS = [0.5, 1, 2, 4];
   function cycleSpeed() { S.speed = SPEEDS[(SPEEDS.indexOf(S.speed) + 1) % SPEEDS.length]; $('speedLabel').textContent = S.speed + 'x'; try { localStorage.setItem('bgr.speed', String(S.speed)); } catch (e) {} }
@@ -601,9 +451,9 @@
     $('resetBtn').addEventListener('click', function () { resetRun(false); toast('Karakter başa alındı'); });
     var coachClose = $('coachClose'); if (coachClose) coachClose.addEventListener('click', function () { hideCoach(); });
     $('clearBtn').addEventListener('click', function () {
-      if (!ws) return;
+      if (!editor) return;
       resetRun(true);
-      loadingWs = true; try { ws.clear(); ensureStartBlock(); } finally { loadingWs = false; }
+      loadingWs = true; try { editor.clear(); } finally { loadingWs = false; }
       updateCounter(); scheduleSaveWs(); setStatus('Bloklar temizlendi');
     });
     $('levelPrev').addEventListener('click', function () { loadLevel(S.idx - 1); });
@@ -676,7 +526,7 @@
           }
           break;
         case 'REQUEST_SAVE': post({ type: 'GAME_UPDATE', levels: compactLevels(), currentLevelIndex: S.idx, version: VERSION }); break;
-        case 'RESET_LOCAL': prog = { v: VERSION, done: {}, ws: {}, last: 0 }; saveProg(); loadLevel(0, { force: true }); break;
+        case 'RESET_LOCAL': prog = { v: VERSION, done: {}, ws: {}, last: 0, wsv: 4 }; saveProg(); loadLevel(0, { force: true }); break;
         case 'RUN': runProgram(); break;
         case 'STEP': stepProgram(); break;
         case 'RESET': resetRun(false); break;
@@ -694,33 +544,12 @@
     return Math.max(0, Math.min(LEVELS.length - 1, last));
   })();
   S.idx = startIdx; level = LEVELS[S.idx];
-  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader(); buildPalette(level);
+  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
 
-  function boot() {
-    if (window.__blocklyReady && window.Blockly) { try { initBlockly(); } catch (e) { console.error('Blockly başlatılamadı', e); failBlockly(e); } }
-  }
-  function failBlockly(err) {
-    var l = $('wsLoading');
-    if (l) {
-      l.classList.remove('hidden');
-      var detail = err && err.message ? '<br><small>' + String(err.message).replace(/</g, '&lt;').slice(0, 160) + '</small>' : '';
-      l.innerHTML = '<div style="text-align:center">Blok editörü yüklenemedi.' + detail + '<br><br><button class="btn btn-ghost btn-compact" onclick="location.reload()">Yenile</button></div>';
-    }
-  }
-  // başlangıçta yan panelde (flyout) blok görünmüyorsa uyar; palet yine de çalışır
-  function checkFlyout() {
-    try {
-      var fl = ws && ws.getFlyout && ws.getFlyout();
-      var n = fl && fl.getWorkspace ? fl.getWorkspace().getTopBlocks(false).length : -1;
-      if (n === 0) console.warn('Blockly yan paneli boş görünüyor; üstteki blok paletini kullanın.');
-    } catch (e) {}
-  }
-  window.addEventListener('blockly-ready', boot);
-  window.addEventListener('blockly-failed', function () { failBlockly({ message: 'Blockly dosyaları indirilemedi (ağ/önbellek).' }); });
-  if (window.__blocklyFailed) failBlockly({ message: 'Blockly dosyaları indirilemedi (ağ/önbellek).' }); else boot();
+  initEditor();
   resolveGrant();
   S.loaded = true;
 
   // dışarıdan test/hata ayıklama için
-  window.BlockApp = { state: S, levels: LEVELS, loadLevel: loadLevel, run: runProgram, buildAst: buildAst, workspace: function () { return ws; } };
+  window.BlockApp = { state: S, levels: LEVELS, loadLevel: loadLevel, run: runProgram, buildAst: buildAst, editor: function () { return editor; } };
 })();

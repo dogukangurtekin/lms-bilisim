@@ -89,17 +89,17 @@
           </div>
         </div>
         <div class="palette" id="palette" aria-label="Blok paleti"></div>
-        <div id="blocklyDiv" class="blockly-host"></div>
+        <div id="editor" class="ed-ws" aria-label="Program alanı"></div>
         <div class="coach hidden" id="coach" role="note">
           <b>Nasıl oynanır?</b>
           <ol>
-            <li>Bir bloğa <b>dokun</b> (ya da soldan <b>sürükle</b>).</li>
-            <li>Blok <b>▶ BAŞLA</b> kutusunun içine, <b>alt alta</b> yapışır.</li>
+            <li>Bir bloğu <b>sürükle</b> (ya da ona <b>dokun</b>).</li>
+            <li>Blok <b>▶ BAŞLA</b> kutusunda, <b>alt alta</b> yapışır (mıknatıs gibi).</li>
             <li><b>Çalıştır</b>'a bas: bloklar <b>yukarıdan aşağıya</b> sırayla çalışır.</li>
           </ol>
           <button id="coachClose" class="btn btn-ghost btn-compact" type="button">Anladım</button>
         </div>
-        <div class="ws-loading" id="wsLoading">Blok editörü yükleniyor…</div>
+        <div class="ws-loading hidden" id="wsLoading">Blok editörü yükleniyor…</div>
       </section>
     </main>
   </div>
@@ -138,26 +138,10 @@
     </div>
   </div>
 
-  <script>
-    // Blockly sabit sürümü kendi sunucumuzdan yüklenir (CDN'e bağlı kalmamak için).
-    (function () {
-      var base = ((window.RUNNER_APP_BASE || '') + '').replace(/\/$/, '') + '/js/vendor/blockly/';
-      window.__BLOCKLY_BASE = base;
-      var files = ['blockly_compressed.js', 'blocks_compressed.js', 'msg/tr.js'];
-      var failed = false;
-      (function next(i) {
-        if (i >= files.length) { window.__blocklyReady = true; window.dispatchEvent(new Event('blockly-ready')); return; }
-        var s = document.createElement('script');
-        s.src = base + files[i];
-        s.onload = function () { next(i + 1); };
-        s.onerror = function () { failed = true; window.__blocklyFailed = true; window.dispatchEvent(new Event('blockly-failed')); };
-        document.head.appendChild(s);
-      })(0);
-    })();
-  </script>
   <script src="engine.js"></script>
   <script src="levels.js"></script>
   <script src="render.js"></script>
+  <script src="editor.js"></script>
   <script src="app.js"></script>
   <script src="../pwa-init.js" defer></script>
 </body>

@@ -218,3 +218,82 @@ button { font-family: inherit; cursor: pointer; }
 .coach ol { margin: 0 0 8px; padding-left: 18px; font-size: 13px; font-weight: 700; line-height: 1.5; color: var(--ink-soft); }
 .coach.hidden { display: none; }
 @media (max-width: 640px) { .coach { top: auto; bottom: 10px; right: 10px; } }
+
+/* =====================================================================
+   Blok editörü (v3): mıknatıs gibi yapışan, Scratch/Code.org tarzı bloklar
+   ===================================================================== */
+.workspace-card { min-height: 560px; }
+.ed-ws {
+  position: relative; flex: 1; min-height: 440px; overflow: auto; padding: 18px 16px 40px; border-radius: 14px;
+  border: 2px dashed var(--line); --dent: var(--surface-2); touch-action: pan-y;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ink-soft) 28%, transparent) 1.2px, transparent 1.5px) 0 0 / 22px 22px, var(--surface-2);
+  transition: border-color .15s, background-color .15s;
+}
+.ed-ws.ed-active { border-color: var(--brand); border-style: solid; }
+.ed-ws.ed-trash { border-color: var(--bad); background-color: color-mix(in srgb, var(--bad) 10%, var(--surface-2)); }
+
+/* BAŞLA kutusu */
+.ed-prog { width: fit-content; min-width: min(100%, 290px); max-width: 100%; }
+.ed-hat {
+  position: relative; z-index: 2; width: fit-content; min-width: 170px; padding: 11px 20px 9px; border-radius: 24px 24px 6px 6px;
+  background: #22c55e; color: #fff; font-weight: 900; font-size: 15px; box-shadow: inset 0 -3px rgba(0, 0, 0, .18);
+}
+.ed-prog-body {
+  --dent: color-mix(in srgb, #22c55e 12%, var(--surface-2)); min-height: 72px; padding: 10px 12px 8px;
+  border-left: 18px solid #22c55e; border-bottom: 14px solid #22c55e; border-radius: 0 0 0 16px;
+  background: color-mix(in srgb, #22c55e 12%, var(--surface-2));
+}
+.ed-hat::after {
+  content: ''; position: absolute; left: 18px; bottom: -6px; width: 22px; height: 7px; background: #22c55e; border-radius: 0 0 8px 8px; z-index: 3; display: none;
+}
+
+/* bloklar */
+.ed-list { min-height: 8px; }
+.ed-blk { position: relative; color: #fff; font-weight: 900; font-size: 15px; --bc: #3b82f6; }
+.ed-motion { --bc: #3b82f6; } .ed-turn { --bc: #a855f7; } .ed-loop { --bc: #f59e0b; } .ed-logic { --bc: #ec4899; }
+.ed-head {
+  position: relative; display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 8px; background: var(--bc);
+  box-shadow: inset 0 -3px rgba(0, 0, 0, .2); cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; white-space: nowrap;
+}
+.ed-head:active { cursor: grabbing; }
+.ed-head::before { /* üstte çentik (öndeki bloğun çıkıntısı buraya oturur) */
+  content: ''; position: absolute; left: 18px; top: 0; width: 22px; height: 7px; background: var(--dent); border-radius: 0 0 8px 8px; z-index: 1;
+}
+.ed-blk:not(.ed-c) > .ed-head::after, .ed-c > .ed-foot::after { /* altta çıkıntı (mıknatıs tırnağı) */
+  content: ''; position: absolute; left: 18px; bottom: -6px; width: 22px; height: 7px; background: var(--bc); border-radius: 0 0 8px 8px; z-index: 3;
+}
+.ed-blk + .ed-blk { margin-top: 0; }
+
+/* döngü / koşul kutuları */
+.ed-c { background: var(--bc); border-radius: 8px; box-shadow: inset 0 -3px rgba(0, 0, 0, .2); }
+.ed-c > .ed-head { background: transparent; box-shadow: none; border-radius: 8px 8px 0 0; }
+.ed-slot {
+  --dent: color-mix(in srgb, var(--bc) 22%, var(--surface-2)); margin-left: 16px; padding: 8px 8px 8px 10px;
+  background: color-mix(in srgb, var(--bc) 22%, var(--surface-2)); min-height: 44px;
+}
+.ed-sep { padding: 7px 16px; font-size: 13px; }
+.ed-foot { position: relative; height: 16px; }
+.ed-num, .ed-sel {
+  border: 0; border-radius: 8px; padding: 4px 8px; font: inherit; font-weight: 900; color: #78350f; background: #fff7ed; cursor: pointer;
+}
+.ed-num { width: 56px; text-align: center; }
+.ed-empty {
+  color: var(--ink-soft); font-weight: 800; font-size: 13px; padding: 12px; border: 2px dashed var(--line); border-radius: 8px; text-align: center; background: transparent;
+}
+
+/* durumlar */
+.ed-dragging { opacity: .3; }
+.ed-sel-on > .ed-head { outline: 3px solid #fde047; outline-offset: 1px; }
+.ed-run > .ed-head { outline: 3px solid #fff; box-shadow: 0 0 0 5px #fbbf24, inset 0 -3px rgba(0, 0, 0, .2); filter: brightness(1.15); }
+.ed-pop { animation: ed-pop .35s cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes ed-pop { 0% { transform: scale(.85); } 60% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.ed-dropline {
+  position: absolute; height: 6px; border-radius: 99px; background: var(--brand); pointer-events: none; z-index: 10;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, .25), 0 0 16px rgba(79, 70, 229, .7);
+}
+.ed-ghost {
+  position: fixed; z-index: 1000; pointer-events: none; padding: 10px 16px; border-radius: 10px; color: #fff; font-weight: 900; font-size: 15px;
+  background: var(--bc); box-shadow: 0 12px 26px rgba(0, 0, 0, .35); transform: rotate(-2deg); white-space: nowrap;
+}
+.pal-btn { touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; }
+@media (max-width: 1000px) { .ed-ws { min-height: 380px; } }

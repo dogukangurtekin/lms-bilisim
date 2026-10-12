@@ -1,4 +1,4 @@
-# Blok Kodlama (v2) — tasarım istemi ve teknik belge
+# Blok Kodlama (v3) — tasarım istemi ve teknik belge
 
 Bu belge hem **yenileme isteminin** (neyi, neden yaptık) hem de oyunun **bakım rehberinin** özetidir.
 
@@ -26,11 +26,11 @@ Temalar (görsel dünya): Orman (1–12), Çöl (13–24), Buz (25–36), Uzay (
 | Dosya | Görev |
 |---|---|
 | `index.html`, `style.css` | Arayüz (açık/koyu tema, mobil uyumlu), bölüm seçici, sonuç penceresi |
-| `app.js` | Oyun mantığı, Blockly editörü, ilerleme, platform mesajları |
+| `app.js` | Oyun mantığı, ilerleme, platform mesajları |
+| `editor.js` | **Kendi sürükle-bırak blok editörümüz** (bağımlılıksız): bloklar mıknatıs gibi alt alta yapışır, döngü/koşul kutularının içine girer, dışarı atınca silinir, dokunmatikte çalışır. `Model` bölümü DOM'suz test edilir |
 | `render.js` | Tuval çizimi: temalı zemin, engeller, parlayan yıldız, animasyonlu robot, parçacıklar |
 | `engine.js` | DOM’dan bağımsız yürütme motoru (ileri/dön/tekrar/yıldıza kadar/eğer) — Node’da da test edilir |
 | `levels.js` | **Otomatik üretilmiş** 82 bölüm — elle düzenlemeyin |
-| `../../js/vendor/blockly/` | Blockly 10.4.3 (kendi sunucumuzdan; CDN’e bağlı değil) |
 | `../../../tools/block-levels/generate.mjs` | Bölüm üretici + doğrulayıcı |
 
 ## Bölümleri yeniden üretmek / değiştirmek
@@ -49,6 +49,9 @@ sırayı değiştirmeyin; yeni bölümleri sona ekleyin.**
 - Giden mesajlar: `LEVEL_COMPLETED`, `ASSIGNMENT_RANGE_COMPLETED`, `LOCKED_LEVEL_WARNING`, `GAME_UPDATE`.
 - Gelen mesajlar: `SET_LEVEL_RANGE`, `SET_ASSIGNMENT_PROGRESS`, `FORCE_ASSIGNMENT_LOCK`, `SET_CURRENT_LEVEL`, `RUN`, `STEP`, `RESET`,
   `LOAD_STATE` (yalnız bu sürümün ilerleme verisi), `REQUEST_SAVE`, `RESET_LOCAL`.
+
+## Blok editörü (v3)
+v2'de Blockly kullanılıyordu; sürükle-bırak istenen biçimde çalışmadığı için v3'te kendi editörümüze geçildi. Davranış: **▶ BAŞLA kutusuna** blok sürükle → en yakın bağlantı noktasında mavi bir **yapışma çizgisi** belirir → bırakınca blok alt alta oturur. Bloğa **dokunmak** onu programın sonuna (seçili döngü/koşul varsa içine) ekler. Çalışma alanı dışına bırakılan blok silinir; seçili bloğu `Delete` tuşu siler. Programın modeli doğrudan `engine.js` AST'sidir.
 - İlerleme `localStorage` anahtarı: `bgr.v2` (eski `levels`/`unlocked` anahtarları açılışta temizlenir).
 
 ## v2’de kaldırılanlar
