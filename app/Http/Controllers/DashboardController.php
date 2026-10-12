@@ -14,6 +14,7 @@ use App\Models\StudentTimeStat;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Services\PushNotificationService;
 use App\Services\StudentXpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
-    public function __construct(private StudentXpService $xpService) {}
+    public function __construct(private StudentXpService $xpService, private PushNotificationService $pushService) {}
 
     private const DEFAULT_WIDGETS = [
         'summary' => ['visible' => true, 'span' => 12, 'order' => 10, 'title' => 'Özet', 'type' => 'summary'],
@@ -592,6 +593,21 @@ class DashboardController extends Controller
         });
 
         $this->forgetDashboardCaches($admin);
+
+        // Öğrencilere anlık bildirim: zil + web-push; sayfa açıksa service worker toast gösterir.
+        // Bildirim hatası XP hediyesinin kendisini asla bozmamalı.
+        try {
+            $this->pushService->sendToUsers(
+                $students->pluck('user_id')->filter()->all(),
+                'xp_gift',
+                '🎁 XP Hediyesi!',
+                "{$amount} XP hediye kazandın: {$description}",
+                url('/ogrenci/panelim'),
+                ['amount' => $amount, 'batch_uuid' => $batchUuid, 'granted_by' => $admin->id]
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->route('dashboard')->with('ok', $students->count()." öğrenciye {$amount} XP hediyesi gönderildi.");
     }

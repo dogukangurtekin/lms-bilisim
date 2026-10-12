@@ -259,6 +259,58 @@
 })();
 </script>
 @endif
+@if(auth()->check())
+@php
+    $xpGiftToast = auth()->user()?->hasRole('student')
+        ? \App\Models\NotificationLog::query()
+            ->where('user_id', auth()->id())
+            ->where('type', 'xp_gift')
+            ->where('created_at', '>=', now()->subDay())
+            ->whereNotIn('id', \App\Models\NotificationLogRead::query()->select('notification_log_id')->where('user_id', auth()->id()))
+            ->latest('id')
+            ->first(['id', 'title', 'body'])
+        : null;
+@endphp
+<script>
+(() => {
+    const showToast = (title, body) => {
+        const text = (title ? title + ' ' : '') + (body || '');
+        if (typeof window.appToast === 'function') window.appToast('success', text.trim());
+    };
+    const bumpBell = () => {
+        const el = document.getElementById('navNotifCount');
+        if (!el) return;
+        const cur = parseInt(el.textContent, 10) || 0;
+        el.hidden = false;
+        el.textContent = cur >= 99 ? '99+' : String(cur + 1);
+    };
+
+    // Sayfa açıkken push geldiğinde service worker haber verir -> anında toast.
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            const d = event.data || {};
+            if (d.kind !== 'app-push') return;
+            if (d.type === 'xp_gift') {
+                try { localStorage.setItem('lastXpGiftToast', String(d.log_id || '')); } catch (_) {}
+            }
+            showToast(d.title, d.body);
+            bumpBell();
+        });
+    }
+
+    @if(!empty($xpGiftToast))
+    // Push izni olmayan veya sayfa kapalıyken hediye alan öğrenci: sonraki açılışta bir kez göster.
+    try {
+        const id = String(@json($xpGiftToast->id));
+        if (localStorage.getItem('lastXpGiftToast') !== id) {
+            localStorage.setItem('lastXpGiftToast', id);
+            setTimeout(() => showToast(@json($xpGiftToast->title), @json($xpGiftToast->body)), 600);
+        }
+    } catch (_) { /* localStorage kullanılamıyor */ }
+    @endif
+})();
+</script>
+@endif
 @if(auth()->check() && !request()->routeIs('student.live-quiz.play', 'live-quiz.session.show'))
 <script>
 (() => {

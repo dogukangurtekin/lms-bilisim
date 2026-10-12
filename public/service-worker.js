@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.3";
+const SW_VERSION = "v1.5.4";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -252,7 +252,25 @@ self.addEventListener("push", (event) => {
     },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      // Açık sayfalara haber ver: sayfa içinde anlık toast gösterilir.
+      windowClients.forEach((client) => {
+        client.postMessage({
+          kind: "app-push",
+          type: payload.type || "system_message",
+          title,
+          body: payload.body || "",
+          log_id: payload.log_id || null,
+          url: payload.url || null,
+        });
+      });
+      // XP hediyesi: sayfa ekranda açıksa sistem bildirimi yerine sayfadaki toast yeterli.
+      const pageIsVisible = windowClients.some((c) => c.visibilityState === "visible");
+      if ((payload.type || "") === "xp_gift" && pageIsVisible) return undefined;
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {

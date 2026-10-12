@@ -8,6 +8,7 @@ return [
         'meeting_created' => 'Yeni Gorusme',
         'attendance_reminder' => 'Yoklama Hatirlatma',
         'parent_report_ready' => 'Veli Raporu Hazir',
+        'xp_gift' => 'XP Hediyesi',
     ],
 ];
 
