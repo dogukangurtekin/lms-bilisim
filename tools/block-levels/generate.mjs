@@ -322,8 +322,8 @@ const XP = { Kolay: 5, Orta: 12, Zor: 21, Uzman: 30 };
 
 const HINTS = {
   1: 'Karakteri yıldıza götürmek için “İleri git” bloğunu BAŞLA bloğunun altına bağla.',
-  4: 'Yeni: “Sola dön” ve “Sağa dön” blokları. Köşede dönmeyi unutma!',
-  13: 'Yeni: “Tekrarla” bloğu! Aynı bloğu tekrar tekrar koymak yerine sayıyı değiştir.',
+  4: 'Köşelerde dönmen gerek: “Sola dön” ve “Sağa dön” bloklarını kullan.',
+  13: 'Tekrarla bloğunu dene! Aynı bloğu tekrar tekrar koymak yerine sayıyı değiştir.',
   20: 'Engelin etrafından dolaşman gerekiyor. Önce hangi yöne döneceğini düşün.',
   23: 'Yılan yolu! Aynı hareketler tekrar ediyor — tekrar bloğu işini kolaylaştırır.',
   32: 'Sarmal yol: içe doğru dönüyor. Döngüyü iç içe kullanabilirsin.',
@@ -381,8 +381,8 @@ function buildLevel(i, spec) {
     level.plain = plain;
     level.par = i >= 13 ? par : plain;   // 13. bölüme kadar tekrar bloğu yok
     level.xp = XP[level.group];
-    const basic = turns > 0 ? ['forward', 'left', 'right'] : ['forward'];
-    level.blocks = basic.concat(i >= 13 ? ['repeat'] : [], i >= 61 ? ['until', 'if'] : []);
+    // Temel bloklar (ileri/sola/sağa/tekrarla) her bölümde açıktır; ileri bloklar 61. bölümden itibaren eklenir.
+    level.blocks = ['forward', 'left', 'right', 'repeat'].concat(i >= 61 ? ['until', 'if'] : []);
     // tekrar öğreten bölümlerde blok sınırı koy (yalnız tekrar kullanınca sığar)
     if (spec.loops && i >= 13) {
       const limit = par + Math.max(2, Math.ceil(par * 0.35));

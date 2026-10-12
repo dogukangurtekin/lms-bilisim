@@ -164,9 +164,57 @@
   }
 
   var BLOCK_NAME = { forward: 'move_forward', left: 'turn_left', right: 'turn_right', repeat: 'repeat_times', until: 'repeat_until_goal', if: 'if_blocked' };
+  // Her bölümde temel bloklar (ileri, sola, sağa, tekrarla) açıktır; ileri bloklar bölümün kendi listesinden gelir.
+  function blockKeysFor(lv) {
+    var keys = ['forward', 'left', 'right', 'repeat'];
+    ['until', 'if'].forEach(function (k) { if (lv.blocks && lv.blocks.indexOf(k) >= 0) keys.push(k); });
+    return keys;
+  }
   function toolboxFor(lv) {
-    var list = (lv.blocks && lv.blocks.length ? lv.blocks : ['forward', 'left', 'right']).map(function (k) { return { kind: 'block', type: BLOCK_NAME[k] }; });
-    return { kind: 'flyoutToolbox', contents: list };
+    return { kind: 'flyoutToolbox', contents: blockKeysFor(lv).map(function (k) { return { kind: 'block', type: BLOCK_NAME[k] }; }) };
+  }
+
+  // ---- blok paleti: Blockly'nin yan paneline bağlı olmadan, dokunarak/tıklayarak blok ekler ----
+  var PALETTE = {
+    forward: { label: '⬆ İleri git', cls: 'pal-motion' }, left: { label: '↺ Sola dön', cls: 'pal-turn' }, right: { label: '↻ Sağa dön', cls: 'pal-turn' },
+    repeat: { label: '🔁 Tekrarla', cls: 'pal-loop' }, until: { label: '🔁 Yıldıza kadar', cls: 'pal-loop' }, if: { label: '❓ Eğer', cls: 'pal-logic' },
+  };
+  function buildPalette(lv) {
+    var host = $('palette'); if (!host) return;
+    host.innerHTML = '';
+    blockKeysFor(lv).forEach(function (k) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'pal-btn ' + PALETTE[k].cls; b.textContent = PALETTE[k].label;
+      b.addEventListener('click', function () { addBlockFromPalette(BLOCK_NAME[k]); });
+      host.appendChild(b);
+    });
+    var tip = document.createElement('span'); tip.className = 'pal-tip'; tip.textContent = 'Butona bas: blok programa eklenir (ya da sürükle).'; host.appendChild(tip);
+  }
+  function selectedBlock() {
+    try { return (Blockly.common && Blockly.common.getSelected && Blockly.common.getSelected()) || (Blockly.getSelected && Blockly.getSelected()) || null; } catch (e) { return null; }
+  }
+  function lastInChain(b) { while (b && b.getNextBlock()) b = b.getNextBlock(); return b; }
+  function addBlockFromPalette(type) {
+    if (!wsReady || !ws) { toast('Blok editörü henüz hazır değil', 'bad'); return; }
+    resetRun(true);
+    var nb = ws.newBlock(type); nb.initSvg(); nb.render();
+    var start = ensureStartBlock(), sel = selectedBlock();
+    var target = null, inner = null;
+    // seçili blok bir döngü/koşul ise önce onun içine, değilse seçili bloktan sonra, yoksa zincirin sonuna ekle
+    if (sel && sel.getInput && sel.getInput('DO') && !sel.getInputTargetBlock('DO')) inner = sel.getInput('DO').connection;
+    else if (sel && sel.id !== start.id && sel.nextConnection) target = sel;
+    try {
+      if (inner) inner.connect(nb.previousConnection);
+      else if (target) {
+        var after = target.getNextBlock();
+        target.nextConnection.connect(nb.previousConnection);
+        if (after && nb.nextConnection && !nb.getNextBlock()) nb.nextConnection.connect(after.previousConnection);
+      } else {
+        var tail = lastInChain(start);
+        if (tail.nextConnection) tail.nextConnection.connect(nb.previousConnection);
+      }
+    } catch (e) { nb.moveBy(40, 90); }
+    try { nb.select(); } catch (e) {}
+    updateCounter(); scheduleSaveWs();
   }
 
   function startBlock() {
@@ -258,6 +306,7 @@
     });
     wsReady = true;
     var l = $('wsLoading'); if (l) l.classList.add('hidden');
+    setTimeout(checkFlyout, 800);
     loadLevel(S.idx, { force: true });
     window.addEventListener('resize', function () { try { Blockly.svgResize(ws); } catch (e) {} });
     new ResizeObserver(function () { try { Blockly.svgResize(ws); } catch (e) {} }).observe($('blocklyDiv'));
@@ -311,8 +360,9 @@
     R.setLevel(level);
     document.body.dataset.theme = level.theme;
     refreshLevelTexts();
+    buildPalette(level);
     if (ws && wsReady) {
-      try { ws.updateToolbox(toolboxFor(level)); } catch (e) {}
+      try { ws.updateToolbox(toolboxFor(level)); } catch (e) { console.warn('updateToolbox', e); }
       loadWorkspaceFor(level);
       setTimeout(function () { try { Blockly.svgResize(ws); } catch (e) {} }, 30);
     }
@@ -631,17 +681,30 @@
     return Math.max(0, Math.min(LEVELS.length - 1, last));
   })();
   S.idx = startIdx; level = LEVELS[S.idx];
-  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
+  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader(); buildPalette(level);
 
   function boot() {
-    if (window.__blocklyReady && window.Blockly) { try { initBlockly(); } catch (e) { console.error(e); failBlockly(); } }
+    if (window.__blocklyReady && window.Blockly) { try { initBlockly(); } catch (e) { console.error('Blockly başlatılamadı', e); failBlockly(e); } }
   }
-  function failBlockly() {
-    var l = $('wsLoading'); if (l) { l.classList.remove('hidden'); l.innerHTML = 'Blok editörü yüklenemedi. <button class="btn btn-ghost btn-compact" onclick="location.reload()">Yenile</button>'; }
+  function failBlockly(err) {
+    var l = $('wsLoading');
+    if (l) {
+      l.classList.remove('hidden');
+      var detail = err && err.message ? '<br><small>' + String(err.message).replace(/</g, '&lt;').slice(0, 160) + '</small>' : '';
+      l.innerHTML = '<div style="text-align:center">Blok editörü yüklenemedi.' + detail + '<br><br><button class="btn btn-ghost btn-compact" onclick="location.reload()">Yenile</button></div>';
+    }
+  }
+  // başlangıçta yan panelde (flyout) blok görünmüyorsa uyar; palet yine de çalışır
+  function checkFlyout() {
+    try {
+      var fl = ws && ws.getFlyout && ws.getFlyout();
+      var n = fl && fl.getWorkspace ? fl.getWorkspace().getTopBlocks(false).length : -1;
+      if (n === 0) console.warn('Blockly yan paneli boş görünüyor; üstteki blok paletini kullanın.');
+    } catch (e) {}
   }
   window.addEventListener('blockly-ready', boot);
-  window.addEventListener('blockly-failed', failBlockly);
-  if (window.__blocklyFailed) failBlockly(); else boot();
+  window.addEventListener('blockly-failed', function () { failBlockly({ message: 'Blockly dosyaları indirilemedi (ağ/önbellek).' }); });
+  if (window.__blocklyFailed) failBlockly({ message: 'Blockly dosyaları indirilemedi (ağ/önbellek).' }); else boot();
   resolveGrant();
   S.loaded = true;
 
