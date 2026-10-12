@@ -317,6 +317,12 @@ class ActivityRunnerController extends Controller
         $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
         $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo.png') . '"', $html);
         $html = str_replace('src="../pwa-init.js"', 'src="' . e($appBase . '/pwa-init.js') . '"', $html);
+        // Runner klasöründeki diğer yerel betikler (engine.js, levels.js, render.js...) de dosya değişince yenilensin.
+        $html = preg_replace_callback('/src="(?:\.\/)?([A-Za-z0-9_\-]+\.js)"/', function ($m) use ($runnerBase, $slug) {
+            $path = public_path('runner-assets/' . $slug . '/' . $m[1]);
+            $v = File::exists($path) ? File::lastModified($path) : time();
+            return 'src="' . e($runnerBase . $m[1] . '?v=' . $v) . '"';
+        }, $html) ?? $html;
         $html = str_replace('src="./app.js"', 'src="' . e($runnerBase . 'app.js?v=' . $appJsVersion) . '"', $html);
         $html = str_replace('src="app.js"', 'src="' . e($runnerBase . 'app.js?v=' . $appJsVersion) . '"', $html);
         $html = str_replace('href="./style.css"', 'href="' . e($runnerBase . 'style.css?v=' . $styleCssVersion) . '"', $html);

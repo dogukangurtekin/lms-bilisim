@@ -1,1835 +1,650 @@
-﻿// Simple Block Grid Runner
-// - Provides Blockly palette and custom blocks
-// - Translates workspace into a command list
-// - Steps a character on a grid with obstacles and a star
+/*
+ * Blok Kodlama (v2) — oyun mantığı, Blockly editörü ve platform entegrasyonu.
+ * Bağımlılıklar: engine.js (yürütme), levels.js (82 bölüm), render.js (tuval), Blockly (kendi sunucumuzdan).
+ *
+ * Platform sözleşmesi (eski sürümle uyumlu):
+ *   URL: ?role=teacher|admin  &from=&to= (veya levelStart/levelEnd)  &assignmentId=  &grant=1
+ *   Gelen mesajlar: SET_LEVEL_RANGE, SET_ASSIGNMENT_PROGRESS, FORCE_ASSIGNMENT_LOCK, SET_CURRENT_LEVEL, RUN, STEP, RESET,
+ *                   LOAD_STATE, REQUEST_SAVE, RESET_LOCAL, DISABLE_MENU, ENABLE_MENU
+ *   Giden mesajlar: LEVEL_COMPLETED, ASSIGNMENT_RANGE_COMPLETED, LOCKED_LEVEL_WARNING, GAME_UPDATE
+ */
+(function () {
+  'use strict';
 
-let workspace;
-const canvas = document.getElementById('gridCanvas');
-const ctx = canvas.getContext('2d');
-const gridSize = 8; // cells per side
-const EASY_LEVEL_XP = 5;
-const MEDIUM_LEVEL_XP = 12;
-const HARD_LEVEL_XP = 21;
-const DEFAULT_LEVEL_XP = MEDIUM_LEVEL_XP;
-const MAX_LEVEL_XP = 500;
+  var SET = window.BLOCK_LEVEL_SET;
+  var Engine = window.BlockEngine;
+  var LEVELS = (SET && SET.levels) || [];
+  var VERSION = (SET && SET.version) || 2;
+  var $ = function (id) { return document.getElementById(id); };
 
-function getCurrentLevelGridWidth(){
-  const lvl = levels?.[state?.levelIndex ?? 0] || {};
-  return Math.max(6, Math.min(12, Number(lvl.gridWidth || gridSize)));
-}
-
-function getCurrentLevelGridHeight(){
-  const lvl = levels?.[state?.levelIndex ?? 0] || {};
-  return Math.max(6, Math.min(12, Number(lvl.gridHeight || gridSize)));
-}
-
-function getCellPx(){
-  const w = getCurrentLevelGridWidth();
-  const h = getCurrentLevelGridHeight();
-  return canvas.width / Math.max(w, h);
-}
-
-let levels = [
-  {
-    id:0, name:'Seviye 1', group: 'Kolay', start:{x:1,y:7,dir:0}, star:{x:4,y:1}, obstacles:[{x:1,y:6},{x:2,y:5},{x:3,y:3}]
-  },
-  {
-    id:1, name:'Seviye 2', group: 'Orta', start:{x:0,y:7,dir:0}, star:{x:5,y:1}, obstacles:[{x:1,y:6},{x:2,y:5},{x:3,y:4},{x:4,y:3}]
+  if (!LEVELS.length || !Engine) {
+    var st = $('status');
+    if (st) st.textContent = 'Bölümler yüklenemedi. Sayfayı yenileyin.';
+    return;
   }
-];
 
-function buildBlockPath(start, star){
-  const path = new Set([`${start.x},${start.y}`]);
-  const moves = [];
-  let x = start.x;
-  let y = start.y;
-  const stepX = star.x >= x ? 1 : -1;
-  while(x !== star.x){
-    x += stepX;
-    path.add(`${x},${y}`);
-    moves.push({ x, y });
+  // ------------------------------------------------------------------ rol / ödev parametreleri
+  var params = (function () { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(''); } })();
+  var role = (function () { var r = (params.get('role') || '').toLowerCase(); return (r === 'teacher' || r === 'admin') ? r : 'student'; })();
+  var assignmentId = String(params.get('assignmentId') || '').trim();
+  var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
+  function queryRange() {
+    // URL'de aralık parametresi yoksa aralık yoktur (serbest oyun).
+    var raw = params.get('levelStart') || params.get('from');
+    if (!raw) return null;
+    var start = Math.max(1, Number(raw));
+    var end = Math.max(start, Number(params.get('levelEnd') || params.get('to') || start));
+    return (Number.isFinite(start) && Number.isFinite(end)) ? { startIdx: start - 1, endIdx: end - 1 } : null;
   }
-  const stepY = star.y >= y ? 1 : -1;
-  while(y !== star.y){
-    y += stepY;
-    path.add(`${x},${y}`);
-    moves.push({ x, y });
-  }
-  return { path, moves };
-}
+  var needsGrantCheck = role === 'student' && (!!queryRange() || !!assignmentId || enforceGrant);
 
-function buildBlockObstacles(pathSet, start, star, seed, targetCount){
-  const obstacles = [];
-  const reserved = new Set([`${start.x},${start.y}`, `${star.x},${star.y}`]);
-  pathSet.forEach((k) => reserved.add(k));
-  for(let y = 0; y < gridSize; y++){
-    for(let x = 0; x < gridSize; x++){
-      const key = `${x},${y}`;
-      if(reserved.has(key)) continue;
-      const scoreA = ((x + y + seed) % 3) === 0;
-      const scoreB = (((x * 2) + y + seed) % 5) === 0;
-      if(scoreA || scoreB){
-        obstacles.push({ x, y });
-        if(obstacles.length >= targetCount) return obstacles;
-      }
-    }
-  }
-  return obstacles;
-}
-
-function buildExtraBlockLevels(){
-  const out = [];
-  let id = levels.reduce((m, lv) => Math.max(m, Number(lv?.id || 0)), 0) + 1;
-  const bands = [
-    { group: 'Kolay', count: 10, obstacleCount: 8, starYBase: 3 },
-    { group: 'Orta', count: 10, obstacleCount: 12, starYBase: 2 },
-    { group: 'Zor', count: 10, obstacleCount: 16, starYBase: 1 }
-  ];
-  bands.forEach((band) => {
-    for(let i = 0; i < band.count; i++){
-      const start = { x: 0, y: 7, dir: 0 };
-      const star = { x: 4 + (i % 4), y: Math.max(0, band.starYBase - (i % 2)) };
-      const pathData = buildBlockPath(start, star);
-      const obstacles = buildBlockObstacles(pathData.path, start, star, id, band.obstacleCount + (i % 3));
-      out.push({
-        id,
-        order: id + 1,
-        name: `${band.group} Yeni ${i + 1}`,
-        group: band.group,
-        start,
-        star,
-        obstacles
-      });
-      id += 1;
-    }
-  });
-  return out;
-}
-
-levels = levels.concat(buildExtraBlockLevels());
-
-function getDefaultXpByGroup(group){
-  const g = String(group || '').trim().toLowerCase();
-  if(g === 'kolay' || g === 'easy') return EASY_LEVEL_XP;
-  if(g === 'orta' || g === 'medium') return MEDIUM_LEVEL_XP;
-  if(g === 'zor' || g === 'hard') return HARD_LEVEL_XP;
-  return DEFAULT_LEVEL_XP;
-}
-
-function getDefaultXpByLevelNo(levelNo){
-  const n = Math.max(1, Number(levelNo || 1));
-  if(n <= 5) return EASY_LEVEL_XP;
-  if(n <= 11) return MEDIUM_LEVEL_XP;
-  return HARD_LEVEL_XP;
-}
-
-function normalizeLevelXp(value){
-  const n = Number(value);
-  if(!Number.isFinite(n)) return DEFAULT_LEVEL_XP;
-  return Math.max(1, Math.min(MAX_LEVEL_XP, Math.floor(n)));
-}
-
-function applyXpDefaults(){
-  levels = (levels || []).map((lvl, idx) => {
-    const levelNo = Number.isFinite(Number(lvl?.order)) ? Number(lvl.order) : (idx + 1);
-    const xp = getDefaultXpByLevelNo(levelNo);
-    return { ...lvl, xp: normalizeLevelXp(xp) };
-  });
-}
-
-applyXpDefaults();
-
-// Preferred group ordering (easy -> hard)
-const groupOrder = ['Kolay','Orta','Zor','Özel','Genel'];
-
-function getGroupRank(name){
-  const idx = groupOrder.indexOf(String(name || 'Genel'));
-  return idx >= 0 ? idx : 999;
-}
-
-function sortLevelsInPlace(){
-  levels.sort((a, b) => {
-    const ga = getGroupRank(a?.group);
-    const gb = getGroupRank(b?.group);
-    if (ga !== gb) return ga - gb;
-    const oa = Number.isFinite(Number(a?.order)) ? Number(a.order) : Number.MAX_SAFE_INTEGER;
-    const ob = Number.isFinite(Number(b?.order)) ? Number(b.order) : Number.MAX_SAFE_INTEGER;
-    if (oa !== ob) return oa - ob;
-    return Number(a?.id || 0) - Number(b?.id || 0);
-  });
-}
-
-let state = {
-  levelIndex:0,
-  x:0,y:0,dir:0, // 0 right, 1 down, 2 left, 3 up
-  commands:[], ip:0, running:false
-};
-let sessionStart = null;
-let levelRange = null; // {startIdx,endIdx} 0-based
-let assignmentRangeLocked = false;
-let grantDenied = false;
-let assignmentCompletedLevelIds = null; // Set<number> for active assignment
-let levelAttemptStart = null;
-const runnerRole = (() => {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const role = (params.get("role") || "").toLowerCase();
-    return (role === "teacher" || role === "admin") ? role : "student";
-  } catch (e) {
-    return "student";
-  }
-})();
-const hasQueryAssignmentRange = !!getQueryAssignmentRange();
-const assignmentId = (() => {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    return String(params.get("assignmentId") || "").trim();
-  } catch (e) {
-    return "";
-  }
-})();
-const enforceGrant = (() => {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("grant") === "1" || params.get("enforceGrant") === "1";
-  } catch (e) {
-    return false;
-  }
-})();
-const needsGrantCheck = runnerRole === "student" && (hasQueryAssignmentRange || !!assignmentId || enforceGrant);
-const isStaffMode = () => runnerRole === "teacher" || runnerRole === "admin" || window.__runnerStaffMode === true;
-const isAdminMode = () => runnerRole === "admin" || window.__runnerAdminMode === true;
-
-function getQueryAssignmentRange(){
-  try{
-    const params = new URLSearchParams(window.location.search);
-    const start = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
-    const end = Math.max(start, Number(params.get("levelEnd") || params.get("to") || start));
-    if(Number.isFinite(start) && Number.isFinite(end) && start > 0){
-      return { startIdx: start - 1, endIdx: end - 1 };
-    }
-  }catch(e){}
-  return null;
-}
-(() => {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const start = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
-    const end = Math.max(start, Number(params.get("levelEnd") || params.get("to") || start));
-    if (!isStaffMode() && Number.isFinite(start) && start > 0) {
-      levelRange = { startIdx: start - 1, endIdx: end - 1 };
-      assignmentRangeLocked = false;
-    }
-  } catch (e) {
-    // ignore malformed query
-  }
-})();
-
-async function resolveAssignmentRangeFromGrant(){
-  if(!needsGrantCheck) return;
-  if(isStaffMode()) return;
-  try{
-    const base = (window.RUNNER_APP_BASE || '').replace(/\/$/, '');
-    const res = await fetch(base + '/runner-grant/block-grid-runner' + window.location.search, {
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json' }
-    });
-    if(!res.ok){
-      grantDenied = true;
-      setStatus('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
-      return;
-    }
-    const grant = await res.json();
-    if(grant && grant.ok && grant.role === 'staff'){
-      window.__runnerStaffMode = true;
-      grantDenied = false;
-      levelRange = null;
-      assignmentRangeLocked = false;
-      return;
-    }
-    if(!grant || !grant.ok || grant.role !== 'student'){
-      grantDenied = true;
-      setStatus('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
-      return;
-    }
-    const start = Math.max(1, Number(grant.from || 1));
-    const end = Math.max(start, Number(grant.to || start));
-    assignmentRangeLocked = false;
-    levelRange = { startIdx: start - 1, endIdx: end - 1 };
-    try{ populateLevels(); }catch(e){}
-    try{
-      const target = Math.max(levelRange.startIdx, Math.min(levelRange.endIdx, Number(state.levelIndex || 0)));
-      loadLevel(target);
-      setStatus('Seviye araligi: ' + start + '-' + end);
-    }catch(e){}
-  }catch(e){
-    grantDenied = true;
-    setStatus('Erisim dogrulanamadi. Sayfayi yenileyip tekrar deneyin.');
-  }
-}
-
-let designerEditMode = false;
-let designerDraft = null;
-let designerSelectedTool = 'obstacle';
-
-function clampDesigner(v, min, max){
-  const n = Number(v);
-  if(!Number.isFinite(n)) return min;
-  return Math.max(min, Math.min(max, Math.floor(n)));
-}
-
-function parseDesignerSize(){
-  const wEl = document.getElementById('designerGridWidth');
-  const hEl = document.getElementById('designerGridHeight');
-  return {
-    w: clampDesigner((wEl||{}).value || 8, 6, 12),
-    h: clampDesigner((hEl||{}).value || 8, 6, 12)
+  var S = {
+    idx: 0, running: false, token: 0, stepIt: null, stepAst: null, lastAst: null,
+    speed: 1, sound: true, levelRange: null, assignmentLocked: false, assignmentCompleted: null,
+    grantDenied: false, staffFlag: false, attemptStart: Date.now(), sessionStart: Date.now(), loaded: false,
   };
-}
+  var isStaff = function () { return role === 'teacher' || role === 'admin' || S.staffFlag; };
+  var isAdmin = function () { return role === 'admin'; };
+  if (!isStaff() && queryRange()) S.levelRange = queryRange();
 
-function makeEmptyDesignerDraft(){
-  const s = parseDesignerSize();
-  return {
-    w: s.w,
-    h: s.h,
-    start: { x: 0, y: s.h - 1, dir: 0 },
-    star: { x: s.w - 1, y: 0 },
-    obstacles: []
-  };
-}
-
-function draftHasObstacle(x, y){
-  return !!designerDraft?.obstacles?.some((o)=> Number(o.x) === Number(x) && Number(o.y) === Number(y));
-}
-
-function draftRemoveObstacle(x, y){
-  if(!designerDraft) return;
-  designerDraft.obstacles = (designerDraft.obstacles || []).filter((o)=> !(Number(o.x) === Number(x) && Number(o.y) === Number(y)));
-}
-
-function setDesignerTool(tool){
-  designerSelectedTool = String(tool || 'obstacle');
-  const items = document.querySelectorAll('#designerPalette .palette-tile');
-  items.forEach((it)=> it.classList.toggle('active', it.dataset.item === designerSelectedTool));
-}
-
-function designerCellLabel(x, y){
-  if(!designerDraft) return '';
-  if(Number(designerDraft.start.x) === Number(x) && Number(designerDraft.start.y) === Number(y)) return 'S';
-  if(Number(designerDraft.star.x) === Number(x) && Number(designerDraft.star.y) === Number(y)) return 'H';
-  if(draftHasObstacle(x,y)) return 'E';
-  return '';
-}
-
-function placeDesignerItem(x, y, item){
-  if(!designerDraft) return;
-  const cx = clampDesigner(x, 0, designerDraft.w - 1);
-  const cy = clampDesigner(y, 0, designerDraft.h - 1);
-  const kind = String(item || designerSelectedTool || 'obstacle');
-  if(kind === 'erase'){
-    draftRemoveObstacle(cx, cy);
-    return;
+  // ------------------------------------------------------------------ ilerleme (localStorage)
+  var KEY = 'bgr.v2';
+  var prog = (function () {
+    try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
+    return { v: VERSION, done: {}, ws: {}, last: 0 };
+  })();
+  try { localStorage.removeItem('levels'); localStorage.removeItem('unlocked'); } catch (e) {} // eski sürümden kalan verileri temizle
+  function saveProg() { try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) {} }
+  var isDoneLocal = function (lv) { return !!prog.done[lv.id]; };
+  function completedSet() {
+    if (!isStaff() && S.assignmentCompleted instanceof Set) return S.assignmentCompleted;
+    var set = new Set(); LEVELS.forEach(function (l) { if (prog.done[l.id]) set.add(l.id); }); return set;
   }
-  if(kind === 'start'){
-    draftRemoveObstacle(cx, cy);
-    designerDraft.start.x = cx; designerDraft.start.y = cy;
-    if(Number(designerDraft.star.x) === cx && Number(designerDraft.star.y) === cy){
-      designerDraft.star.x = designerDraft.w - 1; designerDraft.star.y = 0;
+  var isCompleted = function (lv) { return completedSet().has(lv.id); };
+  function firstIncompleteInRange() {
+    if (!S.levelRange) return null;
+    var s = Math.max(0, S.levelRange.startIdx), e = Math.min(LEVELS.length - 1, Math.max(s, S.levelRange.endIdx));
+    for (var i = s; i <= e; i++) if (!isCompleted(LEVELS[i])) return i;
+    return e;
+  }
+  function highestDoneIdx() { var m = -1; LEVELS.forEach(function (l, i) { if (prog.done[l.id]) m = i; }); return m; }
+
+  function canOpen(idx) {
+    if (idx < 0 || idx >= LEVELS.length) return false;
+    if (isStaff()) return true;
+    if (S.grantDenied || S.assignmentLocked) return false;
+    if (S.levelRange) {
+      var s = Math.max(0, S.levelRange.startIdx), e = Math.min(LEVELS.length - 1, Math.max(s, S.levelRange.endIdx));
+      if (idx < s || idx > e) return false;
+      return idx <= firstIncompleteInRange();
     }
-    return;
+    return idx <= highestDoneIdx() + 1;
   }
-  if(kind === 'star'){
-    draftRemoveObstacle(cx, cy);
-    designerDraft.star.x = cx; designerDraft.star.y = cy;
-    if(Number(designerDraft.start.x) === cx && Number(designerDraft.start.y) === cy){
-      designerDraft.start.x = 0; designerDraft.start.y = designerDraft.h - 1;
-    }
-    return;
+
+  // ------------------------------------------------------------------ yardımcılar: arayüz
+  var toastTimer = null;
+  function toast(msg, kind, ms) {
+    var t = $('toast'); if (!t) return;
+    t.textContent = msg; t.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, ms || 2200);
   }
-  if(kind === 'obstacle'){
-    if((Number(designerDraft.start.x) === cx && Number(designerDraft.start.y) === cy) ||
-       (Number(designerDraft.star.x) === cx && Number(designerDraft.star.y) === cy)) return;
-    if(!draftHasObstacle(cx, cy)) designerDraft.obstacles.push({ x: cx, y: cy });
-  }
-}
+  function setStatus(msg, kind) { var s = $('status'); if (s) { s.textContent = msg; s.className = 'status' + (kind ? ' ' + kind : ''); } }
+  function post(msg) { try { if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*'); } catch (e) {} }
+  function warnLocked(msg) { msg = msg || 'Bu bölüm henüz kilitli.'; setStatus(msg, 'bad'); toast('🔒 ' + msg, 'bad', 2600); post({ type: 'LOCKED_LEVEL_WARNING', message: msg }); }
 
-// --- Akilli tahta / dokunmatik ekran destegi -------------------------
-// HTML5'in yerlesik draggable="true" surukle-birak API'si dokunmatik
-// girdiyi HIC desteklemiyor (spesifikasyon geregi sadece fare ile
-// calisir) - bu yuzden akilli tahtalarda tasarim paletinden ogeleri
-// suruklemek mumkun olmuyordu. Asagidaki touchstart/touchmove/touchend
-// tabanli kucuk polyfill, ayni "surukle-birak" hareketini parmakla da
-// (ya da akilli tahta kaleminin dokunma modunda) calisir hale getiriyor;
-// mevcut fare ile surukleme (dragstart/dragover/drop) davranisi aynen
-// korunuyor. (Not: Blockly'nin kendi program tuvali dokunmatigi zaten
-// yerlesik olarak destekler, bu polyfill sadece asagidaki ozel
-// tasarim izgarasi icindir.)
-let touchDragItem = null;
-let touchDragOverCell = null;
-
-function cellAtPoint(clientX, clientY){
-  const el = document.elementFromPoint(clientX, clientY);
-  return (el && el.closest) ? el.closest('.designer-cell') : null;
-}
-
-function startTouchDrag(itemType, touch){
-  touchDragItem = itemType;
-  touchDragOverCell = null;
-  if(touch) updateTouchDragOver(touch.clientX, touch.clientY);
-}
-
-function updateTouchDragOver(clientX, clientY){
-  const cell = cellAtPoint(clientX, clientY);
-  if(cell === touchDragOverCell) return;
-  if(touchDragOverCell) touchDragOverCell.classList.remove('drag-over');
-  touchDragOverCell = cell;
-  if(touchDragOverCell) touchDragOverCell.classList.add('drag-over');
-}
-
-function endTouchDrag(clientX, clientY){
-  if(!touchDragItem) return;
-  const cell = cellAtPoint(clientX, clientY);
-  if(touchDragOverCell) touchDragOverCell.classList.remove('drag-over');
-  touchDragOverCell = null;
-  if(cell){
-    const x = Number(cell.dataset.x);
-    const y = Number(cell.dataset.y);
-    placeDesignerItem(x, y, touchDragItem);
-    renderDesignerBoard();
-  }
-  touchDragItem = null;
-}
-
-document.addEventListener('touchmove', (ev)=>{
-  if(!touchDragItem) return;
-  ev.preventDefault();
-  const touch = ev.touches[0];
-  if(touch) updateTouchDragOver(touch.clientX, touch.clientY);
-}, { passive: false });
-
-document.addEventListener('touchend', (ev)=>{
-  if(!touchDragItem) return;
-  const touch = ev.changedTouches[0];
-  endTouchDrag(touch ? touch.clientX : -1, touch ? touch.clientY : -1);
-});
-
-document.addEventListener('touchcancel', ()=>{
-  if(touchDragOverCell) touchDragOverCell.classList.remove('drag-over');
-  touchDragOverCell = null;
-  touchDragItem = null;
-});
-
-function renderDesignerBoard(){
-  const board = document.getElementById('designerBoard');
-  if(!board || !designerDraft) return;
-  board.innerHTML = '';
-  board.style.gridTemplateColumns = `repeat(${designerDraft.w}, 36px)`;
-  board.style.gridTemplateRows = `repeat(${designerDraft.h}, 36px)`;
-  for(let y=0; y<designerDraft.h; y++){
-    for(let x=0; x<designerDraft.w; x++){
-      const cell = document.createElement('div');
-      cell.className = 'designer-cell';
-      if(Number(designerDraft.start.x) === x && Number(designerDraft.start.y) === y) cell.classList.add('start');
-      else if(Number(designerDraft.star.x) === x && Number(designerDraft.star.y) === y) cell.classList.add('star');
-      else if(draftHasObstacle(x, y)) cell.classList.add('obstacle');
-      cell.dataset.x = String(x);
-      cell.dataset.y = String(y);
-      cell.textContent = designerCellLabel(x,y);
-      cell.addEventListener('click', ()=>{ placeDesignerItem(x, y, designerSelectedTool); renderDesignerBoard(); });
-      cell.addEventListener('dragover', (ev)=>{ ev.preventDefault(); cell.classList.add('drag-over'); });
-      cell.addEventListener('dragleave', ()=> cell.classList.remove('drag-over'));
-      cell.addEventListener('drop', (ev)=>{
-        ev.preventDefault();
-        cell.classList.remove('drag-over');
-        const t = (ev.dataTransfer && ev.dataTransfer.getData('text/plain')) || designerSelectedTool;
-        placeDesignerItem(x, y, t);
-        renderDesignerBoard();
-      });
-      board.appendChild(cell);
-    }
-  }
-}
-
-function initBlockly(){
-  if(!window.Blockly || typeof Blockly.inject !== 'function'){
-    const statusEl = document.getElementById('status');
-    if(statusEl) statusEl.textContent = 'Blok editoru yukleniyor...';
-    return false;
-  }
-  Blockly.defineBlocksWithJsonArray([
-    {
-      type: "program_start",
-      message0: "START %1 %2",
-      args0: [
-        { type: "input_dummy" },
-        { type: "input_statement", name: "DO" }
-      ],
-      colour: 122,
-      tooltip: "Program buradan baslar",
-      nextStatement: null
-    },
-    {
-      type: "repeat_times",
-      message0: "repeat %1 times",
-      args0: [
-        { type: "field_number", name: "TIMES", value: 2, min: 0, max: 50, precision: 1 }
-      ],
-      message1: "do %1",
-      args1: [
-        { type: "input_statement", name: "DO" }
-      ],
-      previousStatement: null,
-      nextStatement: null,
-      colour: 95,
-      tooltip: "Belirtilen sayı kadar tekrar et"
-    },
-    {
-      type: "move_forward",
-      message0: "Ileri git",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 188,
-      tooltip: "Karakteri ileri götür"
-    },
-    {
-      type: "turn_left",
-      message0: "Sola dön",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 268,
-      tooltip: "Karakteri sola çevir"
-    },
-    {
-      type: "turn_right",
-      message0: "Sağa dön",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 268,
-      tooltip: "Karakteri sağa çevir"
-    }
-  ]);
-
-  const toolbox = `
-    <xml xmlns="https://developers.google.com/blockly/xml">
-      <block type="program_start"></block>
-      <block type="repeat_times"></block>
-      <block type="move_forward"></block>
-      <block type="turn_left"></block>
-      <block type="turn_right"></block>
-    </xml>
-  `;
-
-  workspace = Blockly.inject('blocklyDiv', {
-    toolbox,
-    trashcan: true,
-    grid: { spacing: 20, length: 3, colour: "#cbd5e1", snap: true },
-    move: { scrollbars: true, drag: true, wheel: true }
-  });
-
-  const initialXml = `
-    <xml xmlns="https://developers.google.com/blockly/xml">
-      <block type="program_start" x="20" y="20"></block>
-    </xml>
-  `;
-  try {
-    const textToDomFn =
-      (Blockly.Xml && typeof Blockly.Xml.textToDom === "function" && Blockly.Xml.textToDom.bind(Blockly.Xml)) ||
-      (Blockly.utils?.xml && typeof Blockly.utils.xml.textToDom === "function" && Blockly.utils.xml.textToDom.bind(Blockly.utils.xml));
-    const domToWorkspaceFn =
-      (Blockly.Xml && typeof Blockly.Xml.domToWorkspace === "function" && Blockly.Xml.domToWorkspace.bind(Blockly.Xml)) ||
-      (Blockly.Xml && typeof Blockly.Xml.appendDomToWorkspace === "function" && Blockly.Xml.appendDomToWorkspace.bind(Blockly.Xml));
-
-    if (textToDomFn && domToWorkspaceFn) {
-      const xmlDom = textToDomFn(initialXml);
-      domToWorkspaceFn(xmlDom, workspace);
-    } else {
-      const startBlock = workspace.newBlock("program_start");
-      startBlock.initSvg?.();
-      startBlock.render?.();
-      startBlock.moveBy?.(20, 20);
-    }
-  } catch (e) {
+  // ---- ses (WebAudio, isteğe bağlı) ----
+  var audioCtx = null;
+  try { var sv = localStorage.getItem('bgr.sound'); if (sv === '0') S.sound = false; } catch (e) {}
+  function beep(freq, dur, type, vol, delay) {
+    if (!S.sound) return;
     try {
-      const startBlock = workspace.newBlock("program_start");
-      startBlock.initSvg?.();
-      startBlock.render?.();
-      startBlock.moveBy?.(20, 20);
-    } catch {}
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + (delay || 0);
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || .06, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    move: function () { beep(420, .08, 'triangle', .05); },
+    turn: function () { beep(560, .07, 'square', .035); },
+    crash: function () { beep(160, .25, 'sawtooth', .07); beep(110, .3, 'square', .05, .08); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { beep(f, .22, 'triangle', .07, i * .11); }); },
+    fail: function () { beep(300, .15, 'sine', .05); beep(220, .25, 'sine', .05, .14); },
+  };
+
+  // ------------------------------------------------------------------ çizim motoru
+  var canvas = $('gridCanvas');
+  var R = window.BlockRender.create(canvas);
+  var level = LEVELS[0];
+
+  // ------------------------------------------------------------------ Blockly
+  var ws = null, wsReady = false, loadingWs = false, saveTimer = null;
+
+  function defineBlocks() {
+    Blockly.defineBlocksWithJsonArray([
+      { type: 'program_start', message0: '▶ BAŞLA', nextStatement: null, style: 'hat_blocks', tooltip: 'Programın buradan başlar. Blokları altına bağla.' },
+      { type: 'move_forward', message0: '⬆ İleri git', previousStatement: null, nextStatement: null, style: 'motion_blocks', tooltip: 'Karakteri bir kare ileri götürür.' },
+      { type: 'turn_left', message0: '↺ Sola dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sola çevirir.' },
+      { type: 'turn_right', message0: '↻ Sağa dön', previousStatement: null, nextStatement: null, style: 'turn_blocks', tooltip: 'Karakteri 90° sağa çevirir.' },
+      {
+        type: 'repeat_times', message0: '🔁 Tekrarla %1 kez', args0: [{ type: 'field_number', name: 'TIMES', value: 2, min: 1, max: 50, precision: 1 }],
+        message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], previousStatement: null, nextStatement: null, style: 'loop_blocks',
+        tooltip: 'İçindeki blokları belirtilen sayıda tekrar eder.',
+      },
+      {
+        type: 'repeat_until_goal', message0: '🔁 Yıldıza ulaşana kadar tekrarla', message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }],
+        previousStatement: null, nextStatement: null, style: 'loop_blocks', tooltip: 'Yıldıza varınca durur.',
+      },
+      {
+        type: 'if_blocked', message0: '❓ Eğer %1 ise', args0: [{ type: 'field_dropdown', name: 'COND', options: [['önüm kapalı', 'blocked'], ['önüm açık', 'open']] }],
+        message1: '%1', args1: [{ type: 'input_statement', name: 'DO' }], message2: 'değilse %1', args2: [{ type: 'input_statement', name: 'ELSE' }],
+        previousStatement: null, nextStatement: null, style: 'logic_blocks', tooltip: 'Önündeki kare duvar/kenar mı diye bakar.',
+      },
+    ]);
   }
 
-  // JavaScript generators for custom blocks so Blockly produces runnable code
-  Blockly.JavaScript['program_start'] = function(block){
-    const body = Blockly.JavaScript.statementToCode(block, 'DO');
-    return body || '';
-  };
-  Blockly.JavaScript['move_forward'] = function(){
-    return '  await moveForward();\n';
-  };
-  Blockly.JavaScript['turn_left'] = function(){
-    return '  await turnLeft();\n';
-  };
-  Blockly.JavaScript['turn_right'] = function(){
-    return '  await turnRight();\n';
-  };
-
-  // When workspace changes, save the XML to the current level so blocks persist per-level
-  try{
-    workspace.addChangeListener(function(){
-      try{
-        if(!workspace) return;
-        const idx = state.levelIndex;
-        if(typeof idx !== 'number' || !levels[idx]) return;
-        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-        levels[idx].solutionXml = xml;
-        saveLevelsToStorage();
-      }catch(e){ /* ignore */ }
+  function makeTheme(dark) {
+    var comp = dark
+      ? { workspaceBackgroundColour: '#232650', toolboxBackgroundColour: '#1b1d3a', flyoutBackgroundColour: '#1b1d3a', flyoutOpacity: 1, scrollbarColour: '#4b4f94', insertionMarkerColour: '#a5b4fc', insertionMarkerOpacity: .35, cursorColour: '#a5b4fc' }
+      : { workspaceBackgroundColour: '#f6f7ff', toolboxBackgroundColour: '#eef0ff', flyoutBackgroundColour: '#eef0ff', flyoutOpacity: 1, scrollbarColour: '#c7cbf2', insertionMarkerColour: '#4f46e5', insertionMarkerOpacity: .3, cursorColour: '#4f46e5' };
+    return Blockly.Theme.defineTheme(dark ? 'bgrDark' : 'bgrLight', {
+      name: dark ? 'bgrDark' : 'bgrLight', base: Blockly.Themes.Classic,
+      blockStyles: {
+        hat_blocks: { colourPrimary: '#22c55e', colourSecondary: '#4ade80', colourTertiary: '#15803d', hat: 'cap' },
+        motion_blocks: { colourPrimary: '#3b82f6', colourSecondary: '#60a5fa', colourTertiary: '#1d4ed8' },
+        turn_blocks: { colourPrimary: '#a855f7', colourSecondary: '#c084fc', colourTertiary: '#7e22ce' },
+        loop_blocks: { colourPrimary: '#f59e0b', colourSecondary: '#fbbf24', colourTertiary: '#b45309' },
+        logic_blocks: { colourPrimary: '#ec4899', colourSecondary: '#f472b6', colourTertiary: '#be185d' },
+      },
+      componentStyles: comp,
+      fontStyle: { family: 'Nunito, "Segoe UI", system-ui, sans-serif', weight: '800', size: 12 },
+      startHats: true,
     });
-  }catch(e){ /* ignore */ }
-  return true;
-}
-function generateCommands(){
-  // Returns array of {cmd: 'forward'|'left'|'right', blockId}
-  function collectFromBlock(block){
-    const out = [];
-    let b = block;
-    while(b){
-      const t = b.type;
-      if(t === 'move_forward') out.push({cmd:'forward', blockId:b.id});
-      else if(t === 'turn_left') out.push({cmd:'left', blockId:b.id});
-      else if(t === 'turn_right') out.push({cmd:'right', blockId:b.id});
-      else if(t === 'program_start'){
-        const inner = b.getInputTargetBlock && b.getInputTargetBlock('DO');
-        if(inner){
-          const innerCmds = collectFromBlock(inner);
-          out.push(...innerCmds);
-        }
+  }
+
+  var BLOCK_NAME = { forward: 'move_forward', left: 'turn_left', right: 'turn_right', repeat: 'repeat_times', until: 'repeat_until_goal', if: 'if_blocked' };
+  function toolboxFor(lv) {
+    var list = (lv.blocks && lv.blocks.length ? lv.blocks : ['forward', 'left', 'right']).map(function (k) { return { kind: 'block', type: BLOCK_NAME[k] }; });
+    return { kind: 'flyoutToolbox', contents: list };
+  }
+
+  function startBlock() {
+    if (!ws) return null;
+    var b = ws.getTopBlocks(false).find(function (x) { return x.type === 'program_start'; });
+    return b || null;
+  }
+  function ensureStartBlock() {
+    var b = startBlock();
+    if (!b) {
+      b = ws.newBlock('program_start'); b.initSvg(); b.render(); b.moveBy(36, 24);
+    }
+    b.setDeletable(false);
+    return b;
+  }
+
+  function chain(b) {
+    var out = [];
+    while (b) {
+      if (b.isEnabled && !b.isEnabled()) { b = b.getNextBlock(); continue; }
+      var n = null, id = b.id;
+      switch (b.type) {
+        case 'move_forward': n = { t: 'forward', id: id }; break;
+        case 'turn_left': n = { t: 'left', id: id }; break;
+        case 'turn_right': n = { t: 'right', id: id }; break;
+        case 'repeat_times': n = { t: 'repeat', n: Math.max(1, parseInt(b.getFieldValue('TIMES'), 10) || 1), body: chain(b.getInputTargetBlock('DO')), id: id }; break;
+        case 'repeat_until_goal': n = { t: 'until', body: chain(b.getInputTargetBlock('DO')), id: id }; break;
+        case 'if_blocked': n = { t: 'if', cond: b.getFieldValue('COND'), then: chain(b.getInputTargetBlock('DO')), else: chain(b.getInputTargetBlock('ELSE')), id: id }; break;
       }
-      else if(t === 'repeat_times'){
-        let times = parseInt(b.getFieldValue && b.getFieldValue('TIMES'), 10);
-        if(!Number.isFinite(times)) times = 0;
-        times = Math.max(0, times);
-        const inner = b.getInputTargetBlock && b.getInputTargetBlock('DO');
-        if(inner){
-          const innerCmds = collectFromBlock(inner);
-          for(let i=0;i<times;i++) out.push(...innerCmds.map(c=>({cmd:c.cmd, blockId:b.id})));
-        }
-      }
-      else if(t === 'controls_repeat_ext' || t === 'controls_repeat'){
-        let times = 0;
-        try{
-          if(typeof b.getFieldValue === 'function'){
-            const fv = b.getFieldValue('TIMES');
-            if(fv !== null && fv !== undefined && fv !== '') times = parseInt(fv) || 0;
-          }
-        }catch(e){ /* ignore */ }
-        if(!times){
-          const timesBlock = b.getInputTargetBlock && b.getInputTargetBlock('TIMES');
-          if(timesBlock && typeof timesBlock.getFieldValue === 'function'){
-            const num = timesBlock.getFieldValue('NUM');
-            if(num !== null && num !== undefined && num !== '') times = parseInt(num) || 0;
-          }
-        }
-        const inner = b.getInputTargetBlock && b.getInputTargetBlock('DO');
-        if(inner){
-          const innerCmds = collectFromBlock(inner);
-          for(let i=0;i<times;i++) out.push(...innerCmds.map(c=>({cmd:c.cmd, blockId:b.id})));
-        }
-      }
-      b = b.getNextBlock && b.getNextBlock();
+      if (n) out.push(n);
+      b = b.getNextBlock();
     }
     return out;
   }
+  function buildAst() { var s = startBlock(); return s ? chain(s.getNextBlock()) : []; }
 
-  const cmds = [];
-  const top = workspace.getTopBlocks(true);
-  for(const t of top){
-    cmds.push(...collectFromBlock(t));
+  function orphanCount() {
+    if (!ws) return 0;
+    return ws.getTopBlocks(false).filter(function (b) { return b.type !== 'program_start'; }).length;
   }
-  return cmds;
-}
 
-function loadLevel(idx){
-  if(!isStaffMode() && grantDenied){
-    warnLockedLevel('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
-    return;
+  function blockLimit() { return Number.isFinite(Number(level.limit)) ? Number(level.limit) : null; }
+  function updateCounter() {
+    var el = $('blockCounter'); if (!el || !ws) return;
+    var used = Engine.countBlocks(buildAst()), lim = blockLimit();
+    S.used = used;
+    if (lim) { el.textContent = '🧱 ' + used + ' / ' + lim + ' blok'; el.className = 'block-counter' + (used > lim ? ' over' : ''); }
+    else { el.textContent = used ? '🧱 ' + used + ' blok' : ''; el.className = 'block-counter'; }
+    var orphans = orphanCount();
+    var help = $('wsHelp');
+    if (help) help.textContent = orphans ? '⚠ ' + orphans + ' blok BAŞLA\'ya bağlı değil' : 'Blokları BAŞLA bloğunun altına bağla';
   }
-  if(!isStaffMode() && assignmentRangeLocked){
-    warnLockedLevel('Ödev aralığı tamamlandı. Uygulama kapanıyor.');
-    return;
+
+  function wsSerialize() { try { return Blockly.serialization.workspaces.save(ws); } catch (e) { return null; } }
+  function scheduleSaveWs() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      var s = wsSerialize(); if (!s) return;
+      prog.ws[level.id] = s; prog.last = S.idx; saveProg();
+    }, 350);
   }
-  if(!isStaffMode() && levelRange){
-    const startIdx = Math.max(0, Number(levelRange.startIdx || 0));
-    const endIdx = Math.min(levels.length - 1, Math.max(startIdx, Number(levelRange.endIdx ?? (levels.length - 1))));
-    if(idx < startIdx || idx > endIdx){
-      warnLockedLevel('Bu seviye bu ödev aralığında değil.');
-      return;
-    }
-    const firstIncomplete = getFirstIncompleteRangeIndex();
-    if(typeof firstIncomplete === 'number' && idx > firstIncomplete){
-      warnLockedLevel('İlk bölümler tamamlanmadan sonraki bölümlere geçilemez.');
-      return;
-    }
-  }
-  if(levelRange){
-    const startIdx = Math.max(0, Number(levelRange.startIdx || 0));
-    const endIdx = Math.min(levels.length - 1, Math.max(startIdx, Number(levelRange.endIdx ?? (levels.length - 1))));
-    if(idx < startIdx) idx = startIdx;
-    if(idx > endIdx) idx = endIdx;
-  }
-  // Before switching, persist any current workspace XML into the current level
-  try{
-    if(typeof state.levelIndex === 'number' && levels[state.levelIndex] && window.Blockly && workspace){
-      const prevXml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-      levels[state.levelIndex].solutionXml = prevXml;
-      saveLevelsToStorage();
-    }
-  }catch(e){ /* ignore */ }
-
-  state.levelIndex = idx;
-  const lvl = levels[idx];
-  levelAttemptStart = Date.now();
-  state.x = lvl.start.x; state.y = lvl.start.y; state.dir = lvl.start.dir;
-  state.commands = []; state.ip = 0; state.running = false;
-  draw();
-  // Restore saved workspace blocks for this level if available
-  try{
-    if(window.Blockly && workspace){
-      workspace.clear();
-      if(lvl && lvl.solutionXml){
-        try{
-          const xmlDom = Blockly.Xml.textToDom(lvl.solutionXml);
-          Blockly.Xml.domToWorkspace(xmlDom, workspace);
-        }catch(e){ /* invalid xml? ignore */ }
-      }
-      if(workspace.getAllBlocks(false).length === 0){
-        const starter = workspace.newBlock('program_start');
-        starter.initSvg();
-        starter.render();
-        starter.moveBy(40, 28);
-      }
-    }
-  }catch(e){ /* ignore */ }
-  // persist currently selected level index for resume
-  try{ saveLevelsToStorage(); }catch(e){ /* ignore */ }
-}
-
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const gw = getCurrentLevelGridWidth();
-  const gh = getCurrentLevelGridHeight();
-  const cellPx = getCellPx();
-  // grid
-  ctx.strokeStyle='#e2e8f0';
-  for(let i=0;i<=gw;i++){
-    ctx.beginPath(); ctx.moveTo(i*cellPx,0); ctx.lineTo(i*cellPx,gh*cellPx); ctx.stroke();
-  }
-  for(let j=0;j<=gh;j++){
-    ctx.beginPath(); ctx.moveTo(0,j*cellPx); ctx.lineTo(gw*cellPx,j*cellPx); ctx.stroke();
-  }
-  const lvl = levels[state.levelIndex];
-  // obstacles
-  ctx.fillStyle='#93a3b8';
-  for(const o of lvl.obstacles){
-    ctx.fillRect(o.x*cellPx+4, o.y*cellPx+4, cellPx-8, cellPx-8);
-  }
-  // star
-  ctx.fillStyle='#ffcf3d';
-  const s = lvl.star;
-  ctx.beginPath();
-  ctx.arc(s.x*cellPx + cellPx/2, s.y*cellPx + cellPx/2, cellPx/4, 0, Math.PI*2);
-  ctx.fill();
-  // character
-  const cx = state.x*cellPx + cellPx/2;
-  const cy = state.y*cellPx + cellPx/2;
-  ctx.save();
-  ctx.translate(cx,cy);
-  ctx.rotate(state.dir * Math.PI/2);
-  ctx.fillStyle = '#1e88e5';
-  ctx.beginPath(); ctx.moveTo(-12, -10); ctx.lineTo(14,0); ctx.lineTo(-12,10); ctx.closePath(); ctx.fill();
-  ctx.restore();
-
-  document.getElementById('posX').textContent = state.x;
-  document.getElementById('posY').textContent = state.y;
-}
-
-function stepOnce(){
-  if(state.ip >= state.commands.length) return false;
-  const c = state.commands[state.ip++];
-  // highlight block
-  try{ workspace.highlightBlock(c.blockId); }catch(e){}
-  if(c.cmd === 'left'){
-    state.dir = (state.dir + 3) % 4;
-    draw();
-    setTimeout(()=>workspace.highlightBlock(null), 150);
-    checkStar();
-    return true;
-  }
-  else if(c.cmd === 'right'){
-    state.dir = (state.dir + 1) % 4;
-    draw();
-    setTimeout(()=>workspace.highlightBlock(null), 150);
-    checkStar();
-    return true;
-  }
-  else if(c.cmd === 'forward'){
-    const gw = getCurrentLevelGridWidth();
-    const gh = getCurrentLevelGridHeight();
-    let nx = state.x, ny = state.y;
-    if(state.dir===0) nx++;
-    if(state.dir===1) ny++;
-    if(state.dir===2) nx--;
-    if(state.dir===3) ny--;
-    // bounds
-    if(nx<0||nx>=gw||ny<0||ny>=gh) { state.running=false; setStatus('Sınır!'); flashCanvas('#ff6b6b'); workspace.highlightBlock(null); return false; }
-    // collision
-    const lvl = levels[state.levelIndex];
-    for(const o of lvl.obstacles) if(o.x===nx && o.y===ny){ state.running=false; setStatus('Engel!'); flashCanvas('#ff6b6b'); workspace.highlightBlock(null); return false; }
-
-    // animate move
-    animateMove({x:state.x,y:state.y}, {x:nx,y:ny}, 250, ()=>{
-      state.x = nx; state.y = ny; draw(); workspace.highlightBlock(null); checkStar();
-    });
-    return true;
-  }
-}
-
-function animateMove(from, to, ms, cb){
-  const start = performance.now();
-  function frame(now){
-    const t = Math.min(1, (now-start)/ms);
-    const gw = getCurrentLevelGridWidth();
-    const gh = getCurrentLevelGridHeight();
-    const cellPx = getCellPx();
-    // clear and draw grid and obstacles and star
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    // grid
-    ctx.strokeStyle='#e2e8f0';
-    for(let i=0;i<=gw;i++){
-      ctx.beginPath(); ctx.moveTo(i*cellPx,0); ctx.lineTo(i*cellPx,gh*cellPx); ctx.stroke();
-    }
-    for(let j=0;j<=gh;j++){
-      ctx.beginPath(); ctx.moveTo(0,j*cellPx); ctx.lineTo(gw*cellPx,j*cellPx); ctx.stroke();
-    }
-    const lvl = levels[state.levelIndex];
-    // obstacles
-    ctx.fillStyle='#93a3b8';
-    for(const o of lvl.obstacles){ ctx.fillRect(o.x*cellPx+4, o.y*cellPx+4, cellPx-8, cellPx-8); }
-    // star
-    ctx.fillStyle='#ffcf3d';
-    const s = lvl.star; ctx.beginPath(); ctx.arc(s.x*cellPx + cellPx/2, s.y*cellPx + cellPx/2, cellPx/4, 0, Math.PI*2); ctx.fill();
-
-    // draw character interpolated
-    const cx = (from.x + (to.x-from.x)*t) * cellPx + cellPx/2;
-    const cy = (from.y + (to.y-from.y)*t) * cellPx + cellPx/2;
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(state.dir * Math.PI/2);
-    ctx.fillStyle = '#1e88e5'; ctx.beginPath(); ctx.moveTo(-12, -10); ctx.lineTo(14,0); ctx.lineTo(-12,10); ctx.closePath(); ctx.fill(); ctx.restore();
-    document.getElementById('posX').textContent = Math.round(from.x + (to.x-from.x)*t);
-    document.getElementById('posY').textContent = Math.round(from.y + (to.y-from.y)*t);
-
-    if(t<1) requestAnimationFrame(frame);
-    else if(cb) cb();
-  }
-  requestAnimationFrame(frame);
-}
-
-function flashCanvas(color){
-  const orig = canvas.style.boxShadow;
-  canvas.style.boxShadow = `0 0 0 4px ${color}66`;
-  setTimeout(()=> canvas.style.boxShadow = orig, 300);
-}
-
-function checkStar(){
-  const lvl = levels[state.levelIndex];
-  if(state.x === lvl.star.x && state.y === lvl.star.y){
-    state.running=false; setStatus('Yıldız bulundu! Bölüm tamamlandı.');
-    try{
-      if(assignmentCompletedLevelIds instanceof Set){
-        assignmentCompletedLevelIds.add(Number(lvl.id));
-      }
-    }catch(e){/* ignore */}
-    // mark this level completed and persist
-    try{ 
-      levels[state.levelIndex].completed = true; 
-      saveLevelsToStorage(); 
-      // compute simple XP and completion percent and notify parent
-      try{
-        // determine stars and XP (1 star per level here)
-        const stars = 1;
-        const xpEarned = normalizeLevelXp(lvl?.xp);
-        const completedCount = levels.filter(l=>l.completed).length;
-        const percent = Math.round((completedCount / Math.max(1, levels.length)) * 100);
-        const durationMs = levelAttemptStart ? (Date.now() - levelAttemptStart) : null;
-        // mark stars and completion time on the level object
-        levels[state.levelIndex].stars = stars;
-        levels[state.levelIndex].completedAt = Date.now();
-        if(window.parent && window.parent !== window){
-          window.parent.postMessage({
-            type: 'LEVEL_COMPLETED',
-            levelId: lvl.id,
-            xp: xpEarned,
-            percent: percent,
-            levels: levels,
-            stars: stars,
-            duration: durationMs,
-            currentLevelIndex: state.levelIndex,
-            starCollected: true
-          }, '*');
-        }
-      }catch(err){/* ignore */}
-    }catch(e){}
-    populateLevels();
-    unlockNext();
-    const isAssignmentRangeEnd = (() => {
-      if (isStaffMode()) return false;
-      const activeRange = levelRange || getQueryAssignmentRange();
-      if(!activeRange) return false;
-      const endIdx = Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1))));
-      return state.levelIndex >= endIdx;
-    })();
-    if (isAssignmentRangeEnd) {
-      assignmentRangeLocked = true;
-      postAssignmentCompleted();
-      return;
-    }
-    if (!isAdminMode()) {
-      if (levelRange || getQueryAssignmentRange()) {
-        goToNextLevel();
-        return;
-      }
-    }
-    // only teacher flow keeps level-complete modal
-    state.commands = state.commands.length ? state.commands : generateCommands();
-    showLevelModal();
-  }
-}
-
-function postAssignmentCompleted(){
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: "ASSIGNMENT_RANGE_COMPLETED",
-        source: "block-runner",
-        currentLevelIndex: state.levelIndex,
-        levels,
-        xp: xpTotalEarned(),
-        elapsedSeconds: levelAttemptStart ? Math.max(0, Math.round((Date.now() - levelAttemptStart) / 1000)) : 0,
-        completedLevelIds: assignmentCompletedLevelIds instanceof Set ? Array.from(assignmentCompletedLevelIds) : []
-      }, "*");
-    }
-  } catch (e) {}
-}
-
-function showLevelModal(){
-  try{ workspace.highlightBlock(null); }catch(e){}
-  const modal = document.getElementById('levelModal');
-  const pre = document.getElementById('modalCodePre');
-  const title = document.getElementById('modalTitle');
-  const sub = document.getElementById('modalSubtitle');
-  const code = generateJSFromCommands(state.commands);
-  // Friendly feedback
-  const cmdCount = state.commands? state.commands.length : 0;
-  const activeRange = levelRange || getQueryAssignmentRange();
-  const rangeStartIdx = activeRange ? Math.max(0, Number(activeRange.startIdx || 0)) : 0;
-  const rangeEndIdx = activeRange ? Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1)))) : (levels.length - 1);
-  const isRangeEnd = (!!activeRange && state.levelIndex >= rangeEndIdx) || (!isStaffMode() && assignmentRangeLocked);
-  const currentLevelXp = normalizeLevelXp(levels[state.levelIndex]?.xp);
-  const xpTotal = levels
-    .slice(rangeStartIdx, rangeEndIdx + 1)
-    .reduce((sum, lv) => sum + (lv?.completed ? normalizeLevelXp(lv?.xp) : 0), 0);
-  title.textContent = 'Harika! Seviye Tamamlandı ??';
-  sub.textContent = isRangeEnd
-    ? `Toplam adım: ${cmdCount}. Toplam +${xpTotal} XP ile ödevdeki tüm seviyeler tamamlandı.`
-    : `Toplam adım: ${cmdCount}. Bu seviyede +${currentLevelXp} XP kazandın, bir sonraki seviyeye hazırsın.`;
-  pre.textContent = generateExecutableJS();
-  const nextBtn = document.getElementById('modalNextBtn');
-  if (nextBtn) {
-    nextBtn.disabled = isRangeEnd;
-    nextBtn.style.opacity = isRangeEnd ? "0.5" : "1";
-    nextBtn.style.pointerEvents = isRangeEnd ? "none" : "auto";
-  }
-  // trigger confetti
-  try{ startConfetti(); }catch(e){}
-  modal.classList.remove('hidden');
-}
-
-function xpTotalEarned(){
-  const activeRange = levelRange || getQueryAssignmentRange();
-  const rangeStartIdx = activeRange ? Math.max(0, Number(activeRange.startIdx || 0)) : 0;
-  const rangeEndIdx = activeRange ? Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1)))) : (levels.length - 1);
-  return levels
-    .slice(rangeStartIdx, rangeEndIdx + 1)
-    .reduce((sum, lv) => sum + (lv?.completed ? normalizeLevelXp(lv?.xp) : 0), 0);
-}
-
-// Confetti animation (simple canvas based)
-let _confettiRAF = null;
-function startConfetti(){
-  const c = document.getElementById('confettiCanvas');
-  if(!c) return;
-  const ctx = c.getContext('2d');
-  const W = c.width = c.clientWidth || 800;
-  const H = c.height = 140;
-  const pieces = [];
-  const colors = ['#ff595e','#ffca3a','#8ac926','#1982c4','#6a4c93'];
-  for(let i=0;i<80;i++){
-    pieces.push({x:Math.random()*W, y:Math.random()*-H, r:Math.random()*6+4, vx:(Math.random()-0.5)*2, vy:Math.random()*3+2, color:colors[i%colors.length], rot:Math.random()*360});
-  }
-  const start = performance.now();
-  function frame(t){
-    const dt = (t-start)/1000;
-    ctx.clearRect(0,0,W,H);
-    for(const p of pieces){
-      p.x += p.vx; p.y += p.vy; p.rot += 6;
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
-      ctx.fillStyle = p.color; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.6);
-      ctx.restore();
-      if(p.y>H+20){ p.y = -10; p.x = Math.random()*W; }
-    }
-    if(t-start < 1600) _confettiRAF = requestAnimationFrame(frame);
-    else { ctx.clearRect(0,0,W,H); cancelAnimationFrame(_confettiRAF); _confettiRAF = null; }
-  }
-  if(_confettiRAF) cancelAnimationFrame(_confettiRAF);
-  _confettiRAF = requestAnimationFrame(frame);
-}
-
-function hideLevelModal(){
-  const modal = document.getElementById('levelModal');
-  modal.classList.add('hidden');
-}
-
-function getNormalizedUnlocked(){
-  let raw = [];
-  try{
-    const parsed = JSON.parse(localStorage.getItem('unlocked') || '[]');
-    raw = Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    raw = [];
-  }
-  const set = new Set();
-  for(const v of raw){
-    const n = Number(v);
-    if(!Number.isFinite(n)) continue;
-    if(n >= 0 && n < levels.length){
-      set.add(Math.floor(n));
-      continue;
-    }
-    const idxById = levels.findIndex(l => Number(l?.id) === Math.floor(n));
-    if(idxById >= 0) set.add(idxById);
-  }
-  if(levels.length > 0) set.add(0);
-  const normalized = Array.from(set).sort((a,b)=>a-b);
-  localStorage.setItem('unlocked', JSON.stringify(normalized));
-  return normalized;
-}
-
-function unlockNext(){
-  if (levelRange && !isStaffMode()) {
-    const endIdx = Math.min(levels.length - 1, Math.max(0, Number(levelRange.endIdx || (levels.length - 1))));
-    if (state.levelIndex >= endIdx) return;
-  }
-  const unlocked = getNormalizedUnlocked();
-  if(!unlocked.includes(state.levelIndex+1) && levels[state.levelIndex+1]){
-    unlocked.push(state.levelIndex+1);
-    localStorage.setItem('unlocked', JSON.stringify(Array.from(new Set(unlocked)).sort((a,b)=>a-b)));
-    populateLevels();
-  }
-}
-
-function isCurrentLevelUnlocked(){
-  if(isStaffMode()) return true;
-  if(levelRange){
-    const i = Number(state.levelIndex || 0);
-    const s = Number(levelRange.startIdx || 0);
-    const e = Number(levelRange.endIdx || 0);
-    if(i >= s && i <= e) return true;
-  }
-  const unlocked = getNormalizedUnlocked();
-  return unlocked.includes(Number(state.levelIndex));
-}
-
-function isLevelCompletedForAssignment(level){
-  if(!level) return false;
-  if(assignmentCompletedLevelIds instanceof Set){
-    return assignmentCompletedLevelIds.has(Number(level.id));
-  }
-  return !!level.completed;
-}
-
-function getFirstIncompleteRangeIndex(){
-  if(!levelRange) return null;
-  const startIdx = Math.max(0, Number(levelRange.startIdx || 0));
-  const endIdx = Math.min(levels.length - 1, Math.max(startIdx, Number(levelRange.endIdx ?? (levels.length - 1))));
-  for(let i=startIdx; i<=endIdx; i++){
-    if(!isLevelCompletedForAssignment(levels[i])) return i;
-  }
-  return endIdx;
-}
-
-function warnLockedLevel(customMessage){
-  const msg = customMessage || 'Bu seviye hen?z kilitli.';
-  setStatus(msg);
-  try{
-    if(window.parent && window.parent !== window){
-      window.parent.postMessage({ type: 'LOCKED_LEVEL_WARNING', message: msg }, '*');
-    }
-  }catch(e){/* ignore */}
-}
-
-function normalizeGroupOrders(groupName){
-  const same = levels
-    .map((l, idx) => ({ l, idx }))
-    .filter(x => String(x.l?.group || 'Genel') === String(groupName || 'Genel'))
-    .sort((a, b) => Number(a.l?.order || 0) - Number(b.l?.order || 0));
-  same.forEach((x, i) => { x.l.order = i + 1; });
-}
-
-function moveCurrentLevel(direction){
-  const current = levels[state.levelIndex];
-  if(!current) return;
-  const groupName = current.group || 'Genel';
-  const same = levels
-    .map((l, idx) => ({ l, idx }))
-    .filter(x => String(x.l?.group || 'Genel') === String(groupName))
-    .sort((a, b) => Number(a.l?.order || 0) - Number(b.l?.order || 0));
-  const pos = same.findIndex(x => x.idx === state.levelIndex);
-  if(pos < 0) return;
-  const targetPos = direction === 'up' ? pos - 1 : pos + 1;
-  if(targetPos < 0 || targetPos >= same.length){
-    setStatus(direction === 'up' ? 'Daha yukarı taşınamaz' : 'Daha aşağı taşınamaz');
-    return;
-  }
-  const a = same[pos].l;
-  const b = same[targetPos].l;
-  const tmp = Number(a.order || pos + 1);
-  a.order = Number(b.order || targetPos + 1);
-  b.order = tmp;
-  normalizeGroupOrders(groupName);
-  sortLevelsInPlace();
-  const keepId = current.id;
-  saveLevelsToStorage();
-  populateLevels();
-  const nextIndex = levels.findIndex(l => Number(l?.id) === Number(keepId));
-  loadLevel(nextIndex >= 0 ? nextIndex : 0);
-  setStatus(direction === 'up' ? 'Seviye yukarı taşındı' : 'Seviye aşağı taşındı');
-}
-
-function moveCurrentLevelUp(){ moveCurrentLevel('up'); }
-function moveCurrentLevelDown(){ moveCurrentLevel('down'); }
-
-
-function goToNextLevel(){
-  const activeRange = levelRange || getQueryAssignmentRange();
-  if (!isStaffMode() && assignmentRangeLocked) {
-    postAssignmentCompleted();
-    setStatus('Ödev aralığı tamamlandı');
-    return;
-  }
-  if (activeRange) {
-    const endIdx = Math.min(levels.length - 1, Math.max(0, Number(activeRange.endIdx || (levels.length - 1))));
-    if (state.levelIndex >= endIdx) {
-      assignmentRangeLocked = true;
-      postAssignmentCompleted();
-      setStatus('Ödev aralığı tamamlandı');
-      return;
-    }
-  }
-  const next = state.levelIndex + 1;
-  if(!levels[next]){ setStatus('Tüm seviyeler tamamlandı'); return; }
-  setStatus('Seviye tamamlandı! Sonraki seviyeye geçiliyor...');
-  setTimeout(()=>{
-    try{ if(window.workspace) workspace.clear(); else workspace.clear(); }catch(e){}
-    loadLevel(next);
-    populateLevels();
-    const cp_next = document.getElementById('commandsPre'); if(cp_next) cp_next.textContent = '[]';
-    setStatus('Seviye ' + (next+1) + ' yüklendi');
-  }, 700);
-}
-
-function setStatus(t){ document.getElementById('status').textContent = t; }
-
-function runProgram(){
-  if(state.running) return;
-  if(!levelAttemptStart) levelAttemptStart = Date.now();
-  if(!isCurrentLevelUnlocked()){
-    warnLockedLevel();
-    return;
-  }
-  // reset character to level start before running
-  const lvl = levels[state.levelIndex];
-  state.x = lvl.start.x; state.y = lvl.start.y; state.dir = lvl.start.dir;
-  draw();
-  try{ workspace.highlightBlock(null); }catch(e){}
-  state.commands = generateCommands();
-  // show executable JS generated from Blockly if available
-  const cp_run = document.getElementById('commandsPre'); if(cp_run) cp_run.textContent = generateExecutableJS();
-  state.ip = 0; state.running = true; setStatus('Çalışıyor...');
-  function tick(){
-    if(!state.running) return;
-    const ok = stepOnce();
-    if(!ok){ state.running=false; return; }
-    if(state.ip >= state.commands.length){ state.running=false; setStatus('Bitti'); return; }
-    setTimeout(tick, 400);
-  }
-  setTimeout(tick, 300);
-}
-
-function stepProgram(){
-  if(state.running) return;
-  if(!isCurrentLevelUnlocked()){
-    warnLockedLevel();
-    return;
-  }
-  if(state.commands.length===0) state.commands = generateCommands();
-  const cp_step = document.getElementById('commandsPre'); if(cp_step) cp_step.textContent = generateJSFromCommands(state.commands);
-  stepOnce();
-}
-
-function generateJSFromCommands(cmds){
-  if(!cmds || cmds.length===0) return '// Program boş';
-  // Fallback: produce readable pseudo-JS from commands
-  const lines = [];
-  lines.push('async function program(){');
-  for(const c of cmds){
-    if(c.cmd==='forward') lines.push('  await moveForward();');
-    else if(c.cmd==='left') lines.push('  await turnLeft();');
-    else if(c.cmd==='right') lines.push('  await turnRight();');
-  }
-  lines.push('}');
-  lines.push('');
-  lines.push('// Örnek hareket fonksiyonları:');
-  lines.push('async function moveForward(){ /* karakteri bir hücre öne taşı */ }');
-  lines.push('async function turnLeft(){ /* 90° sola dön */ }');
-  lines.push('async function turnRight(){ /* 90° sağa dön */ }');
-  return lines.join('\n');
-}
-
-function generateExecutableJS(){
-  // If Blockly is available, produce real JS from workspace
-  try{
-    if(window.Blockly && workspace){
-      const body = Blockly.JavaScript.workspaceToCode(workspace);
-      const wrapper = [];
-      wrapper.push('async function program(){');
-      // ensure indentation of body
-      const bodyLines = body.split('\n').map(l=> l.length? '  '+l : '');
-      wrapper.push(...bodyLines);
-      wrapper.push('}');
-      wrapper.push('');
-      wrapper.push('// Yardımcı hareket fonksiyonları (örnek):');
-      wrapper.push('async function moveForward(){ /* karakter bir hücre ilerlesin */ }');
-      wrapper.push('async function turnLeft(){ /* sola dön */ }');
-      wrapper.push('async function turnRight(){ /* sağa dön */ }');
-      return wrapper.join('\n');
-    }
-  }catch(e){/* ignore */}
-  return generateJSFromCommands(state.commands);
-}
-
-function populateLevels(){
-  const sel = document.getElementById('levelSelect'); sel.innerHTML='';
-  const unlocked = getNormalizedUnlocked();
-  // group levels by their group property
-  const groups = {};
-  for(const l of levels){ const g = l.group || 'Genel'; if(!groups[g]) groups[g] = []; groups[g].push(l); }
-  // order groups using groupOrder; fallback to alphabetical
-  const orderedGroupNames = Object.keys(groups).sort((a,b)=>{
-    const ia = groupOrder.indexOf(a); const ib = groupOrder.indexOf(b);
-    if(ia >=0 && ib >=0) return ia-ib;
-    if(ia >=0) return -1; if(ib >=0) return 1;
-    return a.localeCompare(b);
-  });
-  // build optgroups
-  for(const gName of orderedGroupNames){
-    const optg = document.createElement('optgroup'); optg.label = gName;
-    for(const l of groups[gName]){
-      const opt = document.createElement('option');
-      // use index within flat levels array as value
-      const idx = levels.indexOf(l);
-      const inRange = !levelRange || (idx >= Number(levelRange.startIdx || 0) && idx <= Number(levelRange.endIdx || 0));
-      if (!isStaffMode() && levelRange && !inRange) continue;
-      const firstIncomplete = (!isStaffMode() && levelRange) ? getFirstIncompleteRangeIndex() : null;
-      const lockedBySequence = (!isStaffMode()) && levelRange && typeof firstIncomplete === 'number' ? idx > firstIncomplete : false;
-      opt.value = idx;
-      if(isLevelCompletedForAssignment(l)){ opt.textContent = '[Tamam] ' + l.name; opt.style.color = '#16a34a'; }
-      else opt.textContent = (!isStaffMode() && (lockedBySequence || (!unlocked.includes(idx) && !levelRange)) ? '[Kilitli] ' : '') + l.name;
-      if(!isStaffMode()){
-        if(!inRange) opt.disabled = true;
-        else if(!unlocked.includes(idx) && !levelRange) opt.disabled = true;
-      }
-      optg.appendChild(opt);
-    }
-    if (optg.children.length > 0) sel.appendChild(optg);
-  }
-  sel.value = state.levelIndex;
-}
-
-function initUI(){
-  document.getElementById('runBtn').addEventListener('click', runProgram);
-  document.getElementById('stepBtn').addEventListener('click', stepProgram);
-  document.getElementById('resetBtn').addEventListener('click', ()=> loadLevel(state.levelIndex));
-  document.getElementById('levelSelect').addEventListener('change', (e)=>{ loadLevel(parseInt(e.target.value)); });
-  const levelMoveUpBtn = document.getElementById('levelMoveUpBtn');
-  const levelMoveDownBtn = document.getElementById('levelMoveDownBtn');
-  if(levelMoveUpBtn) levelMoveUpBtn.addEventListener('click', ()=>{ if(isAdminMode()) moveCurrentLevelUp(); });
-  if(levelMoveDownBtn) levelMoveDownBtn.addEventListener('click', ()=>{ if(isAdminMode()) moveCurrentLevelDown(); });
-
-  // Side menu toggle and Add Level
-  const menuToggle = document.getElementById('menuToggle');
-  const sideMenu = document.getElementById('sideMenu');
-  const sideClose = document.getElementById('sideClose');
-  const addLevelBtn = document.getElementById('addLevelBtn');
-  const deleteLevelBtn = document.getElementById('deleteLevelBtn');
-  // Side drawer is deprecated. Keep closed and hidden.
-  if(menuToggle) menuToggle.style.display = isAdminMode() ? "inline-flex" : "none";
-  if(sideMenu){ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); }
-  if(menuToggle){ menuToggle.addEventListener('click', ()=>{ if(!isAdminMode()) return; if(!sideMenu) return; const hidden = sideMenu.classList.contains('hidden'); if(hidden){ sideMenu.classList.remove('hidden'); sideMenu.setAttribute('aria-hidden','false'); sideMenu.style.display = 'flex'; sideMenu.style.visibility = 'visible'; sideMenu.style.transform = 'translateX(0)'; sideMenu.style.pointerEvents = 'auto'; sideMenu.style.zIndex = '9999'; } else { sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); sideMenu.style.transform = 'translateX(-110%)'; } }); }
-  if(sideClose){ sideClose.addEventListener('click', ()=>{ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); sideMenu.style.transform = 'translateX(-110%)'; }); }
-  if(addLevelBtn){ addLevelBtn.addEventListener('click', ()=>{ openLevelDesigner(); const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }); }
-  if(deleteLevelBtn){ deleteLevelBtn.addEventListener('click', ()=>{ openDeleteLevelModal(); const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }); }
-  // Close side menu when any menu button is clicked
-  try{
-    sideMenu.addEventListener('click', (e)=>{
-      const btn = e.target.closest && e.target.closest('.menu-btn');
-      if(btn){ sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); }
-    });
-  }catch(e){/* ignore if sideMenu missing */}
-
-  // Student mode cannot access "Seviye Ekle" menu actions.
-  if (!isAdminMode()) {
+  function loadWorkspaceFor(lv) {
+    loadingWs = true;
     try {
-      if (menuToggle) menuToggle.style.display = "none";
-      if (sideMenu) {
-        sideMenu.classList.add("hidden");
-        sideMenu.setAttribute("aria-hidden", "true");
-      }
-      if (addLevelBtn) addLevelBtn.style.display = "none";
-      if (deleteLevelBtn) deleteLevelBtn.style.display = "none";
-      if (levelMoveUpBtn) levelMoveUpBtn.style.display = "none";
-      if (levelMoveDownBtn) levelMoveDownBtn.style.display = "none";
-    } catch (e) {
-      /* ignore */
-    }
+      ws.clear();
+      var saved = prog.ws[lv.id];
+      if (saved) { try { Blockly.serialization.workspaces.load(saved, ws); } catch (e) { ws.clear(); } }
+      ensureStartBlock();
+      try { ws.scrollCenter(); } catch (e) {}
+    } finally { loadingWs = false; }
+    updateCounter();
   }
 
-  // modal buttons
-  const nextBtn = document.getElementById('modalNextBtn');
-  const retryBtn = document.getElementById('modalRetryBtn');
-  const closeBtn = document.getElementById('modalCloseBtn');
-  if(nextBtn) nextBtn.addEventListener('click', ()=>{ hideLevelModal(); goToNextLevel(); });
-  if(retryBtn) retryBtn.addEventListener('click', ()=>{ hideLevelModal(); loadLevel(state.levelIndex); setStatus('Tekrar deneyin'); });
-  if(closeBtn) closeBtn.addEventListener('click', ()=>{ hideLevelModal(); setStatus(''); });
-  // also allow clicking backdrop to close
-  const modal = document.getElementById('levelModal');
-  if(modal){
-    modal.addEventListener('click',(e)=>{ if(e.target === modal) hideLevelModal(); });
-  }
-  const deleteModal = document.getElementById('levelDeleteModal');
-  if(deleteModal){
-    deleteModal.addEventListener('click', (e)=>{ if(e.target === deleteModal) closeDeleteLevelModal(); });
-  }
-
-  // Level designer modal controls
-  const designerModal = document.getElementById('levelDesignerModal');
-  const designerSaveBtn = document.getElementById('designerSaveBtn');
-  const designerResetBtn = document.getElementById('designerResetBtn');
-  const designerCancelBtn = document.getElementById('designerCancelBtn');
-  const confirmDeleteLevelBtn = document.getElementById('confirmDeleteLevelBtn');
-  const cancelDeleteLevelBtn = document.getElementById('cancelDeleteLevelBtn');
-  if(designerSaveBtn) designerSaveBtn.addEventListener('click', ()=>{ saveDesignerLevel(); });
-  if(designerResetBtn) designerResetBtn.addEventListener('click', ()=>{ resetDesignerModal(); });
-  if(designerCancelBtn) designerCancelBtn.addEventListener('click', ()=>{ closeLevelDesigner(); });
-  if(confirmDeleteLevelBtn) confirmDeleteLevelBtn.addEventListener('click', ()=>{ deleteCurrentLevel(); });
-  if(cancelDeleteLevelBtn) cancelDeleteLevelBtn.addEventListener('click', ()=>{ closeDeleteLevelModal(); });
-
-  // Designer bindings (drag-drop grid editor)
-  try{
-    const paletteTiles = document.querySelectorAll('#designerPalette .palette-tile');
-    paletteTiles.forEach((tile)=>{
-      tile.addEventListener('click', ()=> setDesignerTool(tile.dataset.item));
-      tile.addEventListener('dragstart', (ev)=>{
-        const item = tile.dataset.item || 'obstacle';
-        setDesignerTool(item);
-        if(ev.dataTransfer){
-          ev.dataTransfer.setData('text/plain', item);
-          ev.dataTransfer.effectAllowed = 'copy';
-        }
-      });
-      tile.addEventListener('touchstart', (ev)=>{
-        const item = tile.dataset.item || 'obstacle';
-        setDesignerTool(item);
-        startTouchDrag(item, ev.touches[0]);
-        ev.preventDefault();
-      }, { passive: false });
+  function initBlockly() {
+    if (ws) return;
+    defineBlocks();
+    var dark = document.body.classList.contains('dark');
+    ws = Blockly.inject('blocklyDiv', {
+      toolbox: toolboxFor(level), renderer: 'zelos', theme: makeTheme(dark),
+      media: window.__BLOCKLY_BASE + 'media/', trashcan: true, sounds: false,
+      zoom: { controls: true, wheel: false, startScale: .95, maxScale: 1.6, minScale: .5, scaleSpeed: 1.1 },
+      move: { scrollbars: true, drag: true, wheel: true },
+      grid: { spacing: 24, length: 3, colour: dark ? 'rgba(165,180,252,.15)' : 'rgba(99,102,241,.14)', snap: true },
     });
-    const wEl = document.getElementById('designerGridWidth');
-    const hEl = document.getElementById('designerGridHeight');
-    const onSizeChange = ()=>{
-      designerDraft = makeEmptyDesignerDraft();
-      renderDesignerBoard();
-    };
-    if(wEl) wEl.addEventListener('change', onSizeChange);
-    if(hEl) hEl.addEventListener('change', onSizeChange);
-  }catch(e){/* ignore */}
+    ws.addChangeListener(function (e) {
+      if (loadingWs || e.isUiEvent) return;
+      updateCounter();
+      scheduleSaveWs();
+    });
+    wsReady = true;
+    var l = $('wsLoading'); if (l) l.classList.add('hidden');
+    loadLevel(S.idx, { force: true });
+    window.addEventListener('resize', function () { try { Blockly.svgResize(ws); } catch (e) {} });
+    new ResizeObserver(function () { try { Blockly.svgResize(ws); } catch (e) {} }).observe($('blocklyDiv'));
+  }
 
-  // Dark mode toggle
-  try{
-    const darkToggle = document.getElementById('darkToggle');
-    function applyTheme(t){ if(t==='dark') document.body.classList.add('dark'); else document.body.classList.remove('dark'); }
-    const stored = localStorage.getItem('theme'); if(stored) applyTheme(stored);
-    if(darkToggle){ darkToggle.addEventListener('click', ()=>{ const isDark = document.body.classList.toggle('dark'); localStorage.setItem('theme', isDark? 'dark':'light'); darkToggle.textContent = isDark? '??' : '??'; });
-      // set initial icon
-      darkToggle.textContent = document.body.classList.contains('dark')? '??' : '??';
+  // ------------------------------------------------------------------ bölüm yükleme / arayüz
+  function stars3(n) { return [0, 1, 2].map(function (i) { return '<span class="star' + (i < n ? ' on' : '') + '">★</span>'; }).join(''); }
+
+  function refreshHeader() {
+    var done = completedSet();
+    var inRange = S.levelRange && !isStaff();
+    var total = inRange ? (Math.min(LEVELS.length - 1, S.levelRange.endIdx) - Math.max(0, S.levelRange.startIdx) + 1) : LEVELS.length;
+    var cnt = inRange ? LEVELS.slice(S.levelRange.startIdx, S.levelRange.endIdx + 1).filter(function (l) { return done.has(l.id); }).length : done.size;
+    $('progressText').textContent = cnt + ' / ' + total;
+    $('progressFill').style.width = Math.round(cnt / Math.max(1, total) * 100) + '%';
+    var xp = LEVELS.reduce(function (s, l) { return s + (done.has(l.id) ? (l.xp || 0) : 0); }, 0);
+    $('xpBadge').textContent = '⭐ ' + xp + ' XP';
+    $('levelPrev').disabled = !canOpen(S.idx - 1);
+    $('levelNext').disabled = !canOpen(S.idx + 1);
+  }
+
+  function refreshLevelTexts() {
+    $('levelName').textContent = level.name;
+    $('levelMeta').textContent = level.group + ' · ' + R.THEMES[level.theme].name + ' · ' + level.w + '×' + level.h;
+    $('stageTitle').textContent = level.name + ' — ' + level.concept;
+    $('stageHint').textContent = level.hint || '';
+    var rec = prog.done[level.id];
+    $('starRow').innerHTML = stars3(rec ? rec.stars : 0);
+  }
+
+  function loadLevel(idx, opts) {
+    opts = opts || {};
+    if (!opts.force) {
+      if (isStaff() === false && S.grantDenied) { warnLocked('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.'); return false; }
+      if (!isStaff() && S.assignmentLocked) { warnLocked('Ödev aralığı tamamlandı.'); return false; }
+      if (!canOpen(idx)) {
+        if (S.levelRange && !isStaff()) {
+          var s = S.levelRange.startIdx, e = S.levelRange.endIdx;
+          warnLocked(idx < s || idx > e ? 'Bu bölüm ödev aralığında değil.' : 'Önceki bölümleri tamamlamadan buraya geçemezsin.');
+        } else warnLocked('Önce bir önceki bölümü tamamlamalısın.');
+        return false;
+      }
     }
-  }catch(e){/* ignore */}
-}
-
-function openLevelDesigner(editMode = false){
-  const modal = document.getElementById('levelDesignerModal');
-  if(!modal) return;
-  const lvl = levels[state.levelIndex] || {};
-  designerEditMode = !!editMode;
-
-  const header = modal.querySelector('.modal-header h3');
-  if(header) header.textContent = designerEditMode ? 'Seviye Düzenle' : 'Seviye Tasarla';
-
-  const saveBtn = document.getElementById('designerSaveBtn');
-  if(saveBtn) saveBtn.textContent = designerEditMode ? 'Güncelle' : 'Kaydet';
-
-  document.getElementById('designerLevelName').value = designerEditMode
-    ? (lvl.name || 'Özel Seviye')
-    : (lvl.name ? lvl.name + ' - kopya' : 'Özel Seviye');
-  const groupInput = document.getElementById('designerGroup');
-  if(groupInput) groupInput.value = lvl.group || 'Özel';
-  const orderInput = document.getElementById('designerLevelOrder');
-  if(orderInput) {
-    const fallbackOrder = state.levelIndex + 1;
-    orderInput.value = Number.isFinite(Number(lvl.order)) ? Number(lvl.order) : fallbackOrder;
-  }
-  const xpInput = document.getElementById('designerLevelXp');
-  if(xpInput){
-    xpInput.value = String(normalizeLevelXp(lvl?.xp));
-  }
-
-  const wEl = document.getElementById('designerGridWidth');
-  const hEl = document.getElementById('designerGridHeight');
-  if(designerEditMode){
-    const w = clampDesigner((lvl.gridWidth ?? gridSize), 6, 12);
-    const h = clampDesigner((lvl.gridHeight ?? gridSize), 6, 12);
-    if(wEl) wEl.value = String(w);
-    if(hEl) hEl.value = String(h);
-    designerDraft = {
-      w,
-      h,
-      start: { x: clampDesigner((lvl.start||{}).x, 0, w-1), y: clampDesigner((lvl.start||{}).y, 0, h-1), dir: clampDesigner((lvl.start||{}).dir, 0, 3) },
-      star: { x: clampDesigner((lvl.star||{}).x, 0, w-1), y: clampDesigner((lvl.star||{}).y, 0, h-1) },
-      obstacles: Array.isArray(lvl.obstacles)
-        ? lvl.obstacles
-            .map((o)=>({x: clampDesigner(o.x,0,w-1), y: clampDesigner(o.y,0,h-1)}))
-            .filter((o)=> !(o.x===lvl.start?.x && o.y===lvl.start?.y) && !(o.x===lvl.star?.x && o.y===lvl.star?.y))
-        : []
-    };
-  } else {
-    if(wEl && !wEl.value) wEl.value = '8';
-    if(hEl && !hEl.value) hEl.value = '8';
-    designerDraft = makeEmptyDesignerDraft();
-  }
-
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden','false');
-  setDesignerTool('obstacle');
-  renderDesignerBoard();
-}
-
-function closeLevelDesigner(){
-  const modal = document.getElementById('levelDesignerModal');
-  if(!modal) return;
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden','true');
-  designerEditMode = false;
-  designerDraft = null;
-  const saveBtn = document.getElementById('designerSaveBtn');
-  if(saveBtn) saveBtn.textContent = 'Kaydet';
-}
-
-function openDeleteLevelModal(){
-  const modal = document.getElementById('levelDeleteModal');
-  const msg = document.getElementById('deleteLevelMessage');
-  if(!modal) return;
-  const lvl = levels[state.levelIndex];
-  if(msg){
-    msg.textContent = `"${lvl?.name || 'Seviye'}" seviyesini silmek istiyor musunuz?`;
-  }
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden','false');
-}
-
-function closeDeleteLevelModal(){
-  const modal = document.getElementById('levelDeleteModal');
-  if(!modal) return;
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden','true');
-}
-
-function deleteCurrentLevel(){
-  if(!isAdminMode()) return;
-  if(!Array.isArray(levels) || levels.length <= 1){
-    setStatus('Son seviye silinemez');
-    closeDeleteLevelModal();
-    return;
-  }
-  const deleteIndex = state.levelIndex;
-  levels.splice(deleteIndex, 1);
-  try{
-    const unlocked = JSON.parse(localStorage.getItem('unlocked') || '[0]');
-    const fixed = unlocked
-      .map((v)=> Number(v))
-      .filter((v)=> Number.isFinite(v))
-      .map((v)=> v > deleteIndex ? v - 1 : v)
-      .filter((v)=> v >= 0 && v < levels.length);
-    if(!fixed.includes(0)) fixed.push(0);
-    localStorage.setItem('unlocked', JSON.stringify(Array.from(new Set(fixed)).sort((a,b)=>a-b)));
-  }catch(e){/* ignore */}
-  saveLevelsToStorage();
-  populateLevels();
-  const nextIndex = Math.max(0, Math.min(levels.length - 1, deleteIndex));
-  loadLevel(nextIndex);
-  setStatus('Seviye silindi');
-  closeDeleteLevelModal();
-}
-
-function resetDesignerModal(){
-  const wEl = document.getElementById('designerGridWidth');
-  const hEl = document.getElementById('designerGridHeight');
-  if(wEl) wEl.value = '8';
-  if(hEl) hEl.value = '8';
-  const xpEl = document.getElementById('designerLevelXp');
-  if(xpEl) xpEl.value = String(DEFAULT_LEVEL_XP);
-  designerDraft = makeEmptyDesignerDraft();
-  setDesignerTool('obstacle');
-  renderDesignerBoard();
-  setStatus('Tasarım alanı temizlendi');
-}
-
-function saveDesignerLevel(){
-  try{
-    const name = (document.getElementById('designerLevelName')||{}).value || ('Özel Seviye');
-    const groupName = ((document.getElementById('designerGroup')||{}).value || 'Özel').trim() || 'Özel';
-    const levelOrder = Math.max(1, parseInt((document.getElementById('designerLevelOrder')||{}).value) || 1);
-    const levelXp = normalizeLevelXp((document.getElementById('designerLevelXp')||{}).value);
-    if(!designerDraft) designerDraft = makeEmptyDesignerDraft();
-    const gw = clampDesigner(designerDraft.w, 6, 12);
-    const gh = clampDesigner(designerDraft.h, 6, 12);
-    const sx = clampDesigner(designerDraft.start?.x, 0, gw-1);
-    const sy = clampDesigner(designerDraft.start?.y, 0, gh-1);
-    const sdir = clampDesigner(designerDraft.start?.dir ?? 0, 0, 3);
-    const starX = clampDesigner(designerDraft.star?.x, 0, gw-1);
-    const starY = clampDesigner(designerDraft.star?.y, 0, gh-1);
-    const obs = (designerDraft.obstacles || [])
-      .map((o)=>({ x: clampDesigner(o.x, 0, gw-1), y: clampDesigner(o.y, 0, gh-1) }))
-      .filter((o)=> !(o.x===sx && o.y===sy) && !(o.x===starX && o.y===starY));
-
-    const base = levels[state.levelIndex] || { obstacles: [] , star:{x:0,y:0}, start:{x:0,y:0,dir:0} };
-    const newLevel = JSON.parse(JSON.stringify(base));
-
-    if (designerEditMode) {
-      newLevel.id = base.id;
-    } else {
-      const nextId = (levels.length ? Math.max(...levels.map(l => Number(l.id || 0))) + 1 : 0);
-      newLevel.id = nextId;
+    if (S.levelRange && !isStaff()) {
+      var rs = Math.max(0, S.levelRange.startIdx), re = Math.min(LEVELS.length - 1, Math.max(rs, S.levelRange.endIdx));
+      idx = Math.max(rs, Math.min(re, idx));
     }
-
-    newLevel.name = name;
-    newLevel.group = groupName;
-    newLevel.order = levelOrder;
-    newLevel.xp = levelXp;
-    newLevel.gridWidth = gw;
-    newLevel.gridHeight = gh;
-    newLevel.start = { x: sx, y: sy, dir: sdir };
-    newLevel.star = { x: starX, y: starY };
-    newLevel.obstacles = obs.length ? obs : [];
-
-    const xmlText = (window.Blockly && workspace) ? Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace)) : '';
-    newLevel.solutionXml = xmlText;
-    newLevel.solutionCode = generateExecutableJS();
-
-    if (designerEditMode) {
-      const keepId = newLevel.id;
-      levels[state.levelIndex] = newLevel;
-      sortLevelsInPlace();
-      saveLevelsToStorage();
-      populateLevels();
-      const editedIndex = levels.findIndex(l => Number(l?.id) === Number(keepId));
-      loadLevel(editedIndex >= 0 ? editedIndex : state.levelIndex);
-      setStatus('Seviye guncellendi: ' + name);
-    } else {
-      levels.push(newLevel);
-      sortLevelsInPlace();
-      saveLevelsToStorage();
-      populateLevels();
-      const newIndex = levels.findIndex(l => Number(l?.id) === Number(newLevel.id));
-      loadLevel(newIndex >= 0 ? newIndex : 0);
-      setStatus('Yeni seviye tasarlandı ve yüklendi: ' + name);
+    resetRun(true);
+    if (ws && wsReady && level) { var cur = wsSerialize(); if (cur) prog.ws[level.id] = cur; }
+    S.idx = idx; level = LEVELS[idx]; S.attemptStart = Date.now();
+    R.setLevel(level);
+    document.body.dataset.theme = level.theme;
+    refreshLevelTexts();
+    if (ws && wsReady) {
+      try { ws.updateToolbox(toolboxFor(level)); } catch (e) {}
+      loadWorkspaceFor(level);
+      setTimeout(function () { try { Blockly.svgResize(ws); } catch (e) {} }, 30);
     }
-
-    try{ if(window.Blockly && workspace) workspace.clear(); }catch(e){}
-    closeLevelDesigner();
-  }catch(e){
-    console.warn('saveDesignerLevel', e);
-    setStatus('Seviye kaydedilemedi');
+    setStatus('Hazır');
+    prog.last = idx; saveProg();
+    refreshHeader();
+    if (level.limit) toast('En fazla ' + level.limit + ' blok kullanabilirsin', null, 2400);
+    return true;
   }
-}
 
-function addCurrentAsLevel(){
-  // Create a copy of current level layout and attach Blockly XML & code as solution
-  try{
-    const base = levels[state.levelIndex];
-    const nextId = Math.max(...levels.map(l=>l.id))+1;
-    const nameInput = document.getElementById('newLevelName');
-    const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : ('Özel Seviye ' + nextId);
-    // if designerGroup input exists in the UI, use it; otherwise default to 'Özel'
-    const groupInput = document.getElementById('designerGroup');
-    const groupName = (groupInput && groupInput.value.trim()) ? groupInput.value.trim() : 'Özel';
-    const xmlText = (window.Blockly && workspace) ? Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace)) : '';
-    const code = generateExecutableJS();
-    const newLevel = JSON.parse(JSON.stringify(base));
-    newLevel.id = nextId;
-    newLevel.name = name;
-    // Use current character position as start for the new level
-    newLevel.start = { x: state.x, y: state.y, dir: state.dir };
-    // If user provided star position, use it
-    try{
-      const sx = parseInt((document.getElementById('starX')||{}).value);
-      const sy = parseInt((document.getElementById('starY')||{}).value);
-      if(!Number.isNaN(sx) && !Number.isNaN(sy)) newLevel.star = { x: Math.max(0, Math.min(gridSize-1, sx)), y: Math.max(0, Math.min(gridSize-1, sy)) };
-    }catch(e){ /* ignore */ }
-    // Parse obstacles from textarea (format: "x,y; x2,y2")
-    try{
-      const obsTxt = (document.getElementById('obstaclesInput')||{}).value || '';
-      const obs = [];
-      obsTxt.split(';').map(s=>s.trim()).filter(Boolean).forEach(part=>{
-        const p = part.split(',').map(s=>s.trim());
-        if(p.length>=2){ const ox = parseInt(p[0]); const oy = parseInt(p[1]); if(!Number.isNaN(ox)&&!Number.isNaN(oy)) obs.push({x: Math.max(0, Math.min(gridSize-1, ox)), y: Math.max(0, Math.min(gridSize-1, oy))}); }
+  // ------------------------------------------------------------------ çalıştırma
+  var DUR = { turn: 260, move: 340, gap: 70 };
+  function dur(ms) { return Math.max(40, ms / S.speed); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function highlight(id) { try { ws.highlightBlock(id); } catch (e) {} }
+
+  function resetRun(silent) {
+    S.token++; S.running = false; S.stepIt = null; S.stepAst = null;
+    R.cancelTweens(); R.resetRobot(); highlight(null);
+    $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (!silent) setStatus('Hazır');
+  }
+
+  function preflight() {
+    if (!wsReady) { toast('Blok editörü henüz hazır değil', 'bad'); return null; }
+    if (!isStaff() && !canOpen(S.idx)) { warnLocked(); return null; }
+    var ast = buildAst();
+    if (!ast.length) { setStatus('Önce BAŞLA bloğunun altına blok ekle.', 'bad'); toast('Önce blok ekle 🧩', 'bad'); return null; }
+    var lim = blockLimit(), used = Engine.countBlocks(ast);
+    if (lim && used > lim) { setStatus('Çok fazla blok: en fazla ' + lim + ' blok kullanabilirsin.', 'bad'); toast('En fazla ' + lim + ' blok! Tekrar bloğunu dene 🔁', 'bad', 2800); return null; }
+    return ast;
+  }
+
+  async function playEvent(e, token) {
+    if (token !== S.token) return 'cancel';
+    switch (e.kind) {
+      case 'turn': highlight(e.id); sfx.turn(); await R.turn(e.dir, dur(DUR.turn)); await sleep(dur(DUR.gap)); break;
+      case 'move': highlight(e.id); sfx.move(); await R.move(e.to, dur(DUR.move)); await sleep(dur(DUR.gap)); break;
+      case 'crash':
+        highlight(e.id); sfx.crash(); await R.crash(e.target, dur(380));
+        $('canvasWrap').classList.remove('shake'); void $('canvasWrap').offsetWidth; $('canvasWrap').classList.add('shake');
+        setStatus(e.reason === 'edge' ? 'Haritanın kenarına çarptın!' : 'Bir engele çarptın!', 'bad');
+        toast(e.reason === 'edge' ? '💥 Haritanın dışına çıkamazsın' : '💥 Engel var! Başka yoldan git', 'bad');
+        highlight(null); return 'stop';
+      case 'goal': highlight(null); return 'goal';
+      case 'end':
+        sfx.fail(); highlight(null); setStatus('Program bitti ama yıldıza ulaşamadın. Tekrar dene!', 'bad'); toast('⭐ Yıldıza daha varmadın', 'bad'); return 'stop';
+      case 'limit':
+        sfx.fail(); highlight(null); setStatus('Program çok uzun sürdü (sonsuz döngü olabilir).', 'bad'); toast('♾ Program bitmiyor!', 'bad'); return 'stop';
+    }
+    return 'ok';
+  }
+
+  async function runProgram() {
+    if (S.running) return;
+    var ast = preflight(); if (!ast) return;
+    resetRun(true);
+    S.lastAst = ast; S.running = true;
+    var token = ++S.token;
+    $('runBtn').disabled = true; $('stepBtn').disabled = true;
+    setStatus('Çalışıyor…');
+    var it = Engine.run(level, ast);
+    await sleep(dur(200));
+    var result = 'ok';
+    for (var r = it.next(); !r.done; r = it.next()) {
+      result = await playEvent(r.value, token);
+      if (result !== 'ok') break;
+    }
+    if (token !== S.token) return;
+    S.running = false; $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (result === 'goal') onGoal();
+  }
+
+  async function stepProgram() {
+    if (S.running) return;
+    if (!S.stepIt) {
+      var ast = preflight(); if (!ast) return;
+      resetRun(true);
+      S.lastAst = S.stepAst = ast; S.stepIt = Engine.run(level, ast);
+    }
+    var token = S.token;
+    S.running = true; $('runBtn').disabled = true; $('stepBtn').disabled = true;
+    var r = S.stepIt.next(), result = 'ok';
+    if (!r.done) result = await playEvent(r.value, token);
+    if (token !== S.token) return;
+    S.running = false; $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (r.done || result !== 'ok') { S.stepIt = null; if (result === 'goal') onGoal(); }
+    else setStatus('Adım adım: devam etmek için “Adım”a bas');
+  }
+
+  // ------------------------------------------------------------------ tamamlama
+  function compactLevels() {
+    return LEVELS.map(function (l) { var d = prog.done[l.id]; return { id: l.id, name: l.name, group: l.group, order: l.order, xp: l.xp, completed: !!d, stars: d ? d.stars : 0, v: VERSION }; });
+  }
+  function xpInRange() {
+    var done = completedSet();
+    var s = S.levelRange ? Math.max(0, S.levelRange.startIdx) : 0, e = S.levelRange ? Math.min(LEVELS.length - 1, S.levelRange.endIdx) : LEVELS.length - 1;
+    return LEVELS.slice(s, e + 1).reduce(function (sum, l) { return sum + (done.has(l.id) ? (l.xp || 0) : 0); }, 0);
+  }
+
+  function postAssignmentCompleted() {
+    post({
+      type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'block-runner', currentLevelIndex: S.idx, levels: compactLevels(),
+      xp: xpInRange(), elapsedSeconds: Math.max(0, Math.round((Date.now() - S.sessionStart) / 1000)),
+      completedLevelIds: Array.from(completedSet()),
+    });
+  }
+
+  function onGoal() {
+    var ast = S.lastAst || buildAst();
+    var used = Engine.countBlocks(ast);
+    var stars = Engine.rateStars(used, level.par);
+    var prev = prog.done[level.id];
+    var first = !prev;
+    prog.done[level.id] = { stars: Math.max(prev ? prev.stars : 0, stars), blocks: prev ? Math.min(prev.blocks, used) : used, at: Date.now() };
+    prog.ws[level.id] = wsSerialize() || prog.ws[level.id];
+    saveProg();
+    if (S.assignmentCompleted instanceof Set) S.assignmentCompleted.add(level.id);
+
+    R.celebrate(); sfx.win();
+    setStatus('Yıldız bulundu! Bölüm tamamlandı 🎉', 'good');
+    $('starRow').innerHTML = stars3(prog.done[level.id].stars);
+    refreshHeader();
+
+    var done = completedSet();
+    post({
+      type: 'LEVEL_COMPLETED', levelId: level.id, xp: level.xp || 0,
+      percent: Math.round(done.size / LEVELS.length * 100), levels: compactLevels(), stars: stars,
+      duration: Date.now() - S.attemptStart, currentLevelIndex: S.idx, starCollected: true,
+    });
+    post({ type: 'GAME_UPDATE', levels: compactLevels(), currentLevelIndex: S.idx, version: VERSION });
+
+    var inAssignment = !isStaff() && (S.levelRange || queryRange());
+    if (inAssignment) {
+      var range = S.levelRange || queryRange();
+      var endIdx = Math.min(LEVELS.length - 1, Math.max(0, range.endIdx));
+      if (S.idx >= endIdx) { S.assignmentLocked = true; setTimeout(postAssignmentCompleted, 900); toast('Ödevdeki tüm bölümler tamamlandı! 🎉', 'good', 3000); return; }
+      toast('+' + (level.xp || 0) + ' XP · Sonraki bölüme geçiliyor…', 'good', 1500);
+      setTimeout(function () { loadLevel(S.idx + 1); }, 1500);
+      return;
+    }
+    setTimeout(function () { showResult(stars, used, first); }, 900);
+  }
+
+  // ------------------------------------------------------------------ sonuç penceresi + konfeti
+  var confettiRAF = 0;
+  function startConfetti() {
+    var c = $('confettiCanvas'); if (!c) return;
+    var rect = c.getBoundingClientRect(); c.width = rect.width; c.height = rect.height;
+    var g = c.getContext('2d'), parts = [], colors = ['#fde047', '#fb923c', '#f472b6', '#60a5fa', '#34d399', '#a78bfa'];
+    for (var i = 0; i < 90; i++) parts.push({ x: Math.random() * c.width, y: -Math.random() * c.height * .6, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, s: 4 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: colors[i % colors.length] });
+    var t0 = performance.now();
+    cancelAnimationFrame(confettiRAF);
+    (function frame(now) {
+      g.clearRect(0, 0, c.width, c.height);
+      parts.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.r += p.vr; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); g.restore(); });
+      if (now - t0 < 2800) confettiRAF = requestAnimationFrame(frame); else g.clearRect(0, 0, c.width, c.height);
+    })(t0);
+  }
+  function showResult(stars, used, first) {
+    var par = level.par, best = prog.done[level.id];
+    $('resultTitle').textContent = stars === 3 ? 'Mükemmel! 🏆' : 'Harika! Bölüm tamamlandı';
+    $('resultText').textContent = stars === 3
+      ? 'En iyi çözüme ulaştın!'
+      : (par && used > par ? 'Daha az blokla çözebilirsin: ' + par + ' blok yeterli. Tekrar denemek ister misin?' : 'Güzel iş!');
+    $('resultXp').textContent = '+' + (level.xp || 0);
+    $('resultBlocks').textContent = used;
+    $('resultPar').textContent = par || '-';
+    var spans = $('resultStars').children;
+    for (var i = 0; i < 3; i++) spans[i].className = '';
+    $('resultModal').classList.remove('hidden');
+    [0, 1, 2].forEach(function (i) { setTimeout(function () { if (i < stars) spans[i].className = 'on'; }, 250 + i * 260); });
+    $('resultNext').disabled = !canOpen(S.idx + 1);
+    startConfetti();
+  }
+  function hideResult() { $('resultModal').classList.add('hidden'); cancelAnimationFrame(confettiRAF); }
+
+  // ------------------------------------------------------------------ bölüm seçici
+  function openPicker() {
+    var body = $('pickerBody'); body.innerHTML = '';
+    var done = completedSet();
+    var groups = [];
+    LEVELS.forEach(function (l, i) {
+      if (!isStaff() && S.levelRange && (i < S.levelRange.startIdx || i > S.levelRange.endIdx)) return;
+      var g = groups.find(function (x) { return x.name === l.group; });
+      if (!g) { g = { name: l.group, items: [] }; groups.push(g); }
+      g.items.push({ l: l, i: i });
+    });
+    groups.forEach(function (g) {
+      var sec = document.createElement('div'); sec.className = 'picker-group';
+      var finished = g.items.filter(function (x) { return done.has(x.l.id); }).length;
+      sec.innerHTML = '<h4>' + g.name + ' <small>' + finished + ' / ' + g.items.length + ' bölüm · ' + (g.items[0].l.xp || 0) + ' XP</small></h4>';
+      var grid = document.createElement('div'); grid.className = 'picker-grid';
+      g.items.forEach(function (x) {
+        var b = document.createElement('button'); b.type = 'button';
+        var isDone = done.has(x.l.id), open = canOpen(x.i), rec = prog.done[x.l.id];
+        b.className = 'tile' + (isDone ? ' done' : '') + (x.i === S.idx ? ' current' : '');
+        b.disabled = !open;
+        var starsTxt = rec ? '<span class="t-stars"><b>' + '★'.repeat(rec.stars) + '</b>' + '★'.repeat(3 - rec.stars) + '</span>' : '<span class="t-stars">★★★</span>';
+        b.innerHTML = (open ? '' : '<span class="lock">🔒</span>') + '<span class="t-num">' + (x.i + 1) + '</span><span class="t-size">' + x.l.w + '×' + x.l.h + '</span>' + starsTxt;
+        b.addEventListener('click', function () { if (loadLevel(x.i)) closePicker(); });
+        grid.appendChild(b);
       });
-      if(obs.length) newLevel.obstacles = obs;
-    }catch(e){ /* ignore */ }
-    // Attach solution metadata
-    newLevel.solutionXml = xmlText;
-    newLevel.solutionCode = code;
-    newLevel.group = groupName;
-    levels.push(newLevel);
-    saveLevelsToStorage();
-    populateLevels();
-    // select the new level
-    const newIndex = levels.length-1;
-    loadLevel(newIndex);
-    // Clear Blockly workspace so the user can start solving the new level from empty
-    try{ if(window.Blockly && workspace) workspace.clear(); }catch(e){ /* ignore */ }
-    // reset commands view
-    const cmdsPre = document.getElementById('commandsPre'); if(cmdsPre) cmdsPre.textContent = '// Buraya bloklar ile çözüm yazılacak';
-    setStatus('Yeni seviye eklendi ve workspace temizlendi: ' + name + ' - şimdi çözebilirsin.');
-    // close menu
-    const sideMenu = document.getElementById('sideMenu'); if(sideMenu) { sideMenu.classList.add('hidden'); sideMenu.setAttribute('aria-hidden','true'); }
-  }catch(e){ console.warn('addCurrentAsLevel', e); setStatus('Seviye eklenirken hata oluştu'); }
-}
-
-function exportBlocklyXml(){
-  try{
-    if(!window.Blockly || !workspace){ setStatus('Blockly yüklü değil'); return; }
-    const xml = Blockly.Xml.domToPrettyText(Blockly.Xml.workspaceToDom(workspace));
-    // download as file
-    const blob = new Blob([xml], {type:'text/xml'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'workspace.xml'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    setStatus('Blockly XML dışa aktarıldı');
-  }catch(e){ console.warn('exportBlocklyXml', e); setStatus('Dışa aktarım başarısız'); }
-}
-
-// --- Level editor and persistence ---
-function loadStoredLevels(){
-  try{
-    const raw = localStorage.getItem('levels');
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed) && parsed.length>0){
-        const byId = new Map();
-        // keep stored levels first (teacher customizations), then fill missing bundled levels
-        parsed.forEach((p, idx)=>{
-          if(!p.group) p.group = 'Genel';
-          if(!Number.isFinite(Number(p.order))) p.order = idx + 1;
-          const id = Number(p?.id);
-          if(Number.isFinite(id)) byId.set(id, p);
-        });
-        levels.forEach((p, idx) => {
-          const id = Number(p?.id);
-          if(!Number.isFinite(id) || byId.has(id)) return;
-          const clone = { ...p };
-          if(!clone.group) clone.group = 'Genel';
-          if(!Number.isFinite(Number(clone.order))) clone.order = (idx + 1);
-          byId.set(id, clone);
-        });
-        levels = Array.from(byId.values());
-        applyXpDefaults();
-        sortLevelsInPlace();
-      }
-    }
-  }catch(e){ console.warn('loadStoredLevels', e); }
-}
-
-function saveLevelsToStorage(){
-  try{
-    sortLevelsInPlace();
-    localStorage.setItem('levels', JSON.stringify(levels));
-    // notify parent window (if embedded) about the game state update
-    try{
-      if(window.parent && window.parent !== window){
-        window.parent.postMessage({
-          type: 'GAME_UPDATE',
-          levels: levels,
-          currentLevelIndex: state.levelIndex
-        }, '*');
-      }
-    }catch(e){}
+      sec.appendChild(grid); body.appendChild(sec);
+    });
+    $('pickerModal').classList.remove('hidden');
+    var cur = body.querySelector('.tile.current'); if (cur) cur.scrollIntoView({ block: 'center' });
   }
-  catch(e){ console.warn('saveLevelsToStorage', e); }
-}
+  function closePicker() { $('pickerModal').classList.add('hidden'); }
 
-// Listen for parent -> iframe messages for state injection
-(function(){
-  try{
-    window.addEventListener('message', function(e){
-      const data = e && e.data;
-      if(!data || typeof data !== 'object') return;
-      if(data.type === 'LOAD_STATE'){
-        try{
-          if(Array.isArray(data.levels)){
-            levels = data.levels;
-            levels.forEach((p, idx)=>{
-              if(!p.group) p.group = 'Genel';
-              if(!Number.isFinite(Number(p.order))) p.order = idx + 1;
-            });
-            applyXpDefaults();
-            sortLevelsInPlace();
-            // persist locally so the iframe can continue offline
-            localStorage.setItem('levels', JSON.stringify(levels));
-            populateLevels();
-            const idx = Math.max(0, Math.min(levels.length - 1, Number(data.currentLevelIndex || 0)));
-            loadLevel(idx);
+  // ------------------------------------------------------------------ tema / ses / hız
+  function applyTheme(dark) {
+    document.body.classList.toggle('dark', dark);
+    $('darkToggle').textContent = dark ? '☀️' : '🌙';
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+    if (ws) { try { ws.setTheme(makeTheme(dark)); } catch (e) {} }
+  }
+  var SPEEDS = [0.5, 1, 2, 4];
+  function cycleSpeed() { S.speed = SPEEDS[(SPEEDS.indexOf(S.speed) + 1) % SPEEDS.length]; $('speedLabel').textContent = S.speed + 'x'; try { localStorage.setItem('bgr.speed', String(S.speed)); } catch (e) {} }
+
+  function initUI() {
+    $('runBtn').addEventListener('click', runProgram);
+    $('stepBtn').addEventListener('click', stepProgram);
+    $('resetBtn').addEventListener('click', function () { resetRun(false); toast('Karakter başa alındı'); });
+    $('clearBtn').addEventListener('click', function () {
+      if (!ws) return;
+      resetRun(true);
+      loadingWs = true; try { ws.clear(); ensureStartBlock(); } finally { loadingWs = false; }
+      updateCounter(); scheduleSaveWs(); setStatus('Bloklar temizlendi');
+    });
+    $('levelPrev').addEventListener('click', function () { loadLevel(S.idx - 1); });
+    $('levelNext').addEventListener('click', function () { loadLevel(S.idx + 1); });
+    $('levelPicker').addEventListener('click', openPicker);
+    document.querySelectorAll('#pickerModal [data-close]').forEach(function (el) { el.addEventListener('click', closePicker); });
+    $('resultNext').addEventListener('click', function () { hideResult(); loadLevel(S.idx + 1); });
+    $('resultRetry').addEventListener('click', function () { hideResult(); resetRun(false); });
+    $('resultClose').addEventListener('click', hideResult);
+    $('darkToggle').addEventListener('click', function () { applyTheme(!document.body.classList.contains('dark')); });
+    $('soundToggle').addEventListener('click', function () {
+      S.sound = !S.sound; $('soundToggle').textContent = S.sound ? '🔊' : '🔇';
+      try { localStorage.setItem('bgr.sound', S.sound ? '1' : '0'); } catch (e) {}
+      if (S.sound) sfx.move();
+    });
+    $('speedBtn').addEventListener('click', cycleSpeed);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closePicker(); hideResult(); }
+    });
+    $('soundToggle').textContent = S.sound ? '🔊' : '🔇';
+    try { var sp = Number(localStorage.getItem('bgr.speed')); if (SPEEDS.indexOf(sp) >= 0) S.speed = sp; } catch (e) {}
+    $('speedLabel').textContent = S.speed + 'x';
+    var stored = null; try { stored = localStorage.getItem('theme'); } catch (e) {}
+    applyTheme(stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  }
+
+  // ------------------------------------------------------------------ platform: yetki (grant) ve mesajlar
+  async function resolveGrant() {
+    if (!needsGrantCheck || isStaff()) return;
+    try {
+      var base = (window.RUNNER_APP_BASE || '').replace(/\/$/, '');
+      var res = await fetch(base + '/runner-grant/block-grid-runner' + window.location.search, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      if (!res.ok) { S.grantDenied = true; setStatus('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.', 'bad'); refreshHeader(); return; }
+      var grant = await res.json();
+      if (grant && grant.ok && grant.role === 'staff') { S.staffFlag = true; S.grantDenied = false; S.levelRange = null; S.assignmentLocked = false; refreshHeader(); return; }
+      if (!grant || !grant.ok || grant.role !== 'student') { S.grantDenied = true; setStatus('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.', 'bad'); return; }
+      var start = Math.max(1, Number(grant.from || 1)), end = Math.max(start, Number(grant.to || start));
+      S.assignmentLocked = false; S.levelRange = { startIdx: start - 1, endIdx: end - 1 };
+      var target = firstIncompleteInRange();
+      loadLevel(Math.max(S.levelRange.startIdx, Math.min(S.levelRange.endIdx, typeof target === 'number' ? target : S.levelRange.startIdx)), { force: true });
+      setStatus('Bölüm aralığı: ' + start + '-' + end);
+    } catch (e) { S.grantDenied = true; setStatus('Erişim doğrulanamadı. Sayfayı yenileyip tekrar deneyin.', 'bad'); }
+  }
+
+  window.addEventListener('message', function (ev) {
+    var d = ev && ev.data; if (!d || typeof d !== 'object') return;
+    try {
+      switch (d.type) {
+        case 'SET_LEVEL_RANGE': {
+          S.assignmentLocked = false;
+          var s = Math.max(1, Number(d.levelStart || 1)), e = Math.max(s, Number(d.levelEnd || s));
+          S.levelRange = { startIdx: s - 1, endIdx: e - 1 };
+          var target = firstIncompleteInRange();
+          loadLevel(typeof target === 'number' ? target : S.levelRange.startIdx, { force: true });
+          setStatus('Bölüm aralığı: ' + s + '-' + e);
+          break;
+        }
+        case 'SET_ASSIGNMENT_PROGRESS':
+          S.assignmentCompleted = new Set((Array.isArray(d.completedLevelIds) ? d.completedLevelIds : []).map(Number).filter(Number.isFinite));
+          if (S.levelRange) { var t = firstIncompleteInRange(); if (typeof t === 'number' && S.idx > t) loadLevel(t, { force: true }); }
+          refreshHeader();
+          break;
+        case 'FORCE_ASSIGNMENT_LOCK': S.assignmentLocked = true; setStatus('Ödev aralığı tamamlandı'); break;
+        case 'SET_CURRENT_LEVEL': loadLevel(Math.max(0, Math.min(LEVELS.length - 1, Number(d.currentLevelIndex || 0)))); break;
+        case 'LOAD_STATE':
+          // Yalnızca bu sürümün ilerleme verisi kabul edilir; eski sürümün bölüm verisi yok sayılır.
+          if (Number(d.version) === VERSION && Array.isArray(d.levels)) {
+            d.levels.forEach(function (l) { if (l && l.completed && LEVELS.some(function (x) { return x.id === l.id; })) prog.done[l.id] = prog.done[l.id] || { stars: Number(l.stars) || 1, blocks: 0, at: Date.now() }; });
+            saveProg(); refreshHeader();
           }
-        }catch(err){ console.warn('LOAD_STATE error', err); }
+          break;
+        case 'REQUEST_SAVE': post({ type: 'GAME_UPDATE', levels: compactLevels(), currentLevelIndex: S.idx, version: VERSION }); break;
+        case 'RESET_LOCAL': prog = { v: VERSION, done: {}, ws: {}, last: 0 }; saveProg(); loadLevel(0, { force: true }); break;
+        case 'RUN': runProgram(); break;
+        case 'STEP': stepProgram(); break;
+        case 'RESET': resetRun(false); break;
+        default: break; // DISABLE_MENU / ENABLE_MENU / tasarımcı mesajları: v2'de menü yok
       }
-      else if(data.type === 'SET_CURRENT_LEVEL'){
-        try{
-          const idx = Math.max(0, Math.min(levels.length - 1, Number(data.currentLevelIndex || 0)));
-          loadLevel(idx);
-        }catch(err){/* ignore */}
-      }
-      else if(data.type === 'SET_LEVEL_RANGE'){
-        try{
-          assignmentRangeLocked = false;
-          const start = Math.max(1, Number(data.levelStart || 1));
-          const end = Math.max(start, Number(data.levelEnd || start));
-          levelRange = {
-            startIdx: start - 1,
-            endIdx: end - 1
-          };
-          populateLevels();
-          if (state.levelIndex < levelRange.startIdx || state.levelIndex > levelRange.endIdx) {
-            loadLevel(levelRange.startIdx);
-          } else {
-            loadLevel(state.levelIndex);
-          }
-          setStatus(`Seviye aralığı: ${start}-${end}`);
-        }catch(err){/* ignore */}
-      }
-      else if(data.type === 'FORCE_ASSIGNMENT_LOCK'){
-        try{
-          assignmentRangeLocked = true;
-          setStatus('Ödev aralığı tamamlandı');
-        }catch(err){/* ignore */}
-      }
-      else if(data.type === 'SET_ASSIGNMENT_PROGRESS'){
-        try{
-          const ids = Array.isArray(data.completedLevelIds) ? data.completedLevelIds : [];
-          assignmentCompletedLevelIds = new Set(
-            ids.map((v)=> Number(v)).filter((v)=> Number.isFinite(v))
-          );
-          populateLevels();
-        }catch(err){/* ignore */}
-      }
-      else if(data.type === 'RESET_LOCAL'){
-        try{ localStorage.removeItem('levels'); loadStoredLevels(); populateLevels(); loadLevel(0); }catch(err){}
-      }
-      else if(data.type === 'REQUEST_SAVE'){
-        try{ saveLevelsToStorage(); }catch(err){/* ignore */}
-      }
-      else if(data.type === 'RUN'){
-        try{ runProgram(); }catch(e){}
-      }
-      else if(data.type === 'STEP'){
-        try{ stepProgram(); }catch(e){}
-      }
-      else if(data.type === 'RESET'){
-        try{ loadLevel(state.levelIndex); }catch(e){}
-      }
-      else if(data.type === 'DISABLE_MENU'){
-        try{ const mt = document.getElementById('menuToggle'); if(mt) mt.style.display = 'none'; const sm = document.getElementById('sideMenu'); if(sm) { sm.classList.add('hidden'); sm.setAttribute('aria-hidden','true'); } }catch(e){}
-      }
-      else if(data.type === 'ENABLE_MENU'){
-        try{ const mt = document.getElementById('menuToggle'); if(mt) mt.style.display = isAdminMode() ? 'inline-flex' : 'none'; }catch(e){}
-      }
-      else if(data.type === 'OPEN_DESIGNER'){
-        try{ if(isAdminMode()) openLevelDesigner(false); }catch(e){}
-      }
-      else if(data.type === 'OPEN_EDIT_LEVEL'){
-        try{ if(isAdminMode()) openLevelDesigner(true); }catch(e){}
-      }
-      else if(data.type === 'OPEN_DELETE_LEVEL'){
-        try{ if(isAdminMode()) openDeleteLevelModal(); }catch(e){}
-      }
-      else if(data.type === 'MOVE_LEVEL_UP'){
-        try{ if(isAdminMode()) moveCurrentLevelUp(); }catch(e){}
-      }
-      else if(data.type === 'MOVE_LEVEL_DOWN'){
-        try{ if(isAdminMode()) moveCurrentLevelDown(); }catch(e){}
-      }
-    }, false);
-  }catch(e){/* ignore */}
+    } catch (err) { /* bozuk mesajı yok say */ }
+  }, false);
+
+  // ------------------------------------------------------------------ açılış
+  initUI();
+  var startIdx = (function () {
+    if (S.levelRange && !isStaff()) { var f = firstIncompleteInRange(); return typeof f === 'number' ? f : S.levelRange.startIdx; }
+    var last = Number(prog.last) || 0;
+    if (!isStaff() && !canOpen(last)) last = Math.min(highestDoneIdx() + 1, LEVELS.length - 1);
+    return Math.max(0, Math.min(LEVELS.length - 1, last));
+  })();
+  S.idx = startIdx; level = LEVELS[S.idx];
+  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
+
+  function boot() {
+    if (window.__blocklyReady && window.Blockly) { try { initBlockly(); } catch (e) { console.error(e); failBlockly(); } }
+  }
+  function failBlockly() {
+    var l = $('wsLoading'); if (l) { l.classList.remove('hidden'); l.innerHTML = 'Blok editörü yüklenemedi. <button class="btn btn-ghost btn-compact" onclick="location.reload()">Yenile</button>'; }
+  }
+  window.addEventListener('blockly-ready', boot);
+  window.addEventListener('blockly-failed', failBlockly);
+  if (window.__blocklyFailed) failBlockly(); else boot();
+  resolveGrant();
+  S.loaded = true;
+
+  // dışarıdan test/hata ayıklama için
+  window.BlockApp = { state: S, levels: LEVELS, loadLevel: loadLevel, run: runProgram, buildAst: buildAst, workspace: function () { return ws; } };
 })();
-
-// Level editor removed: editor UI and canvas editing handlers were deleted
-// boot
-// (removed START_SESSION handler - sessionStart set when user interacts inside iframe)
-
-// boot
-loadStoredLevels();
-initUI();
-if(!localStorage.getItem('unlocked')) localStorage.setItem('unlocked', JSON.stringify([0]));
-getNormalizedUnlocked();
-populateLevels();
-
-function bootBlocklyWithRetry(attempt = 0){
-  const ok = initBlockly();
-  if(ok){
-    loadLevel(0);
-    return;
-  }
-  if(attempt >= 30){
-    const statusEl = document.getElementById('status');
-    if(statusEl) statusEl.textContent = 'Blok paneli yüklenemedi. Sayfayı yenileyin.';
-    return;
-  }
-  setTimeout(() => bootBlocklyWithRetry(attempt + 1), 200);
-}
-
-bootBlocklyWithRetry(0);
-resolveAssignmentRangeFromGrant();
-
-
-
-
-
-
-
-
-
-
