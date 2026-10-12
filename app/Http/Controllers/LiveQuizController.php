@@ -20,6 +20,10 @@ class LiveQuizController extends Controller
 {
     private const DOUBLE_XP_INTRO_MS = 3000;
 
+    // Son sorudan sonra sıralama ekranı, yönetici "Yarışmayı Bitir" diyene kadar açık kalır.
+    // Unutulursa oturum takılı kalmasın diye bu süre sonunda otomatik bitirilir.
+    private const FINAL_HOLD_MS = 1800000;
+
     public function index()
     {
         return $this->renderIndex();
@@ -458,9 +462,9 @@ class LiveQuizController extends Controller
             ->where('question_index', (int) $session->current_index)
             ->first();
         $topFive = $this->questionTopFive($session);
-        $showBoard = $session->status === 'live' && $session->phase === 'results';
+        $showBoard = $session->status === 'live' && in_array($session->phase, ['results', 'final'], true);
         $boardRows = $showBoard ? $this->liveBoardRows($session) : [];
-        $boardPrevRows = $showBoard ? $this->liveBoardRows($session, (int) $session->current_index) : [];
+        $boardPrevRows = ($showBoard && $session->phase === 'results') ? $this->liveBoardRows($session, (int) $session->current_index) : [];
 
         return view('student-portal.live-quiz-play', compact(
             'session',
@@ -1036,7 +1040,7 @@ class LiveQuizController extends Controller
             return $session;
         }
 
-        if (!in_array((string) $session->phase, ['intro', 'question', 'results'], true)) {
+        if (!in_array((string) $session->phase, ['intro', 'question', 'results', 'final'], true)) {
             $session->update(['phase' => $session->is_locked ? 'results' : 'question']);
             $session->refresh();
         }
@@ -1050,6 +1054,17 @@ class LiveQuizController extends Controller
         $nowMs = $this->nowMs();
         $currentIndex = (int) $session->current_index;
         $endsAtMs = (int) ($session->ends_at_ms ?? 0);
+
+        // Final: tüm sorular bitti, sıralama gösteriliyor; yönetici bitirene (veya zaman aşımına) kadar bekle.
+        if ($session->phase === 'final') {
+            if ($endsAtMs > 0 && $nowMs >= $endsAtMs) {
+                $this->completeSession($session);
+                return $session->fresh(['quiz.questions']);
+            }
+
+            return $session;
+        }
+
         if ($endsAtMs <= 0) {
             $durationMs = $session->phase === 'intro'
                 ? self::DOUBLE_XP_INTRO_MS
@@ -1080,7 +1095,12 @@ class LiveQuizController extends Controller
 
             $nextIndex = $currentIndex + 1;
             if ($nextIndex >= $questions->count()) {
-                $this->completeSession($session);
+                $session->update([
+                    'phase' => 'final',
+                    'is_locked' => true,
+                    'ends_at_ms' => $nowMs + self::FINAL_HOLD_MS,
+                ]);
+
                 return $session->fresh(['quiz.questions']);
             }
 

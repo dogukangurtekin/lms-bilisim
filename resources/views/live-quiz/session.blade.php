@@ -56,7 +56,7 @@
     <p><strong>Durum:</strong> <span id="lqStatusText">{{ $session->status }}</span> |
        <strong>Soru:</strong> <span id="lqQIndex">{{ $session->current_index + 1 }}</span>/<span id="lqQTotal">{{ $questions->count() }}</span></p>
 
-    @if($session->status === 'live')
+    @if($session->status === 'live' && $session->phase !== 'final')
     <div>
         <span class="lq-big-clock">{{ $session->phase === 'intro' ? 'Soru açılıyor' : ($session->phase === 'results' ? 'Sıradaki soruya' : 'Kalan süre') }}: <span id="lqCountdown">--</span> sn</span>
         <div class="lq-timer-bar"><div class="lq-timer-fill" id="lqTimerFill"></div></div>
@@ -64,13 +64,20 @@
     @endif
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+        @if($session->phase !== 'final')
         <form method="POST" action="{{ route('live-quiz.session.next', $session) }}">@csrf<button class="btn btn-primary" type="submit" {{ $session->phase !== 'question' ? 'disabled' : '' }}>Cevapları Kapat / Sonraki Soru</button></form>
-        <form method="POST" action="{{ route('live-quiz.session.finish', $session) }}">@csrf<button class="btn btn-danger" type="submit">Quizi Bitir</button></form>
+        @endif
+        <form method="POST" action="{{ route('live-quiz.session.finish', $session) }}">@csrf<button class="btn btn-danger" type="submit" @if($session->phase === 'final') style="font-size:18px;padding:12px 28px;" @endif>Yarışmayı Bitir</button></form>
         <a class="btn" href="{{ route('live-quiz.session.report', $session) }}">Detayli Rapor</a>
     </div>
 </div>
 
-@if($session->status === 'live' && $session->phase === 'intro')
+@if($session->status === 'live' && $session->phase === 'final')
+<div class="card" style="margin-bottom:12px;text-align:center;padding:18px;border-left:5px solid #16a34a;">
+    <strong style="font-size:20px;">🏁 Tüm sorular tamamlandı.</strong>
+    <p style="margin:6px 0 0;">Son sıralama yukarıda ve öğrenci ekranlarında gösteriliyor. <strong>Yarışmayı Bitir</strong> butonuna basana kadar bu ekran açık kalır; öğrenciler o zaman ana sayfaya yönlendirilir ve XP'ler işlenir.</p>
+</div>
+@elseif($session->status === 'live' && $session->phase === 'intro')
 <div class="card lq-double-stage" style="margin-bottom:12px;">
     <div class="lq-double-icon">⚡ 2X</div>
     <div class="lq-double-title">2 Kat Puanlı Soru!</div>

@@ -76,7 +76,7 @@
 </style>
 
 {{-- Canlı sıralama sadece sorular arasındaki 5 sn'lik ara ekranda gösterilir. --}}
-@if($session->status === 'live' && $session->phase === 'results')
+@if($session->status === 'live' && in_array($session->phase, ['results', 'final'], true))
     @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardPrevRows' => $boardPrevRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
 @endif
 
@@ -113,6 +113,19 @@
         <div class="lq-state">Bu oturumda soru bulunamadi.</div>
     @elseif($session->status !== 'live')
         <div class="lq-state">Quiz tamamlandi.</div>
+    @elseif($session->phase === 'final')
+        @php
+            $myBoard = collect($boardRows ?? [])->firstWhere('user_id', auth()->id());
+        @endphp
+        <div class="lq-center-stage">
+            <div class="lq-wait-box">
+                <h3 class="lq-wait-title">🏁 Yarışma Tamamlandı!</h3>
+                @if($myBoard)
+                    <p class="lq-result-sub">Sıralaman: <strong>#{{ $myBoard['rank'] }}</strong> · {{ $myBoard['xp'] }} XP</p>
+                @endif
+                <p class="lq-auto-note">Son sıralama yukarıda. Öğretmen yarışmayı bitirdiğinde ana sayfaya yönlendirileceksin.</p>
+            </div>
+        </div>
     @elseif($session->phase === 'intro')
         <div class="lq-center-stage lq-double-stage">
             <div class="lq-wait-box">
@@ -319,6 +332,7 @@
     // Cevabını verip bekleyen öğrenci, herkes bitince ara ekrana çabuk geçsin diye biraz daha sık sorgular.
     const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 3000 : 4000;
     const nextSyncDelay = () => {
+        if (initialPhase === 'final') return 6000;         // final ekranı: sadece "yarışma bitti mi" kontrolü
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);
         if (leftMs <= 0) return 1000;                      // faz bitti, sunucunun ilerlemesini bekle
         if (leftMs < BASE_SYNC_MS) return leftMs + 150 + Math.random() * 350;
