@@ -355,7 +355,8 @@
         const slot = document.createElement("button");
         slot.type = "button";
         slot.className = `slot${cmd ? " filled" : ""}${activeStepKey === `${track}:${i}` ? " active-step" : ""}`;
-        slot.textContent = cmd || "+";
+        slot.textContent = cmd ? (CMD_ICON[cmd] || cmd) : "+";
+        if (cmd) slot.dataset.cmd = cmd;
         slot.title = cmd ? "Silmek icin tikla" : "Komut eklemek icin alttan sec";
         slot.addEventListener("click", () => {
           if (runState) return;
@@ -394,88 +395,160 @@
     return { sx, sy, tw, th, eh };
   }
 
+  // =====================================================================
+  //  GÖRSEL KATMAN (yalnızca çizim; oyun mantığı yukarıda/aşağıda değişmedi)
+  // =====================================================================
+  const CMD_ICON = {};
+  COMMANDS.forEach((c) => { CMD_ICON[c.id] = c.icon; });
+  let animT = 0;                                   // animasyon zamanı (sn)
+  const vis = { x: 0, y: 0, h: 0, ang: 0, level: -1, ready: false }; // robotun GÖRÜNEN (yumuşak) konumu
+
+  function hash01(a, b) {
+    let h = (a * 374761393 + b * 668265263) | 0;
+    h = (h ^ (h >>> 13)) * 1274126177;
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  }
+  function angleOf(dir) { const v = DIRS[dir] || DIRS[0]; return Math.atan2(v.y, v.x); }
+
+  // Robotun görünen konumunu gerçek konuma doğru yumuşakça kaydırır (adımlar "tık" diye zıplamasın).
+  function stepVisual(dt) {
+    if (!robot) return;
+    const dist = Math.hypot(robot.x - vis.x, robot.y - vis.y);
+    if (!vis.ready || vis.level !== levelIndex || dist > 1.7) {
+      vis.x = robot.x; vis.y = robot.y; vis.h = robot.h; vis.ang = angleOf(robot.dir); vis.level = levelIndex; vis.ready = true;
+      return;
+    }
+    const k = 1 - Math.exp(-dt * 13);
+    vis.x += (robot.x - vis.x) * k;
+    vis.y += (robot.y - vis.y) * k;
+    vis.h += (robot.h - vis.h) * k;
+    const ta = angleOf(robot.dir);
+    const d = ((ta - vis.ang + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+    vis.ang += d * (1 - Math.exp(-dt * 16));
+  }
+
+  function face(pts, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i += 1) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+
+  function drawBackdrop(w, h) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#0a1738");
+    g.addColorStop(0.55, "#16327a");
+    g.addColorStop(1, "#1d4ed8");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < 70; i += 1) { // yıldızlar
+      const tw = 0.5 + 0.5 * Math.sin(animT * 2 + i * 1.7);
+      ctx.fillStyle = "rgba(255,255,255," + (0.15 + 0.5 * tw) + ")";
+      ctx.beginPath();
+      ctx.arc(hash01(i, 1) * w, hash01(i, 2) * h * 0.75, 0.6 + hash01(i, 3) * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const glow = ctx.createRadialGradient(w * 0.48, h * 0.55, 0, w * 0.48, h * 0.55, w * 0.55);
+    glow.addColorStop(0, "rgba(96,165,250,0.35)");
+    glow.addColorStop(1, "rgba(96,165,250,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+  }
+
   function drawTile(tile, scale, ox, oy, lit) {
     const p = project(tile.x, tile.y, tile.h, scale, ox, oy);
     const { sx, sy, tw, th, eh } = p;
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(sx + tw / 2, sy + th / 2);
-    ctx.lineTo(sx, sy + th);
-    ctx.lineTo(sx - tw / 2, sy + th / 2);
-    ctx.closePath();
-    ctx.fillStyle = lit ? "#ffe15d" : (tile.light ? "#4ea4da" : "#d7e3ef");
-    ctx.fill();
-    ctx.strokeStyle = "#6d7d8e";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(sx - tw / 2, sy + th / 2);
-    ctx.lineTo(sx, sy + th);
-    ctx.lineTo(sx, sy + th + eh);
-    ctx.lineTo(sx - tw / 2, sy + th / 2 + eh);
-    ctx.closePath();
-    ctx.fillStyle = "#b7c6d6";
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(sx + tw / 2, sy + th / 2);
-    ctx.lineTo(sx, sy + th);
-    ctx.lineTo(sx, sy + th + eh);
-    ctx.lineTo(sx + tw / 2, sy + th / 2 + eh);
-    ctx.closePath();
-    ctx.fillStyle = "#a8b9cb";
-    ctx.fill();
-    ctx.stroke();
+    const depth = ((tile.h || 0) + 1) * eh; // sütun zemine kadar uzanır
+    const midY = sy + th / 2;
+    // yan yüzler
+    let g = ctx.createLinearGradient(0, midY, 0, midY + depth);
+    g.addColorStop(0, "#90a8c6");
+    g.addColorStop(1, "#506b8c");
+    face([[sx - tw / 2, midY], [sx, sy + th], [sx, sy + th + depth], [sx - tw / 2, midY + depth]], g, "rgba(20,40,80,0.35)");
+    g = ctx.createLinearGradient(0, midY, 0, midY + depth);
+    g.addColorStop(0, "#7a93b4");
+    g.addColorStop(1, "#3f5878");
+    face([[sx + tw / 2, midY], [sx, sy + th], [sx, sy + th + depth], [sx + tw / 2, midY + depth]], g, "rgba(20,40,80,0.35)");
+    // üst yüz
+    const top = ctx.createLinearGradient(sx - tw / 2, sy, sx + tw / 2, sy + th);
+    if (lit) { top.addColorStop(0, "#fff3a3"); top.addColorStop(1, "#fbbf24"); }
+    else if (tile.light) { top.addColorStop(0, "#9ddcfb"); top.addColorStop(1, "#3b9be0"); }
+    else { top.addColorStop(0, "#f4f9ff"); top.addColorStop(1, "#cbddf1"); }
+    face([[sx, sy], [sx + tw / 2, midY], [sx, sy + th], [sx - tw / 2, midY]], top, "rgba(255,255,255,0.6)");
+    // ışık yuvası: ring + parıltı
+    if (tile.light) {
+      const cx = sx, cy = midY, rx = tw * 0.26, ry = th * 0.26;
+      if (lit) {
+        const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, tw * 0.55);
+        gl.addColorStop(0, "rgba(255,240,150," + (0.75 + 0.2 * Math.sin(animT * 5)) + ")");
+        gl.addColorStop(1, "rgba(255,240,150,0)");
+        ctx.fillStyle = gl;
+        ctx.beginPath(); ctx.ellipse(cx, cy, tw * 0.55, th * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#fffbe0";
+        ctx.beginPath(); ctx.ellipse(cx, cy, rx * 0.7, ry * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.strokeStyle = "rgba(255,255,255," + (0.65 + 0.3 * Math.sin(animT * 3 + tile.x)) + ")";
+        ctx.lineWidth = Math.max(2, 3 * scale);
+        ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath(); ctx.ellipse(cx, cy, rx * 0.55, ry * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
 
   function drawRobot(scale, ox, oy) {
     if (!robot) return;
-    const p = project(robot.x, robot.y, robot.h, scale, ox, oy);
-    const cx = p.sx;
-    // Karakter biraz daha yukari alinmis gorunsun
-    const cy = p.sy + p.th * 0.28;
-    const r = 14 * scale;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = "#d6dbe6";
-    ctx.fill();
-    ctx.strokeStyle = "#5f6d7d";
+    const p = project(vis.x, vis.y, vis.h, scale, ox, oy);
+    const bx = p.sx;
+    const by = p.sy + p.th / 2;                       // karo yüzeyinin merkezi
+    const moving = Math.min(1, Math.abs(robot.x - vis.x) + Math.abs(robot.y - vis.y) + Math.abs(robot.h - vis.h));
+    const bob = Math.sin(animT * 3.2) * 1.6 * scale + moving * 7 * scale; // hafif süzülme + hareket sırasında zıplama
+    const u = scale;
+    // gölge
+    ctx.fillStyle = "rgba(0,0,0," + (0.28 - moving * 0.1) + ")";
+    ctx.beginPath(); ctx.ellipse(bx, by + 1, 13 * u, 6.5 * u, 0, 0, Math.PI * 2); ctx.fill();
+    const cy = by - 17 * u - bob;                     // gövde merkezi
+    // gövde
+    const body = ctx.createLinearGradient(bx - 12 * u, cy - 12 * u, bx + 12 * u, cy + 12 * u);
+    body.addColorStop(0, "#ffffff");
+    body.addColorStop(1, "#b9c8dc");
+    ctx.fillStyle = body;
+    ctx.strokeStyle = "#51657f";
     ctx.lineWidth = 2;
-    ctx.stroke();
-
-    const dirVec = DIRS[robot.dir] || DIRS[0];
-    const ang = Math.atan2(dirVec.y, dirVec.x);
-    const eyeX = cx + Math.cos(ang) * r * 0.58;
-    const eyeY = cy + Math.sin(ang) * r * 0.46;
-    const backEyeX = cx + Math.cos(ang + Math.PI) * r * 0.35;
-    const backEyeY = cy + Math.sin(ang + Math.PI) * r * 0.25;
-    ctx.beginPath();
-    ctx.arc(eyeX, eyeY, Math.max(3, r * 0.23), 0, Math.PI * 2);
+    ctx.beginPath(); ctx.ellipse(bx, cy + 4 * u, 12 * u, 13 * u, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // kafa
+    const hy = cy - 9 * u;
+    const head = ctx.createLinearGradient(bx - 11 * u, hy - 10 * u, bx + 11 * u, hy + 10 * u);
+    head.addColorStop(0, "#9fe3ff");
+    head.addColorStop(1, "#38a8e8");
+    ctx.fillStyle = head;
+    ctx.beginPath(); ctx.arc(bx, hy, 11 * u, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // yüz: bakılan yönde (ekran düzleminde izometrik vektör)
+    const dv = { x: Math.cos(vis.ang), y: Math.sin(vis.ang) };
+    const fx = (dv.x - dv.y) * 0.5, fy = (dv.x + dv.y) * 0.25;
     ctx.fillStyle = "#0f172a";
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(backEyeX, backEyeY, Math.max(2, r * 0.14), 0, Math.PI * 2);
-    ctx.fillStyle = "#94a3b8";
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r - 8 * scale);
-    ctx.lineTo(cx, cy - r - 2 * scale);
-    ctx.strokeStyle = "#64748b";
+    ctx.beginPath(); ctx.ellipse(bx + fx * 8 * u, hy + fy * 8 * u + 1 * u, 8 * u, 6 * u, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#67e8f9";
+    ctx.beginPath(); ctx.arc(bx + fx * 8 * u - 2.6 * u, hy + fy * 8 * u + 1 * u, 1.9 * u, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + fx * 8 * u + 2.6 * u, hy + fy * 8 * u + 1 * u, 1.9 * u, 0, Math.PI * 2); ctx.fill();
+    // anten
+    ctx.strokeStyle = "#51657f";
     ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, cy - r - 9 * scale, 3.5 * scale, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.moveTo(bx, hy - 10 * u); ctx.lineTo(bx, hy - 17 * u); ctx.stroke();
     ctx.fillStyle = "#fb7185";
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(bx, hy - 18.5 * u, (3.2 + Math.sin(animT * 6) * 0.5) * u, 0, Math.PI * 2); ctx.fill();
   }
 
   function draw() {
     const level = getLevel();
+    if (!level) return;
     const w = canvas.clientWidth || 920;
     const h = canvas.clientHeight || 520;
     ctx.clearRect(0, 0, w, h);
+    drawBackdrop(w, h);
     const tiles = level.board.tiles || [];
     const xs = tiles.map((t) => t.x);
     const ys = tiles.map((t) => t.y);
@@ -487,14 +560,29 @@
     const scale = Math.max(0.62, Math.min(1.08, 8 / span));
     const ox = w * 0.48;
     const oy = h * 0.2 + span * 12;
-    tiles
-      .slice()
-      .sort((a, b) => (a.x + a.y + a.h) - (b.x + b.y + b.h))
-      .forEach((tile) => {
-        const lit = litMap.has(tileKey(tile.x, tile.y));
-        drawTile(tile, scale, ox, oy, lit);
-      });
-    drawRobot(scale, ox, oy);
+    const sorted = tiles.slice().sort((a, b) => (a.x + a.y + a.h) - (b.x + b.y + b.h));
+    // robot, kendi karesinden önceki karolardan sonra, öndeki karolardan önce çizilir (doğru örtüşme)
+    const robotDepth = robot ? vis.x + vis.y + vis.h : Infinity;
+    let robotDrawn = false;
+    sorted.forEach((tile) => {
+      if (!robotDrawn && robot && (tile.x + tile.y + tile.h) > robotDepth + 0.6) {
+        drawRobot(scale, ox, oy);
+        robotDrawn = true;
+      }
+      drawTile(tile, scale, ox, oy, litMap.has(tileKey(tile.x, tile.y)));
+    });
+    if (!robotDrawn) drawRobot(scale, ox, oy);
+  }
+
+  let lastFrameTs = 0;
+  function visualLoop(ts) {
+    const dt = Math.min(0.05, ((ts || 0) - lastFrameTs) / 1000) || 0.016;
+    lastFrameTs = ts || 0;
+    animT += dt;
+    try { stepVisual(dt); draw(); } catch (e) { // çizim hatası oyunu durdurmasın; ilk hata konsola yazılır
+      if (!visualLoop.failed) { visualLoop.failed = true; console.error('Lightbot çizim hatası:', e); }
+    }
+    window.requestAnimationFrame(visualLoop);
   }
 
   function executeOne(cmd) {
@@ -708,6 +796,7 @@
       btn.type = "button";
       btn.className = `cmd-btn${cmd.accent ? " accent" : ""}`;
       btn.textContent = cmd.icon;
+      btn.dataset.cmd = cmd.id;
       btn.title = cmd.title || cmd.id;
       const forceJumpOpen = String(level?.id || "") === "1-5";
       const disabled = (cmd.id === "P1" && !level.allow.proc1) || (cmd.id === "P2" && !level.allow.proc2) || (cmd.id === "J" && !level.allow.jump && !forceJumpOpen);
@@ -753,6 +842,7 @@
     resetLevelState();
     renderCommandBar();
     resizeCanvas();
+    window.requestAnimationFrame(visualLoop);
   }
 
   init();
