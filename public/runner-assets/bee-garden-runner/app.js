@@ -55,31 +55,59 @@
 
     function beeSvg() {
         return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="22" cy="24" rx="10" ry="7" fill="rgba(0,0,0,.12)" />
-            <ellipse cx="38" cy="24" rx="10" ry="7" fill="rgba(0,0,0,.12)" />
-            <ellipse cx="22" cy="22" rx="10" ry="7" fill="#FFFDF5" stroke="#E7E2CE" stroke-width="1"/>
-            <ellipse cx="38" cy="22" rx="10" ry="7" fill="#FFFDF5" stroke="#E7E2CE" stroke-width="1"/>
-            <ellipse cx="30" cy="34" rx="18" ry="15" fill="#FFC93C" stroke="#1F2430" stroke-width="2.2"/>
-            <path d="M14 30h32M17 38h26M22 45h16" stroke="#1F2430" stroke-width="4" stroke-linecap="round"/>
-            <circle cx="24" cy="30" r="3.4" fill="#1F2430"/>
-            <circle cx="36" cy="30" r="3.4" fill="#1F2430"/>
-            <circle cx="25" cy="29" r="1" fill="#fff"/>
-            <circle cx="37" cy="29" r="1" fill="#fff"/>
+            <defs>
+                <radialGradient id="beeBody" cx="38%" cy="30%" r="80%">
+                    <stop offset="0" stop-color="#FFE98A"/>
+                    <stop offset="1" stop-color="#FFB800"/>
+                </radialGradient>
+            </defs>
+            <path d="M16 33 L6 36 L16 38 Z" fill="#1F2430"/>
+            <g class="bee-wing"><ellipse cx="22" cy="20" rx="9" ry="12" transform="rotate(-24 22 20)" fill="#EAF6FF" fill-opacity=".92" stroke="#9CC6E8" stroke-width="1.2"/></g>
+            <g class="bee-wing r"><ellipse cx="39" cy="20" rx="9" ry="12" transform="rotate(24 39 20)" fill="#EAF6FF" fill-opacity=".92" stroke="#9CC6E8" stroke-width="1.2"/></g>
+            <path d="M25 17 Q22 8 18 6" stroke="#1F2430" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <path d="M35 17 Q38 8 42 6" stroke="#1F2430" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            <circle cx="18" cy="6" r="2" fill="#FF7A45"/>
+            <circle cx="42" cy="6" r="2" fill="#FF7A45"/>
+            <ellipse cx="30" cy="35" rx="19" ry="16" fill="url(#beeBody)" stroke="#1F2430" stroke-width="2.4"/>
+            <path d="M13.5 32 Q30 38 46.5 32 M15 41 Q30 47 45 41 M20 48 Q30 52 40 48" stroke="#1F2430" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+            <ellipse cx="23" cy="27" rx="6" ry="3.4" fill="#fff" opacity=".4"/>
+            <circle cx="24" cy="30" r="4" fill="#fff" stroke="#1F2430" stroke-width="1.4"/>
+            <circle cx="36" cy="30" r="4" fill="#fff" stroke="#1F2430" stroke-width="1.4"/>
+            <circle cx="25" cy="30.5" r="2.1" fill="#1F2430"/>
+            <circle cx="37" cy="30.5" r="2.1" fill="#1F2430"/>
+            <circle cx="25.7" cy="29.6" r=".8" fill="#fff"/>
+            <circle cx="37.7" cy="29.6" r=".8" fill="#fff"/>
+            <ellipse cx="19" cy="35" rx="2.6" ry="1.6" fill="#FF8FA3" opacity=".7"/>
+            <ellipse cx="41" cy="35" rx="2.6" ry="1.6" fill="#FF8FA3" opacity=".7"/>
             <path d="M27 36q3 3 6 0" stroke="#1F2430" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <path d="M12 18c-4-4-4-10 2-11 4-1 6 4 4 8" fill="#1F2430" opacity=".15"/>
-            <path d="M48 18c4-4 4-10-2-11-4-1-6 4-4 8" fill="#1F2430" opacity=".15"/>
         </svg>`;
     }
 
     function flowerSvg() {
         return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#B8447A" stroke-width="1.5">
-                <ellipse cx="30" cy="16" rx="9" ry="12" fill="#FF8FC0"/>
-                <ellipse cx="30" cy="44" rx="9" ry="12" fill="#FF8FC0"/>
-                <ellipse cx="16" cy="30" rx="12" ry="9" fill="#FFB1D3"/>
-                <ellipse cx="44" cy="30" rx="12" ry="9" fill="#FFB1D3"/>
+            <defs>
+                <radialGradient id="petalG" cx="50%" cy="30%" r="80%">
+                    <stop offset="0" stop-color="#FFC2DC"/>
+                    <stop offset="1" stop-color="#FF7FB5"/>
+                </radialGradient>
+                <radialGradient id="coreG" cx="40%" cy="35%" r="75%">
+                    <stop offset="0" stop-color="#FFF08A"/>
+                    <stop offset="1" stop-color="#FFB400"/>
+                </radialGradient>
+            </defs>
+            <g stroke="#C2457F" stroke-width="1.3" fill="url(#petalG)">
+                <ellipse cx="30" cy="14" rx="8" ry="11"/>
+                <ellipse cx="30" cy="46" rx="8" ry="11"/>
+                <ellipse cx="14" cy="30" rx="11" ry="8"/>
+                <ellipse cx="46" cy="30" rx="11" ry="8"/>
+                <ellipse cx="18.5" cy="18.5" rx="8" ry="10" transform="rotate(-45 18.5 18.5)"/>
+                <ellipse cx="41.5" cy="18.5" rx="8" ry="10" transform="rotate(45 41.5 18.5)"/>
+                <ellipse cx="18.5" cy="41.5" rx="8" ry="10" transform="rotate(45 18.5 41.5)"/>
+                <ellipse cx="41.5" cy="41.5" rx="8" ry="10" transform="rotate(-45 41.5 41.5)"/>
             </g>
-            <circle cx="30" cy="30" r="9" fill="#FFD84D" stroke="#B8447A" stroke-width="1.5"/>
+            <circle cx="30" cy="30" r="9.5" fill="url(#coreG)" stroke="#C2457F" stroke-width="1.3"/>
+            <circle cx="27" cy="27" r="2.2" fill="#fff" opacity=".7"/>
+            <g fill="#B46A00" opacity=".6"><circle cx="31" cy="31" r="1"/><circle cx="34" cy="28" r=".9"/><circle cx="27" cy="34" r=".9"/></g>
         </svg>`;
     }
 
