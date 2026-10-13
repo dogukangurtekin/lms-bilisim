@@ -3,143 +3,181 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#0a1738" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <link rel="manifest" href="../manifest.webmanifest" />
   <link rel="apple-touch-icon" href="../logo.png" />
-  <title>Python Sessiz Ogretmen</title>
+  <title>Python Sessiz Öğretmen</title>
   <style>
+    /* Python Quiz Lab — yenilenmiş görünüm (yalnızca görsel; soru/ilerleme mantığı app.js'te değişmedi) */
     :root {
-      --bg: #0f4a63;
-      --card: #eef0f2;
-      --text: #0f172a;
-      --muted: #475569;
-      --opt: #f88772;
-      --opt-hover: #f5755c;
-      --warn: #f4cc43;
-      --ok: #22c55e;
+      --ink: #0b2447;
+      --soft: #5b7096;
+      --line: #d3e1fb;
+      --navy-1: #0a1738;
+      --navy-2: #12285c;
+      --ok: #16a34a;
       --err: #ef4444;
+      --warn: #f59e0b;
+      --font: "Nunito", "Segoe UI", system-ui, -apple-system, "Trebuchet MS", Arial, sans-serif;
+      --mono: "JetBrains Mono", "Consolas", "Courier New", monospace;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: "Trebuchet MS", "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-    .shell { min-height: 100%; display: grid; grid-template-columns: 300px 1fr; gap: 20px; padding: 22px; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; font-family: var(--font); color: var(--ink); }
+    body {
+      background:
+        radial-gradient(900px 500px at 8% -10%, #ffffff 0%, transparent 60%),
+        radial-gradient(700px 500px at 100% 110%, #c7dcff 0%, transparent 60%),
+        radial-gradient(circle, rgba(37, 99, 235, .10) 1.2px, transparent 1.6px) 0 0 / 26px 26px,
+        linear-gradient(160deg, #eef4ff, #dbe8ff);
+    }
+    .shell { min-height: 100%; display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px; }
     .left {
-      background: rgba(15, 23, 42, 0.18);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      border-radius: 18px;
-      padding: 16px;
+      background: linear-gradient(165deg, var(--navy-1), var(--navy-2));
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 24px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-shadow: 0 16px 34px rgba(11, 36, 71, .3), inset 0 1px 0 rgba(255, 255, 255, .14);
     }
     .brand {
-      font-size: 32px;
-      line-height: 0.95;
+      font-size: 30px;
+      line-height: 1;
       font-weight: 900;
-      color: #e2e8f0;
-      letter-spacing: 0.8px;
+      letter-spacing: .6px;
+      background: linear-gradient(135deg, #7fb0ff 20%, #fde047 80%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      padding-bottom: 2px;
     }
-    .desc { color: #cbd5e1; font-size: 0.95rem; }
+    .desc { color: #bcd0f5; font-size: .92rem; font-weight: 700; line-height: 1.5; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip {
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      background: rgba(15, 23, 42, 0.35);
-      color: #e2e8f0;
-      padding: 6px 10px;
-      font-size: 0.8rem;
+      border: 1px solid rgba(255, 255, 255, .2);
+      background: rgba(255, 255, 255, .1);
+      color: #e6eeff;
+      padding: 6px 11px;
+      font-size: .78rem;
+      font-weight: 800;
     }
     .section-list { display: grid; gap: 8px; margin-top: 6px; }
     .section-btn {
       width: 100%;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      background: rgba(255, 255, 255, 0.08);
-      color: #e2e8f0;
-      border-radius: 12px;
-      padding: 10px 12px;
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, .08);
+      color: #e6eeff;
+      border-radius: 14px;
+      padding: 11px 13px;
       text-align: left;
       cursor: pointer;
-      font-weight: 700;
+      font-family: inherit;
+      font-weight: 800;
+      transition: background .15s, transform .12s, border-color .15s;
     }
-    .section-btn.active { background: rgba(56, 189, 248, 0.2); border-color: #7dd3fc; }
-    .section-btn.locked { opacity: 0.5; cursor: not-allowed; }
+    .section-btn:hover:not(.locked) { background: rgba(255, 255, 255, .16); transform: translateX(2px); }
+    .section-btn.active { background: linear-gradient(135deg, #3b82f6, #1d4ed8); border-color: rgba(255, 255, 255, .35); box-shadow: 0 8px 16px rgba(37, 99, 235, .4); }
+    .section-btn.locked { opacity: .42; cursor: not-allowed; }
     .close-btn {
       margin-top: auto;
-      border: none;
-      border-radius: 10px;
-      background: #e2e8f0;
-      color: #0f172a;
-      padding: 10px 12px;
-      font-weight: 700;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #f87171, #dc2626);
+      color: #fff;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-weight: 900;
       cursor: pointer;
+      box-shadow: 0 5px 0 rgba(0, 0, 0, .28);
+      transition: transform .1s, box-shadow .1s;
     }
+    .close-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, .28); }
     .right { display: grid; grid-template-rows: auto 1fr auto; gap: 12px; min-width: 0; }
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      color: #e2e8f0;
+      padding: 12px 18px;
+      border-radius: 20px;
+      background: linear-gradient(165deg, var(--navy-1), var(--navy-2));
+      border: 1px solid rgba(255, 255, 255, .1);
+      box-shadow: 0 14px 30px rgba(11, 36, 71, .26);
+      color: #fff;
     }
-    .topbar .title { font-size: 1.15rem; font-weight: 800; }
-    .topbar .progress { font-size: 0.95rem; color: #bae6fd; }
+    .topbar .title { font-size: 1.15rem; font-weight: 900; }
+    .topbar .progress { font-size: .9rem; font-weight: 900; color: #fff; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .2); }
     .panel {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 14px 34px rgba(2, 6, 23, 0.2);
+      background: linear-gradient(170deg, #ffffff, #f1f6ff);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 16px 34px rgba(15, 45, 92, .14);
       display: grid;
       grid-template-rows: auto auto 1fr auto;
-      gap: 12px;
+      gap: 14px;
     }
     .lesson {
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 10px 12px;
-      background: #f8fafc;
-      color: #334155;
-      font-size: 0.93rem;
+      border: 1px solid #cfdcfb;
+      border-left: 5px solid #5B3DF5;
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #eef2ff, #e0eaff);
+      color: var(--ink);
+      font-size: .93rem;
+      font-weight: 700;
+      line-height: 1.55;
     }
     pre.code {
       margin: 0;
-      background: #ffffff;
-      border: 1px solid #d8dee7;
-      border-radius: 10px;
-      padding: 12px;
+      background: linear-gradient(170deg, #0d1a38, #101f45);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 18px;
+      padding: 16px 18px;
       overflow: auto;
-      font-family: "Consolas", "Courier New", monospace;
-      font-size: 1.75rem;
-      line-height: 1.35;
-      color: #0f172a;
+      font-family: var(--mono);
+      font-size: 1.6rem;
+      line-height: 1.4;
+      color: #e7eeff;
       min-height: 130px;
+      box-shadow: 0 14px 26px rgba(11, 36, 71, .28), inset 0 1px 0 rgba(255, 255, 255, .1);
     }
-    .kw { color: #0369a1; font-weight: 700; }
-    .num { color: #be185d; }
-    .question { font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+    .kw { color: #7fb0ff; font-weight: 700; }
+    .num { color: #fbbf24; }
+    .question { font-size: 1.08rem; font-weight: 900; color: var(--ink); }
     .options {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+      gap: 12px;
       align-content: start;
     }
     .opt {
-      border: none;
-      border-radius: 999px;
-      background: var(--opt);
+      border: 0;
+      border-radius: 18px;
+      background: linear-gradient(145deg, #4cc3ee, #1d8fd0);
       color: #fff;
-      font-size: 1.35rem;
-      min-height: 56px;
-      font-family: "Consolas", "Courier New", monospace;
+      font-size: 1.3rem;
+      font-weight: 800;
+      min-height: 58px;
+      font-family: var(--mono);
       cursor: pointer;
-      transition: transform 0.15s ease, filter 0.15s ease;
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
       padding: 6px 12px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+      box-shadow: 0 5px 0 rgba(0, 0, 0, .25), 0 10px 16px rgba(15, 45, 92, .16), inset 0 1px 0 rgba(255, 255, 255, .4);
     }
-    .opt:hover { filter: brightness(1.03); transform: translateY(-1px); }
-    .opt.trap { background: var(--warn); color: #6b4d00; }
-    .opt.correct { background: var(--ok); }
-    .opt.wrong { background: var(--err); }
-    .opt.wrong-anim { animation: wrongShake 0.35s ease; }
+    .opt:nth-child(3n+2) { background: linear-gradient(145deg, #a78bfa, #7c3aed); }
+    .opt:nth-child(3n+3) { background: linear-gradient(145deg, #fb923c, #ea580c); }
+    .opt:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-2px); }
+    .opt:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }
+    .opt.trap { background: linear-gradient(145deg, #fde68a, #f59e0b); color: #6b4d00; text-shadow: none; }
+    .opt.correct { background: linear-gradient(145deg, #4ade80, #16a34a); }
+    .opt.wrong { background: linear-gradient(145deg, #f87171, #dc2626); }
+    .opt.wrong-anim { animation: wrongShake .35s ease; }
     @keyframes wrongShake {
       0% { transform: translateX(0); }
       20% { transform: translateX(-5px); }
@@ -155,19 +193,24 @@
       justify-content: space-between;
       gap: 10px;
     }
-    .feedback { min-height: 24px; color: #334155; font-size: 0.95rem; }
+    .feedback { min-height: 24px; color: var(--soft); font-size: .95rem; font-weight: 800; }
     .next-btn {
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #22d398, #16a34a);
       color: #fff;
-      padding: 10px 14px;
-      font-weight: 700;
+      padding: 11px 18px;
+      font-family: inherit;
+      font-weight: 900;
       cursor: pointer;
-      min-width: 130px;
+      min-width: 140px;
+      box-shadow: 0 5px 0 #0f6b32, 0 10px 18px rgba(21, 128, 61, .3);
+      transition: transform .1s, box-shadow .1s, filter .1s;
     }
-    .next-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-    .footer { color: #cbd5e1; font-size: 0.85rem; text-align: right; }
+    .next-btn:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+    .next-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #0f6b32; }
+    .next-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
+    .footer { color: var(--soft); font-size: .85rem; font-weight: 700; text-align: right; }
     @media (max-width: 1000px) {
       .shell { grid-template-columns: 1fr; }
       .options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -176,24 +219,25 @@
     @media (max-width: 640px) {
       .options { grid-template-columns: 1fr; }
     }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
   <div class="shell">
     <aside class="left">
       <div class="brand">PYTHON<br>QUIZ LAB</div>
-      <div class="desc">Kolay, orta ve zor seviyede coklu bolumler. Her bolumde mini konu anlatimi ve kod sorulari.</div>
+      <div class="desc">Kolay, orta ve zor seviyede çoklu bölümler. Her bölümde mini konu anlatımı ve kod soruları.</div>
       <div class="chips">
-        <span class="chip">Temel degiskenler</span>
-        <span class="chip">Kosul</span>
-        <span class="chip">Karsilastirma</span>
+        <span class="chip">Temel değişkenler</span>
+        <span class="chip">Koşul</span>
+        <span class="chip">Karşılaştırma</span>
       </div>
       <div id="section-list" class="section-list"></div>
       <button id="btn-close" class="close-btn">Kapat</button>
     </aside>
     <main class="right">
       <div class="topbar">
-        <div id="section-title" class="title">Bolum 1</div>
+        <div id="section-title" class="title">Bölüm 1</div>
         <div id="section-progress" class="progress">Soru 1/1</div>
       </div>
       <section class="panel">
