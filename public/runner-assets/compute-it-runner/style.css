@@ -148,13 +148,13 @@ body {
   box-shadow: inset 0 -7px 12px rgba(0, 60, 20, .3), inset 0 4px 7px rgba(255, 255, 255, .6), 0 0 0 3px rgba(74, 222, 128, .35), 0 0 18px rgba(74, 222, 128, .55);
 }
 .cell.goal { background: radial-gradient(circle at 32% 26%, #ffffff 0%, #e2e8f0 45%, #94a3b8 100%); }
-.cell.goal::after { /* hedef halkası */
+.cell.goal::after { /* bitiş yuvarlağı: net KIRMIZI halka */
   content: "";
   position: absolute;
-  inset: -5px;
+  inset: -6px;
   border-radius: 50%;
-  border: 4px solid #fb7185;
-  box-shadow: 0 0 14px rgba(244, 63, 94, .65), inset 0 0 8px rgba(244, 63, 94, .35);
+  border: 5px solid #ef4444;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 16px rgba(239, 68, 68, .85), inset 0 0 8px rgba(239, 68, 68, .35);
   pointer-events: none;
   animation: goalPulse 1.7s ease-in-out infinite;
 }
@@ -416,7 +416,7 @@ body {
   .counter-value { margin-top: 0; font-size: 16px; }
   .board { gap: 4px; }
   .cell { width: var(--cell-size, 28px); height: var(--cell-size, 28px); }
-  .cell.goal::after { inset: -2px; border-width: 3px; }
+  .cell.goal::after { inset: -3px; border-width: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .9), 0 0 8px rgba(239, 68, 68, .8); }
   .code-card { padding: 10px 12px; border-radius: 18px; }
   .code-wrap { justify-content: space-between; }
   .code-wrap h2 { margin-bottom: 4px; font-size: 15px; }
