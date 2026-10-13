@@ -241,7 +241,7 @@ body {
   min-width: 0;
   flex: 0 1 auto;
   overflow: visible;
-  padding: 0 0 0 1.6em; /* aktif satır oku için soldan boşluk */
+  padding: 0;
 }
 .cmd-list .line { display: block; white-space: pre; min-width: 0; border-radius: 6px; }
 .cmd-list.compact-columns {
@@ -256,26 +256,7 @@ body {
 .cmd-list .i1 { padding-left: var(--code-indent, 13px); }
 .cmd-list .i2 { padding-left: calc(var(--code-indent, 13px) * 2); }
 .cmd-list .i3 { padding-left: calc(var(--code-indent, 13px) * 3); }
-.cmd-list .active {
-  color: #fff;
-  text-decoration: none;
-  position: relative;
-  background: linear-gradient(90deg, rgba(56, 189, 248, .30), rgba(56, 189, 248, 0));
-  box-shadow: inset 3px 0 0 #38bdf8;
-}
-.cmd-list .active::before {
-  content: "▶";
-  position: absolute;
-  left: -1.4em;
-  color: #fb7185;
-  font-size: 0.85em;
-  line-height: inherit;
-  animation: arrowPulse 0.7s ease infinite alternate;
-}
-@keyframes arrowPulse {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0.5; transform: translateX(2px); }
-}
+/* Adım yardımcısı yok: sıradaki satır işaretlenmez, öğrenci kod sırasını kendisi takip eder. */
 .cmd-list .ok { color: #4ade80; }
 .cmd-list .bad { color: #fca5a5; background: rgba(248, 113, 113, .16); box-shadow: inset 3px 0 0 #f87171; }
 
