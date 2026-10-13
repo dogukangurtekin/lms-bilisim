@@ -1,1544 +1,605 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const statusEl = document.getElementById("status");
-const levelSelect = document.getElementById("level-select");
-const runBtn = document.getElementById("btn-run");
-const resetBtn = document.getElementById("btn-reset");
-const closeBtn = document.getElementById("btn-close");
-const addLevelBtn = document.getElementById("btn-add-level");
-const editLevelBtn = document.getElementById("btn-edit-level");
-const deleteLevelBtn = document.getElementById("btn-delete-level");
-const assignHomeworkBtn = document.getElementById("btn-assign-homework");
-const sessionTimerEl = document.getElementById("session-timer");
-const sessionXpEl = document.getElementById("session-xp");
-const blocklyEl = document.getElementById("blockly");
-const designerModal = document.getElementById("designer-modal");
-const designerBoard = document.getElementById("designer-board");
-const designerPalette = document.getElementById("designer-palette");
-const designerWidthEl = document.getElementById("designer-width");
-const designerHeightEl = document.getElementById("designer-height");
-const designerOrderEl = document.getElementById("designer-order");
-const designerXpEl = document.getElementById("designer-xp");
-const designerSaveBtn = document.getElementById("designer-save");
-const designerCancelBtn = document.getElementById("designer-cancel");
-const notifyPopup = document.getElementById("notify-popup");
-const confirmOverlay = document.getElementById("confirm-overlay");
-const confirmText = document.getElementById("confirm-text");
-const confirmYesBtn = document.getElementById("confirm-yes");
-const confirmNoBtn = document.getElementById("confirm-no");
-const winOverlay = document.getElementById("win-overlay");
-const winTitle = document.getElementById("win-title");
-const winText = document.getElementById("win-text");
-const winStars = document.getElementById("win-stars");
-const winContinueBtn = document.getElementById("win-continue");
-const winRetryBtn = document.getElementById("win-retry");
+/*
+ * 3D Blok Kodlama (v2) — oyun mantığı, sürükle-bırak blok editörü ve platform entegrasyonu.
+ * Bağımlılıklar: engine.js (yürütme), levels.js (65 seviye), render3d.js (izometrik tuval), editor.js (sürükle-bırak blok editörü).
+ * engine.js ve editor.js 2B oyunla ortaktır (tools/block-levels/sync-shared.mjs ile eşitlenir).
+ *
+ * Platform sözleşmesi (eski 3D sürümle uyumlu):
+ *   URL: ?role=teacher|admin  &levelStart=&levelEnd= (veya from/to)  &assignmentId=  &assignmentTitle=  &grant=1
+ *   Giden mesajlar (source: 'block-3d'): GAME_UPDATE, LEVEL_COMPLETED, ASSIGNMENT_RANGE_COMPLETED, CLOSE_ACTIVITY_MODAL, OPEN_BLOCK_HOMEWORK_ASSIGN
+ *   completedLevelIds = tamamlanan seviyelerin SIRA numaraları (1 tabanlı); levels[] = özet liste (id, name, group, order, xp, completed, stars).
+ */
+(function () {
+  'use strict';
 
-const DEFAULT_GRID_SIZE = 10;
-const DEFAULT_LEVEL_XP = 12;
-const EASY_LEVEL_XP = 5;
-const MEDIUM_LEVEL_XP = 12;
-const HARD_LEVEL_XP = 21;
-const TILE_DEPTH = 24;
-const CUSTOM_LEVELS_KEY = "block3d_custom_levels_v1";
-const DELETED_BASE_LEVELS_KEY = "block3d_deleted_base_levels_v1";
+  var SET = window.BLOCK_LEVEL_SET;
+  var Engine = window.BlockEngine;
+  var LEVELS = (SET && SET.levels) || [];
+  var VERSION = (SET && SET.version) || 2;
+  var $ = function (id) { return document.getElementById(id); };
 
-const DIRS = [
-  { x: 1, y: 0 },
-  { x: 0, y: 1 },
-  { x: -1, y: 0 },
-  { x: 0, y: -1 }
-];
-const query = new URLSearchParams(window.location.search);
-const roleParam = String(query.get("role") || "").toLowerCase();
-const roleStorage = String((() => { try { return localStorage.getItem("runner_role") || ""; } catch (e) { return ""; } })()).toLowerCase();
-const resolvedRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : ((roleStorage === "teacher" || roleStorage === "admin") ? roleStorage : "student");
-const runnerRole = resolvedRole;
-const assignmentId = String(query.get("assignmentId") || "");
-const hasQueryRange = Number.isFinite(Number(query.get("levelStart") || query.get("from") || 0))
-  && Number(query.get("levelStart") || query.get("from") || 0) > 0;
-const enforceGrant = query.get("grant") === "1" || query.get("enforceGrant") === "1";
-const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasQueryRange || enforceGrant);
-let assignmentRange = (() => {
-  const s = Number(query.get("levelStart") || 0);
-  const e = Number(query.get("levelEnd") || 0);
-  if (!Number.isFinite(s) || s < 1) return null;
-  const start = Math.floor(s);
-  const end = Math.max(start, Math.floor(Number.isFinite(e) && e > 0 ? e : start));
-  return { start, end };
-})();
-const assignmentTitle = String(query.get("assignmentTitle") || "3D Blok Kodlama Odevi");
-let grantDenied = false;
-let sessionBaseSeconds = 0;
-let sessionStartedAt = null;
-let sessionTickTimer = null;
-let updatePingTimer = null;
-let nextLevelAfterWin = -1;
-let rangeCompletionEmitted = false;
-let sessionEarnedXp = 0;
-
-function normalizeLevelXp(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return DEFAULT_LEVEL_XP;
-  return Math.max(1, Math.min(500, Math.floor(n)));
-}
-
-function isIndexAllowedForRole(idx) {
-  if ((runnerRole === "teacher" || runnerRole === "admin") || !assignmentRange) return true;
-  const levelNo = Number(idx || 0) + 1;
-  return levelNo >= assignmentRange.start && levelNo <= assignmentRange.end;
-}
-
-function formatSeconds(totalSeconds) {
-  const sec = Math.max(0, Math.floor(Number(totalSeconds || 0)));
-  const mm = String(Math.floor(sec / 60)).padStart(2, "0");
-  const ss = String(sec % 60).padStart(2, "0");
-  return `${mm}:${ss}`;
-}
-
-function getSessionElapsedSeconds() {
-  if (!sessionStartedAt) return Math.max(0, Math.floor(sessionBaseSeconds));
-  return Math.max(0, Math.floor(sessionBaseSeconds + (Date.now() - sessionStartedAt) / 1000));
-}
-
-function updateSessionTimerUI() {
-  if (!sessionTimerEl) return;
-  sessionTimerEl.textContent = formatSeconds(getSessionElapsedSeconds());
-}
-
-function updateSessionXpUI() {
-  if (!sessionXpEl) return;
-  sessionXpEl.textContent = `XP: ${Math.max(0, Number(sessionEarnedXp || 0))}`;
-}
-
-function startSessionTimer(initialSeconds = 0) {
-  sessionBaseSeconds = Math.max(0, Math.floor(Number(initialSeconds || 0)));
-  sessionStartedAt = Date.now();
-  if (sessionTickTimer) clearInterval(sessionTickTimer);
-  sessionTickTimer = setInterval(updateSessionTimerUI, 1000);
-  updateSessionTimerUI();
-  updateSessionXpUI();
-}
-
-function getCompletedLevelIds() {
-  return LEVELS
-    .filter((lv) => !!lv?.completed)
-    .map((lv, idx) => Number(lv?.order || idx + 1))
-    .filter((v) => Number.isFinite(v));
-}
-
-function getRangeProgressSnapshot() {
-  if (!assignmentRange) return null;
-  const start = Math.max(1, Number(assignmentRange.start || 1));
-  const end = Math.max(start, Number(assignmentRange.end || start));
-  let completed = 0;
-  for (let i = start - 1; i <= end - 1 && i < LEVELS.length; i++) {
-    if (LEVELS[i]?.completed) completed += 1;
+  if (!LEVELS.length || !Engine) {
+    var st = $('status');
+    if (st) st.textContent = 'Seviyeler yüklenemedi. Sayfayı yenileyin.';
+    return;
   }
-  const total = Math.max(0, end - start + 1);
-  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-  return { start, end, completed, total, percent, done: total > 0 && completed >= total };
-}
 
-function emitGameUpdate() {
-  try {
-    window.parent?.postMessage({
-      type: "GAME_UPDATE",
-      source: "block-3d",
-      levels: LEVELS,
-      currentLevelIndex: Number(state.levelIndex || 0),
-      elapsedSeconds: getSessionElapsedSeconds(),
-      assignmentId,
-      assignmentTitle,
-      levelStart: assignmentRange?.start || null,
-      levelEnd: assignmentRange?.end || null,
-      completedLevelIds: getCompletedLevelIds()
-    }, "*");
-  } catch {}
-}
-
-function maybeEmitRangeComplete() {
-  if (!assignmentId || !assignmentRange || rangeCompletionEmitted || runnerRole !== "student") return;
-  const s = getRangeProgressSnapshot();
-  if (!s?.done) return;
-  rangeCompletionEmitted = true;
-  try {
-    window.parent?.postMessage({
-      type: "ASSIGNMENT_RANGE_COMPLETED",
-      source: "block-3d",
-      assignmentId,
-      levelStart: s.start,
-      levelEnd: s.end
-    }, "*");
-  } catch {}
-}
-
-function hideWinModal() {
-  if (winOverlay) winOverlay.style.display = "none";
-  nextLevelAfterWin = -1;
-}
-
-function getNextPlayableLevelIndex() {
-  for (let i = Number(state.levelIndex || 0) + 1; i < LEVELS.length; i++) {
-    if (isIndexAllowedForRole(i)) return i;
+  // ------------------------------------------------------------------ rol / ödev parametreleri
+  var params = (function () { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(''); } })();
+  var role = (function () {
+    var r = (params.get('role') || '').toLowerCase();
+    if (r !== 'teacher' && r !== 'admin') { try { r = (localStorage.getItem('runner_role') || '').toLowerCase(); } catch (e) { r = ''; } }
+    return (r === 'teacher' || r === 'admin') ? r : 'student';
+  })();
+  var assignmentTitle = String(params.get('assignmentTitle') || '3D Blok Kodlama Ödevi');
+  var assignmentId = String(params.get('assignmentId') || '').trim();
+  var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
+  function queryRange() {
+    // URL'de aralık parametresi yoksa aralık yoktur (serbest oyun).
+    var raw = params.get('levelStart') || params.get('from');
+    if (!raw) return null;
+    var start = Math.max(1, Number(raw));
+    var end = Math.max(start, Number(params.get('levelEnd') || params.get('to') || start));
+    return (Number.isFinite(start) && Number.isFinite(end)) ? { startIdx: start - 1, endIdx: end - 1 } : null;
   }
-  return -1;
-}
+  var needsGrantCheck = role === 'student' && (!!queryRange() || !!assignmentId || enforceGrant);
 
-function showWinModal(starsEarned, levelXpEarned, sessionTotalXp) {
-  if (!winOverlay) return;
-  nextLevelAfterWin = getNextPlayableLevelIndex();
-  if (winTitle) winTitle.textContent = "Tebrikler! Seviye Tamamlandi";
-  if (winStars) winStars.textContent = starsEarned > 0 ? "*".repeat(starsEarned) : "*";
-  if (winText) {
-    const levelGain = Math.max(0, Number(levelXpEarned || 0));
-    const sessionGain = Math.max(0, Number(sessionTotalXp || 0));
-    if (levelGain <= 0) {
-      winText.textContent = nextLevelAfterWin >= 0
-        ? "Bu seviyeyi daha once tamamlamissin. Devam Et ile sonraki seviyeye gecebilirsin."
-        : "Bu araliktaki tum seviyeler zaten tamamli.";
-      if (winContinueBtn) winContinueBtn.textContent = nextLevelAfterWin >= 0 ? "Devam Et" : "Kapat";
-      winOverlay.style.display = "flex";
-      return;
+  var S = {
+    idx: 0, running: false, token: 0, stepIt: null, stepAst: null, lastAst: null,
+    speed: 1, sound: true, levelRange: null, assignmentLocked: false, assignmentCompleted: null,
+    grantDenied: false, staffFlag: false, attemptStart: Date.now(), sessionStart: Date.now(), loaded: false,
+  };
+  var isStaff = function () { return role === 'teacher' || role === 'admin' || S.staffFlag; };
+  var isAdmin = function () { return role === 'admin'; };
+  if (!isStaff() && queryRange()) S.levelRange = queryRange();
+
+  // ------------------------------------------------------------------ ilerleme (localStorage)
+  var KEY = 'b3d.v2';
+  var prog = (function () {
+    try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
+    return { v: VERSION, done: {}, ws: {}, last: 0 };
+  })();
+  if (prog.wsv !== 4) { prog.ws = {}; prog.wsv = 4; } // blok editörü değişti (v3): eski kayıtlı blok yerleşimleri geçersiz
+  // eski sürümün tarayıcıya özel (başkalarına yansımayan) özel seviye / silinen seviye kayıtlarını temizle
+  try { localStorage.removeItem('block3d_custom_levels_v1'); localStorage.removeItem('block3d_deleted_base_levels_v1'); } catch (e) {}
+  function saveProg() { try { localStorage.setItem(KEY, JSON.stringify(prog)); } catch (e) {} }
+  var isDoneLocal = function (lv) { return !!prog.done[lv.id]; };
+  function completedSet() {
+    if (!isStaff() && S.assignmentCompleted instanceof Set) return S.assignmentCompleted;
+    var set = new Set(); LEVELS.forEach(function (l) { if (prog.done[l.id]) set.add(l.id); }); return set;
+  }
+  var isCompleted = function (lv) { return completedSet().has(lv.id); };
+  function firstIncompleteInRange() {
+    if (!S.levelRange) return null;
+    var s = Math.max(0, S.levelRange.startIdx), e = Math.min(LEVELS.length - 1, Math.max(s, S.levelRange.endIdx));
+    for (var i = s; i <= e; i++) if (!isCompleted(LEVELS[i])) return i;
+    return e;
+  }
+  function highestDoneIdx() { var m = -1; LEVELS.forEach(function (l, i) { if (prog.done[l.id]) m = i; }); return m; }
+
+  function canOpen(idx) {
+    if (idx < 0 || idx >= LEVELS.length) return false;
+    if (isStaff()) return true;
+    if (S.grantDenied || S.assignmentLocked) return false;
+    if (S.levelRange) {
+      var s = Math.max(0, S.levelRange.startIdx), e = Math.min(LEVELS.length - 1, Math.max(s, S.levelRange.endIdx));
+      if (idx < s || idx > e) return false;
+      return idx <= firstIncompleteInRange();
     }
-    if (nextLevelAfterWin >= 0) {
-      winText.textContent = `Bu seviyede +${levelGain} XP kazandin. Toplam oturum XP: ${sessionGain}. Devam Et ile sonraki seviyeye gecebilirsin.`;
-    } else {
-      winText.textContent = `Bu seviyede +${levelGain} XP kazandin. Toplam oturum XP: ${sessionGain}. Bu araliktaki seviyeleri tamamladin.`;
-    }
+    return idx <= highestDoneIdx() + 1;
   }
-  if (winContinueBtn) winContinueBtn.textContent = nextLevelAfterWin >= 0 ? "Devam Et" : "Kapat";
-  winOverlay.style.display = "flex";
-}
 
-function handleLevelCompleted() {
-  const current = getCurrentLevel();
-  if (!current) return;
-  const firstCompletion = !current.completed;
-  const starsEarned = firstCompletion ? 1 : 0;
-  const levelXp = normalizeLevelXp(current?.xp);
-  const xpEarned = firstCompletion ? levelXp : 0;
-  if (xpEarned > 0) {
-    sessionEarnedXp += xpEarned;
-    updateSessionXpUI();
+  // ------------------------------------------------------------------ yardımcılar: arayüz
+  var toastTimer = null;
+  function toast(msg, kind, ms) {
+    var t = $('toast'); if (!t) return;
+    t.textContent = msg; t.className = 'toast show' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, ms || 2200);
   }
-  current.completed = true;
-  current.stars = Math.max(Number(current.stars || 0), starsEarned);
-  current.xp = levelXp;
-  current.completedAt = Date.now();
-  setStatus("Tebrikler, hedefe ulastin!", "success");
-  emitGameUpdate();
-  maybeEmitRangeComplete();
-  try {
-    window.parent?.postMessage({
-      type: "LEVEL_COMPLETED",
-      source: "block-3d",
-      levelId: current.id || `lvl_${Number(state.levelIndex || 0) + 1}`,
-      levelNo: Number(state.levelIndex || 0) + 1,
-      stars: starsEarned,
-      xp: xpEarned,
-      duration: getSessionElapsedSeconds(),
-      percent: 100,
-      levels: LEVELS,
-      currentLevelIndex: Number(state.levelIndex || 0),
-      assignmentId,
-      assignmentTitle,
-      levelStart: assignmentRange?.start || null,
-      levelEnd: assignmentRange?.end || null,
-      completedLevelIds: getCompletedLevelIds()
-    }, "*");
-  } catch {}
-  showWinModal(starsEarned, xpEarned, Math.max(0, Number(sessionEarnedXp || 0)));
-}
+  function setStatus(msg, kind) { var s = $('status'); if (s) { s.textContent = msg; s.className = 'status' + (kind ? ' ' + kind : ''); } }
+  function post(msg) { try { if (window.parent && window.parent !== window) window.parent.postMessage(msg, '*'); } catch (e) {} }
+  function warnLocked(msg) { msg = msg || 'Bu seviye henüz kilitli.'; setStatus(msg, 'bad'); toast('🔒 ' + msg, 'bad', 2600); post({ type: 'LOCKED_LEVEL_WARNING', message: msg }); }
 
-function buildPathCells(start, goal) {
-  const cells = new Set([`${start.x},${start.y}`]);
-  let x = start.x;
-  let y = start.y;
-  const stepX = goal.x >= x ? 1 : -1;
-  while (x !== goal.x) {
-    x += stepX;
-    cells.add(`${x},${y}`);
+  // ---- ses (WebAudio, isteğe bağlı) ----
+  var audioCtx = null;
+  try { var sv = localStorage.getItem('bgr.sound'); if (sv === '0') S.sound = false; } catch (e) {}
+  function beep(freq, dur, type, vol, delay) {
+    if (!S.sound) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + (delay || 0);
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || .06, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + dur);
+    } catch (e) {}
   }
-  const stepY = goal.y >= y ? 1 : -1;
-  while (y !== goal.y) {
-    y += stepY;
-    cells.add(`${x},${y}`);
-  }
-  return cells;
-}
+  var sfx = {
+    move: function () { beep(420, .08, 'triangle', .05); },
+    turn: function () { beep(560, .07, 'square', .035); },
+    crash: function () { beep(160, .25, 'sawtooth', .07); beep(110, .3, 'square', .05, .08); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { beep(f, .22, 'triangle', .07, i * .11); }); },
+    fail: function () { beep(300, .15, 'sine', .05); beep(220, .25, 'sine', .05, .14); },
+  };
 
-function buildObstacles(seed, reservedCells, obstacleCount) {
-  const out = [];
-  for (let y = 0; y < DEFAULT_GRID_SIZE; y++) {
-    for (let x = 0; x < DEFAULT_GRID_SIZE; x++) {
-      const key = `${x},${y}`;
-      if (reservedCells.has(key)) continue;
-      const score = (x * 7 + y * 5 + seed * 3) % 11;
-      if (score <= 2 || (x + y + seed) % 9 === 0) {
-        out.push({ x, y });
-        reservedCells.add(key);
-        if (out.length >= obstacleCount) return out;
+  // ------------------------------------------------------------------ çizim motoru
+  var canvas = $('gridCanvas');
+  var R = window.Block3DRender.create(canvas);
+  var level = LEVELS[0];
+
+  // ------------------------------------------------------------------ blok editörü (editor.js)
+  var editor = null, wsReady = false, loadingWs = false, saveTimer = null;
+
+  // Her seviyede temel bloklar (ileri, sola, sağa, tekrarla) açıktır; ileri bloklar seviyenin kendi listesinden gelir.
+  function blockKeysFor(lv) {
+    var keys = ['forward', 'left', 'right', 'repeat'];
+    ['until', 'if'].forEach(function (k) { if (lv.blocks && lv.blocks.indexOf(k) >= 0) keys.push(k); });
+    return keys;
+  }
+  function buildAst() { return editor ? editor.ast() : []; }
+  function highlight(id) { if (editor) editor.highlight(id); }
+  function blockLimit() { return Number.isFinite(Number(level.limit)) ? Number(level.limit) : null; }
+
+  // ---- ilk açılış yönlendirmesi (3 adım) ----
+  function hideCoach(persist) { var c = $('coach'); if (c) c.classList.add('hidden'); if (persist !== false) { try { localStorage.setItem('bgr.coach', '1'); } catch (e) {} } }
+  function showCoachIfNeeded() {
+    var c = $('coach'); if (!c) return;
+    var seen = false; try { seen = localStorage.getItem('bgr.coach') === '1'; } catch (e) {}
+    if (!seen && S.idx === 0 && Engine.countBlocks(buildAst()) === 0) c.classList.remove('hidden');
+  }
+
+  function updateCounter() {
+    var el = $('blockCounter'); if (!el || !editor) return;
+    var used = Engine.countBlocks(buildAst()), lim = blockLimit();
+    S.used = used;
+    if (lim) { el.textContent = '🧱 ' + used + ' / ' + lim + ' blok'; el.className = 'block-counter' + (used > lim ? ' over' : ''); }
+    else { el.textContent = used ? '🧱 ' + used + ' blok' : ''; el.className = 'block-counter'; }
+    if (used > 0) hideCoach();
+  }
+
+  function wsSerialize() { try { return editor ? editor.serialize() : null; } catch (e) { return null; } }
+  function scheduleSaveWs() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      var data = wsSerialize(); if (!data) return;
+      prog.ws[level.id] = data; prog.last = S.idx; saveProg();
+    }, 350);
+  }
+  function loadWorkspaceFor(lv) {
+    loadingWs = true;
+    try { var saved = prog.ws[lv.id]; if (saved) editor.load(saved); else editor.clear(); }
+    finally { loadingWs = false; }
+    updateCounter();
+  }
+
+  function initEditor() {
+    if (editor) return;
+    editor = window.BlockEditor.create({
+      workspace: $('editor'), palette: $('palette'),
+      onChange: function () { if (loadingWs) return; resetRunVisuals(); updateCounter(); scheduleSaveWs(); },
+    });
+    wsReady = true;
+    var l = $('wsLoading'); if (l) l.classList.add('hidden');
+    loadLevel(S.idx, { force: true });
+    setTimeout(showCoachIfNeeded, 400);
+  }
+
+  // ------------------------------------------------------------------ seviye yükleme / arayüz
+  function stars3(n) { return [0, 1, 2].map(function (i) { return '<span class="star' + (i < n ? ' on' : '') + '">★</span>'; }).join(''); }
+
+  function refreshHeader() {
+    var done = completedSet();
+    var inRange = S.levelRange && !isStaff();
+    var total = inRange ? (Math.min(LEVELS.length - 1, S.levelRange.endIdx) - Math.max(0, S.levelRange.startIdx) + 1) : LEVELS.length;
+    var cnt = inRange ? LEVELS.slice(S.levelRange.startIdx, S.levelRange.endIdx + 1).filter(function (l) { return done.has(l.id); }).length : done.size;
+    $('progressText').textContent = cnt + ' / ' + total;
+    $('progressFill').style.width = Math.round(cnt / Math.max(1, total) * 100) + '%';
+    var xp = LEVELS.reduce(function (s, l) { return s + (done.has(l.id) ? (l.xp || 0) : 0); }, 0);
+    $('xpBadge').textContent = '⭐ ' + xp + ' XP';
+    $('levelPrev').disabled = !canOpen(S.idx - 1);
+    $('levelNext').disabled = !canOpen(S.idx + 1);
+  }
+
+  function refreshLevelTexts() {
+    $('levelName').textContent = level.name;
+    $('levelMeta').textContent = level.group + ' · ' + R.THEMES[level.theme].name + ' · ' + level.w + '×' + level.h;
+    $('stageTitle').textContent = level.name + ' — ' + level.concept;
+    $('stageHint').textContent = level.hint || '';
+    var rec = prog.done[level.id];
+    $('starRow').innerHTML = stars3(rec ? rec.stars : 0);
+  }
+
+  function loadLevel(idx, opts) {
+    opts = opts || {};
+    if (!opts.force) {
+      if (isStaff() === false && S.grantDenied) { warnLocked('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.'); return false; }
+      if (!isStaff() && S.assignmentLocked) { warnLocked('Ödev aralığı tamamlandı.'); return false; }
+      if (!canOpen(idx)) {
+        if (S.levelRange && !isStaff()) {
+          var s = S.levelRange.startIdx, e = S.levelRange.endIdx;
+          warnLocked(idx < s || idx > e ? 'Bu seviye ödev aralığında değil.' : 'Önceki seviyeleri tamamlamadan buraya geçemezsin.');
+        } else warnLocked('Önce bir önceki seviyeyi tamamlamalısın.');
+        return false;
       }
     }
-  }
-  return out;
-}
-
-function buildTrees(seed, reservedCells, treeCount) {
-  const out = [];
-  for (let y = 0; y < DEFAULT_GRID_SIZE; y++) {
-    for (let x = 0; x < DEFAULT_GRID_SIZE; x++) {
-      const key = `${x},${y}`;
-      if (reservedCells.has(key)) continue;
-      const score = (x * 3 + y * 11 + seed * 5) % 13;
-      if (score <= 4) {
-        out.push({ x, y });
-        reservedCells.add(key);
-        if (out.length >= treeCount) return out;
-      }
+    if (S.levelRange && !isStaff()) {
+      var rs = Math.max(0, S.levelRange.startIdx), re = Math.min(LEVELS.length - 1, Math.max(rs, S.levelRange.endIdx));
+      idx = Math.max(rs, Math.min(re, idx));
     }
-  }
-  return out;
-}
-
-function createLevel(name, start, goal, seed, obstacleCount, treeCount, xpValue = DEFAULT_LEVEL_XP) {
-  const safePath = buildPathCells(start, goal);
-  const reserved = new Set(safePath);
-  reserved.add(`${start.x},${start.y}`);
-  reserved.add(`${goal.x},${goal.y}`);
-  const obstacles = buildObstacles(seed, reserved, obstacleCount);
-  const trees = buildTrees(seed + 17, reserved, treeCount);
-  return {
-    id: null,
-    name,
-    gridWidth: DEFAULT_GRID_SIZE,
-    gridHeight: DEFAULT_GRID_SIZE,
-    start: { x: start.x, y: start.y, dir: start.dir },
-    goal: { x: goal.x, y: goal.y },
-    xp: normalizeLevelXp(xpValue),
-    obstacles,
-    trees
-  };
-}
-
-const BASE_LEVEL_SPECS = [
-  { group: "Kolay", start: { x: 1, y: 8, dir: 0 }, goal: { x: 4, y: 8 }, obstacles: 3, trees: 1, xp: EASY_LEVEL_XP },
-  { group: "Kolay", start: { x: 8, y: 8, dir: 3 }, goal: { x: 8, y: 4 }, obstacles: 5, trees: 2, xp: EASY_LEVEL_XP },
-  { group: "Kolay", start: { x: 1, y: 1, dir: 0 }, goal: { x: 6, y: 1 }, obstacles: 7, trees: 3, xp: EASY_LEVEL_XP },
-  { group: "Kolay", start: { x: 1, y: 8, dir: 3 }, goal: { x: 1, y: 2 }, obstacles: 9, trees: 4, xp: EASY_LEVEL_XP },
-  { group: "Kolay", start: { x: 1, y: 1, dir: 0 }, goal: { x: 8, y: 1 }, obstacles: 11, trees: 5, xp: EASY_LEVEL_XP },
-  { group: "Orta", start: { x: 0, y: 9, dir: 0 }, goal: { x: 7, y: 8 }, obstacles: 13, trees: 6, xp: MEDIUM_LEVEL_XP },
-  { group: "Orta", start: { x: 9, y: 9, dir: 3 }, goal: { x: 5, y: 4 }, obstacles: 15, trees: 7, xp: MEDIUM_LEVEL_XP },
-  { group: "Orta", start: { x: 0, y: 0, dir: 0 }, goal: { x: 6, y: 4 }, obstacles: 17, trees: 8, xp: MEDIUM_LEVEL_XP },
-  { group: "Orta", start: { x: 0, y: 9, dir: 1 }, goal: { x: 6, y: 4 }, obstacles: 19, trees: 9, xp: MEDIUM_LEVEL_XP },
-  { group: "Orta", start: { x: 9, y: 0, dir: 2 }, goal: { x: 3, y: 6 }, obstacles: 21, trees: 10, xp: MEDIUM_LEVEL_XP },
-  { group: "Zor", start: { x: 0, y: 0, dir: 0 }, goal: { x: 7, y: 6 }, obstacles: 23, trees: 11, xp: HARD_LEVEL_XP },
-  { group: "Zor", start: { x: 9, y: 9, dir: 2 }, goal: { x: 1, y: 3 }, obstacles: 25, trees: 12, xp: HARD_LEVEL_XP },
-  { group: "Zor", start: { x: 0, y: 9, dir: 1 }, goal: { x: 8, y: 2 }, obstacles: 27, trees: 13, xp: HARD_LEVEL_XP },
-  { group: "Zor", start: { x: 9, y: 0, dir: 2 }, goal: { x: 1, y: 8 }, obstacles: 29, trees: 14, xp: HARD_LEVEL_XP },
-  { group: "Zor", start: { x: 0, y: 0, dir: 0 }, goal: { x: 9, y: 8 }, obstacles: 31, trees: 15, xp: HARD_LEVEL_XP },
-];
-
-const BASE_LEVELS = BASE_LEVEL_SPECS.map((spec, index) => createLevel(
-  `${spec.group} ${index % 5 + 1}`,
-  spec.start,
-  spec.goal,
-  23 + (index * 37),
-  spec.obstacles,
-  spec.trees,
-  spec.xp
-));
-
-function normalizeLevel(raw, fallbackId) {
-  const w = Math.max(4, Math.min(20, Number(raw?.gridWidth || raw?.gridSize || DEFAULT_GRID_SIZE)));
-  const h = Math.max(4, Math.min(20, Number(raw?.gridHeight || raw?.gridSize || DEFAULT_GRID_SIZE)));
-  const level = {
-    id: String(raw?.id || fallbackId || `lvl_${Date.now()}`),
-    name: String(raw?.name || "Yeni Seviye"),
-    isCustom: !!raw?.isCustom,
-    order: Math.max(1, Number(raw?.order || 1)),
-    xp: normalizeLevelXp(raw?.xp),
-    gridWidth: w,
-    gridHeight: h,
-    start: {
-      x: Math.max(0, Math.min(w - 1, Number(raw?.start?.x || 0))),
-      y: Math.max(0, Math.min(h - 1, Number(raw?.start?.y || 0))),
-      dir: [0, 1, 2, 3].includes(Number(raw?.start?.dir)) ? Number(raw.start.dir) : 0
-    },
-    goal: {
-      x: Math.max(0, Math.min(w - 1, Number(raw?.goal?.x || w - 1))),
-      y: Math.max(0, Math.min(h - 1, Number(raw?.goal?.y || h - 1)))
-    },
-    obstacles: Array.isArray(raw?.obstacles) ? raw.obstacles : [],
-    trees: Array.isArray(raw?.trees) ? raw.trees : []
-  };
-  level.obstacles = level.obstacles
-    .map((o) => ({ x: Number(o?.x), y: Number(o?.y) }))
-    .filter((o) => Number.isFinite(o.x) && Number.isFinite(o.y) && o.x >= 0 && o.y >= 0 && o.x < w && o.y < h)
-    .filter((o) => !(o.x === level.start.x && o.y === level.start.y) && !(o.x === level.goal.x && o.y === level.goal.y));
-  level.trees = level.trees
-    .map((o) => ({ x: Number(o?.x), y: Number(o?.y) }))
-    .filter((o) => Number.isFinite(o.x) && Number.isFinite(o.y) && o.x >= 0 && o.y >= 0 && o.x < w && o.y < h)
-    .filter((o) => !(o.x === level.start.x && o.y === level.start.y) && !(o.x === level.goal.x && o.y === level.goal.y));
-  return level;
-}
-
-function normalizeLevelOrders() {
-  LEVELS.forEach((lv, idx) => {
-    lv.order = idx + 1;
-  });
-}
-
-function loadCustomLevels() {
-  try {
-    const raw = localStorage.getItem(CUSTOM_LEVELS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((lv, idx) => normalizeLevel({ ...lv, isCustom: true }, `custom_${idx + 1}`));
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomLevels() {
-  try {
-    const custom = LEVELS.filter((lv) => lv.isCustom).map((lv) => ({
-      id: lv.id,
-      name: lv.name,
-      isCustom: true,
-      order: Number(lv.order || 1),
-      xp: normalizeLevelXp(lv.xp),
-      gridWidth: lv.gridWidth,
-      gridHeight: lv.gridHeight,
-      start: lv.start,
-      goal: lv.goal,
-      obstacles: lv.obstacles,
-      trees: lv.trees
-    }));
-    localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(custom));
-  } catch {}
-}
-
-function loadDeletedBaseLevelIds() {
-  try {
-    const raw = localStorage.getItem(DELETED_BASE_LEVELS_KEY);
-    if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.map((v) => String(v)));
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDeletedBaseLevelIds(idSet) {
-  try {
-    localStorage.setItem(DELETED_BASE_LEVELS_KEY, JSON.stringify(Array.from(idSet)));
-  } catch {}
-}
-
-const normalizedBaseLevels = BASE_LEVELS.map((lv, idx) =>
-  normalizeLevel({ ...lv, id: `base_${idx + 1}`, isCustom: false, order: idx + 1 }, `base_${idx + 1}`)
-);
-const deletedBaseLevelIds = loadDeletedBaseLevelIds();
-const customLevelsLoaded = loadCustomLevels();
-const customById = new Map(customLevelsLoaded.map((lv) => [lv.id, lv]));
-const mergedBase = normalizedBaseLevels
-  .filter((lv) => !deletedBaseLevelIds.has(String(lv.id)))
-  .map((lv) => customById.get(lv.id) || lv);
-const extraCustom = customLevelsLoaded.filter((lv) => !normalizedBaseLevels.some((base) => base.id === lv.id));
-let LEVELS = [...mergedBase, ...extraCustom];
-if (!LEVELS.length) {
-  LEVELS = [normalizeLevel({ ...BASE_LEVELS[0], id: "base_1", isCustom: false, order: 1 }, "base_1")];
-}
-LEVELS.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
-normalizeLevelOrders();
-
-let state = {
-  levelIndex: 0,
-  x: 0,
-  y: 0,
-  dir: 0,
-  running: false,
-  won: false
-};
-
-let designerMode = "add";
-let selectedPaletteItem = "obstacle";
-let editingLevelId = null;
-let designerDraft = null;
-let popupTimer = null;
-let confirmResolve = null;
-
-let workspace = null;
-let blocklyReady = false;
-let tileW = 80;
-let tileH = 40;
-let originX = 0;
-let originY = 0;
-
-function setStatus(msg, type = "info") {
-  statusEl.textContent = msg;
-  if (type === "success") {
-    statusEl.style.borderColor = "#16a34a";
-    statusEl.style.background = "#f0fdf4";
-  } else if (type === "error") {
-    statusEl.style.borderColor = "#dc2626";
-    statusEl.style.background = "#fef2f2";
-  } else {
-    statusEl.style.borderColor = "#94a3b8";
-    statusEl.style.background = "#f1f5f9";
-  }
-}
-
-function showPopup(message, type = "info", durationMs = 2200) {
-  if (!notifyPopup) return;
-  notifyPopup.textContent = String(message || "");
-  notifyPopup.classList.remove("success", "error", "show");
-  if (type === "success") notifyPopup.classList.add("success");
-  else if (type === "error") notifyPopup.classList.add("error");
-  notifyPopup.classList.add("show");
-  if (popupTimer) clearTimeout(popupTimer);
-  popupTimer = setTimeout(() => {
-    notifyPopup.classList.remove("show");
-  }, Math.max(800, Number(durationMs || 2200)));
-}
-
-function closeConfirmDialog(result) {
-  if (confirmOverlay) confirmOverlay.style.display = "none";
-  if (confirmResolve) {
-    const resolve = confirmResolve;
-    confirmResolve = null;
-    resolve(!!result);
-  }
-}
-
-function confirmDialog(message) {
-  return new Promise((resolve) => {
-    if (!confirmOverlay || !confirmText || !confirmYesBtn || !confirmNoBtn) {
-      resolve(false);
-      return;
+    resetRun(true);
+    if (editor && wsReady && level) { var cur = wsSerialize(); if (cur) prog.ws[level.id] = cur; }
+    S.idx = idx; level = LEVELS[idx]; S.attemptStart = Date.now();
+    R.setLevel(level);
+    document.body.dataset.theme = level.theme;
+    refreshLevelTexts();
+    if (editor && wsReady) {
+      editor.setKeys(blockKeysFor(level));
+      loadWorkspaceFor(level);
     }
-    confirmResolve = resolve;
-    confirmText.textContent = String(message || "Bu islemi onayliyor musun?");
-    confirmOverlay.style.display = "flex";
-  });
-}
-
-function getCurrentLevel() {
-  return LEVELS[state.levelIndex];
-}
-
-function getCurrentGridWidth() {
-  return Math.max(4, Number(getCurrentLevel()?.gridWidth || DEFAULT_GRID_SIZE));
-}
-
-function getCurrentGridHeight() {
-  return Math.max(4, Number(getCurrentLevel()?.gridHeight || DEFAULT_GRID_SIZE));
-}
-
-function hasObstacle(x, y) {
-  return getCurrentLevel().obstacles.some((o) => o.x === x && o.y === y);
-}
-
-function isInside(x, y) {
-  return x >= 0 && y >= 0 && x < getCurrentGridWidth() && y < getCurrentGridHeight();
-}
-
-function isGoal(x, y) {
-  const g = getCurrentLevel().goal;
-  return g.x === x && g.y === y;
-}
-
-function resetState() {
-  const lvl = getCurrentLevel();
-  hideWinModal();
-  state.x = lvl.start.x;
-  state.y = lvl.start.y;
-  state.dir = lvl.start.dir;
-  state.running = false;
-  state.won = false;
-  runBtn.disabled = false;
-  levelSelect.disabled = false;
-  setStatus("Karakteri hedef kareye gotur.");
-  draw();
-  emitGameUpdate();
-}
-
-function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = Math.max(1, Math.round(rect.width * dpr));
-  canvas.height = Math.max(1, Math.round(rect.height * dpr));
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  const w = rect.width;
-  const h = rect.height;
-  const gw = getCurrentGridWidth();
-  const gh = getCurrentGridHeight();
-  tileW = Math.min((w * 0.78) / gw, (h * 0.85) / (gh * 0.56));
-  tileH = tileW * 0.5;
-  originX = w * 0.5;
-  originY = Math.max(120, (h - gh * tileH) * 0.22 + 42);
-  draw();
-}
-
-function isoToScreen(x, y) {
-  return {
-    x: originX + (x - y) * (tileW / 2),
-    y: originY + (x + y) * (tileH / 2)
-  };
-}
-
-function drawDiamond(cx, cy, w, h, color, stroke = "rgba(0,0,0,0.15)") {
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - h / 2);
-  ctx.lineTo(cx + w / 2, cy);
-  ctx.lineTo(cx, cy + h / 2);
-  ctx.lineTo(cx - w / 2, cy);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.strokeStyle = stroke;
-  ctx.stroke();
-}
-
-function fillRoundedRect(x, y, w, h, r, color) {
-  const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
-  ctx.beginPath();
-  ctx.moveTo(x + rr, y);
-  ctx.arcTo(x + w, y, x + w, y + h, rr);
-  ctx.arcTo(x + w, y + h, x, y + h, rr);
-  ctx.arcTo(x, y + h, x, y, rr);
-  ctx.arcTo(x, y, x + w, y, rr);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-function drawTile(x, y, isGoalTile = false) {
-  const p = isoToScreen(x, y);
-  const gw = getCurrentGridWidth();
-  const gh = getCurrentGridHeight();
-  const shade = (x + y) % 2 === 0 ? "#84cc16" : "#65a30d";
-  const topColor = isGoalTile ? "#f59e0b" : shade;
-
-  drawDiamond(p.x, p.y, tileW, tileH, topColor);
-
-  if (y === gh - 1) {
-    ctx.beginPath();
-    ctx.moveTo(p.x - tileW / 2, p.y);
-    ctx.lineTo(p.x, p.y + tileH / 2);
-    ctx.lineTo(p.x, p.y + tileH / 2 + TILE_DEPTH);
-    ctx.lineTo(p.x - tileW / 2, p.y + TILE_DEPTH);
-    ctx.closePath();
-    ctx.fillStyle = "#f59e0b";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.stroke();
-  }
-
-  if (x === gw - 1) {
-    ctx.beginPath();
-    ctx.moveTo(p.x + tileW / 2, p.y);
-    ctx.lineTo(p.x, p.y + tileH / 2);
-    ctx.lineTo(p.x, p.y + tileH / 2 + TILE_DEPTH);
-    ctx.lineTo(p.x + tileW / 2, p.y + TILE_DEPTH);
-    ctx.closePath();
-    ctx.fillStyle = "#d97706";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.stroke();
-  }
-}
-
-function drawObstacle(x, y) {
-  const p = isoToScreen(x, y);
-  const size = tileW * 0.35;
-  const h = size * 0.62;
-  const z = 20;
-
-  drawDiamond(p.x, p.y - z, size, h, "#78350f", "rgba(0,0,0,0.25)");
-
-  ctx.beginPath();
-  ctx.moveTo(p.x + size / 2, p.y - z);
-  ctx.lineTo(p.x, p.y - z + h / 2);
-  ctx.lineTo(p.x, p.y + h / 2);
-  ctx.lineTo(p.x + size / 2, p.y);
-  ctx.closePath();
-  ctx.fillStyle = "#5b2f0b";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(p.x - size / 2, p.y - z);
-  ctx.lineTo(p.x, p.y - z + h / 2);
-  ctx.lineTo(p.x, p.y + h / 2);
-  ctx.lineTo(p.x - size / 2, p.y);
-  ctx.closePath();
-  ctx.fillStyle = "#6b3a12";
-  ctx.fill();
-}
-
-function drawTree(x, y) {
-  const p = isoToScreen(x, y);
-  const trunkW = Math.max(8, tileW * 0.12);
-  const trunkH = Math.max(20, tileH * 0.9);
-
-  ctx.fillStyle = "#7c3f14";
-  ctx.fillRect(p.x - trunkW / 2, p.y - trunkH - 14, trunkW, trunkH);
-
-  ctx.fillStyle = "#fb923c";
-  ctx.beginPath();
-  ctx.arc(p.x - 12, p.y - trunkH - 22, 16, 0, Math.PI * 2);
-  ctx.arc(p.x + 6, p.y - trunkH - 26, 18, 0, Math.PI * 2);
-  ctx.arc(p.x + 20, p.y - trunkH - 20, 14, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawGoalMark() {
-  const g = getCurrentLevel().goal;
-  const p = isoToScreen(g.x, g.y);
-  ctx.strokeStyle = "#0ea5e9";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(p.x, p.y, tileW * 0.15, tileH * 0.18, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-}
-
-function getDirScreenVector(dir) {
-  const d = ((Number(dir) % 4) + 4) % 4;
-  if (d === 0) return { x: 1, y: 1 };   // +x
-  if (d === 1) return { x: -1, y: 1 };  // +y
-  if (d === 2) return { x: -1, y: -1 }; // -x
-  return { x: 1, y: -1 };               // -y
-}
-
-function drawCharacter() {
-  const p = isoToScreen(state.x, state.y);
-  const bodyY = p.y - 17;
-  const facing = state.dir;
-  const v = getDirScreenVector(facing);
-
-  // New character: little robot explorer
-  fillRoundedRect(p.x - 14, bodyY - 16, 28, 26, 8, "#22d3ee");
-  fillRoundedRect(p.x - 11, bodyY - 28, 22, 12, 5, "#cbd5e1");
-
-  ctx.fillStyle = "#0f172a";
-  ctx.fillRect(p.x - 2, bodyY - 34, 4, 6);
-  ctx.fillStyle = "#38bdf8";
-  ctx.beginPath();
-  ctx.arc(p.x, bodyY - 36, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  const eyeOffsetX = v.x * 1.9;
-  const eyeOffsetY = v.y * 0.8;
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.arc(p.x - 5 + eyeOffsetX, bodyY - 12 + eyeOffsetY, 3.2, 0, Math.PI * 2);
-  ctx.arc(p.x + 5 + eyeOffsetX, bodyY - 12 + eyeOffsetY, 3.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#111827";
-  ctx.beginPath();
-  ctx.arc(p.x - 5 + eyeOffsetX * 1.2, bodyY - 12 + eyeOffsetY, 1.5, 0, Math.PI * 2);
-  ctx.arc(p.x + 5 + eyeOffsetX * 1.2, bodyY - 12 + eyeOffsetY, 1.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Front visor to emphasize heading direction.
-  const visorCx = p.x + v.x * 7;
-  const visorCy = bodyY - 6 + v.y * 3;
-  fillRoundedRect(visorCx - 7, visorCy - 3, 14, 6, 2, "#0f172a");
-
-  // Bold direction arrow (character nose) so left/right turns are obvious.
-  const tipX = p.x + v.x * 20;
-  const tipY = bodyY - 7 + v.y * 10;
-  const baseX = p.x + v.x * 10;
-  const baseY = bodyY - 7 + v.y * 5;
-  const nx = -v.y;
-  const ny = v.x;
-  ctx.beginPath();
-  ctx.moveTo(tipX, tipY);
-  ctx.lineTo(baseX + nx * 4, baseY + ny * 4);
-  ctx.lineTo(baseX - nx * 4, baseY - ny * 4);
-  ctx.closePath();
-  ctx.fillStyle = "#f59e0b";
-  ctx.fill();
-  ctx.strokeStyle = "#b45309";
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.strokeStyle = "#0f172a";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(p.x - 5, bodyY - 4);
-  ctx.lineTo(p.x + 5, bodyY - 4);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-}
-
-function drawWaterAroundBoard() {
-  const rect = canvas.getBoundingClientRect();
-  const g = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-  g.addColorStop(0, "#14b8a6");
-  g.addColorStop(0.5, "#2dd4bf");
-  g.addColorStop(1, "#22d3ee");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, rect.width, rect.height);
-}
-
-function draw() {
-  const level = getCurrentLevel();
-  if (!level) return;
-  const gw = getCurrentGridWidth();
-  const gh = getCurrentGridHeight();
-  drawWaterAroundBoard();
-
-  for (let y = 0; y < gh; y++) {
-    for (let x = 0; x < gw; x++) {
-      drawTile(x, y, isGoal(x, y));
-    }
-  }
-
-  for (const t of level.trees) drawTree(t.x, t.y);
-  for (const o of level.obstacles) drawObstacle(o.x, o.y);
-  drawGoalMark();
-  drawCharacter();
-}
-
-function getRepeatCount(block) {
-  const fieldVal = Number(block.getFieldValue("TIMES"));
-  if (Number.isFinite(fieldVal) && fieldVal > 0) return fieldVal;
-  const timesBlock = block.getInputTargetBlock("TIMES");
-  if (!timesBlock) return 0;
-  const numVal = Number(timesBlock.getFieldValue("NUM"));
-  return Number.isFinite(numVal) && numVal > 0 ? numVal : 0;
-}
-
-function collectCommandsFromBlock(block) {
-  const out = [];
-  let current = block;
-  while (current) {
-    if (current.type === "program_start") {
-      const doBlock = current.getInputTargetBlock("DO");
-      if (doBlock) out.push(...collectCommandsFromBlock(doBlock));
-    } else if (current.type === "move_forward") {
-      out.push({ type: "forward", steps: 1, blockId: current.id });
-    } else if (current.type === "turn_left") {
-      out.push({ type: "left", blockId: current.id });
-    } else if (current.type === "turn_right") {
-      out.push({ type: "right", blockId: current.id });
-    } else if (current.type === "controls_repeat_ext") {
-      const times = Math.max(0, getRepeatCount(current));
-      const doBlock = current.getInputTargetBlock("DO");
-      if (doBlock && times > 0) {
-        const nested = collectCommandsFromBlock(doBlock);
-        for (let i = 0; i < times; i++) out.push(...nested);
-      }
-    }
-    current = current.getNextBlock();
-  }
-  return out;
-}
-
-function buildCommands() {
-  if (!workspace || !blocklyReady) return [];
-  const topBlocks = workspace.getTopBlocks(true);
-  const startBlock = topBlocks.find((b) => b.type === "program_start");
-  if (startBlock) return collectCommandsFromBlock(startBlock);
-  const out = [];
-  for (const b of topBlocks) out.push(...collectCommandsFromBlock(b));
-  return out;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function stepForward() {
-  const d = DIRS[state.dir];
-  const nx = state.x + d.x;
-  const ny = state.y + d.y;
-
-  if (!isInside(nx, ny)) {
-    setStatus("Sinirin disina cikamazsin.", "error");
-    return false;
-  }
-  if (hasObstacle(nx, ny)) {
-    setStatus("Engele carptin. Rotani degistir.", "error");
-    return false;
-  }
-  state.x = nx;
-  state.y = ny;
-  draw();
-  return true;
-}
-
-function checkWin() {
-  if (isGoal(state.x, state.y)) {
-    state.won = true;
-    handleLevelCompleted();
+    setStatus('Hazır');
+    prog.last = idx; saveProg();
+    refreshHeader();
+    if (level.limit) toast('En fazla ' + level.limit + ' blok kullanabilirsin', null, 2400);
     return true;
   }
-  return false;
-}
 
-async function runProgram() {
-  if (state.running) return;
-  if (!blocklyReady || !workspace) {
-    setStatus("Blok editor yuklenemedi. Sayfayi yenileyin.", "error");
-    return;
+  // ------------------------------------------------------------------ çalıştırma
+  var DUR = { turn: 260, move: 340, gap: 70 };
+  function dur(ms) { return Math.max(40, ms / S.speed); }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function resetRunVisuals() { if (S.running || S.stepIt) return; try { highlight(null); } catch (e) {} }
+
+  function resetRun(silent) {
+    S.token++; S.running = false; S.stepIt = null; S.stepAst = null;
+    R.cancelTweens(); R.resetRobot(); highlight(null);
+    $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (!silent) setStatus('Hazır');
   }
-  const commands = buildCommands();
-  if (!commands.length) {
-    setStatus("Calistirmadan once blok ekle.", "error");
-    return;
+
+  function preflight() {
+    if (!wsReady) { toast('Blok editörü henüz hazır değil', 'bad'); return null; }
+    if (!isStaff() && !canOpen(S.idx)) { warnLocked(); return null; }
+    var ast = buildAst();
+    if (!ast.length) { setStatus('Önce BAŞLA kutusunun içine blok ekle.', 'bad'); toast('Blokları ▶ BAŞLA kutusunun içine sürükle 🧩', 'bad', 2800); return null; }
+    var lim = blockLimit(), used = Engine.countBlocks(ast);
+    if (lim && used > lim) { setStatus('Çok fazla blok: en fazla ' + lim + ' blok kullanabilirsin.', 'bad'); toast('En fazla ' + lim + ' blok! Tekrar bloğunu dene 🔁', 'bad', 2800); return null; }
+    return ast;
   }
 
-  state.running = true;
-  state.won = false;
-  runBtn.disabled = true;
-  levelSelect.disabled = true;
-  setStatus("Program calisiyor...");
-
-  try {
-    for (const cmd of commands) {
-      workspace.highlightBlock(cmd.blockId);
-
-      if (cmd.type === "left") {
-        state.dir = (state.dir + 3) % 4;
-        draw();
-        await sleep(260);
-      } else if (cmd.type === "right") {
-        state.dir = (state.dir + 1) % 4;
-        draw();
-        await sleep(260);
-      } else if (cmd.type === "forward") {
-        for (let i = 0; i < cmd.steps; i++) {
-          const ok = await stepForward();
-          await sleep(260);
-          if (!ok) throw new Error("blocked");
-          if (checkWin()) break;
-        }
-      }
-
-      if (state.won) break;
+  async function playEvent(e, token) {
+    if (token !== S.token) return 'cancel';
+    switch (e.kind) {
+      case 'turn': highlight(e.id); sfx.turn(); await R.turn(e.dir, dur(DUR.turn)); await sleep(dur(DUR.gap)); break;
+      case 'move': highlight(e.id); sfx.move(); await R.move(e.to, dur(DUR.move)); await sleep(dur(DUR.gap)); break;
+      case 'crash':
+        highlight(e.id); sfx.crash(); await R.crash(e.target, dur(380));
+        $('canvasWrap').classList.remove('shake'); void $('canvasWrap').offsetWidth; $('canvasWrap').classList.add('shake');
+        setStatus(e.reason === 'edge' ? 'Haritanın kenarına çarptın!' : 'Bir engele çarptın!', 'bad');
+        toast(e.reason === 'edge' ? '💥 Haritanın dışına çıkamazsın' : '💥 Engel var! Başka yoldan git', 'bad');
+        highlight(null); return 'stop';
+      case 'goal': highlight(null); return 'goal';
+      case 'end':
+        sfx.fail(); highlight(null); setStatus('Program bitti ama yıldıza ulaşamadın. Tekrar dene!', 'bad'); toast('⭐ Yıldıza daha varmadın', 'bad'); return 'stop';
+      case 'limit':
+        sfx.fail(); highlight(null); setStatus('Program çok uzun sürdü (sonsuz döngü olabilir).', 'bad'); toast('♾ Program bitmiyor!', 'bad'); return 'stop';
     }
+    return 'ok';
+  }
 
-    if (!state.won) {
-      setStatus("Program bitti. Hedefe ulasilamadi.", "error");
+  async function runProgram() {
+    if (S.running) return;
+    var ast = preflight(); if (!ast) return;
+    resetRun(true);
+    S.lastAst = ast; S.running = true;
+    var token = ++S.token;
+    $('runBtn').disabled = true; $('stepBtn').disabled = true;
+    setStatus('Çalışıyor…');
+    var it = Engine.run(level, ast);
+    await sleep(dur(200));
+    var result = 'ok';
+    for (var r = it.next(); !r.done; r = it.next()) {
+      result = await playEvent(r.value, token);
+      if (result !== 'ok') break;
     }
-  } catch (e) {
-    if (e?.message !== "blocked") {
-      setStatus("Program calistirilirken hata oldu.", "error");
+    if (token !== S.token) return;
+    S.running = false; $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (result === 'goal') onGoal();
+  }
+
+  async function stepProgram() {
+    if (S.running) return;
+    if (!S.stepIt) {
+      var ast = preflight(); if (!ast) return;
+      resetRun(true);
+      S.lastAst = S.stepAst = ast; S.stepIt = Engine.run(level, ast);
     }
-  } finally {
-    workspace.highlightBlock(null);
-    state.running = false;
-    runBtn.disabled = false;
-    levelSelect.disabled = false;
-  }
-}
-
-function rebuildLevelSelect(keepIndex = 0) {
-  LEVELS.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
-  normalizeLevelOrders();
-  levelSelect.innerHTML = "";
-  LEVELS.forEach((level, idx) => {
-    const opt = document.createElement("option");
-    opt.value = String(idx);
-    const customTag = level.isCustom ? " [Ozel]" : "";
-    opt.textContent = `${idx + 1}. ${level.name}${customTag}`;
-    if (!isIndexAllowedForRole(idx)) {
-      opt.disabled = true;
-      opt.textContent += " [Kilitli]";
-    }
-    levelSelect.appendChild(opt);
-  });
-  let safeIndex = Math.max(0, Math.min(LEVELS.length - 1, Number(keepIndex || 0)));
-  if (!isIndexAllowedForRole(safeIndex)) {
-    safeIndex = Math.max(0, Math.min(LEVELS.length - 1, Number((assignmentRange?.start || 1) - 1)));
-  }
-  state.levelIndex = safeIndex;
-  levelSelect.value = String(safeIndex);
-}
-
-function createEmptyDesignerDraft(width, height) {
-  const w = Math.max(4, Math.min(20, Number(width || DEFAULT_GRID_SIZE)));
-  const h = Math.max(4, Math.min(20, Number(height || DEFAULT_GRID_SIZE)));
-  return {
-    gridWidth: w,
-    gridHeight: h,
-    start: { x: 0, y: h - 1, dir: 0 },
-    goal: { x: w - 1, y: 0 },
-    obstacles: [],
-    trees: []
-  };
-}
-
-function isDraftStart(x, y) {
-  return designerDraft && designerDraft.start.x === x && designerDraft.start.y === y;
-}
-
-function isDraftGoal(x, y) {
-  return designerDraft && designerDraft.goal.x === x && designerDraft.goal.y === y;
-}
-
-function draftHasObstacle(x, y) {
-  return !!designerDraft?.obstacles?.some((o) => o.x === x && o.y === y);
-}
-
-function draftHasTree(x, y) {
-  return !!designerDraft?.trees?.some((o) => o.x === x && o.y === y);
-}
-
-function removeDraftCell(listName, x, y) {
-  if (!designerDraft || !Array.isArray(designerDraft[listName])) return;
-  designerDraft[listName] = designerDraft[listName].filter((o) => !(o.x === x && o.y === y));
-}
-
-function placeDraftItem(x, y, itemType) {
-  if (!designerDraft) return;
-  if (x < 0 || y < 0 || x >= designerDraft.gridWidth || y >= designerDraft.gridHeight) return;
-  if (itemType === "erase") {
-    if (isDraftStart(x, y)) designerDraft.start = { x: 0, y: designerDraft.gridHeight - 1, dir: 0 };
-    if (isDraftGoal(x, y)) designerDraft.goal = { x: designerDraft.gridWidth - 1, y: 0 };
-    removeDraftCell("obstacles", x, y);
-    removeDraftCell("trees", x, y);
-    return;
-  }
-  if (itemType === "start") {
-    designerDraft.start = { x, y, dir: 0 };
-    removeDraftCell("obstacles", x, y);
-    removeDraftCell("trees", x, y);
-    if (isDraftGoal(x, y)) designerDraft.goal = { x: designerDraft.gridWidth - 1, y: 0 };
-    return;
-  }
-  if (itemType === "goal") {
-    designerDraft.goal = { x, y };
-    removeDraftCell("obstacles", x, y);
-    removeDraftCell("trees", x, y);
-    if (isDraftStart(x, y)) designerDraft.start = { x: 0, y: designerDraft.gridHeight - 1, dir: 0 };
-    return;
-  }
-  if (itemType === "obstacle") {
-    if (isDraftStart(x, y) || isDraftGoal(x, y)) return;
-    if (!draftHasObstacle(x, y)) designerDraft.obstacles.push({ x, y });
-    removeDraftCell("trees", x, y);
-    return;
-  }
-  if (itemType === "tree") {
-    if (isDraftStart(x, y) || isDraftGoal(x, y)) return;
-    if (!draftHasTree(x, y)) designerDraft.trees.push({ x, y });
-    removeDraftCell("obstacles", x, y);
-  }
-}
-
-// --- Akilli tahta / dokunmatik ekran destegi -------------------------
-// HTML5'in yerlesik draggable="true" surukle-birak API'si dokunmatik
-// girdiyi HIC desteklemiyor (spesifikasyon geregi sadece fare ile
-// calisir) - bu yuzden akilli tahtalarda tasarim paletinden ogeleri
-// suruklemek mumkun olmuyordu. Asagidaki touchstart/touchmove/touchend
-// tabanli kucuk polyfill, ayni "surukle-birak" hareketini parmakla da
-// (ya da akilli tahta kaleminin dokunma modunda) calisir hale getiriyor;
-// mevcut fare ile surukleme (dragstart/dragover/drop) davranisi aynen
-// korunuyor.
-let touchDragItem = null;
-let touchDragOverCell = null;
-
-function cellAtPoint(clientX, clientY) {
-  const el = document.elementFromPoint(clientX, clientY);
-  return el?.closest?.(".designer-cell") || null;
-}
-
-function startTouchDrag(itemType, touch) {
-  touchDragItem = itemType;
-  touchDragOverCell = null;
-  if (touch) updateTouchDragOver(touch.clientX, touch.clientY);
-}
-
-function updateTouchDragOver(clientX, clientY) {
-  const cell = cellAtPoint(clientX, clientY);
-  if (cell === touchDragOverCell) return;
-  touchDragOverCell?.classList.remove("drag-over");
-  touchDragOverCell = cell;
-  touchDragOverCell?.classList.add("drag-over");
-}
-
-function endTouchDrag(clientX, clientY) {
-  if (!touchDragItem) return;
-  const cell = cellAtPoint(clientX, clientY);
-  touchDragOverCell?.classList.remove("drag-over");
-  touchDragOverCell = null;
-  if (cell) {
-    const x = Number(cell.dataset.x);
-    const y = Number(cell.dataset.y);
-    placeDraftItem(x, y, touchDragItem);
-    renderDesignerBoard();
-  }
-  touchDragItem = null;
-}
-
-document.addEventListener("touchmove", (ev) => {
-  if (!touchDragItem) return;
-  ev.preventDefault();
-  const touch = ev.touches[0];
-  if (touch) updateTouchDragOver(touch.clientX, touch.clientY);
-}, { passive: false });
-
-document.addEventListener("touchend", (ev) => {
-  if (!touchDragItem) return;
-  const touch = ev.changedTouches[0];
-  endTouchDrag(touch ? touch.clientX : -1, touch ? touch.clientY : -1);
-});
-
-document.addEventListener("touchcancel", () => {
-  touchDragOverCell?.classList.remove("drag-over");
-  touchDragOverCell = null;
-  touchDragItem = null;
-});
-
-function refreshPaletteActive() {
-  const items = designerPalette?.querySelectorAll(".palette-item") || [];
-  items.forEach((el) => {
-    el.classList.toggle("active", el.dataset.item === selectedPaletteItem);
-  });
-}
-
-function renderDesignerBoard() {
-  if (!designerDraft || !designerBoard) return;
-  designerBoard.innerHTML = "";
-  designerBoard.style.gridTemplateColumns = `repeat(${designerDraft.gridWidth}, 34px)`;
-  designerBoard.style.gridTemplateRows = `repeat(${designerDraft.gridHeight}, 34px)`;
-
-  for (let y = 0; y < designerDraft.gridHeight; y++) {
-    for (let x = 0; x < designerDraft.gridWidth; x++) {
-      const cell = document.createElement("div");
-      cell.className = "designer-cell";
-      cell.dataset.x = String(x);
-      cell.dataset.y = String(y);
-      if (isDraftGoal(x, y)) {
-        cell.classList.add("goal");
-        cell.textContent = "⭐";
-      } else if (isDraftStart(x, y)) {
-        cell.classList.add("start");
-        cell.textContent = "🤖";
-      } else if (draftHasObstacle(x, y)) {
-        cell.classList.add("obstacle");
-        cell.textContent = "🪵";
-      } else if (draftHasTree(x, y)) {
-        cell.classList.add("tree");
-        cell.textContent = "🌳";
-      } else {
-        cell.textContent = "";
-      }
-
-      cell.addEventListener("dragover", (ev) => {
-        ev.preventDefault();
-        cell.classList.add("drag-over");
-      });
-      cell.addEventListener("dragleave", () => cell.classList.remove("drag-over"));
-      cell.addEventListener("drop", (ev) => {
-        ev.preventDefault();
-        cell.classList.remove("drag-over");
-        const type = ev.dataTransfer?.getData("text/plain") || selectedPaletteItem;
-        placeDraftItem(x, y, type);
-        renderDesignerBoard();
-      });
-      cell.addEventListener("click", () => {
-        placeDraftItem(x, y, selectedPaletteItem);
-        renderDesignerBoard();
-      });
-      designerBoard.appendChild(cell);
-    }
-  }
-}
-
-function openDesigner(mode) {
-  if (state.running) return;
-  designerMode = mode === "edit" ? "edit" : "add";
-  editingLevelId = null;
-  const current = getCurrentLevel();
-  if (designerMode === "edit" && current) {
-    editingLevelId = current.id;
-    designerDraft = normalizeLevel({ ...current, isCustom: true }, current.id);
-  } else {
-    designerDraft = createEmptyDesignerDraft(Number(designerWidthEl.value), Number(designerHeightEl.value));
-  }
-  designerWidthEl.value = String(designerDraft.gridWidth);
-  designerHeightEl.value = String(designerDraft.gridHeight);
-  const orderValue = designerMode === "edit" && current
-    ? Math.max(1, state.levelIndex + 1)
-    : Math.max(1, LEVELS.length + 1);
-  if (designerOrderEl) designerOrderEl.value = String(orderValue);
-  if (designerXpEl) designerXpEl.value = String(normalizeLevelXp(designerDraft?.xp));
-  selectedPaletteItem = "obstacle";
-  refreshPaletteActive();
-  renderDesignerBoard();
-  designerModal.style.display = "flex";
-}
-
-function closeDesigner() {
-  designerModal.style.display = "none";
-  designerDraft = null;
-  editingLevelId = null;
-}
-
-function saveDesignerLevel() {
-  if (!designerDraft) return;
-  const maxOrderForAdd = LEVELS.length + (editingLevelId ? 0 : 1);
-  const requestedOrder = Math.max(1, Math.min(maxOrderForAdd, Number(designerOrderEl?.value || 1)));
-  const requestedXp = normalizeLevelXp(designerXpEl?.value);
-  const levelPayload = normalizeLevel({
-    id: editingLevelId || `custom_${Date.now()}`,
-    isCustom: true,
-    name: editingLevelId ? `${getCurrentLevel()?.name || "Duzenlenen Seviye"} (Duzenlendi)` : `Ozel Seviye ${Date.now().toString().slice(-5)}`,
-    order: requestedOrder,
-    xp: requestedXp,
-    gridWidth: designerDraft.gridWidth,
-    gridHeight: designerDraft.gridHeight,
-    start: designerDraft.start,
-    goal: designerDraft.goal,
-    obstacles: designerDraft.obstacles,
-    trees: designerDraft.trees
-  }, editingLevelId || `custom_${Date.now()}`);
-  const currentEditIndex = editingLevelId ? LEVELS.findIndex((lv) => lv.id === editingLevelId) : -1;
-  if (currentEditIndex >= 0) LEVELS.splice(currentEditIndex, 1);
-  const insertIndex = Math.max(0, Math.min(LEVELS.length, requestedOrder - 1));
-  LEVELS.splice(insertIndex, 0, levelPayload);
-  state.levelIndex = insertIndex;
-  normalizeLevelOrders();
-  saveCustomLevels();
-  rebuildLevelSelect(state.levelIndex);
-  resetState();
-  closeDesigner();
-  emitGameUpdate();
-}
-
-async function deleteCurrentLevel() {
-  if (state.running) return;
-  if (!Array.isArray(LEVELS) || LEVELS.length <= 1) {
-    showPopup("En az bir seviye kalmali.", "error");
-    return;
-  }
-  const current = getCurrentLevel();
-  if (!current) return;
-  const approved = await confirmDialog(`"${current.name}" seviyesini silmek istiyor musun?`);
-  if (!approved) {
-    showPopup("Silme iptal edildi.", "info", 1300);
-    return;
+    var token = S.token;
+    S.running = true; $('runBtn').disabled = true; $('stepBtn').disabled = true;
+    var r = S.stepIt.next(), result = 'ok';
+    if (!r.done) result = await playEvent(r.value, token);
+    if (token !== S.token) return;
+    S.running = false; $('runBtn').disabled = false; $('stepBtn').disabled = false;
+    if (r.done || result !== 'ok') { S.stepIt = null; if (result === 'goal') onGoal(); }
+    else setStatus('Adım adım: devam etmek için “Adım”a bas');
   }
 
-  if (current.isCustom) {
-    LEVELS = LEVELS.filter((lv) => lv.id !== current.id);
-  } else {
-    deletedBaseLevelIds.add(String(current.id));
-    saveDeletedBaseLevelIds(deletedBaseLevelIds);
-    LEVELS = LEVELS.filter((lv) => lv.id !== current.id);
+  // ------------------------------------------------------------------ tamamlama + platform mesajları (3D sözleşmesi)
+  var sessionXp = 0, rangeEmitted = false;
+  function elapsedSeconds() { return Math.max(0, Math.round((Date.now() - S.sessionStart) / 1000)); }
+  function compactLevels() {
+    return LEVELS.map(function (l) { var d = prog.done[l.id]; return { id: l.id, name: l.name, group: l.group, order: l.order, xp: l.xp, completed: !!d, stars: d ? d.stars : 0 }; });
   }
-
-  normalizeLevelOrders();
-  const nextIndex = Math.max(0, Math.min(state.levelIndex, LEVELS.length - 1));
-  saveCustomLevels();
-  rebuildLevelSelect(nextIndex);
-  resetState();
-  showPopup("Seviye silindi.", "success");
-  emitGameUpdate();
-}
-
-function initBlockly() {
-  if (typeof Blockly === "undefined" || !Blockly?.inject) {
-    blocklyReady = false;
-    setStatus("Blockly yuklenemedi. Internet baglantisini kontrol et.", "error");
-    return;
+  function completedOrders() { var set = completedSet(); return LEVELS.filter(function (l) { return set.has(l.id); }).map(function (l) { return l.order; }); }
+  function rangeInfo() { var r = S.levelRange || queryRange(); return r ? { start: r.startIdx + 1, end: r.endIdx + 1 } : null; }
+  function xpInRange() {
+    var done = completedSet();
+    var s0 = S.levelRange ? Math.max(0, S.levelRange.startIdx) : 0, e0 = S.levelRange ? Math.min(LEVELS.length - 1, S.levelRange.endIdx) : LEVELS.length - 1;
+    return LEVELS.slice(s0, e0 + 1).reduce(function (sum, l) { return sum + (done.has(l.id) ? (l.xp || 0) : 0); }, 0);
   }
-
-  Blockly.defineBlocksWithJsonArray([
-    {
-      type: "program_start",
-      message0: "START %1 %2",
-      args0: [
-        { type: "input_dummy" },
-        { type: "input_statement", name: "DO" }
-      ],
-      colour: 122,
-      tooltip: "Program buradan baslar",
-      nextStatement: null
-    },
-    {
-      type: "move_forward",
-      message0: "Ileri git",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 188,
-      tooltip: "Karakteri ileri gotur"
-    },
-    {
-      type: "turn_left",
-      message0: "Sola don",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 268,
-      tooltip: "Karakteri sola cevir"
-    },
-    {
-      type: "turn_right",
-      message0: "Saga don",
-      previousStatement: null,
-      nextStatement: null,
-      colour: 268,
-      tooltip: "Karakteri saga cevir"
-    }
-  ]);
-
-  const toolbox = `
-    <xml xmlns="https://developers.google.com/blockly/xml">
-      <block type="program_start"></block>
-      <block type="move_forward"></block>
-      <block type="turn_left"></block>
-      <block type="turn_right"></block>
-      <block type="controls_repeat_ext">
-        <value name="TIMES">
-          <shadow type="math_number">
-            <field name="NUM">2</field>
-          </shadow>
-        </value>
-      </block>
-    </xml>
-  `;
-
-  workspace = Blockly.inject(blocklyEl, {
-    toolbox,
-    trashcan: true,
-    grid: { spacing: 20, length: 3, colour: "#cbd5e1", snap: true },
-    move: { scrollbars: true, drag: true, wheel: true }
-  });
-  blocklyReady = true;
-
-  const initialXml = `
-    <xml xmlns="https://developers.google.com/blockly/xml">
-      <block type="program_start" x="20" y="20"></block>
-    </xml>
-  `;
-  try {
-    const textToDomFn =
-      (Blockly.Xml && typeof Blockly.Xml.textToDom === "function" && Blockly.Xml.textToDom.bind(Blockly.Xml)) ||
-      (Blockly.utils?.xml && typeof Blockly.utils.xml.textToDom === "function" && Blockly.utils.xml.textToDom.bind(Blockly.utils.xml));
-    const domToWorkspaceFn =
-      (Blockly.Xml && typeof Blockly.Xml.domToWorkspace === "function" && Blockly.Xml.domToWorkspace.bind(Blockly.Xml)) ||
-      (Blockly.Xml && typeof Blockly.Xml.appendDomToWorkspace === "function" && Blockly.Xml.appendDomToWorkspace.bind(Blockly.Xml));
-
-    if (textToDomFn && domToWorkspaceFn) {
-      const xmlDom = textToDomFn(initialXml);
-      domToWorkspaceFn(xmlDom, workspace);
-    } else {
-      const startBlock = workspace.newBlock("program_start");
-      startBlock.initSvg?.();
-      startBlock.render?.();
-      startBlock.moveBy?.(20, 20);
-    }
-  } catch (e) {
-    console.warn("3D runner initial xml load failed:", e);
-    try {
-      const startBlock = workspace.newBlock("program_start");
-      startBlock.initSvg?.();
-      startBlock.render?.();
-      startBlock.moveBy?.(20, 20);
-    } catch {}
-  }
-}
-
-function resetWorkspaceForLevel() {
-  if (!workspace || !blocklyReady) return;
-  try {
-    workspace.clear();
-    const startBlock = workspace.newBlock("program_start");
-    startBlock.initSvg?.();
-    startBlock.render?.();
-    startBlock.moveBy?.(20, 20);
-  } catch (e) {
-    console.warn("3D runner workspace reset failed:", e);
-  }
-}
-
-function bindUI() {
-  levelSelect.addEventListener("change", () => {
-    if (state.running) return;
-    const nextIndex = Number(levelSelect.value || 0);
-    if (!isIndexAllowedForRole(nextIndex)) {
-      setStatus("Bu seviye bu odev araliginda degil.", "error");
-      levelSelect.value = String(state.levelIndex);
-      return;
-    }
-    state.levelIndex = nextIndex;
-    resetWorkspaceForLevel();
-    resetState();
-  });
-
-  runBtn.addEventListener("click", runProgram);
-  resetBtn.addEventListener("click", () => {
-    if (state.running) return;
-    resetState();
-  });
-  closeBtn?.addEventListener("click", () => {
-    window.parent?.postMessage({ type: "CLOSE_ACTIVITY_MODAL" }, "*");
-  });
-  if (runnerRole !== "admin") {
-    if (addLevelBtn) addLevelBtn.style.display = "none";
-    if (editLevelBtn) editLevelBtn.style.display = "none";
-    if (deleteLevelBtn) deleteLevelBtn.style.display = "none";
-    if (assignHomeworkBtn) assignHomeworkBtn.style.display = "none";
-  }
-  addLevelBtn?.addEventListener("click", () => openDesigner("add"));
-  editLevelBtn?.addEventListener("click", () => openDesigner("edit"));
-  deleteLevelBtn?.addEventListener("click", deleteCurrentLevel);
-  assignHomeworkBtn?.addEventListener("click", () => {
-    if (runnerRole !== "admin") return;
-    const currentLevelNo = Number(state.levelIndex || 0) + 1;
-    const currentLevel = getCurrentLevel();
-    window.parent?.postMessage({
-      type: "OPEN_BLOCK_HOMEWORK_ASSIGN",
-      source: "block-3d",
-      levelStart: currentLevelNo,
-      levelEnd: currentLevelNo,
-      levelName: String(currentLevel?.name || `3D Seviye ${currentLevelNo}`),
-      title: `3D Blok Kodlama - ${String(currentLevel?.name || `Seviye ${currentLevelNo}`)}`
-    }, "*");
-  });
-  winRetryBtn?.addEventListener("click", () => {
-    hideWinModal();
-    resetState();
-  });
-  winContinueBtn?.addEventListener("click", () => {
-    if (nextLevelAfterWin >= 0) {
-      state.levelIndex = nextLevelAfterWin;
-      levelSelect.value = String(nextLevelAfterWin);
-      hideWinModal();
-      resetWorkspaceForLevel();
-      resetState();
-      return;
-    }
-    hideWinModal();
-  });
-  winOverlay?.addEventListener("click", (ev) => {
-    if (ev.target === winOverlay) hideWinModal();
-  });
-  confirmYesBtn?.addEventListener("click", () => closeConfirmDialog(true));
-  confirmNoBtn?.addEventListener("click", () => closeConfirmDialog(false));
-  confirmOverlay?.addEventListener("click", (ev) => {
-    if (ev.target === confirmOverlay) closeConfirmDialog(false);
-  });
-  designerCancelBtn?.addEventListener("click", closeDesigner);
-  designerSaveBtn?.addEventListener("click", saveDesignerLevel);
-  designerWidthEl?.addEventListener("change", () => {
-    if (!designerDraft) return;
-    designerDraft = createEmptyDesignerDraft(Number(designerWidthEl.value), Number(designerHeightEl.value));
-    renderDesignerBoard();
-  });
-  designerHeightEl?.addEventListener("change", () => {
-    if (!designerDraft) return;
-    designerDraft = createEmptyDesignerDraft(Number(designerWidthEl.value), Number(designerHeightEl.value));
-    renderDesignerBoard();
-  });
-  designerPalette?.querySelectorAll(".palette-item").forEach((item) => {
-    item.addEventListener("click", () => {
-      selectedPaletteItem = item.dataset.item || "obstacle";
-      refreshPaletteActive();
+  function emitGameUpdate() {
+    var r = rangeInfo();
+    post({
+      type: 'GAME_UPDATE', source: 'block-3d', levels: compactLevels(), currentLevelIndex: S.idx, elapsedSeconds: elapsedSeconds(),
+      assignmentId: assignmentId, assignmentTitle: assignmentTitle, levelStart: r ? r.start : null, levelEnd: r ? r.end : null, completedLevelIds: completedOrders(),
     });
-    item.addEventListener("dragstart", (ev) => {
-      const itemType = item.dataset.item || "obstacle";
-      selectedPaletteItem = itemType;
-      refreshPaletteActive();
-      ev.dataTransfer?.setData("text/plain", itemType);
-      ev.dataTransfer.effectAllowed = "copy";
+  }
+  // Ödev aralığındaki tüm seviyeler bitince bir kez bildir (assignmentId olmasa da: Laravel ödev sayfası da dinler)
+  function maybeEmitRangeComplete() {
+    if (role !== 'student' || rangeEmitted) return;
+    var r = rangeInfo(); if (!r) return;
+    var done = completedSet();
+    for (var i = r.start - 1; i <= r.end - 1 && i < LEVELS.length; i++) if (!done.has(LEVELS[i].id)) return;
+    rangeEmitted = true;
+    post({
+      type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'block-3d', assignmentId: assignmentId, assignmentTitle: assignmentTitle,
+      levelStart: r.start, levelEnd: r.end, xp: xpInRange(), elapsedSeconds: elapsedSeconds(), completedLevelIds: completedOrders(),
+      levels: compactLevels(), currentLevelIndex: S.idx,
     });
-    item.addEventListener("touchstart", (ev) => {
-      const itemType = item.dataset.item || "obstacle";
-      selectedPaletteItem = itemType;
-      refreshPaletteActive();
-      startTouchDrag(itemType, ev.touches[0]);
-      ev.preventDefault();
-    }, { passive: false });
-  });
-  designerModal?.addEventListener("click", (ev) => {
-    if (ev.target === designerModal) closeDesigner();
-  });
+  }
 
-  window.addEventListener("resize", resizeCanvas);
-  window.addEventListener("beforeunload", () => {
+  // ---- oturum süresi / XP göstergeleri, Çık ve Ödev Ver düğmeleri
+  function updateSessionUI() {
+    var t = $('sessionTimer'), x = $('sessionXp');
+    if (t) { var sec = elapsedSeconds(); t.textContent = ('0' + Math.floor(sec / 60)).slice(-2) + ':' + ('0' + (sec % 60)).slice(-2); }
+    if (x) x.textContent = 'XP: ' + sessionXp;
+  }
+  function initSessionUI() {
+    var inFrame = false; try { inFrame = window.parent && window.parent !== window; } catch (e) {}
+    if (role === 'student' && assignmentId) {
+      ['sessionTimer', 'sessionXp'].forEach(function (id) { var e = $(id); if (e) e.classList.remove('hidden'); });
+      updateSessionUI(); setInterval(updateSessionUI, 1000);
+      setInterval(emitGameUpdate, 4000);
+    }
+    var close = $('btnClose');
+    if (close) {
+      if (inFrame) close.classList.remove('hidden');
+      close.addEventListener('click', function () { post({ type: 'CLOSE_ACTIVITY_MODAL' }); });
+    }
+    var assign = $('btnAssign');
+    if (assign) {
+      if (role === 'admin') assign.classList.remove('hidden');
+      assign.addEventListener('click', function () {
+        if (role !== 'admin') return;
+        post({ type: 'OPEN_BLOCK_HOMEWORK_ASSIGN', source: 'block-3d', levelStart: S.idx + 1, levelEnd: S.idx + 1, levelName: level.name, title: '3D Blok Kodlama - ' + level.name });
+      });
+    }
+    window.addEventListener('beforeunload', emitGameUpdate);
+  }
+
+  function onGoal() {
+    var ast = S.lastAst || buildAst();
+    var used = Engine.countBlocks(ast);
+    var stars = Engine.rateStars(used, level.par);
+    var prev = prog.done[level.id];
+    var first = !prev;
+    prog.done[level.id] = { stars: Math.max(prev ? prev.stars : 0, stars), blocks: prev ? Math.min(prev.blocks, used) : used, at: Date.now() };
+    prog.ws[level.id] = wsSerialize() || prog.ws[level.id];
+    saveProg();
+    if (S.assignmentCompleted instanceof Set) S.assignmentCompleted.add(level.id);
+
+    // XP yalnızca ilk tamamlamada verilir (eski 3D sürümüyle aynı)
+    var xpEarned = first ? (level.xp || 0) : 0;
+    if (xpEarned > 0) { sessionXp += xpEarned; updateSessionUI(); }
+
+    R.celebrate(); sfx.win();
+    setStatus('Hedefe ulaştın! Seviye tamamlandı 🎉', 'good');
+    $('starRow').innerHTML = stars3(prog.done[level.id].stars);
+    refreshHeader();
+
+    var r = rangeInfo();
     emitGameUpdate();
-  });
-}
-
-async function resolveAssignmentRangeFromGrant() {
-  if (!needsGrantCheck) return;
-  if (runnerRole !== "student") return;
-  try {
-    const base = (window.RUNNER_APP_BASE || "").replace(/\/$/, "");
-    const res = await fetch(base + "/runner-grant/block-3d-runner" + window.location.search, {
-      credentials: "same-origin",
-      headers: { Accept: "application/json" }
+    post({
+      type: 'LEVEL_COMPLETED', source: 'block-3d', levelId: level.id, levelNo: level.order, stars: stars, xp: xpEarned,
+      duration: elapsedSeconds(), percent: 100, levels: compactLevels(), currentLevelIndex: S.idx,
+      assignmentId: assignmentId, assignmentTitle: assignmentTitle, levelStart: r ? r.start : null, levelEnd: r ? r.end : null, completedLevelIds: completedOrders(),
     });
-    if (!res.ok) {
-      grantDenied = true;
-      return;
-    }
-    const grant = await res.json();
-    if (!grant || !grant.ok || grant.role !== "student") {
-      grantDenied = true;
-      return;
-    }
-    const start = Math.max(1, Number(grant.from || 1));
-    const end = Math.max(start, Number(grant.to || start));
-    assignmentRange = { start, end };
-  } catch (e) {
-    grantDenied = true;
-  }
-}
 
-async function init() {
-  await resolveAssignmentRangeFromGrant();
-  if (grantDenied) {
-    setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "error");
-    levelSelect.disabled = true;
-    runBtn.disabled = true;
-    return;
+    if (!isStaff() && r && S.idx >= Math.min(LEVELS.length - 1, r.end - 1)) S.assignmentLocked = true;
+    setTimeout(maybeEmitRangeComplete, 900);
+    setTimeout(function () { showResult(stars, used, first); }, 900);
   }
-  rebuildLevelSelect(0);
-  try {
-    initBlockly();
-  } catch (e) {
-    blocklyReady = false;
-    setStatus("Blok editor baslatilamadi.", "error");
-    console.error("3D runner Blockly init error:", e);
+
+  // ------------------------------------------------------------------ sonuç penceresi + konfeti
+  var confettiRAF = 0;
+  function startConfetti() {
+    var c = $('confettiCanvas'); if (!c) return;
+    var rect = c.getBoundingClientRect(); c.width = rect.width; c.height = rect.height;
+    var g = c.getContext('2d'), parts = [], colors = ['#fde047', '#fb923c', '#f472b6', '#60a5fa', '#34d399', '#a78bfa'];
+    for (var i = 0; i < 90; i++) parts.push({ x: Math.random() * c.width, y: -Math.random() * c.height * .6, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, s: 4 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: colors[i % colors.length] });
+    var t0 = performance.now();
+    cancelAnimationFrame(confettiRAF);
+    (function frame(now) {
+      g.clearRect(0, 0, c.width, c.height);
+      parts.forEach(function (p) { p.x += p.vx; p.y += p.vy; p.r += p.vr; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.c; g.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); g.restore(); });
+      if (now - t0 < 2800) confettiRAF = requestAnimationFrame(frame); else g.clearRect(0, 0, c.width, c.height);
+    })(t0);
   }
-  bindUI();
-  if (runnerRole === "student" && assignmentId) {
-    sessionEarnedXp = 0;
-    if (sessionTimerEl) sessionTimerEl.style.display = "block";
-    if (sessionXpEl) sessionXpEl.style.display = "block";
-    startSessionTimer(0);
-    if (updatePingTimer) clearInterval(updatePingTimer);
-    updatePingTimer = setInterval(() => emitGameUpdate(), 4000);
-  } else {
-    if (sessionTimerEl) sessionTimerEl.style.display = "none";
-    if (sessionXpEl) sessionXpEl.style.display = "none";
+  function showResult(stars, used, first) {
+    var par = level.par, best = prog.done[level.id];
+    $('resultTitle').textContent = stars === 3 ? 'Mükemmel! 🏆' : 'Harika! Seviye tamamlandı';
+    $('resultText').textContent = stars === 3
+      ? 'En iyi çözüme ulaştın!'
+      : (!first && best && best.blocks && used >= best.blocks ? 'Bu seviyeyi daha önce de tamamlamıştın.' : par && used > par ? 'Daha az blokla çözebilirsin: ' + par + ' blok yeterli. Tekrar denemek ister misin?' : 'Güzel iş!');
+    $('resultXp').textContent = '+' + (first ? (level.xp || 0) : 0);
+    $('resultBlocks').textContent = used;
+    $('resultPar').textContent = par || '-';
+    var spans = $('resultStars').children;
+    for (var i = 0; i < 3; i++) spans[i].className = '';
+    $('resultModal').classList.remove('hidden');
+    [0, 1, 2].forEach(function (i) { setTimeout(function () { if (i < stars) spans[i].className = 'on'; }, 250 + i * 260); });
+    $('resultNext').disabled = !canOpen(S.idx + 1);
+    startConfetti();
   }
-  resetState();
-  if (runnerRole !== "teacher" && runnerRole !== "admin" && assignmentRange) {
-    setStatus(`Odev araligi: Seviye ${assignmentRange.start}-${assignmentRange.end}`);
+  function hideResult() { $('resultModal').classList.add('hidden'); cancelAnimationFrame(confettiRAF); }
+
+  // ------------------------------------------------------------------ seviye seçici
+  function openPicker() {
+    var body = $('pickerBody'); body.innerHTML = '';
+    var done = completedSet();
+    var groups = [];
+    LEVELS.forEach(function (l, i) {
+      if (!isStaff() && S.levelRange && (i < S.levelRange.startIdx || i > S.levelRange.endIdx)) return;
+      var g = groups.find(function (x) { return x.name === l.group; });
+      if (!g) { g = { name: l.group, items: [] }; groups.push(g); }
+      g.items.push({ l: l, i: i });
+    });
+    groups.forEach(function (g) {
+      var sec = document.createElement('div'); sec.className = 'picker-group';
+      var finished = g.items.filter(function (x) { return done.has(x.l.id); }).length;
+      sec.innerHTML = '<h4>' + g.name + ' <small>' + finished + ' / ' + g.items.length + ' seviye · ' + (g.items[0].l.xp || 0) + ' XP</small></h4>';
+      var grid = document.createElement('div'); grid.className = 'picker-grid';
+      g.items.forEach(function (x) {
+        var b = document.createElement('button'); b.type = 'button';
+        var isDone = done.has(x.l.id), open = canOpen(x.i), rec = prog.done[x.l.id];
+        b.className = 'tile' + (isDone ? ' done' : '') + (x.i === S.idx ? ' current' : '');
+        b.disabled = !open;
+        var starsTxt = rec ? '<span class="t-stars"><b>' + '★'.repeat(rec.stars) + '</b>' + '★'.repeat(3 - rec.stars) + '</span>' : '<span class="t-stars">★★★</span>';
+        b.innerHTML = (open ? '' : '<span class="lock">🔒</span>') + '<span class="t-num">' + (x.i + 1) + '</span><span class="t-size">' + x.l.w + '×' + x.l.h + '</span>' + starsTxt;
+        b.addEventListener('click', function () { if (loadLevel(x.i)) closePicker(); });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid); body.appendChild(sec);
+    });
+    $('pickerModal').classList.remove('hidden');
+    var cur = body.querySelector('.tile.current'); if (cur) cur.scrollIntoView({ block: 'center' });
   }
-  resizeCanvas();
-  requestAnimationFrame(resizeCanvas);
-  setTimeout(resizeCanvas, 120);
-  setTimeout(resizeCanvas, 400);
+  function closePicker() { $('pickerModal').classList.add('hidden'); }
+
+  // ------------------------------------------------------------------ tema / ses / hız
+  function applyTheme(dark) {
+    document.body.classList.toggle('dark', dark);
+    $('darkToggle').textContent = dark ? '☀️' : '🌙';
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+  }
+  var SPEEDS = [0.5, 1, 2, 4];
+  function cycleSpeed() { S.speed = SPEEDS[(SPEEDS.indexOf(S.speed) + 1) % SPEEDS.length]; $('speedLabel').textContent = S.speed + 'x'; try { localStorage.setItem('bgr.speed', String(S.speed)); } catch (e) {} }
+
+  function initUI() {
+    $('runBtn').addEventListener('click', runProgram);
+    $('stepBtn').addEventListener('click', stepProgram);
+    $('resetBtn').addEventListener('click', function () { resetRun(false); toast('Karakter başa alındı'); });
+    var coachClose = $('coachClose'); if (coachClose) coachClose.addEventListener('click', function () { hideCoach(); });
+    $('clearBtn').addEventListener('click', function () {
+      if (!editor) return;
+      resetRun(true);
+      loadingWs = true; try { editor.clear(); } finally { loadingWs = false; }
+      updateCounter(); scheduleSaveWs(); setStatus('Bloklar temizlendi');
+    });
+    $('levelPrev').addEventListener('click', function () { loadLevel(S.idx - 1); });
+    $('levelNext').addEventListener('click', function () { loadLevel(S.idx + 1); });
+    $('levelPicker').addEventListener('click', openPicker);
+    document.querySelectorAll('#pickerModal [data-close]').forEach(function (el) { el.addEventListener('click', closePicker); });
+    $('resultNext').addEventListener('click', function () { hideResult(); loadLevel(S.idx + 1); });
+    $('resultRetry').addEventListener('click', function () { hideResult(); resetRun(false); });
+    $('resultClose').addEventListener('click', hideResult);
+    $('darkToggle').addEventListener('click', function () { applyTheme(!document.body.classList.contains('dark')); });
+    $('soundToggle').addEventListener('click', function () {
+      S.sound = !S.sound; $('soundToggle').textContent = S.sound ? '🔊' : '🔇';
+      try { localStorage.setItem('bgr.sound', S.sound ? '1' : '0'); } catch (e) {}
+      if (S.sound) sfx.move();
+    });
+    $('speedBtn').addEventListener('click', cycleSpeed);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closePicker(); hideResult(); }
+    });
+    $('soundToggle').textContent = S.sound ? '🔊' : '🔇';
+    try { var sp = Number(localStorage.getItem('bgr.speed')); if (SPEEDS.indexOf(sp) >= 0) S.speed = sp; } catch (e) {}
+    $('speedLabel').textContent = S.speed + 'x';
+    var stored = null; try { stored = localStorage.getItem('theme'); } catch (e) {}
+    applyTheme(stored ? stored === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  }
+
+  // ------------------------------------------------------------------ platform: yetki (grant) ve mesajlar
+  async function resolveGrant() {
+    if (!needsGrantCheck || isStaff()) return;
+    try {
+      var base = (window.RUNNER_APP_BASE || '').replace(/\/$/, '');
+      var res = await fetch(base + '/runner-grant/block-3d-runner' + window.location.search, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+      if (!res.ok) { S.grantDenied = true; setStatus('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.', 'bad'); refreshHeader(); return; }
+      var grant = await res.json();
+      if (grant && grant.ok && grant.role === 'staff') { S.staffFlag = true; S.grantDenied = false; S.levelRange = null; S.assignmentLocked = false; refreshHeader(); return; }
+      if (!grant || !grant.ok || grant.role !== 'student') { S.grantDenied = true; setStatus('Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.', 'bad'); return; }
+      var start = Math.max(1, Number(grant.from || 1)), end = Math.max(start, Number(grant.to || start));
+      S.assignmentLocked = false; S.levelRange = { startIdx: start - 1, endIdx: end - 1 };
+      var target = firstIncompleteInRange();
+      loadLevel(Math.max(S.levelRange.startIdx, Math.min(S.levelRange.endIdx, typeof target === 'number' ? target : S.levelRange.startIdx)), { force: true });
+      setStatus('Seviye aralığı: ' + start + '-' + end);
+    } catch (e) { S.grantDenied = true; setStatus('Erişim doğrulanamadı. Sayfayı yenileyip tekrar deneyin.', 'bad'); }
+  }
+
+  window.addEventListener('message', function (ev) {
+    var d = ev && ev.data; if (!d || typeof d !== 'object') return;
+    try {
+      switch (d.type) {
+        case 'SET_LEVEL_RANGE': {
+          S.assignmentLocked = false;
+          var s = Math.max(1, Number(d.levelStart || 1)), e = Math.max(s, Number(d.levelEnd || s));
+          S.levelRange = { startIdx: s - 1, endIdx: e - 1 };
+          var target = firstIncompleteInRange();
+          loadLevel(typeof target === 'number' ? target : S.levelRange.startIdx, { force: true });
+          setStatus('Seviye aralığı: ' + s + '-' + e);
+          break;
+        }
+        case 'SET_ASSIGNMENT_PROGRESS':
+          S.assignmentCompleted = new Set((Array.isArray(d.completedLevelIds) ? d.completedLevelIds : []).map(Number).filter(Number.isFinite));
+          if (S.levelRange) { var t = firstIncompleteInRange(); if (typeof t === 'number' && S.idx > t) loadLevel(t, { force: true }); }
+          refreshHeader();
+          break;
+        case 'FORCE_ASSIGNMENT_LOCK': S.assignmentLocked = true; setStatus('Ödev aralığı tamamlandı'); break;
+        case 'SET_CURRENT_LEVEL': loadLevel(Math.max(0, Math.min(LEVELS.length - 1, Number(d.currentLevelIndex || 0)))); break;
+        case 'LOAD_STATE':
+          // Yalnızca bu sürümün ilerleme verisi kabul edilir; eski sürümün seviye verisi yok sayılır.
+          if (Number(d.version) === VERSION && Array.isArray(d.levels)) {
+            d.levels.forEach(function (l) { if (l && l.completed && LEVELS.some(function (x) { return x.id === l.id; })) prog.done[l.id] = prog.done[l.id] || { stars: Number(l.stars) || 1, blocks: 0, at: Date.now() }; });
+            saveProg(); refreshHeader();
+          }
+          break;
+        case 'REQUEST_SAVE': emitGameUpdate(); break;
+        case 'RESET_LOCAL': prog = { v: VERSION, done: {}, ws: {}, last: 0, wsv: 4 }; saveProg(); loadLevel(0, { force: true }); break;
+        case 'RUN': runProgram(); break;
+        case 'STEP': stepProgram(); break;
+        case 'RESET': resetRun(false); break;
+        default: break; // DISABLE_MENU / ENABLE_MENU / tasarımcı mesajları: v2'de menü yok
+      }
+    } catch (err) { /* bozuk mesajı yok say */ }
+  }, false);
+
+  // ------------------------------------------------------------------ açılış
+  initUI();
+  var startIdx = (function () {
+    if (S.levelRange && !isStaff()) { var f = firstIncompleteInRange(); return typeof f === 'number' ? f : S.levelRange.startIdx; }
+    var last = Number(prog.last) || 0;
+    if (!isStaff() && !canOpen(last)) last = Math.min(highestDoneIdx() + 1, LEVELS.length - 1);
+    return Math.max(0, Math.min(LEVELS.length - 1, last));
+  })();
+  S.idx = startIdx; level = LEVELS[S.idx];
+  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
+
+  initEditor();
+  initSessionUI();
   emitGameUpdate();
-}
+  resolveGrant();
+  S.loaded = true;
 
-init();
-
-
-
-
-
+  // dışarıdan test/hata ayıklama için
+  window.BlockApp = { state: S, levels: LEVELS, loadLevel: loadLevel, run: runProgram, buildAst: buildAst, editor: function () { return editor; } };
+})();
