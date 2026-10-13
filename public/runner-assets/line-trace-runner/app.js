@@ -228,45 +228,98 @@
     const level = levels[state.level];
     const d = state.levelData;
     const corr = level.baseTol * state.assist;
-    bctx.clearRect(0, 0, bgCanvas.clientWidth, bgCanvas.clientHeight);
+    const w = bgCanvas.clientWidth;
+    const h = bgCanvas.clientHeight;
+    bctx.clearRect(0, 0, w, h);
     bctx.lineCap = "round";
     bctx.lineJoin = "round";
 
-    bctx.strokeStyle = "rgba(59,130,246,0.20)";
-    bctx.lineWidth = Math.max(2, corr * 2);
-    bctx.beginPath();
-    bctx.moveTo(d.points[0].x, d.points[0].y);
-    d.points.slice(1).forEach((p) => bctx.lineTo(p.x, p.y));
-    bctx.stroke();
-
-    bctx.fillStyle = "rgba(157,184,220,0.35)";
-    d.dots.forEach((p) => {
+    const tracePath = () => {
       bctx.beginPath();
-      bctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      bctx.moveTo(d.points[0].x, d.points[0].y);
+      d.points.slice(1).forEach((p) => bctx.lineTo(p.x, p.y));
+    };
+
+    // izin verilen koridor (yumuşak ışıma)
+    bctx.save();
+    bctx.strokeStyle = "rgba(96,165,250,0.16)";
+    bctx.lineWidth = Math.max(2, corr * 2);
+    tracePath();
+    bctx.stroke();
+    bctx.strokeStyle = "rgba(147,197,253,0.18)";
+    bctx.lineWidth = Math.max(2, corr * 1.1);
+    tracePath();
+    bctx.stroke();
+    bctx.restore();
+
+    // hedef yolun ortası: kesikli ışıklı kılavuz
+    bctx.save();
+    bctx.setLineDash([10, 9]);
+    bctx.strokeStyle = "rgba(224,236,255,0.85)";
+    bctx.shadowColor = "rgba(147,197,253,0.9)";
+    bctx.shadowBlur = 8;
+    bctx.lineWidth = 3;
+    tracePath();
+    bctx.stroke();
+    bctx.restore();
+
+    // ara noktalar
+    d.dots.forEach((p) => {
+      bctx.fillStyle = "rgba(147,197,253,0.25)";
+      bctx.beginPath();
+      bctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      bctx.fill();
+      bctx.fillStyle = "#e0ecff";
+      bctx.beginPath();
+      bctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
       bctx.fill();
     });
 
-    bctx.fillStyle = "#10b981";
-    bctx.beginPath();
-    bctx.arc(d.start.x, d.start.y, 18, 0, Math.PI * 2);
-    bctx.fill();
-
-    bctx.fillStyle = "#ef4444";
-    bctx.beginPath();
-    bctx.arc(d.end.x, d.end.y, 18, 0, Math.PI * 2);
-    bctx.fill();
+    const marker = (pt, color, glow, label) => {
+      bctx.save();
+      bctx.shadowColor = glow;
+      bctx.shadowBlur = 22;
+      bctx.fillStyle = color;
+      bctx.beginPath();
+      bctx.arc(pt.x, pt.y, 18, 0, Math.PI * 2);
+      bctx.fill();
+      bctx.restore();
+      bctx.strokeStyle = "rgba(255,255,255,0.9)";
+      bctx.lineWidth = 3;
+      bctx.beginPath();
+      bctx.arc(pt.x, pt.y, 18, 0, Math.PI * 2);
+      bctx.stroke();
+      bctx.fillStyle = "#ffffff";
+      bctx.font = "900 11px Nunito, Segoe UI, sans-serif";
+      bctx.textAlign = "center";
+      bctx.textBaseline = "middle";
+      bctx.fillText(label, pt.x, pt.y + 1);
+    };
+    marker(d.start, "#16a34a", "rgba(74,222,128,0.95)", "▶");
+    marker(d.end, "#dc2626", "rgba(248,113,113,0.95)", "🏁");
   }
 
   function drawStroke() {
     dctx.clearRect(0, 0, drawCanvas.clientWidth, drawCanvas.clientHeight);
     if (state.stroke.length < 2) return;
-    dctx.lineWidth = 9;
     dctx.lineJoin = "round";
     dctx.lineCap = "round";
+    const path = () => {
+      dctx.beginPath();
+      dctx.moveTo(state.stroke[0].x, state.stroke[0].y);
+      for (let i = 1; i < state.stroke.length; i++) dctx.lineTo(state.stroke[i].x, state.stroke[i].y);
+    };
+    dctx.save();
+    dctx.shadowColor = "rgba(74,222,128,0.9)";
+    dctx.shadowBlur = 16;
     dctx.strokeStyle = "#4ade80";
-    dctx.beginPath();
-    dctx.moveTo(state.stroke[0].x, state.stroke[0].y);
-    for (let i = 1; i < state.stroke.length; i++) dctx.lineTo(state.stroke[i].x, state.stroke[i].y);
+    dctx.lineWidth = 9;
+    path();
+    dctx.stroke();
+    dctx.restore();
+    dctx.strokeStyle = "#bbf7d0";
+    dctx.lineWidth = 3;
+    path();
     dctx.stroke();
   }
 
