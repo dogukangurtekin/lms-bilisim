@@ -179,15 +179,6 @@ body {
 .slot.filled[data-cmd="J"] { background: linear-gradient(145deg, var(--c-jump-2), var(--c-jump)); }
 .slot.filled[data-cmd="B"] { background: linear-gradient(145deg, var(--c-light-2), var(--c-light)); }
 .slot.filled[data-cmd="P1"], .slot.filled[data-cmd="P2"] { background: linear-gradient(145deg, var(--c-proc-2), var(--c-proc)); font-size: 17px; }
-.slot.active-step {
-  outline: 3px solid #f59e0b;
-  outline-offset: 2px;
-  animation: stepGlow .6s ease-in-out infinite alternate;
-}
-@keyframes stepGlow {
-  from { box-shadow: 0 0 0 0 rgba(245, 158, 11, .6); }
-  to { box-shadow: 0 0 14px 3px rgba(245, 158, 11, .55); }
-}
 
 /* ---------- komut çubuğu ---------- */
 .command-bar {

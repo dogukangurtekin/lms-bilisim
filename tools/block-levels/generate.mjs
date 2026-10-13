@@ -99,5 +99,5 @@ const HINTS = {
 
 generate({
   plan, expected: 82, version: LEVEL_SET_VERSION, globalName: 'BLOCK_LEVEL_SET', outFile, sourceNote: 'tools/block-levels/generate.mjs',
-  build: makeBuilder({ themeFor, groupFor, XP, CONCEPT, HINTS, namePrefix: 'Bölüm ', loopsFrom: 13, advancedFrom: 61, easyStartMax: 12, mazeSteps: (i) => Math.round(12 + (i - 33) * 0.5) }),
+  build: makeBuilder({ themeFor, groupFor, XP, CONCEPT, HINTS, namePrefix: 'Bölüm ', loopsFrom: 13, sealRing: true, advancedFrom: 61, easyStartMax: 12, mazeSteps: (i) => Math.round(12 + (i - 33) * 0.5) }),
 });

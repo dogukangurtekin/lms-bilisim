@@ -354,7 +354,7 @@
         const cmd = currentProgram[track][i] || "";
         const slot = document.createElement("button");
         slot.type = "button";
-        slot.className = `slot${cmd ? " filled" : ""}${activeStepKey === `${track}:${i}` ? " active-step" : ""}`;
+        slot.className = `slot${cmd ? " filled" : ""}`;
         slot.textContent = cmd ? (CMD_ICON[cmd] || cmd) : "+";
         if (cmd) slot.dataset.cmd = cmd;
         slot.title = cmd ? "Silmek icin tikla" : "Komut eklemek icin alttan sec";

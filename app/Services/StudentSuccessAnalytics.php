@@ -117,7 +117,7 @@ class StudentSuccessAnalytics
             return (! $from || $ts->gte($from)) && (! $to || $ts->lte($to));
         };
 
-        [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass] = $this->classContentIds($classIds);
+        [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass, $lessonHomeworkCourse] = $this->classContentIds($classIds);
 
         // --- Ders tamamlama ---
         $doneLessons = [];   // user_id => [content_id => true]
@@ -191,6 +191,13 @@ class StudentSuccessAnalytics
             $cid = (int) $student->school_class_id;
             $doneLessonIds = array_keys($doneLessons[$student->user_id] ?? []);
             $doneHomeworkIds = array_keys($doneHomeworks[$student->id] ?? []);
+            // 'Ders' türündeki ödev, öğrenci o dersi tamamladığında (ders ilerlemesi üzerinden) tamamlanmış sayılır.
+            foreach ($lessonHomeworkCourse as $hwId => $courseKey) {
+                if (isset($doneLessons[$student->user_id][$courseKey])) {
+                    $doneHomeworkIds[] = $hwId;
+                }
+            }
+            $doneHomeworkIds = array_values(array_unique($doneHomeworkIds));
             // Öğretmen bir ders/ödevi silse bile öğrencinin tamamladığı kayıt öğrenciden eksilmez:
             // silinmiş içeriklerden öğrencinin tamamladıkları hem payda hem pay olarak sayılır.
             $lessonIds = array_values(array_unique(array_merge(
@@ -309,7 +316,11 @@ class StudentSuccessAnalytics
 
         $homeworkIdsByClass = [];
         $trashedHomeworksByClass = [];
-        foreach (CourseHomework::withTrashed()->whereIn('school_class_id', $classIds)->get(['id', 'school_class_id', 'deleted_at']) as $h) {
+        $lessonHomeworkCourse = [];
+        foreach (CourseHomework::withTrashed()->whereIn('school_class_id', $classIds)->get(['id', 'school_class_id', 'deleted_at', 'assignment_type', 'course_id']) as $h) {
+            if ((string) $h->assignment_type === 'lesson' && $h->course_id) {
+                $lessonHomeworkCourse[$h->id] = 'course-'.$h->course_id;
+            }
             if ($h->deleted_at) {
                 $trashedHomeworksByClass[$h->school_class_id][] = $h->id;
             } else {
@@ -317,7 +328,7 @@ class StudentSuccessAnalytics
             }
         }
 
-        return [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass];
+        return [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass, $lessonHomeworkCourse];
     }
 
     private function avg(array $values): ?float
@@ -440,7 +451,7 @@ class StudentSuccessAnalytics
         };
 
         // Dersler
-        [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass] = $this->classContentIds([$classId]);
+        [$lessonIdsByClass, $homeworkIdsByClass, $trashedLessonsByClass, $trashedHomeworksByClass, $lessonHomeworkCourse] = $this->classContentIds([$classId]);
         // Silinmiş olsa bile öğrencinin tamamladığı ders/ödev listede kalır.
         $doneContentIds = ContentProgress::query()->where('user_id', $userId)->where('completed', true)->where('content_id', 'like', 'course-%')->pluck('content_id')->all();
         $lessonContentIds = array_values(array_unique(array_merge(
@@ -479,6 +490,15 @@ class StudentSuccessAnalytics
         // Ödevler
         $homeworks = [];
         $hwProgressAll = StudentHomeworkProgress::query()->where('student_id', $student->id)->whereNotNull('completed_at')->pluck('course_homework_id')->all();
+        // 'Ders' türündeki ödev, ilgili ders tamamlandıysa tamamlanmış sayılır.
+        $lessonHwDone = [];
+        foreach ($lessonHomeworkCourse as $hwId => $courseKey) {
+            if (in_array($courseKey, $doneContentIds, true)) {
+                $lessonHwDone[$hwId] = $courseKey;
+                $hwProgressAll[] = $hwId;
+            }
+        }
+        $courseDoneRows = ContentProgress::query()->where('user_id', $userId)->where('completed', true)->whereIn('content_id', array_values($lessonHwDone))->get()->keyBy('content_id');
         $hwIds = array_values(array_unique(array_merge(
             $homeworkIdsByClass[$classId] ?? [],
             array_intersect($trashedHomeworksByClass[$classId] ?? [], $hwProgressAll)
@@ -487,6 +507,19 @@ class StudentSuccessAnalytics
         foreach (CourseHomework::withTrashed()->whereIn('id', $hwIds)->orderByDesc('id')->get(['id', 'title', 'assignment_type', 'due_date']) as $hw) {
             $p = $hwProgress->get($hw->id);
             $done = $p && $p->completed_at && $inRange($p->completed_at);
+            $cp = isset($lessonHwDone[$hw->id]) ? $courseDoneRows->get($lessonHwDone[$hw->id]) : null;
+            if (! $done && $cp && $inRange($cp->updated_at)) {
+                $homeworks[] = [
+                    'title' => (string) $hw->title,
+                    'type' => (string) $hw->assignment_type,
+                    'due' => $hw->due_date ? Carbon::parse($hw->due_date)->format('d.m.Y') : null,
+                    'done' => true,
+                    'done_at' => $cp->updated_at->format('d.m.Y'),
+                    'xp' => (int) $cp->xp_awarded,
+                    'seconds' => (int) (((array) $cp->payload)['duration_seconds'] ?? 0),
+                ];
+                continue;
+            }
             $homeworks[] = [
                 'title' => (string) $hw->title,
                 'type' => (string) $hw->assignment_type,
