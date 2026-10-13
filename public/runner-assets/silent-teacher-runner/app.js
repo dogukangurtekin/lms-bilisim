@@ -1,101 +1,4 @@
-const CURRICULUM = {
-  easy: [
-    {
-      id: "easy_1",
-      title: "Degiskenler",
-      lesson: "Degiskene yeni deger atarsan eski deger silinir.",
-      questions: [
-        { code: "a = 2\na = 3\na + 1", prompt: "Son satirin sonucu nedir?", options: ["5", "1", "6", "4", "3", "2", "?!?"], answer: "4" },
-        { code: "x = 9\ny = 4\nx - y", prompt: "x - y sonucu nedir?", options: ["6", "5", "13", "4", "0", "9", "?!?"], answer: "5" },
-        { code: "n = 10\nn = n + 5\nn", prompt: "n'nin son degeri nedir?", options: ["15", "10", "5", "20", "0", "11", "?!?"], answer: "15" }
-      ]
-    },
-    {
-      id: "easy_2",
-      title: "Dizi ve Indeks",
-      lesson: "Dizilerde indeks 0'dan baslar. a[0] ilk elemandir.",
-      questions: [
-        { code: "let a = ['p', 'g', 'w', 't', 'x']\na[0]", prompt: "a[0] sonucu nedir?", options: ["'g'", "'x'", "'p'", "5", "4", "'w'", "?!?"], answer: "'p'" },
-        { code: "let b = [8, 3, 1]\nb[2]", prompt: "b[2] sonucu nedir?", options: ["8", "3", "1", "2", "0", "9", "?!?"], answer: "1" },
-        { code: "let c = ['q', 'y']\nc.length", prompt: "Uzunluk nedir?", options: ["'q'", "'y'", "1", "9", "6", "2", "?!?"], answer: "2" }
-      ]
-    },
-    {
-      id: "easy_3",
-      title: "Karsilastirma",
-      lesson: "== esitligi kontrol eder, sonuc True veya False olur.",
-      questions: [
-        { code: "14 == 14", prompt: "Ifadenin sonucu nedir?", options: ["28", "0", "True", "False", "'=='", "14", "?!?"], answer: "True" },
-        { code: "8 != 8", prompt: "Sonuc nedir?", options: ["True", "False", "0", "1", "16", "8", "?!?"], answer: "False" },
-        { code: "3 < 5", prompt: "3 < 5 sonucu nedir?", options: ["True", "False", "8", "2", "10", "0", "?!?"], answer: "True" }
-      ]
-    }
-  ],
-  medium: [
-    {
-      id: "mid_1",
-      title: "if / else",
-      lesson: "if dogruysa ilk blok, degilse else blogu calisir.",
-      questions: [
-        { code: "a = 0\nif 3 < 6:\n    a = 4\na + 1", prompt: "Kodun sonucu nedir?", options: ["5", "1", "0", "6", "3", "4", "?!?"], answer: "5" },
-        { code: "b = 2\nif b > 5:\n    b = 9\nelse:\n    b = 7\nb", prompt: "b'nin son degeri nedir?", options: ["9", "2", "7", "5", "0", "1", "?!?"], answer: "7" },
-        { code: "k = 1\nif k == 1:\n    k = k + 2\nk", prompt: "k'nin son degeri nedir?", options: ["1", "2", "3", "4", "0", "5", "?!?"], answer: "3" }
-      ]
-    },
-    {
-      id: "mid_2",
-      title: "else if Zinciri",
-      lesson: "Ilk dogru kosul calisir, diger dallar atlanir.",
-      questions: [
-        { code: "let a = 0\nif (1 < 7) {\n  a = 2\n} else if (6 < 8) {\n  a = 4\n} else {\n  a = 5\n}\na + 4", prompt: "Sonuc nedir?", options: ["4", "5", "2", "6", "9", "8", "?!?"], answer: "6" },
-        { code: "let n = 3\nif (n > 5) {\n  n = 1\n} else if (n == 3) {\n  n = 9\n}\nn", prompt: "n'nin son degeri nedir?", options: ["3", "1", "9", "5", "0", "7", "?!?"], answer: "9" },
-        { code: "let x = 10\nif (x < 0) {\n  x = 4\n} else {\n  x = x - 3\n}\nx", prompt: "Son deger nedir?", options: ["10", "7", "4", "3", "0", "13", "?!?"], answer: "7" }
-      ]
-    },
-    {
-      id: "mid_3",
-      title: "Fonksiyon Giris",
-      lesson: "Fonksiyon parametre alir ve return ile sonuc dondurur.",
-      questions: [
-        { code: "function hello(a, b) {\n  return a + b\n}\n\nhello(4, 5)", prompt: "Sonuc nedir?", options: ["10", "8", "4", "6", "5", "1", "9", "2", "7", "3", "?!?"], answer: "9" },
-        { code: "function hi(a, b) {\n  return a * b\n}\n\nhi(2, 3)", prompt: "Sonuc nedir?", options: ["3", "4", "8", "6", "7", "1", "2", "5", "?!?"], answer: "6" },
-        { code: "def topla(a, b):\n    return a + b\n\ntopla(7, 1)", prompt: "Fonksiyon sonucu nedir?", options: ["6", "7", "8", "9", "1", "0", "?!?"], answer: "8" }
-      ]
-    }
-  ],
-  hard: [
-    {
-      id: "hard_1",
-      title: "Ic Ice Kosul",
-      lesson: "Bir if blogunun icinde baska bir if daha olabilir.",
-      questions: [
-        { code: "x = 4\ny = 2\nif x > 1:\n    if y < 3:\n        x = x + y\nx", prompt: "x'in son degeri nedir?", options: ["4", "5", "6", "2", "3", "7", "?!?"], answer: "6" },
-        { code: "a = 5\nif a > 2:\n    if a < 5:\n        a = 1\n    else:\n        a = 9\na", prompt: "Son deger nedir?", options: ["1", "5", "9", "2", "3", "0", "?!?"], answer: "9" },
-        { code: "n = 3\nif n == 3:\n    n = n * 2\n    if n == 6:\n        n = n + 1\nn", prompt: "Son deger nedir?", options: ["6", "7", "3", "2", "5", "1", "?!?"], answer: "7" }
-      ]
-    },
-    {
-      id: "hard_2",
-      title: "Dizi ve Hesaplama",
-      lesson: "Indeksleme + uzunluk bilgisi birlikte kullanilabilir.",
-      questions: [
-        { code: "arr = [2, 4, 6, 8]\narr[1] + arr[3]", prompt: "Sonuc nedir?", options: ["10", "12", "14", "16", "8", "6", "?!?"], answer: "12" },
-        { code: "s = 'qwert'\nlen(s) - 1", prompt: "Sonuc nedir?", options: ["3", "4", "5", "2", "1", "0", "?!?"], answer: "4" },
-        { code: "a = ['k', 'm', 'z']\na[0] + a[2]", prompt: "Sonuc nedir?", options: ["'km'", "'kz'", "'mz'", "'z'", "'k'", "3", "?!?"], answer: "'kz'" }
-      ]
-    },
-    {
-      id: "hard_3",
-      title: "Fonksiyon + Kosul",
-      lesson: "Fonksiyon icinde kosul kullanarak farkli deger dondurebilirsin.",
-      questions: [
-        { code: "def puan(x):\n    if x >= 50:\n        return 1\n    return 0\n\npuan(70)", prompt: "Sonuc nedir?", options: ["0", "1", "50", "70", "2", "True", "?!?"], answer: "1" },
-        { code: "def sec(a, b):\n    if a > b:\n        return a\n    return b\n\nsec(3, 9)", prompt: "Sonuc nedir?", options: ["3", "9", "12", "0", "6", "1", "?!?"], answer: "9" },
-        { code: "function f(a, b) {\n  if (a == b) {\n    return a * 2\n  }\n  return a + b\n}\n\nf(4, 4)", prompt: "Sonuc nedir?", options: ["4", "8", "16", "2", "0", "12", "?!?"], answer: "8" }
-      ]
-    }
-  ]
-};
+// CURRICULUM (100 bölüm) curriculum.js dosyasından gelir (tools/learn-levels/silent-teacher.gen.mjs ile üretilir).
 
 function flattenCurriculum(curriculum) {
   const order = ["easy", "medium", "hard"];
@@ -210,6 +113,7 @@ function highlightCode(text) {
 }
 
 function buildSectionButtons() {
+  let active = null;
   sectionListEl.innerHTML = "";
   sections.forEach((s, idx) => {
     const btn = document.createElement("button");
@@ -230,7 +134,9 @@ function buildSectionButtons() {
       emitProgress();
     });
     sectionListEl.appendChild(btn);
+    if (idx === sectionIndex) active = btn;
   });
+  if (active && active.scrollIntoView) active.scrollIntoView({ block: "nearest" });
 }
 
 function getCurrentQuestion() {

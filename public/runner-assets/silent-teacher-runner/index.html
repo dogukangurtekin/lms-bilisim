@@ -34,6 +34,9 @@
     }
     .shell { min-height: 100%; display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px; }
     .left {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
       background: linear-gradient(165deg, var(--navy-1), var(--navy-2));
       border: 1px solid rgba(255, 255, 255, .1);
       border-radius: 24px;
@@ -65,14 +68,15 @@
       font-size: .78rem;
       font-weight: 800;
     }
-    .section-list { display: grid; gap: 8px; margin-top: 6px; }
+    .section-list { display: grid; gap: 6px; margin-top: 6px; overflow-y: auto; min-height: 0; padding-right: 4px; align-content: start; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
     .section-btn {
       width: 100%;
       border: 2px solid transparent;
       background: rgba(255, 255, 255, .08);
       color: #e6eeff;
-      border-radius: 14px;
-      padding: 11px 13px;
+      border-radius: 12px;
+      padding: 8px 11px;
+      font-size: .86rem;
       text-align: left;
       cursor: pointer;
       font-family: inherit;
@@ -213,6 +217,7 @@
     .footer { color: var(--soft); font-size: .85rem; font-weight: 700; text-align: right; }
     @media (max-width: 1000px) {
       .shell { grid-template-columns: 1fr; }
+      .left { position: static; max-height: 360px; }
       .options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       pre.code { font-size: 1.2rem; min-height: 110px; }
     }
@@ -253,6 +258,7 @@
       <div id="footer" class="footer"></div>
     </main>
   </div>
+  <script src="./curriculum.js"></script>
   <script src="./app.js"></script>
   <script src="../pwa-init.js" defer></script>
 </body>
