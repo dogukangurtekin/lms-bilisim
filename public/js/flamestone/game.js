@@ -273,220 +273,246 @@ export class FlamestoneGame {
     ctx.restore();
   }
 
-  poly(ctx, pts, fill, stroke) {
+  rr(ctx, x, y, w, h, r) {
+    const rad = Math.max(0, Math.min(r, w / 2, h / 2));
     ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length; i += 1) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
     ctx.closePath();
-    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
   }
 
-  // İzometrik kutu: taban merkezi (px,py), yarım genişlik hw, yarım derinlik hh, yükseklik h
-  box(ctx, px, py, hw, hh, h, cTop, cL, cR) {
-    this.poly(ctx, [[px - hw, py - h], [px, py - h + hh], [px, py + hh], [px - hw, py]], cL);
-    this.poly(ctx, [[px + hw, py - h], [px, py - h + hh], [px, py + hh], [px + hw, py]], cR);
-    this.poly(ctx, [[px, py - h - hh], [px + hw, py - h], [px, py - h + hh], [px - hw, py - h]], cTop);
-  }
-
-  ellipseAt(ctx, px, py, rx, ry, fill) {
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
+  // Yumuşak degrade dolgulu, alt kenarı koyu "kalınlık" şeritli kutu
+  slab(ctx, x, y, w, h, r, top, bottom, edge) {
+    this.rr(ctx, x, y + h * 0.08, w, h, r);
+    ctx.fillStyle = edge;
     ctx.fill();
+    const g = ctx.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, top);
+    g.addColorStop(1, bottom);
+    this.rr(ctx, x, y, w, h, r);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    this.rr(ctx, x + w * 0.08, y + h * 0.07, w * 0.84, h * 0.22, r * 0.6);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
   }
 
   draw(ts = performance.now()) {
     const s = this.state;
     const ctx = this.ctx;
     if (!s) return;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
-    const n = s.width + s.height;
-    const a = Math.min((W * 0.95) / n, (H * 0.95) / (n / 2 + 1.9));
-    const b = a / 2;
-    const thick = a * 0.5;
-    const ox = W / 2 + ((s.height - s.width) * a) / 2;
-    const oy = (H - (n * b + thick + a * 1.4)) / 2 + a * 1.4;
-    const sxp = (x, y) => ox + (x - y) * a;
-    const syp = (x, y) => oy + (x + y) * b;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const cell = Math.min(w / s.width, h / s.height);
+    const ox = (w - (cell * s.width)) / 2;
+    const oy = (h - (cell * s.height)) / 2;
     const pulse = 0.5 + 0.5 * Math.sin(ts / 380);
 
     const shaking = ts < this.shakeUntil;
     const sx = shaking ? (Math.random() - 0.5) * 8 : 0;
     const sy = shaking ? (Math.random() - 0.5) * 8 : 0;
 
-    ctx.clearRect(0, 0, W, H);
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#0b1d4d');
-    bg.addColorStop(1, '#2a1a5e');
+    ctx.clearRect(0, 0, w, h);
+    const bg = ctx.createRadialGradient(w / 2, h * 0.35, 20, w / 2, h / 2, Math.max(w, h) * 0.75);
+    bg.addColorStop(0, '#1b3a82');
+    bg.addColorStop(1, '#070f22');
     ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-    for (let i = 0; i < 70; i += 1) {
-      const hx = ((i * 7919) % 1000) / 1000;
-      const hy = ((i * 104729) % 997) / 997;
-      ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.5 * Math.abs(Math.sin(ts / 900 + i))})`;
-      ctx.fillRect(hx * W, hy * H * 0.7, 1.6, 1.6);
-    }
+    ctx.fillRect(0, 0, w, h);
 
     ctx.save();
     ctx.translate(sx, sy);
 
-    // zemin blokları
+    // zemin
+    for (let y = 0; y < s.height; y += 1) {
+      for (let x = 0; x < s.width; x += 1) {
+        const px = ox + x * cell;
+        const py = oy + y * cell;
+        ctx.fillStyle = (x + y) % 2 === 0 ? '#16295a' : '#12234d';
+        ctx.fillRect(px, py, cell, cell);
+        ctx.strokeStyle = 'rgba(147,197,253,.08)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px + 0.5, py + 0.5, cell - 1, cell - 1);
+      }
+    }
+
+    // nesneler
     for (let y = 0; y < s.height; y += 1) {
       for (let x = 0; x < s.width; x += 1) {
         const t = s.grid[y][x];
-        const topC = (x + y) % 2 === 0 ? '#7dd3fc' : '#60c3f5';
-        const L = [sxp(x, y + 1), syp(x, y + 1)];
-        const B = [sxp(x + 1, y + 1), syp(x + 1, y + 1)];
-        const R = [sxp(x + 1, y), syp(x + 1, y)];
-        this.poly(ctx, [L, B, [B[0], B[1] + thick], [L[0], L[1] + thick]], '#1d4ed8');
-        this.poly(ctx, [R, B, [B[0], B[1] + thick], [R[0], R[1] + thick]], '#1e3a8a');
-        this.poly(ctx, [[sxp(x, y), syp(x, y)], R, B, L], t === 'T' ? '#4c1d1d' : topC, 'rgba(255,255,255,.18)');
-      }
-    }
-
-    // oyuncu ve nesneler derinlik sırasıyla
-    const p = this.getPlayerDrawPos(ts);
-    const playerDepth = (p.x - 0.5) + (p.y - 0.5);
-    let playerDone = false;
-    const drawPlayer = () => {
-      playerDone = true;
-      const px = sxp(p.x, p.y);
-      const py = syp(p.x, p.y);
-      const r = a * 0.34;
-      const moving = !!this.tween;
-      const hop = moving ? Math.abs(Math.sin(ts / 70)) * a * 0.12 : Math.sin(ts / 320) * a * 0.02;
-      this.ellipseAt(ctx, px, py + b * 0.1, r * 0.95, r * 0.48, 'rgba(0,0,0,.35)');
-      if (s.hasKey) this.ellipseAt(ctx, px, py - r * 1.1 - hop, r * (1.5 + 0.15 * pulse), r * (1.5 + 0.15 * pulse), 'rgba(253,224,71,.22)');
-      const cy = py - r * 1.05 - hop;
-      const pg = ctx.createRadialGradient(px - r * 0.35, cy - r * 0.4, r * 0.1, px, cy, r);
-      pg.addColorStop(0, s.hasKey ? '#ddd6fe' : '#dbeafe');
-      pg.addColorStop(1, s.hasKey ? '#7c3aed' : '#2563eb');
-      ctx.fillStyle = pg;
-      ctx.beginPath();
-      ctx.arc(px, cy, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.6)';
-      ctx.lineWidth = Math.max(1.5, a * 0.03);
-      ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(px - r * 0.34, cy - r * 0.1, r * 0.2, 0, Math.PI * 2);
-      ctx.arc(px + r * 0.34, cy - r * 0.1, r * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#0b1b44';
-      ctx.beginPath();
-      ctx.arc(px - r * 0.3, cy - r * 0.08, r * 0.1, 0, Math.PI * 2);
-      ctx.arc(px + r * 0.38, cy - r * 0.08, r * 0.1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#0b1b44';
-      ctx.beginPath();
-      ctx.arc(px, cy + r * 0.14, r * 0.3, 0.15 * Math.PI, 0.85 * Math.PI);
-      ctx.stroke();
-    };
-
-    for (let d = 0; d <= s.width + s.height - 2; d += 1) {
-      for (let x = 0; x < s.width; x += 1) {
-        const y = d - x;
-        if (y < 0 || y >= s.height) continue;
-        if (!playerDone && playerDepth < d - 0.0001) drawPlayer();
-        const t = s.grid[y][x];
-        const px = sxp(x + 0.5, y + 0.5);
-        const py = syp(x + 0.5, y + 0.5);
+        const px = ox + x * cell;
+        const py = oy + y * cell;
+        const cx = px + cell / 2;
+        const cy = py + cell / 2;
 
         if (t === '#') {
-          this.ellipseAt(ctx, px + a * 0.1, py + b * 0.15, a * 0.55, b * 0.55, 'rgba(0,0,0,.25)');
-          this.box(ctx, px, py + b * 0.05, a * 0.5, b * 0.5, a * 0.95, '#cbd5e1', '#64748b', '#475569');
-          ctx.fillStyle = 'rgba(15,23,42,.25)';
-          ctx.fillRect(px - a * 0.36, py - a * 0.52, a * 0.2, a * 0.1);
-          ctx.fillRect(px + a * 0.1, py - a * 0.3, a * 0.2, a * 0.1);
+          this.slab(ctx, px + cell * 0.03, py + cell * 0.03, cell * 0.94, cell * 0.86, cell * 0.14, '#8b9bb8', '#4b5a78', '#2b3650');
+          ctx.strokeStyle = 'rgba(15,23,42,.35)';
+          ctx.lineWidth = Math.max(1, cell * 0.025);
+          ctx.beginPath();
+          ctx.moveTo(px + cell * 0.1, cy - cell * 0.02);
+          ctx.lineTo(px + cell * 0.9, cy - cell * 0.02);
+          ctx.moveTo(cx, py + cell * 0.1);
+          ctx.lineTo(cx, cy - cell * 0.02);
+          ctx.moveTo(px + cell * 0.3, cy - cell * 0.02);
+          ctx.lineTo(px + cell * 0.3, py + cell * 0.8);
+          ctx.moveTo(px + cell * 0.7, cy - cell * 0.02);
+          ctx.lineTo(px + cell * 0.7, py + cell * 0.8);
+          ctx.stroke();
         } else if (t === 'X') {
-          const k = 0.7;
-          this.poly(ctx, [[px, py - b * k], [px + a * k, py], [px, py + b * k], [px - a * k, py]], `rgba(167,139,250,${0.35 + 0.3 * pulse})`, `rgba(237,233,254,${0.7 + 0.3 * pulse})`);
-          const k2 = 0.35;
-          this.poly(ctx, [[px, py - b * k2], [px + a * k2, py], [px, py + b * k2], [px - a * k2, py]], `rgba(196,181,253,${0.4 + 0.3 * pulse})`);
+          ctx.save();
+          ctx.setLineDash([cell * 0.14, cell * 0.1]);
+          ctx.lineWidth = Math.max(2, cell * 0.06);
+          ctx.strokeStyle = `rgba(167,139,250,${0.65 + 0.35 * pulse})`;
+          this.rr(ctx, px + cell * 0.14, py + cell * 0.14, cell * 0.72, cell * 0.72, cell * 0.14);
+          ctx.stroke();
+          ctx.restore();
+          ctx.fillStyle = `rgba(167,139,250,${0.12 + 0.12 * pulse})`;
+          this.rr(ctx, px + cell * 0.14, py + cell * 0.14, cell * 0.72, cell * 0.72, cell * 0.14);
+          ctx.fill();
         } else if (t === 'B' || t === 'b') {
           const done = t === 'b';
-          if (done) this.poly(ctx, [[px, py - b * 0.8], [px + a * 0.8, py], [px, py + b * 0.8], [px - a * 0.8, py]], `rgba(74,222,128,${0.25 + 0.2 * pulse})`);
-          this.ellipseAt(ctx, px + a * 0.08, py + b * 0.1, a * 0.5, b * 0.5, 'rgba(0,0,0,.28)');
-          this.box(ctx, px, py + b * 0.1, a * 0.42, b * 0.42, a * 0.62,
-            done ? '#bbf7d0' : '#fcd9a8', done ? '#16a34a' : '#c2610f', done ? '#15803d' : '#92400e');
-          ctx.strokeStyle = done ? 'rgba(6,78,59,.5)' : 'rgba(92,45,8,.5)';
-          ctx.lineWidth = Math.max(1.2, a * 0.03);
+          if (done) {
+            ctx.fillStyle = `rgba(74,222,128,${0.18 + 0.14 * pulse})`;
+            this.rr(ctx, px + cell * 0.08, py + cell * 0.08, cell * 0.84, cell * 0.84, cell * 0.18);
+            ctx.fill();
+          }
+          this.slab(ctx, px + cell * 0.12, py + cell * 0.1, cell * 0.76, cell * 0.72, cell * 0.14,
+            done ? '#86efac' : '#f0a85b', done ? '#16a34a' : '#c2610f', done ? '#0f5c2b' : '#7c3a0a');
+          ctx.strokeStyle = done ? 'rgba(6,78,59,.55)' : 'rgba(92,45,8,.55)';
+          ctx.lineWidth = Math.max(1.5, cell * 0.035);
           ctx.beginPath();
-          ctx.moveTo(px - a * 0.3, py - a * 0.66);
-          ctx.lineTo(px + a * 0.3, py - a * 0.66);
-          ctx.moveTo(px, py - a * 0.66 - b * 0.3);
-          ctx.lineTo(px, py - a * 0.66 + b * 0.3);
+          ctx.moveTo(px + cell * 0.2, py + cell * 0.18);
+          ctx.lineTo(px + cell * 0.8, py + cell * 0.74);
+          ctx.moveTo(px + cell * 0.8, py + cell * 0.18);
+          ctx.lineTo(px + cell * 0.2, py + cell * 0.74);
           ctx.stroke();
+          if (done) this.drawTileGlyph(ctx, px, py - cell * 0.02, cell, '✔', '#ffffff');
         } else if (t === 'T') {
-          const g = ctx.createRadialGradient(px, py, 2, px, py, a * 0.7);
-          g.addColorStop(0, `rgba(248,113,113,${0.5 + 0.3 * pulse})`);
+          const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, cell * 0.5);
+          g.addColorStop(0, `rgba(248,113,113,${0.55 + 0.3 * pulse})`);
           g.addColorStop(1, 'rgba(220,38,38,0)');
           ctx.fillStyle = g;
-          ctx.fillRect(px - a, py - b, a * 2, b * 2);
-          this.poly(ctx, [[px, py - b * 0.7], [px + a * 0.7, py], [px, py + b * 0.7], [px - a * 0.7, py]], '#1c0a0a');
-          for (let i = 0; i < 4; i += 1) {
-            const qx = px + [-0.28, 0.28, 0, 0][i] * a;
-            const qy = py + [0, 0, -0.28, 0.28][i] * b * 1.2;
-            this.poly(ctx, [[qx - a * 0.1, qy], [qx, qy - a * 0.38], [qx + a * 0.1, qy]], '#fca5a5', '#7f1d1d');
+          ctx.fillRect(px, py, cell, cell);
+          ctx.fillStyle = '#7f1d1d';
+          ctx.beginPath();
+          ctx.arc(cx, cy, cell * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ef4444';
+          for (let i = 0; i < 6; i += 1) {
+            const a = (Math.PI * 2 * i) / 6 + Math.PI / 6;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a - 0.28) * cell * 0.26, cy + Math.sin(a - 0.28) * cell * 0.26);
+            ctx.lineTo(cx + Math.cos(a) * cell * 0.42, cy + Math.sin(a) * cell * 0.42);
+            ctx.lineTo(cx + Math.cos(a + 0.28) * cell * 0.26, cy + Math.sin(a + 0.28) * cell * 0.26);
+            ctx.closePath();
+            ctx.fill();
           }
+          this.drawTileGlyph(ctx, px, py, cell, '☠', '#fee2e2');
         } else if (t === 'K') {
-          const bob = Math.sin(ts / 260 + x) * a * 0.06;
-          this.ellipseAt(ctx, px, py, a * 0.3, b * 0.3, 'rgba(0,0,0,.28)');
-          this.ellipseAt(ctx, px, py - a * 0.5 + bob, a * 0.42, a * 0.42, `rgba(253,224,71,${0.18 + 0.15 * pulse})`);
-          const ky = py - a * 0.5 + bob;
+          const bob = Math.sin(ts / 260) * cell * 0.03;
+          const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, cell * 0.5);
+          g.addColorStop(0, `rgba(253,224,71,${0.35 + 0.25 * pulse})`);
+          g.addColorStop(1, 'rgba(253,224,71,0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(px, py, cell, cell);
           ctx.fillStyle = '#fbbf24';
           ctx.strokeStyle = '#b45309';
-          ctx.lineWidth = Math.max(1.5, a * 0.04);
+          ctx.lineWidth = Math.max(1.5, cell * 0.04);
           ctx.beginPath();
-          ctx.arc(px - a * 0.14, ky, a * 0.15, 0, Math.PI * 2);
+          ctx.arc(cx - cell * 0.12, cy + bob, cell * 0.15, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
-          ctx.fillRect(px - a * 0.02, ky - a * 0.04, a * 0.34, a * 0.08);
-          ctx.fillRect(px + a * 0.2, ky, a * 0.07, a * 0.16);
+          ctx.fillRect(cx - cell * 0.02, cy - cell * 0.04 + bob, cell * 0.32, cell * 0.08);
+          ctx.fillRect(cx + cell * 0.18, cy + bob, cell * 0.07, cell * 0.16);
           ctx.fillStyle = '#78350f';
           ctx.beginPath();
-          ctx.arc(px - a * 0.14, ky, a * 0.05, 0, Math.PI * 2);
+          ctx.arc(cx - cell * 0.12, cy + bob, cell * 0.05, 0, Math.PI * 2);
           ctx.fill();
         } else if (t === 'D') {
-          this.ellipseAt(ctx, px + a * 0.08, py + b * 0.1, a * 0.5, b * 0.5, 'rgba(0,0,0,.25)');
-          this.box(ctx, px, py + b * 0.05, a * 0.46, b * 0.46, a * 1.0, '#bae6fd', '#0284c7', '#0369a1');
+          this.slab(ctx, px + cell * 0.16, py + cell * 0.06, cell * 0.68, cell * 0.86, cell * 0.2, '#7dd3fc', '#0369a1', '#0c4a6e');
           ctx.fillStyle = '#fde68a';
           ctx.beginPath();
-          ctx.arc(px + a * 0.18, py - a * 0.32, a * 0.05, 0, Math.PI * 2);
+          ctx.arc(cx + cell * 0.14, cy, cell * 0.05, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = 'rgba(255,255,255,.22)';
-          ctx.fillRect(px - a * 0.34, py - a * 0.72, a * 0.2, a * 0.5);
-        } else if (t === 'G') {
-          const k = 0.78 + 0.05 * pulse;
-          this.poly(ctx, [[px, py - b * k], [px + a * k, py], [px, py + b * k], [px - a * k, py]], `rgba(74,222,128,${0.45 + 0.25 * pulse})`, '#bbf7d0');
-          const k2 = 0.4;
-          this.poly(ctx, [[px, py - b * k2], [px + a * k2, py], [px, py + b * k2], [px - a * k2, py]], '#16a34a');
-          ctx.strokeStyle = '#e2e8f0';
-          ctx.lineWidth = Math.max(2, a * 0.05);
+          ctx.strokeStyle = 'rgba(12,74,110,.5)';
+          ctx.lineWidth = Math.max(1, cell * 0.03);
           ctx.beginPath();
-          ctx.moveTo(px, py);
-          ctx.lineTo(px, py - a * 0.95);
+          ctx.moveTo(cx - cell * 0.06, py + cell * 0.16);
+          ctx.lineTo(cx - cell * 0.06, py + cell * 0.8);
           ctx.stroke();
-          const wave = Math.sin(ts / 200) * a * 0.04;
-          this.poly(ctx, [[px, py - a * 0.95], [px + a * 0.42, py - a * 0.8 + wave], [px, py - a * 0.62]], '#ef4444');
+        } else if (t === 'G') {
+          const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, cell * (0.5 + 0.05 * pulse));
+          g.addColorStop(0, 'rgba(134,239,172,.85)');
+          g.addColorStop(1, 'rgba(34,197,94,0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(px - cell * 0.1, py - cell * 0.1, cell * 1.2, cell * 1.2);
+          this.slab(ctx, px + cell * 0.14, py + cell * 0.14, cell * 0.72, cell * 0.66, cell * 0.2, '#86efac', '#16a34a', '#0f5c2b');
+          this.drawTileGlyph(ctx, px, py - cell * 0.02, cell, '🏁', '#052e16');
         }
       }
     }
-    if (!playerDone) drawPlayer();
+
+    // oyuncu
+    const p = this.getPlayerDrawPos(ts);
+    const pcx = ox + p.x * cell;
+    const pcy = oy + p.y * cell;
+    const r = cell * 0.32;
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(pcx, pcy + r * 0.95, r * 0.85, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (s.hasKey) {
+      ctx.fillStyle = `rgba(253,224,71,${0.25 + 0.2 * pulse})`;
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, r * 1.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const pg = ctx.createRadialGradient(pcx - r * 0.35, pcy - r * 0.4, r * 0.1, pcx, pcy, r);
+    pg.addColorStop(0, s.hasKey ? '#ddd6fe' : '#bfdbfe');
+    pg.addColorStop(1, s.hasKey ? '#7c3aed' : '#2563eb');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.arc(pcx, pcy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = Math.max(1.5, cell * 0.03);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pcx - r * 0.34, pcy - r * 0.12, r * 0.2, 0, Math.PI * 2);
+    ctx.arc(pcx + r * 0.34, pcy - r * 0.12, r * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0b1b44';
+    ctx.beginPath();
+    ctx.arc(pcx - r * 0.3, pcy - r * 0.1, r * 0.1, 0, Math.PI * 2);
+    ctx.arc(pcx + r * 0.38, pcy - r * 0.1, r * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0b1b44';
+    ctx.lineWidth = Math.max(1.5, cell * 0.03);
+    ctx.beginPath();
+    ctx.arc(pcx, pcy + r * 0.12, r * 0.32, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
 
     const now = performance.now();
     this.particles = this.particles.filter((p0) => now - p0.born < p0.life);
     for (const p0 of this.particles) {
       const age = now - p0.born;
       const tt = age / p0.life;
-      const qx = sxp(p0.x + p0.vx * age, p0.y + p0.vy * age);
-      const qy = syp(p0.x + p0.vx * age, p0.y + p0.vy * age) - a * 0.5 - age * 0.02;
+      const qx = ox + (p0.x + p0.vx * age) * cell;
+      const qy = oy + (p0.y + p0.vy * age) * cell;
       ctx.fillStyle = `rgba(250,204,21,${1 - tt})`;
       ctx.beginPath();
-      ctx.arc(qx, qy, 3 * (1 - tt) + 1, 0, Math.PI * 2);
+      ctx.arc(qx, qy, 2.5 * (1 - tt) + 1, 0, Math.PI * 2);
       ctx.fill();
     }
 
