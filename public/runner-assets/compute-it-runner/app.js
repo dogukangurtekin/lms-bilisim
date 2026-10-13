@@ -1401,8 +1401,16 @@
 
   window.addEventListener("resize", fitCodeToPanel);
 
+  // Topun önceki konumu: her adımda tahta yeniden çizildiği için topu eski karesinden yeni karesine kaydırmak (FLIP) için saklanır.
+  let lastBallBoardKey = "";
+
   function renderBoard() {
     const level = levels[levelIndex];
+    const prevBallEl = boardEl.querySelector(".ball");
+    const prevBallRect = prevBallEl ? prevBallEl.getBoundingClientRect() : null;
+    const ballBoardKey = `${levelIndex}:${level.size}`;
+    const sameBoardAsBefore = lastBallBoardKey === ballBoardKey;
+    lastBallBoardKey = ballBoardKey;
     const gapPx = window.innerWidth <= 1024 ? 4 : 12;
     const widthLimit = Math.floor((boardEl.clientWidth - (level.size - 1) * gapPx) / level.size);
     const heightLimit = boardEl.clientHeight > 0
@@ -1440,6 +1448,21 @@
           cell.appendChild(ball);
         }
         boardEl.appendChild(cell);
+      }
+    }
+    // Top bir kare ilerlediyse "tık" diye zıplamasın, yumuşakça kaysın (yeni bir basış gelirse bulunduğu yerden devam eder).
+    const newBallEl = boardEl.querySelector(".ball");
+    if (newBallEl && prevBallRect && sameBoardAsBefore) {
+      const nr = newBallEl.getBoundingClientRect();
+      const dx = prevBallRect.left - nr.left;
+      const dy = prevBallRect.top - nr.top;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 0.5 && dist <= (sizePx + gapPx) * 1.6) { // yalnızca komşu kareye geçişte; kenardan karşı kenara sarmada kaymaz
+        newBallEl.style.transition = "none";
+        newBallEl.style.transform = `translate(${dx}px, ${dy}px)`;
+        void newBallEl.offsetWidth; // başlangıç konumunu uygula
+        newBallEl.style.transition = "transform 240ms cubic-bezier(.25, .8, .25, 1)";
+        newBallEl.style.transform = "translate(0, 0)";
       }
     }
   }

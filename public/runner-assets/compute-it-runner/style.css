@@ -161,7 +161,7 @@ body {
   border: max(3px, calc(var(--cell-size, 92px) * .07)) solid var(--pink);
   position: relative;
   box-shadow: 0 7px 12px rgba(0, 0, 0, .38), inset 0 -4px 6px rgba(0, 0, 0, .12);
-  animation: ballIdle 1.8s ease-in-out infinite;
+  will-change: transform; /* kayma animasyonu app.js'ten satır içi transform ile verilir */
 }
 .ball.signal-1 { border-color: #0ea5e9; background: radial-gradient(circle at 32% 28%, #fff, #eaf8ff 50%, #bae6fd); }
 .ball.signal-2 { border-color: #16a34a; background: radial-gradient(circle at 32% 28%, #fff, #effdf4 50%, #bbf7d0); }
@@ -182,7 +182,6 @@ body {
   font-weight: 900;
   font-size: max(12px, calc(var(--cell-size, 92px) * .22));
 }
-@keyframes ballIdle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes ballDonePop {
   0% { transform: scale(1); }
   45% { transform: scale(1.28); }
