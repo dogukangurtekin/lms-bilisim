@@ -3,49 +3,71 @@
     'scoreUrl' => route('flamestone.scores.store'),
 ])
 
-<section class="card" id="flamestone-game-root" data-levels-url="{{ $levelsUrl }}" data-score-url="{{ $scoreUrl }}">
-    <div class="flame-header" style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
-        <div>
-            <h2 id="flame-level-title" style="margin:0;font-size:20px;color:#0f172a;">Flamestone</h2>
-            <p id="flame-level-meta" style="margin:4px 0 0;color:#475569;font-size:13px;">Hazirlaniyor...</p>
-            <p style="margin:8px 0 0;font-size:12px;line-height:1.4;color:#334155;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;max-width:420px;">
-                Mantik: Oyuncuyu hedefe (G) ulastir. Duvarlardan gecemezsin, bloklari (B) itebilirsin, tuzaga (T) basarsan bolum sifirlanir.
-                Bloklari once hedef noktalara (X) koy, sonra finish'e git. Anahtari (K) alip kapiyi (D) acman gereken bolumler vardir.
-                En az adim ve kisa sure en iyi skorudur.
-            </p>
+@once
+    <link rel="stylesheet" href="{{ asset('css/flamestone.css') }}?v={{ @filemtime(public_path('css/flamestone.css')) }}">
+@endonce
+
+<section class="fs fs-card" id="flamestone-game-root" data-levels-url="{{ $levelsUrl }}" data-score-url="{{ $scoreUrl }}">
+    <div class="fs-top">
+        <div class="fs-title-block">
+            <div class="fs-badge">🔥</div>
+            <div>
+                <h2 id="flame-level-title" class="fs-title">Flamestone</h2>
+                <p id="flame-level-meta" class="fs-meta">Hazırlanıyor...</p>
+            </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <select id="flame-difficulty-filter" class="form-control" style="min-width:120px;">
-                <option value="all">Tum</option>
+        <div class="fs-stats">
+            <span id="flame-steps" class="fs-chip">Adım: 0</span>
+            <span id="flame-time" class="fs-chip">Süre: 0 sn</span>
+        </div>
+        <div class="fs-filters">
+            <select id="flame-difficulty-filter">
+                <option value="all">Tüm</option>
                 <option value="easy">Kolay</option>
                 <option value="medium">Orta</option>
                 <option value="hard">Zor</option>
             </select>
-            <select id="flame-level-select" class="form-control" style="min-width:200px;"></select>
-            <button id="flame-fullscreen-btn" class="btn" type="button">Tam Ekran</button>
+            <select id="flame-level-select" style="min-width:190px;"></select>
+            <button id="flame-fullscreen-btn" class="fs-btn fs-btn-ghost" type="button">Tam Ekran</button>
         </div>
     </div>
 
-    <div style="margin-top:12px;display:flex;justify-content:center;">
-        <canvas id="flame-canvas" width="720" height="720" style="max-width:min(92vw,760px);width:100%;border-radius:16px;border:1px solid #cbd5e1;background:#0b1220;"></canvas>
+    <div class="fs-body">
+        <div class="fs-stage">
+            <canvas id="flame-canvas" class="fs-canvas" width="720" height="720"></canvas>
+        </div>
+
+        <aside class="fs-side">
+            <div class="fs-actions">
+                <button class="fs-btn fs-btn-ghost" id="flame-restart-btn" type="button">Yeniden Başlat</button>
+                <button class="fs-btn fs-btn-go" id="flame-next-btn" type="button">Sonraki Level</button>
+            </div>
+
+            <div id="flame-toast" class="fs-toast"></div>
+
+            <div id="flame-mobile-controls" class="fs-dpad">
+                <span></span>
+                <button type="button" class="fs-btn" data-dir="up" aria-label="Yukarı">▲</button>
+                <span></span>
+                <button type="button" class="fs-btn" data-dir="left" aria-label="Sol">◀</button>
+                <button type="button" class="fs-btn" data-dir="down" aria-label="Aşağı">▼</button>
+                <button type="button" class="fs-btn" data-dir="right" aria-label="Sağ">▶</button>
+            </div>
+
+            <div class="fs-panel fs-help">
+                <h3>Nasıl oynanır?</h3>
+                <ul class="fs-legend">
+                    <li><span class="fs-sw player"></span><span>Oyuncuyu hedefe (G) ulaştır.</span></li>
+                    <li><span class="fs-sw crate"></span><span>Blokları (B) itebilirsin, duvardan geçemezsin.</span></li>
+                    <li><span class="fs-sw slot"></span><span>Blokları önce hedef noktalara (X) koy.</span></li>
+                    <li><span class="fs-sw key">🗝</span><span>Anahtarı (K) alıp kapıyı (D) aç.</span></li>
+                    <li><span class="fs-sw trap">✖</span><span>Tuzağa (T) basarsan bölüm sıfırlanır.</span></li>
+                    <li><span class="fs-sw goal">🏁</span><span>Bitiş noktası (G).</span></li>
+                </ul>
+                <p class="fs-tip">En az adım ve kısa süre en iyi skordur. Yön tuşları veya WASD ile oyna.</p>
+            </div>
+        </aside>
     </div>
 
-    <div style="margin-top:10px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
-        <button class="btn" id="flame-restart-btn" type="button">Restart</button>
-        <button class="btn" id="flame-next-btn" type="button">Sonraki Level</button>
-        <span id="flame-steps" class="chip" style="padding:8px 10px;background:#e2e8f0;border-radius:999px;font-weight:700;">Adim: 0</span>
-        <span id="flame-time" class="chip" style="padding:8px 10px;background:#e2e8f0;border-radius:999px;font-weight:700;">Sure: 0 sn</span>
-    </div>
-
-    <div id="flame-mobile-controls" style="margin-top:12px;display:grid;gap:6px;justify-content:center;grid-template-columns:repeat(3,56px);">
-        <span></span>
-        <button type="button" class="btn" data-dir="up" style="padding:8px;">^</button>
-        <span></span>
-        <button type="button" class="btn" data-dir="left" style="padding:8px;">�</button>
-        <button type="button" class="btn" data-dir="down" style="padding:8px;">v</button>
-        <button type="button" class="btn" data-dir="right" style="padding:8px;">�</button>
-    </div>
-
-    <div id="flame-toast" style="margin-top:10px;color:#1f2937;font-weight:600;min-height:22px;"></div>
-    <div id="flame-level-previews" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;"></div>
+    <div id="flame-level-previews" class="fs-previews"></div>
 </section>

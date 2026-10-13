@@ -99,14 +99,14 @@ function bindGamePage() {
   const startLevelTimer = () => {
     levelStartedAt = Date.now();
     if (levelTimer) clearInterval(levelTimer);
-    const tick = () => { if (timeEl) timeEl.textContent = `Sure: ${Math.max(0, Math.round((Date.now() - levelStartedAt) / 1000))} sn`; };
+    const tick = () => { if (timeEl) timeEl.textContent = `Süre: ${Math.max(0, Math.round((Date.now() - levelStartedAt) / 1000))} sn`; };
     tick();
     levelTimer = setInterval(tick, 1000);
   };
 
   const game = new FlamestoneGame({
     canvas,
-    onMove: (n) => { stepsEl.textContent = `Adim: ${n}`; },
+    onMove: (n) => { stepsEl.textContent = `Adım: ${n}`; },
     onToast: showToast,
     onLevelComplete: async ({ level, moves }) => {
       showToast(`Basarili! ${moves} adim.`);
@@ -132,6 +132,7 @@ function bindGamePage() {
     levelTitle.textContent = lv.name || `Level ${current + 1}`;
     levelMeta.textContent = `Grid: ${lv.data.grid[0].length}x${lv.data.grid.length} | Level ${current + 1}/${levels.length}`;
     levelSelect.value = String(current);
+    previewsEl.querySelectorAll('.flame-preview-card').forEach((b) => b.classList.toggle('is-active', Number(b.getAttribute('data-idx')) === current));
   }
 
   function loadLevel(index) {
@@ -167,15 +168,15 @@ function bindGamePage() {
     levels = allLevels.filter((lv, idx) => (f === 'all' ? true : detectDifficulty(lv.name, idx) === f));
     if (!levels.length) {
       levelSelect.innerHTML = '';
-      previewsEl.innerHTML = '<p style="margin:0;color:#64748b;">Filtreye uygun level bulunamadi.</p>';
+      previewsEl.innerHTML = '<p class="fs-empty">Filtreye uygun level bulunamadı.</p>';
       return;
     }
 
     levelSelect.innerHTML = levels.map((lv, i) => `<option value="${i}" ${isLockedIndex(i) ? 'disabled' : ''}>${i + 1}. ${lv.name}${isLockedIndex(i) ? ' (Kilitli)' : ''}</option>`).join('');
     previewsEl.innerHTML = levels.map((lv, i) => `
-      <button type="button" class="flame-preview-card" data-idx="${i}" style="text-align:left;border:1px solid #cbd5e1;background:${isLockedIndex(i) ? '#f8fafc' : '#fff'};border-radius:10px;padding:8px;cursor:pointer;opacity:${isLockedIndex(i) ? '0.72' : '1'};">
-        <canvas width="96" height="96" data-map="${i}" style="width:100%;height:auto;border-radius:6px;background:#020617;"></canvas>
-        <div style="margin-top:6px;font-size:12px;font-weight:700;color:#0f172a;">${i + 1}. ${lv.name}${isLockedIndex(i) ? ' - Kilitli' : ''}</div>
+      <button type="button" class="flame-preview-card${isLockedIndex(i) ? ' is-locked' : ''}${i === current ? ' is-active' : ''}" data-idx="${i}">
+        <canvas width="96" height="96" data-map="${i}"></canvas>
+        <div class="fs-pv-name">${i + 1}. ${lv.name}${isLockedIndex(i) ? ' - Kilitli' : ''}</div>
       </button>
     `).join('');
 
