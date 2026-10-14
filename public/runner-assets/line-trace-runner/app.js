@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "line_trace_progress_v2";
+  const STORAGE_KEY = "line_trace_progress_v3";
   const query = new URLSearchParams(window.location.search);
   const roleParam = (query.get("role") || "").toLowerCase();
   const runnerRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";
@@ -45,23 +45,14 @@
   const bctx = bgCanvas.getContext("2d");
   const dctx = drawCanvas.getContext("2d");
 
-  const levels = [
-    { name: "Çizgi", difficulty: "easy", points: [[0.08, 0.50], [0.92, 0.50]], pass: 52, baseTol: 16 },
-    { name: "Zikzak", difficulty: "easy", points: [[0.08, 0.58], [0.26, 0.42], [0.44, 0.58], [0.62, 0.42], [0.80, 0.58], [0.92, 0.50]], pass: 56, baseTol: 16 },
-    { name: "Üçgen", difficulty: "easy", points: [[0.12, 0.78], [0.50, 0.20], [0.88, 0.78], [0.26, 0.78]], pass: 58, baseTol: 15 },
-    { name: "Kare", difficulty: "medium", points: [[0.18, 0.78], [0.82, 0.78], [0.82, 0.22], [0.18, 0.22], [0.18, 0.78], [0.30, 0.78]], pass: 60, baseTol: 15 },
-    { name: "Elmas", difficulty: "medium", points: [[0.50, 0.12], [0.82, 0.50], [0.50, 0.88], [0.18, 0.50], [0.50, 0.12], [0.63, 0.26]], pass: 63, baseTol: 14 },
-    { name: "Dalga", difficulty: "medium", points: [[0.06, 0.55], [0.18, 0.30], [0.30, 0.70], [0.42, 0.32], [0.54, 0.68], [0.66, 0.30], [0.78, 0.64], [0.92, 0.45]], pass: 65, baseTol: 14 },
-    { name: "Spiral", difficulty: "medium", points: [[0.85, 0.50], [0.75, 0.30], [0.45, 0.24], [0.26, 0.40], [0.30, 0.66], [0.52, 0.74], [0.66, 0.60], [0.62, 0.46], [0.48, 0.43], [0.44, 0.52], [0.52, 0.56], [0.58, 0.51]], pass: 68, baseTol: 13 },
-    { name: "Yıldız", difficulty: "hard", points: [[0.50, 0.10], [0.62, 0.40], [0.92, 0.40], [0.68, 0.58], [0.78, 0.88], [0.50, 0.70], [0.22, 0.88], [0.32, 0.58], [0.08, 0.40], [0.38, 0.40], [0.50, 0.10], [0.60, 0.30]], pass: 72, baseTol: 12 },
-    { name: "S-Kıvrım", difficulty: "hard", points: [[0.10, 0.28], [0.32, 0.24], [0.50, 0.40], [0.68, 0.58], [0.90, 0.54], [0.80, 0.72], [0.58, 0.78], [0.36, 0.66], [0.14, 0.52]], pass: 74, baseTol: 12 },
-    { name: "Usta Parkur", difficulty: "hard", points: [[0.08, 0.80], [0.24, 0.54], [0.16, 0.24], [0.42, 0.18], [0.58, 0.40], [0.72, 0.20], [0.90, 0.34], [0.76, 0.54], [0.90, 0.78], [0.66, 0.84], [0.52, 0.66], [0.34, 0.84], [0.12, 0.70]], pass: 78, baseTol: 11 }
-  ];
+  // 100 bölümlük kategorili set (Kolay / Orta / Zor / Uzman) levels.js içinde tanımlıdır (tools/learn-levels/line-trace.gen.mjs ile üretilir).
+  const levels = Array.isArray(window.LINE_TRACE_LEVELS) ? window.LINE_TRACE_LEVELS : [];
 
   const XP_BY_DIFFICULTY = {
     easy: 6,
     medium: 9,
-    hard: 17
+    hard: 17,
+    expert: 25
   };
 
   const state = {
@@ -129,6 +120,7 @@
   function getDifficultyLabel(token) {
     if (token === "easy") return "Kolay";
     if (token === "hard") return "Zor";
+    if (token === "expert") return "Uzman";
     return "Orta";
   }
 
@@ -168,8 +160,16 @@
     return sampled;
   }
 
-  function buildPathData(rawPoints, w, h) {
-    const points = rawPoints.map((p) => ({ x: p[0] * w, y: p[1] * h }));
+  function buildPathData(rawPoints, w, h, units) {
+    let points;
+    if (units === "ar2") {
+      const s = Math.min(w / 2, h);
+      const ox = (w - 2 * s) / 2;
+      const oy = (h - s) / 2;
+      points = rawPoints.map((p) => ({ x: ox + p[0] * s, y: oy + p[1] * s }));
+    } else {
+      points = rawPoints.map((p) => ({ x: p[0] * w, y: p[1] * h }));
+    }
     let totalLen = 0;
     const segs = [];
     for (let i = 0; i < points.length - 1; i++) {
@@ -220,7 +220,7 @@
     });
     bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    state.levelData = buildPathData(levels[state.level].points, rect.width, rect.height);
+    state.levelData = buildPathData(levels[state.level].points, rect.width, rect.height, levels[state.level].units);
     redrawAll();
   }
 
@@ -462,8 +462,18 @@
 
   function renderLevelGrid() {
     levelGridEl.innerHTML = "";
+    let lastGroup = "";
     levels.forEach((level, idx) => {
       if (!isLevelInAllowedRange(idx)) return;
+      if (level.difficulty !== lastGroup) {
+        lastGroup = level.difficulty;
+        const count = levels.filter((l, i) => l.difficulty === lastGroup && isLevelInAllowedRange(i)).length;
+        const doneInGroup = levels.filter((l, i) => l.difficulty === lastGroup && isLevelInAllowedRange(i) && state.completed[`${i}_pass`]).length;
+        const head = document.createElement("div");
+        head.className = `level-group-title grp-${lastGroup}`;
+        head.textContent = `${getDifficultyLabel(lastGroup)} · ${doneInGroup} / ${count} bölüm · +${XP_BY_DIFFICULTY[lastGroup] || 9} XP`;
+        levelGridEl.appendChild(head);
+      }
       const unlocked = (runnerRole === "teacher" || runnerRole === "admin") ? true : (idx <= state.unlockedLevel);
       const done = !!state.completed[`${idx}_pass`];
       const card = document.createElement("button");
