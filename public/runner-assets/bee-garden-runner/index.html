@@ -21,7 +21,8 @@
         </div>
         <div class="bg-level-nav">
             <button id="bgPrevBtn" class="bg-nav-btn" type="button" aria-label="Önceki seviye">‹</button>
-            <span id="bgLevelLabel" class="bg-level-label">Seviye 1 / 14</span>
+            <button id="bgLevelsBtn" class="bg-nav-btn bg-levels-btn" type="button" aria-label="Bölümler" title="Bölümler">☰</button>
+            <span id="bgLevelLabel" class="bg-level-label">Seviye 1 / 100</span>
             <button id="bgNextBtn" class="bg-nav-btn" type="button" aria-label="Sonraki seviye">›</button>
         </div>
     </header>
@@ -88,6 +89,14 @@
 <!-- Gizli referans bahçe: dogru cozumun hedef konumlarini hesaplamak icin kullanilir, ekranda gorunmez -->
 <div id="bgRefGarden" class="bg-garden bg-garden-ref" aria-hidden="true"></div>
 
+<div id="bgPicker" class="bg-picker" hidden role="dialog" aria-modal="true" aria-label="Bölümler">
+    <div class="bg-picker-backdrop" data-close></div>
+    <div class="bg-picker-card">
+        <div class="bg-picker-head"><h3>Bölümler</h3><button class="bg-nav-btn" type="button" data-close aria-label="Kapat">✕</button></div>
+        <div id="bgPickerBody" class="bg-picker-body"></div>
+    </div>
+</div>
+
 <div id="bgIntroOverlay" class="bg-intro-overlay">
     <div class="bg-intro-card">
         <div class="bg-intro-bee">🐝</div>
@@ -107,6 +116,7 @@
     </div>
 </div>
 
+<script src="./levels.js"></script>
 <script src="./app.js"></script>
 </body>
 </html>

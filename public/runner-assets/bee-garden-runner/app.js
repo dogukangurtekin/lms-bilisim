@@ -21,7 +21,7 @@
     const introStartBtn = document.getElementById('bgIntroStartBtn');
     const codeGutter = document.getElementById('bgCodeGutter');
 
-    const STORAGE_KEY = 'bee_garden_progress_v1';
+    const STORAGE_KEY = 'bee_garden_progress_v2';
     const query = new URLSearchParams(window.location.search);
     const competitionId = query.get('assignmentId') || '';
     const competitionMode = /^competition-\d+$/.test(competitionId);
@@ -136,133 +136,9 @@
         return { key, cssName, label, options: opts.map(([value, text]) => ({ value, text })) };
     }
 
-    const LEVELS = [
-        {
-            title: 'Ortaya Kondur',
-            desc: 'Arıyı bahçenin yatayda tam ortasına kondur. "yatay-hizala" komutunu "ortaya" yap.',
-            beeCount: 1,
-            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
-            solution: { container: { justifyContent: 'center' } },
-            tutorial: 'Bu oyunda arıyı sağdaki bahçede çiçeğin üstüne konduracaksın. Sol taraftaki kutucuğa kurallar yazarak (ya da blokları sürükleyerek) arıya komut verirsin. <code>yatay-hizala</code> komutu arının SOLA-SAĞA doğru nereye gideceğini belirler: <code>basa</code> (sola), <code>ortaya</code> (ortaya), <code>sona</code> (sağa).',
-        },
-        {
-            title: 'Sona Kondur',
-            desc: 'Arıyı bahçenin sağ tarafına (sonuna) kondur.',
-            beeCount: 1,
-            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
-            solution: { container: { justifyContent: 'flex-end' } },
-        },
-        {
-            title: 'Başa Kondur',
-            desc: 'Arıyı bahçenin sol tarafına (başına) kondur.',
-            beeCount: 1,
-            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3))],
-            solution: { container: { justifyContent: 'flex-start' } },
-        },
-        {
-            title: 'Yukarı-Aşağı Ortala',
-            desc: 'Bu sefer dikeyde ortala. "dikey-hizala" komutunu "ortaya" yap.',
-            beeCount: 1,
-            properties: [prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3))],
-            solution: { container: { alignItems: 'center' } },
-            tutorial: 'Yeni komut: <code>dikey-hizala</code>. Bu komut arının YUKARI-AŞAĞI doğru nereye gideceğini belirler: <code>basa</code> (yukarı), <code>ortaya</code> (ortaya), <code>sona</code> (aşağı).',
-        },
-        {
-            title: 'Aşağı Kondur',
-            desc: 'Arıyı bahçenin altına kondur.',
-            beeCount: 1,
-            properties: [prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3))],
-            solution: { container: { alignItems: 'flex-end' } },
-        },
-        {
-            title: 'Tam Ortaya!',
-            desc: 'Şimdi iki özelliği birden kullan: hem yatayda hem dikeyde tam ortala.',
-            beeCount: 1,
-            properties: [
-                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
-                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
-            ],
-            solution: { container: { justifyContent: 'center', alignItems: 'center' } },
-            tutorial: 'İki komutu AYNI ANDA kullanabilirsin! <code>yatay-hizala</code> ve <code>dikey-hizala</code> birlikte yazılırsa arı hem yatayda hem dikeyde istediğin yere gider.',
-        },
-        {
-            title: 'Sağ Alt Köşe',
-            desc: 'Arıyı bahçenin sağ alt köşesine kondur.',
-            beeCount: 1,
-            properties: [
-                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
-                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
-            ],
-            solution: { container: { justifyContent: 'flex-end', alignItems: 'flex-end' } },
-        },
-        {
-            title: 'Sol Alt Köşe',
-            desc: 'Arıyı bahçenin sol alt köşesine kondur.',
-            beeCount: 1,
-            properties: [
-                prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC.slice(0, 3)),
-                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
-            ],
-            solution: { container: { justifyContent: 'flex-start', alignItems: 'flex-end' } },
-        },
-        {
-            title: 'Üç Arı, Eşit Aralık',
-            desc: '3 arı var. Onları aralarında eşit boşlukla, kenarlarda boşluk bırakmadan diz. "esit-arada" kullan.',
-            beeCount: 3,
-            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC)],
-            solution: { container: { justifyContent: 'space-between' } },
-            tutorial: 'Birden fazla arı olunca <code>yatay-hizala</code> için yeni değerler kullanabilirsin: <code>esit-arada</code> (aralarında eşit boşluk, kenarlar boş), <code>esit-kenarli</code> (kenarlarda da boşluk var), <code>tam-esit</code> (hepsi tamamen eşit aralıklı).',
-        },
-        {
-            title: 'Üç Arı, Kenarlar da Boşluklu',
-            desc: 'Bu sefer kenarlarda da boşluk olsun. "esit-kenarli" kullan.',
-            beeCount: 3,
-            properties: [prop('justifyContent', 'yatay-hizala', 'Yatay Hizalama (yatay-hizala)', JC)],
-            solution: { container: { justifyContent: 'space-around' } },
-        },
-        {
-            title: 'Yön Değiştir: Dikey',
-            desc: 'Arılar artık yukarıdan aşağıya doğru sıralanacak. "ucus-yonu" komutunu "dikey" yap, sonra ortala.',
-            beeCount: 1,
-            properties: [
-                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD.slice(0, 2)),
-                prop('justifyContent', 'yatay-hizala', 'Ana Eksen Hizalama (yatay-hizala)', JC.slice(0, 3)),
-            ],
-            solution: { container: { flexDirection: 'column', justifyContent: 'center' } },
-            tutorial: 'Yeni komut: <code>ucus-yonu</code>. Arıların hangi YÖNDE dizileceğini değiştirir: <code>yatay</code> (soldan sağa, varsayılan) veya <code>dikey</code> (yukarıdan aşağıya). Yön değişince dikkat: <code>yatay-hizala</code> artık YUKARI-AŞAĞI eksenini kontrol etmeye başlar!',
-        },
-        {
-            title: 'Dikeyde Kenara Yasla',
-            desc: 'Dikey yönde, arıyı sağ tarafa yasla.',
-            beeCount: 1,
-            properties: [
-                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD.slice(0, 2)),
-                prop('alignItems', 'dikey-hizala', 'Yan Eksen Hizalama (dikey-hizala)', AI.slice(0, 3)),
-            ],
-            solution: { container: { flexDirection: 'column', alignItems: 'flex-end' } },
-        },
-        {
-            title: 'Farklı Çiçek, Farklı Kural',
-            desc: '3 arı da üstte duruyor ama 2. arı farklı bir çiçeğe konacak. Ona özel bir kural (kendi-hizasi) yaz.',
-            beeCount: 3,
-            properties: [
-                prop('alignItems', 'dikey-hizala', 'Dikey Hizalama (dikey-hizala)', AI.slice(0, 3)),
-            ],
-            itemProperty: prop('alignSelf', 'kendi-hizasi', 'Seçili Arının Kendi Hizalaması (kendi-hizasi)', AI.slice(0, 3)),
-            solution: { container: { alignItems: 'flex-start' }, items: { 2: { alignSelf: 'flex-end' } } },
-            tutorial: 'Yeni komut: <code>kendi-hizasi</code>. Diğer komutlar TÜM arılara birden uygulanır, ama bu komut SADECE seçtiğin TEK bir arıya özel bir kural yazmanı sağlar. Aşağıdan hangi arı olduğunu seç.',
-        },
-        {
-            title: 'Son Görev: Ters ve Aralıklı',
-            desc: 'En zor görev! Yönü ters çevir ve aralarında eşit boşluk bırak.',
-            beeCount: 3,
-            properties: [
-                prop('flexDirection', 'ucus-yonu', 'Yön (ucus-yonu)', FD),
-                prop('justifyContent', 'yatay-hizala', 'Ana Eksen Hizalama (yatay-hizala)', JC),
-            ],
-            solution: { container: { flexDirection: 'column-reverse', justifyContent: 'space-between' } },
-        },
-    ];
+    // 100 bölümlük kategorili set (Kolay / Orta / Zor / Uzman) levels.js içinde tanımlıdır (tools/learn-levels/bee-garden.gen.mjs ile üretilir).
+    const CATEGORY_LABEL = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', expert: 'Uzman' };
+    const LEVELS = Array.isArray(window.BEE_GARDEN_LEVELS) ? window.BEE_GARDEN_LEVELS : [];
 
     const requestedStart = Math.floor(Number(query.get('from') || 1));
     const requestedEnd = Math.floor(Number(query.get('to') || LEVELS.length));
@@ -735,7 +611,7 @@
 
     function updateNav() {
         const unlockedIndex = loadProgress();
-        levelLabelEl.textContent = 'Seviye ' + (currentLevelIndex + 1) + ' / ' + LEVELS.length;
+        levelLabelEl.textContent = 'Seviye ' + (currentLevelIndex + 1) + ' / ' + LEVELS.length + (LEVELS[currentLevelIndex] && LEVELS[currentLevelIndex].category ? ' · ' + (CATEGORY_LABEL[LEVELS[currentLevelIndex].category] || '') : '');
         prevBtn.disabled = currentLevelIndex <= competitionStartIndex;
         nextBtn.disabled = currentLevelIndex >= Math.min(unlockedIndex, competitionEndIndex);
     }
@@ -773,6 +649,53 @@
         runStatusEl.className = 'bg-run-status';
         updateNav();
     }
+
+    // ---- bölüm seçici (Kolay / Orta / Zor / Uzman) ----
+    const pickerEl = document.getElementById('bgPicker');
+    const pickerBodyEl = document.getElementById('bgPickerBody');
+    const levelsBtn = document.getElementById('bgLevelsBtn');
+
+    function openPicker() {
+        if (!pickerEl || !pickerBodyEl) return;
+        pickerBodyEl.innerHTML = '';
+        const unlocked = competitionMode ? competitionEndIndex : loadProgress();
+        const groups = [];
+        LEVELS.forEach((lv, i) => {
+            if (i < competitionStartIndex || i > competitionEndIndex) return;
+            const cat = lv.category || 'easy';
+            let g = groups.find((x) => x.cat === cat);
+            if (!g) { g = { cat, items: [] }; groups.push(g); }
+            g.items.push({ lv, i });
+        });
+        groups.forEach((g) => {
+            const sec = document.createElement('div');
+            sec.className = 'bg-pk-group cat-' + g.cat;
+            const h = document.createElement('h4');
+            h.textContent = (CATEGORY_LABEL[g.cat] || g.cat) + ' · ' + g.items.length + ' bölüm';
+            sec.appendChild(h);
+            const grid = document.createElement('div');
+            grid.className = 'bg-pk-grid';
+            g.items.forEach((x) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                const open = competitionMode ? true : x.i <= unlocked;
+                const done = !competitionMode && x.i < unlocked;
+                b.className = 'bg-pk-tile' + (done ? ' done' : '') + (x.i === currentLevelIndex ? ' current' : '');
+                b.disabled = !open;
+                b.innerHTML = (open ? '' : '<span class="bg-pk-lock">🔒</span>') + '<span class="bg-pk-num">' + (x.i + 1) + '</span><span class="bg-pk-bees">🐝 ' + x.lv.beeCount + '</span>';
+                b.addEventListener('click', () => { goToLevel(x.i); closePicker(); });
+                grid.appendChild(b);
+            });
+            sec.appendChild(grid);
+            pickerBodyEl.appendChild(sec);
+        });
+        pickerEl.hidden = false;
+        const cur = pickerBodyEl.querySelector('.bg-pk-tile.current');
+        if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'center' });
+    }
+    function closePicker() { if (pickerEl) pickerEl.hidden = true; }
+    if (levelsBtn) levelsBtn.addEventListener('click', openPicker);
+    if (pickerEl) pickerEl.addEventListener('click', (e) => { if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-close')) closePicker(); });
 
     prevBtn.addEventListener('click', () => goToLevel(currentLevelIndex - 1));
     nextBtn.addEventListener('click', () => {

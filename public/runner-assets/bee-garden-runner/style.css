@@ -273,3 +273,28 @@ body{
 .bg-intro-start-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #0c8c66,0 6px 14px rgba(14,165,122,.35)}
 
 @media (prefers-reduced-motion:reduce){*:not(.bg-bee),*::before,*::after{animation:none!important}}
+
+/* ---------- bölüm seçici ---------- */
+.bg-levels-btn { font-size: 16px; }
+.bg-level-label { min-width: 150px; }
+.bg-picker { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 16px; }
+.bg-picker[hidden] { display: none; }
+.bg-picker-backdrop { position: absolute; inset: 0; background: rgba(8, 18, 44, .62); backdrop-filter: blur(4px); }
+.bg-picker-card { position: relative; width: min(820px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border-radius: 26px; background: linear-gradient(170deg, #ffffff, #f1f6ff); border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0, 0, 0, .4); }
+.bg-picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.bg-picker-head h3 { margin: 0; font-size: 22px; font-weight: 900; color: var(--ink); }
+.bg-pk-group { margin-bottom: 16px; }
+.bg-pk-group h4 { margin: 0 0 8px; font-size: 15px; font-weight: 900; display: flex; align-items: center; gap: 8px; color: var(--ink); }
+.bg-pk-group h4::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: #22c55e; }
+.bg-pk-group.cat-medium h4::before { background: #f59e0b; }
+.bg-pk-group.cat-hard h4::before { background: #ef4444; }
+.bg-pk-group.cat-expert h4::before { background: #7c3aed; }
+.bg-pk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 8px; }
+.bg-pk-tile { position: relative; display: grid; gap: 2px; justify-items: center; padding: 8px 4px 6px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink); font-family: inherit; font-weight: 900; cursor: pointer; transition: transform .12s, border-color .12s; }
+.bg-pk-tile:hover:not(:disabled) { transform: translateY(-2px); border-color: #3b82f6; }
+.bg-pk-num { font-size: 18px; }
+.bg-pk-bees { font-size: 10px; color: var(--ink-soft); font-weight: 800; }
+.bg-pk-tile.done { border-color: #86efac; background: #f0fdf4; }
+.bg-pk-tile.current { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .25); }
+.bg-pk-tile:disabled { opacity: .45; cursor: not-allowed; }
+.bg-pk-lock { position: absolute; top: 3px; right: 5px; font-size: 11px; }
