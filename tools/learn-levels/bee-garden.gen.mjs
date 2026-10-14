@@ -57,7 +57,7 @@ function flexCenters(bees, container, items, CW, CH) {
 }
 // Başlangıçta herhangi bir arı kendi çiçeğinin üstündeyse (iki farklı bahçe boyutunda) seviye reddedilir.
 function startsOnFlower(bees, container, items) {
-  return [[580, 342], [380, 262]].some(([CW, CH]) => {
+  return [[600, 362], [580, 342], [520, 320], [480, 300], [440, 280], [380, 262]].some(([CW, CH]) => {
     const start = flexCenters(bees, {}, null, CW, CH), target = flexCenters(bees, container, items, CW, CH);
     return start.some((s, i) => Math.abs(s.x - target[i].x) < BEE * 0.6 && Math.abs(s.y - target[i].y) < BEE * 0.6);
   });
