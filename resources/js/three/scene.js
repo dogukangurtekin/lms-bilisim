@@ -185,7 +185,8 @@ export class BlockScene {
     this.mouseEvent = null;
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#eef2f7');
+    this.scene.background = new THREE.Color('#dbe8ff');
+    this.scene.fog = new THREE.Fog('#dbe8ff', 55, 150);
 
     this.camera = new THREE.PerspectiveCamera(52, 1, 0.1, 400);
     this.camera.position.set(22, 24, 22);
@@ -193,34 +194,36 @@ export class BlockScene {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.container.appendChild(this.renderer.domElement);
     this.controls = createOrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
-    this.grid = new THREE.GridHelper(64, 64, '#b8c2cf', '#d7dee8');
+    this.grid = new THREE.GridHelper(64, 64, '#8fb0ea', '#c3d6f5');
     this.grid.position.y = 0;
     this.scene.add(this.grid);
 
     const planeGeo = new THREE.PlaneGeometry(64, 64);
-    const planeMat = new THREE.MeshStandardMaterial({ color: '#f3f5f8', metalness: 0.05, roughness: 0.9, side: THREE.DoubleSide });
+    const planeMat = new THREE.MeshStandardMaterial({ color: '#e9f1ff', metalness: 0.02, roughness: 0.95, side: THREE.DoubleSide });
     this.groundPlane = new THREE.Mesh(planeGeo, planeMat);
     this.groundPlane.rotation.x = -Math.PI / 2;
     this.groundPlane.receiveShadow = true;
     this.scene.add(this.groundPlane);
 
-    const ambient = new THREE.AmbientLight('#ffffff', 0.75);
+    const ambient = new THREE.AmbientLight('#ffffff', 0.62);
     this.scene.add(ambient);
     this.ambientLight = ambient;
 
-    const hemi = new THREE.HemisphereLight('#f3f6ff', '#cbd5e1', 0.45);
+    const hemi = new THREE.HemisphereLight('#dbeafe', '#c7d2fe', 0.55);
     this.scene.add(hemi);
     this.hemiLight = hemi;
 
-    const key = new THREE.DirectionalLight('#ffffff', 0.9);
+    const key = new THREE.DirectionalLight('#fff4e0', 1.05);
     key.position.set(18, 30, 12);
+    key.shadow.normalBias = 0.03;
+    key.shadow.radius = 3;
     key.castShadow = true;
     key.shadow.mapSize.width = 2048;
     key.shadow.mapSize.height = 2048;
@@ -233,10 +236,10 @@ export class BlockScene {
 
     const hoverGeo = new THREE.BoxGeometry(1.02, 1.02, 1.02);
     const hoverMat = new THREE.MeshStandardMaterial({
-      color: '#22d3ee',
+      color: '#38bdf8',
       transparent: true,
-      opacity: 0.25,
-      emissive: '#22d3ee',
+      opacity: 0.3,
+      emissive: '#38bdf8',
       emissiveIntensity: 0.25,
       depthWrite: false,
     });
@@ -332,29 +335,32 @@ export class BlockScene {
     this.theme = theme === 'dark' ? 'dark' : 'light';
     const isDark = this.theme === 'dark';
 
-    this.scene.background.set(isDark ? '#0f1115' : '#eef2f7');
+    const sky = isDark ? '#0a1738' : '#dbe8ff';
+    this.scene.background.set(sky);
+    if (this.scene.fog) this.scene.fog.color.set(sky);
     const gridMaterial = this.grid.material;
     if (Array.isArray(gridMaterial)) {
-      if (gridMaterial[0]) gridMaterial[0].color.set(isDark ? '#48505c' : '#b8c2cf');
-      if (gridMaterial[1]) gridMaterial[1].color.set(isDark ? '#272c34' : '#d7dee8');
+      if (gridMaterial[0]) gridMaterial[0].color.set(isDark ? '#3a5db0' : '#8fb0ea');
+      if (gridMaterial[1]) gridMaterial[1].color.set(isDark ? '#1f3470' : '#c3d6f5');
       gridMaterial.forEach((m) => { m.needsUpdate = true; });
     } else if (gridMaterial) {
-      gridMaterial.color.set(isDark ? '#48505c' : '#b8c2cf');
+      gridMaterial.color.set(isDark ? '#3a5db0' : '#8fb0ea');
       gridMaterial.needsUpdate = true;
     }
-    this.groundPlane.material.color.set(isDark ? '#101319' : '#f3f5f8');
+    this.groundPlane.material.color.set(isDark ? '#0d1d44' : '#e9f1ff');
 
     if (this.ambientLight) {
-      this.ambientLight.color.set(isDark ? '#d8e4ff' : '#ffffff');
-      this.ambientLight.intensity = isDark ? 0.55 : 0.75;
+      this.ambientLight.color.set(isDark ? '#c9d8ff' : '#ffffff');
+      this.ambientLight.intensity = isDark ? 0.5 : 0.62;
     }
     if (this.hemiLight) {
-      this.hemiLight.color.set(isDark ? '#c6d8ff' : '#f3f6ff');
-      this.hemiLight.groundColor.set(isDark ? '#0a0d12' : '#cbd5e1');
-      this.hemiLight.intensity = isDark ? 0.35 : 0.45;
+      this.hemiLight.color.set(isDark ? '#9db8f5' : '#dbeafe');
+      this.hemiLight.groundColor.set(isDark ? '#08112b' : '#c7d2fe');
+      this.hemiLight.intensity = isDark ? 0.4 : 0.55;
     }
     if (this.keyLight) {
-      this.keyLight.intensity = isDark ? 0.9 : 1.0;
+      this.keyLight.color.set(isDark ? '#d6e2ff' : '#fff4e0');
+      this.keyLight.intensity = isDark ? 0.95 : 1.05;
     }
   }
 

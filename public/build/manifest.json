@@ -26,15 +26,12 @@
     ]
   },
   "resources/js/block-builder-page.js": {
-    "file": "assets/block-builder-page-BjXF0Z0v.js",
+    "file": "assets/block-builder-page-D_Kzh3Cv.js",
     "name": "block-builder-page",
     "src": "resources/js/block-builder-page.js",
     "isEntry": true,
-    "imports": [
-      "__plugin-vue_export-helper-DpF3cPj6.js"
-    ],
     "css": [
-      "assets/block-builder-page-DacVcVWY.css"
+      "assets/block-builder-page-B8516AGH.css"
     ]
   },
   "resources/js/flowchart-editor-entry.js": {
