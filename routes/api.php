@@ -3,8 +3,6 @@
 use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Api\V1\SchoolClassController;
 use App\Http\Controllers\Api\V1\StudentController;
-use App\Http\Controllers\Api\ExecutionController;
-use App\Http\Controllers\Api\FlowchartController;
 use App\Http\Controllers\ClientBlockBuilderController;
 use App\Http\Controllers\ClientDataController;
 use App\Http\Controllers\RaceController;
@@ -61,12 +59,4 @@ Route::prefix('race')->middleware(['web', 'auth', \App\Http\Middleware\UseAuthen
     Route::post('/rooms/{room:code}/finish', [RaceController::class, 'finish']);
     Route::get('/rooms/{room:code}/leaderboard', [RaceController::class, 'leaderboard']);
     Route::get('/rooms/{room:code}/report', [RaceController::class, 'report']);
-});
-
-Route::middleware(['web', 'auth'])->group(function () {
-    Route::post('/flowcharts', [FlowchartController::class, 'store']);
-    Route::get('/flowcharts/{id}', [FlowchartController::class, 'show']);
-    Route::put('/flowcharts/{id}', [FlowchartController::class, 'update']);
-    Route::delete('/flowcharts/{id}', [FlowchartController::class, 'destroy']);
-    Route::post('/execute', [ExecutionController::class, 'execute']);
 });

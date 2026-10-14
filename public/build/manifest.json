@@ -33,18 +33,5 @@
     "css": [
       "assets/block-builder-page-BtBVErUF.css"
     ]
-  },
-  "resources/js/flowchart-editor-entry.js": {
-    "file": "assets/flowchart-editor-entry-DD8tOd0K.js",
-    "name": "flowchart-editor-entry",
-    "src": "resources/js/flowchart-editor-entry.js",
-    "isEntry": true,
-    "imports": [
-      "__plugin-vue_export-helper-DpF3cPj6.js",
-      "_index-BOeqtr82.js"
-    ],
-    "css": [
-      "assets/flowchart-editor-entry-U4LPwvXo.css"
-    ]
   }
 }

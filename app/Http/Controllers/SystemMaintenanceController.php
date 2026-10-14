@@ -10,7 +10,6 @@ use App\Models\ClassBoardPost;
 use App\Models\CompetitionParticipant;
 use App\Models\ContentProgress;
 use App\Models\CourseFavorite;
-use App\Models\Flowchart;
 use App\Models\GameState;
 use App\Models\Grade;
 use App\Models\Leaderboard;
@@ -68,7 +67,7 @@ class SystemMaintenanceController extends Controller
      *
      * ONEMLI - KESINLIKLE SILINMEZ: Admin/ogretmen tarafindan yuklenen
      * DERSLER (Course/CourseHomework), OYUN VE ETKINLIKLER (GameAssignment,
-     * Level/Flowchart/vb'nin sistem-varsayilan ve ogretmen/admin'e ait
+     * Level/vb'nin sistem-varsayilan ve ogretmen/admin'e ait
      * olanlari) ve GUNLUK CALISMALAR (CodingActivity) asagida HICBIR
      * sekilde silinmiyor/guncellenmiyor - sadece bu iceriklere baglı
      * OGRENCI ilerleme/sonuc kayitlari (orn. StudentHomeworkProgress,
@@ -117,7 +116,6 @@ class SystemMaintenanceController extends Controller
             RaceResult::whereIn('user_id', $studentUserIds)->delete();
             GameState::whereIn('user_id', $studentUserIds)->delete();
             Level::whereIn('user_id', $studentUserIds)->delete();
-            Flowchart::whereIn('user_id', $studentUserIds)->delete();
             BlockBuilderDesign::whereIn('user_id', $studentUserIds)->delete();
             BookTaskProgress::whereIn('user_id', $studentUserIds)->delete();
 

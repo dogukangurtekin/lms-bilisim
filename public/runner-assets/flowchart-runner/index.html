@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1738">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <title>Flowchart Programlama</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="fc-app" id="fcApp">
+  <!-- ===== üst şerit ===== -->
+  <header class="fc-top">
+    <div class="fc-brand"><span class="fc-logo">🔀</span><div><b>Flowchart Programlama</b><small id="fcSub">Akış şemasını kur, çalıştır, doğrula</small></div></div>
+    <div class="fc-levelnav">
+      <button id="btnPrevTask" class="fc-icon" type="button" title="Önceki görev" aria-label="Önceki görev">‹</button>
+      <button id="btnTasks" class="fc-picker" type="button" aria-haspopup="dialog"><span id="taskName">Görev 1</span><small id="taskMeta">Kolay</small></button>
+      <button id="btnNextTask" class="fc-icon" type="button" title="Sonraki görev" aria-label="Sonraki görev">›</button>
+    </div>
+    <div class="fc-stats">
+      <span class="fc-pill" id="progressPill">0 / 40</span>
+      <span class="fc-pill fc-gold" id="xpPill">⭐ 0 XP</span>
+      <button id="btnHelp" class="fc-icon" type="button" title="İfade rehberi" aria-label="İfade rehberi">?</button>
+      <button id="btnClose" class="fc-exit hidden" type="button" title="Etkinlikten çık">Çık</button>
+    </div>
+  </header>
+
+  <main class="fc-main">
+    <!-- ===== sol: palet ===== -->
+    <aside class="fc-left" aria-label="Bloklar">
+      <h3>Bloklar</h3>
+      <p class="fc-tip" id="addTip">Bir blok seç, ardından aşağıdan ekle: otomatik bağlanır.</p>
+      <div class="fc-palette" id="palette">
+        <button class="pal pal-start" data-type="start" type="button"><i></i><span>Başla</span></button>
+        <button class="pal pal-input" data-type="input" type="button"><i></i><span>Girdi</span></button>
+        <button class="pal pal-process" data-type="process" type="button"><i></i><span>İşlem</span></button>
+        <button class="pal pal-decision" data-type="decision" type="button"><i></i><span>Karar</span></button>
+        <button class="pal pal-output" data-type="output" type="button"><i></i><span>Çıktı</span></button>
+        <button class="pal pal-end" data-type="end" type="button"><i></i><span>Bitir</span></button>
+      </div>
+      <h3>Araçlar</h3>
+      <div class="fc-tools">
+        <button id="btnUndo" type="button" title="Geri al (Ctrl+Z)">↶ Geri</button>
+        <button id="btnRedo" type="button" title="Yinele (Ctrl+Y)">↷ İleri</button>
+        <button id="btnDup" type="button" title="Çoğalt (Ctrl+D)">⧉ Çoğalt</button>
+        <button id="btnDel" type="button" title="Sil (Delete)" class="danger">🗑 Sil</button>
+        <button id="btnLayout" type="button" title="Şemayı otomatik düzenle">✨ Düzenle</button>
+        <button id="btnFit" type="button" title="Tümünü göster">⤢ Sığdır</button>
+        <button id="btnZoomIn" type="button" title="Yaklaş">＋</button>
+        <button id="btnZoomOut" type="button" title="Uzaklaş">－</button>
+      </div>
+      <h3>Dosya</h3>
+      <div class="fc-tools">
+        <button id="btnExport" type="button" title="Şemayı JSON olarak indir">⬇ Kaydet</button>
+        <button id="btnImport" type="button" title="JSON şemayı yükle">⬆ Yükle</button>
+        <button id="btnPng" type="button" title="Resim olarak indir">🖼 PNG</button>
+        <button id="btnClear" type="button" class="danger" title="Tuvali temizle">♻ Temizle</button>
+        <input id="fileInput" type="file" accept=".json,application/json" hidden>
+      </div>
+    </aside>
+
+    <!-- ===== orta: tuval ===== -->
+    <section class="fc-center">
+      <div class="fc-editbar" id="editBar">
+        <span class="fc-eb-type" id="ebType">Blok seçilmedi</span>
+        <input id="ebInput" class="fc-eb-input" type="text" autocomplete="off" spellcheck="false" placeholder="Bir bloğa tıkla, içeriğini burada düzenle" disabled>
+        <button id="ebDelEdge" class="fc-eb-btn hidden" type="button">Bağlantıyı sil</button>
+      </div>
+      <div class="fc-board" id="board">
+        <svg id="svg" class="fc-svg" xmlns="http://www.w3.org/2000/svg" tabindex="0" aria-label="Akış şeması tuvali">
+          <defs>
+            <pattern id="gridDots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.5" class="grid-dot"/></pattern>
+          </defs>
+          <rect id="gridRect" x="-20000" y="-20000" width="40000" height="40000" fill="url(#gridDots)"/>
+          <g id="viewport"><g id="gEdges"></g><g id="gNodes"></g><g id="gTemp"></g></g>
+        </svg>
+        <div class="fc-runbanner hidden" id="runBanner">▶ Çalışırken düzenleme kapalı — <b>Sıfırla</b>'ya basınca düzenleyebilirsin.</div>
+        <div class="fc-coach" id="coach">
+          <b>Nasıl çalışır?</b>
+          <ol>
+            <li><b>Başla</b> bloğu seçili. Soldan <b>Çıktı</b>'ya tıkla — blok otomatik bağlanır.</li>
+            <li>Bloğun içini üstteki kutuya yaz: <code>"Merhaba"</code></li>
+            <li><b>Bitir</b> ekle, sonra <b>▶ Çalıştır</b>'a bas ve akışı izle!</li>
+          </ol>
+          <button id="coachClose" class="fc-btn" type="button">Anladım</button>
+        </div>
+      </div>
+      <div class="fc-runbar">
+        <button id="btnRun" class="fc-btn fc-btn-run" type="button">▶ Çalıştır</button>
+        <button id="btnStep" class="fc-btn" type="button">⏭ Adım</button>
+        <button id="btnPause" class="fc-btn hidden" type="button">⏸ Duraklat</button>
+        <button id="btnReset" class="fc-btn" type="button">↺ Sıfırla</button>
+        <label class="fc-speed" title="Çalışma hızı">Hız <input id="speed" type="range" min="1" max="6" value="3"><span id="speedLabel">1×</span></label>
+        <button id="btnCheck" class="fc-btn fc-btn-check hidden" type="button">✔ Kontrol Et</button>
+      </div>
+      <div class="fc-validation" id="validation" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- ===== sağ: görev / değişkenler / çıktı ===== -->
+    <aside class="fc-right">
+      <div class="fc-tabs" role="tablist">
+        <button class="fc-tab active" data-tab="task" type="button">📋 Görev</button>
+        <button class="fc-tab" data-tab="vars" type="button">🧮 Değişkenler</button>
+        <button class="fc-tab" data-tab="out" type="button">📟 Çıktı</button>
+      </div>
+      <div class="fc-panel" id="panel-task">
+        <h2 id="tkTitle">Görev</h2>
+        <div class="fc-chips" id="tkChips"></div>
+        <div class="fc-story" id="tkStory"></div>
+        <div class="fc-example" id="tkExample"></div>
+        <div class="fc-hints"><button id="btnHint" class="fc-btn fc-btn-soft" type="button">💡 İpucu göster</button><div id="tkHints"></div></div>
+        <div class="fc-results" id="tkResults"></div>
+      </div>
+      <div class="fc-panel hidden" id="panel-vars"><table class="fc-vars"><thead><tr><th>Değişken</th><th>Değer</th></tr></thead><tbody id="varsBody"></tbody></table><p class="fc-empty" id="varsEmpty">Program çalışınca değişkenler burada görünür.</p></div>
+      <div class="fc-panel hidden" id="panel-out">
+        <pre id="console" class="fc-console"></pre>
+        <div class="fc-inputrow hidden" id="inputRow"><label id="inputLabel" for="runInput">Değer gir</label><div><input id="runInput" type="text" autocomplete="off"><button id="runInputOk" class="fc-btn" type="button">Gönder</button></div></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="fc-toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<!-- görev seçici -->
+<div id="pickerModal" class="fc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+  <div class="fc-backdrop" data-close></div>
+  <div class="fc-card fc-picker-card">
+    <div class="fc-card-head"><h3 id="pickerTitle">Görevler</h3><button class="fc-icon" data-close aria-label="Kapat" type="button">✕</button></div>
+    <button id="btnFree" class="fc-free" type="button">🎨 Serbest Çalışma <small>görevsiz tuval</small></button>
+    <div id="pickerBody"></div>
+  </div>
+</div>
+
+<!-- görev tamamlandı -->
+<div id="doneModal" class="fc-modal hidden" role="dialog" aria-modal="true">
+  <div class="fc-backdrop"></div>
+  <div class="fc-card fc-done">
+    <div class="fc-burst" aria-hidden="true">🎉</div>
+    <h3>Görev tamamlandı!</h3>
+    <p id="doneText"></p>
+    <div class="fc-done-xp" id="doneXp">+10 XP</div>
+    <div class="fc-done-actions"><button id="doneNext" class="fc-btn fc-btn-run" type="button">Sonraki görev ›</button><button id="doneStay" class="fc-btn" type="button">Şemaya bak</button></div>
+  </div>
+</div>
+
+<!-- ifade rehberi -->
+<div id="helpModal" class="fc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="fc-backdrop" data-close></div>
+  <div class="fc-card fc-help">
+    <div class="fc-card-head"><h3 id="helpTitle">İfade Rehberi</h3><button class="fc-icon" data-close aria-label="Kapat" type="button">✕</button></div>
+    <div class="fc-help-body">
+      <h4>Bloklar</h4>
+      <ul>
+        <li><b>Girdi</b>: <code>a, b</code> — kullanıcıdan sırayla okunur.</li>
+        <li><b>Çıktı</b>: <code>"Toplam:", a + b</code> — virgülle ayrılanlar boşlukla yazılır.</li>
+        <li><b>İşlem</b>: <code>x = x + 1</code> ya da <code>x += 1</code>; birden çok için <code>;</code> kullan: <code>t = 0; i = 1</code></li>
+        <li><b>Karar</b>: <code>a &gt; b</code> — Evet ve Hayır çıkışlarını bağla.</li>
+      </ul>
+      <h4>İfadeler</h4>
+      <ul>
+        <li>Sayılar <code>12</code>, <code>3.5</code> · metinler <code>"merhaba"</code> · mantık <code>doğru</code>/<code>yanlış</code></li>
+        <li>Aritmetik: <code>+ − * / %</code> · üs: <code>**</code> veya <code>^</code> (<code>/</code> ondalık böler; tam bölme: <code>taban(a / b)</code>)</li>
+        <li>Karşılaştırma: <code>== != &lt; &gt; &lt;= &gt;=</code> (eşitlik <b>iki</b> eşittir)</li>
+        <li>Mantık: <code>ve</code>, <code>veya</code>, <code>değil</code></li>
+        <li>Fonksiyonlar: <code>karekök</code> <code>mutlak</code> <code>yuvarla</code> <code>taban</code> <code>tavan</code> <code>enküçük</code> <code>enbüyük</code> <code>uzunluk</code> <code>sayı</code> <code>metin</code></li>
+      </ul>
+      <h4>Döngü nasıl kurulur?</h4>
+      <p>Bir bloğun çıkış halkasından, <b>daha önceki</b> bir bloğa bağlantı sürükle. Genelde bir <b>Karar</b> bloğunun Evet kolu içerideki işleri yapıp tekrar Karar'a döner, Hayır kolu döngüden çıkar.</p>
+      <h4>Kısayollar</h4>
+      <p><code>Delete</code> sil · <code>Ctrl+Z</code>/<code>Ctrl+Y</code> geri/yinele · <code>Ctrl+D</code> çoğalt · <code>Enter</code> düzenle · <code>Esc</code> seçimi kaldır · Oklar ile seçili bloğu kaydır</p>
+    </div>
+  </div>
+</div>
+
+<script src="./engine.js"></script>
+<script src="./tasks.js"></script>
+<script src="./app.js"></script>
+<script src="../pwa-init.js" defer></script>
+</body>
+</html>

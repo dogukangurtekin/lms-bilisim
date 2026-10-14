@@ -7,7 +7,6 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CompetitionController;
 use App\Http\Controllers\CourseHomeworkController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\FlowchartPageController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\GameAssignmentController;
 use App\Http\Controllers\LevelController;
@@ -217,7 +216,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\BlockBuilderStudioController::class, 'store'])->middleware('throttle:60,1')->name('store');
         Route::delete('/{id}', [\App\Http\Controllers\BlockBuilderStudioController::class, 'destroy'])->whereNumber('id')->name('destroy');
     });
-    Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
+    Route::get('/flowchart-runner', [ActivityRunnerController::class, 'flowchart']);
+    // Eski adres (kaldırılan Vue uygulaması) yeni Flowchart Programlama uygulamasına yönlendirilir.
+    Route::redirect('/flowchart-programming', '/flowchart-runner')->name('flowchart.editor');
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
     Route::get('/dersler/{course}/onizle', [CourseController::class, 'preview'])->name('course.preview');
     Route::middleware('role:admin,teacher')->group(function () {

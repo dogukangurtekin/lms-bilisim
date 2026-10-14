@@ -61,6 +61,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('bee-garden-runner');
     }
 
+    public function flowchart()
+    {
+        return $this->serveRunner('flowchart-runner');
+    }
+
     public function webLab()
     {
         return $this->serveRunner('web-lab-runner');

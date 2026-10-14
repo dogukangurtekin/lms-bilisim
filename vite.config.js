@@ -10,7 +10,6 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/block-builder-page.js',
-                'resources/js/flowchart-editor-entry.js',
             ],
             refresh: true,
         }),
