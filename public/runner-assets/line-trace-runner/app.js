@@ -46,15 +46,15 @@
   const dctx = drawCanvas.getContext("2d");
 
   const levels = [
-    { name: "Cizgi", difficulty: "easy", points: [[0.08, 0.50], [0.92, 0.50]], pass: 52, baseTol: 16 },
+    { name: "Çizgi", difficulty: "easy", points: [[0.08, 0.50], [0.92, 0.50]], pass: 52, baseTol: 16 },
     { name: "Zikzak", difficulty: "easy", points: [[0.08, 0.58], [0.26, 0.42], [0.44, 0.58], [0.62, 0.42], [0.80, 0.58], [0.92, 0.50]], pass: 56, baseTol: 16 },
-    { name: "Ucgen", difficulty: "easy", points: [[0.12, 0.78], [0.50, 0.20], [0.88, 0.78], [0.26, 0.78]], pass: 58, baseTol: 15 },
+    { name: "Üçgen", difficulty: "easy", points: [[0.12, 0.78], [0.50, 0.20], [0.88, 0.78], [0.26, 0.78]], pass: 58, baseTol: 15 },
     { name: "Kare", difficulty: "medium", points: [[0.18, 0.78], [0.82, 0.78], [0.82, 0.22], [0.18, 0.22], [0.18, 0.78], [0.30, 0.78]], pass: 60, baseTol: 15 },
     { name: "Elmas", difficulty: "medium", points: [[0.50, 0.12], [0.82, 0.50], [0.50, 0.88], [0.18, 0.50], [0.50, 0.12], [0.63, 0.26]], pass: 63, baseTol: 14 },
     { name: "Dalga", difficulty: "medium", points: [[0.06, 0.55], [0.18, 0.30], [0.30, 0.70], [0.42, 0.32], [0.54, 0.68], [0.66, 0.30], [0.78, 0.64], [0.92, 0.45]], pass: 65, baseTol: 14 },
     { name: "Spiral", difficulty: "medium", points: [[0.85, 0.50], [0.75, 0.30], [0.45, 0.24], [0.26, 0.40], [0.30, 0.66], [0.52, 0.74], [0.66, 0.60], [0.62, 0.46], [0.48, 0.43], [0.44, 0.52], [0.52, 0.56], [0.58, 0.51]], pass: 68, baseTol: 13 },
-    { name: "Yildiz", difficulty: "hard", points: [[0.50, 0.10], [0.62, 0.40], [0.92, 0.40], [0.68, 0.58], [0.78, 0.88], [0.50, 0.70], [0.22, 0.88], [0.32, 0.58], [0.08, 0.40], [0.38, 0.40], [0.50, 0.10], [0.60, 0.30]], pass: 72, baseTol: 12 },
-    { name: "S-Kivrim", difficulty: "hard", points: [[0.10, 0.28], [0.32, 0.24], [0.50, 0.40], [0.68, 0.58], [0.90, 0.54], [0.80, 0.72], [0.58, 0.78], [0.36, 0.66], [0.14, 0.52]], pass: 74, baseTol: 12 },
+    { name: "Yıldız", difficulty: "hard", points: [[0.50, 0.10], [0.62, 0.40], [0.92, 0.40], [0.68, 0.58], [0.78, 0.88], [0.50, 0.70], [0.22, 0.88], [0.32, 0.58], [0.08, 0.40], [0.38, 0.40], [0.50, 0.10], [0.60, 0.30]], pass: 72, baseTol: 12 },
+    { name: "S-Kıvrım", difficulty: "hard", points: [[0.10, 0.28], [0.32, 0.24], [0.50, 0.40], [0.68, 0.58], [0.90, 0.54], [0.80, 0.72], [0.58, 0.78], [0.36, 0.66], [0.14, 0.52]], pass: 74, baseTol: 12 },
     { name: "Usta Parkur", difficulty: "hard", points: [[0.08, 0.80], [0.24, 0.54], [0.16, 0.24], [0.42, 0.18], [0.58, 0.40], [0.72, 0.20], [0.90, 0.34], [0.76, 0.54], [0.90, 0.78], [0.66, 0.84], [0.52, 0.66], [0.34, 0.84], [0.12, 0.70]], pass: 78, baseTol: 11 }
   ];
 
@@ -330,18 +330,18 @@
 
   function setStatus(text, color) {
     statusEl.textContent = text;
-    statusEl.style.color = color || "#8ea2bf";
+    statusEl.style.color = color || "#5b7096";
   }
 
   function updateHud(accuracy, barValue = accuracy) {
     const l = levels[state.level];
     levelLabelEl.textContent = `Seviye ${state.level + 1} - ${l.name}`;
     difficultyLabelEl.textContent = `Zorluk: ${getDifficultyLabel(l.difficulty)}`;
-    assistLabelEl.textContent = `Yardim: x${state.assist.toFixed(2)}`;
+    assistLabelEl.textContent = `Yardım: x${state.assist.toFixed(2)}`;
     bestLabelEl.textContent = `En iyi: %${Math.round(state.best)}`;
-    if (currentLabelEl) currentLabelEl.textContent = `Anlik: %${Math.round(clamp(accuracy || 0, 0, 100))}`;
+    if (currentLabelEl) currentLabelEl.textContent = `Anlık: %${Math.round(clamp(accuracy || 0, 0, 100))}`;
     xpLabelEl.textContent = `Toplam XP: ${state.totalXp}`;
-    rewardLabelEl.textContent = `Son Odul: +${state.lastRewardXp} XP`;
+    rewardLabelEl.textContent = `Son Ödül: +${state.lastRewardXp} XP`;
     levelsXpLabelEl.textContent = `Toplam XP: ${state.totalXp}`;
     accuracyBarEl.style.width = `${clamp(barValue || 0, 0, 100)}%`;
     nextBtn.disabled = !state.canAdvance;
@@ -438,7 +438,7 @@
   }
 
   function resetAllProgress() {
-    const ok = window.confirm("Tum cizgi oyunu verileri sifirlansin mi?");
+    const ok = window.confirm("Tüm çizgi oyunu verileri sıfırlansın mı?");
     if (!ok) return;
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     state.unlockedLevel = 0;
@@ -451,7 +451,7 @@
     renderLevelGrid();
     showLevelSelect(true);
     updateHud(0);
-    setStatus("Veriler sifirlandi. 1. seviyeden baslayabilirsin.", "#f59e0b");
+    setStatus("Veriler sıfırlandı. 1. seviyeden başlayabilirsin.", "#b45309");
   }
 
   function showLevelSelect(show) {
@@ -488,11 +488,11 @@
 
   function startLevel(levelIndex) {
     if (grantDenied) {
-      setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "#ef4444");
+      setStatus("Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.", "#dc2626");
       return;
     }
     if (!isLevelInAllowedRange(levelIndex)) {
-      setStatus("Bu seviyeye erisim yok. Sadece atanan odev araligini oynayabilirsiniz.", "#ef4444");
+      setStatus("Bu seviyeye erişim yok. Sadece atanan ödev aralığını oynayabilirsiniz.", "#dc2626");
       return;
     }
     state.level = clamp(Number(levelIndex || 0), 0, levels.length - 1);
@@ -505,7 +505,7 @@
     showLevelSelect(false);
     setupCanvasSize();
     updateHud(0);
-    setStatus("Baslamak icin yesil noktadan ciz.", "#8ea2bf");
+    setStatus("Başlamak için yeşil noktadan çiz.", "#5b7096");
   }
 
   function resetCurrentLevel() {
@@ -515,14 +515,14 @@
     stopTimer();
     drawStroke();
     updateHud(0);
-    setStatus("Tekrar dene. Yesil noktadan ciz.", "#8ea2bf");
+    setStatus("Tekrar dene. Yeşil noktadan çiz.", "#5b7096");
   }
 
   function onPointerDown(ev) {
     ev.preventDefault();
     const p = getPointerPos(ev);
     if (dist(p, state.levelData.start) > 30) {
-      setStatus("Cizime yesil noktadan basla.", "#f59e0b");
+      setStatus("Çizime yeşil noktadan başla.", "#b45309");
       return;
     }
     state.drawing = true;
@@ -571,7 +571,7 @@
       saveProgress();
       renderLevelGrid();
       updateHud(result.accuracy);
-      setStatus(`Gectin! Basari %${Math.round(result.accuracy)} - hedef tamamlandi.`, "#34d399");
+      setStatus(`Geçtin! Başarı %${Math.round(result.accuracy)} - hedef tamamlandı.`, "#15803d");
       try {
         window.parent.postMessage({
           type: "LINE_TRACE_LEVEL_COMPLETE",
@@ -601,7 +601,7 @@
     } else {
       state.canAdvance = false;
       saveProgress();
-      setStatus(`Yetersiz: %${Math.round(result.accuracy)} (hedef %90) - tekrar dene.`, "#ef4444");
+      setStatus(`Yetersiz: %${Math.round(result.accuracy)} (hedef %90) - tekrar dene.`, "#dc2626");
       setTimeout(() => {
         resetCurrentLevel();
       }, 800);
@@ -636,7 +636,7 @@
 
   resolveAssignmentRangeFromGrant().finally(() => {
   if (grantDenied) {
-    setStatus("Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.", "#ef4444");
+    setStatus("Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.", "#dc2626");
     retryBtn.disabled = true;
     nextBtn.disabled = true;
     openLevelsBtn.disabled = true;
