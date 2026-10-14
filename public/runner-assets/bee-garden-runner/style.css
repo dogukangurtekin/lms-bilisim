@@ -298,3 +298,8 @@ body{
 .bg-pk-tile.current { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .25); }
 .bg-pk-tile:disabled { opacity: .45; cursor: not-allowed; }
 .bg-pk-lock { position: absolute; top: 3px; right: 5px; font-size: 11px; }
+
+/* ---------- uçuş: iz noktaları ve hızlı kanat çırpma ---------- */
+.bg-trail { position: absolute; z-index: 2; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); background: radial-gradient(circle, #fff7b0, #facc15 60%, rgba(250, 204, 21, 0)); box-shadow: 0 0 10px rgba(250, 204, 21, .9); opacity: 0; }
+.bg-bee.is-flying { transition: none; animation: none; z-index: 3; }
+.bg-bee.is-flying .bee-wing { animation-duration: .05s; }

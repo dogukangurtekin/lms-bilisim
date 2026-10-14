@@ -213,40 +213,6 @@
                 </article>
 
                 @foreach($games as $slug => $game)
-                                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #dbe7ff;border-radius:14px;background:#fff;cursor:pointer;min-width:0;">
-                                        <input type="checkbox" name="game_slugs[]" value="{{ $slug }}" class="activity-game-check" style="width:18px;height:18px;flex:0 0 auto;">
-                                        <span style="font-weight:600;min-width:0;overflow-wrap:anywhere;">{{ $game['name'] }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </form>
-
-                <form method="POST" action="{{ route('activities.unassign.teacher.bulk') }}" id="activity-bulk-unassign-form" data-confirm="Seçili öğretmenden tüm atanmış oyun ve etkinlikler kaldırılacak. Devam edilsin mi?" style="display:flex;justify-content:flex-end;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap;">
-                    @csrf
-                    <select name="teacher_id" id="activity-unassign-teacher-select" required style="min-width:240px;height:40px;padding:0 12px;border:1px solid #cfe0ff;border-radius:14px;background:#fff;font-size:15px;">
-                        <option value="">Kaldırılacak öğretmeni seçin</option>
-                        @foreach($teachers as $teacher)
-                            <option value="{{ $teacher->id }}">{{ $teacher->user->name ?? ('Öğretmen #' . $teacher->id) }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="btn" style="height:40px;padding:0 14px;">Seçili öğretmenden tüm atanmışları kaldır</button>
-                </form>
-            </div>
-
-            <div class="activity-grid">
-                <article class="activity-item activity-card">
-                    <img src="{{ asset('klavye.jpg') }}?v={{ @filemtime(public_path('klavye.jpg')) ?: 1 }}" alt="Canlı Yarışmalar">
-                    <div class="activity-body">
-                        <h3>Canlı Yarışmalar</h3>
-                        <div class="actions">
-                            <a class="btn" href="{{ route('competitions.index') }}">Yarışma Aç</a>
-                        </div>
-                    </div>
-                </article>
-
-                @foreach($games as $slug => $game)
                     <article class="activity-item activity-card">
                         <img src="{{ asset($game['image']) }}" alt="{{ $game['name'] }}">
                         <div class="activity-body">

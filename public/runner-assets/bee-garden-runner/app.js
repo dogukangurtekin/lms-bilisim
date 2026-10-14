@@ -25,6 +25,8 @@
     const query = new URLSearchParams(window.location.search);
     const competitionId = query.get('assignmentId') || '';
     const competitionMode = /^competition-\d+$/.test(competitionId);
+    const roleParam = String(query.get('role') || '').toLowerCase();
+    const isStaff = roleParam === 'admin' || roleParam === 'teacher';
 
     // Blockly/Scratch tarzı blok parçalarının kural kategorisine göre rengi.
     const PROP_COLORS = {
@@ -157,6 +159,7 @@
     let currentMode = 'blok';
 
     function loadProgress() {
+        if (isStaff) return Math.max(0, LEVELS.length - 1);   // yönetici ve öğretmen: tüm bölümler açık
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             const parsed = raw ? JSON.parse(raw) : {};
@@ -236,30 +239,38 @@
         });
     }
 
+    function evalSolved(containerRect, beeRects, beeEls) {
+        const matches = [];
+        let allMatch = true;
+        beeEls.forEach((bee, i) => {
+            const target = currentTargets[i];
+            const r = beeRects[i];
+            let matched = false;
+            if (target && r) {
+                const cx = ((r.left + r.width / 2 - containerRect.left) / containerRect.width) * 100;
+                const cy = ((r.top + r.height / 2 - containerRect.top) / containerRect.height) * 100;
+                matched = Math.abs(cx - target.xPercent) < 4 && Math.abs(cy - target.yPercent) < 4;
+            }
+            matches.push(matched);
+            if (!matched) allMatch = false;
+        });
+        return { solved: allMatch && beeEls.length > 0, matches };
+    }
+
+    function commitSolved(beeEls, ev) {
+        beeEls.forEach((bee, i) => bee.classList.toggle('is-landed', !!ev.matches[i]));
+        if (ev.solved) onLevelSolved();
+    }
+
     function checkSolved(containerRect, beeRects, beeEls) {
         if (!containerRect) {
             containerRect = gardenEl.getBoundingClientRect();
             beeEls = Array.from(gardenEl.children).filter((el) => el.classList.contains('bg-bee'));
             beeRects = beeEls.map((el) => el.getBoundingClientRect());
         }
-        let allMatch = true;
-        beeEls.forEach((bee, i) => {
-            const target = currentTargets[i];
-            const r = beeRects[i];
-            if (!target || !r) return;
-            const cx = ((r.left + r.width / 2 - containerRect.left) / containerRect.width) * 100;
-            const cy = ((r.top + r.height / 2 - containerRect.top) / containerRect.height) * 100;
-            const dx = Math.abs(cx - target.xPercent);
-            const dy = Math.abs(cy - target.yPercent);
-            const matched = dx < 4 && dy < 4;
-            if (!matched) allMatch = false;
-            bee.classList.toggle('is-landed', matched);
-        });
-        const solved = allMatch && beeEls.length > 0;
-        if (solved) {
-            onLevelSolved();
-        }
-        return solved;
+        const ev = evalSolved(containerRect, beeRects, beeEls);
+        commitSolved(beeEls, ev);
+        return ev.solved;
     }
 
     // FLIP tekniği: arı(lar)ın eski konumunu kaydet, yeni CSS kuralını uygula
@@ -273,25 +284,49 @@
 
         const containerRect = container.getBoundingClientRect();
         const lastRects = bees.map((b) => b.getBoundingClientRect());
+        let flightMs = 0;
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         bees.forEach((bee, i) => {
-            const dx = firstRects[i].left - lastRects[i].left;
+            const dx = firstRects[i].left - lastRects[i].left;     // başlangıç konumu (şu anki yerleşime göre)
             const dy = firstRects[i].top - lastRects[i].top;
-            if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 1 || reduce || typeof bee.animate !== 'function') return;
 
-            bee.style.transition = 'none';
-            bee.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+            const dur = Math.round(520 + Math.min(780, dist * 1.25));
+            const lift = Math.min(70, 22 + dist * 0.2);              // yay yüksekliği
+            const tilt = Math.max(-18, Math.min(18, -dx * 0.06));    // gidilen yöne doğru eğil
             bee.classList.add('is-flying');
-            // Reflow'u zorla ki tarayıcı "from" konumunu gerçekten uygulasın.
-            void bee.offsetWidth;
-            requestAnimationFrame(() => {
-                bee.style.transition = '';
-                bee.style.transform = '';
-                setTimeout(() => bee.classList.remove('is-flying'), 600);
-            });
+            const anim = bee.animate([
+                { transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(0deg) scale(1)', offset: 0 },
+                { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy * 0.5 - lift) + 'px) rotate(' + tilt + 'deg) scale(1.12)', offset: 0.5 },
+                { transform: 'translate(0px,0px) rotate(0deg) scale(1)', offset: 1 },
+            ], { duration: dur, easing: 'cubic-bezier(.45,.05,.3,1)' });
+            anim.onfinish = anim.oncancel = () => bee.classList.remove('is-flying');
+            flightMs = Math.max(flightMs, dur);
+
+            // uçuş izi: yay boyunca sönen ışıltılı noktalar
+            const sx = firstRects[i].left + firstRects[i].width / 2 - containerRect.left;
+            const sy = firstRects[i].top + firstRects[i].height / 2 - containerRect.top;
+            const ex = lastRects[i].left + lastRects[i].width / 2 - containerRect.left;
+            const ey = lastRects[i].top + lastRects[i].height / 2 - containerRect.top;
+            const cx = (sx + ex) / 2, cy = (sy + ey) / 2 - lift * 2;  // ikinci derece Bézier kontrol noktası
+            const N = 9;
+            for (let k = 1; k <= N; k++) {
+                const t = k / (N + 1), u = 1 - t;
+                const px = u * u * sx + 2 * u * t * cx + t * t * ex;
+                const py = u * u * sy + 2 * u * t * cy + t * t * ey;
+                const dot = document.createElement('div');
+                dot.className = 'bg-trail';
+                dot.style.left = px + 'px';
+                dot.style.top = py + 'px';
+                container.appendChild(dot);
+                const a2 = dot.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.4)' }, { opacity: 0.95, transform: 'translate(-50%,-50%) scale(1)', offset: 0.25 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }], { duration: 900, delay: t * dur * 0.85, fill: 'backwards' });
+                a2.onfinish = a2.oncancel = () => dot.remove();
+            }
         });
 
-        return { bees, containerRect, lastRects };
+        return { bees, containerRect, lastRects, flightMs };
     }
 
     let solvedForLevel = false;
@@ -355,11 +390,17 @@
         codePreview.textContent = generateCodeText();
     }
 
+    let checkToken = 0;
     function applyAndCheck() {
         const level = LEVELS[currentLevelIndex];
-        const { bees, containerRect, lastRects } = applyStateAnimated(gardenEl, level, currentState);
+        const { bees, containerRect, lastRects, flightMs } = applyStateAnimated(gardenEl, level, currentState);
         refreshPreview();
-        return checkSolved(containerRect, lastRects, bees);
+        const ev = evalSolved(containerRect, lastRects, bees);
+        const token = ++checkToken;
+        bees.forEach((b) => b.classList.remove('is-landed'));
+        if (flightMs > 0) setTimeout(() => { if (token === checkToken) commitSolved(bees, ev); }, flightMs + 60);
+        else commitSolved(bees, ev);
+        return ev.solved;
     }
 
     // ---- Sürükle-bırak (pointer events ile, fare + dokunmatik ortak) ----
@@ -617,6 +658,7 @@
     }
 
     function goToLevel(index, forceReset) {
+        checkToken++;
         currentLevelIndex = Math.max(competitionStartIndex, Math.min(competitionEndIndex, index));
         levelStartedAt = Date.now();
         const level = LEVELS[currentLevelIndex];
