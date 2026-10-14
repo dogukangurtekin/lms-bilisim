@@ -14,6 +14,7 @@
 <body>
   <div class="app">
     <aside class="left-tools">
+      <button id="btn-levels" class="tool-btn" title="Bölümler" aria-label="Bölümler">☰</button>
       <button id="btn-prev-level" class="tool-btn">◀</button>
       <button id="btn-reset-level" class="tool-btn">↺</button>
       <button id="btn-run" class="tool-btn run">▶</button>
@@ -43,6 +44,15 @@
 
   <footer class="command-bar" id="command-bar"></footer>
 
+  <div id="level-picker" class="modal hidden" role="dialog" aria-modal="true" aria-label="Bölümler">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card">
+      <div class="modal-head"><h3>Bölümler</h3><button class="tool-btn modal-x" data-close aria-label="Kapat">✕</button></div>
+      <div id="picker-body" class="picker-body"></div>
+    </div>
+  </div>
+
+  <script src="levels.js"></script>
   <script src="app.js"></script>
   <script src="../pwa-init.js" defer></script>
 </body>

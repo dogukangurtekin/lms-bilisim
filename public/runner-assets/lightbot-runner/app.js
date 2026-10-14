@@ -84,163 +84,11 @@
     return `${x},${y}`;
   }
 
-  function mkStepCommandSeq(path) {
-    const cmds = [];
-    let dir = path.startDir;
-    let prev = path.points[0];
-    for (let i = 1; i < path.points.length; i += 1) {
-      const next = path.points[i];
-      const dx = next.x - prev.x;
-      const dy = next.y - prev.y;
-      const targetDir = dx > 0 ? 0 : dx < 0 ? 2 : dy > 0 ? 1 : 3;
-      while (dir !== targetDir) {
-        const rightDelta = (targetDir - dir + 4) % 4;
-        if (rightDelta === 1 || rightDelta === 2) {
-          cmds.push("R");
-          dir = (dir + 1) % 4;
-        } else {
-          cmds.push("L");
-          dir = (dir + 3) % 4;
-        }
-      }
-      cmds.push(next.h !== prev.h ? "J" : "F");
-      if (next.light) cmds.push("B");
-      prev = next;
-    }
-    if (path.points[0].light) cmds.unshift("B");
-    return cmds;
-  }
-
-  function generateBand(bandName, bandNo, count, options) {
-    const out = [];
-    const { startMainSlots, startProcSlots, useProc1At, useProc2At, jumpCount } = options;
-    for (let i = 0; i < count; i += 1) {
-      if (bandNo === 1 && i < 5) {
-        const tutorialDefs = [
-          {
-            title: "Ogretici 1 - Ileri Git ve Isik Yak",
-            start: { x: 0, y: 2, h: 0, dir: 0 },
-            path: [
-              { x: 0, y: 2, h: 0, light: false },
-              { x: 1, y: 2, h: 0, light: false },
-              { x: 2, y: 2, h: 0, light: true }
-            ],
-            allowJump: false
-          },
-          {
-            title: "Ogretici 2 - Duz Ilerleme",
-            start: { x: 0, y: 3, h: 0, dir: 0 },
-            path: [
-              { x: 0, y: 3, h: 0, light: false },
-              { x: 1, y: 3, h: 0, light: true },
-              { x: 2, y: 3, h: 0, light: true }
-            ],
-            allowJump: false
-          },
-          {
-            title: "Ogretici 3 - Saga Don",
-            start: { x: 0, y: 2, h: 0, dir: 0 },
-            path: [
-              { x: 0, y: 2, h: 0, light: false },
-              { x: 1, y: 2, h: 0, light: false },
-              { x: 1, y: 3, h: 0, light: true }
-            ],
-            allowJump: false
-          },
-          {
-            title: "Ogretici 4 - Donusleri Birlestir",
-            start: { x: 0, y: 2, h: 0, dir: 0 },
-            path: [
-              { x: 0, y: 2, h: 0, light: false },
-              { x: 1, y: 2, h: 0, light: false },
-              { x: 1, y: 3, h: 0, light: true },
-              { x: 2, y: 3, h: 0, light: true }
-            ],
-            allowJump: false
-          },
-          {
-            title: "Ogretici 5 - Zipla ve Don",
-            start: { x: 0, y: 2, h: 0, dir: 0 },
-            path: [
-              { x: 0, y: 2, h: 0, light: false },
-              { x: 1, y: 2, h: 0, light: false },
-              { x: 2, y: 2, h: 1, light: true },
-              { x: 2, y: 3, h: 1, light: true }
-            ],
-            allowJump: true
-          }
-        ];
-        const td = tutorialDefs[i];
-        const sampleSolution = mkStepCommandSeq({ points: td.path, startDir: td.start.dir });
-        const mainSlots = Math.max(8 + i, sampleSolution.length + 2);
-        out.push({
-          id: `${bandNo}-${i + 1}`,
-          title: `${bandName} - ${i + 1} (${td.title})`,
-          maxSlots: { main: mainSlots, proc1: 0, proc2: 0 },
-          allow: { jump: td.allowJump, proc1: false, proc2: false },
-          board: {
-            start: { ...td.start },
-            tiles: td.path.map((t) => ({ x: t.x, y: t.y, h: t.h, light: !!t.light })),
-            endHint: { x: td.path[td.path.length - 1].x, y: td.path[td.path.length - 1].y }
-          },
-          sampleSolution
-        });
-        continue;
-      }
-
-      const isEarlyEasy = bandNo === 1 && i < 6;
-      const baseY = 2 + (i % 3);
-      const pathPoints = [];
-      const len = isEarlyEasy ? (4 + Math.floor(i / 2)) : (5 + (i % 4) + (bandNo > 1 ? 1 : 0));
-      for (let p = 0; p < len; p += 1) {
-        const x = p;
-        const y = isEarlyEasy ? baseY : (baseY + ((p % 2 === 0 && bandNo > 1) ? 1 : 0));
-        const h = (bandNo === 1 ? 0 : Math.min(2, Math.floor((p + i) % jumpCount)));
-        const light = isEarlyEasy ? (p === len - 1) : (p > 0 && p % 2 === 0);
-        pathPoints.push({ x, y, h, light });
-      }
-      const extra = isEarlyEasy ? [] : [
-        { x: len - 2, y: baseY + 2, h: Math.min(2, bandNo), light: true },
-        { x: len - 1, y: baseY + 2, h: Math.min(2, bandNo), light: bandNo > 1 }
-      ];
-      extra.forEach((t) => pathPoints.push(t));
-      const uniqueMap = new Map();
-      pathPoints.forEach((t) => uniqueMap.set(tileKey(t.x, t.y), t));
-      const points = Array.from(uniqueMap.values());
-      points.sort((a, b) => (a.x + a.y) - (b.x + b.y));
-      const start = points[0];
-      const end = points[points.length - 1];
-      const path = { points, startDir: 0 };
-      const sampleSolution = mkStepCommandSeq(path);
-      const useP1 = i >= useProc1At;
-      const useP2 = i >= useProc2At;
-      const mainSlotsBase = startMainSlots + Math.min(6, Math.floor(i / 2));
-      const mainSlots = Math.max(
-        isEarlyEasy ? (startMainSlots + 6) : mainSlotsBase,
-        sampleSolution.length + 2
-      );
-      const procSlots = startProcSlots + Math.min(5, Math.floor(i / 3));
-      out.push({
-        id: `${bandNo}-${i + 1}`,
-        title: `${bandName} - ${i + 1}`,
-        maxSlots: { main: mainSlots, proc1: useP1 ? procSlots : 0, proc2: useP2 ? procSlots : 0 },
-        allow: { jump: (bandNo >= 2) || isEarlyEasy, proc1: useP1, proc2: useP2 },
-        board: {
-          start: { x: start.x, y: start.y, h: start.h, dir: 0 },
-          tiles: points.map((t) => ({ x: t.x, y: t.y, h: t.h, light: !!t.light })),
-          endHint: { x: end.x, y: end.y }
-        },
-        sampleSolution
-      });
-    }
-    return out;
-  }
+  // 100 bölümlük kategorili set (Kolay / Orta / Zor) levels.js içinde tanımlıdır (tools/learn-levels/lightbot.gen.mjs ile üretilir).
+  const CATEGORY_LABEL = { easy: "Kolay", medium: "Orta", hard: "Zor" };
 
   function buildLevels() {
-    return []
-      .concat(generateBand("Kolay", 1, 12, { startMainSlots: 8, startProcSlots: 0, useProc1At: 99, useProc2At: 99, jumpCount: 1 }))
-      .concat(generateBand("Orta", 2, 12, { startMainSlots: 9, startProcSlots: 5, useProc1At: 3, useProc2At: 99, jumpCount: 2 }))
-      .concat(generateBand("Zor", 3, 12, { startMainSlots: 10, startProcSlots: 6, useProc1At: 2, useProc2At: 5, jumpCount: 3 }));
+    return (window.LIGHTBOT_LEVELS || []).map((lv) => JSON.parse(JSON.stringify(lv)));
   }
 
   function applyAssignmentRange(fullLevels) {
@@ -764,6 +612,8 @@
           if (levelIndex < levels.length - 1) {
             levelIndex += 1;
             resetLevelState();
+            renderCommandBar();
+            setActiveTrack("main");
           } else {
             showToast("Tum bolumler tamamlandi", 1800);
           }
@@ -798,15 +648,79 @@
       btn.textContent = cmd.icon;
       btn.dataset.cmd = cmd.id;
       btn.title = cmd.title || cmd.id;
-      const forceJumpOpen = String(level?.id || "") === "1-5";
-      const disabled = (cmd.id === "P1" && !level.allow.proc1) || (cmd.id === "P2" && !level.allow.proc2) || (cmd.id === "J" && !level.allow.jump && !forceJumpOpen);
+      const disabled = (cmd.id === "P1" && !level.allow.proc1) || (cmd.id === "P2" && !level.allow.proc2) || (cmd.id === "J" && !level.allow.jump);
       btn.disabled = !!disabled;
       btn.addEventListener("click", () => appendCommand(cmd.id));
       commandBar.appendChild(btn);
     });
   }
 
+  // ---------------- bölüm seçici (Kolay / Orta / Zor) ----------------
+  const pickerEl = document.getElementById("level-picker");
+  const pickerBodyEl = document.getElementById("picker-body");
+  const btnLevels = document.getElementById("btn-levels");
+
+  function unlockedMaxIndex() {
+    if (isStaff) return levels.length - 1;
+    let maxDone = 0;
+    completedLevelNos.forEach((n) => { if (n > maxDone) maxDone = n; });
+    return Math.min(levels.length - 1, maxDone); // tamamlanan en son bölümün bir sonrakine kadar açık (indeks = sıra numarası)
+  }
+
+  function gotoLevel(idx) {
+    if (idx < 0 || idx >= levels.length || idx > unlockedMaxIndex()) return;
+    stopRun(true);
+    levelIndex = idx;
+    resetLevelState();
+    renderCommandBar();
+    setActiveTrack("main");
+  }
+
+  function openPicker() {
+    if (!pickerEl || !pickerBodyEl) return;
+    pickerBodyEl.innerHTML = "";
+    const groups = [];
+    levels.forEach((lv, i) => {
+      const cat = lv.category || "easy";
+      let g = groups.find((x) => x.cat === cat);
+      if (!g) { g = { cat, items: [] }; groups.push(g); }
+      g.items.push({ lv, i });
+    });
+    const maxOpen = unlockedMaxIndex();
+    groups.forEach((g) => {
+      const doneCount = g.items.filter((x) => completedLevelNos.has(x.i + 1)).length;
+      const sec = document.createElement("div");
+      sec.className = "picker-group cat-" + g.cat;
+      const h = document.createElement("h4");
+      h.innerHTML = (CATEGORY_LABEL[g.cat] || g.cat) + " <small>" + doneCount + " / " + g.items.length + " bölüm</small>";
+      sec.appendChild(h);
+      const grid = document.createElement("div");
+      grid.className = "picker-grid";
+      g.items.forEach((x) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        const open = x.i <= maxOpen;
+        b.className = "tile" + (completedLevelNos.has(x.i + 1) ? " done" : "") + (x.i === levelIndex ? " current" : "");
+        b.disabled = !open;
+        b.innerHTML = (open ? "" : '<span class="lock">🔒</span>') + '<span class="t-num">' + (levelStart + x.i) + '</span><span class="t-size">' + x.lv.id + "</span>";
+        b.addEventListener("click", () => { gotoLevel(x.i); closePicker(); });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      pickerBodyEl.appendChild(sec);
+    });
+    pickerEl.classList.remove("hidden");
+    const cur = pickerBodyEl.querySelector(".tile.current");
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "center" });
+  }
+
+  function closePicker() {
+    if (pickerEl) pickerEl.classList.add("hidden");
+  }
+
   function bindEvents() {
+    if (btnLevels) btnLevels.addEventListener("click", openPicker);
+    if (pickerEl) pickerEl.addEventListener("click", (e) => { if (e.target && e.target.hasAttribute && e.target.hasAttribute("data-close")) closePicker(); });
     tabBtns.forEach((btn) => btn.addEventListener("click", () => setActiveTrack(btn.dataset.track)));
     btnRun.addEventListener("click", startRun);
     btnStop.addEventListener("click", () => stopRun(true));
@@ -820,6 +734,7 @@
       levelIndex -= 1;
       resetLevelState();
       renderCommandBar();
+      setActiveTrack("main");
     });
     window.addEventListener("resize", resizeCanvas);
   }

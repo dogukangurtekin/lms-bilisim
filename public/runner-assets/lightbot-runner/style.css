@@ -275,3 +275,35 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- bölüm seçici (Kolay / Orta / Zor) ---------- */
+.left-tools { gap: 9px; }
+.tool-btn { height: 48px; }
+.modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 16px; }
+.modal.hidden { display: none; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(8, 18, 44, .62); backdrop-filter: blur(4px); }
+.modal-card {
+  position: relative; width: min(860px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border-radius: 26px;
+  background: linear-gradient(170deg, #ffffff, #f1f6ff); border: 1px solid var(--line); box-shadow: 0 30px 70px rgba(0, 0, 0, .4);
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.modal-head h3 { margin: 0; font-size: 22px; font-weight: 900; color: var(--ink); }
+.modal-x { width: 40px; height: 40px; font-size: 16px; }
+.picker-group { margin-bottom: 16px; }
+.picker-group h4 { margin: 0 0 8px; font-size: 15px; font-weight: 900; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.picker-group h4::before { content: ""; width: 12px; height: 12px; border-radius: 4px; background: var(--c-move); }
+.picker-group.cat-medium h4::before { background: var(--c-light); }
+.picker-group.cat-hard h4::before { background: var(--c-del); }
+.picker-group h4 small { color: var(--soft); font-weight: 800; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 8px; }
+.tile {
+  position: relative; display: grid; gap: 2px; justify-items: center; padding: 9px 4px 7px; border-radius: 14px; border: 2px solid var(--line);
+  background: #fff; color: var(--ink); font-family: inherit; font-weight: 900; cursor: pointer; transition: transform .12s, border-color .12s;
+}
+.tile:hover:not(:disabled) { transform: translateY(-2px); border-color: #3b82f6; }
+.tile .t-num { font-size: 18px; }
+.tile .t-size { font-size: 10px; color: var(--soft); font-weight: 800; }
+.tile.done { border-color: #86efac; background: #f0fdf4; }
+.tile.current { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .25); }
+.tile:disabled { opacity: .45; cursor: not-allowed; }
+.tile .lock { position: absolute; top: 3px; right: 5px; font-size: 11px; }
