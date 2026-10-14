@@ -356,3 +356,27 @@ button { font-family: inherit; cursor: pointer; }
   .workspace-card { position: static; max-height: none; }
   .ed-ws { max-height: none; min-height: 200px; }
 }
+
+/* v6 — program alanı daha geniş ve ferah (oyun alanı hâlâ büyük) */
+.layout { grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr); max-width: 1900px; }
+.workspace-card { padding: 14px; max-height: calc(100vh - 92px); min-height: calc(100vh - 150px); }
+.ws-head h3 { font-size: 16px; }
+.palette { gap: 7px; margin-bottom: 10px; }
+.pal-btn { padding: 8px 13px; font-size: 13.5px; border-radius: 12px; }
+.ed-ws { flex: 1; min-height: 340px; max-height: none; padding: 14px 14px 30px; border-width: 2px; }
+.ed-prog { min-width: min(100%, 300px); }
+.ed-hat { min-width: 150px; padding: 8px 16px 7px; font-size: 14px; }
+.ed-prog-body { min-height: 56px; padding: 8px 10px 6px; border-left-width: 12px; border-bottom-width: 12px; }
+.ed-blk { font-size: 14px; }
+.ed-head { padding: 8px 14px; gap: 8px; }
+.ed-slot { margin-left: 14px; padding: 6px 6px 6px 8px; min-height: 36px; }
+.ed-foot { height: 12px; }
+.ed-num, .ed-sel { padding: 3px 7px; font-size: 13px; }
+.ed-num { width: 50px; }
+.ed-empty { padding: 10px; font-size: 12.5px; }
+.ed-ghost { font-size: 14px; padding: 8px 14px; }
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: 1fr; }
+  .workspace-card { min-height: 0; }
+  .ed-ws { min-height: 300px; }
+}
