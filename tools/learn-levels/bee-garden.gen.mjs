@@ -32,6 +32,37 @@ const TUT = {
   self: 'Yeni komut: <code>kendi-hizasi</code>. Diğer komutlar TÜM arılara birden uygulanır, ama bu komut SADECE seçtiğin TEK bir arıya özel bir kural yazmanı sağlar. Aşağıdan hangi arı olduğunu seç.',
 };
 
+// Oyundaki bahçe: kenarlık+iç boşluk düşüldükten sonra içerik alanı CWxCH, arılar 52x52. Varsayılan düzen: row / flex-start / flex-start.
+const BEE = 52;
+function flexCenters(bees, container, items, CW, CH) {
+  const dir = container.flexDirection || 'row', jc = container.justifyContent || 'flex-start', ai = container.alignItems || 'flex-start';
+  const row = dir.startsWith('row'), rev = dir.endsWith('reverse');
+  const main = row ? CW : CH, cross = row ? CH : CW;
+  const free = Math.max(0, main - bees * BEE);
+  let offset = 0, gap = 0;
+  if (jc === 'center') offset = free / 2;
+  else if (jc === 'flex-end') offset = free;
+  else if (jc === 'space-between') gap = bees > 1 ? free / (bees - 1) : 0;
+  else if (jc === 'space-around') { gap = free / bees; offset = gap / 2; }
+  else if (jc === 'space-evenly') { gap = free / (bees + 1); offset = gap; }
+  const out = [];
+  for (let i = 0; i < bees; i++) {
+    let pos = offset + i * (BEE + gap);
+    if (rev) pos = main - pos - BEE;
+    const al = (items && items[i + 1] && items[i + 1].alignSelf) || ai;
+    const cpos = al === 'center' ? (cross - BEE) / 2 : al === 'flex-end' ? cross - BEE : 0;
+    out.push(row ? { x: pos + BEE / 2, y: cpos + BEE / 2 } : { x: cpos + BEE / 2, y: pos + BEE / 2 });
+  }
+  return out;
+}
+// Başlangıçta herhangi bir arı kendi çiçeğinin üstündeyse (iki farklı bahçe boyutunda) seviye reddedilir.
+function startsOnFlower(bees, container, items) {
+  return [[580, 342], [380, 262]].some(([CW, CH]) => {
+    const start = flexCenters(bees, {}, null, CW, CH), target = flexCenters(bees, container, items, CW, CH);
+    return start.some((s, i) => Math.abs(s.x - target[i].x) < BEE * 0.6 && Math.abs(s.y - target[i].y) < BEE * 0.6);
+  });
+}
+
 const recipes = []; // { cat, feature, bees, fd?, jc?, ai?, items?: n, opt:{jc,ai,fd} }
 const signature = new Set();
 
@@ -60,7 +91,8 @@ function trySolution(cat, spec, k = 0) {
       }
     }
     const isDefault = (!fd || fd === 'row') && (!jc || jc === 'flex-start') && (!ai || ai === 'flex-start') && !items;
-    if (isDefault && !spec.ordered) continue;
+    if (isDefault) continue;
+    if (startsOnFlower(bees, container, items)) continue;   // arı zaten çiçeğin üstünde başlamasın
     const sig = JSON.stringify([bees, container, items]);
     if (signature.has(sig)) continue;
     signature.add(sig);
@@ -71,12 +103,12 @@ function trySolution(cat, spec, k = 0) {
 
 const STAGES = [
   // ---- KOLAY (25)
-  ['easy', 3, { bees: 1, jcSet: ['center', 'flex-end', 'flex-start'], optJC: 3, tut: 'jc', feature: 'Yatay hizalama', ordered: true }],
-  ['easy', 3, { bees: 1, aiSet: ['center', 'flex-end', 'flex-start'], optAI: 3, tut: 'ai', feature: 'Dikey hizalama', ordered: true }],
-  ['easy', 6, { bees: 1, jcSet: J3, aiSet: J3, optJC: 3, optAI: 3, tut: 'both', feature: 'Köşeye kondur' }],
-  ['easy', 5, { bees: () => ri(2, 3), jcSet: J6, optJC: 6, tut: 'multi', feature: 'Eşit aralık' }],
-  ['easy', 5, { bees: 3, jcSet: J6, aiSet: J3, optJC: 6, optAI: 3, feature: 'Karma hizalama' }],
-  ['easy', 3, { bees: 1, fdSet: ['column'], jcSet: J3, optFD: 2, optJC: 3, tut: 'fd', feature: 'Dikey dizilim' }],
+  ['easy', 2, { bees: 1, jcSet: ['center', 'flex-end'], optJC: 3, tut: 'jc', feature: 'Yatay hizalama', ordered: true }],
+  ['easy', 2, { bees: 1, aiSet: ['center', 'flex-end'], optAI: 3, tut: 'ai', feature: 'Dikey hizalama', ordered: true }],
+  ['easy', 7, { bees: 1, jcSet: J3, aiSet: J3, optJC: 3, optAI: 3, tut: 'both', feature: 'Köşeye kondur' }],
+  ['easy', 6, { bees: () => ri(2, 3), jcSet: J6, optJC: 6, tut: 'multi', feature: 'Eşit aralık' }],
+  ['easy', 6, { bees: 3, jcSet: J6, aiSet: J3, optJC: 6, optAI: 3, feature: 'Karma hizalama' }],
+  ['easy', 2, { bees: 1, fdSet: ['column'], jcSet: J3, optFD: 2, optJC: 3, tut: 'fd', feature: 'Dikey dizilim' }],
   // ---- ORTA (30)
   ['medium', 6, { bees: () => ri(2, 3), fdSet: ['column'], jcSet: J6, optFD: 2, optJC: 6, feature: 'Dikey dizilim' }],
   ['medium', 6, { bees: 3, fdSet: ['row-reverse', 'column-reverse', 'column'], jcSet: J6, optFD: 4, optJC: 6, tut: 'rev', feature: 'Ters yön' }],
