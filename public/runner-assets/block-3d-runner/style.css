@@ -468,3 +468,12 @@ body.dark .tile { background: var(--surface-2); }
   .workspace-card { min-height: 0; }
   .ed-ws { min-height: 300px; }
 }
+
+/* v7 — büyük ızgaralarda geniş ekran oyun alanı */
+.canvas-wrap { transition: aspect-ratio .25s ease; }
+.canvas-wrap[data-shape="mid"] { aspect-ratio: 4 / 3; width: min(100%, calc((100vh - 235px) * 1.333)); }
+.canvas-wrap[data-shape="wide"] { aspect-ratio: 16 / 9; width: min(100%, calc((100vh - 235px) * 1.778)); }
+@media (max-width: 1000px) {
+  .canvas-wrap[data-shape="mid"] { width: 100%; }
+  .canvas-wrap[data-shape="wide"] { width: 100%; }
+}

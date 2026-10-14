@@ -31,7 +31,7 @@
     var level = null, theme = THEMES.meadow, dpr = 1;
     var a = 40, b = 20, thick = 22, ox = 0, oy = 0;       // yarım karo genişliği/yüksekliği, kalınlık, başlangıç
     var robot = { x: 0, y: 0, angle: 0, hop: 0, squash: 0, mood: 'idle' };
-    var tweens = [], particles = [], clouds = [], stars = [], ambient = [];
+    var tweens = [], particles = [], clouds = [], stars = [], ambient = [], tallScale = 1;
     var time = 0, last = performance.now(), running = true, goalReached = false, shakeT = 0;
     var kinds = {};
 
@@ -60,6 +60,7 @@
 
     function setLevel(lv, themeName) {
       level = lv; theme = THEMES[themeName || lv.theme] || THEMES.meadow;
+      var big = Math.max(lv.w, lv.h); tallScale = big >= 12 ? .62 : big >= 10 ? .72 : big >= 8 ? .86 : 1;
       kinds = {};
       (lv.obstacles || []).forEach(function (o) {
         var h = hash(o.x, o.y, lv.id || 1);
@@ -239,6 +240,8 @@
       var info = kinds[o.x + ',' + o.y] || { kind: 'rock', r: .5 };
       var px = cx(o.x, o.y), py = cy(o.x, o.y), u = a;
       ctx.save();
+      // büyük tahtalarda engeller alçaltılır; arkalarındaki karolar görünsün/seçilebilsin
+      if (tallScale < 1) { ctx.translate(px, py); ctx.scale(1, tallScale); ctx.translate(-px, -py); }
       switch (info.kind) {
         case 'tree':
           shadowAt(px, py, u * .5);

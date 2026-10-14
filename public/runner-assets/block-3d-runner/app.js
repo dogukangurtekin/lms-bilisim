@@ -198,6 +198,13 @@
     $('levelNext').disabled = !canOpen(S.idx + 1);
   }
 
+  // Büyük ızgaralarda (10×10 ve üstü) oyun alanı kare yerine geniş ekran olur: izometrik tahta yatay uzandığı için karolar büyür.
+  function setStageShape(lv) {
+    var wrap = $('canvasWrap'); if (!wrap) return;
+    var n = Math.max(lv.w, lv.h);
+    wrap.dataset.shape = n >= 10 ? 'wide' : n >= 8 ? 'mid' : 'square';
+  }
+
   function refreshLevelTexts() {
     $('levelName').textContent = level.name;
     $('levelMeta').textContent = level.group + ' · ' + R.THEMES[level.theme].name + ' · ' + level.w + '×' + level.h;
@@ -227,7 +234,7 @@
     resetRun(true);
     if (editor && wsReady && level) { var cur = wsSerialize(); if (cur) prog.ws[level.id] = cur; }
     S.idx = idx; level = LEVELS[idx]; S.attemptStart = Date.now();
-    R.setLevel(level);
+    setStageShape(level); R.setLevel(level);
     document.body.dataset.theme = level.theme;
     refreshLevelTexts();
     if (editor && wsReady) {
@@ -592,7 +599,7 @@
     return Math.max(0, Math.min(LEVELS.length - 1, last));
   })();
   S.idx = startIdx; level = LEVELS[S.idx];
-  R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
+  setStageShape(level); R.setLevel(level); document.body.dataset.theme = level.theme; refreshLevelTexts(); refreshHeader();
 
   initEditor();
   initSessionUI();
