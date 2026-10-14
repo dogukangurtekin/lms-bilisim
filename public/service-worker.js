@@ -46,6 +46,7 @@ const RUNNER_SLUGS = [
   "python-editor",
   "bee-garden-runner",
   "flowchart-runner",
+  "dot-cards-runner",
 ];
 
 function isRunnerRequest(url) {

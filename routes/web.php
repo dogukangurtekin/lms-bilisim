@@ -216,6 +216,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\BlockBuilderStudioController::class, 'store'])->middleware('throttle:60,1')->name('store');
         Route::delete('/{id}', [\App\Http\Controllers\BlockBuilderStudioController::class, 'destroy'])->whereNumber('id')->name('destroy');
     });
+    Route::get('/dot-cards-runner', [ActivityRunnerController::class, 'dotCards']);
     Route::get('/flowchart-runner', [ActivityRunnerController::class, 'flowchart']);
     // Eski adres (kaldırılan Vue uygulaması) yeni Flowchart Programlama uygulamasına yönlendirilir.
     Route::redirect('/flowchart-programming', '/flowchart-runner')->name('flowchart.editor');

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a1738">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <title>Küçük Nokta — Kod Kartları</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="dc-app">
+  <header class="dc-top">
+    <div class="dc-brand"><span class="dc-logo"><i></i></span><div><b>Küçük Nokta</b><small>Kod Kartları</small></div></div>
+    <div class="dc-nav">
+      <button id="btnPrev" class="dc-icon" type="button" aria-label="Önceki seviye" title="Önceki seviye">‹</button>
+      <button id="btnLevels" class="dc-picker" type="button" aria-haspopup="dialog"><span id="lvName">Seviye 1</span><small id="lvMeta">Kolay</small></button>
+      <button id="btnNext" class="dc-icon" type="button" aria-label="Sonraki seviye" title="Sonraki seviye">›</button>
+    </div>
+    <div class="dc-stats">
+      <span class="dc-pill" id="pillProgress">0 / 48</span>
+      <span class="dc-pill dc-gold" id="pillXp">⭐ 0 XP</span>
+      <button id="btnSound" class="dc-icon" type="button" aria-label="Ses" title="Ses">🔊</button>
+      <button id="btnHelp" class="dc-icon" type="button" aria-label="Nasıl oynanır" title="Nasıl oynanır?">?</button>
+      <button id="btnClose" class="dc-exit hidden" type="button">Çık</button>
+    </div>
+  </header>
+
+  <main class="dc-main">
+    <section class="dc-stage">
+      <div class="dc-tip" id="tip"></div>
+      <div class="dc-boardwrap" id="boardWrap">
+        <div class="dc-board" id="board"><div class="dc-dot" id="dot"><i class="dc-eye"></i></div></div>
+        <div class="dc-msg" id="msg" role="status" aria-live="polite"></div>
+      </div>
+      <div class="dc-bar">
+        <span class="dc-chip" id="chipAttempts">Hata: 0</span>
+        <span class="dc-chip" id="chipStars">★★★</span>
+        <button id="btnHint" class="dc-btn" type="button">💡 İpucu</button>
+        <button id="btnReset" class="dc-btn" type="button">↺ Baştan</button>
+      </div>
+      <div class="dc-roampad hidden" id="roamPad" aria-label="Yön düğmeleri">
+        <button data-dir="N" type="button" aria-label="Yukarı">▲</button>
+        <button data-dir="W" type="button" aria-label="Sola">◀</button>
+        <button data-dir="S" type="button" aria-label="Aşağı">▼</button>
+        <button data-dir="E" type="button" aria-label="Sağa">▶</button>
+      </div>
+    </section>
+
+    <aside class="dc-side">
+      <div class="dc-side-head"><h3 id="handTitle">Kartların</h3><small id="handSub"></small></div>
+      <div class="dc-hand" id="hand"></div>
+      <div class="dc-played-wrap"><h4>Oynadıkların</h4><div class="dc-played" id="played"><span class="dc-none">Henüz kart oynamadın</span></div></div>
+    </aside>
+  </main>
+  <div class="dc-toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<div id="pickerModal" class="dc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+  <div class="dc-backdrop" data-close></div>
+  <div class="dc-card dc-picker-card">
+    <div class="dc-card-head"><h3 id="pickerTitle">Seviyeler</h3><button class="dc-icon" data-close type="button" aria-label="Kapat">✕</button></div>
+    <div id="pickerBody"></div>
+  </div>
+</div>
+
+<div id="winModal" class="dc-modal hidden" role="dialog" aria-modal="true">
+  <div class="dc-backdrop"></div>
+  <div class="dc-card dc-win">
+    <div class="dc-burst" aria-hidden="true">🟠</div>
+    <h3>Hedefe ulaştın!</h3>
+    <div class="dc-win-stars" id="winStars">★★★</div>
+    <p id="winText"></p>
+    <div class="dc-win-xp" id="winXp">+10 XP</div>
+    <div class="dc-win-actions"><button id="winNext" class="dc-btn dc-btn-go" type="button">Sonraki ›</button><button id="winRetry" class="dc-btn" type="button">Tekrar oyna</button></div>
+  </div>
+</div>
+
+<div id="helpModal" class="dc-modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="dc-backdrop" data-close></div>
+  <div class="dc-card dc-help">
+    <div class="dc-card-head"><h3 id="helpTitle">Nasıl oynanır?</h3><button class="dc-icon" data-close type="button" aria-label="Kapat">✕</button></div>
+    <div class="dc-help-body">
+      <p>Amaç: <b>küçük noktayı turuncu hedefe</b> ulaştırmak. Noktayı doğrudan sen yönetmezsin; <b>kartlar</b> yönetir. Her kartın üzerinde küçük bir program yazar. Kartı seçince nokta o programı çalıştırır.</p>
+      <ul>
+        <li><b>Kart Dizisi</b> bölümlerinde kartları doğru sırayla seç. Bir kart noktayı duvara çarpıtırsa ya da çukura düşürürse nokta önceki yerine döner ve kart geri gelir.</li>
+        <li><b>Doğru Kartı Bul</b> bölümlerinde yalnızca tek kart hedefe götürür. Kodları okuyarak tahmin et.</li>
+        <li><b>Serbest Gezinti</b> bölümlerinde ok tuşlarıyla (ya da düğmelerle) noktayı sen yürütürsün.</li>
+      </ul>
+      <h4>Komutlar</h4>
+      <ul>
+        <li><code>sağa(3)</code> <code>sola(2)</code> <code>yukarı(1)</code> <code>aşağı(4)</code> — o yöne belirtilen kare kadar yürür.</li>
+        <li><code>ileri(2)</code> — noktanın baktığı yönde yürür. <code>dön_sağ()</code> / <code>dön_sol()</code> — baktığı yönü çevirir.</li>
+        <li><code>tekrarla (3) { … }</code> — içindekileri 3 kez yapar.</li>
+        <li><code>eğer (önüm_boş) { … } değilse { … }</code> — koşul doğruysa birincisini, değilse ikincisini yapar.</li>
+        <li><code>iken (önüm_güvenli) { … }</code> — koşul doğru olduğu sürece tekrarlar.</li>
+      </ul>
+      <h4>Koşullar</h4>
+      <ul>
+        <li><code>önüm_boş</code>: önümde duvar yok · <code>önüm_güvenli</code>: önümde duvar da çukur da yok</li>
+        <li><code>sağım_boş</code> / <code>solum_boş</code>: sağımda / solumda duvar yok</li>
+      </ul>
+      <h4>Kısayollar</h4>
+      <p>Kartı seçmek için tıkla ya da <code>1</code>–<code>9</code> tuşlarına bas · <code>R</code> baştan · <code>H</code> ipucu</p>
+    </div>
+  </div>
+</div>
+
+<script src="./engine.js"></script>
+<script src="./levels.js"></script>
+<script src="./app.js"></script>
+<script src="../pwa-init.js" defer></script>
+</body>
+</html>
