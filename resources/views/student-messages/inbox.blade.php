@@ -38,7 +38,7 @@
                     <div class="im-actions"><button type="submit" class="btn">↩️ Cevapla</button></div>
                 </form>
                 @if($isAdmin)
-                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" onsubmit="return confirm('Bu mesajı silmek istediğine emin misin?')">
+                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı silmek istediğine emin misin?">
                         @csrf @method('DELETE')
                         <button type="submit">🗑 Mesajı sil</button>
                     </form>
@@ -54,7 +54,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px">
             <h3 style="margin:0">Cevaplananlar</h3>
             @if($isAdmin && $answered->count())
-                <form method="POST" action="{{ route('staff.messages.clear-answered') }}" class="im-del" onsubmit="return confirm('Cevaplanmış tüm mesajlar gelen kutusundan silinsin mi?')">
+                <form method="POST" action="{{ route('staff.messages.clear-answered') }}" class="im-del" data-confirm="Cevaplanmış tüm mesajlar gelen kutusundan silinsin mi?">
                     @csrf @method('DELETE')
                     <button type="submit">🗑 Cevaplananların hepsini sil</button>
                 </form>
@@ -70,7 +70,7 @@
                 <div class="im-body">{{ $m->body }}</div>
                 <div class="im-reply"><small style="color:#64748b">{{ $m->replier?->name ?? 'Cevap' }} · {{ $m->replied_at?->format('d.m.Y H:i') }}</small><br>{{ $m->reply_body }}</div>
                 @if($isAdmin)
-                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" onsubmit="return confirm('Bu mesajı silmek istediğine emin misin?')">
+                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı silmek istediğine emin misin?">
                         @csrf @method('DELETE')
                         <button type="submit">🗑 Sil</button>
                     </form>
