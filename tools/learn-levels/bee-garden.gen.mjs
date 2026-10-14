@@ -57,10 +57,14 @@ function flexCenters(bees, container, items, CW, CH) {
 }
 // Başlangıçta herhangi bir arı kendi çiçeğinin üstündeyse (iki farklı bahçe boyutunda) seviye reddedilir.
 function startsOnFlower(bees, container, items) {
-  return [[600, 362], [580, 342], [520, 320], [480, 300], [440, 280], [380, 262]].some(([CW, CH]) => {
-    const start = flexCenters(bees, {}, null, CW, CH), target = flexCenters(bees, container, items, CW, CH);
-    return start.some((s, i) => Math.abs(s.x - target[i].x) < BEE * 0.6 && Math.abs(s.y - target[i].y) < BEE * 0.6);
-  });
+  // Oyundaki gerçek bahçe: en çok 640x400 dış ölçü → içerik alanı en çok ~602x362; dar ekranlarda ~340x240'a kadar küçülür.
+  for (let CW = 340; CW <= 604; CW += 10) {
+    for (let CH = 240; CH <= 364; CH += 10) {
+      const start = flexCenters(bees, {}, null, CW, CH), target = flexCenters(bees, container, items, CW, CH);
+      if (start.some((s, i) => Math.abs(s.x - target[i].x) < BEE * 0.6 && Math.abs(s.y - target[i].y) < BEE * 0.6)) return true;
+    }
+  }
+  return false;
 }
 
 const recipes = []; // { cat, feature, bees, fd?, jc?, ai?, items?: n, opt:{jc,ai,fd} }
