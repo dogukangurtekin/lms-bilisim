@@ -9,12 +9,13 @@ class StudentMessage extends Model
 {
     protected $fillable = [
         'student_id', 'student_user_id', 'recipient_type', 'recipient_user_id',
-        'body', 'reply_body', 'replied_by', 'replied_at', 'student_read_at',
+        'body', 'reply_body', 'replied_by', 'replied_at', 'student_read_at', 'staff_deleted_at', 'staff_deleted_by',
     ];
 
     protected $casts = [
         'replied_at' => 'datetime',
         'student_read_at' => 'datetime',
+        'staff_deleted_at' => 'datetime',
     ];
 
     public function student(): BelongsTo
@@ -32,9 +33,10 @@ class StudentMessage extends Model
         return $this->belongsTo(User::class, 'replied_by');
     }
 
-    /** Admin tüm mesajları, öğretmen yalnızca kendisine yazılanları görür. */
+    /** Admin tüm mesajları, öğretmen yalnızca kendisine yazılanları görür. Yönetici tarafından silinenler personel ekranında görünmez. */
     public function scopeVisibleTo($query, User $user)
     {
+        $query->whereNull('staff_deleted_at');
         if ($user->hasRole('admin')) {
             return $query;
         }
@@ -45,6 +47,7 @@ class StudentMessage extends Model
     /** Öğrencinin cevap bekleyen (cevaplanmamış) mesajı var mı? */
     public static function hasPendingFor(int $studentId): bool
     {
-        return static::query()->where('student_id', $studentId)->whereNull('replied_at')->exists();
+        // Yönetici silmişse mesaj bekleyen sayılmaz; öğrenci yeni mesaj yazabilir.
+        return static::query()->where('student_id', $studentId)->whereNull('replied_at')->whereNull('staff_deleted_at')->exists();
     }
 }

@@ -140,4 +140,29 @@ class StudentMessageController extends Controller
 
         return back()->with('ok', 'Cevabın öğrenciye gönderildi.');
     }
+
+    /** Yönetici bir öğrenci mesajını gelen kutusundan kaldırır (öğrencinin kendi geçmişi etkilenmez). */
+    public function staffDestroy(Request $request, StudentMessage $message): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasRole('admin'), 403);
+
+        $message->forceFill(['staff_deleted_at' => now(), 'staff_deleted_by' => $user->id])->save();
+
+        return back()->with('ok', 'Mesaj silindi.');
+    }
+
+    /** Yönetici, cevaplanmış tüm mesajları gelen kutusundan topluca temizler. */
+    public function staffClearAnswered(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->hasRole('admin'), 403);
+
+        $count = StudentMessage::query()
+            ->whereNull('staff_deleted_at')
+            ->whereNotNull('replied_at')
+            ->update(['staff_deleted_at' => now(), 'staff_deleted_by' => $user->id]);
+
+        return back()->with('ok', $count . ' cevaplanmış mesaj silindi.');
+    }
 }
