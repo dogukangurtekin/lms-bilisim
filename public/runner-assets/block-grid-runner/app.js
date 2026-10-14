@@ -1,6 +1,6 @@
 /*
  * Blok Kodlama (v3) — oyun mantığı, sürükle-bırak blok editörü ve platform entegrasyonu.
- * Bağımlılıklar: engine.js (yürütme), levels.js (82 bölüm), render.js (tuval), editor.js (sürükle-bırak blok editörü).
+ * Bağımlılıklar: engine.js (yürütme), levels.js (200 bölüm), render.js (tuval), editor.js (sürükle-bırak blok editörü).
  *
  * Platform sözleşmesi (eski sürümle uyumlu):
  *   URL: ?role=teacher|admin  &from=&to= (veya levelStart/levelEnd)  &assignmentId=  &grant=1

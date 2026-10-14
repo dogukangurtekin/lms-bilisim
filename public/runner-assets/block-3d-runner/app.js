@@ -1,6 +1,6 @@
 /*
  * 3D Blok Kodlama (v2) — oyun mantığı, sürükle-bırak blok editörü ve platform entegrasyonu.
- * Bağımlılıklar: engine.js (yürütme), levels.js (65 seviye), render3d.js (izometrik tuval), editor.js (sürükle-bırak blok editörü).
+ * Bağımlılıklar: engine.js (yürütme), levels.js (200 seviye), render3d.js (izometrik tuval), editor.js (sürükle-bırak blok editörü).
  * engine.js ve editor.js 2B oyunla ortaktır (tools/block-levels/sync-shared.mjs ile eşitlenir).
  *
  * Platform sözleşmesi (eski 3D sürümle uyumlu):
