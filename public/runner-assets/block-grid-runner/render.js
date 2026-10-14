@@ -42,17 +42,18 @@
     function resize() {
       var rect = canvas.getBoundingClientRect();
       var size = Math.max(200, Math.round(rect.width || 480));
+      var hgt = Math.max(160, Math.round(rect.height || size));   // geniş ekranda yükseklik genişlikten küçük olabilir
       dpr = Math.min(2.5, window.devicePixelRatio || 1);
       cssSize = size;
       canvas.width = Math.round(size * dpr);
-      canvas.height = Math.round(size * dpr);
+      canvas.height = Math.round(hgt * dpr);
       layout();
     }
 
     function layout() {
       if (!level) return;
       var n = Math.max(level.w, level.h);
-      cell = (canvas.width) / n;
+      cell = Math.min(canvas.width / level.w, canvas.height / level.h);
       ox = (canvas.width - cell * level.w) / 2;
       oy = (canvas.height - cell * level.h) / 2;
     }
@@ -139,6 +140,29 @@
 
     // ----- çizim -----
     function px(v) { return v * cell; }
+
+    // Geniş ekranda tahtanın yanlarını temaya uygun arka planla doldurur; tahtaya çerçeve ve gölge verir.
+    function drawBackdrop() {
+      var cw = canvas.width, ch = canvas.height;
+      var g = ctx.createLinearGradient(0, 0, 0, ch);
+      g.addColorStop(0, theme.b); g.addColorStop(1, theme.edge);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = theme.glow;
+      for (var i = 0; i < 46; i++) {
+        var sxp = hash(i, 21, 5) * cw, syp = hash(i, 22, 5) * ch, sr = (1 + hash(i, 23, 5) * 2.4) * dpr;
+        ctx.beginPath(); ctx.arc(sxp, syp, sr, 0, TAU); ctx.fill();
+      }
+      var vg = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .35, cw / 2, ch / 2, Math.max(cw, ch) * .75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.32)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, cw, ch);
+      if (level) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18 * dpr; ctx.shadowOffsetY = 4 * dpr;
+        ctx.fillStyle = theme.edge;
+        ctx.fillRect(ox - 4 * dpr, oy - 4 * dpr, cell * level.w + 8 * dpr, cell * level.h + 8 * dpr);
+        ctx.restore();
+      }
+    }
 
     function drawBoard() {
       var w = level.w, h = level.h;
@@ -398,6 +422,7 @@
       if (level) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackdrop();
         drawBoard();
         drawStart();
         var obs = level.obstacles || [];

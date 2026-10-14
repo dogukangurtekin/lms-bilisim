@@ -380,3 +380,12 @@ button { font-family: inherit; cursor: pointer; }
   .workspace-card { min-height: 0; }
   .ed-ws { min-height: 300px; }
 }
+
+/* v7 — büyük ızgaralarda geniş ekran oyun alanı (tahta aynı büyüklükte kalır, yanlar temalı arka planla dolar) */
+.canvas-wrap { transition: aspect-ratio .25s ease; }
+.canvas-wrap[data-shape="wide"] { aspect-ratio: 16 / 10; width: min(100%, calc((100vh - 235px) * 1.6)); }
+.layout:has(.canvas-wrap[data-shape="wide"]) { grid-template-columns: minmax(0, 1.6fr) minmax(380px, 1fr); }
+@media (max-width: 1000px) {
+  .canvas-wrap[data-shape="wide"] { width: 100%; }
+  .layout:has(.canvas-wrap[data-shape="wide"]) { grid-template-columns: 1fr; }
+}
