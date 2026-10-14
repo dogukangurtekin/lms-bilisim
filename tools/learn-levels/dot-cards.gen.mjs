@@ -1,4 +1,4 @@
-// Küçük Nokta — Kod Kartları: 48 seviyelik (Kolay/Orta/Zor/Uzman × 12) seviye seti üretici ve doğrulayıcı.
+// Küçük Nokta — Kod Kartları: 100 seviyelik (Kolay/Orta/Zor/Uzman × 25) seviye seti üretici ve doğrulayıcı.
 // Çalıştır: node tools/learn-levels/dot-cards.gen.mjs  →  public/runner-assets/dot-cards-runner/levels.js
 // Üretim yöntemi (özgün): önce çözüm kartları rastgele üretilip haritada gerçekten çalıştırılır, hedef son konuma konur,
 // sonra yem (decoy) kartlar eklenir. Çözücü her seviyenin çözülebildiğini ve tasarlanan kart sayısından kısa yol olmadığını doğrular.
@@ -59,30 +59,24 @@ function cand(tier, r) {
 }
 const code = (ast) => E.codeLines(JSON.parse(JSON.stringify(ast))).join('\n');
 
-// ---- plan: [kategori, mod, tier, çözüm kartı, yem kartı, boyut, duvar yoğunluğu, çukur yoğunluğu]
+// ---- plan (100 seviye: Kolay/Orta/Zor/Uzman × 25): [kategori, mod, tier, çözüm kartı, yem kartı, boyut, duvar yoğunluğu, çukur yoğunluğu]
 const PLAN = [];
 const add = (cat, mode, tier, k, dec, size, wall, pit) => PLAN.push({ cat, mode, tier, k, dec, size, wall, pit });
-// KOLAY (12)
+const lerp = (a, b, t) => a + (b - a) * t;
+// KOLAY (25): 3 gezinti · 5 doğru-kartı-bul · 17 kart dizisi
 add('easy', 'roam', 0, 0, 0, 5, 0.08, 0); add('easy', 'roam', 0, 0, 0, 5, 0.14, 0.04); add('easy', 'roam', 0, 0, 0, 6, 0.14, 0.06);
-add('easy', 'find', 1, 1, 3, 5, 0.08, 0); add('easy', 'find', 1, 1, 4, 6, 0.1, 0.03); add('easy', 'find', 1, 1, 4, 6, 0.12, 0.04);
-add('easy', 'seq', 1, 2, 1, 5, 0.08, 0); add('easy', 'seq', 1, 2, 2, 6, 0.1, 0.03); add('easy', 'seq', 1, 3, 1, 6, 0.1, 0.03);
-add('easy', 'seq', 1, 3, 2, 6, 0.12, 0.04); add('easy', 'seq', 1, 3, 2, 7, 0.12, 0.05); add('easy', 'seq', 1, 4, 2, 7, 0.12, 0.05);
-// ORTA (12)
-add('medium', 'find', 2, 1, 4, 6, 0.1, 0.03); add('medium', 'find', 2, 1, 5, 7, 0.12, 0.04);
-add('medium', 'seq', 2, 2, 1, 6, 0.1, 0.03); add('medium', 'seq', 2, 2, 2, 6, 0.12, 0.04); add('medium', 'seq', 2, 3, 1, 7, 0.12, 0.04);
-add('medium', 'seq', 2, 3, 2, 7, 0.14, 0.05); add('medium', 'seq', 2, 3, 3, 7, 0.14, 0.06); add('medium', 'seq', 2, 4, 2, 7, 0.14, 0.06);
-add('medium', 'seq', 2, 4, 2, 8, 0.15, 0.06); add('medium', 'seq', 2, 4, 3, 8, 0.15, 0.06); add('medium', 'seq', 2, 4, 3, 8, 0.16, 0.07); add('medium', 'seq', 2, 5, 2, 8, 0.16, 0.07);
-// ZOR (12)
-add('hard', 'find', 3, 1, 4, 7, 0.14, 0.05); add('hard', 'find', 3, 1, 5, 8, 0.16, 0.06);
-add('hard', 'seq', 3, 2, 2, 7, 0.14, 0.05); add('hard', 'seq', 3, 2, 3, 7, 0.16, 0.06); add('hard', 'seq', 3, 3, 2, 8, 0.16, 0.06);
-add('hard', 'seq', 3, 3, 3, 8, 0.17, 0.07); add('hard', 'seq', 3, 3, 3, 8, 0.18, 0.08); add('hard', 'seq', 3, 4, 2, 8, 0.18, 0.08);
-add('hard', 'seq', 3, 4, 3, 9, 0.18, 0.08); add('hard', 'seq', 3, 4, 3, 9, 0.19, 0.08); add('hard', 'seq', 3, 4, 4, 9, 0.2, 0.09); add('hard', 'seq', 3, 5, 3, 9, 0.2, 0.09);
-// UZMAN (12)
-add('expert', 'find', 4, 1, 5, 8, 0.16, 0.06); add('expert', 'find', 4, 1, 6, 9, 0.18, 0.07);
-add('expert', 'seq', 4, 3, 2, 8, 0.17, 0.07); add('expert', 'seq', 4, 3, 3, 9, 0.18, 0.08); add('expert', 'seq', 4, 3, 3, 9, 0.2, 0.09);
-add('expert', 'seq', 4, 4, 3, 9, 0.2, 0.09); add('expert', 'seq', 4, 4, 3, 9, 0.2, 0.1); add('expert', 'seq', 4, 4, 4, 9, 0.21, 0.1);
-add('expert', 'seq', 4, 5, 3, 9, 0.21, 0.1); add('expert', 'seq', 4, 5, 3, 10, 0.22, 0.1); add('expert', 'seq', 4, 5, 4, 10, 0.22, 0.11); add('expert', 'seq', 4, 6, 3, 10, 0.22, 0.11);
-if (PLAN.length !== 48) throw new Error('Plan 48 olmalı: ' + PLAN.length);
+[[5, 3, 0.08, 0], [5, 4, 0.1, 0.03], [6, 4, 0.1, 0.03], [6, 4, 0.12, 0.04], [6, 5, 0.12, 0.04]].forEach(([s, d, w, p]) => add('easy', 'find', 1, 1, d, s, w, p));
+for (let i = 0; i < 17; i++) { const t = i / 16; add('easy', 'seq', 1, 2 + Math.floor(t * 2.99), 1 + Math.floor(t * 2.2), 5 + Math.floor(t * 2.99), lerp(0.08, 0.13, t), lerp(0, 0.05, t)); }
+// ORTA (25): 3 doğru-kartı-bul · 22 kart dizisi
+[[6, 4, 0.1, 0.03], [6, 5, 0.11, 0.03], [7, 5, 0.12, 0.04]].forEach(([s, d, w, p]) => add('medium', 'find', 2, 1, d, s, w, p));
+for (let i = 0; i < 22; i++) { const t = i / 21; add('medium', 'seq', 2, 2 + Math.floor(t * 3.99), 1 + Math.floor(t * 2.99), 6 + Math.floor(t * 2.99), lerp(0.1, 0.16, t), lerp(0.03, 0.07, t)); }
+// ZOR (25)
+[[7, 4, 0.14, 0.05], [7, 5, 0.15, 0.05], [8, 5, 0.16, 0.06]].forEach(([s, d, w, p]) => add('hard', 'find', 3, 1, d, s, w, p));
+for (let i = 0; i < 22; i++) { const t = i / 21; add('hard', 'seq', 3, 2 + Math.floor(t * 3.99), 2 + Math.floor(t * 2.2), 7 + Math.floor(t * 2.99), lerp(0.14, 0.2, t), lerp(0.05, 0.09, t)); }
+// UZMAN (25)
+[[8, 5, 0.16, 0.06], [9, 6, 0.18, 0.07], [9, 6, 0.19, 0.08]].forEach(([s, d, w, p]) => add('expert', 'find', 4, 1, d, s, w, p));
+for (let i = 0; i < 22; i++) { const t = i / 21; add('expert', 'seq', 4, 3 + Math.floor(t * 3.99), 2 + Math.floor(t * 2.99), 8 + Math.floor(t * 2.99), lerp(0.17, 0.22, t), lerp(0.07, 0.11, t)); }
+if (PLAN.length !== 100) throw new Error('Plan 100 olmalı: ' + PLAN.length);
 
 const TIPS = {
   roam: 'Ok tuşlarıyla (ya da ekrandaki yön düğmeleriyle) noktayı turuncu hedefe götür. Duvarlardan geçemezsin, çukurlara düşersen başa dönersin.',
@@ -97,7 +91,7 @@ const CONCEPT_TIP = {
 };
 
 function buildLevel(spec, idx, seed) {
-  for (let attempt = 0; attempt < 800; attempt++) {
+  for (let attempt = 0; attempt < 1500; attempt++) {
     const r = makeRng(seed * 7919 + attempt * 104729 + 17);
     const N = spec.size;
     const grid = Array.from({ length: N }, () => Array(N).fill('.'));
@@ -159,6 +153,7 @@ function buildLevel(spec, idx, seed) {
       if (sols.some((s) => s.length < spec.k)) continue;                         // tasarlanandan kısa yol yok
       // tek kartla hedefe varılmasın
       if (sols.some((s) => s.length === 1)) continue;
+      if (sols.length > ({ easy: 12, medium: 20, hard: 30, expert: 60 })[spec.cat]) continue;   // çok yollu (fazla kolay) seviyeleri ele
     }
     sols.sort((a, b) => a.length - b.length);
     return {
@@ -198,7 +193,7 @@ for (const l of levels) {
   if (!s.length) throw new Error('Çözümsüz: ' + l.id);
   if (l.mode === 'find' && !(s.length === 1 && s[0].length === 1)) throw new Error('Tek kart kuralı bozuk: ' + l.id);
 }
-const js = `/* Küçük Nokta — Kod Kartları: 48 seviye (otomatik üretildi: tools/learn-levels/dot-cards.gen.mjs, elle düzenlemeyin). */\nwindow.DOT_CARDS_LEVELS = ${JSON.stringify(levels)};\n`;
+const js = `/* Küçük Nokta — Kod Kartları: 100 seviye (otomatik üretildi: tools/learn-levels/dot-cards.gen.mjs, elle düzenlemeyin). */\nwindow.DOT_CARDS_LEVELS = ${JSON.stringify(levels)};\n`;
 fs.writeFileSync(OUT, js);
 console.log(levels.map((l) => `${String(l.id).padStart(2)} ${l.title.padEnd(28)} ${l.w}x${l.h} kart=${String(l.cards.length).padStart(2)} çözüm=${(l.sol || []).join('→') || '-'} ${l.wins ? '(' + l.wins + ' yol)' : ''}`).join('\n'));
-console.log(`\n48 seviye -> ${path.relative(process.cwd(), OUT)} (${(js.length / 1024).toFixed(1)} KB)`);
+console.log(`\n${levels.length} seviye -> ${path.relative(process.cwd(), OUT)} (${(js.length / 1024).toFixed(1)} KB)`);
