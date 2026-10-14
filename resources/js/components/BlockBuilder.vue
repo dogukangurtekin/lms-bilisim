@@ -19,7 +19,7 @@
 
         <div class="top-actions">
           <button class="tbtn tbtn-save" :disabled="loading" @click="saveDesign">💾 Kaydet</button>
-          <button class="tbtn tbtn-load" :disabled="loading" @click="loadLatest">📂 Yükle</button>
+          <button class="tbtn tbtn-load" :disabled="loading" @click="openWorlds">📂 Yükle</button>
           <button class="tbtn tbtn-exit" @click="emitClose">{{ standalone ? 'Panele Dön' : 'Kapat' }}</button>
         </div>
       </header>
@@ -51,7 +51,7 @@
         </section>
 
         <section class="group group-scroll">
-          <h4>Doku</h4>
+          <h4>Desen</h4>
           <div v-for="group in textureGroups" :key="group.label" class="tex-group">
             <div class="tex-label">{{ group.label }}</div>
             <div class="tex-grid">
@@ -82,7 +82,37 @@
         <span class="chip">📍 {{ hoverLabel }}</span>
         <span class="chip">🧱 {{ blocks.length }} blok</span>
         <span class="chip chip-status">{{ statusText }}</span>
+        <span v-if="dirty && blocks.length" class="chip chip-dirty">● Kaydedilmedi</span>
         <span class="chip chip-tip">Sol tık: {{ mode === 'add' ? 'ekle' : 'sil' }} · Sürükle: döndür · Sağ tık: kaydır · Tekerlek: yakınlaş</span>
+      </div>
+    </div>
+
+    <!-- dünyalarım penceresi -->
+    <div v-if="worldsOpen" class="worlds-modal" role="dialog" aria-modal="true" aria-label="Dünyalarım">
+      <div class="worlds-backdrop" @click="closeWorlds"></div>
+      <div class="worlds-card">
+        <div class="worlds-head">
+          <h3>📂 Dünyalarım</h3>
+          <button class="worlds-x" aria-label="Kapat" @click="closeWorlds">✕</button>
+        </div>
+        <div v-if="worldsLoading" class="worlds-empty">Yükleniyor…</div>
+        <div v-else-if="!worlds.length" class="worlds-empty">
+          Henüz kayıtlı dünyan yok. Bir şeyler inşa edip <b>Kaydet</b>’e bas, burada görünsün.
+        </div>
+        <ul v-else class="worlds-list">
+          <li v-for="w in worlds" :key="w.id" class="world" :class="{ current: w.id === designId }">
+            <div class="world-info">
+              <b>{{ w.name }}</b>
+              <small>{{ w.blockCount }} blok · {{ formatDate(w.updatedAt) }}</small>
+            </div>
+            <button class="wbtn wbtn-open" :disabled="loading" @click="loadWorld(w.id)">Aç</button>
+            <button class="wbtn wbtn-del" title="Sil" @click="deleteWorld(w)">🗑</button>
+          </li>
+        </ul>
+        <div class="worlds-foot">
+          <small>{{ worlds.length }} / {{ worldsMax }} dünya</small>
+          <button class="wbtn wbtn-new" @click="newWorld">＋ Yeni boş dünya</button>
+        </div>
       </div>
     </div>
   </div>
@@ -111,6 +141,12 @@ const designName = ref('Tasarim');
 const designId = ref(null);
 const loading = ref(false);
 const statusText = ref('Hazır');
+const dirty = ref(false);
+const worldsOpen = ref(false);
+const worlds = ref([]);
+const worldsMax = ref(30);
+const worldsLoading = ref(false);
+let suppressDirty = false;
 const textureGroups = [
   {
     label: 'Düz Renk',
@@ -160,28 +196,28 @@ const colorPresets = [
   '#facc15', '#22c55e', '#14b8a6', '#ffffff', '#94a3b8', '#1e293b',
 ];
 
-// Doku seçici kartlarındaki küçük önizlemeler (yaklaşık CSS karşılıkları)
-const texturePreview = {
-  flat_matte: 'linear-gradient(145deg, #cbd5e1, #94a3b8)',
-  flat_soft: 'linear-gradient(145deg, #f1f5f9, #cbd5e1)',
-  flat_gloss: 'linear-gradient(145deg, #ffffff 10%, #93c5fd 45%, #3b82f6)',
-  plain: 'linear-gradient(145deg, #e2e8f0, #cbd5e1)',
-  wood_oak: 'repeating-linear-gradient(90deg, #c08a4a 0 6px, #a9733a 6px 9px)',
-  wood_walnut: 'repeating-linear-gradient(90deg, #6b4423 0 6px, #55341a 6px 9px)',
-  wood_pine: 'repeating-linear-gradient(90deg, #e3b97a 0 6px, #cfa062 6px 9px)',
-  concrete: 'radial-gradient(circle at 30% 30%, #b6bcc6 0 2px, transparent 3px) 0 0 / 9px 9px, #9ca3af',
-  concrete_dark: 'radial-gradient(circle at 30% 30%, #6b7280 0 2px, transparent 3px) 0 0 / 9px 9px, #4b5563',
-  concrete_light: 'radial-gradient(circle at 30% 30%, #e5e7eb 0 2px, transparent 3px) 0 0 / 9px 9px, #d1d5db',
-  sea_shallow: 'repeating-linear-gradient(160deg, #67e8f9 0 5px, #22d3ee 5px 10px)',
-  sea_deep: 'repeating-linear-gradient(160deg, #1d4ed8 0 5px, #1e3a8a 5px 10px)',
-  sea_foam: 'repeating-linear-gradient(160deg, #e0f7ff 0 5px, #7dd3fc 5px 10px)',
-  grass: 'repeating-linear-gradient(100deg, #4ade80 0 3px, #22c55e 3px 6px)',
-  grass_fresh: 'repeating-linear-gradient(100deg, #a3e635 0 3px, #65a30d 3px 6px)',
-  grass_dark: 'repeating-linear-gradient(100deg, #15803d 0 3px, #14532d 3px 6px)',
+// Doku kartları: seçili rengin üzerine nötr desen (gerçek bloklardaki gibi renk aynen görünür)
+const texturePattern = {
+  flat_matte: 'none',
+  flat_soft: 'linear-gradient(145deg, rgba(255,255,255,.0), rgba(0,0,0,.07))',
+  flat_gloss: 'linear-gradient(145deg, rgba(255,255,255,.55), rgba(255,255,255,0) 55%)',
+  plain: 'none',
+  wood_oak: 'repeating-linear-gradient(0deg, rgba(0,0,0,.2) 0 1.5px, transparent 1.5px 6px)',
+  wood_walnut: 'repeating-linear-gradient(0deg, rgba(0,0,0,.26) 0 1.5px, transparent 1.5px 5px)',
+  wood_pine: 'repeating-linear-gradient(0deg, rgba(0,0,0,.15) 0 1.5px, transparent 1.5px 7px)',
+  concrete: 'radial-gradient(rgba(0,0,0,.2) 1px, transparent 1.6px) 0 0 / 6px 6px',
+  concrete_dark: 'radial-gradient(rgba(0,0,0,.3) 1px, transparent 1.6px) 0 0 / 5px 5px',
+  concrete_light: 'radial-gradient(rgba(0,0,0,.13) 1px, transparent 1.6px) 0 0 / 7px 7px',
+  sea_shallow: 'repeating-linear-gradient(170deg, rgba(0,0,0,.14) 0 1.5px, transparent 1.5px 6px)',
+  sea_deep: 'repeating-linear-gradient(170deg, rgba(0,0,0,.24) 0 1.5px, transparent 1.5px 6px)',
+  sea_foam: 'radial-gradient(circle, transparent 2px, rgba(0,0,0,.16) 2.4px, transparent 3.2px) 0 0 / 8px 8px',
+  grass: 'repeating-linear-gradient(100deg, rgba(0,0,0,.2) 0 1px, transparent 1px 4px)',
+  grass_fresh: 'repeating-linear-gradient(100deg, rgba(0,0,0,.14) 0 1px, transparent 1px 4px)',
+  grass_dark: 'repeating-linear-gradient(100deg, rgba(0,0,0,.3) 0 1px, transparent 1px 3.5px)',
 };
 
 function texChipStyle(value) {
-  return { background: texturePreview[value] || '#cbd5e1' };
+  return { backgroundColor: activeColor.value, backgroundImage: texturePattern[value] || 'none' };
 }
 
 function pickColor(c) {
@@ -204,49 +240,31 @@ function emitClose() {
   emit('close');
 }
 
-function getAuthHeaders() {
-  const raw = localStorage.getItem('mysql_auth_user');
-  const parsed = raw ? JSON.parse(raw) : null;
-  const uid = String(parsed?.uid || parsed?.id || '').trim();
-  const token = String(parsed?.token || '').trim();
-  if (!uid || !token) {
-    throw new Error('Önce giriş yapmalısınız.');
-  }
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Client-Uid': uid,
-      'X-Client-Token': token,
-      Authorization: `Bearer ${token}`,
-    },
-  };
+function designsUrl(path = '') {
+  const base = String(document.querySelector('meta[name="app-base-url"]')?.content || '').trim().replace(/\/+$/, '');
+  return `${base}/block-builder-studio/designs${path}`;
 }
 
-function getApiBase() {
-  const metaBase = String(document.querySelector('meta[name="app-base-url"]')?.content || '').trim().replace(/\/+$/, '');
-  if (metaBase) return `${metaBase}/api/client`;
-
-  const hasIndexPhp = /\/index\.php(\/|$)/i.test(window.location.pathname);
-  const root = hasIndexPhp ? `${window.location.origin}/index.php` : window.location.origin;
-  return `${root}/api/client`;
-}
-
-function apiUrl(path) {
-  return `${getApiBase().replace(/\/+$/, '')}/block-builder${path}`;
-}
-
-async function apiRequest(path, options = {}) {
-  const auth = getAuthHeaders();
-  const response = await fetch(apiUrl(path), {
+async function apiRequest(path = '', options = {}) {
+  const csrf = String(document.querySelector('meta[name="csrf-token"]')?.content || '');
+  const response = await fetch(designsUrl(path), {
+    credentials: 'same-origin',
     ...options,
     headers: {
+      Accept: 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      'X-CSRF-TOKEN': csrf,
+      'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers || {}),
-      ...auth.headers,
     },
   });
   const data = await response.json().catch(() => ({}));
+  if (response.status === 401 || response.status === 419) {
+    throw new Error('Oturumun süresi dolmuş. Sayfayı yenileyip tekrar giriş yap.');
+  }
   if (!response.ok) {
-    throw new Error(String(data?.message || `HTTP ${response.status}`));
+    const firstError = data?.errors ? Object.values(data.errors).flat()[0] : '';
+    throw new Error(String(firstError || data?.message || `HTTP ${response.status}`));
   }
   return data;
 }
@@ -260,6 +278,7 @@ function buildScene() {
     },
     onBlocksChanged: (list) => {
       blocks.value = list;
+      if (!suppressDirty) dirty.value = true;
       emit('changed', list);
     },
   });
@@ -298,22 +317,35 @@ function resetCamera() {
   scene.value?.resetCamera();
 }
 
+function applyDesign(design) {
+  suppressDirty = true;
+  try {
+    designId.value = Number(design?.id || 0) || null;
+    designName.value = String(design?.name || 'Dünyam');
+    scene.value?.setBlocks(Array.isArray(design?.blocks) ? design.blocks : []);
+  } finally {
+    suppressDirty = false;
+  }
+  dirty.value = false;
+}
+
 async function saveDesign() {
+  if (loading.value) return;
   try {
     loading.value = true;
     statusText.value = 'Kaydediliyor...';
-    const payload = {
-      id: designId.value,
-      name: designName.value,
-      blocks: scene.value?.getBlocks() || [],
-    };
-    const res = await apiRequest('/designs', {
+    const res = await apiRequest('', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        id: designId.value,
+        name: designName.value,
+        blocks: scene.value?.getBlocks() || [],
+      }),
     });
     designId.value = Number(res?.design?.id || 0) || null;
     designName.value = String(res?.design?.name || designName.value);
-    statusText.value = 'Kaydedildi';
+    dirty.value = false;
+    statusText.value = 'Kaydedildi ✓ (' + (res?.design?.blocks?.length ?? blocks.value.length) + ' blok)';
     emit('saved', res?.design || null);
   } catch (error) {
     statusText.value = `Hata: ${error.message}`;
@@ -326,23 +358,88 @@ async function loadLatest() {
   try {
     loading.value = true;
     statusText.value = 'Yükleniyor...';
-    const res = await apiRequest('/designs/latest', { method: 'GET' });
+    const res = await apiRequest('/latest', { method: 'GET' });
     if (!res?.design) {
-      statusText.value = 'Kayıt bulunamadı';
-      scene.value?.setBlocks([]);
-      designId.value = null;
+      statusText.value = 'Henüz kayıtlı dünyan yok';
       return;
     }
-    designId.value = Number(res.design.id || 0) || null;
-    designName.value = String(res.design.name || 'Tasarim');
-    scene.value?.setBlocks(Array.isArray(res.design.blocks) ? res.design.blocks : []);
-    statusText.value = 'Yüklendi';
+    applyDesign(res.design);
+    statusText.value = 'Son dünyan yüklendi ✓';
     emit('loaded', res.design);
   } catch (error) {
     statusText.value = `Hata: ${error.message}`;
   } finally {
     loading.value = false;
   }
+}
+
+async function openWorlds() {
+  worldsOpen.value = true;
+  worldsLoading.value = true;
+  try {
+    const res = await apiRequest('', { method: 'GET' });
+    worlds.value = Array.isArray(res?.designs) ? res.designs : [];
+    worldsMax.value = Number(res?.max || 30);
+  } catch (error) {
+    worlds.value = [];
+    statusText.value = `Hata: ${error.message}`;
+  } finally {
+    worldsLoading.value = false;
+  }
+}
+
+function closeWorlds() {
+  worldsOpen.value = false;
+}
+
+async function loadWorld(id) {
+  if (dirty.value && blocks.value.length && !window.confirm('Kaydedilmemiş değişikliklerin var. Yine de başka bir dünyayı açayım mı?')) return;
+  try {
+    loading.value = true;
+    statusText.value = 'Yükleniyor...';
+    const res = await apiRequest(`/${id}`, { method: 'GET' });
+    applyDesign(res.design);
+    statusText.value = `"${designName.value}" yüklendi ✓`;
+    worldsOpen.value = false;
+    emit('loaded', res.design);
+  } catch (error) {
+    statusText.value = `Hata: ${error.message}`;
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteWorld(world) {
+  if (!window.confirm(`"${world.name}" dünyasını silmek istediğine emin misin?`)) return;
+  try {
+    await apiRequest(`/${world.id}`, { method: 'DELETE' });
+    worlds.value = worlds.value.filter((w) => w.id !== world.id);
+    if (designId.value === world.id) designId.value = null;
+    statusText.value = 'Dünya silindi';
+  } catch (error) {
+    statusText.value = `Hata: ${error.message}`;
+  }
+}
+
+function newWorld() {
+  if (dirty.value && blocks.value.length && !window.confirm('Kaydedilmemiş değişikliklerin var. Yeni boş dünya açayım mı?')) return;
+  suppressDirty = true;
+  try {
+    scene.value?.setBlocks([]);
+    designId.value = null;
+    designName.value = 'Yeni dünya';
+  } finally {
+    suppressDirty = false;
+  }
+  dirty.value = false;
+  worldsOpen.value = false;
+  statusText.value = 'Yeni boş dünya';
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 watch(
@@ -486,6 +583,36 @@ onBeforeUnmount(() => {
 }
 .chip-status { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff; border-color: transparent; }
 .chip-tip { color: var(--soft); font-weight: 700; }
+.chip-dirty { background: #fff7ed; color: #b45309; border-color: #fdba74; }
+
+/* ---------- dünyalarım penceresi ---------- */
+.worlds-modal { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; }
+.worlds-backdrop { position: absolute; inset: 0; background: rgba(8, 18, 44, .6); backdrop-filter: blur(4px); }
+.worlds-card {
+  position: relative; width: min(520px, 100%); max-height: 84vh; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 26px;
+  background: linear-gradient(170deg, #ffffff, #f1f6ff); color: #0b2447; border: 1px solid #d3e1fb; box-shadow: 0 30px 70px rgba(0, 0, 0, .4);
+}
+.is-dark .worlds-card { background: linear-gradient(170deg, #0f2150, #0b1a3d); color: #e6eeff; border-color: rgba(255, 255, 255, .14); }
+.worlds-head { display: flex; align-items: center; justify-content: space-between; }
+.worlds-head h3 { margin: 0; font-size: 20px; font-weight: 900; }
+.worlds-x { width: 36px; height: 36px; border-radius: 12px; border: 0; background: rgba(120, 150, 210, .2); color: inherit; font-size: 16px; font-weight: 900; cursor: pointer; }
+.worlds-empty { padding: 26px 12px; text-align: center; color: #5b7096; font-weight: 700; line-height: 1.55; }
+.worlds-list { list-style: none; margin: 0; padding: 0 4px 0 0; display: grid; gap: 8px; overflow-y: auto; scrollbar-width: thin; }
+.world { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 16px; border: 2px solid #d3e1fb; background: #fff; }
+.is-dark .world { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .12); }
+.world.current { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .2); }
+.world-info { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.world-info b { font-size: 14.5px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-info small { color: #5b7096; font-weight: 700; font-size: 12px; }
+.wbtn { height: 36px; padding: 0 14px; border: 0; border-radius: 12px; color: #fff; font: inherit; font-weight: 900; font-size: 13px; cursor: pointer; box-shadow: 0 3px 0 rgba(0, 0, 0, .25); transition: transform .1s, filter .1s; }
+.wbtn:hover:not(:disabled) { filter: brightness(1.08); }
+.wbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+.wbtn:disabled { opacity: .5; cursor: not-allowed; }
+.wbtn-open { background: linear-gradient(180deg, #22d398, #16a34a); }
+.wbtn-del { background: linear-gradient(145deg, #f87171, #dc2626); padding: 0 11px; }
+.wbtn-new { background: linear-gradient(145deg, #4cc3ee, #1d8fd0); }
+.worlds-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.worlds-foot small { color: #5b7096; font-weight: 800; }
 
 @media (max-width: 860px) {
   .brand-text small, .chip-tip { display: none; }

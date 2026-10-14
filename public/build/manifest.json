@@ -26,12 +26,12 @@
     ]
   },
   "resources/js/block-builder-page.js": {
-    "file": "assets/block-builder-page-D_Kzh3Cv.js",
+    "file": "assets/block-builder-page-DaQvb7Kh.js",
     "name": "block-builder-page",
     "src": "resources/js/block-builder-page.js",
     "isEntry": true,
     "css": [
-      "assets/block-builder-page-B8516AGH.css"
+      "assets/block-builder-page-BtBVErUF.css"
     ]
   },
   "resources/js/flowchart-editor-entry.js": {

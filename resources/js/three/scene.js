@@ -9,6 +9,8 @@ function toWorldCellCenter(v) {
   return Number(v) + 0.5;
 }
 
+// Desenler NÖTR (beyaz tabanlı) üretilir: seçilen renk malzemeye çarpılarak doğrudan görünür,
+// desen yalnızca koyu/açık ince detay ekler. (Eskiden desenlerin kendi renkleri vardı ve seçilen rengi bulanıklaştırıyordu.)
 function makePatternTexture(type = 'plain') {
   const size = 64;
   const canvas = document.createElement('canvas');
@@ -17,147 +19,72 @@ function makePatternTexture(type = 'plain') {
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  if (type === 'wood_oak') {
-    ctx.fillStyle = '#8b5a2b';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 8; i += 1) {
-      ctx.strokeStyle = `rgba(60,30,10,${0.12 + (i % 3) * 0.08})`;
-      ctx.lineWidth = 2;
-      const y = (i / 8) * size;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, size, size);
+
+  const grain = (lines, dark, width, wobble) => {
+    for (let i = 0; i < lines; i += 1) {
+      ctx.strokeStyle = `rgba(0,0,0,${dark * (0.55 + (i % 3) * 0.25)})`;
+      ctx.lineWidth = width;
+      const y = ((i + 0.5) / lines) * size;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.bezierCurveTo(size * 0.3, y + 2, size * 0.7, y - 2, size, y + 1);
+      ctx.bezierCurveTo(size * 0.3, y + wobble, size * 0.7, y - wobble, size, y + wobble * 0.5);
       ctx.stroke();
     }
-  } else if (type === 'wood_walnut') {
-    ctx.fillStyle = '#5b3a29';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 10; i += 1) {
-      ctx.strokeStyle = `rgba(30,18,12,${0.14 + (i % 3) * 0.1})`;
-      ctx.lineWidth = 2;
-      const y = (i / 10) * size;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.bezierCurveTo(size * 0.2, y - 2, size * 0.8, y + 2, size, y);
-      ctx.stroke();
-    }
-  } else if (type === 'wood_pine') {
-    ctx.fillStyle = '#c9924e';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 9; i += 1) {
-      ctx.strokeStyle = `rgba(120,70,30,${0.11 + (i % 2) * 0.08})`;
-      ctx.lineWidth = 1.8;
-      const y = (i / 9) * size;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.bezierCurveTo(size * 0.35, y + 1, size * 0.65, y - 1, size, y + 1);
-      ctx.stroke();
-    }
-  } else if (type === 'concrete') {
-    ctx.fillStyle = '#7b8794';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 120; i += 1) {
-      const s = 1 + Math.random() * 3;
-      ctx.fillStyle = `rgba(230,235,240,${0.08 + Math.random() * 0.2})`;
+  };
+  const specks = (count, maxSize, dark) => {
+    for (let i = 0; i < count; i += 1) {
+      const s = 1 + Math.random() * maxSize;
+      ctx.fillStyle = `rgba(0,0,0,${dark * (0.4 + Math.random() * 0.6)})`;
       ctx.fillRect(Math.random() * size, Math.random() * size, s, s);
     }
-  } else if (type === 'concrete_dark') {
-    ctx.fillStyle = '#4b5563';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 140; i += 1) {
-      const s = 1 + Math.random() * 2.5;
-      ctx.fillStyle = `rgba(220,225,230,${0.06 + Math.random() * 0.14})`;
-      ctx.fillRect(Math.random() * size, Math.random() * size, s, s);
-    }
-  } else if (type === 'concrete_light') {
-    ctx.fillStyle = '#cfd6de';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 130; i += 1) {
-      const s = 1 + Math.random() * 2.2;
-      ctx.fillStyle = `rgba(120,130,145,${0.05 + Math.random() * 0.12})`;
-      ctx.fillRect(Math.random() * size, Math.random() * size, s, s);
-    }
-  } else if (type === 'sea_shallow') {
-    const grad = ctx.createLinearGradient(0, 0, size, size);
-    grad.addColorStop(0, '#2dd4bf');
-    grad.addColorStop(1, '#0ea5e9');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 8; i += 1) {
-      ctx.strokeStyle = `rgba(255,255,255,${0.09 + i * 0.01})`;
-      ctx.lineWidth = 1.5;
-      const y = (i / 8) * size;
+  };
+  const waves = (lines, dark, width, amp) => {
+    for (let i = 0; i < lines; i += 1) {
+      ctx.strokeStyle = `rgba(0,0,0,${dark})`;
+      ctx.lineWidth = width;
+      const y = ((i + 0.5) / lines) * size;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.bezierCurveTo(size * 0.2, y + 2, size * 0.8, y - 2, size, y + 1);
+      ctx.bezierCurveTo(size * 0.25, y - amp, size * 0.75, y + amp, size, y);
       ctx.stroke();
     }
-  } else if (type === 'sea_deep') {
-    const grad = ctx.createLinearGradient(0, 0, size, size);
-    grad.addColorStop(0, '#1d4ed8');
-    grad.addColorStop(1, '#0f172a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 9; i += 1) {
-      ctx.strokeStyle = `rgba(148,197,255,${0.08 + i * 0.008})`;
+  };
+  const blades = (count, dark) => {
+    for (let i = 0; i < count; i += 1) {
+      ctx.fillStyle = `rgba(0,0,0,${dark * (0.5 + Math.random() * 0.5)})`;
+      ctx.fillRect(Math.random() * size, Math.random() * size, 1.2, 2 + Math.random() * 3.5);
+    }
+  };
+
+  if (type === 'wood_oak') grain(8, 0.17, 2, 2);
+  else if (type === 'wood_walnut') grain(10, 0.22, 2, 2);
+  else if (type === 'wood_pine') grain(7, 0.13, 1.8, 1.5);
+  else if (type === 'concrete') specks(110, 3, 0.13);
+  else if (type === 'concrete_dark') specks(150, 2.6, 0.2);
+  else if (type === 'concrete_light') specks(90, 2.2, 0.08);
+  else if (type === 'sea_shallow') waves(8, 0.1, 1.6, 2);
+  else if (type === 'sea_deep') waves(9, 0.16, 1.4, 2.4);
+  else if (type === 'sea_foam') {
+    for (let i = 0; i < 70; i += 1) {
+      ctx.strokeStyle = `rgba(0,0,0,${0.06 + Math.random() * 0.08})`;
       ctx.lineWidth = 1.2;
-      const y = (i / 9) * size;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.bezierCurveTo(size * 0.25, y - 2, size * 0.75, y + 2, size, y);
+      ctx.arc(Math.random() * size, Math.random() * size, 1 + Math.random() * 3, 0, Math.PI * 2);
       ctx.stroke();
     }
-  } else if (type === 'sea_foam') {
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 100; i += 1) {
-      const r = Math.random() * 2.8;
-      ctx.fillStyle = `rgba(226,248,255,${0.14 + Math.random() * 0.28})`;
-      ctx.beginPath();
-      ctx.arc(Math.random() * size, Math.random() * size, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (type === 'grass') {
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 180; i += 1) {
-      ctx.fillStyle = `rgba(10,110,40,${0.08 + Math.random() * 0.2})`;
-      ctx.fillRect(Math.random() * size, Math.random() * size, 1, 2 + Math.random() * 3);
-    }
-  } else if (type === 'grass_fresh') {
-    ctx.fillStyle = '#84cc16';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 170; i += 1) {
-      ctx.fillStyle = `rgba(50,130,20,${0.08 + Math.random() * 0.2})`;
-      ctx.fillRect(Math.random() * size, Math.random() * size, 1.2, 2 + Math.random() * 3);
-    }
-  } else if (type === 'grass_dark') {
-    ctx.fillStyle = '#15803d';
-    ctx.fillRect(0, 0, size, size);
-    for (let i = 0; i < 190; i += 1) {
-      ctx.fillStyle = `rgba(5,60,20,${0.08 + Math.random() * 0.22})`;
-      ctx.fillRect(Math.random() * size, Math.random() * size, 1, 2 + Math.random() * 3);
-    }
-  } else if (type === 'flat_matte') {
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, 0, size, size);
-  } else if (type === 'flat_soft') {
+  } else if (type === 'grass') blades(150, 0.16);
+  else if (type === 'grass_fresh') blades(130, 0.12);
+  else if (type === 'grass_dark') blades(190, 0.22);
+  else if (type === 'flat_soft') {
     const grad = ctx.createLinearGradient(0, 0, size, size);
     grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(1, '#e2e8f0');
+    grad.addColorStop(1, '#f1f1f1');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-  } else if (type === 'flat_gloss') {
-    const grad = ctx.createLinearGradient(0, 0, size, size);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.45, '#f1f5f9');
-    grad.addColorStop(1, '#cbd5e1');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, size, size);
-  } else {
-    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, size, size);
   }
+  // flat_matte / flat_gloss / plain: düz beyaz = seçilen renk aynen görünür
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -166,6 +93,15 @@ function makePatternTexture(type = 'plain') {
   texture.repeat.set(1, 1);
   texture.needsUpdate = true;
   return texture;
+}
+
+// Doku türüne göre yüzey parlaklığı (renk her durumda aynen kalır)
+function surfaceFor(textureType) {
+  if (textureType === 'flat_gloss') return { roughness: 0.22, metalness: 0.12 };
+  if (textureType === 'flat_matte') return { roughness: 1, metalness: 0 };
+  if (textureType === 'flat_soft') return { roughness: 0.7, metalness: 0 };
+  if (textureType.startsWith('sea_')) return { roughness: 0.35, metalness: 0.05 };
+  return { roughness: 0.82, metalness: 0.02 };
 }
 
 export class BlockScene {
@@ -212,15 +148,15 @@ export class BlockScene {
     this.groundPlane.receiveShadow = true;
     this.scene.add(this.groundPlane);
 
-    const ambient = new THREE.AmbientLight('#ffffff', 0.62);
+    const ambient = new THREE.AmbientLight('#ffffff', 0.34);
     this.scene.add(ambient);
     this.ambientLight = ambient;
 
-    const hemi = new THREE.HemisphereLight('#dbeafe', '#c7d2fe', 0.55);
+    const hemi = new THREE.HemisphereLight('#dbeafe', '#c7d2fe', 0.34);
     this.scene.add(hemi);
     this.hemiLight = hemi;
 
-    const key = new THREE.DirectionalLight('#fff4e0', 1.05);
+    const key = new THREE.DirectionalLight('#fff4e0', 0.78);
     key.position.set(18, 30, 12);
     key.shadow.normalBias = 0.03;
     key.shadow.radius = 3;
@@ -351,16 +287,16 @@ export class BlockScene {
 
     if (this.ambientLight) {
       this.ambientLight.color.set(isDark ? '#c9d8ff' : '#ffffff');
-      this.ambientLight.intensity = isDark ? 0.5 : 0.62;
+      this.ambientLight.intensity = isDark ? 0.34 : 0.34;
     }
     if (this.hemiLight) {
       this.hemiLight.color.set(isDark ? '#9db8f5' : '#dbeafe');
       this.hemiLight.groundColor.set(isDark ? '#08112b' : '#c7d2fe');
-      this.hemiLight.intensity = isDark ? 0.4 : 0.55;
+      this.hemiLight.intensity = isDark ? 0.3 : 0.34;
     }
     if (this.keyLight) {
       this.keyLight.color.set(isDark ? '#d6e2ff' : '#fff4e0');
-      this.keyLight.intensity = isDark ? 0.95 : 1.05;
+      this.keyLight.intensity = isDark ? 0.8 : 0.78;
     }
   }
 
@@ -371,6 +307,7 @@ export class BlockScene {
     this.previewCube.material.emissive.set(this.activeColor);
     const t = this.textureCache[this.activeTexture] || null;
     this.previewCube.material.map = t;
+    this.previewCube.material.opacity = 0.7;
     this.previewCube.material.needsUpdate = true;
   }
 
@@ -634,8 +571,7 @@ export class BlockScene {
       const mat = new THREE.MeshStandardMaterial({
         color,
         map,
-        metalness: 0.05,
-        roughness: 0.72,
+        ...surfaceFor(textureType),
       });
       const mesh = new THREE.InstancedMesh(this.baseGeometry, mat, entries.length);
       mesh.castShadow = true;

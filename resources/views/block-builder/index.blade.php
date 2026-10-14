@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     @include('partials.pwa-head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="app-base-url" content="{{ rtrim(request()->getBaseUrl(), '/') }}">
     <title>Blok Tasarım Stüdyosu</title>
     @php

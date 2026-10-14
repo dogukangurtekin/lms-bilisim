@@ -208,6 +208,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/runner-grant/{slug}/', [ActivityRunnerController::class, 'grant']);
     Route::view('/keyboard-race', 'keyboard-race.index')->name('keyboard-race.index');
     Route::view('/block-builder-studio', 'block-builder.index')->name('block-builder.index');
+    Route::prefix('/block-builder-studio/designs')->name('block-builder.designs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BlockBuilderStudioController::class, 'index'])->name('index');
+        Route::get('/latest', [\App\Http\Controllers\BlockBuilderStudioController::class, 'latest'])->name('latest');
+        Route::get('/{id}', [\App\Http\Controllers\BlockBuilderStudioController::class, 'show'])->whereNumber('id')->name('show');
+        Route::post('/', [\App\Http\Controllers\BlockBuilderStudioController::class, 'store'])->middleware('throttle:60,1')->name('store');
+        Route::delete('/{id}', [\App\Http\Controllers\BlockBuilderStudioController::class, 'destroy'])->whereNumber('id')->name('destroy');
+    });
     Route::get('/flowchart-programming', [FlowchartPageController::class, 'index'])->name('flowchart.editor');
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
     Route::get('/dersler/{course}/onizle', [CourseController::class, 'preview'])->name('course.preview');
