@@ -385,3 +385,62 @@ body.dark .modal-card { background: var(--surface); }
 .tile { border-radius: 16px; background: #fff; }
 body.dark .tile { background: var(--surface-2); }
 .result-stats > div { border-radius: 16px; }
+
+/* =====================================================================
+   v5 — oyun alanı büyük, program (blok) alanı minimal
+   ===================================================================== */
+.layout {
+  grid-template-columns: minmax(0, 1fr) clamp(290px, 27vw, 380px); gap: 12px; padding: 12px 14px 16px; max-width: 1800px; align-items: start;
+}
+.stage-card { padding: 10px 12px 12px; }
+.stage-head { margin-bottom: 6px; }
+.stage-title h2 { font-size: 18px; }
+.stage-hint { font-size: 12.5px; min-height: 0; }
+.stars { font-size: 24px; }
+/* oyun alanı: sığdığı kadar büyük kare */
+.canvas-wrap {
+  width: min(100%, calc(100vh - 235px)); min-width: min(100%, 360px); margin: 0 auto; border-radius: 18px;
+}
+.controls { margin-top: 8px; gap: 6px; justify-content: center; }
+.btn { padding: 8px 14px; font-size: 14px; border-radius: 13px; }
+.btn-run { flex: 0 1 auto; min-width: 150px; font-size: 15px; }
+.btn-compact { padding: 7px 12px; font-size: 12.5px; }
+.status-row { margin-top: 6px; min-height: 18px; }
+
+/* program alanı: sade, küçük bloklar */
+.workspace-card { min-height: 0; padding: 10px; border-radius: 20px; position: sticky; top: 76px; max-height: calc(100vh - 92px); }
+.ws-head { margin-bottom: 6px; }
+.ws-head h3 { font-size: 14px; }
+.ws-help { display: none; }
+.palette { gap: 5px; margin-bottom: 6px; }
+.pal-btn {
+  padding: 5px 9px; border-radius: 10px; font-size: 12.5px; gap: 4px; box-shadow: 0 2px 0 rgba(0, 0, 0, .22);
+}
+.pal-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0, 0, 0, .22); }
+.ed-ws { min-height: 220px; max-height: calc(100vh - 220px); padding: 8px 8px 20px; border-radius: 14px; border-width: 1px; overflow: auto; }
+.ed-prog { min-width: min(100%, 200px); }
+.ed-hat { min-width: 120px; padding: 6px 12px 5px; font-size: 12.5px; border-radius: 14px 14px 4px 4px; }
+.ed-prog-body { min-height: 36px; padding: 5px 6px 4px; border-left-width: 8px; border-bottom-width: 8px; border-radius: 0 0 0 10px; }
+.ed-blk { font-size: 12.5px; }
+.ed-head { padding: 5px 10px; gap: 6px; border-radius: 6px; box-shadow: inset 0 -2px rgba(0, 0, 0, .2); }
+.ed-head::before { left: 12px; width: 14px; height: 4px; border-radius: 0 0 5px 5px; }
+.ed-blk:not(.ed-c) > .ed-head::after, .ed-c > .ed-foot::after { left: 12px; bottom: -4px; width: 14px; height: 4px; border-radius: 0 0 5px 5px; }
+.ed-c { border-radius: 6px; box-shadow: inset 0 -2px rgba(0, 0, 0, .2); }
+.ed-c > .ed-head { border-radius: 6px 6px 0 0; }
+.ed-slot { margin-left: 10px; padding: 4px 4px 4px 6px; min-height: 28px; }
+.ed-sep { padding: 4px 10px; font-size: 11.5px; }
+.ed-foot { height: 8px; }
+.ed-num, .ed-sel { padding: 1px 5px; font-size: 12px; border-radius: 6px; }
+.ed-num { width: 42px; }
+.ed-empty { padding: 6px; font-size: 11.5px; border-width: 1px; }
+.ed-dropline { height: 4px; }
+.ed-ghost { padding: 5px 11px; font-size: 12.5px; }
+.coach { top: 88px; right: 14px; width: min(230px, calc(100% - 28px)); padding: 9px 11px; }
+.coach ol { font-size: 12px; line-height: 1.4; }
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: 1fr; padding: 8px; }
+  .stage-card { max-width: none; }
+  .canvas-wrap { width: min(100%, 72vh); }
+  .workspace-card { position: static; max-height: none; }
+  .ed-ws { max-height: none; min-height: 200px; }
+}
