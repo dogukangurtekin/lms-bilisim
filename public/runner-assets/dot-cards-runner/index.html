@@ -37,7 +37,7 @@
         <div class="dc-msg" id="msg" role="status" aria-live="polite"></div>
       </div>
       <div class="dc-bar">
-        <span class="dc-chip" id="chipAttempts">Hata: 0</span>
+        <span class="dc-lives" id="lives" aria-label="Kalan canlar"></span>
         <span class="dc-chip" id="chipStars">★★★</span>
         <button id="btnHint" class="dc-btn" type="button">💡 İpucu</button>
         <button id="btnReset" class="dc-btn" type="button">↺ Baştan</button>
@@ -86,6 +86,7 @@
     <div class="dc-help-body">
       <p>Amaç: <b>küçük noktayı turuncu hedefe</b> ulaştırmak. Noktayı doğrudan sen yönetmezsin; <b>kartlar</b> yönetir. Her kartın üzerinde küçük bir program yazar. Kartı seçince nokta o programı çalıştırır.</p>
       <ul>
+        <li><b>Canlar:</b> Her bölümde <b>2 canın</b> var (♥ ♥). Yanlış hamle (duvara çarpan ya da çukura düşüren kart, hedefe götürmeyen kart) bir can götürür; ikisi de bitince bölüm baştan başlar. Hiç can kaybetmeden bitirirsen 3 yıldız alırsın.</li>
         <li><b>Kart Dizisi</b> bölümlerinde kartları doğru sırayla seç. Bir kart noktayı duvara çarpıtırsa ya da çukura düşürürse nokta önceki yerine döner ve kart geri gelir.</li>
         <li><b>Doğru Kartı Bul</b> bölümlerinde yalnızca tek kart hedefe götürür. Kodları okuyarak tahmin et.</li>
         <li><b>Serbest Gezinti</b> bölümlerinde ok tuşlarıyla (ya da düğmelerle) noktayı sen yürütürsün.</li>

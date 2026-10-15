@@ -106,3 +106,11 @@ code { font-family: var(--mono); background: #eaf1ff; border: 1px solid #cfdcfb;
   .dc-nav { margin: 0; } .dc-brand small { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } .dc-dot { transition: none !important; } }
+
+/* ---------- can göstergesi (her bölümde 2 can) ---------- */
+.dc-lives { display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.22); }
+.dc-lives::before { content: "CAN"; font-size: 10.5px; font-weight: 900; letter-spacing: .1em; color: #aac2ee; margin-right: 4px; }
+.dc-lives .heart { font-style: normal; font-size: 22px; line-height: 1; color: #ff4d6d; text-shadow: 0 0 10px rgba(255,77,109,.75); transition: color .2s, text-shadow .2s, transform .2s; }
+.dc-lives .heart.off { color: #475569; text-shadow: none; transform: scale(.88); }
+.dc-lives .heart.lost { animation: heartLost .7s ease; }
+@keyframes heartLost { 0% { transform: scale(1.5); color: #ff4d6d; } 40% { transform: scale(1.2) rotate(-14deg); } 100% { transform: scale(.88); color: #475569; } }

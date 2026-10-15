@@ -34,6 +34,7 @@
   var store = { done: {}, last: 0, hintsUsed: {} };
   var soundOn = true, audio = null;
   var cell = 56;
+  var MAX_LIVES = 2;                              // her bölümde 2 can: yanlış hamle bir can götürür
 
   function loadStore() { try { var p = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (p && typeof p === 'object') store = Object.assign(store, p); } catch (e) {} try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch (e) {} }
   function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
@@ -134,9 +135,11 @@
   }
   function cardEl(id) { return $('hand').querySelector('.dc-cardbtn[data-id="' + id + '"]'); }
 
-  function starsFor() { var base = st.wrong === 0 ? 3 : st.wrong <= 2 ? 2 : 1; return st.hints > 0 ? Math.min(base, 2) : base; }
+  function starsFor() { var base = st.wrong === 0 ? 3 : st.wrong === 1 ? 2 : 1; return st.hints > 0 ? Math.min(base, 2) : base; }
   function updateBar() {
-    $('chipAttempts').textContent = 'Hata: ' + st.wrong;
+    var lv = $('lives'); lv.textContent = '';
+    for (var h = 0; h < MAX_LIVES; h++) { var s = document.createElement('i'); s.className = 'heart ' + (h < st.lives ? 'on' : 'off') + (st.justLost === h ? ' lost' : ''); s.textContent = '♥'; lv.appendChild(s); }
+    lv.title = 'Kalan can: ' + st.lives + ' / ' + MAX_LIVES; st.justLost = -1;
     var s = starsFor(); $('chipStars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
     $('btnHint').textContent = '💡 İpucu' + (st.hints ? ' (' + st.hints + ')' : '');
   }
@@ -158,6 +161,8 @@
   function resetDot(pos) { var dot = $('dot'); dot.classList.remove('fall', 'bump', 'win'); placeDot(pos, true); }
 
   // ------------------------------------------------------------------ oyun akışı
+  function loseLife() { st.lives = Math.max(0, st.lives - 1); st.wrong++; st.justLost = st.lives; updateBar(); return st.lives <= 0; }
+  async function outOfLives() { say('Canların bitti! Bölüm baştan başlıyor.', 'bad', 2600); await delay(1500); restartLevel('lives'); }
   async function playCard(id) {
     if (!st || st.busy || st.won) return;
     var card = level.cards.filter(function (c) { return c.id === id; })[0]; if (!card) return;
@@ -167,20 +172,24 @@
     if (res.goal) { await win(); return; }
     var failed = !res.ok || level.mode === 'find';
     if (failed) {
-      st.wrong++; updateBar();
-      say(res.failure === 'pit' ? 'Çukura düştü! Kart geri döndü.' : res.failure === 'wall' ? 'Duvara çarptı! Kart geri döndü.' : res.failure === 'loop' ? 'Kart sonsuza dek dönüyor! Kart geri döndü.' : 'Bu kart noktayı hedefe götürmedi.', 'bad');
+      var dead = loseLife();
+      say((res.failure === 'pit' ? 'Çukura düştü!' : res.failure === 'wall' ? 'Duvara çarptı!' : res.failure === 'loop' ? 'Kart sonsuza dek dönüyor!' : 'Bu kart noktayı hedefe götürmedi.') + (dead ? '' : ' Bir can gitti, kalan: ' + st.lives + '.'), 'bad');
       if (el) { el.classList.add('shake'); setTimeout(function () { el.classList.remove('shake'); }, 450); }
-      await delay(450); resetDot(st.pos); st.busy = false; return;
+      await delay(450); resetDot(st.pos);
+      if (dead) { await outOfLives(); return; }
+      st.busy = false; return;
     }
     // başarılı ama hedefe varılmadı: kart harcanır, kontrol noktası güncellenir
     st.pos = res.end; st.hand = st.hand.filter(function (x) { return x !== id; }); st.played.push(id);
     renderHand(); updateBar();
-    if (!st.hand.length) { st.wrong++; updateBar(); say('Kart kalmadı ama hedefe ulaşamadın. Baştan başlıyoruz!', 'bad', 2400); await delay(1500); restartLevel(); return; }
+    if (!st.hand.length) { var dead2 = loseLife(); say('Kart kalmadı ama hedefe ulaşamadın. ' + (dead2 ? 'Canların da bitti!' : 'Bir can gitti, kalan: ' + st.lives + '.') + ' Baştan başlıyoruz!', 'bad', 2600); await delay(1700); restartLevel(dead2 ? 'lives' : true); return; }
     st.busy = false;
   }
+  // keepStats: undefined = sıfırdan · true = can/hata/ipucu korunur · 'lives' = hata/ipucu korunur, canlar yenilenir
   function restartLevel(keepStats) {
     if (!level) return;
-    st = { pos: { x: level.start.x, y: level.start.y, dir: level.start.dir }, hand: level.cards.map(function (c) { return c.id; }), played: [], busy: false, won: false, wrong: keepStats && st ? st.wrong : 0, hints: keepStats && st ? st.hints : 0 };
+    var old = st;
+    st = { pos: { x: level.start.x, y: level.start.y, dir: level.start.dir }, hand: level.cards.map(function (c) { return c.id; }), played: [], busy: false, won: false, wrong: keepStats && old ? old.wrong : 0, hints: keepStats && old ? old.hints : 0, lives: keepStats === true && old ? old.lives : MAX_LIVES, justLost: -1 };
     resetDot(st.pos); renderHand(); updateBar(); clearHint();
   }
   async function roamMove(dir) {
@@ -189,7 +198,7 @@
     var res = E.runCard(world, st.pos, [{ t: 'move', dir: dir, n: 1, ln: 0 }]);
     await play(res, null);
     if (res.goal) { await win(); return; }
-    if (res.failure === 'pit') { st.wrong++; updateBar(); say('Çukura düştün! Başa dönüyorsun.', 'bad'); await delay(350); resetDot({ x: level.start.x, y: level.start.y, dir: level.start.dir }); st.pos = { x: level.start.x, y: level.start.y, dir: level.start.dir }; }
+    if (res.failure === 'pit') { var dead3 = loseLife(); say('Çukura düştün! ' + (dead3 ? '' : 'Bir can gitti, kalan: ' + st.lives + '.'), 'bad'); await delay(450); st.pos = { x: level.start.x, y: level.start.y, dir: level.start.dir }; resetDot(st.pos); if (dead3) { await outOfLives(); return; } }
     else if (res.failure === 'wall') { /* sadece çarptı */ }
     else st.pos = res.end;
     st.busy = false;
@@ -214,7 +223,7 @@
     emitLevelCompleted(stars); emitGameUpdate(); emitRangeIfNeeded();
     await delay(900);
     $('winStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
-    $('winText').textContent = stars === 3 ? 'Hiç hata yapmadan çözdün, harika!' : stars === 2 ? 'Güzel iş! Daha az hatayla 3 yıldız alabilirsin.' : 'Bölümü bitirdin. Kodları dikkatle okuyarak tekrar dene, daha çok yıldız kazan!';
+    $('winText').textContent = stars === 3 ? 'Hiç can kaybetmeden çözdün, harika!' : stars === 2 ? 'Güzel iş! Canını kaybetmeden çözersen 3 yıldız alırsın.' : 'Bölümü bitirdin. Kodları dikkatle okuyarak tekrar dene, daha çok yıldız kazan!';
     $('winXp').textContent = firstTime ? '+' + level.xp + ' XP' : 'Tekrar oynadın ✓';
     var last = idx >= levels.length - 1; $('winNext').classList.toggle('hidden', last);
     $('winModal').classList.remove('hidden');
@@ -239,7 +248,7 @@
     idx = i; level = levels[i]; world = E.makeWorld(level);
     $('winModal').classList.add('hidden');
     $('lvName').textContent = level.title; $('lvMeta').textContent = CAT_LABEL[level.cat] + ' · ⭐ ' + level.xp + ' XP · ' + level.w + '×' + level.h;
-    $('tip').textContent = level.tip;
+    $('tip').textContent = level.tip + ' Her bölümde 2 canın var: yanlış hamle bir can götürür, canların bitince bölüm baştan başlar.';
     st = null; buildBoard(); restartLevel(); updateHeader(); emitGameUpdate();
   }
   function openPicker() {

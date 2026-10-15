@@ -12,7 +12,8 @@ Bu uygulama, "kartlardaki kodu okuyup noktanın nereye gideceğini tahmin etme" 
 - **Kart Dizisi:** Kartları doğru sırayla seç. Kart noktayı duvara çarptırır ya da çukura düşürürse nokta önceki yerine döner ve kart geri gelir. Başarılı kart harcanır; kartlar bitince hedefe varılmadıysa seviye baştan başlar.
 - **Doğru Kartı Bul:** Yalnızca bir kart hedefe götürür; kodları okuyarak bulunur.
 - **Serbest Gezinti:** Ok tuşları/düğmelerle nokta doğrudan yönetilir.
-- Yıldız: hatasız 3, ≤2 hata 2, fazlası 1; ipucu kullanılırsa en çok 2 yıldız.
+- **Canlar:** her bölümde 2 can (♥ ♥). Yanlış hamle bir can götürür; canlar bitince bölüm baştan başlar ve canlar yenilenir.
+- Yıldız: hiç can kaybetmeden 3, bir can kaybedince 2, ikisi de gidince 1; ipucu kullanılırsa en çok 2 yıldız.
 
 ## Seviyeler (100)
 Kolay 25 (gezinti, mutlak yönlü kartlar) · Orta 25 (göreli hareket, `tekrarla`) · Zor 25 (`eğer`/`değilse`, `iken`) · Uzman 25 (iç içe yapılar, uzun diziler). Üretici her seviyeyi çözücüyle doğrular (çözülebilirlik, "Doğru Kartı Bul"da tek doğru kart, tasarlanandan kısa yol olmaması).
