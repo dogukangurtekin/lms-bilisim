@@ -179,7 +179,9 @@
     @media(max-width:1050px){.xp-gift-form{grid-template-columns:1fr 1fr}.xp-gift-submit{width:100%}}
     @media(max-width:680px){.xp-gift-form{grid-template-columns:1fr}}
     /* ---- sınıf seçici: kaydırmalı (oklar, sürükleme, tekerlek) ---- */
-    .class-tabs-wrap{display:flex;align-items:center;gap:8px;margin-top:-6px;padding:0 2px 8px;position:relative}
+    .class-tabs-wrap{display:flex;align-items:center;gap:6px;margin:8px 0 0;padding:0;position:relative}
+    .class-picker-widget{margin:0 0 14px;padding:14px;border-radius:20px;border:1px solid #dbe4ee;background:linear-gradient(160deg,#ffffff,#f1f6ff);box-shadow:0 12px 28px rgba(15,23,42,.07);min-width:0}
+    .class-picker-widget .ct-arrow{width:32px;height:32px;border-radius:10px;font-size:18px}
     .class-tabs-wrap .class-tabs-strip{flex:1 1 auto;min-width:0;margin:0;padding:2px 2px 8px;scroll-behavior:smooth;overflow-x:auto;cursor:grab;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;
         -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 0,#000 calc(100% - 0px),transparent 100%);mask-image:none}
     .class-tabs-wrap .class-tabs-strip::-webkit-scrollbar{height:6px}
@@ -202,17 +204,6 @@
     .gg-chip.active small{color:#9a3412}
 </style>
 <div class="dashboard-shell" data-dashboard-shell>
-    <section class="class-tabs-wrap" id="classTabsWrap" aria-label="Sınıf seçimi">
-        <button type="button" class="ct-arrow" id="ctPrev" aria-label="Sola kaydır" title="Sola kaydır">‹</button>
-        <div class="class-tabs-strip" id="classTabsStrip" role="tablist" aria-label="Sınıf sekmeleri">
-            <a class="class-tab {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
-            @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
-                <a class="class-tab {{ $selectedClassId === (int) ($classTab['id'] ?? 0) ? 'active' : '' }}" href="{{ route('dashboard', ['class_id' => $classTab['id']]) }}">{{ $classTab['label'] }}</a>
-            @endforeach
-        </div>
-        <button type="button" class="ct-arrow" id="ctNext" aria-label="Sağa kaydır" title="Sağa kaydır">›</button>
-    </section>
-
     <section class="dashboard-main-layout">
         <div class="dashboard-center-column">
             <section class="dashboard-widget-grid" id="dashboard-widget-grid">
@@ -580,6 +571,19 @@
         </div>
 
         <aside class="dashboard-right-column">
+            <section class="class-picker-widget" aria-label="Sınıf seçimi">
+                <div class="gg-head"><strong>Sınıf Seçimi</strong><span>Kaydırarak sınıf seçin</span></div>
+        <section class="class-tabs-wrap" id="classTabsWrap" aria-label="Sınıf seçimi">
+            <button type="button" class="ct-arrow" id="ctPrev" aria-label="Sola kaydır" title="Sola kaydır">‹</button>
+            <div class="class-tabs-strip" id="classTabsStrip" role="tablist" aria-label="Sınıf sekmeleri">
+                <a class="class-tab {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
+                @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
+                    <a class="class-tab {{ $selectedClassId === (int) ($classTab['id'] ?? 0) ? 'active' : '' }}" href="{{ route('dashboard', ['class_id' => $classTab['id']]) }}">{{ $classTab['label'] }}</a>
+                @endforeach
+            </div>
+            <button type="button" class="ct-arrow" id="ctNext" aria-label="Sağa kaydır" title="Sağa kaydır">›</button>
+        </section>
+            </section>
             @if($isAdminDash && !empty($dashboard['grade_groups']))
                 <section class="grade-group-widget" aria-label="Sınıf düzeyi filtresi">
                     <div class="gg-head"><strong>Sınıf Düzeyi Filtresi</strong><span>Düzeydeki tüm şubeleri birlikte göster</span></div>
