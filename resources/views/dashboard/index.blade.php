@@ -181,7 +181,8 @@
     /* ---- sınıf seçici: kaydırmalı (oklar, sürükleme, tekerlek) ---- */
     .class-tabs-wrap{display:flex;align-items:center;gap:6px;margin:8px 0 0;padding:0;position:relative}
     .class-picker-widget{margin:0 0 14px;padding:14px;border-radius:20px;border:1px solid #dbe4ee;background:linear-gradient(160deg,#ffffff,#f1f6ff);box-shadow:0 12px 28px rgba(15,23,42,.07);min-width:0}
-    .class-picker-widget .ct-arrow{width:32px;height:32px;border-radius:10px;font-size:18px}
+    .class-picker-select{width:100%;margin-top:10px;padding:11px 12px;border-radius:14px;border:2px solid #e2e8f0;background:#fff;color:#0f172a;font-size:14px;font-weight:800;cursor:pointer}
+    .class-picker-select:focus{outline:none;border-color:#f59e0b}
     .class-tabs-wrap .class-tabs-strip{flex:1 1 auto;min-width:0;margin:0;padding:2px 2px 8px;scroll-behavior:smooth;overflow-x:auto;cursor:grab;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;
         -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 0,#000 calc(100% - 0px),transparent 100%);mask-image:none}
     .class-tabs-wrap .class-tabs-strip::-webkit-scrollbar{height:6px}
@@ -572,17 +573,14 @@
 
         <aside class="dashboard-right-column">
             <section class="class-picker-widget" aria-label="Sınıf seçimi">
-                <div class="gg-head"><strong>Sınıf Seçimi</strong><span>Kaydırarak sınıf seçin</span></div>
-        <section class="class-tabs-wrap" id="classTabsWrap" aria-label="Sınıf seçimi">
-            <button type="button" class="ct-arrow" id="ctPrev" aria-label="Sola kaydır" title="Sola kaydır">‹</button>
-            <div class="class-tabs-strip" id="classTabsStrip" role="tablist" aria-label="Sınıf sekmeleri">
-                <a class="class-tab {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
-                @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
-                    <a class="class-tab {{ $selectedClassId === (int) ($classTab['id'] ?? 0) ? 'active' : '' }}" href="{{ route('dashboard', ['class_id' => $classTab['id']]) }}">{{ $classTab['label'] }}</a>
-                @endforeach
-            </div>
-            <button type="button" class="ct-arrow" id="ctNext" aria-label="Sağa kaydır" title="Sağa kaydır">›</button>
-        </section>
+                <div class="gg-head"><strong>Sınıf Seçimi</strong><span>Listeden sınıf seçin</span></div>
+        <select class="class-picker-select" id="classPickerSelect" aria-label="Sınıf seç" onchange="if(this.value)window.location.href=this.value">
+                    <option value="{{ route('dashboard') }}" @selected($selectedClassId === 0 && $selectedGradeGroup === '')>Tümü</option>
+                    @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
+                        <option value="{{ route('dashboard', ['class_id' => $classTab['id']]) }}" @selected($selectedClassId === (int) ($classTab['id'] ?? 0))>{{ $classTab['label'] }}</option>
+                    @endforeach
+                </select>
+            
             </section>
             @if($isAdminDash && !empty($dashboard['grade_groups']))
                 <section class="grade-group-widget" aria-label="Sınıf düzeyi filtresi">
@@ -1374,44 +1372,6 @@
     });
 })();
 </script>
-<script>
-(function () {
-    var wrap = document.getElementById('classTabsWrap'), strip = document.getElementById('classTabsStrip');
-    if (!wrap || !strip) return;
-    var prev = document.getElementById('ctPrev'), next = document.getElementById('ctNext');
-    function update() {
-        var max = strip.scrollWidth - strip.clientWidth, x = strip.scrollLeft;
-        wrap.classList.toggle('can-left', x > 4); wrap.classList.toggle('can-right', x < max - 4);
-        prev.disabled = x <= 4; next.disabled = x >= max - 4;
-        var overflow = max > 4; prev.style.visibility = next.style.visibility = overflow ? 'visible' : 'hidden';
-    }
-    prev.addEventListener('click', function () { strip.scrollBy({ left: -Math.max(160, strip.clientWidth * 0.7), behavior: 'smooth' }); });
-    next.addEventListener('click', function () { strip.scrollBy({ left: Math.max(160, strip.clientWidth * 0.7), behavior: 'smooth' }); });
-    strip.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    // fare tekerleği dikey kaydırmayı yatay kaydırmaya çevirir
-    strip.addEventListener('wheel', function (e) {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        var max = strip.scrollWidth - strip.clientWidth; if (max <= 4) return;
-        var atEdge = (e.deltaY < 0 && strip.scrollLeft <= 0) || (e.deltaY > 0 && strip.scrollLeft >= max - 1);
-        if (atEdge) return;
-        e.preventDefault(); strip.scrollLeft += e.deltaY;
-    }, { passive: false });
-    // fareyle sürükleyerek kaydırma (tıklama ile karışmasın)
-    var down = null, moved = false;
-    strip.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse' || e.button !== 0) return; down = { x: e.clientX, left: strip.scrollLeft }; moved = false; });
-    window.addEventListener('pointermove', function (e) {
-        if (!down) return; var dx = e.clientX - down.x;
-        if (!moved && Math.abs(dx) > 5) { moved = true; strip.classList.add('dragging'); }
-        if (moved) strip.scrollLeft = down.left - dx;
-    });
-    window.addEventListener('pointerup', function () { if (down) { down = null; setTimeout(function () { strip.classList.remove('dragging'); }, 0); } });
-    strip.addEventListener('click', function (e) { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
-    // seçili sekmeyi görünür alana ortala
-    var active = strip.querySelector('.class-tab.active');
-    if (active) { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = Math.max(0, active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2); strip.style.scrollBehavior = ''; }
-    update();
-})();
-</script>
+
 @endpush
 @endsection
