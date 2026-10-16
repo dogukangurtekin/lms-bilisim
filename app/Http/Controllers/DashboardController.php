@@ -43,16 +43,25 @@ class DashboardController extends Controller
         'xp_gift' => ['visible' => true, 'span' => 12, 'order' => 72, 'title' => 'XP Hediyesi', 'type' => 'xp_gift'],
     ];
 
+    /** Yönetici paneli sınıf düzeyi grupları (grade_level). */
+    public const GRADE_GROUPS = [
+        '3-4' => ['label' => '3-4. Sınıflar', 'levels' => [3, 4]],
+        '5-7' => ['label' => '5-6-7. Sınıflar', 'levels' => [5, 6, 7]],
+        '9-10' => ['label' => '9-10. Sınıflar', 'levels' => [9, 10]],
+    ];
+
     public function index()
     {
         $user = auth()->user();
         $selectedClassId = (int) request()->query('class_id', 0);
+        // Yalnızca yönetici: sınıf düzeyi grubu (3-4 / 5-6-7 / 9-10) filtresi
+        $selectedGradeGroup = $user?->hasRole('admin') === true ? (string) request()->query('grade_group', '') : '';
 
         if ($user?->hasRole('student')) {
             return redirect()->route('student.portal.dashboard');
         }
 
-        $dashboard = Cache::remember('dashboard.teacher.'.($user?->id ?? 'guest').'.class.'.$selectedClassId, now()->addSeconds(20), function () use ($user, $selectedClassId) {
+        $dashboard = Cache::remember('dashboard.teacher.'.($user?->id ?? 'guest').'.class.'.$selectedClassId.'.grp.'.$selectedGradeGroup, now()->addSeconds(20), function () use ($user, $selectedClassId, $selectedGradeGroup) {
             $isAdmin = $user?->hasRole('admin') === true;
             $teacher = null;
             $teacherClassIds = [];
@@ -72,6 +81,28 @@ class DashboardController extends Controller
                 ? $selectedClassId
                 : 0;
 
+            // Sınıf düzeyi grupları (yalnızca yönetici): grade_level değerlerine göre
+            $gradeGroups = self::GRADE_GROUPS;
+            $activeGroup = ($isAdmin && $activeClassId === 0 && isset($gradeGroups[$selectedGradeGroup])) ? $selectedGradeGroup : '';
+            $activeClassIds = $activeClassId > 0
+                ? [$activeClassId]
+                : ($activeGroup !== ''
+                    ? SchoolClass::query()->whereIn('grade_level', $gradeGroups[$activeGroup]['levels'])->pluck('id')->map(fn ($id) => (int) $id)->all()
+                    : []);
+            $gradeGroupStats = [];
+            if ($isAdmin) {
+                $studentCountByClass = Student::query()->selectRaw('school_class_id, COUNT(*) as c')->groupBy('school_class_id')->pluck('c', 'school_class_id');
+                foreach ($gradeGroups as $key => $group) {
+                    $ids = SchoolClass::query()->whereIn('grade_level', $group['levels'])->pluck('id');
+                    $gradeGroupStats[] = [
+                        'key' => $key,
+                        'label' => $group['label'],
+                        'classes' => $ids->count(),
+                        'students' => (int) $ids->sum(fn ($id) => (int) ($studentCountByClass[$id] ?? 0)),
+                    ];
+                }
+            }
+
             $classTabs = SchoolClass::query()
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('id', $teacherClassIds))
                 ->select('id', 'name', 'section')
@@ -86,7 +117,7 @@ class DashboardController extends Controller
                 ->all();
             $studentsBase = Student::query()
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
-                ->when($activeClassId > 0, fn ($q) => $q->where('school_class_id', $activeClassId));
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('school_class_id', $activeClassIds));
 
             $studentIds = (clone $studentsBase)->pluck('id');
             $studentUserIds = (clone $studentsBase)->pluck('user_id');
@@ -95,7 +126,7 @@ class DashboardController extends Controller
 
             $totalClasses = SchoolClass::query()
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('id', $teacherClassIds))
-                ->when($activeClassId > 0, fn ($q) => $q->where('id', $activeClassId))
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('id', $activeClassIds))
                 ->count();
 
             $totalCourses = Course::query()
@@ -104,7 +135,7 @@ class DashboardController extends Controller
                     $teacherId = (int) ($teacher?->id ?? 0);
                     $q->where('teacher_id', $teacherId);
                 })
-                ->when($activeClassId > 0, fn ($q) => $q->where('school_class_id', $activeClassId))
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('school_class_id', $activeClassIds))
                 ->count();
 
             $gradeCount = Grade::query()
@@ -273,7 +304,7 @@ class DashboardController extends Controller
                 ])->all();
 
             $studentLessonBase = $students
-                ->when($activeClassId > 0, fn ($rows) => $rows->where('school_class_id', $activeClassId));
+                ->when($activeClassIds !== [], fn ($rows) => $rows->whereIn('school_class_id', $activeClassIds));
 
             $studentLessonCompletion = $studentLessonBase
                 ->map(function (Student $student) use ($completedContentCountByUser) {
@@ -345,7 +376,7 @@ class DashboardController extends Controller
 
             $totalXp = (int) $studentXpRows->sum('xp');
             $topStudents = $studentXpRows
-                ->when($activeClassId > 0, fn ($rows) => $rows->where('school_class_id', $activeClassId))
+                ->when($activeClassIds !== [], fn ($rows) => $rows->whereIn('school_class_id', $activeClassIds))
                 ->sortByDesc('xp')
                 ->values()
                 ->take(5)
@@ -361,7 +392,7 @@ class DashboardController extends Controller
             $classDistribution = Student::query()
                 ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('students.school_class_id', $teacherClassIds))
-                ->when($activeClassId > 0, fn ($q) => $q->where('students.school_class_id', $activeClassId))
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('students.school_class_id', $activeClassIds))
                 ->selectRaw("CONCAT(school_classes.name, '/', school_classes.section) as class_name, COUNT(*) as total")
                 ->groupBy('school_classes.id', 'school_classes.name', 'school_classes.section')
                 ->orderByDesc('total')
@@ -371,7 +402,7 @@ class DashboardController extends Controller
                 ->join('students', 'grades.student_id', '=', 'students.id')
                 ->join('school_classes', 'students.school_class_id', '=', 'school_classes.id')
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('students.school_class_id', $teacherClassIds))
-                ->when($activeClassId > 0, fn ($q) => $q->where('students.school_class_id', $activeClassId))
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('students.school_class_id', $activeClassIds))
                 ->selectRaw("CONCAT(school_classes.name, '/', school_classes.section) as class_name, ROUND(AVG(grades.score), 1) as avg_score")
                 ->groupBy('school_classes.id', 'school_classes.name', 'school_classes.section')
                 ->orderByDesc('avg_score')
@@ -387,6 +418,9 @@ class DashboardController extends Controller
             return [
                 'headline_name' => $this->normalizeDashboardText($user?->name ?? 'Öğretmen'),
                 'selected_class_id' => $activeClassId,
+                'selected_grade_group' => $activeGroup,
+                'selected_grade_group_label' => $activeGroup !== '' ? $gradeGroups[$activeGroup]['label'] : '',
+                'grade_groups' => $gradeGroupStats,
                 'class_tabs' => $classTabs,
                 'summary' => [
                     'total_students' => $totalStudents,

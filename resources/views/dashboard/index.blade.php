@@ -12,6 +12,12 @@
             break;
         }
     }
+    $selectedGradeGroup = (string) ($dashboard['selected_grade_group'] ?? '');
+    $selectedGradeGroupLabel = (string) ($dashboard['selected_grade_group_label'] ?? '');
+    if ($selectedGradeGroupLabel !== '') {
+        $selectedClassLabel = $selectedGradeGroupLabel;
+    }
+    $isAdminDash = (bool) auth()->user()?->hasRole('admin');
 @endphp
 <style>
     .dashboard-sidebar-stack{
@@ -172,13 +178,39 @@
     .xp-gift-errors{grid-column:1/-1;padding:10px 12px;border-radius:12px;background:#fff1f2;color:#be123c;font-size:12px;font-weight:700}
     @media(max-width:1050px){.xp-gift-form{grid-template-columns:1fr 1fr}.xp-gift-submit{width:100%}}
     @media(max-width:680px){.xp-gift-form{grid-template-columns:1fr}}
+    /* ---- sınıf seçici: kaydırmalı (oklar, sürükleme, tekerlek) ---- */
+    .class-tabs-wrap{display:flex;align-items:center;gap:8px;margin-top:-6px;padding:0 2px 8px;position:relative}
+    .class-tabs-wrap .class-tabs-strip{flex:1 1 auto;min-width:0;margin:0;padding:2px 2px 8px;scroll-behavior:smooth;overflow-x:auto;cursor:grab;scrollbar-width:thin;scrollbar-color:#cbd5e1 transparent;
+        -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 0,#000 calc(100% - 0px),transparent 100%);mask-image:none}
+    .class-tabs-wrap .class-tabs-strip::-webkit-scrollbar{height:6px}
+    .class-tabs-wrap .class-tabs-strip::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+    .class-tabs-wrap .class-tabs-strip.dragging{cursor:grabbing;scroll-behavior:auto;user-select:none}
+    .class-tabs-wrap.can-left .class-tabs-strip{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34px);mask-image:linear-gradient(90deg,transparent 0,#000 34px)}
+    .class-tabs-wrap.can-right .class-tabs-strip{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent 100%);mask-image:linear-gradient(90deg,#000 calc(100% - 34px),transparent 100%)}
+    .class-tabs-wrap.can-left.can-right .class-tabs-strip{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34px,#000 calc(100% - 34px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 34px,#000 calc(100% - 34px),transparent 100%)}
+    .ct-arrow{flex:0 0 auto;width:38px;height:38px;border-radius:12px;border:1px solid #dbe4ee;background:#fff;color:#334155;font-size:22px;font-weight:900;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 20px rgba(15,23,42,.06);transition:transform .12s,opacity .15s}
+    .ct-arrow:hover:not(:disabled){transform:translateY(-1px);border-color:#f59e0b;color:#b45309}
+    .ct-arrow:disabled{opacity:.35;cursor:default}
+    /* ---- yönetici: sınıf düzeyi filtresi (sağ panelin en üstünde sabit) ---- */
+    .grade-group-widget{margin:0 0 14px;padding:14px;border-radius:20px;border:1px solid #dbe4ee;background:linear-gradient(160deg,#ffffff,#f1f6ff);box-shadow:0 12px 28px rgba(15,23,42,.07)}
+    .gg-head strong{display:block;font-size:15px;color:#0f172a}.gg-head span{display:block;font-size:12px;color:#64748b;margin-top:2px;font-weight:600}
+    .gg-list{display:grid;gap:8px;margin-top:10px}
+    .gg-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;border:2px solid #e2e8f0;background:#fff;color:#334155;text-decoration:none;transition:transform .12s,border-color .12s,box-shadow .12s}
+    .gg-chip:hover{transform:translateY(-1px);border-color:#93c5fd}
+    .gg-chip b{font-size:13.5px}.gg-chip small{color:#64748b;font-weight:700;font-size:11.5px;text-align:right}
+    .gg-chip.active{border-color:#f59e0b;background:linear-gradient(135deg,#fff7ed,#ffedd5);box-shadow:0 8px 18px rgba(245,158,11,.2)}
+    .gg-chip.active small{color:#9a3412}
 </style>
 <div class="dashboard-shell" data-dashboard-shell>
-    <section class="class-tabs-strip" aria-label="Sınıf sekmeleri">
-        <a class="class-tab {{ $selectedClassId === 0 ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
-        @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
-            <a class="class-tab {{ $selectedClassId === (int) ($classTab['id'] ?? 0) ? 'active' : '' }}" href="{{ route('dashboard', ['class_id' => $classTab['id']]) }}">{{ $classTab['label'] }}</a>
-        @endforeach
+    <section class="class-tabs-wrap" id="classTabsWrap" aria-label="Sınıf seçimi">
+        <button type="button" class="ct-arrow" id="ctPrev" aria-label="Sola kaydır" title="Sola kaydır">‹</button>
+        <div class="class-tabs-strip" id="classTabsStrip" role="tablist" aria-label="Sınıf sekmeleri">
+            <a class="class-tab {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}">Tümü</a>
+            @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
+                <a class="class-tab {{ $selectedClassId === (int) ($classTab['id'] ?? 0) ? 'active' : '' }}" href="{{ route('dashboard', ['class_id' => $classTab['id']]) }}">{{ $classTab['label'] }}</a>
+            @endforeach
+        </div>
+        <button type="button" class="ct-arrow" id="ctNext" aria-label="Sağa kaydır" title="Sağa kaydır">›</button>
     </section>
 
     <section class="dashboard-main-layout">
@@ -548,11 +580,22 @@
         </div>
 
         <aside class="dashboard-right-column">
+            @if($isAdminDash && !empty($dashboard['grade_groups']))
+                <section class="grade-group-widget" aria-label="Sınıf düzeyi filtresi">
+                    <div class="gg-head"><strong>Sınıf Düzeyi Filtresi</strong><span>Düzeydeki tüm şubeleri birlikte göster</span></div>
+                    <div class="gg-list">
+                        <a class="gg-chip {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}"><b>Tüm düzeyler</b><small>Tüm sınıflar</small></a>
+                        @foreach($dashboard['grade_groups'] as $group)
+                            <a class="gg-chip {{ $selectedGradeGroup === $group['key'] ? 'active' : '' }}" href="{{ route('dashboard', ['grade_group' => $group['key']]) }}"><b>{{ $group['label'] }}</b><small>{{ $group['classes'] }} şube · {{ $group['students'] }} öğrenci</small></a>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
             <section class="dashboard-sidebar-stack">
                 <div class="dashboard-widget-sidebar-grid" id="dashboard-widget-sidebar-grid" style="grid-template-columns:1fr !important;width:100%;"></div>
                 <article class="dashboard-widget dashboard-widget-wide widget-span-12 dashboard-leaderboard-panel" data-widget-key="leaderboard" draggable="true">
                     <div class="widget-head">
-                        <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf' }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
+                        <div><strong>İlk 5 Öğrenci Başarı Listesi</strong><span>{{ $selectedGradeGroupLabel !== '' ? 'Seçili sınıf düzeyi' : ($selectedClassId === 0 ? 'Tüm sınıflar genelinde' : 'Seçili sınıf') }}</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
                         <div class="leaderboard-head-actions">
                             <button type="button" class="leaderboard-full-btn" data-leaderboard-full>Tüm Sıralamayı Göster</button>
                             <button type="button" class="widget-toggle" data-widget-toggle="leaderboard" aria-label="Gizle" title="Gizle">-</button>
@@ -1325,6 +1368,45 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('open')) close();
     });
+})();
+</script>
+<script>
+(function () {
+    var wrap = document.getElementById('classTabsWrap'), strip = document.getElementById('classTabsStrip');
+    if (!wrap || !strip) return;
+    var prev = document.getElementById('ctPrev'), next = document.getElementById('ctNext');
+    function update() {
+        var max = strip.scrollWidth - strip.clientWidth, x = strip.scrollLeft;
+        wrap.classList.toggle('can-left', x > 4); wrap.classList.toggle('can-right', x < max - 4);
+        prev.disabled = x <= 4; next.disabled = x >= max - 4;
+        var overflow = max > 4; prev.style.visibility = next.style.visibility = overflow ? 'visible' : 'hidden';
+    }
+    prev.addEventListener('click', function () { strip.scrollBy({ left: -Math.max(160, strip.clientWidth * 0.7), behavior: 'smooth' }); });
+    next.addEventListener('click', function () { strip.scrollBy({ left: Math.max(160, strip.clientWidth * 0.7), behavior: 'smooth' }); });
+    strip.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    // fare tekerleği dikey kaydırmayı yatay kaydırmaya çevirir
+    strip.addEventListener('wheel', function (e) {
+        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+        var max = strip.scrollWidth - strip.clientWidth; if (max <= 4) return;
+        var atEdge = (e.deltaY < 0 && strip.scrollLeft <= 0) || (e.deltaY > 0 && strip.scrollLeft >= max - 1);
+        if (atEdge) return;
+        e.preventDefault(); strip.scrollLeft += e.deltaY;
+    }, { passive: false });
+    // fareyle sürükleyerek kaydırma (tıklama ile karışmasın)
+    var down = null, moved = false;
+    strip.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse' || e.button !== 0) return; down = { x: e.clientX, left: strip.scrollLeft }; moved = false; });
+    window.addEventListener('pointermove', function (e) {
+        if (!down) return; var dx = e.clientX - down.x;
+        if (!moved && Math.abs(dx) > 5) { moved = true; strip.classList.add('dragging'); }
+        if (moved) strip.scrollLeft = down.left - dx;
+    });
+    window.addEventListener('pointerup', function () { if (down) { down = null; setTimeout(function () { strip.classList.remove('dragging'); }, 0); } });
+    strip.addEventListener('click', function (e) { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+    // seçili sekmeyi görünür alana ortala
+    var active = strip.querySelector('.class-tab.active');
+    if (active) { strip.style.scrollBehavior = 'auto'; strip.scrollLeft = Math.max(0, active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2); strip.style.scrollBehavior = ''; }
+    update();
 })();
 </script>
 @endpush
