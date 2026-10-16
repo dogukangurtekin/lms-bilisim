@@ -87,7 +87,7 @@ class DashboardController extends Controller
             $activeClassIds = $activeClassId > 0
                 ? [$activeClassId]
                 : ($activeGroup !== ''
-                    ? SchoolClass::query()->whereIn('grade_level', $gradeGroups[$activeGroup]['levels'])->pluck('id')->map(fn ($id) => (int) $id)->all()
+                    ? SchoolClass::query()->whereIn('grade_level', $gradeGroups[$activeGroup]['levels'])->pluck('id')->map(fn ($id) => (int) $id)->all() ?: [0]
                     : []);
             $gradeGroupStats = [];
             if ($isAdmin) {
@@ -119,6 +119,8 @@ class DashboardController extends Controller
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
                 ->when($activeClassIds !== [], fn ($q) => $q->whereIn('school_class_id', $activeClassIds));
 
+            // Öğretmen ya da seçili sınıf/düzey varsa tüm veriler yalnızca bu öğrencilerle sınırlanır.
+            $scoped = ! $isAdmin || $activeClassIds !== [];
             $studentIds = (clone $studentsBase)->pluck('id');
             $studentUserIds = (clone $studentsBase)->pluck('user_id');
 
@@ -139,11 +141,11 @@ class DashboardController extends Controller
                 ->count();
 
             $gradeCount = Grade::query()
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->count();
 
             $avgGrade = round((float) Grade::query()
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->avg('score'), 1);
 
             // "Ortalama Not / Genel Basari" widget'i sadece manuel girilen
@@ -194,19 +196,19 @@ class DashboardController extends Controller
 
             $avgGradeByStudent = Grade::query()
                 ->selectRaw('student_id, ROUND(AVG(score), 1) as avg_score')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->groupBy('student_id')
                 ->pluck('avg_score', 'student_id');
 
             $activeStudents = StudentTimeStat::query()
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->whereNotNull('last_seen_at')
                 ->where('last_seen_at', '>=', now()->subDay())
                 ->count();
 
             $activeStudentTop3 = StudentTimeStat::query()
                 ->with(['student.user'])
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('student_id', $studentIds))
+                ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
                 ->whereNotNull('last_seen_at')
                 ->where('last_seen_at', '>=', now()->subDay())
                 ->orderByDesc('last_seen_at')
@@ -227,7 +229,7 @@ class DashboardController extends Controller
 
             $completedContentCountByUser = ContentProgress::query()
                 ->selectRaw('user_id, COUNT(*) as completed_count')
-                ->when(! $isAdmin, fn ($q) => $q->whereIn('user_id', $studentUserIds))
+                ->when($scoped, fn ($q) => $q->whereIn('user_id', $studentUserIds))
                 ->where('completed', true)
                 ->groupBy('user_id')
                 ->pluck('completed_count', 'user_id');
@@ -235,6 +237,7 @@ class DashboardController extends Controller
             $students = Student::query()
                 ->with(['user', 'schoolClass'])
                 ->when(! $isAdmin, fn ($q) => $q->whereIn('school_class_id', $teacherClassIds))
+                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('school_class_id', $activeClassIds))
                 ->get();
             $availableXp = $this->xpService->availableFor($students);
 
@@ -593,11 +596,22 @@ class DashboardController extends Controller
                 : [];
         }
 
+        // Panelde seçili sınıf / sınıf düzeyi varsa liste yalnızca onları kapsar.
+        $scopeClassIds = [];
+        $reqClass = (int) $request->query('class_id', 0);
+        $reqGroup = (string) $request->query('grade_group', '');
+        if ($reqClass > 0) {
+            $scopeClassIds = [$reqClass];
+        } elseif ($isAdmin && isset(self::GRADE_GROUPS[$reqGroup])) {
+            $scopeClassIds = SchoolClass::query()->whereIn('grade_level', self::GRADE_GROUPS[$reqGroup]['levels'])->pluck('id')->map(fn ($id) => (int) $id)->all() ?: [0];
+        }
+
         $rows = Student::query()
             ->join('student_time_stats', 'student_time_stats.student_id', '=', 'students.id')
             ->join('school_classes', 'school_classes.id', '=', 'students.school_class_id')
             ->join('users', 'users.id', '=', 'students.user_id')
             ->when(! $isAdmin, fn ($q) => $q->whereIn('students.school_class_id', $teacherClassIds))
+            ->when($scopeClassIds !== [], fn ($q) => $q->whereIn('students.school_class_id', $scopeClassIds))
             ->where('student_time_stats.last_seen_at', '>=', now()->subMinutes(15))
             // Cikis yaptirilan (force_logout_at girildikten sonra ogrenci
             // henuz tekrar giris yapmamis) ogrenciler "aktif" sayilmamali -

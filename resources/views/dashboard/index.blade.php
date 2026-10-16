@@ -1246,7 +1246,7 @@
 
     async function load() {
         try {
-            const res = await fetch(activeClassesUrl, { headers: { 'Accept': 'application/json' } });
+            const res = await fetch(activeClassesUrl + window.location.search, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
             const data = await res.json();
             render(data.classes || []);
