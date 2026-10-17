@@ -221,13 +221,22 @@ class CourseController extends Controller
         try {
             $assignableCourses = Course::query()
                 ->select(['id', 'name', 'teacher_id', 'parent_course_id'])
+                // Kapak yolu yalnızca JSON'dan çekilir; slayt içerikleri (çok büyük) belleğe alınmaz.
+                ->selectRaw("JSON_UNQUOTE(JSON_EXTRACT(lesson_payload, '$.cover_image')) as cover_raw")
                 ->orderByDesc('id')
                 ->whereNull('parent_course_id')
                 ->when(
                     $isTeacher && $teacherId > 0,
                     fn ($query) => $query->where('teacher_id', $teacherId)
                 )
-                ->get();
+                ->get()
+                ->each(function (Course $course): void {
+                    $raw = (string) ($course->getAttribute('cover_raw') ?? '');
+                    $course->setRawAttributes(array_merge($course->getAttributes(), [
+                        'lesson_payload' => json_encode(['cover_image' => $raw]),
+                    ]));
+                    $course->setAttribute('cover_url', $raw !== '' ? $course->coverImageUrl() : '');
+                });
         } catch (\Throwable $e) {
             Log::warning('Course assignable courses fallback triggered', [
                 'message' => $e->getMessage(),

@@ -284,7 +284,7 @@
                 <button id="course-import-open" type="button" class="btn-upload">Yükle</button>
                 <a href="{{ route('courses.export-all') }}" class="btn-download">İndir</a>
                 @if(auth()->user()?->hasRole('admin','teacher'))
-                    <button type="button" id="course-bulk-assign-open" class="btn" style="background:#fb923c;color:#fff">Ders Ata</button>
+                    <button type="button" id="ba-open" class="btn" style="background:#fb923c;color:#fff">Ders Ata</button>
                 @endif
                 @if(auth()->user()?->hasRole('admin'))
                     <button type="submit" form="course-destroy-all-form" class="btn-delete">Tüm Dersleri Sil</button>
@@ -447,119 +447,7 @@
     </div>
 </div>
 
-<div id="course-bulk-assign-modal" style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:3050;padding:16px;">
-    <div style="width:min(96vw,1200px);height:92vh;max-height:92vh;overflow:hidden;background:#fff;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.18);display:grid;grid-template-rows:{{ ($isAdmin ?? false) ? 'auto auto minmax(0,1fr) minmax(0,1fr) auto' : 'auto minmax(0,1fr) minmax(0,1fr) auto' }};gap:14px;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-            <div>
-                <h3 style="margin:0;font-size:22px;font-weight:800;color:#111827;">Toplu Ders Atama</h3>
-                <p id="course-bulk-assign-title" style="margin:6px 0 0;color:#475569;">Bir öğretmen seçin ve dersleri topluca atayın.</p>
-            </div>
-            <button type="button" id="course-bulk-assign-close" style="height:40px;padding:0 14px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Kapat</button>
-        </div>
-        @if(($isAdmin ?? false))
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <button type="button" class="btn" data-bulk-tab="teacher">Öğretmene Atama</button>
-                <button type="button" class="btn" data-bulk-tab="class">Sınıfa Atama</button>
-            </div>
-        @endif
-        <div style="display:grid;grid-template-columns:{{ ($isAdmin ?? false) ? '1fr 1.15fr' : '1fr' }};gap:12px;align-items:start;">
-            @if(($isAdmin ?? false))
-                <div id="bulk-course-teacher-wrap">
-                    <label for="bulk-course-teacher" style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Öğretmen Seç</label>
-                    <select id="bulk-course-teacher" style="width:100%;height:44px;border:1px solid #cbd5e1;border-radius:12px;padding:0 12px;">
-                        <option value="">Öğretmen seçiniz</option>
-                        @foreach(($teachers ?? collect()) as $teacher)
-                            <option value="{{ $teacher->id }}">{{ $teacher->user?->name ?? ('Öğretmen #' . $teacher->id) }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            @endif
-            <div id="bulk-course-class-wrap" style="grid-column:{{ ($isAdmin ?? false) ? 'auto' : '1 / -1' }};display:grid;grid-template-rows:auto minmax(0,1fr);align-self:stretch;min-height:0;">
-                <label style="display:block;margin-bottom:6px;font-weight:700;color:#0f172a">Sınıf Seç</label>
-                <div id="bulk-course-classes" style="min-height:0;overflow-y:scroll;border:1px solid #cbd5e1;border-radius:14px;padding:10px;background:#f8fafc;">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">
-                        @foreach($bulkAssignableClasses as $class)
-                            <label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;min-width:0;min-height:72px;">
-                                <input type="checkbox" class="bulk-course-class-checkbox" value="{{ $class->id }}" style="margin-top:3px;width:auto;">
-                                <span style="display:grid;gap:2px;min-width:0;">
-                                    <strong style="color:#0f172a;">{{ $class->name }}/{{ $class->section }}</strong>
-                                    <small style="color:#64748b;">{{ $class->grade_level }}. sınıf</small>
-                                </span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-        @if(($isAdmin ?? false))
-        <div id="bulk-course-list" style="overflow:auto;border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#f8fafc;min-height:0;max-height:38vh;">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff;white-space:nowrap;">
-                    <input type="checkbox" id="bulk-course-select-all-classes" style="width:auto;margin:0">
-                    <span>Sınıfları tümünü seç</span>
-                </label>
-            </div>
-            <div id="bulk-course-panel-teacher" style="display:grid;gap:10px;">
-                @foreach(($assignableCourses ?? collect()) as $course)
-                    <label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
-                        <input type="checkbox" class="bulk-course-checkbox" value="{{ $course->id }}" data-course-teacher="{{ (int) ($course->teacher_id ?? 0) }}" style="width:auto;margin:0;">
-                        <span style="flex:1 1 auto;font-weight:700;color:#111827;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">{{ $course->name }}</span>
-                        <span style="flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;">{{ (int) ($course->teacher_id ?? 0) > 0 ? 'Atanmış' : 'Boş' }}</span>
-                    </label>
-                @endforeach
-            </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap;">
-            <form id="course-bulk-assign-form" method="POST" action="{{ route('courses.assign-teacher.bulk') }}" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin:0;">
-                @csrf
-                <input type="hidden" name="teacher_id" id="bulk-course-teacher-input">
-                <div id="bulk-course-class-hidden-inputs"></div>
-                <div id="bulk-course-hidden-inputs"></div>
-                <button type="button" id="course-bulk-assign-cancel" style="height:44px;padding:0 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">İptal</button>
-                <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaydet</button>
-            </form>
-            <form id="course-bulk-unassign-form" method="POST" action="{{ route('courses.unassign-teacher.bulk') }}" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin:0;">
-                @csrf
-                <input type="hidden" name="teacher_id" id="bulk-course-unassign-teacher-input">
-                <div id="bulk-course-unassign-hidden-inputs"></div>
-                <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaldır</button>
-            </form>
-        </div>
-        @else
-        <div id="bulk-course-list" style="overflow:auto;border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#f8fafc;min-height:0;max-height:52vh;">
-            <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-                <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff;white-space:nowrap;">
-                    <input type="checkbox" id="bulk-course-select-all-classes" style="width:auto;margin:0">
-                    <span>Sınıfları tümünü seç</span>
-                </label>
-            </div>
-            <div style="display:grid;gap:10px;">
-                @foreach(($assignableCourses ?? collect()) as $course)
-                    <label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
-                        <input type="checkbox" class="bulk-course-checkbox" value="{{ $course->id }}" data-course-teacher="{{ (int) ($course->teacher_id ?? 0) }}" style="width:auto;margin:0;">
-                        <span style="flex:1 1 auto;font-weight:700;color:#111827;min-width:0;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">{{ $course->name }}</span>
-                        <span style="flex:0 0 auto;padding:5px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;">{{ (int) ($course->teacher_id ?? 0) > 0 ? 'Atanmış' : 'Boş' }}</span>
-                    </label>
-                @endforeach
-            </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap;">
-            <form id="course-bulk-assign-form" method="POST" action="{{ route('courses.assign-classes.bulk') }}" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin:0;">
-                @csrf
-                <div id="bulk-course-class-hidden-inputs"></div>
-                <div id="bulk-course-hidden-inputs"></div>
-                <button type="button" id="course-bulk-assign-cancel" style="height:44px;padding:0 16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">İptal</button>
-                <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaydet</button>
-            </form>
-            <form id="course-bulk-unassign-form" method="POST" action="{{ route('courses.unassign-classes.bulk') }}" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;margin:0;">
-                @csrf
-                <div id="bulk-course-unassign-hidden-inputs"></div>
-                <button type="submit" style="height:44px;padding:0 16px;border:0;border-radius:12px;background:#f59e0b;color:#fff;font-weight:700;cursor:pointer;">Atamayı Kaldır</button>
-            </form>
-        </div>
-        @endif
-    </div>
-</div>
+@include('courses.partials.bulk-assign-modal')
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
