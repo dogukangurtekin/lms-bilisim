@@ -697,7 +697,7 @@
         courses: { title: 'Ders Sayısı', span: 4, order: 60 },
         avg_completion: { title: 'Ortalama Not', span: 4, order: 70 },
         xp: { title: 'Toplam XP', span: 4, order: 80 },
-        @if(auth()->user()?->hasRole('admin'))
+        @if($canGiftXp ?? false)
         xp_gift: { title: 'XP Hediyesi', span: 12, order: 72 },
         @endif
         active_classes: { title: 'Aktif Sınıflar', span: 6, order: 75 },
