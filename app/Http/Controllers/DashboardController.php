@@ -472,14 +472,18 @@ class DashboardController extends Controller
         $layout = $this->resolveLayout($user);
         $xpGiftClasses = collect();
         $xpGiftStudents = collect();
-        if ($user?->hasRole('admin')) {
+        $canGiftXp = $this->canGiftXp($user);
+        if ($canGiftXp) {
+            $giftClassIds = $this->giftClassIds($user);
             $xpGiftClasses = SchoolClass::query()
                 ->select(['id', 'name', 'section'])
+                ->when($giftClassIds !== null, fn ($q) => $q->whereIn('id', $giftClassIds))
                 ->orderBy('name')
                 ->orderBy('section')
                 ->get();
             $xpGiftStudents = Student::query()
                 ->with(['user:id,name,is_active', 'schoolClass:id,name,section'])
+                ->when($giftClassIds !== null, fn ($q) => $q->whereIn('school_class_id', $giftClassIds))
                 ->whereHas('user', fn ($query) => $query->where('is_active', true))
                 ->get()
                 ->sortBy(fn (Student $student) => ($student->schoolClass?->name ?? '').'/'.($student->schoolClass?->section ?? '').'/'.($student->user?->name ?? ''))
@@ -490,15 +494,41 @@ class DashboardController extends Controller
             'dashboard' => $dashboard,
             'dashboardLayout' => $layout,
             'selectedClassId' => $dashboard['selected_class_id'] ?? 0,
+            'canGiftXp' => $canGiftXp,
             'xpGiftClasses' => $xpGiftClasses,
             'xpGiftStudents' => $xpGiftStudents,
         ]);
     }
 
+    /** Admin her zaman; öğretmen yalnızca admin widget'ı açtıysa XP hediyesi gönderebilir. */
+    private function canGiftXp(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->hasRole('admin')
+            || ($user->hasRole('teacher') && \App\Support\TeacherXpGiftSetting::enabled());
+    }
+
+    /** Admin için null (kısıt yok); öğretmen için kendi sınıf kimlikleri. */
+    private function giftClassIds(User $user): ?array
+    {
+        if ($user->hasRole('admin')) {
+            return null;
+        }
+        $teacher = Teacher::query()->where('user_id', $user->id)->first();
+
+        return $teacher
+            ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all()
+            : [];
+    }
+
     public function grantXp(Request $request)
     {
         $admin = $request->user();
-        abort_unless($admin?->hasRole('admin'), 403);
+        abort_unless($this->canGiftXp($admin), 403);
+        $giftClassIds = $this->giftClassIds($admin);
 
         $data = $request->validate([
             'target_scope' => ['required', 'in:all,class,students'],
@@ -512,6 +542,7 @@ class DashboardController extends Controller
         $students = Student::query()
             ->with('user')
             ->whereHas('user', fn ($query) => $query->where('is_active', true))
+            ->when($giftClassIds !== null, fn ($query) => $query->whereIn('school_class_id', $giftClassIds))
             ->when($data['target_scope'] === 'class', fn ($query) => $query->where('school_class_id', (int) $data['class_id']))
             ->when($data['target_scope'] === 'students', fn ($query) => $query->whereIn('id', $data['student_ids'] ?? []))
             ->get();

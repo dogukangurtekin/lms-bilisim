@@ -127,6 +127,18 @@ class ProfileController extends Controller
             : 'Slayt süresi kapatıldı. Öğrenciler sayfaları beklemeden geçebilir.');
     }
 
+    public function updateTeacherXpGift(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        \App\Support\TeacherXpGiftSetting::set((bool) $data['enabled']);
+
+        return back()->with('success', $data['enabled']
+            ? 'XP Hediyesi widget\'ı öğretmenlere açıldı. Öğretmenler yalnızca kendi sınıflarına XP gönderebilir.'
+            : 'XP Hediyesi widget\'ı öğretmenlere kapatıldı.');
+    }
+
     public function updateBranding(Request $request): RedirectResponse
     {
         $user = $request->user();

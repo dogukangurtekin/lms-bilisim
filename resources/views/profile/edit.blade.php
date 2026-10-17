@@ -149,6 +149,24 @@
     @endif
 
     @if($user->hasRole('admin'))
+        @php($teacherXpGiftOn = \App\Support\TeacherXpGiftSetting::enabled())
+        <div class="card" style="border:1.5px solid {{ $teacherXpGiftOn ? '#a7f3d0' : '#dbe5f2' }};">
+            <h3 style="margin:0 0 4px;">🎁 Öğretmenlere XP Hediyesi</h3>
+            <p style="margin:0 0 12px;color:#475569">
+                Açıldığında öğretmenler panellerinde "XP Hediyesi Gönder" widget'ını görür ve yalnızca kendi sınıflarındaki öğrencilere XP gönderebilir.
+                Şu an: <strong style="color:{{ $teacherXpGiftOn ? '#15803d' : '#64748b' }}">{{ $teacherXpGiftOn ? 'AÇIK (öğretmenler gönderebilir)' : 'KAPALI (yalnızca admin)' }}</strong>
+            </p>
+            <form method="POST" action="{{ route('profile.teacher-xp-gift.update') }}">
+                @csrf
+                <input type="hidden" name="enabled" value="{{ $teacherXpGiftOn ? 0 : 1 }}">
+                <button type="submit" class="btn {{ $teacherXpGiftOn ? 'btn-danger' : '' }}">
+                    {{ $teacherXpGiftOn ? '🎁 Öğretmenlere Kapat' : '🎁 Öğretmenlere Aç' }}
+                </button>
+            </form>
+        </div>
+    @endif
+
+    @if($user->hasRole('admin'))
         @php($maintenance = \App\Support\MaintenanceMode::state())
         <div class="card" style="border:1.5px solid {{ $maintenance['enabled'] ? '#fbbf24' : '#dbe5f2' }};{{ $maintenance['enabled'] ? 'background:#fffbeb;' : '' }}">
             <h3 style="margin:0 0 4px;">🛠️ Bakım Çalışması</h3>

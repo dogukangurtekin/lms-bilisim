@@ -318,7 +318,7 @@
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
 
-                @if(auth()->user()?->hasRole('admin'))
+                @if($canGiftXp ?? false)
                     <article class="dashboard-widget widget-span-12 xp-gift-widget" data-widget-key="xp_gift" draggable="false">
                         <div class="widget-head">
                             <div><strong>XP Hediyesi Gönder</strong><span>Tüm öğrencilere, sınıfa veya seçilen öğrencilere XP yükle</span></div>
@@ -332,7 +332,7 @@
                             <div class="xp-gift-field">
                                 <label for="xp-gift-scope">Hedef</label>
                                 <select id="xp-gift-scope" name="target_scope" data-xp-gift-scope required>
-                                    <option value="all" @selected(old('target_scope', 'all') === 'all')>Tüm öğrenciler</option>
+                                    <option value="all" @selected(old('target_scope', 'all') === 'all')>{{ $isAdminDash ? 'Tüm öğrenciler' : 'Tüm öğrencilerim' }}</option>
                                     <option value="class" @selected(old('target_scope') === 'class')>Sınıf ve şube</option>
                                     <option value="students" @selected(old('target_scope') === 'students')>Öğrenci seç</option>
                                 </select>
