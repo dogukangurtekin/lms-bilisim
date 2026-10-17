@@ -172,6 +172,21 @@
     const targetCount = () => st.mode === 'teacher' ? (st.teacher ? 1 : 0) : targetClassIds().length;
     const teacherName = (id) => (TEACHERS.find((t) => t.id === id) || {}).name || '';
 
+    // Hedefe (öğretmen / sınıf / kademe) atanmış dersleri otomatik seç.
+    function autoSelect() {
+        let ids = [];
+        if (st.mode === 'teacher') ids = st.teacher ? (BY_TEACHER[st.teacher] || []) : [];
+        else ids = [...new Set(targetClassIds().flatMap((id) => BY_CLASS[id] || []))];
+        st.courses = new Set(ids.map(Number).filter((id) => COURSES.some((c) => c.id === id)));
+    }
+    function resetState() {
+        clearTimeout(armed); armed = null;
+        st.mode = IS_ADMIN ? 'teacher' : 'class';
+        st.teacher = 0; st.q = ''; st.tq = '';
+        st.classes = new Set(); st.levels = new Set(); st.courses = new Set();
+        const q = $('ba-q'); if (q) q.value = '';
+    }
+
     function renderModes() {
         document.querySelectorAll('#ba-modes button').forEach((b) => b.classList.toggle('on', b.dataset.mode === st.mode));
     }
@@ -253,14 +268,12 @@
     function refresh() { renderCourses(); renderFoot(); }
 
     function open() {
-        armed = null;
-        st.courses.clear();
-        if (!IS_ADMIN && st.mode === 'teacher') st.mode = 'class';
+        resetState();
         renderAll();
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
-    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; armed = null; }
+    function close() { modal.classList.remove('open'); document.body.style.overflow = ''; resetState(); }
 
     function submit(kind) {
         const f = $('ba-form');
@@ -280,7 +293,7 @@
 
     $('ba-modes').addEventListener('click', (e) => {
         const b = e.target.closest('button[data-mode]'); if (!b) return;
-        st.mode = b.dataset.mode; armed = null; renderAll();
+        st.mode = b.dataset.mode; armed = null; autoSelect(); renderAll();
     });
     $('ba-target').addEventListener('click', (e) => {
         const t = e.target.closest('[data-teacher]');
@@ -290,7 +303,6 @@
         if (t) {
             // Öğretmene tıklanınca ona atanmış dersler otomatik seçilir.
             st.teacher = Number(t.dataset.teacher);
-            st.courses = new Set((BY_TEACHER[st.teacher] || []).map(Number).filter((id) => COURSES.some((c) => c.id === id)));
         }
         else if (c) { const id = Number(c.dataset.class); st.classes.has(id) ? st.classes.delete(id) : st.classes.add(id); }
         else if (g) {
@@ -300,7 +312,7 @@
         }
         else if (l) { const v = Number(l.dataset.level); st.levels.has(v) ? st.levels.delete(v) : st.levels.add(v); }
         else return;
-        armed = null; renderTarget(); refresh();
+        armed = null; autoSelect(); renderTarget(); refresh();
     });
     $('ba-courses').addEventListener('click', (e) => {
         const b = e.target.closest('[data-course]'); if (!b) return;

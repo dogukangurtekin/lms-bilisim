@@ -55,7 +55,12 @@ class DashboardController extends Controller
         $user = auth()->user();
         $selectedClassId = (int) request()->query('class_id', 0);
         // Yalnızca yönetici: sınıf düzeyi grubu (3-4 / 5-6-7 / 9-10) filtresi
-        $selectedGradeGroup = $user?->hasRole('admin') === true ? (string) request()->query('grade_group', '') : '';
+        // Varsayılan: 5-6-7. sınıflar. "grade_group=all" tüm düzeyleri, class_id ise tek sınıfı seçer.
+        $selectedGradeGroup = '';
+        if ($user?->hasRole('admin') === true && $selectedClassId === 0) {
+            $requestedGroup = request()->query('grade_group');
+            $selectedGradeGroup = $requestedGroup === null ? '5-7' : ($requestedGroup === 'all' ? '' : (string) $requestedGroup);
+        }
 
         if ($user?->hasRole('student')) {
             return redirect()->route('student.portal.dashboard');

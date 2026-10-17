@@ -575,7 +575,7 @@
             <section class="class-picker-widget" aria-label="Sınıf seçimi">
                 <div class="gg-head"><strong>Sınıf Seçimi</strong><span>Listeden sınıf seçin</span></div>
         <select class="class-picker-select" id="classPickerSelect" aria-label="Sınıf seç" onchange="if(this.value)window.location.href=this.value">
-                    <option value="{{ route('dashboard') }}" @selected($selectedClassId === 0 && $selectedGradeGroup === '')>Tümü</option>
+                    <option value="{{ $isAdminDash ? route('dashboard', ['grade_group' => 'all']) : route('dashboard') }}" @selected($selectedClassId === 0 && $selectedGradeGroup === '')>Tümü</option>
                     @foreach(($dashboard['class_tabs'] ?? []) as $classTab)
                         <option value="{{ route('dashboard', ['class_id' => $classTab['id']]) }}" @selected($selectedClassId === (int) ($classTab['id'] ?? 0))>{{ $classTab['label'] }}</option>
                     @endforeach
@@ -586,7 +586,7 @@
                 <section class="grade-group-widget" aria-label="Sınıf düzeyi filtresi">
                     <div class="gg-head"><strong>Sınıf Düzeyi Filtresi</strong><span>Düzeydeki tüm şubeleri birlikte göster</span></div>
                     <div class="gg-list">
-                        <a class="gg-chip {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard') }}"><b>Tüm düzeyler</b><small>Tüm sınıflar</small></a>
+                        <a class="gg-chip {{ $selectedClassId === 0 && $selectedGradeGroup === '' ? 'active' : '' }}" href="{{ route('dashboard', ['grade_group' => 'all']) }}"><b>Tüm düzeyler</b><small>Tüm sınıflar</small></a>
                         @foreach($dashboard['grade_groups'] as $group)
                             <a class="gg-chip {{ $selectedGradeGroup === $group['key'] ? 'active' : '' }}" href="{{ route('dashboard', ['grade_group' => $group['key']]) }}"><b>{{ $group['label'] }}</b><small>{{ $group['classes'] }} şube · {{ $group['students'] }} öğrenci</small></a>
                         @endforeach
@@ -1109,6 +1109,7 @@
     const listEl = document.getElementById('active-classes-list');
     if (!listEl) return;
     const activeClassesUrl = @json(route('dashboard.active-classes'));
+    const activeClassesScope = @json($selectedClassId > 0 ? '?class_id='.$selectedClassId : ($selectedGradeGroup !== '' ? '?grade_group='.$selectedGradeGroup : ''));
     const activeStudentsUrlTemplate = @json(route('dashboard.class.active-students', ['class' => '__CLASS_ID__']));
     const studentLogoutUrlTemplate = @json(route('dashboard.student.force-logout', ['class' => '__CLASS_ID__', 'student' => '__STUDENT_ID__']));
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -1246,7 +1247,7 @@
 
     async function load() {
         try {
-            const res = await fetch(activeClassesUrl + window.location.search, { headers: { 'Accept': 'application/json' } });
+            const res = await fetch(activeClassesUrl + activeClassesScope, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
             const data = await res.json();
             render(data.classes || []);
