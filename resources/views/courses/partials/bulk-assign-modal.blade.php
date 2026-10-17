@@ -6,7 +6,8 @@
         'teacher' => (int) ($c->teacher_id ?? 0),
         'cover' => (string) ($c->getAttribute('cover_url') ?? ''),
     ])->values();
-    $baTeachers = ($teachers ?? collect())->map(fn ($t) => [
+    // Yönetici hesabı öğretmen listesinde gösterilmez; yalnızca öğretmen rolündeki kullanıcılar.
+    $baTeachers = ($teachers ?? collect())->filter(fn ($t) => $t->user?->hasRole('teacher'))->map(fn ($t) => [
         'id' => (int) $t->id,
         'name' => (string) ($t->user?->name ?? ('Öğretmen #'.$t->id)),
     ])->values();
@@ -255,7 +256,6 @@
         armed = null;
         st.courses.clear();
         if (!IS_ADMIN && st.mode === 'teacher') st.mode = 'class';
-        if (IS_ADMIN && !st.teacher && MY_TEACHER) st.teacher = MY_TEACHER;
         renderAll();
         modal.classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -287,7 +287,11 @@
         const c = e.target.closest('[data-class]');
         const g = e.target.closest('[data-grp]');
         const l = e.target.closest('[data-level]');
-        if (t) { st.teacher = Number(t.dataset.teacher); }
+        if (t) {
+            // Öğretmene tıklanınca ona atanmış dersler otomatik seçilir.
+            st.teacher = Number(t.dataset.teacher);
+            st.courses = new Set((BY_TEACHER[st.teacher] || []).map(Number).filter((id) => COURSES.some((c) => c.id === id)));
+        }
         else if (c) { const id = Number(c.dataset.class); st.classes.has(id) ? st.classes.delete(id) : st.classes.add(id); }
         else if (g) {
             const grade = Number(g.dataset.grp), arr = CLASSES.filter((x) => x.grade === grade);
