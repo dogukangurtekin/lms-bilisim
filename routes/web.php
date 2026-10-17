@@ -239,6 +239,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/kullanici-yonetimi/toplu/ogretmen-yukle', [UserManagementController::class, 'bulkStoreTeachers'])->name('users.bulk.teachers.store');
             Route::delete('/kullanici-yonetimi/ogrenciler/secili', [UserManagementController::class, 'destroySelectedStudents'])->name('users.students.destroy-selected');
             Route::delete('/kullanici-yonetimi/ogrenciler/tumu', [UserManagementController::class, 'destroyAllStudents'])->name('users.students.destroy-all');
+            Route::put('/kullanici-yonetimi/{user}/sinif', [UserManagementController::class, 'updateClass'])->name('users.update-class');
             Route::put('/kullanici-yonetimi/{user}', [UserManagementController::class, 'update'])->name('users.update');
             Route::post('/kullanici-yonetimi/{user}/sifre-sifirla', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
             Route::delete('/kullanici-yonetimi/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');

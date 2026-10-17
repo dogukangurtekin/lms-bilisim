@@ -145,7 +145,7 @@
     <form id="delete-selected-students-form" method="POST" action="{{ route('users.students.destroy-selected') }}" data-confirm="Seçili öğrenciler sistemden kaldırılsın mı?" style="display:none">@csrf @method('DELETE')</form>
     <div class="table-responsive users-table-wrap">
         <table>
-            <thead><tr><th><input type="checkbox" id="select-all-students" title="Tum ogrencileri sec"></th><th>ID</th><th>Ad</th><th>E-posta</th><th>Rol</th><th>İşlem</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="select-all-students" title="Tum ogrencileri sec"></th><th>ID</th><th>Ad</th><th>E-posta</th><th>Rol</th><th>Sınıf</th><th>İşlem</th></tr></thead>
             <tbody>
             @foreach($users as $item)
                 <tr>
@@ -154,6 +154,19 @@
                     <td>{{ $item->name }}</td>
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role?->slug ?? '-' }}</td>
+                    <td>
+                        @if($item->student)
+                            <form method="POST" action="{{ route('users.update-class', $item) }}" style="margin:0;display:flex;gap:6px;align-items:center;">@csrf @method('PUT')
+                                <select name="school_class_id" style="min-width:110px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;" aria-label="Sınıf">
+                                    @unless($item->student->school_class_id)<option value="">-</option>@endunless
+                                    @foreach($classes as $class)<option value="{{ $class->id }}" @selected((int) $item->student->school_class_id === (int) $class->id)>{{ $class->name }} / {{ $class->section }}</option>@endforeach
+                                </select>
+                                <button type="submit" class="btn btn-sm" title="Sınıfı kaydet">Kaydet</button>
+                            </form>
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td class="actions" style="display:flex;gap:6px;flex-wrap:wrap;">
                         @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
                             <a class="btn" href="{{ route('users.classes.edit', $item) }}" style="padding:7px 12px;font-size:13px;">Sınıf Ata</a>

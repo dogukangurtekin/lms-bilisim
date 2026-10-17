@@ -89,6 +89,24 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')->with('ok', 'Kullanici bilgileri guncellendi.');
     }
 
+    public function updateClass(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'school_class_id' => ['required', 'integer', 'exists:school_classes,id'],
+        ]);
+
+        $student = Student::query()->where('user_id', $user->id)->first();
+        if (! $student) {
+            return redirect()->back()->with('err', 'Bu kullanici ogrenci degil.');
+        }
+
+        // Ogrenci kaydi (ilerleme, XP, odevler) ayni kalir; sadece sinifi degisir.
+        $student->school_class_id = (int) $data['school_class_id'];
+        $student->save();
+
+        return redirect()->back()->with('ok', $user->name.' icin sinif guncellendi.');
+    }
+
     public function resetPassword(User $user)
     {
         $newPassword = Str::password(10, symbols: false);
