@@ -161,6 +161,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
     Route::post('/profilim/slayt-suresi', [ProfileController::class, 'updateSlideTimer'])->name('profile.slide-timer.update');
     Route::post('/profilim/ogretmen-xp-hediyesi', [ProfileController::class, 'updateTeacherXpGift'])->name('profile.teacher-xp-gift.update');
+    Route::post('/profilim/sinav-olustur', [ProfileController::class, 'updateExamBuilder'])->name('profile.exam-builder.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -223,6 +224,11 @@ Route::middleware('auth')->group(function () {
     Route::redirect('/flowchart-programming', '/flowchart-runner')->name('flowchart.editor');
     Route::get('/course/{id}', [CourseController::class, 'show'])->name('course.detail');
     Route::get('/dersler/{course}/onizle', [CourseController::class, 'preview'])->name('course.preview');
+    Route::middleware(['role:admin,teacher', 'exam.access'])->prefix('sinav-olustur')->name('exams.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ExamController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\ExamController::class, 'store'])->name('store');
+        Route::delete('/{exam}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');
+    });
     Route::middleware('role:admin,teacher')->group(function () {
         Route::get('/taleplerim', [SupportRequestController::class, 'index'])->name('support-requests.index');
         Route::post('/taleplerim', [SupportRequestController::class, 'store'])->middleware('role:teacher')->name('support-requests.store');

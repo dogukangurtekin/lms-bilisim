@@ -35,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [CheckMaintenanceMode::class]);
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'exam.access' => \App\Http\Middleware\ExamBuilderAccess::class,
             'client.auth' => AuthenticateClientApi::class,
         ]);
     })

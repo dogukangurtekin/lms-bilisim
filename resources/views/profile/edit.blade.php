@@ -167,6 +167,24 @@
     @endif
 
     @if($user->hasRole('admin'))
+        @php($examBuilderOn = \App\Support\ExamBuilderSetting::enabled())
+        <div class="card" style="border:1.5px solid {{ $examBuilderOn ? '#a7f3d0' : '#dbe5f2' }};">
+            <h3 style="margin:0 0 4px;">📝 Öğretmenlere Sınav Oluştur</h3>
+            <p style="margin:0 0 12px;color:#475569">
+                Açıldığında öğretmenlerin sol menüsünde "Sınav Oluştur" görünür; öğretmenler yalnızca kendi sınavlarını hazırlayıp PDF/Word olarak indirebilir.
+                Şu an: <strong style="color:{{ $examBuilderOn ? '#15803d' : '#64748b' }}">{{ $examBuilderOn ? 'AÇIK (öğretmenler kullanabilir)' : 'KAPALI (yalnızca admin)' }}</strong>
+            </p>
+            <form method="POST" action="{{ route('profile.exam-builder.update') }}">
+                @csrf
+                <input type="hidden" name="enabled" value="{{ $examBuilderOn ? 0 : 1 }}">
+                <button type="submit" class="btn {{ $examBuilderOn ? 'btn-danger' : '' }}">
+                    {{ $examBuilderOn ? '📝 Öğretmenlere Kapat' : '📝 Öğretmenlere Aç' }}
+                </button>
+            </form>
+        </div>
+    @endif
+
+    @if($user->hasRole('admin'))
         @php($maintenance = \App\Support\MaintenanceMode::state())
         <div class="card" style="border:1.5px solid {{ $maintenance['enabled'] ? '#fbbf24' : '#dbe5f2' }};{{ $maintenance['enabled'] ? 'background:#fffbeb;' : '' }}">
             <h3 style="margin:0 0 4px;">🛠️ Bakım Çalışması</h3>

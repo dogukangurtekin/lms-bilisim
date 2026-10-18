@@ -139,6 +139,18 @@ class ProfileController extends Controller
             : 'XP Hediyesi widget\'ı öğretmenlere kapatıldı.');
     }
 
+    public function updateExamBuilder(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        \App\Support\ExamBuilderSetting::set((bool) $data['enabled']);
+
+        return back()->with('success', $data['enabled']
+            ? 'Sınav Oluştur modülü öğretmenlere açıldı. Öğretmenler yalnızca kendi sınavlarını görür.'
+            : 'Sınav Oluştur modülü öğretmenlere kapatıldı.');
+    }
+
     public function updateBranding(Request $request): RedirectResponse
     {
         $user = $request->user();

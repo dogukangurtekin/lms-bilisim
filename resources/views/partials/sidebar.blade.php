@@ -88,6 +88,11 @@
         <a class="{{ request()->routeIs('live-tracking.*') ? 'active' : '' }}" href="{{ route('live-tracking.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/><path d="M12 6v2m0 8v2M6 12H4m16 0h-2"/></svg></span>Canlı Takip
         </a>
+        @if(\App\Support\ExamBuilderSetting::allowedFor(auth()->user()))
+        <a class="{{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6a1 1 0 01-1-1V3a1 1 0 011-1zm8 1.5V8h4.5L14 3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg></span>Sınav Oluştur
+        </a>
+        @endif
         <a class="{{ request()->routeIs('coding.activities.*') ? 'active' : '' }}" href="{{ route('coding.activities.manage') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Günlük Çalışmalar
         </a>
