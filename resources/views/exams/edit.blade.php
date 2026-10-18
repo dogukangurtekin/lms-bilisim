@@ -33,6 +33,11 @@
     .pl-meta{font-size:11.5px;color:#64748b;font-weight:700}
     .pl-add{height:32px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer}
     .pl-add:disabled{background:#dcfce7;color:#166534;cursor:default}
+    .wt-cur{display:flex;align-items:center;gap:8px;justify-content:space-between;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:6px 8px;font-size:12px;font-weight:800;color:#065f46}
+    .wt-cur span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .wt-panel{border:1px solid #fcd34d;background:#fffbeb;border-radius:12px;padding:10px;display:grid;gap:7px;font-size:12.5px;font-weight:700;color:#78350f}
+    .wt-panel button{border:0;border-radius:9px;padding:8px 10px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;background:#fff;color:#0f172a;border:1px solid #e5e7eb;text-align:left}
+    .wt-panel button.p{background:#2563eb;color:#fff;border-color:transparent}
     .tpl-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
     .tpl-card{border:2px solid #e2e8f0;border-radius:11px;background:#fff;padding:6px 3px 5px;font-size:10.5px;font-weight:800;color:#334155;cursor:pointer;text-align:center;line-height:1.15}
     .tpl-card.on{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
@@ -140,6 +145,15 @@
             <button type="button" data-pdf="key">Yalnız cevap anahtarı<small>Tek tablo</small></button>
         </div>
     </div>
+    <div class="xe-menu">
+        <button type="button" class="xe-btn" id="xe-word">📝 Word ▾</button>
+        <div class="xe-dd" id="xe-dd-w">
+            <button type="button" data-word="student">Öğrenci kâğıdı<small>Sorular, cevapsız</small></button>
+            <button type="button" data-word="student_key">Öğrenci kâğıdı + cevap anahtarı<small>Son sayfada cevap tablosu</small></button>
+            <button type="button" data-word="teacher">Öğretmen kâğıdı (cevaplı)<small>Doğru şıklar ve cevaplar işaretli</small></button>
+            <button type="button" data-word="key">Yalnız cevap anahtarı<small>Tek tablo</small></button>
+        </div>
+    </div>
     <button type="button" class="xe-btn primary" id="xe-save">💾 Kaydet</button>
 </div>
 
@@ -236,6 +250,13 @@
                 </div>
             </div>
             <small style="color:#64748b;font-weight:600">PNG, JPG veya WEBP · en fazla 1 MB</small>
+        </div>
+        <h3 style="margin:14px 0 8px">📎 Word Şablonu</h3>
+        <div class="xe-f">
+            <div id="wt-current" class="wt-cur" style="display:none"><span id="wt-name"></span><button type="button" class="xe-mini" id="wt-del">Kaldır</button></div>
+            <label class="xe-mini" style="text-align:center;cursor:pointer">📤 Word kâğıdı yükle (.docx)<input type="file" id="wt-file" accept=".docx" style="display:none"></label>
+            <small style="color:#64748b;font-weight:600;line-height:1.4">Kendi sınav kâğıdınızı yükleyin: başlık, alt bilgi ve stiller korunur; kâğıttaki sorular okunup editöre eklenir. Word çıktısında sorular şablonun soru bölümüne yazılır (başlıktaki tarih/puan gibi alanlar şablondaki haliyle kalır). Soru yerini kendiniz belirlemek için şablona <b>&#123;&#123;SORULAR&#125;&#125;</b> yazabilirsiniz.</small>
+            <div id="wt-panel" class="wt-panel" style="display:none"></div>
         </div>
         <label class="xe-f" style="margin-top:9px">Sınav açıklaması<textarea data-k="settings.instructions" maxlength="1000" rows="3" style="border:1px solid #cbd5e1;border-radius:9px;padding:7px 9px;font:inherit;font-size:13px" placeholder="Örn. Her soru 10 puandır. Süre 40 dakikadır."></textarea></label>
     </aside>
@@ -484,6 +505,8 @@
         const img = $('logo-img'), has = !!state.settings.logo_path;
         img.style.display = has ? '' : 'none'; if (has) img.src = LOGO_BASE + state.settings.logo_path;
         $('logo-del').style.display = has ? '' : 'none';
+        const wn = state.settings.word_template_name || '';
+        $('wt-current').style.display = wn ? 'flex' : 'none'; $('wt-name').textContent = wn;
     };
     document.querySelectorAll('[data-k]').forEach((el) => {
         const [grp, key] = el.dataset.k.split('.');
@@ -625,6 +648,53 @@
     document.querySelector('[data-k="settings.font_family"]').addEventListener('change', () => ensureFonts().then(renderPreview));
     ensureFonts().then(renderPreview);
     renderPreview();
+
+    // Word menüsü
+    const WORD_URL = @json(route('exams.word', $exam));
+    $('xe-word').addEventListener('click', (ev) => { ev.stopPropagation(); $('xe-dd-w').classList.toggle('open'); $('xe-dd').classList.remove('open'); });
+    $('xe-pdf').addEventListener('click', () => $('xe-dd-w').classList.remove('open'));
+    document.addEventListener('click', () => $('xe-dd-w').classList.remove('open'));
+    $('xe-dd-w').addEventListener('click', async (ev) => {
+        const b = ev.target.closest('[data-word]'); if (!b) return;
+        $('xe-dd-w').classList.remove('open');
+        await ensureFonts(); await save();
+        if (!dirty) { setStatus('ok', 'Word dosyası hazırlanıyor…'); window.location.href = WORD_URL + '?mode=' + b.dataset.word; }
+    });
+
+    // Word şablonu yükle / kaldır
+    const WT_URL = @json(route('exams.word.template.upload', $exam));
+    const panel = $('wt-panel');
+    $('wt-file').addEventListener('change', async () => {
+        const f = $('wt-file').files[0]; if (!f) return;
+        if (f.size > 5 * 1024 * 1024) { setStatus('err', 'Dosya en fazla 5 MB olabilir.'); return; }
+        setStatus('', 'Word kâğıdı okunuyor…');
+        const fd = new FormData(); fd.append('word', f);
+        try {
+            const res = await fetch(WT_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'));
+            state.settings.word_template_name = j.name; syncControls(); setStatus('ok', 'Şablon eklendi');
+            const n = j.questions.length, nt = j.notes.skipped_tables, nm = j.notes.mc_without_answer;
+            if (!n) { panel.style.display = 'grid'; panel.innerHTML = '<div>Şablon eklendi. Kâğıtta numaralı soru bulunamadı; soruları editörden ekleyebilirsiniz.</div><button type="button" id="wt-close">Tamam</button>'; $('wt-close').onclick = () => { panel.style.display = 'none'; }; return; }
+            panel.style.display = 'grid';
+            panel.innerHTML = '<div>📄 Kâğıttan <b>' + n + '</b> soru okundu.' + (nt ? ' ' + nt + ' tablo (ör. eşleştirme) okunamadı.' : '') + (nm ? ' Çoktan seçmeli soruların doğru şıkkını işaretleyin.' : '') + '</div>'
+                + '<button type="button" class="p" id="wt-add">Mevcut soruların sonuna ekle</button><button type="button" id="wt-rep">Mevcut soruların yerine koy</button><button type="button" id="wt-skip">Soru ekleme (yalnız şablon)</button>';
+            const take = (replace) => {
+                const mapped = j.questions.map((q) => ({ uid: uidSeq++, ...q, options: q.options || [] }));
+                if (replace) state.questions = [];
+                state.questions.push(...mapped); selected = state.questions.length ? state.questions.length - mapped.length : -1;
+                panel.style.display = 'none'; renderList(); schedulePreview(); markDirty();
+            };
+            $('wt-add').onclick = () => take(false);
+            $('wt-rep').onclick = () => take(true);
+            $('wt-skip').onclick = () => { panel.style.display = 'none'; };
+        } catch (err) { setStatus('err', err.message); }
+        $('wt-file').value = '';
+    });
+    $('wt-del').addEventListener('click', async () => {
+        try { await fetch(WT_URL, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); } catch (_) {}
+        state.settings.word_template_name = ''; syncControls(); setStatus('ok', 'Şablon kaldırıldı');
+    });
 
     // PDF menüsü
     const PDF_URL = @json(route('exams.pdf', $exam));

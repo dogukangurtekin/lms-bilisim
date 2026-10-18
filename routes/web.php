@@ -227,6 +227,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin,teacher', 'exam.access'])->prefix('sinav-olustur')->name('exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ExamController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\ExamController::class, 'store'])->name('store');
+        Route::post('/word-ice-aktar', [\App\Http\Controllers\ExamController::class, 'importWord'])->middleware('throttle:10,1')->name('word.import');
         Route::get('/soru-havuzu', [\App\Http\Controllers\QuestionBankController::class, 'index'])->name('bank.index');
         Route::get('/soru-havuzu/ara', [\App\Http\Controllers\QuestionBankController::class, 'search'])->name('bank.search');
         Route::get('/soru-havuzu/sablon', [\App\Http\Controllers\QuestionBankController::class, 'template'])->name('bank.template');
@@ -236,6 +237,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'update'])->name('bank.update');
         Route::delete('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'destroy'])->name('bank.destroy');
         Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
+        Route::get('/{exam}/word', [\App\Http\Controllers\ExamController::class, 'word'])->middleware('throttle:20,1')->name('word');
+        Route::post('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'uploadWordTemplate'])->middleware('throttle:10,1')->name('word.template.upload');
+        Route::delete('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'deleteWordTemplate'])->name('word.template.delete');
         Route::get('/{exam}/pdf', [\App\Http\Controllers\ExamController::class, 'pdf'])->middleware('throttle:20,1')->name('pdf');
         Route::post('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'uploadLogo'])->middleware('throttle:20,1')->name('logo.upload');
         Route::delete('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'deleteLogo'])->name('logo.delete');

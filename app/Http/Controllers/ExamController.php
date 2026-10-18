@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Exam;
 use App\Models\ExamQuestion;
+use App\Services\ExamDocx\Builder as DocxBuilder;
+use App\Services\ExamDocx\Template as DocxTemplate;
 use App\Support\ExamLayout;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -182,7 +184,8 @@ class ExamController extends Controller
                 'columns' => (int) $meta['columns'],
                 'status' => $meta['status'],
                 // Önizlemedeki sayfa/sütun dağılımı: PDF ve Word çıktısı aynı dağılımı kullanır.
-                'settings' => $data['settings'] + ['layout' => $layout, 'layout_header_h' => $data['layout_header_h'] ?? null],
+                'settings' => $data['settings'] + ['layout' => $layout, 'layout_header_h' => $data['layout_header_h'] ?? null]
+                    + array_intersect_key((array) $exam->settings, ['word_template' => 1, 'word_template_name' => 1]),
             ])->save();
 
             $exam->questions()->delete();
@@ -218,15 +221,7 @@ class ExamController extends Controller
             $mode = 'student';
         }
 
-        $qs = $exam->questions()->get()->map(fn (ExamQuestion $q) => [
-            'type' => $q->type,
-            'body' => (string) $q->body,
-            'options' => $q->options ?? [],
-            'answer' => (string) ($q->answer ?? ''),
-            'points' => (float) $q->points,
-            'section_title' => (string) ($q->section_title ?? ''),
-            'answer_lines' => (int) $q->answer_lines,
-        ])->values()->all();
+        $qs = $this->exportQuestions($exam);
 
         if ($qs === []) {
             return redirect()->route('exams.edit', $exam)->with('error', 'PDF almak için sınava en az bir soru ekleyin.');
@@ -252,6 +247,175 @@ class ExamController extends Controller
         $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
 
         return $pdf->download(Str::slug($exam->title ?: 'sinav').$suffix.'.pdf');
+    }
+
+    /** PDF ve Word çıktısı için sınav sorularını düz diziye çevirir. */
+    private function exportQuestions(Exam $exam): array
+    {
+        return $exam->questions()->get()->map(fn (ExamQuestion $q) => [
+            'type' => $q->type,
+            'body' => (string) $q->body,
+            'options' => $q->options ?? [],
+            'answer' => (string) ($q->answer ?? ''),
+            'points' => (float) $q->points,
+            'section_title' => (string) ($q->section_title ?? ''),
+            'answer_lines' => (int) $q->answer_lines,
+        ])->values()->all();
+    }
+
+    private function templateDir(): string
+    {
+        return storage_path('app/exam-templates');
+    }
+
+    /** Sınava bağlı Word şablonunun tam yolu (yoksa/geçersizse null). */
+    private function wordTemplatePath(Exam $exam): ?string
+    {
+        $name = (string) data_get($exam->settings, 'word_template', '');
+        if (! preg_match('/^[a-f0-9]{24}\.docx$/', $name)) {
+            return null;
+        }
+        $path = $this->templateDir().'/'.$name;
+
+        return is_file($path) ? $path : null;
+    }
+
+    private function deleteWordTemplateFile(Exam $exam): void
+    {
+        if ($path = $this->wordTemplatePath($exam)) {
+            @unlink($path);
+        }
+    }
+
+    /** Yüklenen dosyayı doğrulayıp kalıcı depoya taşır; [dosya adı, çözümlenen içerik] döner. */
+    private function storeWordUpload(Request $request): array
+    {
+        $request->validate(['word' => ['required', 'file', 'max:5120']]);
+        $file = $request->file('word');
+        if (strtolower((string) $file->getClientOriginalExtension()) !== 'docx') {
+            abort(response()->json(['message' => 'Yalnızca .docx (Word) dosyaları yüklenebilir.'], 422));
+        }
+        try {
+            $parsed = (new DocxTemplate($file->getRealPath()))->parse();
+        } catch (\Throwable $e) {
+            abort(response()->json(['message' => 'Bu dosya geçerli bir Word (.docx) belgesi değil ya da okunamadı.'], 422));
+        }
+        $dir = $this->templateDir();
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $name = bin2hex(random_bytes(12)).'.docx';
+        $file->move($dir, $name);
+
+        return [$name, $parsed, $this->cleanFileName((string) $file->getClientOriginalName())];
+    }
+
+    private function cleanFileName(string $n): string
+    {
+        $n = preg_replace('/[\x00-\x1F\x7F]/u', '', basename($n)) ?? '';
+        $n = str_replace(['<', '>', '"', "'", '\\', '/'], '', $n);
+
+        return mb_substr(trim($n), 0, 120);
+    }
+
+    /** Word şablonu yükle: şablon sınava bağlanır, kâğıttaki sorular okunup editöre döner. */
+    public function uploadWordTemplate(Request $request, Exam $exam): JsonResponse
+    {
+        $this->authorizeOwner($request, $exam);
+        [$name, $parsed, $orig] = $this->storeWordUpload($request);
+
+        $this->deleteWordTemplateFile($exam);
+        $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['word_template' => $name, 'word_template_name' => $orig]);
+        $exam->save();
+
+        return response()->json(['ok' => true, 'name' => $orig, 'questions' => $parsed['questions'], 'header' => $parsed['header'], 'notes' => $parsed['notes']]);
+    }
+
+    public function deleteWordTemplate(Request $request, Exam $exam): JsonResponse
+    {
+        $this->authorizeOwner($request, $exam);
+        $this->deleteWordTemplateFile($exam);
+        $settings = (array) $exam->settings;
+        unset($settings['word_template'], $settings['word_template_name']);
+        $exam->settings = $settings;
+        $exam->save();
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Word kâğıdından yeni sınav: şablon olarak saklanır, sorular okunup eklenir. */
+    public function importWord(Request $request): JsonResponse|RedirectResponse
+    {
+        [$name, $parsed, $orig] = $this->storeWordUpload($request);
+
+        $title = $parsed['header']['title'] ?: (pathinfo($orig, PATHINFO_FILENAME) ?: 'Word Sınavı');
+        $exam = Exam::query()->create([
+            'user_id' => $request->user()->id,
+            'title' => mb_substr($title, 0, 200),
+            'school_name' => $parsed['header']['school'] ?: null,
+            'template' => 'classic',
+            'columns' => 1,
+            'status' => 'draft',
+            'settings' => array_merge(self::DEFAULT_SETTINGS, ['word_template' => $name, 'word_template_name' => $orig]),
+        ]);
+        foreach ($parsed['questions'] as $i => $q) {
+            ExamQuestion::query()->create([
+                'exam_id' => $exam->id, 'sort_order' => $i + 1, 'type' => $q['type'], 'body' => $q['body'],
+                'options' => self::cleanOptions($q['options']), 'answer' => $q['answer'] ?: null, 'points' => $q['points'],
+                'section_title' => $q['section_title'] ?: null, 'answer_lines' => $q['answer_lines'],
+            ]);
+        }
+        $n = count($parsed['questions']);
+        $msg = $n > 0
+            ? '"'.$orig.'" şablon olarak eklendi; '.$n.' soru okundu. Soruları kontrol edin'.($parsed['notes']['skipped_tables'] > 0 ? ' ('.$parsed['notes']['skipped_tables'].' tablo okunamadı)' : '').'.'
+            : '"'.$orig.'" şablon olarak eklendi; kâğıtta numaralı soru bulunamadı. Soruları şimdi ekleyebilirsiniz.';
+
+        if ($request->expectsJson()) {
+            $request->session()->flash('ok', $msg);
+
+            return response()->json(['ok' => true, 'url' => route('exams.edit', $exam)]);
+        }
+
+        return redirect()->route('exams.edit', $exam)->with('ok', $msg);
+    }
+
+    /** Sınavı Word (.docx) olarak indirir. mode: student | student_key | teacher | key */
+    public function word(Request $request, Exam $exam)
+    {
+        $this->authorizeOwner($request, $exam);
+        @set_time_limit(120);
+
+        $mode = (string) $request->query('mode', 'student');
+        if (! in_array($mode, ['student', 'student_key', 'teacher', 'key'], true)) {
+            $mode = 'student';
+        }
+        $qs = $this->exportQuestions($exam);
+        if ($qs === []) {
+            return redirect()->route('exams.edit', $exam)->with('error', 'Word çıktısı için sınava en az bir soru ekleyin.');
+        }
+
+        $s = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings);
+        $builder = new DocxBuilder($exam, $qs, $s, $mode);
+        $tpl = $this->wordTemplatePath($exam);
+        try {
+            $bin = $tpl ? $builder->buildFromTemplate($tpl) : $builder->build();
+        } catch (\Throwable $e) {
+            report($e);
+            if ($tpl) {
+                // Şablon bozuksa standart düzenle devam et
+                $bin = $builder->build();
+            } else {
+                throw $e;
+            }
+        }
+        $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
+
+        return response()->streamDownload(function () use ($bin): void {
+            echo $bin;
+        }, Str::slug($exam->title ?: 'sinav').$suffix.'.docx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
 
     public function uploadLogo(Request $request, Exam $exam): JsonResponse

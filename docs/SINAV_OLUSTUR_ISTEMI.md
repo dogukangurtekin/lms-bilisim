@@ -60,6 +60,6 @@ Soru tipleri: `multiple_choice` (A–E), `true_false`, `fill_blank`, `open_ended
 | 2 | Editör iskeleti: A4 önizleme, soru ekleme/silme/sıralama, tek/çift sütun, kaydetme | Tamam |
 | 3 | Soru havuzu: havuz yönetimi, filtre, havuzdan sınava ekleme, soruyu havuza kaydetme | Tamam |
 | 4 | Şablonlar ve tasarım ayarları (başlık, tipografi, tema, logo) + havuz soruları için Excel dışa/içe aktarma | Tamam |
-| 5 | PDF çıktısı (öğrenci / öğretmen kâğıdı, cevap anahtarı; önizlemeyle aynı sayfa dağılımı) | **Bu teslim** |
-| 6 | Word (.docx) çıktısı | |
+| 5 | PDF çıktısı (öğrenci / öğretmen kâğıdı, cevap anahtarı; önizlemeyle aynı sayfa dağılımı) | Tamam |
+| 6 | Word (.docx) çıktısı + yüklenen Word kâğıdını şablon olarak kullanma (soruları okuma, şablona yazma) | **Bu teslim** |
 | 7 | Cilalama: kopyalama, görsel yükleme, sürükle-bırak, yazdırma, hata/sınır durumları | |

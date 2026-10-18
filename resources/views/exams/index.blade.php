@@ -30,6 +30,8 @@
     .ex-cols i span{display:block;width:16px;height:24px;border:2px solid #94a3b8;border-radius:3px;background:#fff}
     .ex-submit{height:46px;border:0;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 8px 18px rgba(37,99,235,.3)}
     .ex-err{background:#fee2e2;color:#991b1b;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px}
+    .ex-word{display:grid;gap:6px;background:#eff6ff;border:1px dashed #93c5fd;border-radius:14px;padding:12px;margin-bottom:16px;font-size:12.5px;color:#334155}
+    .ex-word b{font-size:14px;color:#1e3a8a}.ex-word small{font-weight:700;color:#b91c1c}
     @media (max-width:980px){.ex-wrap{grid-template-columns:1fr}}
 </style>
 
@@ -53,7 +55,7 @@
                         </small>
                     </div>
                     <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
-                    @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını PDF olarak indir">PDF</a>@endif
+                    @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını PDF olarak indir">PDF</a><a href="{{ route('exams.word', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını Word olarak indir">Word</a>@endif
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
                     </form>
@@ -65,6 +67,12 @@
     </section>
 
     <aside class="ex-card">
+        <div class="ex-word">
+            <b>📎 Word kâğıdından başla</b>
+            <span>Hazır bir sınav kâğıdınızı (.docx) yükleyin; şablon olarak kullanılır ve içindeki sorular okunur.</span>
+            <label class="btn" style="cursor:pointer;justify-self:start">Word dosyası seç<input type="file" id="ex-word-file" accept=".docx" style="display:none"></label>
+            <small id="ex-word-msg"></small>
+        </div>
         <h2>Yeni Sınav</h2>
         <p class="ex-sub">Temel bilgileri girin, şablonu ve sayfa düzenini seçin.</p>
         @if($errors->any())<div class="ex-err" style="margin-bottom:10px">{{ $errors->first() }}</div>@endif
@@ -97,3 +105,23 @@
     </aside>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(() => {
+    const input = document.getElementById('ex-word-file'), msg = document.getElementById('ex-word-msg');
+    if (!input) return;
+    input.addEventListener('change', async () => {
+        const f = input.files[0]; if (!f) return;
+        msg.style.color = '#334155'; msg.textContent = 'Yükleniyor ve sorular okunuyor…';
+        const fd = new FormData(); fd.append('word', f);
+        try {
+            const res = await fetch(@json(route('exams.word.import')), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' }, body: fd });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) { msg.style.color = '#b91c1c'; msg.textContent = j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'); input.value = ''; return; }
+            window.location.href = j.url;
+        } catch (_) { msg.style.color = '#b91c1c'; msg.textContent = 'Bağlantı hatası oluştu.'; }
+    });
+})();
+</script>
+@endpush
