@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sayı Arısı">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset="1" stop-color="#ffc83d"/></linearGradient></defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <g font-family="Nunito,Arial,sans-serif" font-weight="900" font-size="64" text-anchor="middle" fill="#3b2306">
+    <g stroke="#3b2306" stroke-width="6"><rect x="60" y="64" width="86" height="86" rx="12" fill="#fff"/><rect x="154" y="64" width="86" height="86" rx="12" fill="#ffe8a3"/><rect x="248" y="64" width="86" height="86" rx="12" fill="#fff"/><rect x="342" y="64" width="86" height="86" rx="12" fill="#ffe8a3"/></g>
+    <text x="103" y="127">4</text><text x="197" y="127">0</text><text x="291" y="127">7</text><text x="385" y="127">2</text>
+  </g>
+  <g transform="translate(150 190)">
+    <ellipse cx="86" cy="52" rx="48" ry="30" transform="rotate(-24 86 52)" fill="#e0f2fe" stroke="#38bdf8" stroke-width="6" opacity=".92"/>
+    <ellipse cx="156" cy="46" rx="48" ry="30" transform="rotate(22 156 46)" fill="#e0f2fe" stroke="#38bdf8" stroke-width="6" opacity=".92"/>
+    <ellipse cx="124" cy="132" rx="100" ry="78" fill="#fbbf24" stroke="#7c4a03" stroke-width="9"/>
+    <path d="M84 70 q-18 62 0 124" fill="none" stroke="#3b2306" stroke-width="28" stroke-linecap="round"/>
+    <path d="M134 62 q-16 72 0 142" fill="none" stroke="#3b2306" stroke-width="28" stroke-linecap="round"/>
+    <circle cx="190" cy="112" r="27" fill="#fff" stroke="#3b2306" stroke-width="8"/><circle cx="196" cy="115" r="12" fill="#111"/>
+    <path d="M186 74 q26 -34 54 -34 M168 70 q8 -42 36 -56" fill="none" stroke="#3b2306" stroke-width="8" stroke-linecap="round"/>
+    <path d="M26 134 l-30 10 l30 12z" fill="#3b2306"/>
+  </g>
+  <path d="M260 470 q60 -24 120 0" fill="none" stroke="#3b2306" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 22"/>
+</svg>

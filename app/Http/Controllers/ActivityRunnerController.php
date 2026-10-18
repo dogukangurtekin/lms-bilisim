@@ -71,6 +71,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('word-bee-runner');
     }
 
+    public function numberBee()
+    {
+        return $this->serveRunner('number-bee-runner');
+    }
+
     public function flowchart()
     {
         return $this->serveRunner('flowchart-runner');

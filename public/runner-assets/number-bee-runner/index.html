@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#3a2406">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../logo.png">
+  <title>Sayı Arısı — Rakam Avı</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<template id="beeTpl">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <g transform="rotate(-24 40 26)"><ellipse class="wing w1" cx="40" cy="26" rx="17" ry="11"/></g>
+    <g transform="rotate(22 62 24)"><ellipse class="wing w2" cx="62" cy="24" rx="17" ry="11"/></g>
+    <ellipse cx="50" cy="57" rx="31" ry="25" fill="#fbbf24" stroke="#7c4a03" stroke-width="3"/>
+    <path d="M36 36 q-5 21 0 42" fill="none" stroke="#3b2306" stroke-width="9" stroke-linecap="round"/>
+    <path d="M54 33 q-5 24 0 49" fill="none" stroke="#3b2306" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="71" cy="49" r="9" fill="#fff" stroke="#3b2306" stroke-width="2.5"/><circle cx="73" cy="50" r="4" fill="#111"/>
+    <path d="M70 34 q8 -12 17 -12 M64 32 q3 -14 12 -18" fill="none" stroke="#3b2306" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M19 59 l-9 3 l9 4z" fill="#3b2306"/>
+  </svg>
+</template>
+
+<div class="wb-app">
+  <header class="wb-top">
+    <div class="wb-brand"><span class="wb-logo" id="logoBee"></span><div><b>Sayı Arısı</b><small>Rakam Avı</small></div></div>
+    <div class="wb-nav">
+      <button id="btnPrev" class="wb-icon" type="button" aria-label="Önceki seviye" title="Önceki seviye">‹</button>
+      <button id="btnLevels" class="wb-picker" type="button" aria-haspopup="dialog"><span id="lvName">Seviye 1</span><small id="lvMeta">Kolay</small></button>
+      <button id="btnNext" class="wb-icon" type="button" aria-label="Sonraki seviye" title="Sonraki seviye">›</button>
+    </div>
+    <div class="wb-stats">
+      <span class="wb-pill" id="pillProgress">0 / 100</span>
+      <span class="wb-pill wb-gold" id="pillXp">⭐ 0 XP</span>
+      <button id="btnSound" class="wb-icon" type="button" aria-label="Ses" title="Ses">🔊</button>
+      <button id="btnHelp" class="wb-icon" type="button" aria-label="Nasıl oynanır" title="Nasıl oynanır?">?</button>
+      <button id="btnClose" class="wb-exit hidden" type="button">Çık</button>
+    </div>
+  </header>
+
+  <main class="wb-main">
+    <section class="wb-stage">
+      <div class="wb-boardwrap" id="boardWrap">
+        <div class="wb-board" id="board"></div>
+        <div class="wb-msg" id="msg" role="status" aria-live="polite"></div>
+      </div>
+      <div class="wb-words">
+        <div class="wb-wrow"><span class="wb-wlabel">Sayıyı bul:</span><span class="wb-chips wb-target" id="target"></span></div>
+        <div class="wb-wrow"><span class="wb-wlabel">Oluşturduğun sayı:</span><span class="wb-chips wb-spelled" id="spelled"></span></div>
+      </div>
+      <div class="wb-bar">
+        <button id="btnRun" class="wb-btn wb-go" type="button">▶ Çalıştır</button>
+        <button id="btnStep" class="wb-btn" type="button">⏭ Adım</button>
+        <button id="btnReset" class="wb-btn" type="button">↺ Sıfırla</button>
+        <button id="btnHint" class="wb-btn" type="button">💡 İpucu</button>
+        <span class="wb-chip" id="chipStars">★★★</span>
+      </div>
+    </section>
+
+    <aside class="wb-side">
+      <div class="wb-bubble"><span class="wb-bubble-bee" id="bubbleBee"></span><p id="tip"></p></div>
+      <div class="wb-cols">
+        <div class="wb-palette">
+          <div class="wb-phead">Bloklar</div>
+          <div class="wb-pbody" id="palette"></div>
+          <div class="wb-legend">K yukarı · G aşağı<br>D sağ · B sol</div>
+        </div>
+        <div class="wb-work">
+          <div class="wb-phead"><span>Çalışma alanı</span><span id="blockCount" class="wb-bc">Blok: 0</span></div>
+          <div class="wb-wbody" id="workBody">
+            <div class="wb-hat">Çalıştığı zaman <i>▶</i></div>
+            <div class="wb-slot wb-root" id="rootSlot" data-slot="root"></div>
+            <p class="wb-empty" id="emptyNote">Blokları buraya sürükle ya da bloğa dokunarak ekle.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+  <div class="wb-toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<div id="pickerModal" class="wb-modal hidden" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+  <div class="wb-backdrop" data-close></div>
+  <div class="wb-card wb-picker-card">
+    <div class="wb-card-head"><h3 id="pickerTitle">Seviyeler</h3><button class="wb-icon wb-dark" data-close type="button" aria-label="Kapat">✕</button></div>
+    <div id="pickerBody"></div>
+  </div>
+</div>
+
+<div id="winModal" class="wb-modal hidden" role="dialog" aria-modal="true">
+  <div class="wb-backdrop"></div>
+  <div class="wb-card wb-win">
+    <div class="wb-burst" aria-hidden="true">🐝</div>
+    <h3>Sayıyı buldun!</h3>
+    <div class="wb-win-word" id="winWord"></div>
+    <div class="wb-win-stars" id="winStars">★★★</div>
+    <p id="winText"></p>
+    <div class="wb-win-xp" id="winXp">+10 XP</div>
+    <div class="wb-win-actions"><button id="winNext" class="wb-btn wb-go" type="button">Sonraki ›</button><button id="winRetry" class="wb-btn" type="button">Tekrar oyna</button></div>
+  </div>
+</div>
+
+<div id="helpModal" class="wb-modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="wb-backdrop" data-close></div>
+  <div class="wb-card wb-help">
+    <div class="wb-card-head"><h3 id="helpTitle">Nasıl oynanır?</h3><button class="wb-icon wb-dark" data-close type="button" aria-label="Kapat">✕</button></div>
+    <div class="wb-help-body">
+      <p>Amaç: <b>arıyı yön bloklarıyla</b> gezdirerek <b>“Sayıyı bul”</b> yazan sayıyı rakam rakam <b>oluşturmak</b>. Arı bir kareye indiğinde o karedeki rakamı toplar ve <b>“Oluşturduğun sayı”</b> alanına ekler. Arının başladığı kare sayılmaz.</p>
+      <ul>
+        <li><b>K</b> ▲ yukarı · <b>G</b> ▼ aşağı · <b>D</b> ▶ sağa · <b>B</b> ◀ sola (Kuzey, Güney, Doğu, Batı) — her blok arıyı bir kare ilerletir.</li>
+        <li>Blokları soldaki kutudan <b>çalışma alanına sürükle</b> ya da bloğa dokunarak sona ekle. Bloğu yerinden tutup kaydırarak sırasını değiştirebilir, alanın dışına bırakarak ya da ✕ ile silebilirsin.</li>
+        <li><b>Çalıştır</b> programı baştan sona oynatır; <b>Adım</b> blokları tek tek çalıştırır. Arı ızgaranın dışına çıkarsa program durur.</li>
+        <li><b>tekrarla</b> bloğu içindekileri seçtiğin sayıda tekrar eder. Bir tekrarlama bloğunun başlığına dokunursan sonraki blokların onun içine eklenir; çalışma alanının boş yerine dokunursan tekrar ana diziye eklenir. Tekrarlama bloklarını iç içe de koyabilirsin.</li>
+        <li>Bazı bölümlerde <b>blok sınırı</b> vardır (Blok: 3 / 4). Düz giden yolları “tekrarla” ile kısaltarak sınıra uy.</li>
+        <li><b>Yıldız:</b> yanlış denemesiz ve en az blokla çözersen 3 yıldız alırsın; ipucu kullanırsan en fazla 2.</li>
+      </ul>
+      <h4>Kısayollar</h4>
+      <p><code>Enter</code> çalıştır · <code>R</code> sıfırla · <code>H</code> ipucu · <code>↑ ↓ ← →</code> bloğu ekle</p>
+    </div>
+  </div>
+</div>
+
+<script src="./engine.js"></script>
+<script src="./levels.js"></script>
+<script src="./app.js"></script>
+<script src="../pwa-init.js" defer></script>
+</body>
+</html>
