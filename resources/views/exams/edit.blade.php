@@ -152,7 +152,7 @@
     .qo{word-break:break-word}.qo b{margin-right:3px}
     .qimg-opts{display:grid;grid-template-columns:1fr;gap:4px;margin:2px 0}.qimg-opts label{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569}.qimg-opts select{flex:1;min-width:0;font-size:12px;padding:3px 4px}
     .qimg-size{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;margin:2px 0}.qimg-size input{flex:1;min-width:0}
-    .qimg{display:block;margin-top:5px;max-width:100%}
+    .qimgw{margin-top:5px}.qimg{display:inline-block;vertical-align:top;max-width:100%}
     .qlines i{display:block;height:25px;border-bottom:1px dotted #64748b}
     .qmatch{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:5px}
     .qmatch div div{margin-bottom:3px;word-break:break-word}
