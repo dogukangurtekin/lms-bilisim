@@ -42,6 +42,27 @@ class ExamLayout
         return count($seen) === $questionCount;
     }
 
+    /** Soru görselinin ekrandaki/PDF'teki boyutu; ölçü dosya adındaki "-{G}x{Y}" bölümünden okunur. [genişlik, yükseklik] ya da null. */
+    public static function imageSize(?string $path, int $maxW, int $maxH = 200): ?array
+    {
+        if (! $path || ! preg_match('/-(\d{2,4})x(\d{2,4})\.(png|jpg)$/', $path, $m)) {
+            return null;
+        }
+        $w = (int) $m[1];
+        $h = (int) $m[2];
+        if ($w < 1 || $h < 1) {
+            return null;
+        }
+        $dw = min($w, $maxW);
+        $dh = $dw * $h / $w;
+        if ($dh > $maxH) {
+            $dh = $maxH;
+            $dw = $dh * $w / $h;
+        }
+
+        return [(int) round($dw), (int) round($dh)];
+    }
+
     /** Sayfada soruların kullanabileceği yükseklik (kenar boşlukları, sayfa numarası ve güvenlik payı düşülmüş). */
     public static function contentHeight(array $settings): int
     {
@@ -96,6 +117,9 @@ class ExamLayout
                 $h += count($opts) * $lineH + 6;
             } elseif (($q['type'] ?? '') === 'open_ended') {
                 $h += ((int) ($q['answer_lines'] ?? 0)) * 25;
+            }
+            if ($sz = self::imageSize($q['image_path'] ?? null, $colW - 40)) {
+                $h += $sz[1] + 8;
             }
             $heights[] = $h;
         }

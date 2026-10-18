@@ -237,6 +237,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'update'])->name('bank.update');
         Route::delete('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'destroy'])->name('bank.destroy');
         Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
+        Route::post('/{exam}/gorsel', [\App\Http\Controllers\ExamController::class, 'uploadImage'])->middleware('throttle:30,1')->name('image.upload');
+        Route::post('/{exam}/kopyala', [\App\Http\Controllers\ExamController::class, 'duplicate'])->middleware('throttle:20,1')->name('duplicate');
         Route::get('/{exam}/word', [\App\Http\Controllers\ExamController::class, 'word'])->middleware('throttle:20,1')->name('word');
         Route::post('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'uploadWordTemplate'])->middleware('throttle:10,1')->name('word.template.upload');
         Route::delete('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'deleteWordTemplate'])->name('word.template.delete');

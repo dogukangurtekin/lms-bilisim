@@ -407,7 +407,7 @@ class Template
      * @param  string  $questionsXml  <w:p>/<w:tbl> dizisi (kök öğesiz)
      * @param  string  $tailXml  sorulardan sonra eklenecek bölüm (ör. cevap anahtarı), yoksa ''
      */
-    public function render(string $questionsXml, int $columns, string $tailXml = ''): string
+    public function render(string $questionsXml, int $columns, string $tailXml = '', array $images = []): string
     {
         $this->loadDom(); // temiz kopya
         $a = $this->analyze();
@@ -478,13 +478,13 @@ class Template
             }
         }
 
-        return $this->repack($this->dom->saveXML());
+        return $this->repack($this->dom->saveXML(), $images);
     }
 
     private function importFragment(string $inner): \DOMDocumentFragment
     {
         $wrap = new DOMDocument();
-        $ok = @$wrap->loadXML('<root xmlns:w="'.Xml::W_NS.'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'.$inner.'</root>', LIBXML_NONET);
+        $ok = @$wrap->loadXML('<root xmlns:w="'.Xml::W_NS.'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'.$inner.'</root>', LIBXML_NONET);
         if (! $ok) {
             throw new \RuntimeException('Soru içeriği Word biçimine çevrilemedi.');
         }
@@ -557,7 +557,7 @@ class Template
         }
     }
 
-    private function repack(string $documentXml): string
+    private function repack(string $documentXml, array $images = []): string
     {
         $tmp = tempnam(sys_get_temp_dir(), 'exam-docx-');
         $out = new ZipArchive();
@@ -569,7 +569,26 @@ class Template
             if ($name === false || str_ends_with($name, '/')) {
                 continue;
             }
-            $out->addFromString($name, $name === 'word/document.xml' ? $documentXml : (string) $this->zip->getFromIndex($i));
+            $content = (string) $this->zip->getFromIndex($i);
+            if ($name === 'word/document.xml') {
+                $content = $documentXml;
+            } elseif ($images !== [] && $name === 'word/_rels/document.xml.rels') {
+                $add = '';
+                foreach ($images as $k => $img) {
+                    $add .= '<Relationship Id="'.$img['rid'].'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/examq'.($k + 1).'.'.$img['ext'].'"/>';
+                }
+                $content = str_replace('</Relationships>', $add.'</Relationships>', $content);
+            } elseif ($images !== [] && $name === '[Content_Types].xml') {
+                foreach (['png' => 'image/png', 'jpg' => 'image/jpeg'] as $ext => $mime) {
+                    if (! preg_match('/Extension="'.$ext.'"/i', $content)) {
+                        $content = preg_replace('/(<Types[^>]*>)/', '$1<Default Extension="'.$ext.'" ContentType="'.$mime.'"/>', $content, 1) ?? $content;
+                    }
+                }
+            }
+            $out->addFromString($name, $content);
+        }
+        foreach ($images as $k => $img) {
+            $out->addFromString('word/media/examq'.($k + 1).'.'.$img['ext'], $img['bytes']);
         }
         $out->close();
         $bin = (string) file_get_contents($tmp);

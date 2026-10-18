@@ -61,5 +61,5 @@ Soru tipleri: `multiple_choice` (A–E), `true_false`, `fill_blank`, `open_ended
 | 3 | Soru havuzu: havuz yönetimi, filtre, havuzdan sınava ekleme, soruyu havuza kaydetme | Tamam |
 | 4 | Şablonlar ve tasarım ayarları (başlık, tipografi, tema, logo) + havuz soruları için Excel dışa/içe aktarma | Tamam |
 | 5 | PDF çıktısı (öğrenci / öğretmen kâğıdı, cevap anahtarı; önizlemeyle aynı sayfa dağılımı) | Tamam |
-| 6 | Word (.docx) çıktısı + yüklenen Word kâğıdını şablon olarak kullanma (soruları okuma, şablona yazma) | **Bu teslim** |
-| 7 | Cilalama: kopyalama, görsel yükleme, sürükle-bırak, yazdırma, hata/sınır durumları | |
+| 6 | Word (.docx) çıktısı + yüklenen Word kâğıdını şablon olarak kullanma (soruları okuma, şablona yazma) | Tamam |
+| 7 | Cilalama: kopyalama, soru görseli, sürükle-bırak, yazdırma, sınır durumları | **Bu teslim** |

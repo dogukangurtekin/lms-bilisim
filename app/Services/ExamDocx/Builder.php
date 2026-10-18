@@ -26,6 +26,8 @@ class Builder
     private int $contentTw;
     private int $marginTw;
     private bool $templated = false;
+    /** @var list<array{rid: string, ext: string, bytes: string}> */
+    private array $images = [];
 
     public function __construct(private Exam $exam, private array $qs, array $settings, private string $mode)
     {
@@ -84,13 +86,17 @@ class Builder
             $overrides .= '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>';
             $files['word/header1.xml'] = $this->watermarkHeaderXml((string) $this->s['watermark']);
         }
+        foreach ($this->images as $k => $img) {
+            $rels .= '<Relationship Id="'.$img['rid'].'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/q'.($k + 1).'.'.$img['ext'].'"/>';
+            $files['word/media/q'.($k + 1).'.'.$img['ext']] = $img['bytes'];
+        }
         if ($withLogo) {
             $rels .= '<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>';
             $files['word/media/logo.png'] = $withLogo['png'];
         }
 
         $files['[Content_Types].xml'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            .'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>'
+            .'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/>'
             .$overrides.'</Types>';
         $files['_rels/.rels'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
             .'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
@@ -111,7 +117,7 @@ class Builder
         $questions = $this->mode === 'key' ? $this->keyXml(true) : $this->questionsXml($columns);
         $tail = ($this->mode === 'student_key') ? $this->keyXml(false) : '';
 
-        return $tpl->render($questions, $this->mode === 'key' ? 1 : $columns, $tail);
+        return $tpl->render($questions, $this->mode === 'key' ? 1 : $columns, $tail, $this->images);
     }
 
     /* ------------------------------------------------------------------ */
@@ -218,11 +224,17 @@ class Builder
 
     private function logoRun(array $logo): string
     {
-        return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'.$logo['cx'].'" cy="'.$logo['cy'].'"/><wp:docPr id="1" name="Logo"/>'
+        return $this->drawingRun('rId5', $logo['cx'], $logo['cy'], 1, 'logo.png');
+    }
+
+    /** Satır içi resim (logo ve soru görselleri için ortak). */
+    private function drawingRun(string $rid, int $cx, int $cy, int $id, string $name): string
+    {
+        return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'.$cx.'" cy="'.$cy.'"/><wp:docPr id="'.$id.'" name="'.Xml::esc($name).'"/>'
             .'<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
-            .'<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr>'
-            .'<pic:blipFill><a:blip r:embed="rId5"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
-            .'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'.$logo['cx'].'" cy="'.$logo['cy'].'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+            .'<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="'.Xml::esc($name).'"/><pic:cNvPicPr/></pic:nvPicPr>'
+            .'<pic:blipFill><a:blip r:embed="'.$rid.'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+            .'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'.$cx.'" cy="'.$cy.'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
     }
 
     private function info(): string
@@ -374,11 +386,15 @@ class Builder
         $add = function (string $xml) use (&$paraList): void { $paraList[] = $xml; };
 
         $first = [$numRun];
+        $imgP = $this->imagePara($q, $columns, $hang);
         switch ($q['type']) {
             case 'multiple_choice':
                 $first[] = Xml::run($body);
                 $short = $columns === 1 && count($opts) <= 4 && collect($opts)->every(fn ($o) => mb_strlen((string) $o) <= 20);
                 $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => true, 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang], 'after' => 40]));
+                if ($imgP !== '') {
+                    $add($imgP);
+                }
                 if ($short) {
                     $span = max(1, (int) floor(($this->contentTw - $hang) / max(1, count($opts))));
                     $runs = [];
@@ -409,12 +425,18 @@ class Builder
                 $mark = $teacher ? '( '.($ans === 'Y' ? 'Y' : 'D').' ) ' : '(      ) ';
                 $first[] = Xml::run($mark, ['b' => 1]);
                 $first[] = Xml::run($body);
-                $add(Xml::para(array_merge($first, $ptsRun), ['keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => $imgP !== '', 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                if ($imgP !== '') {
+                    $add($imgP);
+                }
                 break;
 
             case 'matching':
                 $first[] = Xml::run($body);
                 $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => true, 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang], 'after' => 60]));
+                if ($imgP !== '') {
+                    $add($imgP);
+                }
                 $n = count($opts);
                 $shift = max(1, intdiv($n, 2));
                 $order = [];
@@ -439,7 +461,10 @@ class Builder
                 $first[] = Xml::run($body);
                 $lines = max(0, min(20, (int) ($q['answer_lines'] ?? 0)));
                 $keep = $lines > 0 && ! $teacher;
-                $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => $keep || ($teacher && trim($ans) !== ''), 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => $keep || ($teacher && trim($ans) !== '') || $imgP !== '', 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                if ($imgP !== '') {
+                    $add($imgP);
+                }
                 if ($teacher) {
                     if (trim($ans) !== '') {
                         $add($this->answerPara('Cevap: '.$ans, $hang));
@@ -454,7 +479,10 @@ class Builder
 
             default: // fill_blank
                 $first[] = Xml::run($body);
-                $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => $teacher && trim($ans) !== '', 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                $add(Xml::para(array_merge($first, $ptsRun), ['keepNext' => ($teacher && trim($ans) !== '') || $imgP !== '', 'keepLines' => true, 'ind' => $qInd, 'tabs' => [$hang]]));
+                if ($imgP !== '') {
+                    $add($imgP);
+                }
                 if ($teacher && trim($ans) !== '') {
                     $add($this->answerPara('Cevap: '.$ans, $hang));
                 }
@@ -465,6 +493,26 @@ class Builder
         $x .= Xml::para([], ['before' => 0, 'after' => 0, 'line' => max(20, $pad)]);
 
         return $x;
+    }
+
+    /** Sorunun görselini satır içi resim paragrafı olarak üretir (yoksa ''). */
+    private function imagePara(array $q, int $columns, int $left): string
+    {
+        $path = (string) ($q['image_path'] ?? '');
+        if ($path === '' || ! is_file(public_path($path))) {
+            return '';
+        }
+        $contentPx = (int) round($this->contentTw / 15);
+        $colPx = $columns === 2 ? (int) floor(($contentPx - 24) / 2) : $contentPx;
+        $sz = \App\Support\ExamLayout::imageSize($path, $colPx - 40);
+        if (! $sz) {
+            return '';
+        }
+        $n = count($this->images) + 1;
+        $rid = 'rIdQ'.$n;
+        $this->images[] = ['rid' => $rid, 'ext' => str_ends_with($path, '.jpg') ? 'jpg' : 'png', 'bytes' => (string) file_get_contents(public_path($path))];
+
+        return Xml::para([$this->drawingRun($rid, $sz[0] * 9525, $sz[1] * 9525, 100 + $n, 'Soru görseli '.$n)], ['keepNext' => true, 'keepLines' => true, 'ind' => ['left' => $left], 'before' => 60, 'after' => 60]);
     }
 
     private function answerPara(string $text, int $left): string

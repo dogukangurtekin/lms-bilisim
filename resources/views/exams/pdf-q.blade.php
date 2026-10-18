@@ -9,6 +9,12 @@
     $teacher = $mode === 'teacher';
     $ans = (string) ($q['answer'] ?? '');
     $opts = (array) ($q['options'] ?? []);
+    $imgHtml = '';
+    $imgSz = \App\Support\ExamLayout::imageSize($q['image_path'] ?? null, $colW - 40);
+    if ($imgSz && is_file(public_path($q['image_path']))) {
+        $mime = str_ends_with($q['image_path'], '.jpg') ? 'jpeg' : 'png';
+        $imgHtml = '<div style="margin-top:5px"><img src="data:image/'.$mime.';base64,'.base64_encode((string) file_get_contents(public_path($q['image_path']))).'" style="width:'.$imgSz[0].'px;height:'.$imgSz[1].'px"></div>';
+    }
 @endphp
 <div class="qblk">
     @if(trim((string) ($q['section_title'] ?? '')) !== '')<div class="qsec">{{ $q['section_title'] }}</div>@endif
@@ -16,7 +22,7 @@
         <td class="qn">{{ $num }}</td>
         <td class="qb">
             @if($q['type'] === 'multiple_choice')
-                <div>{!! $body !!}{!! $pts !!}</div>
+                <div>{!! $body !!}{!! $pts !!}</div>{!! $imgHtml !!}
                 @php
                     $short = $columns === 1 && count($opts) <= 4 && collect($opts)->every(fn ($o) => mb_strlen((string) $o) <= 20);
                 @endphp
@@ -32,9 +38,9 @@
                     @endforeach
                 @endif
             @elseif($q['type'] === 'true_false')
-                <div><b>({!! $teacher ? '&nbsp;'.($ans === 'Y' ? 'Y' : 'D').'&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!})</b> {!! $body !!}{!! $pts !!}</div>
+                <div><b>({!! $teacher ? '&nbsp;'.($ans === 'Y' ? 'Y' : 'D').'&nbsp;' : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' !!})</b> {!! $body !!}{!! $pts !!}</div>{!! $imgHtml !!}
             @elseif($q['type'] === 'open_ended')
-                <div>{!! $body !!}{!! $pts !!}</div>
+                <div>{!! $body !!}{!! $pts !!}</div>{!! $imgHtml !!}
                 @if($teacher)
                     @if(trim($ans) !== '')<div class="ans">Cevap: {!! nl2br(e($ans)) !!}</div>@endif
                 @else
@@ -45,7 +51,7 @@
                     $n = count($opts); $shift = max(1, intdiv($n, 2)); $order = [];
                     for ($j = 0; $j < $n; $j++) { $order[] = ($j + $shift) % $n; }
                 @endphp
-                <div>{!! $body !!}{!! $pts !!}</div>
+                <div>{!! $body !!}{!! $pts !!}</div>{!! $imgHtml !!}
                 <table class="qm"><tr>
                     <td>
                         @foreach($opts as $k => $o)
@@ -59,7 +65,7 @@
                     </td>
                 </tr></table>
             @else
-                <div>{!! $body !!}{!! $pts !!}</div>
+                <div>{!! $body !!}{!! $pts !!}</div>{!! $imgHtml !!}
                 @if($teacher && trim($ans) !== '')<div class="ans">Cevap: {{ $ans }}</div>@endif
             @endif
         </td>

@@ -56,6 +56,7 @@
                     </div>
                     <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
                     @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını PDF olarak indir">PDF</a><a href="{{ route('exams.word', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını Word olarak indir">Word</a>@endif
+                    <form method="POST" action="{{ route('exams.duplicate', $exam) }}" class="ex-del">@csrf<button type="submit" style="background:#e0e7ff;color:#3730a3" title="Sınavın kopyasını oluştur">Kopyala</button></form>
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
                     </form>

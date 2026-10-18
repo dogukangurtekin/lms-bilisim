@@ -89,6 +89,7 @@ class ExamController extends Controller
             'section_title' => $q->section_title ?? '',
             'answer_lines' => (int) $q->answer_lines,
             'bank_item_id' => $q->bank_item_id,
+            'image_path' => $q->image_path ?? '',
         ])->values();
 
         return view('exams.edit', [
@@ -160,6 +161,7 @@ class ExamController extends Controller
             'questions.*.section_title' => ['nullable', 'string', 'max:200'],
             'questions.*.answer_lines' => ['nullable', 'integer', 'between:0,20'],
             'questions.*.bank_item_id' => ['nullable', 'integer', 'exists:question_bank_items,id'],
+            'questions.*.image_path' => ['nullable', 'string', 'max:120', 'regex:#^exam-images/'.$exam->id.'-[a-f0-9]{20}-\d{2,4}x\d{2,4}\.(png|jpg)$#'],
         ]);
 
         // Doğrulama anahtar sırasını karıştırabildiği için sayfa/sütun sırasını açıkça düzeltiriz.
@@ -202,9 +204,12 @@ class ExamController extends Controller
                     'section_title' => $q['section_title'] ?? null,
                     'answer_lines' => (int) ($q['answer_lines'] ?? 0),
                     'bank_item_id' => $q['bank_item_id'] ?? null,
+                    'image_path' => ($q['image_path'] ?? '') ?: null,
                 ]);
             }
         });
+
+        $this->pruneImages($exam);
 
         return response()->json(['ok' => true, 'saved_at' => now()->format('H:i:s')]);
     }
@@ -260,6 +265,7 @@ class ExamController extends Controller
             'points' => (float) $q->points,
             'section_title' => (string) ($q->section_title ?? ''),
             'answer_lines' => (int) $q->answer_lines,
+            'image_path' => (string) ($q->image_path ?? ''),
         ])->values()->all();
     }
 
@@ -473,9 +479,123 @@ class ExamController extends Controller
         return $out;
     }
 
+    /** Soruya görsel yükle: sunucuda küçültülür, boyutu dosya adına yazılır (önizleme/PDF/Word aynı ölçüyü kullanır). */
+    public function uploadImage(Request $request, Exam $exam): JsonResponse
+    {
+        $this->authorizeOwner($request, $exam);
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', 'mimetypes:image/png,image/jpeg,image/webp', 'max:4096']]);
+        if (! function_exists('imagecreatefromstring')) {
+            return response()->json(['message' => 'Sunucuda görsel işleme desteği yok.'], 422);
+        }
+
+        $raw = (string) file_get_contents($request->file('image')->getRealPath());
+        $mime = (string) ($request->file('image')->getMimeType() ?? '');
+        $src = @imagecreatefromstring($raw);
+        if (! $src) {
+            return response()->json(['message' => 'Görsel okunamadı.'], 422);
+        }
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $max = 1200;
+        if ($w > $max || $h > $max) {
+            $ratio = min($max / $w, $max / $h);
+            $nw = max(1, (int) round($w * $ratio));
+            $nh = max(1, (int) round($h * $ratio));
+            $dst = imagecreatetruecolor($nw, $nh);
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 255, 255, 255, 127));
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            imagedestroy($src);
+            $src = $dst;
+            $w = $nw;
+            $h = $nh;
+        }
+        $isJpeg = $mime === 'image/jpeg';
+        ob_start();
+        if ($isJpeg) {
+            imagejpeg($src, null, 85);
+        } else {
+            imagealphablending($src, false);
+            imagesavealpha($src, true);
+            imagepng($src);
+        }
+        $bin = (string) ob_get_clean();
+        imagedestroy($src);
+
+        $dir = public_path('exam-images');
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $name = $exam->id.'-'.bin2hex(random_bytes(10)).'-'.$w.'x'.$h.'.'.($isJpeg ? 'jpg' : 'png');
+        file_put_contents($dir.'/'.$name, $bin);
+
+        return response()->json(['ok' => true, 'path' => 'exam-images/'.$name, 'url' => asset('exam-images/'.$name)]);
+    }
+
+    /** Sınavın artık hiçbir soruda kullanılmayan görsellerini siler (yeni yüklenenlere 10 dk tolerans). */
+    private function pruneImages(Exam $exam, bool $all = false): void
+    {
+        $used = $all ? [] : $exam->questions()->pluck('image_path')->filter()->all();
+        foreach (glob(public_path('exam-images/'.$exam->id.'-*')) ?: [] as $file) {
+            $rel = 'exam-images/'.basename($file);
+            if (! in_array($rel, $used, true) && ($all || filemtime($file) < time() - 600)) {
+                @unlink($file);
+            }
+        }
+    }
+
+    /** Sınavı (sorular, ayarlar, logo, Word şablonu ve görselleriyle) kopyalar. */
+    public function duplicate(Request $request, Exam $exam): RedirectResponse
+    {
+        $this->authorizeOwner($request, $exam);
+
+        $copy = DB::transaction(function () use ($request, $exam): Exam {
+            $new = $exam->replicate(['created_at', 'updated_at']);
+            $new->user_id = $request->user()->id;
+            $new->title = mb_substr($exam->title.' (kopya)', 0, 200);
+            $new->status = 'draft';
+            $new->save();
+
+            $settings = (array) $exam->settings;
+            $logo = (string) ($settings['logo_path'] ?? '');
+            if ($logo !== '' && is_file(public_path($logo)) && preg_match('/\.(png|jpe?g|webp)$/', $logo, $m)) {
+                $nl = 'exam-logos/'.bin2hex(random_bytes(12)).'.'.$m[1];
+                @copy(public_path($logo), public_path($nl));
+                $settings['logo_path'] = $nl;
+            }
+            if ($tpl = $this->wordTemplatePath($exam)) {
+                $nt = bin2hex(random_bytes(12)).'.docx';
+                @copy($tpl, $this->templateDir().'/'.$nt);
+                $settings['word_template'] = $nt;
+            }
+            $new->settings = $settings;
+            $new->save();
+
+            foreach ($exam->questions()->get() as $q) {
+                $nq = $q->replicate(['created_at', 'updated_at']);
+                $nq->exam_id = $new->id;
+                $img = (string) ($q->image_path ?? '');
+                if ($img !== '' && is_file(public_path($img)) && preg_match('/-(\d{2,4}x\d{2,4})\.(png|jpg)$/', $img, $m)) {
+                    $ni = 'exam-images/'.$new->id.'-'.bin2hex(random_bytes(10)).'-'.$m[1].'.'.$m[2];
+                    @copy(public_path($img), public_path($ni));
+                    $nq->image_path = $ni;
+                }
+                $nq->save();
+            }
+
+            return $new;
+        });
+
+        return redirect()->route('exams.edit', $copy)->with('ok', 'Sınav kopyalandı. Kopya üzerinde çalışıyorsunuz.');
+    }
+
     public function destroy(Request $request, Exam $exam): RedirectResponse
     {
         $this->authorizeOwner($request, $exam);
+        $this->deleteLogoFile($exam);
+        $this->deleteWordTemplateFile($exam);
+        $this->pruneImages($exam, true);
         $exam->delete();
 
         return redirect()->route('exams.index')->with('ok', 'Sınav silindi.');

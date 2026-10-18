@@ -41,3 +41,7 @@ Thumbs.db
 /login_post_headers.txt
 /temp_image_slide.txt
 /subdomains/
+
+# Sınav modülü: kullanıcı yüklemeleri
+/public/exam-logos/
+/public/exam-images/

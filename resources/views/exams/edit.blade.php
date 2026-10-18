@@ -52,6 +52,18 @@
     .sw-pick{width:30px!important;height:26px!important;padding:0!important;border:1px solid #cbd5e1!important;border-radius:6px!important;background:#fff}
     .logo-box{display:flex;gap:10px;align-items:center;border:1px dashed #cbd5e1;border-radius:11px;padding:8px}
     .logo-box img{width:56px;height:56px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+    .xe-q.over{outline:2px dashed #2563eb;outline-offset:-2px}
+    .xe-qh{cursor:grab}
+    .qimg-row{display:flex;gap:8px;align-items:center}.qimg-row img{height:46px;max-width:90px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;background:#fff}
+    @media print{
+        body *{visibility:hidden!important}
+        #pv-pages,#pv-pages *{visibility:visible!important}
+        #pv-pages{position:absolute!important;left:0!important;top:0!important;transform:none!important}
+        .paper{box-shadow:none!important;margin:0!important;height:1122px!important;page-break-after:always;break-after:page}
+        .paper:last-child{page-break-after:auto;break-after:auto}
+        .qblk.sel .qrow{outline:none!important}
+        @page{size:A4;margin:0}
+    }
     .xe-grid{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr) minmax(250px,290px);gap:14px;align-items:start}
     .xe-panel{background:#fff;border:1px solid #dbe5f2;border-radius:16px;padding:14px;box-shadow:0 8px 20px rgba(15,23,42,.04)}
     .xe-panel h3{margin:0 0 10px;font-size:15px}
@@ -103,6 +115,7 @@
     .qopts{margin-top:4px;display:grid;gap:2px}
     .qopts.inline{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
     .qo{word-break:break-word}.qo b{margin-right:3px}
+    .qimg{display:block;margin-top:5px;max-width:100%}
     .qlines i{display:block;height:25px;border-bottom:1px dotted #64748b}
     .qmatch{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:5px}
     .qmatch div div{margin-bottom:3px;word-break:break-word}
@@ -136,6 +149,8 @@
     <h1 id="xe-heading">{{ $exam->title }}</h1>
     <span class="xe-chip" id="xe-status">Kaydedildi</span>
     <button type="button" class="xe-btn" id="xe-final"></button>
+    <button type="button" class="xe-btn" id="xe-print" title="Önizlemeyi yazdır">🖨 Yazdır</button>
+    <button type="button" class="xe-btn" id="xe-dup" title="Bu sınavın bir kopyasını oluştur">⧉ Kopyala</button>
     <div class="xe-menu">
         <button type="button" class="xe-btn" id="xe-pdf">📄 PDF ▾</button>
         <div class="xe-dd" id="xe-dd">
@@ -292,6 +307,15 @@
     /* ---------- önizleme: soru bloğu ---------- */
     const optLabel = (k) => ({ paren: LETTERS[k] + ')', bracket: '(' + LETTERS[k] + ')', dot: LETTERS[k] + '.' }[state.settings.opt_style] || LETTERS[k] + ')');
     const numLabel = (i) => ({ dot: (i + 1) + '.', paren: (i + 1) + ')', soru: 'Soru ' + (i + 1) + '.' }[state.settings.num_style] || (i + 1) + '.');
+    let curColW = 680;
+    const imgSize = (path, maxW, maxH = 200) => {
+        const m = /-(\d{2,4})x(\d{2,4})\.(png|jpg)$/.exec(path || ''); if (!m) return null;
+        const w = Number(m[1]), h = Number(m[2]); if (!w || !h) return null;
+        let dw = Math.min(w, maxW), dh = dw * h / w;
+        if (dh > maxH) { dh = maxH; dw = dh * w / h; }
+        return [Math.round(dw), Math.round(dh)];
+    };
+    const imgHtml = (q) => { const sz = imgSize(q.image_path, curColW - 40); return sz ? '<img class="qimg" src="' + esc(LOGO_BASE + q.image_path) + '" width="' + sz[0] + '" height="' + sz[1] + '" alt="">' : ''; };
     function blockHtml(q, i) {
         const pts = state.settings.show_points && Number(q.points) > 0 ? '<span class="qp">(' + esc(String(q.points).replace('.', ',')) + ' p)</span>' : '';
         let inner = '';
@@ -299,18 +323,18 @@
         if (q.type === 'multiple_choice') {
             const opts = q.options.map((o, k) => '<div class="qo"><b>' + optLabel(k) + '</b>' + esc(o) + '</div>').join('');
             const short = state.exam.columns === 1 && q.options.length <= 4 && q.options.every((o) => o.length <= 20);
-            inner = '<div class="qtext">' + text + pts + '</div><div class="qopts' + (short ? ' inline' : '') + '">' + opts + '</div>';
+            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qopts' + (short ? ' inline' : '') + '">' + opts + '</div>';
         } else if (q.type === 'true_false') {
-            inner = '<div class="qtext"><b>(&nbsp;&nbsp;&nbsp;&nbsp;)</b> ' + text + pts + '</div>';
+            inner = '<div class="qtext"><b>(&nbsp;&nbsp;&nbsp;&nbsp;)</b> ' + text + pts + '</div>' + imgHtml(q) + '';
         } else if (q.type === 'open_ended') {
-            inner = '<div class="qtext">' + text + pts + '</div><div class="qlines">' + '<i></i>'.repeat(Math.max(0, Math.min(20, Number(q.answer_lines) || 0))) + '</div>';
+            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qlines">' + '<i></i>'.repeat(Math.max(0, Math.min(20, Number(q.answer_lines) || 0))) + '</div>';
         } else if (q.type === 'matching') {
             const n = q.options.length, order = matchOrder(n);
             const left = q.options.map((o, k) => '<div><b>(&nbsp;&nbsp;&nbsp;)</b> ' + (k + 1) + '. ' + esc(o.l) + '</div>').join('');
             const right = order.map((src, k) => '<div><b>' + optLabel(k) + '</b> ' + esc(q.options[src].r) + '</div>').join('');
-            inner = '<div class="qtext">' + text + pts + '</div><div class="qmatch"><div>' + left + '</div><div>' + right + '</div></div>';
+            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qmatch"><div>' + left + '</div><div>' + right + '</div></div>';
         } else {
-            inner = '<div class="qtext">' + text + pts + '</div>';
+            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '';
         }
         const sec = q.section_title && q.section_title.trim() ? '<div class="qsec">' + esc(q.section_title) + '</div>' : '';
         return '<div class="qblk' + (i === selected ? ' sel' : '') + '" data-i="' + i + '">' + sec
@@ -357,6 +381,7 @@
         const contentW = PAGE_W - 2 * margin;
         const gap = 24;
         const colW = n === 2 ? Math.floor((contentW - gap) / 2) : contentW;
+        curColW = colW;
         const footer = s.page_numbers ? 26 : 0;
         const contentH = PAGE_H - 2 * margin - footer;
         const fam = 'fam-' + s.font_family, tpl = 'tpl-' + e.template + ' sp-' + s.spacing;
@@ -414,7 +439,7 @@
         box.innerHTML = state.questions.map((q, i) => {
             const open = i === selected;
             return '<div class="xe-q' + (open ? ' sel' : '') + '" data-i="' + i + '">'
-                + '<div class="xe-qh" data-act="select"><span class="xe-qn">' + (i + 1) + '</span>'
+                + '<div class="xe-qh" data-act="select" draggable="true" title="Sıralamak için sürükleyin"><span class="xe-qn">' + (i + 1) + '</span>'
                 + '<span class="xe-qt">' + esc((q.body || '').split('\n')[0] || TYPE_NAME[q.type]) + '</span>'
                 + '<button type="button" class="xe-ic" data-act="up" title="Yukarı">▲</button><button type="button" class="xe-ic" data-act="down" title="Aşağı">▼</button>'
                 + '<button type="button" class="xe-ic" data-act="dup" title="Çoğalt">⧉</button><button type="button" class="xe-ic del" data-act="del" title="Sil">✕</button></div>'
@@ -422,7 +447,9 @@
         }).join('');
     }
 
-    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div><button type="button" class="xe-mini" data-act="tobank"' + (q.bank_item_id ? ' disabled' : '') + '>' + (q.bank_item_id ? '✓ Havuzda' : '📚 Havuza kaydet') + '</button></div></div>');
+    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div class="xe-f">Görsel' + (q.image_path ? '<div class="qimg-row"><img src="' + esc(LOGO_BASE + q.image_path) + '" alt=""><button type="button" class="xe-mini" data-act="imgdel">Kaldır</button></div>' : '')
+        + '<label class="xe-mini" style="text-align:center;cursor:pointer">🖼 ' + (q.image_path ? 'Değiştir' : 'Görsel ekle') + '<input type="file" data-img accept="image/png,image/jpeg,image/webp" style="display:none"></label></div>'
+        + '<div><button type="button" class="xe-mini" data-act="tobank"' + (q.bank_item_id ? ' disabled' : '') + '>' + (q.bank_item_id ? '✓ Havuzda' : '📚 Havuza kaydet') + '</button></div></div>');
 
     /* ---------- durum / kaydet ---------- */
     function setStatus(kind, text) { const c = $('xe-status'); c.className = 'xe-chip ' + kind; c.textContent = text; }
@@ -440,7 +467,7 @@
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
                 answer: window.ExamQ.answerOf(q),
-                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null,
+                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null, image_path: q.image_path || null,
             })),
         };
     }
@@ -466,6 +493,7 @@
 
     $('xe-types').addEventListener('click', (ev) => {
         const b = ev.target.closest('[data-add]'); if (!b) return;
+        if (state.questions.length >= 300) { setStatus('err', 'Bir sınava en fazla 300 soru eklenebilir.'); return; }
         state.questions.push(newQuestion(b.dataset.add)); selected = state.questions.length - 1; changed(true);
         $('xe-list').lastElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
@@ -480,9 +508,50 @@
         else if (act === 'dup') { const c = JSON.parse(JSON.stringify(q)); c.uid = uidSeq++; c.bank_item_id = null; state.questions.splice(i + 1, 0, c); selected = i + 1; }
         else if (act === 'del') { state.questions.splice(i, 1); selected = Math.min(selected, state.questions.length - 1); }
         else if (act === 'tobank') { saveToBank(q); return; }
+        else if (act === 'imgdel') { q.image_path = ''; }
         else if (!window.ExamQ.applyClick(q, ev.target)) return;
         changed(true);
     });
+
+    const IMG_URL = @json(route('exams.image.upload', $exam));
+    $('xe-list').addEventListener('change', async (ev) => {
+        const t = ev.target; if (t.dataset.img === undefined) return;
+        const card = t.closest('.xe-q'), f = t.files && t.files[0]; if (!card || !f) return;
+        const q = state.questions[Number(card.dataset.i)];
+        if (f.size > 4 * 1024 * 1024) { setStatus('err', 'Görsel en fazla 4 MB olabilir.'); return; }
+        setStatus('', 'Görsel yükleniyor…');
+        const fd = new FormData(); fd.append('image', f);
+        try {
+            const res = await fetch(IMG_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'));
+            q.image_path = j.path; changed(true); setStatus('ok', 'Görsel eklendi');
+        } catch (err) { setStatus('err', err.message); }
+    });
+
+    // sürükle-bırak ile soru sıralama
+    let dragFrom = -1;
+    const listEl = $('xe-list');
+    listEl.addEventListener('dragstart', (ev) => {
+        const c = ev.target.closest && ev.target.closest('.xe-q'); if (!c) return;
+        dragFrom = Number(c.dataset.i); ev.dataTransfer.effectAllowed = 'move';
+        try { ev.dataTransfer.setData('text/plain', String(dragFrom)); } catch (_) {}
+    });
+    listEl.addEventListener('dragover', (ev) => {
+        if (dragFrom < 0) return; ev.preventDefault();
+        listEl.querySelectorAll('.xe-q.over').forEach((x) => x.classList.remove('over'));
+        const c = ev.target.closest('.xe-q'); if (c) c.classList.add('over');
+    });
+    listEl.addEventListener('drop', (ev) => {
+        ev.preventDefault();
+        const c = ev.target.closest('.xe-q');
+        if (c && dragFrom >= 0) {
+            const to = Number(c.dataset.i);
+            if (to !== dragFrom) { const [m] = state.questions.splice(dragFrom, 1); state.questions.splice(to, 0, m); selected = to; changed(true); }
+        }
+        dragFrom = -1;
+    });
+    listEl.addEventListener('dragend', () => { dragFrom = -1; listEl.querySelectorAll('.xe-q.over').forEach((x) => x.classList.remove('over')); });
 
     $('xe-list').addEventListener('input', (ev) => {
         const card = ev.target.closest('.xe-q'); if (!card) return;
@@ -595,6 +664,7 @@
         ).join('') : '<div class="xe-empty">Havuzda uygun soru bulunamadı.</div>';
     }
     function addFromBank(i) {
+        if (state.questions.length >= 300) { setStatus('err', 'Bir sınava en fazla 300 soru eklenebilir.'); return; }
         const q = newQuestion(i.type);
         q.body = i.body; q.options = JSON.parse(JSON.stringify(i.options || [])); q.answer = i.answer || q.answer;
         q.bank_item_id = i.id;
@@ -648,6 +718,15 @@
     document.querySelector('[data-k="settings.font_family"]').addEventListener('change', () => ensureFonts().then(renderPreview));
     ensureFonts().then(renderPreview);
     renderPreview();
+
+    $('xe-print').addEventListener('click', async () => { await ensureFonts(); renderPreview(); setTimeout(() => window.print(), 150); });
+    const DUP_URL = @json(route('exams.duplicate', $exam));
+    $('xe-dup').addEventListener('click', async () => {
+        await save(); if (dirty) return;
+        const f = document.createElement('form'); f.method = 'POST'; f.action = DUP_URL;
+        const t = document.createElement('input'); t.type = 'hidden'; t.name = '_token'; t.value = csrf; f.appendChild(t);
+        document.body.appendChild(f); f.submit();
+    });
 
     // Word menüsü
     const WORD_URL = @json(route('exams.word', $exam));
