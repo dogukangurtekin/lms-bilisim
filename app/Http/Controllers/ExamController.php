@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Exam;
 use App\Models\ExamQuestion;
+use App\Support\ExamLayout;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -103,7 +106,7 @@ class ExamController extends Controller
                     'columns' => (int) $exam->columns,
                     'status' => $exam->status,
                 ],
-                'settings' => array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings),
+                'settings' => array_diff_key(array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings), ['layout' => 1, 'layout_header_h' => 1]),
                 'questions' => $questions,
             ],
         ]);
@@ -141,6 +144,11 @@ class ExamController extends Controller
             'settings.watermark' => ['nullable', 'string', 'max:40'],
             'settings.show_logo' => ['required', 'boolean'],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
+            'layout' => ['nullable', 'array', 'max:80'],
+            'layout_header_h' => ['nullable', 'integer', 'between:0,700'],
+            'layout.*' => ['array', 'max:2'],
+            'layout.*.*' => ['array', 'max:300'],
+            'layout.*.*.*' => ['integer', 'min:0', 'max:299'],
             'questions' => ['present', 'array', 'max:300'],
             'questions.*.type' => ['required', Rule::in(self::QUESTION_TYPES)],
             'questions.*.body' => ['nullable', 'string', 'max:6000'],
@@ -152,7 +160,14 @@ class ExamController extends Controller
             'questions.*.bank_item_id' => ['nullable', 'integer', 'exists:question_bank_items,id'],
         ]);
 
-        DB::transaction(function () use ($exam, $data): void {
+        // Doğrulama anahtar sırasını karıştırabildiği için sayfa/sütun sırasını açıkça düzeltiriz.
+        $layout = isset($data['layout'])
+            ? collect($data['layout'])->sortKeys()->map(
+                fn ($page) => collect($page)->sortKeys()->map(fn ($col) => array_map('intval', array_values((array) $col)))->values()->all()
+            )->values()->all()
+            : null;
+
+        DB::transaction(function () use ($exam, $data, $layout): void {
             $meta = $data['exam'];
             $exam->fill([
                 'title' => $meta['title'],
@@ -166,7 +181,8 @@ class ExamController extends Controller
                 'template' => $meta['template'],
                 'columns' => (int) $meta['columns'],
                 'status' => $meta['status'],
-                'settings' => $data['settings'],
+                // Önizlemedeki sayfa/sütun dağılımı: PDF ve Word çıktısı aynı dağılımı kullanır.
+                'settings' => $data['settings'] + ['layout' => $layout, 'layout_header_h' => $data['layout_header_h'] ?? null],
             ])->save();
 
             $exam->questions()->delete();
@@ -188,6 +204,54 @@ class ExamController extends Controller
         });
 
         return response()->json(['ok' => true, 'saved_at' => now()->format('H:i:s')]);
+    }
+
+    /** Sınavı PDF olarak indirir. mode: student | student_key | teacher | key */
+    public function pdf(Request $request, Exam $exam)
+    {
+        $this->authorizeOwner($request, $exam);
+        @set_time_limit(180);
+        @ini_set('memory_limit', '512M');
+
+        $mode = (string) $request->query('mode', 'student');
+        if (! in_array($mode, ['student', 'student_key', 'teacher', 'key'], true)) {
+            $mode = 'student';
+        }
+
+        $qs = $exam->questions()->get()->map(fn (ExamQuestion $q) => [
+            'type' => $q->type,
+            'body' => (string) $q->body,
+            'options' => $q->options ?? [],
+            'answer' => (string) ($q->answer ?? ''),
+            'points' => (float) $q->points,
+            'section_title' => (string) ($q->section_title ?? ''),
+            'answer_lines' => (int) $q->answer_lines,
+        ])->values()->all();
+
+        if ($qs === []) {
+            return redirect()->route('exams.edit', $exam)->with('error', 'PDF almak için sınava en az bir soru ekleyin.');
+        }
+
+        $s = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings);
+        $columns = (int) $exam->columns === 2 ? 2 : 1;
+        $pages = $s['layout'] ?? null;
+        if (! ExamLayout::isValid($pages, count($qs), $columns)) {
+            $pages = ExamLayout::estimate($qs, $s, $columns);
+        }
+
+        $margin = (int) round(((int) $s['margin_mm']) * ExamLayout::MM);
+        $contentW = ExamLayout::PAGE_W - 2 * $margin;
+        $colW = $columns === 2 ? (int) floor(($contentW - 24) / 2) : $contentW;
+
+        $pdf = Pdf::loadView('exams.pdf', [
+            'exam' => $exam, 's' => $s, 'qs' => $qs, 'pages' => $pages, 'mode' => $mode === 'student_key' ? 'student' : $mode,
+            'withKey' => $mode === 'student_key', 'columns' => $columns, 'margin' => $margin, 'contentW' => $contentW, 'colW' => $colW,
+            'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
+        ])->setPaper('a4', 'portrait')->setOptions(['dpi' => 96, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+
+        $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
+
+        return $pdf->download(Str::slug($exam->title ?: 'sinav').$suffix.'.pdf');
     }
 
     public function uploadLogo(Request $request, Exam $exam): JsonResponse

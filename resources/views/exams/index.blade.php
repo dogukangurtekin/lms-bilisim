@@ -53,6 +53,7 @@
                         </small>
                     </div>
                     <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
+                    @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını PDF olarak indir">PDF</a>@endif
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
                     </form>

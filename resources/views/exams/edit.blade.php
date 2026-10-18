@@ -3,6 +3,20 @@
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/exam-q.css') }}?v={{ @filemtime(public_path('css/exam-q.css')) }}">
 <style>
+    @font-face{font-family:'ExamSerif';font-weight:400;font-style:normal;src:url('{{ asset('fonts/dejavu/DejaVuSerif.ttf') }}')}
+    @font-face{font-family:'ExamSerif';font-weight:700;font-style:normal;src:url('{{ asset('fonts/dejavu/DejaVuSerif-Bold.ttf') }}')}
+    @font-face{font-family:'ExamSerif';font-weight:400;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSerif-Italic.ttf') }}')}
+    @font-face{font-family:'ExamSerif';font-weight:700;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSerif-BoldItalic.ttf') }}')}
+    @font-face{font-family:'ExamSans';font-weight:400;font-style:normal;src:url('{{ asset('fonts/dejavu/DejaVuSans.ttf') }}')}
+    @font-face{font-family:'ExamSans';font-weight:700;font-style:normal;src:url('{{ asset('fonts/dejavu/DejaVuSans-Bold.ttf') }}')}
+    @font-face{font-family:'ExamSans';font-weight:400;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSans-Oblique.ttf') }}')}
+    @font-face{font-family:'ExamSans';font-weight:700;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSans-BoldOblique.ttf') }}')}
+    .xe-menu{position:relative}
+    .xe-dd{position:absolute;right:0;top:44px;z-index:30;background:#fff;border:1px solid #dbe5f2;border-radius:12px;box-shadow:0 14px 30px rgba(15,23,42,.18);min-width:250px;padding:6px;display:none}
+    .xe-dd.open{display:block}
+    .xe-dd button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:8px;font:inherit;font-weight:700;font-size:13px;color:#0f172a;cursor:pointer}
+    .xe-dd button:hover{background:#eff6ff;color:#1d4ed8}
+    .xe-dd small{display:block;color:#64748b;font-weight:600;font-size:11.5px}
     .xe-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .xe-top h1{margin:0;font-size:22px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .xe-chip{padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:800;background:#e2e8f0;color:#475569}
@@ -56,8 +70,8 @@
     .pv-holder{position:relative;width:100%}
     .pv-pages{position:absolute;top:0;left:0;transform-origin:top left}
     .paper{position:relative;width:794px;height:1123px;background:#fff;margin-bottom:24px;box-shadow:0 10px 30px rgba(15,23,42,.18);color:#111;overflow:hidden;box-sizing:border-box;line-height:1.35}
-    .paper.fam-serif,.measure.fam-serif{font-family:"Times New Roman",Times,Georgia,serif}
-    .paper.fam-sans,.measure.fam-sans{font-family:Arial,Helvetica,sans-serif}
+    .paper.fam-serif,.measure.fam-serif{font-family:ExamSerif,'DejaVu Serif',serif}
+    .paper.fam-sans,.measure.fam-sans{font-family:ExamSans,'DejaVu Sans',sans-serif}
     .measure{position:absolute;left:-99999px;top:0;visibility:hidden;box-sizing:border-box}
     .paper .cols{display:grid;gap:24px;align-items:start}
     .paper .col{min-width:0;overflow:hidden}
@@ -117,6 +131,15 @@
     <h1 id="xe-heading">{{ $exam->title }}</h1>
     <span class="xe-chip" id="xe-status">Kaydedildi</span>
     <button type="button" class="xe-btn" id="xe-final"></button>
+    <div class="xe-menu">
+        <button type="button" class="xe-btn" id="xe-pdf">📄 PDF ▾</button>
+        <div class="xe-dd" id="xe-dd">
+            <button type="button" data-pdf="student">Öğrenci kâğıdı<small>Sorular, cevapsız</small></button>
+            <button type="button" data-pdf="student_key">Öğrenci kâğıdı + cevap anahtarı<small>Son sayfada cevap tablosu</small></button>
+            <button type="button" data-pdf="teacher">Öğretmen kâğıdı (cevaplı)<small>Doğru şıklar ve cevaplar işaretli</small></button>
+            <button type="button" data-pdf="key">Yalnız cevap anahtarı<small>Tek tablo</small></button>
+        </div>
+    </div>
     <button type="button" class="xe-btn primary" id="xe-save">💾 Kaydet</button>
 </div>
 
@@ -180,7 +203,7 @@
             <div class="xe-cols"><button type="button" data-cols="1">▯ Tek sütun</button><button type="button" data-cols="2">▯▯ İki sütun</button></div>
         </div>
         <div class="xe-row2">
-            <label class="xe-f">Yazı tipi<select data-k="settings.font_family"><option value="serif">Times (Serif)</option><option value="sans">Arial (Sans)</option></select></label>
+            <label class="xe-f">Yazı tipi<select data-k="settings.font_family"><option value="serif">Serif (DejaVu)</option><option value="sans">Sans (DejaVu)</option></select></label>
             <label class="xe-f">Yazı boyutu<select data-k="settings.font_size" data-num>@for($i=9;$i<=16;$i++)<option value="{{ $i }}">{{ $i }} pt</option>@endfor</select></label>
         </div>
         <label class="xe-f">Kenar boşluğu (mm)<input type="number" data-k="settings.margin_mm" data-num min="8" max="30"></label>
@@ -240,6 +263,7 @@
         questions: (INIT.questions || []).map((q) => ({ uid: uidSeq++, ...q, options: q.options || [] })),
     };
     let selected = state.questions.length ? 0 : -1;
+    let lastLayout = null, lastHeaderH = 0;
     let dirty = false, saving = false, saveTimer = null, previewTimer = null;
 
     const newQuestion = (type) => ({ uid: uidSeq++, ...mkQuestion(type) });
@@ -329,10 +353,11 @@
         mh.innerHTML = headerHtml();
         document.body.appendChild(m); document.body.appendChild(mh);
         const heights = [...m.children].map((c) => c.getBoundingClientRect().height);
-        const headerH = mh.getBoundingClientRect().height + 4;
+        const headerH = mh.getBoundingClientRect().height + 12; // başlık + alt boşluk (.ph margin)
         m.remove(); mh.remove();
 
         const pages = paginate(heights, headerH, contentH, n);
+        lastLayout = pages.map((p) => p.cols); lastHeaderH = Math.round(headerH);
         const total = pages.length;
         const html = pages.map((pg, pIdx) => {
             const colsHtml = pg.cols.map((idxs) => '<div class="col" style="height:' + (contentH - (pIdx === 0 ? headerH : 0)) + 'px">' + idxs.map((k) => blockHtml(state.questions[k], k)).join('') + '</div>').join('');
@@ -390,6 +415,7 @@
         return {
             exam: { ...e, grade_level: numOrNull(e.grade_level), duration_min: numOrNull(e.duration_min), exam_date: e.exam_date || null, columns: e.columns === 2 ? 2 : 1 },
             settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers, page_border: !!s.page_border, show_logo: !!s.show_logo },
+            layout: lastLayout, layout_header_h: lastHeaderH,
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
                 answer: window.ExamQ.answerOf(q),
@@ -400,6 +426,7 @@
     async function save() {
         if (saving) { clearTimeout(saveTimer); saveTimer = setTimeout(save, 800); return; }
         clearTimeout(saveTimer); saving = true; setStatus('', 'Kaydediliyor…');
+        renderPreview(); // sayfa dağılımı kayıtla birlikte güncel gitsin (PDF/Word bu dağılımı kullanır)
         try {
             const res = await fetch(SAVE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify(payload()) });
             if (!res.ok) {
@@ -590,8 +617,25 @@
 
     $('xe-heading').textContent = state.exam.title || 'Sınav';
     syncControls(); refreshFinalBtn(); refreshCols(); renderList();
-    (document.fonts?.ready || Promise.resolve()).then(renderPreview);
+    const ensureFonts = () => {
+        if (!document.fonts || !document.fonts.load) return Promise.resolve();
+        const f = state.settings.font_family === 'sans' ? 'ExamSans' : 'ExamSerif';
+        return Promise.all(['400', '700'].map((w) => document.fonts.load(w + ' 11pt ' + f)).concat(document.fonts.load('italic 400 11pt ' + f))).catch(() => {});
+    };
+    document.querySelector('[data-k="settings.font_family"]').addEventListener('change', () => ensureFonts().then(renderPreview));
+    ensureFonts().then(renderPreview);
     renderPreview();
+
+    // PDF menüsü
+    const PDF_URL = @json(route('exams.pdf', $exam));
+    $('xe-pdf').addEventListener('click', (ev) => { ev.stopPropagation(); $('xe-dd').classList.toggle('open'); });
+    document.addEventListener('click', () => $('xe-dd').classList.remove('open'));
+    $('xe-dd').addEventListener('click', async (ev) => {
+        const b = ev.target.closest('[data-pdf]'); if (!b) return;
+        $('xe-dd').classList.remove('open');
+        await ensureFonts(); await save();
+        if (!dirty) { setStatus('ok', 'PDF hazırlanıyor…'); window.location.href = PDF_URL + '?mode=' + b.dataset.pdf; }
+    });
 })();
 </script>
 @endpush

@@ -236,6 +236,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'update'])->name('bank.update');
         Route::delete('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'destroy'])->name('bank.destroy');
         Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
+        Route::get('/{exam}/pdf', [\App\Http\Controllers\ExamController::class, 'pdf'])->middleware('throttle:20,1')->name('pdf');
         Route::post('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'uploadLogo'])->middleware('throttle:20,1')->name('logo.upload');
         Route::delete('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'deleteLogo'])->name('logo.delete');
         Route::put('/{exam}', [\App\Http\Controllers\ExamController::class, 'update'])->middleware('throttle:120,1')->name('update');
