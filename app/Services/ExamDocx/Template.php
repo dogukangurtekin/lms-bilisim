@@ -404,6 +404,42 @@ class Template
     /* ------------------------------------------------------------------ */
 
     /**
+     * Şablonun üst kısmını (soru bölgesinden önceki içerik + sayfa üst bilgisi) önizleme/PDF için HTML'e çevirir.
+     */
+    public function headerHtml(int $contentPx): string
+    {
+        $a = $this->analyze();
+        $els = $this->children();
+        $limit = $a['start'] >= 0 ? $a['start'] : count($els);
+        $top = [];
+        foreach (array_slice($els, 0, $limit) as $e) {
+            if (in_array($e->localName, ['p', 'tbl', 'sdt'], true)) {
+                $top[] = $e;
+            }
+        }
+
+        // Sayfa üst bilgisi (varsayılan header parçası)
+        $part = null;
+        foreach (array_reverse($els) as $e) {
+            if ($e->localName === 'sectPr') {
+                $ref = $this->xp->query('w:headerReference[@w:type="default"] | w:headerReference', $e)->item(0);
+                if ($ref) {
+                    $rid = $ref->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+                    $rels = (string) $this->zip->getFromName('word/_rels/document.xml.rels');
+                    if ($rid !== '' && preg_match('/<Relationship\b[^>]*\bId="'.preg_quote($rid, '/').'"[^>]*\bTarget="([^"]+)"/', $rels, $m)) {
+                        $part = 'word/'.ltrim(basename($m[1]) === $m[1] ? $m[1] : $m[1], '/');
+                    } elseif ($rid !== '' && preg_match('/<Relationship\b[^>]*\bTarget="([^"]+)"[^>]*\bId="'.preg_quote($rid, '/').'"/', $rels, $m)) {
+                        $part = 'word/'.ltrim($m[1], '/');
+                    }
+                }
+                break;
+            }
+        }
+
+        return (new HeaderHtml($this->zip, $contentPx))->render($top, $part);
+    }
+
+    /**
      * @param  string  $questionsXml  <w:p>/<w:tbl> dizisi (kök öğesiz)
      * @param  string  $tailXml  sorulardan sonra eklenecek bölüm (ör. cevap anahtarı), yoksa ''
      */

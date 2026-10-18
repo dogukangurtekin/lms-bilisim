@@ -36,6 +36,8 @@
     .frame { position: absolute; left: {{ $bi }}px; top: {{ $bi }}px; width: {{ 794 - 2 * $bi }}px; height: {{ 1118 - 2 * $bi }}px; border: 1.5px solid {{ $ac }}; }
     .wm { position: absolute; left: 0; top: 520px; width: 794px; text-align: center; font-size: 84px; font-weight: bold; color: #e5e7eb; transform: rotate(-30deg); text-transform: uppercase; }
     .pgno { position: absolute; left: 0; bottom: 0; width: 794px; height: 26px; line-height: 26px; text-align: center; font-size: 8.5pt; color: #64748b; }
+    .wf-serif { font-family: 'DejaVu Serif', serif; }
+    .wf-sans { font-family: 'DejaVu Sans', sans-serif; }
     table { border-collapse: collapse; }
     td { padding: 0; vertical-align: top; }
     .qblk { padding-bottom: {{ $padB }}px; }
@@ -80,7 +82,12 @@
         @if(! empty($s['page_border']))<div class="frame"></div>@endif
         @if(trim((string) ($s['watermark'] ?? '')) !== '')<div class="wm">{{ $s['watermark'] }}</div>@endif
         <div class="inner">
-            @if($pIdx === 0)
+            @if($pIdx === 0 && $wordHeader !== null)
+                <div class="ph">
+                    @if($mode === 'teacher')<div class="tag">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
+                    {!! $wordHeader !!}
+                </div>
+            @elseif($pIdx === 0)
                 @php
                     $top = '<div class="ph-school">'.e($exam->school_name).'</div><div class="ph-title">'.e($exam->title).'</div><div class="ph-info">'.e($info).'</div>';
                     $topWithLogo = $logo

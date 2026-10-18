@@ -74,6 +74,8 @@ class ExamController extends Controller
         'watermark' => '',
         'show_logo' => false,
         'logo_path' => '',
+        // Word şablonu varsa başlık şablondaki haliyle kullanılır (önizleme ve PDF)
+        'use_word_header' => true,
     ];
 
     public function edit(Request $request, Exam $exam)
@@ -110,6 +112,7 @@ class ExamController extends Controller
                     'status' => $exam->status,
                 ],
                 'settings' => array_diff_key(array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings), ['layout' => 1, 'layout_header_h' => 1]),
+                'word_header' => $this->wordHeaderHtml($exam),
                 'questions' => $questions,
             ],
         ]);
@@ -146,6 +149,7 @@ class ExamController extends Controller
             'settings.page_border' => ['required', 'boolean'],
             'settings.watermark' => ['nullable', 'string', 'max:40'],
             'settings.show_logo' => ['required', 'boolean'],
+            'settings.use_word_header' => ['nullable', 'boolean'],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'layout' => ['nullable', 'array', 'max:80'],
             'layout_header_h' => ['nullable', 'integer', 'between:0,700'],
@@ -247,6 +251,7 @@ class ExamController extends Controller
             'exam' => $exam, 's' => $s, 'qs' => $qs, 'pages' => $pages, 'mode' => $mode === 'student_key' ? 'student' : $mode,
             'withKey' => $mode === 'student_key', 'columns' => $columns, 'margin' => $margin, 'contentW' => $contentW, 'colW' => $colW,
             'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
+            'wordHeader' => (($s['use_word_header'] ?? true) && $this->wordTemplatePath($exam)) ? $this->wordHeaderHtml($exam, $s) : null,
         ])->setPaper('a4', 'portrait')->setOptions(['dpi' => 96, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
 
         $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
@@ -284,6 +289,24 @@ class ExamController extends Controller
         $path = $this->templateDir().'/'.$name;
 
         return is_file($path) ? $path : null;
+    }
+
+    /** Word şablonunun başlığını HTML olarak döndürür (şablon yoksa ya da okunamazsa ''). */
+    private function wordHeaderHtml(Exam $exam, ?array $settings = null): string
+    {
+        $path = $this->wordTemplatePath($exam);
+        if (! $path) {
+            return '';
+        }
+        $s = $settings ?? array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings);
+        $contentPx = ExamLayout::PAGE_W - 2 * (int) round(((int) $s['margin_mm']) * ExamLayout::MM);
+        try {
+            return (new DocxTemplate($path))->headerHtml($contentPx);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return '';
+        }
     }
 
     private function deleteWordTemplateFile(Exam $exam): void
@@ -334,7 +357,7 @@ class ExamController extends Controller
         $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['word_template' => $name, 'word_template_name' => $orig]);
         $exam->save();
 
-        return response()->json(['ok' => true, 'name' => $orig, 'questions' => $parsed['questions'], 'header' => $parsed['header'], 'notes' => $parsed['notes']]);
+        return response()->json(['ok' => true, 'name' => $orig, 'questions' => $parsed['questions'], 'header' => $parsed['header'], 'notes' => $parsed['notes'], 'header_html' => $this->wordHeaderHtml($exam->fresh())]);
     }
 
     public function deleteWordTemplate(Request $request, Exam $exam): JsonResponse

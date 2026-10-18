@@ -120,6 +120,8 @@
     .qmatch{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:5px}
     .qmatch div div{margin-bottom:3px;word-break:break-word}
     .ph{margin-bottom:12px}
+    .wf-serif{font-family:ExamSerif,'DejaVu Serif',serif}.wf-sans{font-family:ExamSans,'DejaVu Sans',sans-serif}
+    .ph-word img{max-width:100%}
     .ph-school{text-align:center;font-weight:800;letter-spacing:.02em;text-transform:uppercase;font-size:1.05em}
     .ph-title{text-align:center;font-weight:800;font-size:1.35em;margin:2px 0}
     .ph-info{text-align:center;color:#334155;font-size:.95em}
@@ -270,7 +272,8 @@
         <div class="xe-f">
             <div id="wt-current" class="wt-cur" style="display:none"><span id="wt-name"></span><button type="button" class="xe-mini" id="wt-del">Kaldır</button></div>
             <label class="xe-mini" style="text-align:center;cursor:pointer">📤 Word kâğıdı yükle (.docx)<input type="file" id="wt-file" accept=".docx" style="display:none"></label>
-            <small style="color:#64748b;font-weight:600;line-height:1.4">Kendi sınav kâğıdınızı yükleyin: başlık, alt bilgi ve stiller korunur; kâğıttaki sorular okunup editöre eklenir. Word çıktısında sorular şablonun soru bölümüne yazılır (başlıktaki tarih/puan gibi alanlar şablondaki haliyle kalır). Soru yerini kendiniz belirlemek için şablona <b>&#123;&#123;SORULAR&#125;&#125;</b> yazabilirsiniz.</small>
+            <small style="color:#64748b;font-weight:600;line-height:1.4">Kendi sınav kâğıdınızı yükleyin: başlık, alt bilgi ve stiller korunur; kâğıttaki sorular okunup editöre eklenir. Word çıktısında sorular şablonun soru bölümüne yazılır; üst kısım (yazı, logo, tablo hücreleri) <b>şablondaki haliyle aynen</b> kalır, önizleme ve PDF'te de aynı başlık gösterilir. Soru yerini kendiniz belirlemek için şablona <b>&#123;&#123;SORULAR&#125;&#125;</b> yazabilirsiniz.</small>
+            <label class="xe-sw" style="font-size:12px"><input type="checkbox" data-k="settings.use_word_header"> Başlığı Word şablonundan al (önizleme ve PDF)</label>
             <div id="wt-panel" class="wt-panel" style="display:none"></div>
         </div>
         <label class="xe-f" style="margin-top:9px">Sınav açıklaması<textarea data-k="settings.instructions" maxlength="1000" rows="3" style="border:1px solid #cbd5e1;border-radius:9px;padding:7px 9px;font:inherit;font-size:13px" placeholder="Örn. Her soru 10 puandır. Süre 40 dakikadır."></textarea></label>
@@ -299,6 +302,7 @@
         questions: (INIT.questions || []).map((q) => ({ uid: uidSeq++, ...q, options: q.options || [] })),
     };
     let selected = state.questions.length ? 0 : -1;
+    let wordHeader = INIT.word_header || '';
     let lastLayout = null, lastHeaderH = 0;
     let dirty = false, saving = false, saveTimer = null, previewTimer = null;
 
@@ -345,6 +349,8 @@
     function totalPoints() { return state.questions.reduce((a, q) => a + (Number(q.points) || 0), 0); }
     function headerHtml() {
         const e = state.exam, s = state.settings;
+        // Word şablonu varsa başlık şablondaki haliyle (metin, logo, hücreler) kullanılır; sistem kendi başlığını üretmez.
+        if (s.word_template_name && s.use_word_header !== false) return '<div class="ph ph-word">' + wordHeader + '</div>';
         const info = [e.subject, e.grade_level ? e.grade_level + '. Sınıf' : '', e.class_label, e.term].filter(Boolean).map(esc).join(' · ');
         const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '';
         const meta = '<div class="ph-meta"><span>Tarih: ' + esc(date || '…/…/……') + '</span><span>Süre: ' + (e.duration_min ? esc(e.duration_min) + ' dk' : '……') + '</span><span>Toplam Puan: ' + esc(String(Math.round(totalPoints() * 100) / 100).replace('.', ',')) + '</span></div>';
@@ -462,7 +468,7 @@
         const numOrNull = (v) => (v === '' || v === null || v === undefined || Number.isNaN(Number(v))) ? null : Number(v);
         return {
             exam: { ...e, grade_level: numOrNull(e.grade_level), duration_min: numOrNull(e.duration_min), exam_date: e.exam_date || null, columns: e.columns === 2 ? 2 : 1 },
-            settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers, page_border: !!s.page_border, show_logo: !!s.show_logo },
+            settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers, page_border: !!s.page_border, show_logo: !!s.show_logo, use_word_header: s.use_word_header !== false },
             layout: lastLayout, layout_header_h: lastHeaderH,
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
@@ -752,7 +758,8 @@
             const res = await fetch(WT_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
             const j = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'));
-            state.settings.word_template_name = j.name; syncControls(); setStatus('ok', 'Şablon eklendi');
+            state.settings.word_template_name = j.name; state.settings.use_word_header = true; wordHeader = j.header_html || '';
+            syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Şablon eklendi');
             const n = j.questions.length, nt = j.notes.skipped_tables, nm = j.notes.mc_without_answer;
             if (!n) { panel.style.display = 'grid'; panel.innerHTML = '<div>Şablon eklendi. Kâğıtta numaralı soru bulunamadı; soruları editörden ekleyebilirsiniz.</div><button type="button" id="wt-close">Tamam</button>'; $('wt-close').onclick = () => { panel.style.display = 'none'; }; return; }
             panel.style.display = 'grid';
@@ -772,7 +779,7 @@
     });
     $('wt-del').addEventListener('click', async () => {
         try { await fetch(WT_URL, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); } catch (_) {}
-        state.settings.word_template_name = ''; syncControls(); setStatus('ok', 'Şablon kaldırıldı');
+        state.settings.word_template_name = ''; wordHeader = ''; syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Şablon kaldırıldı');
     });
 
     // PDF menüsü
