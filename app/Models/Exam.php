@@ -13,6 +13,7 @@ class Exam extends Model
         'modern' => 'Modern Renkli',
         'plain' => 'Sade Test',
         'quiz' => 'Kısa Quiz',
+        'school' => 'Okul Logolu',
     ];
 
     protected $fillable = [

@@ -5,7 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\QuestionBankItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\BulkTemplateWorkbook;
+use App\Support\QuestionBankSheet;
+use App\Support\SpreadsheetReader;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionBankController extends Controller
 {
@@ -26,7 +31,22 @@ class QuestionBankController extends Controller
     public function search(Request $request): JsonResponse
     {
         $user = $request->user();
-        $q = $this->visibleQuery($request)->with('owner:id,name');
+        $q = $this->filtered($request)->with('owner:id,name');
+
+        $page = $q->orderByDesc('id')->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'data' => $page->getCollection()->map(fn (QuestionBankItem $i) => $this->present($i, $user->id))->values(),
+            'has_more' => $page->hasMorePages(),
+            'total' => $page->total(),
+        ]);
+    }
+
+    /** Arama ve dışa aktarma için ortak filtreler. */
+    private function filtered(Request $request)
+    {
+        $user = $request->user();
+        $q = $this->visibleQuery($request);
 
         if ($request->query('scope') === 'mine') {
             $q->where('owner_id', $user->id);
@@ -48,12 +68,89 @@ class QuestionBankController extends Controller
             $q->where(fn ($w) => $w->where('body', 'like', $like)->orWhere('unit', 'like', $like)->orWhere('tags', 'like', $like));
         }
 
-        $page = $q->orderByDesc('id')->paginate(self::PER_PAGE);
+        return $q;
+    }
+
+    /** Boş şablon: her soru tipinden bir örnek satır içerir. */
+    public function template(): StreamedResponse
+    {
+        $binary = BulkTemplateWorkbook::buildFromRows(QuestionBankSheet::HEADERS, QuestionBankSheet::sampleRows(), 'Sorular');
+
+        return $this->download($binary, 'soru-havuzu-sablon.xlsx');
+    }
+
+    /** Görünen (filtrelenmiş) soruları aynı biçimde Excel olarak indirir. */
+    public function export(Request $request): StreamedResponse
+    {
+        @set_time_limit(120);
+        $rows = $this->filtered($request)->orderBy('id')->limit(2000)->get()->map(fn (QuestionBankItem $i) => QuestionBankSheet::toRow($i))->all();
+        $binary = BulkTemplateWorkbook::buildFromRows(QuestionBankSheet::HEADERS, $rows, 'Sorular');
+
+        return $this->download($binary, 'soru-havuzu-'.now()->format('Ymd-His').'.xlsx');
+    }
+
+    /** Şablon biçimindeki dosyadan toplu soru yükler (geçersiz satırlar atlanır ve bildirilir). */
+    public function import(Request $request): JsonResponse
+    {
+        @set_time_limit(120);
+        $request->validate(['file' => ['required', 'file', 'max:5120']]);
+        $ext = strtolower((string) $request->file('file')->getClientOriginalExtension());
+        if (! in_array($ext, ['xlsx', 'csv', 'txt'], true)) {
+            return response()->json(['message' => 'Yalnızca xlsx, csv veya txt dosyaları yüklenebilir.'], 422);
+        }
+
+        $rows = SpreadsheetReader::read((string) $request->file('file')->getRealPath(), $ext);
+        if ($rows === null) {
+            return response()->json(['message' => 'Dosya okunamadı. Şablon dosyasını kullandığınızdan emin olun.'], 422);
+        }
+
+        $offset = 1;
+        if ($rows !== [] && QuestionBankSheet::looksLikeHeader($rows[0])) {
+            array_shift($rows);
+            $offset = 2;
+        }
+        // Boş satırlar atlanır ama dosyadaki satır numaraları korunur (hata mesajları için).
+        $rows = array_filter($rows, static fn ($r) => trim(implode('', $r)) !== '');
+        if ($rows === []) {
+            return response()->json(['message' => 'Dosyada soru satırı bulunamadı.'], 422);
+        }
+        if (count($rows) > 500) {
+            return response()->json(['message' => 'Tek seferde en fazla 500 soru yüklenebilir ('.count($rows).' satır bulundu).'], 422);
+        }
+
+        $ownerId = $request->user()->id;
+        $valid = [];
+        $errors = [];
+        foreach ($rows as $i => $cols) {
+            [$data, $err] = QuestionBankSheet::parseRow($cols);
+            if ($err !== null) {
+                $errors[] = 'Satır '.($i + $offset).': '.$err;
+                continue;
+            }
+            $valid[] = $data + ['owner_id' => $ownerId, 'created_at' => now(), 'updated_at' => now()];
+        }
+
+        DB::transaction(function () use ($valid): void {
+            foreach ($valid as $row) {
+                QuestionBankItem::query()->create($row);
+            }
+        });
 
         return response()->json([
-            'data' => $page->getCollection()->map(fn (QuestionBankItem $i) => $this->present($i, $user->id))->values(),
-            'has_more' => $page->hasMorePages(),
-            'total' => $page->total(),
+            'ok' => true,
+            'imported' => count($valid),
+            'skipped' => count($errors),
+            'errors' => array_slice($errors, 0, 15),
+        ]);
+    }
+
+    private function download(string $binary, string $filename): StreamedResponse
+    {
+        return response()->streamDownload(function () use ($binary): void {
+            echo $binary;
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
     }
 

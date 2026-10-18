@@ -5,6 +5,10 @@
 <style>
     .bk-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
     .bk-top h1{margin:0;font-size:22px;flex:1 1 auto}
+    .bk-result{background:#f0fdf4;border:1px solid #86efac;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13.5px;font-weight:700;color:#14532d}
+    .bk-result.warn{background:#fffbeb;border-color:#fcd34d;color:#78350f}
+    .bk-result.err{background:#fef2f2;border-color:#fca5a5;color:#7f1d1d}
+    .bk-result ul{margin:6px 0 0;padding-left:20px;font-weight:600}
     .bk-filters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(5,minmax(120px,1fr));gap:8px;margin-bottom:14px}
     .bk-filters input,.bk-filters select{height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font:inherit;font-size:13.5px;background:#fff;width:100%}
     .bk-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
@@ -36,8 +40,13 @@
 <div class="bk-top">
     <a class="xe-btn" href="{{ route('exams.index') }}">← Sınavlar</a>
     <h1>📚 Soru Havuzu</h1>
+    <a class="xe-btn" href="{{ route('exams.bank.template') }}" title="Her soru tipinden örnek satır içeren boş şablon">⬇ Şablon indir</a>
+    <a class="xe-btn" href="{{ route('exams.bank.export') }}" id="bk-export" title="Ekranda görünen filtreye uyan soruları aynı biçimde indirir">⬇ Dışa aktar</a>
+    <button type="button" class="xe-btn" id="bk-import" title="Şablon biçimindeki Excel/CSV dosyasından toplu soru yükler">⬆ İçe aktar</button>
+    <input type="file" id="bk-file" accept=".xlsx,.csv,.txt" style="display:none">
     <button type="button" class="xe-btn primary" id="bk-new">➕ Yeni Soru</button>
 </div>
+<div class="bk-result" id="bk-result" style="display:none"></div>
 
 <div class="bk-filters">
     <input type="search" id="f-q" placeholder="Soru, konu veya etiket ara…">
@@ -162,6 +171,22 @@
         armedId = null;
         const res = await fetch(URLS.item + '/' + id, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } });
         if (res.ok) load(true);
+    });
+    $('bk-export').addEventListener('click', (e) => { e.preventDefault(); window.location.href = @json(route('exams.bank.export')) + '?' + params(); });
+    $('bk-import').addEventListener('click', () => { $('bk-file').value = ''; $('bk-file').click(); });
+    $('bk-file').addEventListener('change', async () => {
+        const f = $('bk-file').files[0]; if (!f) return;
+        const box = $('bk-result'); box.className = 'bk-result'; box.style.display = 'block'; box.textContent = 'Yükleniyor…';
+        const fd = new FormData(); fd.append('file', f);
+        try {
+            const res = await fetch(@json(route('exams.bank.import')), { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok) { box.className = 'bk-result err'; box.textContent = j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yükleme başarısız (' + res.status + ')'); return; }
+            box.className = 'bk-result' + (j.skipped ? ' warn' : '');
+            box.innerHTML = '✔ ' + j.imported + ' soru havuza eklendi' + (j.skipped ? ', ' + j.skipped + ' satır atlandı:' : '.')
+                + (j.errors.length ? '<ul>' + j.errors.map((m) => '<li>' + esc(m) + '</li>').join('') + '</ul>' : '');
+            load(true);
+        } catch (_) { box.className = 'bk-result err'; box.textContent = 'Yükleme sırasında bağlantı hatası oluştu.'; }
     });
     load(true);
 })();

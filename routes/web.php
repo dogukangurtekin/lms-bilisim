@@ -229,10 +229,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [\App\Http\Controllers\ExamController::class, 'store'])->name('store');
         Route::get('/soru-havuzu', [\App\Http\Controllers\QuestionBankController::class, 'index'])->name('bank.index');
         Route::get('/soru-havuzu/ara', [\App\Http\Controllers\QuestionBankController::class, 'search'])->name('bank.search');
+        Route::get('/soru-havuzu/sablon', [\App\Http\Controllers\QuestionBankController::class, 'template'])->name('bank.template');
+        Route::get('/soru-havuzu/indir', [\App\Http\Controllers\QuestionBankController::class, 'export'])->middleware('throttle:20,1')->name('bank.export');
+        Route::post('/soru-havuzu/yukle', [\App\Http\Controllers\QuestionBankController::class, 'import'])->middleware('throttle:10,1')->name('bank.import');
         Route::post('/soru-havuzu', [\App\Http\Controllers\QuestionBankController::class, 'store'])->middleware('throttle:60,1')->name('bank.store');
         Route::put('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'update'])->name('bank.update');
         Route::delete('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'destroy'])->name('bank.destroy');
         Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
+        Route::post('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'uploadLogo'])->middleware('throttle:20,1')->name('logo.upload');
+        Route::delete('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'deleteLogo'])->name('logo.delete');
         Route::put('/{exam}', [\App\Http\Controllers\ExamController::class, 'update'])->middleware('throttle:120,1')->name('update');
         Route::delete('/{exam}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');
     });

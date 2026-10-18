@@ -58,8 +58,8 @@ Soru tipleri: `multiple_choice` (A–E), `true_false`, `fill_blank`, `open_ended
 |---|---|---|
 | 1 | İstem + erişim (menü, Profilim açma/kapama, yetki) + veritabanı + sınav listesi/yeni sınav oluşturma | Tamam |
 | 2 | Editör iskeleti: A4 önizleme, soru ekleme/silme/sıralama, tek/çift sütun, kaydetme | Tamam |
-| 3 | Soru havuzu: havuz yönetimi, filtre, havuzdan sınava ekleme, soruyu havuza kaydetme | **Bu teslim** |
-| 4 | Şablonlar ve tasarım ayarları (başlık, tipografi, tema, logo) | |
+| 3 | Soru havuzu: havuz yönetimi, filtre, havuzdan sınava ekleme, soruyu havuza kaydetme | Tamam |
+| 4 | Şablonlar ve tasarım ayarları (başlık, tipografi, tema, logo) + havuz soruları için Excel dışa/içe aktarma | **Bu teslim** |
 | 5 | PDF çıktısı (+ cevap anahtarı) | |
 | 6 | Word (.docx) çıktısı | |
 | 7 | Cilalama: kopyalama, görsel yükleme, sürükle-bırak, yazdırma, hata/sınır durumları | |

@@ -60,6 +60,15 @@ class ExamController extends Controller
         'student_box' => true,
         'page_numbers' => true,
         'instructions' => '',
+        // tasarım (Adım 4)
+        'accent' => '#1e3a8a',
+        'spacing' => 'normal',     // compact | normal | relaxed
+        'num_style' => 'dot',      // dot: 1.  paren: 1)  soru: Soru 1
+        'opt_style' => 'paren',    // paren: A)  bracket: (A)  dot: A.
+        'page_border' => false,
+        'watermark' => '',
+        'show_logo' => false,
+        'logo_path' => '',
     ];
 
     public function edit(Request $request, Exam $exam)
@@ -124,6 +133,14 @@ class ExamController extends Controller
             'settings.student_box' => ['required', 'boolean'],
             'settings.page_numbers' => ['required', 'boolean'],
             'settings.instructions' => ['nullable', 'string', 'max:1000'],
+            'settings.accent' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'settings.spacing' => ['required', 'in:compact,normal,relaxed'],
+            'settings.num_style' => ['required', 'in:dot,paren,soru'],
+            'settings.opt_style' => ['required', 'in:paren,bracket,dot'],
+            'settings.page_border' => ['required', 'boolean'],
+            'settings.watermark' => ['nullable', 'string', 'max:40'],
+            'settings.show_logo' => ['required', 'boolean'],
+            'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'questions' => ['present', 'array', 'max:300'],
             'questions.*.type' => ['required', Rule::in(self::QUESTION_TYPES)],
             'questions.*.body' => ['nullable', 'string', 'max:6000'],
@@ -171,6 +188,47 @@ class ExamController extends Controller
         });
 
         return response()->json(['ok' => true, 'saved_at' => now()->format('H:i:s')]);
+    }
+
+    public function uploadLogo(Request $request, Exam $exam): JsonResponse
+    {
+        $this->authorizeOwner($request, $exam);
+        $request->validate(['logo' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', 'mimetypes:image/png,image/jpeg,image/webp', 'max:1024']]);
+
+        $file = $request->file('logo');
+        $dir = public_path('exam-logos');
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $ext = $file->guessExtension() === 'jpeg' ? 'jpg' : $file->guessExtension();
+        $name = bin2hex(random_bytes(12)).'.'.$ext;
+        $file->move($dir, $name);
+
+        $this->deleteLogoFile($exam);
+        $path = 'exam-logos/'.$name;
+        $settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['logo_path' => $path, 'show_logo' => true]);
+        $exam->settings = $settings;
+        $exam->save();
+
+        return response()->json(['ok' => true, 'logo_path' => $path, 'url' => asset($path)]);
+    }
+
+    public function deleteLogo(Request $request, Exam $exam): JsonResponse
+    {
+        $this->authorizeOwner($request, $exam);
+        $this->deleteLogoFile($exam);
+        $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['logo_path' => '', 'show_logo' => false]);
+        $exam->save();
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function deleteLogoFile(Exam $exam): void
+    {
+        $old = (string) data_get($exam->settings, 'logo_path', '');
+        if ($old !== '' && preg_match('#^exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp)$#', $old)) {
+            @unlink(public_path($old));
+        }
     }
 
     /** Seçenek / eşleştirme çiftlerini temizler (kırpma + uzunluk sınırı). */
