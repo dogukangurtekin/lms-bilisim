@@ -313,11 +313,12 @@ class Builder
         if ($TL['year'] !== '') {
             $textParas .= Xml::para([Xml::run($TL['year'], ['color' => $modern ? 'E0E7FF' : '334155', 'sz' => $fs - 1])], $base + ['before' => 60, 'after' => 0]);
         }
+        // okul ve ders satırı sayfa genişliğine tek satırda sığsın (en fazla 3 satır başlık)
+        $boxPt = $this->contentTw / 20 - 20;
+        $fq = in_array($s['font_family'] ?? '', ['serif', 'sans'], true) ? 0.72 : 0.62;
+        $fitSz = fn (string $t, int $max) => (int) max(16, min($max, floor($boxPt / (max(1, mb_strlen($t)) * $fq) * 2)));
         if ($TL['school'] !== '') {
-            $textParas .= Xml::para([Xml::run($TL['school'], ['b' => 1, 'color' => $txt, 'sz' => $fs + 2])], $base + ['before' => 0, 'after' => 0]);
-        }
-        if ($TL['course'] !== '') {
-            $textParas .= Xml::para([Xml::run($TL['course'], ['b' => 1, 'color' => $txt, 'sz' => $fs + 1])], $base + ['before' => 0, 'after' => 0]);
+            $textParas .= Xml::para([Xml::run($TL['school'], ['b' => 1, 'color' => $txt, 'sz' => $fitSz($TL['school'], $fs + 2)])], $base + ['before' => 0, 'after' => 0]);
         }
         $lastOpts = $base;
         if ($tpl === 'quiz') {
@@ -325,7 +326,10 @@ class Builder
         } elseif ($tpl === 'school') {
             $lastOpts['borders'] = ['bottom' => ['double', 12, $ac, 6]];
         }
-        $textParas .= Xml::para([Xml::run($TL['last'], ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fs + 6])], $lastOpts + ['before' => 0, 'after' => 120]);
+        // Son satır (ders adı + dönem + yazılı numarası) şablonun alt çizgisini/boşluğunu taşır
+        if ($TL['course'] !== '') {
+            $textParas .= Xml::para([Xml::run($TL['course'], ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fitSz($TL['course'], $fs + 3)])], $lastOpts + ['before' => 0, 'after' => 120]);
+        }
 
         if ($logo) {
             $logoCell = ['xml' => Xml::para([$this->logoRun($logo)], ['jc' => 'left']), 'vAlign' => 'center'];
@@ -383,7 +387,12 @@ class Builder
 
         $TL = \App\Support\ExamLayout::titleLines($e, $this->s);
         $lines = collect([$TL['year'], $TL['school'], $TL['course'], $TL['last']])->filter(fn ($t) => $t !== '');
-        $titleXml = $lines->map(fn ($t) => Xml::para([Xml::run($t, ['b' => 1, 'sz' => $fs + 2])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
+        // satırlar hücreye tek satırda sığsın: en uzun satıra göre yazı boyutu (yarım punto) küçültülür
+        $cellPt = ($w[1] + $w[2] + $w[3] + $w[4] + $w[5]) / 20 - 8;
+        $maxLen = max(1, ...($lines->map(fn ($t) => mb_strlen($t))->all() ?: [1]));
+        $factor = in_array($this->s['font_family'] ?? '', ['serif', 'sans'], true) ? 0.72 : 0.62;
+        $titleSz = (int) max(16, min($fs + 2, floor($cellPt / ($maxLen * $factor) * 2)));
+        $titleXml = $lines->map(fn ($t) => Xml::para([Xml::run($t, ['b' => 1, 'sz' => $titleSz])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
         $c = fn (string $t, array $o = [], string $jc = 'left') => Xml::para([Xml::run($t, ['b' => 1] + $o)], ['jc' => $jc, 'before' => 20, 'after' => 20]);
         $logoCell = fn (?array $l, string $rid, int $id) => ['xml' => $l ? Xml::para([$this->logoRun($l, $rid, $id)], ['jc' => 'center']) : '', 'vAlign' => 'center'];
         $date = $e->exam_date ? $e->exam_date->format('d.m.Y') : '…/…/……';

@@ -109,6 +109,7 @@
                     $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $contentW);
                     $TL = \App\Support\ExamLayout::titleLines($exam, $s);
                     $lines = collect([$TL['year'], $TL['school'], $TL['course'], $TL['last']])->filter(fn ($t) => $t !== '');
+                    $fitEm = \App\Support\ExamLayout::fitTitleScale($lines->all(), ($contentW + ($tblFrame ? 2 * $fpad : 0)) * 0.741, ((int) $s['font_size']) * 1.3333, (string) ($s['font_family'] ?? 'calibri'));
                     $lg1 = $logoUri($s['logo_path'] ?? null);
                     $lg2 = $logoUri($s['logo2_path'] ?? null);
                     $cell = 'border:2px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
@@ -120,7 +121,7 @@
                     <table style="width:{{ $tw }}px;border-collapse:collapse">
                         <tr style="height:86px">
                             <td style="{{ $cell }}width:{{ $px(0) }}px;text-align:center">@if($lg1)<img src="{{ $lg1 }}" style="max-width:{{ $px(0) - 12 }}px;max-height:78px">@endif</td>
-                            <td colspan="5" style="{{ $cell }}width:{{ $px(1, 2, 3, 4, 5) }}px;text-align:center;font-size:1.08em;line-height:1.3">@foreach($lines as $ln)<div>{{ $ln }}</div>@endforeach</td>
+                            <td colspan="5" style="{{ $cell }}width:{{ $px(1, 2, 3, 4, 5) }}px;text-align:center;font-size:{{ number_format($fitEm, 3, '.', '') }}em;line-height:1.3">@foreach($lines as $ln)<div>{{ $ln }}</div>@endforeach</td>
                             <td style="{{ $cell }}width:{{ $px(6) }}px;text-align:center">@if($lg2)<img src="{{ $lg2 }}" style="max-width:{{ $px(6) - 12 }}px;max-height:78px">@endif</td>
                         </tr>
                         <tr style="height:46px">
@@ -142,7 +143,10 @@
             @elseif($pIdx === 0)
                 @php
                     $TL = \App\Support\ExamLayout::titleLines($exam, $s);
-                    $top = ($TL['year'] !== '' ? '<div class="ph-info">'.e($TL['year']).'</div>' : '').($TL['school'] !== '' ? '<div class="ph-school">'.e($TL['school']).'</div>' : '').($TL['course'] !== '' ? '<div class="ph-sub">'.e($TL['course']).'</div>' : '').($TL['last'] !== '' ? '<div class="ph-title">'.e($TL['last']).'</div>' : '');
+                    $boxW = $contentW - 30;
+                    $basePx = ((int) $s['font_size']) * 1.3333;
+                    $fitFor = fn (string $t, float $base) => number_format(min($base, \App\Support\ExamLayout::fitTitleScale([$t], $boxW, $basePx, (string) ($s['font_family'] ?? 'serif'))), 3, '.', '');
+                    $top = ($TL['year'] !== '' ? '<div class="ph-info">'.e($TL['year']).'</div>' : '').($TL['school'] !== '' ? '<div class="ph-school" style="font-size:'.$fitFor($TL['school'], 1.05).'em">'.e($TL['school']).'</div>' : '').($TL['course'] !== '' ? '<div class="ph-sub" style="font-size:'.$fitFor($TL['course'], 1.08).'em">'.e($TL['course']).'</div>' : '').($TL['last'] !== '' ? '<div class="ph-title">'.e($TL['last']).'</div>' : '');
                     $topWithLogo = $logo
                         ? '<table style="width:100%"><tr><td style="width:70px;vertical-align:middle"><img src="'.$logo.'" style="height:56px;width:auto"></td><td style="vertical-align:middle">'.$top.'</td></tr></table>'
                         : $top;

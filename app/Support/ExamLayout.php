@@ -74,7 +74,7 @@ class ExamLayout
     }
 
     /**
-     * Sınav kâğıdı başlık satırları, sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası.
+     * Sınav kâğıdı başlık satırları: 1) yıl, 2) okul adı, 3) ders adı + dönem ve yazılı numarası (aynı satırda).
      *
      * @return array{year: string, school: string, course: string, last: string}
      */
@@ -91,12 +91,28 @@ class ExamLayout
             ? trim(($term !== '' ? $term.'. DÖNEM' : '').' '.($no !== '' ? $no.'. YAZILISI' : ''))
             : $up($exam->title);
 
+        // Üç satır: yıl, okul adı, "sınıf + ders adı + dönem ve yazılı numarası" (dönem/yazılı dersin devamında gelir)
         return [
             'year' => $year !== '' ? $year.' EĞİTİM - ÖĞRETİM YILI' : $up($exam->term),
             'school' => $up($exam->school_name),
-            'course' => trim($cls.' '.$course),
-            'last' => $last,
+            'course' => trim($cls.' '.$course.' '.$last),
+            'last' => '',
         ];
+    }
+
+    /**
+     * Başlık satırlarının hücreye tek satırda sığması için yazı boyutu çarpanı (em): en uzun satıra göre küçültülür.
+     * $cellPx: satırların yazıldığı hücre genişliği (px), $basePx: temel yazı boyutu (px).
+     */
+    public static function fitTitleScale(array $lines, float $cellPx, float $basePx, string $fontKey = 'calibri'): float
+    {
+        $max = max(array_map(fn ($l) => mb_strlen((string) $l), $lines ?: ['']));
+        $factor = in_array($fontKey, ['serif', 'sans'], true) ? 0.72 : 0.62; // büyük harfli kalın yazının ortalama genişliği (em)
+        if ($max < 1 || $basePx <= 0) {
+            return 1.08;
+        }
+
+        return max(0.7, min(1.08, ($cellPx - 12) / ($max * $factor * $basePx)));
     }
 
     /** Türkçe büyük harf (i→İ, ı→I). */

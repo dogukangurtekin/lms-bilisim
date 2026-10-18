@@ -391,7 +391,7 @@
     /* ---------- önizleme: üst bilgi ---------- */
     function totalPoints() { return state.questions.reduce((a, q) => a + (Number(q.points) || 0), 0); }
     // Tablolu (okul) başlık: logo - başlık satırları - logo / AD SOYAD - süre - tarih - PUAN / SINIF - NO hücreleri
-    // Başlık satırları, sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası
+    // Başlık satırları: yıl / okul adı / ders adı + dönem ve yazılı numarası
     function titleLines() {
         const e = state.exam, s = state.settings;
         const up = (t) => String(t || '').trim().toLocaleUpperCase('tr');
@@ -402,8 +402,9 @@
         return {
             year: String(s.academic_year || '').trim() ? String(s.academic_year).trim() + ' EĞİTİM - ÖĞRETİM YILI' : up(e.term),
             school: up(e.school_name),
-            course: [cls, course].filter(Boolean).join(' '),
-            last: (term || no) ? [term ? term + '. DÖNEM' : '', no ? no + '. YAZILISI' : ''].filter(Boolean).join(' ') : up(e.title),
+            // dönem ve yazılı numarası dersin devamında, aynı satırda gelir (toplam 3 satır)
+            course: [cls, course, (term || no) ? [term ? term + '. DÖNEM' : '', no ? no + '. YAZILISI' : ''].filter(Boolean).join(' ') : up(e.title)].filter(Boolean).join(' '),
+            last: '',
         };
     }
     function tableHeader() {
@@ -412,11 +413,17 @@
         const img = (p) => p ? '<img src="' + esc(LOGO_BASE + p) + '" alt="" style="max-width:100%;max-height:78px;display:block;margin:0 auto">' : '';
         const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '…/…/……';
         const L = titleLines();
-        const lines = [L.year, L.school, L.course, L.last].filter(Boolean).map((t) => '<div>' + esc(t) + '</div>').join('');
+        const arr = [L.year, L.school, L.course, L.last].filter(Boolean);
+        const lines = arr.map((t) => '<div>' + esc(t) + '</div>').join('');
+        // satırlar hücreye tek satırda sığsın: en uzun satıra göre yazı küçülür
+        const mg = Math.round(s.margin_mm * MM), contentW = PAGE_W - 2 * mg + (s.page_border ? 16 : 0);
+        const maxLen = Math.max(1, ...arr.map((t) => t.length));
+        const factor = (s.font_family === 'serif' || s.font_family === 'sans') ? 0.72 : 0.62;
+        const fit = Math.max(0.7, Math.min(1.08, (contentW * 0.741 - 12) / (maxLen * factor * s.font_size * 1.3333)));
         const cg = '<colgroup><col style="width:12.3%"><col style="width:13.5%"><col style="width:10.5%"><col style="width:7.5%"><col style="width:21.2%"><col style="width:21.4%"><col style="width:13.6%"></colgroup>';
         const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
         return '<div class="ph' + (s.page_border ? ' ph-tbl' : '') + '"><table class="th-tbl">' + cg
-            + '<tr style="height:86px"><td class="c">' + img(s.logo_path) + '</td><td class="t" colspan="5">' + lines + '</td><td class="c">' + img(s.logo2_path) + '</td></tr>'
+            + '<tr style="height:86px"><td class="c">' + img(s.logo_path) + '</td><td class="t" colspan="5" style="font-size:' + fit.toFixed(3) + 'em">' + lines + '</td><td class="c">' + img(s.logo2_path) + '</td></tr>'
             + '<tr style="height:46px"><td class="lb">AD SOYAD:</td><td colspan="3"></td><td class="sm">' + (e.duration_min ? 'Sınav süresi ' + esc(e.duration_min) + ' dakikadır.' : '') + '</td><td class="sm">TARİH: ' + esc(date) + '</td><td class="big">PUAN</td></tr>'
             + '<tr style="height:40px"><td class="lb">SINIF:</td><td></td><td class="lb">NO:</td><td></td><td></td><td></td><td></td></tr>'
             + '</table>' + ins + '</div>';
@@ -429,8 +436,12 @@
         const stu = s.student_box ? '<div class="ph-stu"><span>Adı Soyadı:</span><span>Numara:</span><span>Sınıf:</span><span>Puan:</span></div>' : '';
         const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
         const L = titleLines();
-        let top = (L.year ? '<div class="ph-info">' + esc(L.year) + '</div>' : '') + (L.school ? '<div class="ph-school">' + esc(L.school) + '</div>' : '')
-            + (L.course ? '<div class="ph-sub">' + esc(L.course) + '</div>' : '') + (L.last ? '<div class="ph-title">' + esc(L.last) + '</div>' : '');
+        // okul ve ders satırı sayfa genişliğine tek satırda sığsın (en fazla 3 satır başlık)
+        const boxW = PAGE_W - 2 * Math.round(s.margin_mm * MM) - 30;
+        const fq = (s.font_family === 'serif' || s.font_family === 'sans') ? 0.72 : 0.62;
+        const fitEm = (t, base) => Math.max(0.7, Math.min(base, (boxW - 8) / (Math.max(1, t.length) * fq * s.font_size * 1.3333))).toFixed(3);
+        let top = (L.year ? '<div class="ph-info">' + esc(L.year) + '</div>' : '') + (L.school ? '<div class="ph-school" style="font-size:' + fitEm(L.school, 1.05) + 'em">' + esc(L.school) + '</div>' : '')
+            + (L.course ? '<div class="ph-sub" style="font-size:' + fitEm(L.course, 1.08) + 'em">' + esc(L.course) + '</div>' : '') + (L.last ? '<div class="ph-title">' + esc(L.last) + '</div>' : '');
         if (s.show_logo && s.logo_path) top = '<div class="ph-row"><img class="ph-logo" src="' + esc(LOGO_BASE + s.logo_path) + '" alt=""><div class="ph-txt">' + top + '</div></div>';
         if (e.template === 'modern') return '<div class="ph"><div class="ph-top">' + top + '</div><div class="ph-rest">' + meta + stu + ins + '</div></div>';
         return '<div class="ph">' + top + meta + stu + ins + '</div>';
