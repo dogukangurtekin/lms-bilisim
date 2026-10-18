@@ -47,6 +47,7 @@ const RUNNER_SLUGS = [
   "bee-garden-runner",
   "flowchart-runner",
   "dot-cards-runner",
+  "word-bee-runner",
 ];
 
 function isRunnerRequest(url) {

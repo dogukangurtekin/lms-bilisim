@@ -219,6 +219,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{id}', [\App\Http\Controllers\BlockBuilderStudioController::class, 'destroy'])->whereNumber('id')->name('destroy');
     });
     Route::get('/dot-cards-runner', [ActivityRunnerController::class, 'dotCards']);
+    Route::get('/word-bee-runner', [ActivityRunnerController::class, 'wordBee']);
     Route::get('/flowchart-runner', [ActivityRunnerController::class, 'flowchart']);
     // Eski adres (kaldırılan Vue uygulaması) yeni Flowchart Programlama uygulamasına yönlendirilir.
     Route::redirect('/flowchart-programming', '/flowchart-runner')->name('flowchart.editor');
