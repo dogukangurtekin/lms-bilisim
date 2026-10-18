@@ -227,6 +227,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin,teacher', 'exam.access'])->prefix('sinav-olustur')->name('exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ExamController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\ExamController::class, 'store'])->name('store');
+        Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
+        Route::put('/{exam}', [\App\Http\Controllers\ExamController::class, 'update'])->middleware('throttle:120,1')->name('update');
         Route::delete('/{exam}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');
     });
     Route::middleware('role:admin,teacher')->group(function () {

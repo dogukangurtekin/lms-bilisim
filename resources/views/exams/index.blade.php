@@ -36,13 +36,13 @@
 <div class="ex-wrap">
     <section class="ex-card">
         <h2>{{ $isAdmin ? 'Tüm Sınavlar' : 'Sınavlarım' }}</h2>
-        <p class="ex-sub">Hazırladığınız sınav kâğıtları burada listelenir. Soru editörü, soru havuzu ve PDF/Word çıktısı sonraki adımlarda eklenecek.</p>
+        <p class="ex-sub">Hazırladığınız sınav kâğıtları burada listelenir. Bir sınava tıklayarak soru editörünü açın. Soru havuzu ve PDF/Word çıktısı sonraki adımlarda eklenecek.</p>
         <div class="ex-list">
             @forelse($exams as $exam)
                 <div class="ex-item">
                     <div class="ex-ico">📄</div>
                     <div class="ex-meta">
-                        <b>{{ $exam->title }}</b>
+                        <b><a href="{{ route('exams.edit', $exam) }}" style="color:inherit;text-decoration:none">{{ $exam->title }}</a></b>
                         <small>
                             <span class="ex-tag {{ $exam->status === 'final' ? 'final' : '' }}">{{ $exam->status === 'final' ? 'Kesin' : 'Taslak' }}</span>
                             {{ $exam->subject ?: 'Ders belirtilmedi' }}{{ $exam->grade_level ? ' · '.$exam->grade_level.'. sınıf' : '' }}
@@ -52,6 +52,7 @@
                             · {{ $exam->updated_at->format('d.m.Y H:i') }}
                         </small>
                     </div>
+                    <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
                     </form>
