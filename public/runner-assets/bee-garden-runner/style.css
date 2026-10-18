@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('/fonts/runner-fonts.css');
 
 /* Arı Bahçesi — yenilenmiş görünüm (yalnızca görsel; oyun mantığı app.js'te değişmedi).
    Dikkat: .bg-garden / .bg-bee ölçüleri (padding, kenarlık, 52px arı) flex hizalama hesabını etkiler, değiştirilmemelidir. */

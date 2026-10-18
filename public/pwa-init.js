@@ -261,6 +261,22 @@
     }
   }
 
+  // Paylaşımlı cihazlarda kişisel veri kalmasın: çıkışta ve giriş sayfasında cihaz önbelleği temizlenir.
+  function clearPrivateCaches() {
+    notifyServiceWorker({ type: "CLEAR_PRIVATE_CACHES" });
+  }
+  document.addEventListener("click", function (event) {
+    const link = event.target && event.target.closest ? event.target.closest('a[href*="/logout"]') : null;
+    if (link) clearPrivateCaches();
+  }, true);
+  document.addEventListener("submit", function (event) {
+    const action = event.target && event.target.getAttribute ? event.target.getAttribute("action") || "" : "";
+    if (action.indexOf("/logout") !== -1) clearPrivateCaches();
+  }, true);
+  if (/^\/login\/?$/.test(window.location.pathname)) {
+    window.addEventListener("load", function () { setTimeout(clearPrivateCaches, 800); });
+  }
+
   registerServiceWorker();
   createSplashScreen();
   setRootState();

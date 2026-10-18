@@ -10,7 +10,7 @@
     </div>
     <p id="status" style="margin-top:10px"></p>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="/js/vendor/jsQR.js"></script>
 <script>
 (() => {
     const startCamBtn = document.getElementById('startCamBtn');

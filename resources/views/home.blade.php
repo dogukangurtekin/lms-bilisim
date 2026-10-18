@@ -66,7 +66,7 @@
       'acceptedAnswer' => 
       array (
         '@@type' => 'Answer',
-        'text' => 'Bağlantılar HTTPS ile şifrelenir, parolalar geri döndürülemez biçimde saklanır ve panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.',
+        'text' => 'Bağlantılar HTTPS ile şifrelenir, giriş parolaları geri döndürülemez (hash) biçimde saklanır, öğretmenin öğrenciye iletebilmesi için öğrenci giriş bilgisi kopyası ayrıca şifreli tutulur ve yalnızca yetkili yönetici ile kendi sınıflarındaki öğretmenler görebilir; panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.',
       ),
     ),
     2 => 
@@ -106,7 +106,7 @@
     {{-- Yazı tipleri kendi sunucumuzdan (public/fonts); Google'a istek gitmez. --}}
     <link rel="preload" href="{{ asset('fonts/inter-latin-567244.woff2') }}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{{ asset('fonts/fonts.css') }}">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="/js/vendor/alpine.min.js"></script>
     <style>
         :root{
             --paper:#F7F6F2;
@@ -399,7 +399,7 @@
             </div>
             <div class="faq">
                 <details><summary>Bilişim Kod kimler için uygun?</summary><p>İlkokul, ortaokul ve lise düzeyindeki okullar için hazırlanmıştır. Yönetici, öğretmen ve öğrenci için ayrı paneller bulunur.</p></details>
-                <details><summary>Öğrencilerin verileri güvende mi?</summary><p>Bağlantılar HTTPS ile şifrelenir, parolalar geri döndürülemez biçimde saklanır ve panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.</p></details>
+                <details><summary>Öğrencilerin verileri güvende mi?</summary><p>Bağlantılar HTTPS ile şifrelenir, giriş parolaları geri döndürülemez (hash) biçimde saklanır, öğretmenin öğrenciye iletebilmesi için öğrenci giriş bilgisi kopyası ayrıca şifreli tutulur ve yalnızca yetkili yönetici ile kendi sınıflarındaki öğretmenler görebilir; panellere rol bazlı erişim uygulanır. Ayrıntılar Gizlilik Politikası ve KVKK Aydınlatma Metni’nde yer alır.</p></details>
                 <details><summary>Kurulum gerekiyor mu?</summary><p>Hayır. Platform tarayıcı üzerinden çalışır; öğrenci ve öğretmenler özel bir yazılım kurmadan giriş yapabilir.</p></details>
                 <details><summary>Veliler nasıl bilgilendirilir?</summary><p>Okul yönetimi isterse ödev ve ilerleme bilgileri için veli bildirimlerini etkinleştirebilir.</p></details>
                 <details><summary>Deneme veya demo alabilir miyim?</summary><p>Evet. Sayfadaki “Demo Talep Et” formunu doldurun, okulunuza özel kısa bir gösterim için size dönüş yapalım.</p></details>

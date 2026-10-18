@@ -116,19 +116,49 @@ class StudentDataController extends Controller
         return view('student-data.index', compact('students', 'stats', 'q', 'name', 'className', 'section', 'classNames', 'sections', 'schoolClasses', 'perPage', 'pushPermissionByUser'));
     }
 
+    /** Yönetici için null (kısıt yok); öğretmen için yalnızca kendi sınıflarının kimlikleri. */
+    private function scopedClassIds(): ?array
+    {
+        $user = auth()->user();
+        if ($user?->role?->slug === 'admin') {
+            return null;
+        }
+        $teacher = $user ? Teacher::query()->where('user_id', $user->id)->first() : null;
+
+        return $teacher ? $teacher->classes()->pluck('school_classes.id')->map(fn ($id) => (int) $id)->all() : [];
+    }
+
+    /** Öğretmen yalnızca kendi sınıfındaki öğrencinin verilerine (rapor, sertifika) erişebilir. */
+    private function authorizeStudent(Student $student): void
+    {
+        $ids = $this->scopedClassIds();
+        abort_unless($ids === null || in_array((int) $student->school_class_id, $ids, true), 403);
+    }
+
+    private function requireAdmin(): void
+    {
+        abort_unless(auth()->user()?->role?->slug === 'admin', 403);
+    }
+
     public function loginCards()
     {
-        $students = Student::with(['user', 'schoolClass', 'credential'])->orderBy('id')->get();
+        // Giriş bilgileri (kullanıcı adı/parola kopyası) yalnızca yetkili olunan sınıflar için listelenir.
+        $classIds = $this->scopedClassIds();
+        $query = fn () => Student::with(['user', 'schoolClass', 'credential'])
+            ->when($classIds !== null, fn ($q) => $q->whereIn('school_class_id', $classIds))
+            ->orderBy('id');
+        $students = $query()->get();
         foreach ($students as $student) {
             $this->safeSyncRewardsAndCredentials($student, $this->calculateXp($student));
         }
-        $students = Student::with(['user', 'schoolClass', 'credential'])->orderBy('id')->get();
+        $students = $query()->get();
 
         return view('student-data.login-cards', compact('students'));
     }
 
     public function resetAllPasswords(): RedirectResponse
     {
+        $this->requireAdmin();
         $plain = '123456';
 
         DB::transaction(function () use ($plain) {
@@ -161,6 +191,7 @@ class StudentDataController extends Controller
 
     public function resetAllPasswordsStart(): JsonResponse
     {
+        $this->requireAdmin();
         $studentIds = Student::query()->orderBy('id')->pluck('id')->all();
         $task = [
             'id' => (string) Str::uuid(),
@@ -180,6 +211,7 @@ class StudentDataController extends Controller
 
     public function resetAllPasswordsStep(string $taskId): JsonResponse
     {
+        $this->requireAdmin();
         $task = $this->readPasswordTask($taskId);
         if (! $task) {
             return response()->json(['message' => 'Gorev bulunamadi.'], 404);
@@ -237,6 +269,7 @@ class StudentDataController extends Controller
 
     public function certificate(Student $student)
     {
+        $this->authorizeStudent($student);
         $xp = $this->calculateXp($student);
         $this->safeSyncRewardsAndCredentials($student, $xp);
         $student->refresh()->load(['user', 'schoolClass.teacher.user']);
@@ -266,6 +299,7 @@ class StudentDataController extends Controller
 
     public function progressReport(Student $student)
     {
+        $this->authorizeStudent($student);
         $xp = $this->calculateXp($student);
         $this->safeSyncRewardsAndCredentials($student, $xp);
         $student->refresh()->load(['user', 'schoolClass', 'badges', 'currentAvatar', 'avatars']);
@@ -280,6 +314,7 @@ class StudentDataController extends Controller
 
     public function parentProgressReport(Student $student)
     {
+        // Veli bağlantısı: erişim imzalı (signed) URL ile kontrol edilir, oturum gerekmez.
         $student->load(['user', 'schoolClass', 'badges', 'currentAvatar', 'avatars']);
         $report = $this->reportService->build($student);
 

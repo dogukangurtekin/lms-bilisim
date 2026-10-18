@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('/fonts/runner-fonts.css');
 
 /* Küçük Nokta — Kod Kartları · özgün görünüm (tüm çizimler CSS/SVG ile bu projede üretildi) */
 :root { --ink:#0b2447; --soft:#5b7096; --line:#d3e1fb; --navy-1:#0a1738; --navy-2:#12285c; --orange:#ff8a1f; --font:"Nunito","Segoe UI",system-ui,-apple-system,Arial,sans-serif; --mono:"JetBrains Mono",ui-monospace,Consolas,monospace; --cell:56px; }

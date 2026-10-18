@@ -169,7 +169,8 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // APP_URL https ise çerezler yalnızca HTTPS bağlantısında gönderilir (SESSION_SECURE_COOKIE ile ezilebilir).
+    'secure' => env('SESSION_SECURE_COOKIE', str_starts_with((string) env('APP_URL', ''), 'https://')),
 
     /*
     |--------------------------------------------------------------------------

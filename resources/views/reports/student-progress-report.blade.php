@@ -4,9 +4,7 @@
     <meta charset="utf-8">
     @include('partials.pwa-head')
     <title>Öğrenci Gelişim Raporu</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/fonts/fonts.css" rel="stylesheet">
     <style>
         @page { size: A4; margin: 10mm; }
         * { box-sizing: border-box; }
@@ -291,8 +289,8 @@
 
 @include('reports.partials.student-progress-pages', ['student' => $student, 'report' => $report])
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/js/vendor/html2canvas.min.js"></script>
+<script src="/js/vendor/jspdf.umd.min.js"></script>
 <script>
 (() => {
     const btn = document.getElementById('download-report-pdf-btn');

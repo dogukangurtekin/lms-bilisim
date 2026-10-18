@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.4";
+const SW_VERSION = "v1.5.5";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -229,6 +229,10 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  // Çıkış / giriş sayfasında kişisel veri içerebilen dinamik önbellekler silinir.
+  if (event.data && event.data.type === "CLEAR_PRIVATE_CACHES") {
+    event.waitUntil(Promise.all([CACHE_NAMES.api, CACHE_NAMES.shell].map((name) => caches.delete(name))));
   }
 });
 

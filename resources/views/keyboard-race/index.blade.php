@@ -269,8 +269,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="/js/vendor/socket.io.min.js" crossorigin="anonymous"></script>
+<script src="/js/vendor/confetti.browser.js"></script>
 <script>
 (() => {
     const AUTH_USER_ID = {{ (int) (auth()->id() ?? 0) }};

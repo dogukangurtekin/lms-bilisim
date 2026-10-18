@@ -724,6 +724,7 @@
     loop();
 })();
 </script>
+<script src="{{ asset('js/vendor/qrcode.js') }}"></script>
 <script>
 (() => {
     const openBtn = document.getElementById('openQrLoginBtn');
@@ -743,7 +744,9 @@
         const data = await res.json();
         token = String(data.token || '');
         if (!token) throw new Error('Token olusmadi');
-        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(token);
+        // QR kodu tarayıcıda üretilir; giriş eşleştirme kodu hiçbir üçüncü tarafa gönderilmez.
+        const qr = qrcode(0, 'M'); qr.addData(token); qr.make();
+        img.src = qr.createDataURL(8, 2);
         img.style.display = 'block';
         statusEl.textContent = 'Onay bekleniyor...';
     }

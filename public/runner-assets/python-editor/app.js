@@ -223,7 +223,7 @@
     async function initPyodide() {
         try {
             setStatus('Python ortamı hazırlanıyor…');
-            pyodide = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/' });
+            pyodide = await loadPyodide({ indexURL: '/pyodide/0.26.4/' });
             pyodideReady = true;
             setStatus('Hazır', 'is-ready');
             runBtn.disabled = false;
