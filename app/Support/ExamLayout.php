@@ -63,6 +63,42 @@ class ExamLayout
         return [(int) round($dw), (int) round($dh)];
     }
 
+    /** İçinde bulunulan eğitim-öğretim yılı (Eylül'den itibaren yeni yıl): 2026-2027. */
+    public static function academicYear(?string $date = null): string
+    {
+        $t = $date ? strtotime($date) : time();
+        $y = (int) date('Y', $t ?: time());
+        $m = (int) date('n', $t ?: time());
+
+        return $m >= 9 ? $y.'-'.($y + 1) : ($y - 1).'-'.$y;
+    }
+
+    /**
+     * Sınav kâğıdı başlık satırları, sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası.
+     *
+     * @return array{year: string, school: string, course: string, last: string}
+     */
+    public static function titleLines(object $exam, array $s): array
+    {
+        $up = fn (?string $t) => self::upper(trim((string) $t));
+        $year = trim((string) ($s['academic_year'] ?? ''));
+        $subject = $up($exam->subject);
+        $course = $subject !== '' ? (preg_match('/DERS[İI]?$/u', $subject) ? $subject : $subject.' DERSİ') : '';
+        $cls = trim((string) $exam->class_label) !== '' ? $up($exam->class_label).' SINIFI' : ($exam->grade_level ? $exam->grade_level.'. SINIF' : '');
+        $term = (string) ($s['term_no'] ?? '');
+        $no = (string) ($s['exam_no'] ?? '');
+        $last = ($term !== '' || $no !== '')
+            ? trim(($term !== '' ? $term.'. DÖNEM' : '').' '.($no !== '' ? $no.'. YAZILISI' : ''))
+            : $up($exam->title);
+
+        return [
+            'year' => $year !== '' ? $year.' EĞİTİM - ÖĞRETİM YILI' : $up($exam->term),
+            'school' => $up($exam->school_name),
+            'course' => trim($cls.' '.$course),
+            'last' => $last,
+        ];
+    }
+
     /** Türkçe büyük harf (i→İ, ı→I). */
     public static function upper(?string $s): string
     {

@@ -75,7 +75,8 @@
     .ln { height: 25px; border-bottom: 1px dotted #64748b; }
     .ans { margin-top: 4px; padding: 4px 8px; background: #f0fdf4; border-left: 3px solid #15803d; color: #14532d; font-size: 0.92em; }
     .ph { margin-bottom: 12px; }
-    .ph-school { text-align: {{ $tpl === 'plain' || $tpl === 'quiz' ? 'left' : 'center' }}; font-weight: bold; text-transform: uppercase; {{ $tpl === 'quiz' ? 'display:none;' : '' }} }
+    .ph-school { text-align: {{ $tpl === 'plain' || $tpl === 'quiz' ? 'left' : 'center' }}; font-weight: bold; text-transform: uppercase; }
+    .ph-sub { text-align: {{ $tpl === 'plain' || $tpl === 'quiz' ? 'left' : 'center' }}; font-weight: bold; font-size: 1.08em; }
     .ph-title { text-align: {{ $tpl === 'plain' || $tpl === 'quiz' ? 'left' : 'center' }}; font-weight: bold; font-size: {{ $tpl === 'quiz' ? '1.15' : '1.35' }}em; margin: 2px 0; {{ $tpl === 'school' ? 'color:'.$ac.';' : '' }} }
     .ph-info { text-align: {{ $tpl === 'plain' || $tpl === 'quiz' ? 'left' : 'center' }}; color: #334155; font-size: 0.95em; }
     .ph-meta { width: 100%; margin-top: 8px; border-top: {{ $tpl === 'plain' ? '0' : '1px solid '.($tpl === 'classic' ? $ac : '#111') }}; border-bottom: {{ $tpl === 'plain' ? '0' : '1px solid '.($tpl === 'classic' ? $ac : '#111') }}; font-size: 0.92em; font-weight: bold; }
@@ -106,8 +107,8 @@
                 @php
                     $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
                     $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $contentW);
-                    $l3 = collect([$exam->grade_level ? $exam->grade_level.'. SINIF' : null, $up($exam->subject), $up($exam->title)])->filter()->implode(' ');
-                    $lines = collect([$up($exam->term), $up($exam->school_name), $l3])->filter();
+                    $TL = \App\Support\ExamLayout::titleLines($exam, $s);
+                    $lines = collect([$TL['year'], $TL['school'], $TL['course'], $TL['last']])->filter(fn ($t) => $t !== '');
                     $lg1 = $logoUri($s['logo_path'] ?? null);
                     $lg2 = $logoUri($s['logo2_path'] ?? null);
                     $cell = 'border:2px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
@@ -140,7 +141,8 @@
                 </div>
             @elseif($pIdx === 0)
                 @php
-                    $top = '<div class="ph-school">'.e($exam->school_name).'</div><div class="ph-title">'.e($exam->title).'</div><div class="ph-info">'.e($info).'</div>';
+                    $TL = \App\Support\ExamLayout::titleLines($exam, $s);
+                    $top = ($TL['year'] !== '' ? '<div class="ph-info">'.e($TL['year']).'</div>' : '').($TL['school'] !== '' ? '<div class="ph-school">'.e($TL['school']).'</div>' : '').($TL['course'] !== '' ? '<div class="ph-sub">'.e($TL['course']).'</div>' : '').($TL['last'] !== '' ? '<div class="ph-title">'.e($TL['last']).'</div>' : '');
                     $topWithLogo = $logo
                         ? '<table style="width:100%"><tr><td style="width:70px;vertical-align:middle"><img src="'.$logo.'" style="height:56px;width:auto"></td><td style="vertical-align:middle">'.$top.'</td></tr></table>'
                         : $top;

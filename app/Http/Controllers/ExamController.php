@@ -33,6 +33,7 @@ class ExamController extends Controller
             'exams' => $exams,
             'isAdmin' => $isAdmin,
             'templates' => Exam::TEMPLATES,
+            'defaultYear' => ExamLayout::academicYear(),
         ]);
     }
 
@@ -42,15 +43,23 @@ class ExamController extends Controller
             'title' => ['required', 'string', 'max:200'],
             'subject' => ['nullable', 'string', 'max:120'],
             'grade_level' => ['nullable', 'integer', 'between:1,12'],
-            'term' => ['nullable', 'string', 'max:80'],
+            'academic_year' => ['nullable', 'string', 'max:20'],
+            'term_no' => ['nullable', 'in:1,2'],
+            'exam_no' => ['nullable', 'in:1,2,3,4,5'],
             'exam_date' => ['nullable', 'date'],
             'duration_min' => ['nullable', 'integer', 'between:1,600'],
             'school_name' => ['nullable', 'string', 'max:200'],
             'template' => ['required', Rule::in(array_keys(Exam::TEMPLATES))],
             'columns' => ['required', 'integer', 'in:1,2'],
         ]);
+        $settings = array_merge(self::DEFAULT_SETTINGS, [
+            'academic_year' => trim((string) ($data['academic_year'] ?? '')) ?: ExamLayout::academicYear($data['exam_date'] ?? null),
+            'term_no' => (string) ($data['term_no'] ?? ''),
+            'exam_no' => (string) ($data['exam_no'] ?? ''),
+        ]);
+        unset($data['academic_year'], $data['term_no'], $data['exam_no']);
 
-        $exam = Exam::query()->create($data + ['user_id' => $request->user()->id, 'status' => 'draft']);
+        $exam = Exam::query()->create($data + ['user_id' => $request->user()->id, 'status' => 'draft', 'settings' => $settings]);
 
         return redirect()->route('exams.edit', $exam)->with('ok', '"'.$exam->title.'" sınavı oluşturuldu. Soruları ekleyebilirsiniz.');
     }
@@ -75,6 +84,10 @@ class ExamController extends Controller
         'show_logo' => false,
         'logo_path' => '',
         'logo2_path' => '', // Tablolu şablonda sağ üst logo
+        // Başlık satırları: eğitim-öğretim yılı, dönem (1|2), yazılı numarası
+        'academic_year' => '',
+        'term_no' => '',
+        'exam_no' => '',
     ];
 
     public function edit(Request $request, Exam $exam)
@@ -147,6 +160,9 @@ class ExamController extends Controller
             'settings.page_border' => ['required', 'boolean'],
             'settings.watermark' => ['nullable', 'string', 'max:40'],
             'settings.show_logo' => ['required', 'boolean'],
+            'settings.academic_year' => ['nullable', 'string', 'max:20'],
+            'settings.term_no' => ['nullable', 'in:1,2'],
+            'settings.exam_no' => ['nullable', 'in:1,2,3,4,5'],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'settings.logo2_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'layout' => ['nullable', 'array', 'max:80'],

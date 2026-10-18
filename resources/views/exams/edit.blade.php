@@ -156,6 +156,7 @@
     .ph-school{text-align:center;font-weight:800;letter-spacing:.02em;text-transform:uppercase;font-size:1.05em}
     .ph-title{text-align:center;font-weight:800;font-size:1.35em;margin:2px 0}
     .ph-info{text-align:center;color:#334155;font-size:.95em}
+    .ph-sub{text-align:center;font-weight:800;font-size:1.08em}
     .ph-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;padding:5px 0;border-top:1px solid #111;border-bottom:1px solid #111;font-size:.92em;font-weight:700}
     .ph-stu{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;margin-top:8px;font-size:.92em;font-weight:700}
     .ph-stu span{border-bottom:1px solid #111;padding-bottom:12px}
@@ -166,10 +167,10 @@
     .tpl-modern .ph-rest{padding:6px 14px 10px}
     .tpl-modern .ph-meta{border-color:#c7d2fe}
     .tpl-modern .qn{color:var(--ac,#1d4ed8)}
-    .tpl-plain .ph-school,.tpl-plain .ph-title,.tpl-plain .ph-info{text-align:left}
+    .tpl-plain .ph-school,.tpl-plain .ph-title,.tpl-plain .ph-info,.tpl-plain .ph-sub{text-align:left}
     .tpl-plain .ph-meta{border:0;padding:4px 0}
     .tpl-quiz .ph{margin-bottom:8px;border-bottom:2px solid #111;padding-bottom:6px}
-    .tpl-quiz .ph-school{display:none}.tpl-quiz .ph-title{font-size:1.15em;text-align:left}.tpl-quiz .ph-info{text-align:left}
+    .tpl-quiz .ph-title{font-size:1.15em;text-align:left}.tpl-quiz .ph-info,.tpl-quiz .ph-school,.tpl-quiz .ph-sub{text-align:left}
     .pg-no{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.8em;color:#64748b}
     @media (max-width:1279px){
         .xe-grid{grid-template-columns:1fr}
@@ -249,7 +250,11 @@
             <label class="xe-f">Sınıf düzeyi<select data-k="exam.grade_level" data-num><option value="">—</option>@for($i=1;$i<=12;$i++)<option value="{{ $i }}">{{ $i }}. sınıf</option>@endfor</select></label>
             <label class="xe-f">Şube<input type="text" data-k="exam.class_label" maxlength="60" placeholder="5/A"></label>
         </div>
-        <label class="xe-f">Dönem<input type="text" data-k="exam.term" maxlength="80"></label>
+        <label class="xe-f">Eğitim-öğretim yılı<input type="text" data-k="settings.academic_year" maxlength="20" placeholder="2026-2027"></label>
+        <div class="xe-row2">
+            <label class="xe-f">Dönem<select data-k="settings.term_no"><option value="">—</option><option value="1">1. Dönem</option><option value="2">2. Dönem</option></select></label>
+            <label class="xe-f">Yazılı no<select data-k="settings.exam_no"><option value="">—</option><option value="1">1. Yazılı</option><option value="2">2. Yazılı</option><option value="3">3. Yazılı</option><option value="4">4. Yazılı</option><option value="5">5. Yazılı</option></select></label>
+        </div>
         <div class="xe-row2">
             <label class="xe-f">Tarih<input type="date" data-k="exam.exam_date"></label>
             <label class="xe-f">Süre (dk)<input type="number" data-k="exam.duration_min" data-num min="1" max="600"></label>
@@ -386,13 +391,28 @@
     /* ---------- önizleme: üst bilgi ---------- */
     function totalPoints() { return state.questions.reduce((a, q) => a + (Number(q.points) || 0), 0); }
     // Tablolu (okul) başlık: logo - başlık satırları - logo / AD SOYAD - süre - tarih - PUAN / SINIF - NO hücreleri
+    // Başlık satırları, sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası
+    function titleLines() {
+        const e = state.exam, s = state.settings;
+        const up = (t) => String(t || '').trim().toLocaleUpperCase('tr');
+        const subject = up(e.subject);
+        const course = subject ? (/DERS[İI]?$/.test(subject) ? subject : subject + ' DERSİ') : '';
+        const cls = String(e.class_label || '').trim() ? up(e.class_label) + ' SINIFI' : (e.grade_level ? e.grade_level + '. SINIF' : '');
+        const term = String(s.term_no || ''), no = String(s.exam_no || '');
+        return {
+            year: String(s.academic_year || '').trim() ? String(s.academic_year).trim() + ' EĞİTİM - ÖĞRETİM YILI' : up(e.term),
+            school: up(e.school_name),
+            course: [cls, course].filter(Boolean).join(' '),
+            last: (term || no) ? [term ? term + '. DÖNEM' : '', no ? no + '. YAZILISI' : ''].filter(Boolean).join(' ') : up(e.title),
+        };
+    }
     function tableHeader() {
         const e = state.exam, s = state.settings;
         const up = (t) => String(t || '').toLocaleUpperCase('tr');
         const img = (p) => p ? '<img src="' + esc(LOGO_BASE + p) + '" alt="" style="max-width:100%;max-height:78px;display:block;margin:0 auto">' : '';
         const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '…/…/……';
-        const l3 = [e.grade_level ? e.grade_level + '. SINIF' : '', up(e.subject), up(e.title)].filter(Boolean).join(' ');
-        const lines = [up(e.term), up(e.school_name), l3].filter(Boolean).map((t) => '<div>' + esc(t) + '</div>').join('');
+        const L = titleLines();
+        const lines = [L.year, L.school, L.course, L.last].filter(Boolean).map((t) => '<div>' + esc(t) + '</div>').join('');
         const cg = '<colgroup><col style="width:12.3%"><col style="width:13.5%"><col style="width:10.5%"><col style="width:7.5%"><col style="width:21.2%"><col style="width:21.4%"><col style="width:13.6%"></colgroup>';
         const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
         return '<div class="ph' + (s.page_border ? ' ph-tbl' : '') + '"><table class="th-tbl">' + cg
@@ -404,12 +424,13 @@
     function headerHtml() {
         const e = state.exam, s = state.settings;
         if (e.template === 'table') return tableHeader();
-        const info = [e.subject, e.grade_level ? e.grade_level + '. Sınıf' : '', e.class_label, e.term].filter(Boolean).map(esc).join(' · ');
         const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '';
         const meta = '<div class="ph-meta"><span>Tarih: ' + esc(date || '…/…/……') + '</span><span>Süre: ' + (e.duration_min ? esc(e.duration_min) + ' dk' : '……') + '</span><span>Toplam Puan: ' + esc(String(Math.round(totalPoints() * 100) / 100).replace('.', ',')) + '</span></div>';
         const stu = s.student_box ? '<div class="ph-stu"><span>Adı Soyadı:</span><span>Numara:</span><span>Sınıf:</span><span>Puan:</span></div>' : '';
         const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
-        let top = '<div class="ph-school">' + esc(e.school_name) + '</div><div class="ph-title">' + esc(e.title) + '</div><div class="ph-info">' + info + '</div>';
+        const L = titleLines();
+        let top = (L.year ? '<div class="ph-info">' + esc(L.year) + '</div>' : '') + (L.school ? '<div class="ph-school">' + esc(L.school) + '</div>' : '')
+            + (L.course ? '<div class="ph-sub">' + esc(L.course) + '</div>' : '') + (L.last ? '<div class="ph-title">' + esc(L.last) + '</div>' : '');
         if (s.show_logo && s.logo_path) top = '<div class="ph-row"><img class="ph-logo" src="' + esc(LOGO_BASE + s.logo_path) + '" alt=""><div class="ph-txt">' + top + '</div></div>';
         if (e.template === 'modern') return '<div class="ph"><div class="ph-top">' + top + '</div><div class="ph-rest">' + meta + stu + ins + '</div></div>';
         return '<div class="ph">' + top + meta + stu + ins + '</div>';

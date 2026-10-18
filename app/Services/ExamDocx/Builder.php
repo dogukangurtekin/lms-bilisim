@@ -307,18 +307,25 @@ class Builder
         if ($this->mode === 'teacher') {
             $paras .= Xml::para([Xml::run('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
+        // Satırlar sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası
+        $TL = \App\Support\ExamLayout::titleLines($e, $s);
         $textParas = '';
-        if ($tpl !== 'quiz') {
-            $textParas .= Xml::para([Xml::run((string) $e->school_name, ['b' => 1, 'caps' => 1, 'color' => $txt, 'sz' => $fs + 2])], $base + ['before' => 60, 'after' => 0]);
+        if ($TL['year'] !== '') {
+            $textParas .= Xml::para([Xml::run($TL['year'], ['color' => $modern ? 'E0E7FF' : '334155', 'sz' => $fs - 1])], $base + ['before' => 60, 'after' => 0]);
         }
-        $textParas .= Xml::para([Xml::run((string) $e->title, ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fs + ($tpl === 'quiz' ? 4 : 8)])], $base + ['before' => 0, 'after' => 0]);
-        $infoOpts = $base;
+        if ($TL['school'] !== '') {
+            $textParas .= Xml::para([Xml::run($TL['school'], ['b' => 1, 'color' => $txt, 'sz' => $fs + 2])], $base + ['before' => 0, 'after' => 0]);
+        }
+        if ($TL['course'] !== '') {
+            $textParas .= Xml::para([Xml::run($TL['course'], ['b' => 1, 'color' => $txt, 'sz' => $fs + 1])], $base + ['before' => 0, 'after' => 0]);
+        }
+        $lastOpts = $base;
         if ($tpl === 'quiz') {
-            $infoOpts['borders'] = ['bottom' => ['single', 12, $ac, 4]];
+            $lastOpts['borders'] = ['bottom' => ['single', 12, $ac, 4]];
         } elseif ($tpl === 'school') {
-            $infoOpts['borders'] = ['bottom' => ['double', 12, $ac, 6]];
+            $lastOpts['borders'] = ['bottom' => ['double', 12, $ac, 6]];
         }
-        $textParas .= Xml::para([Xml::run($this->info(), ['color' => $modern ? 'E0E7FF' : '334155', 'sz' => $fs - 1])], $infoOpts + ['after' => 120]);
+        $textParas .= Xml::para([Xml::run($TL['last'], ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fs + 6])], $lastOpts + ['before' => 0, 'after' => 120]);
 
         if ($logo) {
             $logoCell = ['xml' => Xml::para([$this->logoRun($logo)], ['jc' => 'left']), 'vAlign' => 'center'];
@@ -374,8 +381,8 @@ class Builder
         $w = array_map(fn ($p) => (int) round($tw * $p / 100), $pct);
         $w[6] = $tw - array_sum(array_slice($w, 0, 6));
 
-        $l3 = collect([$e->grade_level ? $e->grade_level.'. SINIF' : null, $up($e->subject), $up($e->title)])->filter()->implode(' ');
-        $lines = collect([$up($e->term), $up($e->school_name), $l3])->filter();
+        $TL = \App\Support\ExamLayout::titleLines($e, $this->s);
+        $lines = collect([$TL['year'], $TL['school'], $TL['course'], $TL['last']])->filter(fn ($t) => $t !== '');
         $titleXml = $lines->map(fn ($t) => Xml::para([Xml::run($t, ['b' => 1, 'sz' => $fs + 2])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
         $c = fn (string $t, array $o = [], string $jc = 'left') => Xml::para([Xml::run($t, ['b' => 1] + $o)], ['jc' => $jc, 'before' => 20, 'after' => 20]);
         $logoCell = fn (?array $l, string $rid, int $id) => ['xml' => $l ? Xml::para([$this->logoRun($l, $rid, $id)], ['jc' => 'center']) : '', 'vAlign' => 'center'];

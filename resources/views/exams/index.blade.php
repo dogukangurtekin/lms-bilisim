@@ -87,8 +87,16 @@
                 </label>
             </div>
             <div class="ex-row">
-                <label>Dönem<input name="term" value="{{ old('term') }}" maxlength="80" placeholder="2026-2027 / 1. Dönem"></label>
+                <label>Eğitim-öğretim yılı<input name="academic_year" value="{{ old('academic_year', $defaultYear) }}" maxlength="20" placeholder="2026-2027"></label>
                 <label>Tarih<input type="date" name="exam_date" value="{{ old('exam_date') }}"></label>
+            </div>
+            <div class="ex-row">
+                <label>Dönem
+                    <select name="term_no"><option value="">—</option><option value="1" @selected(old('term_no') === '1')>1. Dönem</option><option value="2" @selected(old('term_no') === '2')>2. Dönem</option></select>
+                </label>
+                <label>Yazılı numarası
+                    <select name="exam_no"><option value="">—</option>@for($i=1;$i<=5;$i++)<option value="{{ $i }}" @selected(old('exam_no') === (string) $i)>{{ $i }}. Yazılı</option>@endfor</select>
+                </label>
             </div>
             <div class="ex-row">
                 <label>Süre (dk)<input type="number" name="duration_min" value="{{ old('duration_min', 40) }}" min="1" max="600"></label>
