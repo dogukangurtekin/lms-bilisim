@@ -167,9 +167,27 @@ class Builder
     }
 
     /** Seçilen yazı tipinin Word'deki karşılığı (önizleme/PDF aynı ölçülü uyumlu fontu kullanır). */
-    private function font(): string
+    private function font(?string $key = null): string
     {
-        return ['serif' => 'Times New Roman', 'sans' => 'Arial', 'times' => 'Times New Roman', 'arial' => 'Arial', 'calibri' => 'Calibri', 'cambria' => 'Cambria', 'georgia' => 'Georgia'][$this->s['font_family'] ?? 'serif'] ?? 'Times New Roman';
+        return ['serif' => 'Times New Roman', 'sans' => 'Arial', 'times' => 'Times New Roman', 'arial' => 'Arial', 'calibri' => 'Calibri', 'cambria' => 'Cambria', 'georgia' => 'Georgia'][$key ?? ($this->s['font_family'] ?? 'serif')] ?? 'Times New Roman';
+    }
+
+    /** Üst kısım (başlık) yazı tipi: boşsa soru yazı tipiyle aynı. */
+    private function headerFont(): string
+    {
+        return $this->font(($this->s['header_font_family'] ?? '') ?: ($this->s['font_family'] ?? 'serif'));
+    }
+
+    /** Üst kısım yazı boyutu (pt): boşsa soru yazı boyutuyla aynı. */
+    private function headerPt(): int
+    {
+        return (int) (($this->s['header_font_size'] ?? '') ?: $this->s['font_size']);
+    }
+
+    /** Kenarlık kalınlığı (px) → Word kenarlık kalınlığı (1/8 punto). 1px = 0,75pt. */
+    private function borderSz(): int
+    {
+        return max(2, (int) round(((float) ($this->s['border_width'] ?? 2)) * 6));
     }
 
     /** Sayfa çerçevesi (Tablolu şablonda başlık tablosuyla hizalı; diğerlerinde kenardan içeride). */
@@ -179,13 +197,13 @@ class Builder
             return '';
         }
         if ($this->exam->template === 'table') {
-            $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="16" w:space="6" w:color="000000"/>';
+            $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="'.$this->borderSz().'" w:space="6" w:color="000000"/>';
 
             return '<w:pgBorders w:offsetFrom="text">'.$side('top').$side('left').$side('bottom').$side('right').'</w:pgBorders>';
         }
         $space = max(4, min(31, (int) round($this->marginTw / 20 / 2)));
         $c = Xml::hex($this->s['accent']);
-        $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="12" w:space="'.$space.'" w:color="'.$c.'"/>';
+        $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="'.$this->borderSz().'" w:space="'.$space.'" w:color="'.$c.'"/>';
 
         return '<w:pgBorders w:offsetFrom="page">'.$side('top').$side('left').$side('bottom').$side('right').'</w:pgBorders>';
     }
@@ -289,12 +307,14 @@ class Builder
         $tpl = $e->template;
         $left = in_array($tpl, ['plain', 'quiz'], true);
         $modern = $tpl === 'modern';
-        $fs = ((int) $s['font_size']) * 2;
+        $fs = $this->headerPt() * 2;
+        $hf = $this->headerFont();
+        $R = fn (string $t, array $o = []) => Xml::run($t, $o + ['font' => $hf]);
         $txt = $modern ? 'FFFFFF' : '000000';
 
         $box = [];
         if ($tpl === 'classic') {
-            $b = ['single', 12, $ac, 4];
+            $b = ['single', $this->borderSz(), $ac, 4];
             $box = ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b];
         }
         $base = ['jc' => $left ? 'left' : 'center', 'borders' => $box, 'keepNext' => true];
@@ -305,20 +325,20 @@ class Builder
 
         $paras = '';
         if ($this->mode === 'teacher') {
-            $paras .= Xml::para([Xml::run('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
+            $paras .= Xml::para([$R('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
         // Satırlar sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası
         $TL = \App\Support\ExamLayout::titleLines($e, $s);
         $textParas = '';
         if ($TL['year'] !== '') {
-            $textParas .= Xml::para([Xml::run($TL['year'], ['color' => $modern ? 'E0E7FF' : '334155', 'sz' => $fs - 1])], $base + ['before' => 60, 'after' => 0]);
+            $textParas .= Xml::para([$R($TL['year'], ['color' => $modern ? 'E0E7FF' : '334155', 'sz' => $fs - 1])], $base + ['before' => 60, 'after' => 0]);
         }
         // okul ve ders satırı sayfa genişliğine tek satırda sığsın (en fazla 3 satır başlık)
         $boxPt = $this->contentTw / 20 - 20;
         $fq = in_array($s['font_family'] ?? '', ['serif', 'sans'], true) ? 0.72 : 0.62;
         $fitSz = fn (string $t, int $max) => (int) max(16, min($max, floor($boxPt / (max(1, mb_strlen($t)) * $fq) * 2)));
         if ($TL['school'] !== '') {
-            $textParas .= Xml::para([Xml::run($TL['school'], ['b' => 1, 'color' => $txt, 'sz' => $fitSz($TL['school'], $fs + 2)])], $base + ['before' => 0, 'after' => 0]);
+            $textParas .= Xml::para([$R($TL['school'], ['b' => 1, 'color' => $txt, 'sz' => $fitSz($TL['school'], $fs + 2)])], $base + ['before' => 0, 'after' => 0]);
         }
         $lastOpts = $base;
         if ($tpl === 'quiz') {
@@ -328,7 +348,7 @@ class Builder
         }
         // Son satır (ders adı + dönem + yazılı numarası) şablonun alt çizgisini/boşluğunu taşır
         if ($TL['course'] !== '') {
-            $textParas .= Xml::para([Xml::run($TL['course'], ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fitSz($TL['course'], $fs + 3)])], $lastOpts + ['before' => 0, 'after' => 120]);
+            $textParas .= Xml::para([$R($TL['course'], ['b' => 1, 'color' => $tpl === 'school' ? $ac : $txt, 'sz' => $fitSz($TL['course'], $fs + 3)])], $lastOpts + ['before' => 0, 'after' => 120]);
         }
 
         if ($logo) {
@@ -346,9 +366,9 @@ class Builder
         $third = (int) floor($this->contentTw / 3);
         $metaOpt = ['sz' => $fs - 1, 'b' => 1];
         $paras .= Xml::table([[
-            ['xml' => Xml::para([Xml::run('Tarih: '.($e->exam_date ? $e->exam_date->format('d.m.Y') : '…/…/……'), $metaOpt)], ['jc' => 'left', 'before' => 40, 'after' => 40]), 'borders' => $mb],
-            ['xml' => Xml::para([Xml::run('Süre: '.($e->duration_min ? $e->duration_min.' dk' : '……'), $metaOpt)], ['jc' => 'center', 'before' => 40, 'after' => 40]), 'borders' => $mb],
-            ['xml' => Xml::para([Xml::run('Toplam Puan: '.$this->fmt($this->totalPoints()), $metaOpt)], ['jc' => 'right', 'before' => 40, 'after' => 40]), 'borders' => $mb],
+            ['xml' => Xml::para([$R('Tarih: '.($e->exam_date ? $e->exam_date->format('d.m.Y') : '…/…/……'), $metaOpt)], ['jc' => 'left', 'before' => 40, 'after' => 40]), 'borders' => $mb],
+            ['xml' => Xml::para([$R('Süre: '.($e->duration_min ? $e->duration_min.' dk' : '……'), $metaOpt)], ['jc' => 'center', 'before' => 40, 'after' => 40]), 'borders' => $mb],
+            ['xml' => Xml::para([$R('Toplam Puan: '.$this->fmt($this->totalPoints()), $metaOpt)], ['jc' => 'right', 'before' => 40, 'after' => 40]), 'borders' => $mb],
         ]], [$third, $third, $this->contentTw - 2 * $third]);
 
         if (! empty($s['student_box'])) {
@@ -358,15 +378,15 @@ class Builder
             $so = ['sz' => $fs - 1, 'b' => 1];
             $paras .= Xml::para([], ['line' => 80, 'before' => 0, 'after' => 0]);
             $paras .= Xml::table([[
-                ['xml' => Xml::para([Xml::run('Adı Soyadı:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
-                ['xml' => Xml::para([Xml::run('Numara:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
-                ['xml' => Xml::para([Xml::run('Sınıf:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
-                ['xml' => Xml::para([Xml::run('Puan:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
+                ['xml' => Xml::para([$R('Adı Soyadı:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
+                ['xml' => Xml::para([$R('Numara:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
+                ['xml' => Xml::para([$R('Sınıf:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
+                ['xml' => Xml::para([$R('Puan:', $so)], []), 'borders' => $bb, 'vAlign' => 'bottom'],
             ]], [$w1, $w, $w, $this->contentTw - $w1 - 2 * $w], ['rowHeight' => 460]);
         }
         $ins = trim((string) ($s['instructions'] ?? ''));
         if ($ins !== '') {
-            $paras .= Xml::para([Xml::run($ins, ['i' => 1, 'color' => '334155', 'sz' => $fs - 2])], ['before' => 100, 'after' => 0]);
+            $paras .= Xml::para([$R($ins, ['i' => 1, 'color' => '334155', 'sz' => $fs - 2])], ['before' => 100, 'after' => 0]);
         }
 
         return $paras.Xml::para([], ['before' => 0, 'after' => 120, 'line' => 120]);
@@ -376,7 +396,9 @@ class Builder
     private function tableHeaderXml(?array $logo, ?array $logo2): string
     {
         $e = $this->exam;
-        $fs = ((int) $this->s['font_size']) * 2;
+        $fs = $this->headerPt() * 2;
+        $hf = $this->headerFont();
+        $R = fn (string $t, array $o = []) => Xml::run($t, $o + ['font' => $hf]);
         $up = fn ($t) => \App\Support\ExamLayout::upper($t);
         $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
         // Sayfa çerçevesi açıksa tablo çerçeveye hizalanır (her yandan 6 pt = 120 twips dışarı taşar)
@@ -392,10 +414,11 @@ class Builder
         $maxLen = max(1, ...($lines->map(fn ($t) => mb_strlen($t))->all() ?: [1]));
         $factor = in_array($this->s['font_family'] ?? '', ['serif', 'sans'], true) ? 0.72 : 0.62;
         $titleSz = (int) max(16, min($fs + 2, floor($cellPt / ($maxLen * $factor) * 2)));
-        $titleXml = $lines->map(fn ($t) => Xml::para([Xml::run($t, ['b' => 1, 'sz' => $titleSz])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
-        $c = fn (string $t, array $o = [], string $jc = 'left') => Xml::para([Xml::run($t, ['b' => 1] + $o)], ['jc' => $jc, 'before' => 20, 'after' => 20]);
+        $titleXml = $lines->map(fn ($t) => Xml::para([$R($t, ['b' => 1, 'sz' => $titleSz])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
+        $c = fn (string $t, array $o = [], string $jc = 'left') => Xml::para([$R($t, ['b' => 1] + $o)], ['jc' => $jc, 'before' => 20, 'after' => 20]);
         $logoCell = fn (?array $l, string $rid, int $id) => ['xml' => $l ? Xml::para([$this->logoRun($l, $rid, $id)], ['jc' => 'center']) : '', 'vAlign' => 'center'];
         $date = $e->exam_date ? $e->exam_date->format('d.m.Y') : '…/…/……';
+        $note = trim((string) ($this->s['instructions'] ?? ''));
 
         $rows = [
             ['h' => 1300, 'cells' => [
@@ -414,20 +437,18 @@ class Builder
                 ['xml' => $c('SINIF:', ['sz' => $fs]), 'vAlign' => 'center'],
                 ['xml' => ''],
                 ['xml' => $c('NO:', ['sz' => $fs]), 'vAlign' => 'center'],
-                ['xml' => ''], ['xml' => ''], ['xml' => ''], ['xml' => ''],
+                ['xml' => ''],
+                // Sınav açıklaması: süre ve tarihin altındaki iki hücre birleştirilip oraya yazılır
+                ['xml' => $note !== '' ? Xml::para([$R($note, ['sz' => $fs - 3])], ['jc' => 'left', 'before' => 20, 'after' => 20]) : '', 'span' => 2, 'vAlign' => 'center'],
+                ['xml' => ''],
             ]],
         ];
-        $b = ['single', 16, '000000'];
+        $b = ['single', $this->borderSz(), '000000'];
         $x = '';
         if ($this->mode === 'teacher') {
-            $x .= Xml::para([Xml::run('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
+            $x .= Xml::para([$R('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
         $x .= Xml::table($rows, $w, ['borders' => ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b, 'insideH' => $b, 'insideV' => $b]] + ($framed ? ['ind' => -120] : []));
-        $ins = trim((string) ($this->s['instructions'] ?? ''));
-        if ($ins !== '') {
-            $x .= Xml::para([Xml::run($ins, ['i' => 1, 'color' => '334155', 'sz' => $fs - 2])], ['before' => 100, 'after' => 0]);
-        }
-
         return $x.Xml::para([], ['before' => 0, 'after' => 120, 'line' => 120]);
     }
 

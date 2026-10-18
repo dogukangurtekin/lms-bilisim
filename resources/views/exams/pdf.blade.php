@@ -4,6 +4,13 @@
     $fk = $s['font_family'] ?? 'serif';
     $custom = $examFonts[$fk] ?? null;
     $fam = $custom ? "'".$custom[0]."', ".$custom[2] : ($fk === 'sans' ? "'DejaVu Sans', sans-serif" : "'DejaVu Serif', serif");
+    // Üst kısım (başlık) yazı tipi/boyutu soru yazısından ayrıdır; boşsa soru yazısıyla aynıdır
+    $hk = ($s['header_font_family'] ?? '') ?: $fk;
+    $hcustom = $examFonts[$hk] ?? null;
+    $hfam = $hcustom ? "'".$hcustom[0]."', ".$hcustom[2] : ($hk === 'sans' ? "'DejaVu Sans', sans-serif" : "'DejaVu Serif', serif");
+    $hsize = (int) (($s['header_font_size'] ?? '') ?: $s['font_size']);
+    $bw = (float) ($s['border_width'] ?? 2); // kenarlık kalınlığı (px)
+    $bwf = rtrim(rtrim(number_format($bw, 2, '.', ''), '0'), '.');
     $tblFrame = $exam->template === 'table' && ! empty($s['page_border']);
     $fpad = 8; // çerçeve ile içerik arasındaki boşluk
     $ac = $s['accent'];
@@ -44,17 +51,17 @@
 <title>{{ $exam->title }}</title>
 <style>
     @page { margin: 0; }
-@if($custom)
-    @font-face { font-family: '{{ $custom[0] }}'; font-style: normal; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Regular.ttf') }}') format('truetype'); }
-    @font-face { font-family: '{{ $custom[0] }}'; font-style: normal; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Bold.ttf') }}') format('truetype'); }
-    @font-face { font-family: '{{ $custom[0] }}'; font-style: italic; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Italic.ttf') }}') format('truetype'); }
-    @font-face { font-family: '{{ $custom[0] }}'; font-style: italic; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$custom[1].'-BoldItalic.ttf') }}') format('truetype'); }
-@endif
+@foreach(collect([$custom, $hcustom])->filter()->unique(fn ($c) => $c[0]) as $cf)
+    @font-face { font-family: '{{ $cf[0] }}'; font-style: normal; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$cf[1].'-Regular.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $cf[0] }}'; font-style: normal; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$cf[1].'-Bold.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $cf[0] }}'; font-style: italic; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$cf[1].'-Italic.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $cf[0] }}'; font-style: italic; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$cf[1].'-BoldItalic.ttf') }}') format('truetype'); }
+@endforeach
     body { margin: 0; padding: 0; font-family: {!! $fam !!}; font-size: {{ (int) $s['font_size'] }}pt; line-height: 1.35; color: #111; }
     .pg { position: relative; width: 794px; height: 1118px; overflow: hidden; page-break-after: always; }
     .pg.last { page-break-after: auto; }
     .inner { position: absolute; left: {{ $margin }}px; top: {{ $margin }}px; width: {{ $contentW }}px; }
-    .frame { position: absolute; left: {{ $bi }}px; top: {{ $bi }}px; width: {{ 794 - 2 * $bi }}px; height: {{ 1118 - 2 * $bi }}px; border: 1.5px solid {{ $ac }}; }
+    .frame { position: absolute; left: {{ $bi }}px; top: {{ $bi }}px; width: {{ 794 - 2 * $bi }}px; height: {{ 1118 - 2 * $bi }}px; border: {{ $bwf }}px solid {{ $ac }}; }
     .wm { position: absolute; left: 0; top: 520px; width: 794px; text-align: center; font-size: 84px; font-weight: bold; color: #e5e7eb; transform: rotate(-30deg); text-transform: uppercase; }
     .pgno { position: absolute; left: 0; bottom: 0; width: 794px; height: 26px; line-height: 26px; text-align: center; font-size: 8.5pt; color: #64748b; }
     table { border-collapse: collapse; }
@@ -84,7 +91,7 @@
     .ph-stu { width: 100%; margin-top: 8px; font-size: 0.92em; font-weight: bold; table-layout: fixed; }
     .ph-stu td { border-bottom: 1px solid #111; height: 26px; padding-right: 8px; }
     .ph-ins { margin-top: 8px; font-size: 0.88em; font-style: italic; color: #334155; }
-    .ph-box { {{ $tpl === 'classic' ? 'border:1.5px solid '.$ac.'; padding:8px 10px;' : '' }} {{ $tpl === 'school' ? 'border-bottom:3px double '.$ac.'; padding-bottom:8px;' : '' }} {{ $tpl === 'quiz' ? 'border-bottom:2px solid '.$ac.'; padding-bottom:6px;' : '' }} }
+    .ph-box { {{ $tpl === 'classic' ? 'border:'.$bwf.'px solid '.$ac.'; padding:8px 10px;' : '' }} {{ $tpl === 'school' ? 'border-bottom:3px double '.$ac.'; padding-bottom:8px;' : '' }} {{ $tpl === 'quiz' ? 'border-bottom:2px solid '.$ac.'; padding-bottom:6px;' : '' }} }
     .ph-band { background: {{ $ac }}; color: #fff; padding: 10px 14px; width: {{ $contentW - 28 }}px; }
     .ph-band .ph-info { color: #e0e7ff; }
     .ph-rest { padding: 6px 14px 10px; border: 1px solid {{ $ac }}; border-top: 0; width: {{ $contentW - 28 }}px; }
@@ -100,19 +107,21 @@
 @foreach($pages as $pIdx => $pg)
     <div class="pg {{ ($pIdx === $total - 1 && ! $withKey) ? 'last' : '' }}">
         @if(! empty($s['page_border']) && ! $tblFrame)<div class="frame"></div>@endif
-        @if($tblFrame)<div style="position:absolute;left:{{ $margin - $fpad }}px;top:{{ $margin }}px;width:{{ $contentW + 2 * $fpad - 4 }}px;height:{{ 1118 - 2 * $margin - (! empty($s['page_numbers']) ? 26 : 0) + $fpad - 4 }}px;border:2px solid #000"></div>@endif
+        @if($tblFrame)<div style="position:absolute;left:{{ $margin - $fpad }}px;top:{{ $margin }}px;width:{{ $contentW + 2 * $fpad - 2 * $bw }}px;height:{{ 1118 - 2 * $margin - (! empty($s['page_numbers']) ? 26 : 0) + $fpad - 2 * $bw }}px;border:{{ $bwf }}px solid #000"></div>@endif
         @if(trim((string) ($s['watermark'] ?? '')) !== '')<div class="wm">{{ $s['watermark'] }}</div>@endif
         <div class="inner">
+            <div style="font-family:{!! $hfam !!};font-size:{{ $hsize }}pt">
             @if($pIdx === 0 && $tpl === 'table')
                 @php
                     $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
                     $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $contentW);
                     $TL = \App\Support\ExamLayout::titleLines($exam, $s);
                     $lines = collect([$TL['year'], $TL['school'], $TL['course'], $TL['last']])->filter(fn ($t) => $t !== '');
-                    $fitEm = \App\Support\ExamLayout::fitTitleScale($lines->all(), ($contentW + ($tblFrame ? 2 * $fpad : 0)) * 0.741, ((int) $s['font_size']) * 1.3333, (string) ($s['font_family'] ?? 'calibri'));
+                    $fitEm = \App\Support\ExamLayout::fitTitleScale($lines->all(), ($contentW + ($tblFrame ? 2 * $fpad : 0)) * 0.741, $hsize * 1.3333, $hk);
                     $lg1 = $logoUri($s['logo_path'] ?? null);
                     $lg2 = $logoUri($s['logo2_path'] ?? null);
-                    $cell = 'border:2px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
+                    $cell = 'border:'.$bwf.'px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
+                    $note = trim((string) ($s['instructions'] ?? ''));
                     $tw = $contentW + ($tblFrame ? 2 * $fpad : 0);
                     $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $tw);
                 @endphp
@@ -135,17 +144,18 @@
                             <td style="{{ $cell }}font-size:0.9em;white-space:nowrap">SINIF:</td>
                             <td style="{{ $cell }}"></td>
                             <td style="{{ $cell }}font-size:0.9em;white-space:nowrap">NO:</td>
-                            <td style="{{ $cell }}"></td><td style="{{ $cell }}"></td><td style="{{ $cell }}"></td><td style="{{ $cell }}"></td>
+                            <td style="{{ $cell }}"></td>
+                            <td colspan="2" style="{{ $cell }}font-size:0.78em;font-weight:normal;line-height:1.25;text-align:left">{!! $note !== '' ? nl2br(e($note)) : '' !!}</td>
+                            <td style="{{ $cell }}"></td>
                         </tr>
                     </table>
-                    @if(trim((string) ($s['instructions'] ?? '')) !== '')<div class="ph-ins">{!! nl2br(e($s['instructions'])) !!}</div>@endif
                 </div>
             @elseif($pIdx === 0)
                 @php
                     $TL = \App\Support\ExamLayout::titleLines($exam, $s);
                     $boxW = $contentW - 30;
-                    $basePx = ((int) $s['font_size']) * 1.3333;
-                    $fitFor = fn (string $t, float $base) => number_format(min($base, \App\Support\ExamLayout::fitTitleScale([$t], $boxW, $basePx, (string) ($s['font_family'] ?? 'serif'))), 3, '.', '');
+                    $basePx = $hsize * 1.3333;
+                    $fitFor = fn (string $t, float $base) => number_format(min($base, \App\Support\ExamLayout::fitTitleScale([$t], $boxW, $basePx, $hk)), 3, '.', '');
                     $top = ($TL['year'] !== '' ? '<div class="ph-info">'.e($TL['year']).'</div>' : '').($TL['school'] !== '' ? '<div class="ph-school" style="font-size:'.$fitFor($TL['school'], 1.05).'em">'.e($TL['school']).'</div>' : '').($TL['course'] !== '' ? '<div class="ph-sub" style="font-size:'.$fitFor($TL['course'], 1.08).'em">'.e($TL['course']).'</div>' : '').($TL['last'] !== '' ? '<div class="ph-title">'.e($TL['last']).'</div>' : '');
                     $topWithLogo = $logo
                         ? '<table style="width:100%"><tr><td style="width:70px;vertical-align:middle"><img src="'.$logo.'" style="height:56px;width:auto"></td><td style="vertical-align:middle">'.$top.'</td></tr></table>'
@@ -164,6 +174,7 @@
                     </div>
                 </div>
             @endif
+            </div>
             <div style="position:relative;width:{{ $contentW }}px;height:{{ $pIdx === 0 ? $contentH - $headerH : $contentH }}px;{{ $tblFrame && $pIdx > 0 ? 'margin-top:'.$fpad.'px;' : '' }}">
                 @foreach($pg as $cIdx => $col)
                     @if($cIdx > 0)<div style="position:absolute;left:{{ $colW + 11 }}px;top:0;width:1px;height:{{ $pIdx === 0 ? $contentH - $headerH : $contentH }}px;background:#cbd5e1"></div>@endif

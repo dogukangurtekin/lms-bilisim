@@ -86,6 +86,11 @@ class ExamController extends Controller
         'logo2_path' => '', // Tablolu şablonda sağ üst logo
         // Başlık satırları: eğitim-öğretim yılı, dönem (1|2), yazılı numarası
         'academic_year' => '',
+        // Üst kısım (başlık) yazı ayarları soru yazısından ayrıdır; boş = soru yazısıyla aynı
+        'header_font_family' => '',
+        'header_font_size' => '',
+        // Kenarlık kalınlığı (px): 1, 1.5, 2, 3, 4
+        'border_width' => 2,
         'term_no' => '',
         'exam_no' => '',
     ];
@@ -161,6 +166,9 @@ class ExamController extends Controller
             'settings.watermark' => ['nullable', 'string', 'max:40'],
             'settings.show_logo' => ['required', 'boolean'],
             'settings.academic_year' => ['nullable', 'string', 'max:20'],
+            'settings.header_font_family' => ['nullable', 'in:serif,sans,times,arial,calibri,cambria,georgia'],
+            'settings.header_font_size' => ['nullable', 'integer', 'between:8,24'],
+            'settings.border_width' => ['required', 'in:1,1.5,2,3,4'],
             'settings.term_no' => ['nullable', 'in:1,2'],
             'settings.exam_no' => ['nullable', 'in:1,2,3,4,5'],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],

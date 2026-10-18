@@ -60,11 +60,13 @@
     .wt-panel button.p{background:#2563eb;color:#fff;border-color:transparent}
     .th-table{border:2px solid #111!important}.th-table i{background:linear-gradient(90deg,#cbd5e1 22%,#94a3b8 22% 78%,#cbd5e1 78%)!important;height:12px}
     .th-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
-    .th-tbl td{border:2px solid #000;padding:4px 6px;font-weight:700;vertical-align:middle}
+    .th-tbl td{border:var(--bw,2px) solid #000;padding:4px 6px;font-weight:700;vertical-align:middle}
     .ph-tbl{margin-left:-8px;margin-right:-8px}
-    .tbl-frame{position:absolute;border:2px solid #000;box-sizing:border-box;pointer-events:none}
+    .tbl-frame{position:absolute;border:var(--bw,2px) solid #000;box-sizing:border-box;pointer-events:none}
     .th-tbl td.c{text-align:center;padding:4px}
     .th-tbl td.t{text-align:center;font-size:1.08em;line-height:1.3}
+    .hf-times{font-family:ExamTimes,'Times New Roman',serif}.hf-arial{font-family:ExamArial,Arial,sans-serif}.hf-calibri{font-family:ExamCalibri,Calibri,sans-serif}.hf-cambria{font-family:ExamCambria,Cambria,serif}.hf-georgia{font-family:ExamGeorgia,Georgia,serif}.hf-serif{font-family:ExamSerif,'DejaVu Serif',serif}.hf-sans{font-family:ExamSans,'DejaVu Sans',sans-serif}
+    .th-tbl td.insc{font-size:.78em;font-weight:600;text-align:left;line-height:1.25;vertical-align:middle}
     .th-tbl .lb{font-size:.9em;white-space:nowrap}.th-tbl .sm{font-size:.78em;text-align:center}.th-tbl .big{font-size:1.1em;text-align:center}
     .tpl-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
     .tpl-card{border:2px solid #e2e8f0;border-radius:11px;background:#fff;padding:6px 3px 5px;font-size:10.5px;font-weight:800;color:#334155;cursor:pointer;text-align:center;line-height:1.15}
@@ -122,18 +124,18 @@
     .paper.fam-calibri,.measure.fam-calibri{font-family:ExamCalibri,Calibri,sans-serif}
     .paper.fam-cambria,.measure.fam-cambria{font-family:ExamCambria,Cambria,serif}
     .paper.fam-georgia,.measure.fam-georgia{font-family:ExamGeorgia,Georgia,serif}
-    .measure{position:absolute;left:-99999px;top:0;visibility:hidden;box-sizing:border-box}
+    .measure{position:absolute;left:-99999px;top:0;visibility:hidden;box-sizing:border-box;line-height:1.35;color:#111}
     .paper .cols{display:grid;gap:24px;align-items:start}
     .paper .col{min-width:0;overflow:hidden}
     .paper.two .cols{background:linear-gradient(#cbd5e1,#cbd5e1) center top/1px 100% no-repeat}
     .qblk{padding-bottom:12px;break-inside:avoid}
     .sp-compact .qblk{padding-bottom:6px}.sp-relaxed .qblk{padding-bottom:20px}
-    .paper.bordered::after{content:'';position:absolute;inset:var(--bi,24px);border:1.5px solid var(--ac,#111);pointer-events:none}
+    .paper.bordered::after{content:'';position:absolute;inset:var(--bi,24px);border:var(--bw,1.5px) solid var(--ac,#111);pointer-events:none}
     .wm{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:84px;font-weight:900;letter-spacing:.06em;color:rgba(100,116,139,.13);transform:rotate(-30deg);pointer-events:none;white-space:nowrap;text-transform:uppercase}
     .ph-row{display:flex;align-items:center;gap:14px}.ph-row .ph-txt{flex:1;min-width:0}
     .ph-logo{height:56px;width:auto;max-width:120px;object-fit:contain;flex:0 0 auto}
     .qsec{border-left-color:var(--ac,#334155)}
-    .tpl-classic .ph{border:1.5px solid var(--ac,#111);padding:8px 10px}
+    .tpl-classic .ph{border:var(--bw,1.5px) solid var(--ac,#111);padding:8px 10px}
     .tpl-classic .ph-meta{border-color:var(--ac,#111)}
     .tpl-school .ph{border-bottom:3px double var(--ac,#1e3a8a);padding-bottom:8px}
     .tpl-school .ph-title{color:var(--ac,#1e3a8a)}.tpl-school .qn,.tpl-quiz .qn{color:var(--ac,#111)}
@@ -270,9 +272,14 @@
             <div class="xe-cols"><button type="button" data-cols="1">▯ Tek sütun</button><button type="button" data-cols="2">▯▯ İki sütun</button></div>
         </div>
         <div class="xe-row2">
-            <label class="xe-f">Yazı tipi<select data-k="settings.font_family"><optgroup label="Word ile aynı ölçülü"><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option></optgroup><optgroup label="Diğer"><option value="serif">DejaVu Serif</option><option value="sans">DejaVu Sans</option></optgroup></select></label>
-            <label class="xe-f">Yazı boyutu<select data-k="settings.font_size" data-num>@for($i=9;$i<=16;$i++)<option value="{{ $i }}">{{ $i }} pt</option>@endfor</select></label>
+            <label class="xe-f">Soru yazı tipi<select data-k="settings.font_family"><optgroup label="Word ile aynı ölçülü"><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option></optgroup><optgroup label="Diğer"><option value="serif">DejaVu Serif</option><option value="sans">DejaVu Sans</option></optgroup></select></label>
+            <label class="xe-f">Soru yazı boyutu<select data-k="settings.font_size" data-num>@for($i=9;$i<=16;$i++)<option value="{{ $i }}">{{ $i }} pt</option>@endfor</select></label>
         </div>
+        <div class="xe-row2">
+            <label class="xe-f">Üst kısım yazı tipi<select data-k="settings.header_font_family"><option value="">Soru yazısıyla aynı</option><optgroup label="Word ile aynı ölçülü"><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option></optgroup><optgroup label="Diğer"><option value="serif">DejaVu Serif</option><option value="sans">DejaVu Sans</option></optgroup></select></label>
+            <label class="xe-f">Üst kısım boyutu<select data-k="settings.header_font_size" data-num><option value="">Soru yazısıyla aynı</option>@for($i=8;$i<=18;$i++)<option value="{{ $i }}">{{ $i }} pt</option>@endfor</select></label>
+        </div>
+        <label class="xe-f">Kenarlık kalınlığı<select data-k="settings.border_width" data-num><option value="1">Çok ince</option><option value="1.5">İnce</option><option value="2">Normal</option><option value="3">Kalın</option><option value="4">Çok kalın</option></select></label>
         <label class="xe-f">Kenar boşluğu (mm)<input type="number" data-k="settings.margin_mm" data-num min="8" max="30"></label>
         <label class="xe-sw"><input type="checkbox" data-k="settings.show_points"> Soru puanlarını göster</label>
         <label class="xe-sw" style="margin-top:6px"><input type="checkbox" data-k="settings.student_box"> Ad-soyad / numara alanı</label>
@@ -390,6 +397,10 @@
 
     /* ---------- önizleme: üst bilgi ---------- */
     function totalPoints() { return state.questions.reduce((a, q) => a + (Number(q.points) || 0), 0); }
+    // Üst kısım (başlık) yazı tipi/boyutu soru yazısından ayrıdır; boşsa soru yazısıyla aynıdır
+    const hdrKey = () => state.settings.header_font_family || state.settings.font_family;
+    const hdrSize = () => Number(state.settings.header_font_size) || Number(state.settings.font_size);
+    const headerBlock = () => '<div class="hdr hf-' + hdrKey() + '" style="font-size:' + hdrSize() + 'pt">' + headerHtml() + '</div>';
     // Tablolu (okul) başlık: logo - başlık satırları - logo / AD SOYAD - süre - tarih - PUAN / SINIF - NO hücreleri
     // Başlık satırları: yıl / okul adı / ders adı + dönem ve yazılı numarası
     function titleLines() {
@@ -418,15 +429,16 @@
         // satırlar hücreye tek satırda sığsın: en uzun satıra göre yazı küçülür
         const mg = Math.round(s.margin_mm * MM), contentW = PAGE_W - 2 * mg + (s.page_border ? 16 : 0);
         const maxLen = Math.max(1, ...arr.map((t) => t.length));
-        const factor = (s.font_family === 'serif' || s.font_family === 'sans') ? 0.72 : 0.62;
-        const fit = Math.max(0.7, Math.min(1.08, (contentW * 0.741 - 12) / (maxLen * factor * s.font_size * 1.3333)));
+        const factor = (hdrKey() === 'serif' || hdrKey() === 'sans') ? 0.72 : 0.62;
+        const fit = Math.max(0.7, Math.min(1.08, (contentW * 0.741 - 12) / (maxLen * factor * hdrSize() * 1.3333)));
         const cg = '<colgroup><col style="width:12.3%"><col style="width:13.5%"><col style="width:10.5%"><col style="width:7.5%"><col style="width:21.2%"><col style="width:21.4%"><col style="width:13.6%"></colgroup>';
-        const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
+        // Sınav açıklaması: süre ve tarihin altındaki iki hücre birleştirilip oraya yazılır (açıklama yoksa boş kalır)
+        const note = s.instructions && s.instructions.trim() ? esc(s.instructions.trim()).replace(/\n/g, '<br>') : '';
         return '<div class="ph' + (s.page_border ? ' ph-tbl' : '') + '"><table class="th-tbl">' + cg
             + '<tr style="height:86px"><td class="c">' + img(s.logo_path) + '</td><td class="t" colspan="5" style="font-size:' + fit.toFixed(3) + 'em">' + lines + '</td><td class="c">' + img(s.logo2_path) + '</td></tr>'
             + '<tr style="height:46px"><td class="lb">AD SOYAD:</td><td colspan="3"></td><td class="sm">' + (e.duration_min ? 'Sınav süresi ' + esc(e.duration_min) + ' dakikadır.' : '') + '</td><td class="sm">TARİH: ' + esc(date) + '</td><td class="big">PUAN</td></tr>'
-            + '<tr style="height:40px"><td class="lb">SINIF:</td><td></td><td class="lb">NO:</td><td></td><td></td><td></td><td></td></tr>'
-            + '</table>' + ins + '</div>';
+            + '<tr style="height:40px"><td class="lb">SINIF:</td><td></td><td class="lb">NO:</td><td></td><td class="insc" colspan="2">' + note + '</td><td></td></tr>'
+            + '</table></div>';
     }
     function headerHtml() {
         const e = state.exam, s = state.settings;
@@ -438,8 +450,8 @@
         const L = titleLines();
         // okul ve ders satırı sayfa genişliğine tek satırda sığsın (en fazla 3 satır başlık)
         const boxW = PAGE_W - 2 * Math.round(s.margin_mm * MM) - 30;
-        const fq = (s.font_family === 'serif' || s.font_family === 'sans') ? 0.72 : 0.62;
-        const fitEm = (t, base) => Math.max(0.7, Math.min(base, (boxW - 8) / (Math.max(1, t.length) * fq * s.font_size * 1.3333))).toFixed(3);
+        const fq = (hdrKey() === 'serif' || hdrKey() === 'sans') ? 0.72 : 0.62;
+        const fitEm = (t, base) => Math.max(0.7, Math.min(base, (boxW - 8) / (Math.max(1, t.length) * fq * hdrSize() * 1.3333))).toFixed(3);
         let top = (L.year ? '<div class="ph-info">' + esc(L.year) + '</div>' : '') + (L.school ? '<div class="ph-school" style="font-size:' + fitEm(L.school, 1.05) + 'em">' + esc(L.school) + '</div>' : '')
             + (L.course ? '<div class="ph-sub" style="font-size:' + fitEm(L.course, 1.08) + 'em">' + esc(L.course) + '</div>' : '') + (L.last ? '<div class="ph-title">' + esc(L.last) + '</div>' : '');
         if (s.show_logo && s.logo_path) top = '<div class="ph-row"><img class="ph-logo" src="' + esc(LOGO_BASE + s.logo_path) + '" alt=""><div class="ph-txt">' + top + '</div></div>';
@@ -475,9 +487,10 @@
         curColW = colW;
         const footer = s.page_numbers ? 26 : 0;
         const frameOn = e.template === 'table' && !!s.page_border; // başlık tablosuyla hizalı, sayfanın altına kadar süren çerçeve
-        const contentH = PAGE_H - 2 * margin - footer - (frameOn ? 8 : 0);
+        // -6: ölçüm ile gerçek çizim arasındaki yuvarlama farkları için küçük güvenlik payı
+        const contentH = PAGE_H - 2 * margin - footer - (frameOn ? 8 : 0) - 6;
         const fam = 'fam-' + s.font_family, tpl = 'tpl-' + e.template + ' sp-' + s.spacing;
-        const vars = '--ac:' + s.accent + ';--bi:' + Math.round(margin / 2) + 'px;';
+        const vars = '--ac:' + s.accent + ';--bi:' + Math.round(margin / 2) + 'px;--bw:' + (Number(s.border_width) || 2) + 'px;';
         const fs = 'font-size:' + s.font_size + 'pt;';
 
         // ölçüm
@@ -486,9 +499,9 @@
         m.style.cssText = fs + vars + 'width:' + colW + 'px';
         m.innerHTML = state.questions.map((q, i) => blockHtml(q, i)).join('');
         const mh = document.createElement('div');
-        mh.className = 'measure ' + fam + ' ' + tpl;
+        mh.className = 'measure ' + tpl;
         mh.style.cssText = fs + vars + 'width:' + contentW + 'px';
-        mh.innerHTML = headerHtml();
+        mh.innerHTML = headerBlock();
         document.body.appendChild(m); document.body.appendChild(mh);
         const heights = [...m.children].map((c) => c.getBoundingClientRect().height);
         const headerH = mh.getBoundingClientRect().height + 12; // başlık + alt boşluk (.ph margin)
@@ -502,7 +515,7 @@
             const empty = (!state.questions.length && pIdx === 0) ? '<div style="color:#94a3b8;text-align:center;padding:60px 0;font-weight:700">Soldaki "Soru Ekle" düğmeleriyle ilk sorunuzu ekleyin.</div>' : '';
             return '<div class="paper ' + fam + ' ' + tpl + (n === 2 ? ' two' : '') + (s.page_border && !frameOn ? ' bordered' : '') + '" style="' + fs + vars + 'padding:' + margin + 'px">'
                 + (s.watermark && s.watermark.trim() ? '<div class="wm">' + esc(s.watermark) + '</div>' : '')
-                + (pIdx === 0 ? headerHtml() : '')
+                + (pIdx === 0 ? headerBlock() : '')
                 + empty
                 + (frameOn ? '<div class="tbl-frame" style="left:' + (margin - 8) + 'px;top:' + margin + 'px;width:' + (contentW + 16) + 'px;height:' + (PAGE_H - 2 * margin - footer + 8) + 'px"></div>' : '')
                 + '<div class="cols" style="grid-template-columns:repeat(' + n + ',1fr);' + (frameOn && pIdx > 0 ? 'margin-top:8px' : '') + '">' + colsHtml + '</div>'
@@ -813,10 +826,11 @@
     syncControls(); refreshFinalBtn(); refreshCols(); renderList();
     const ensureFonts = () => {
         if (!document.fonts || !document.fonts.load) return Promise.resolve();
-        const f = ({ sans: 'ExamSans', serif: 'ExamSerif', times: 'ExamTimes', arial: 'ExamArial', calibri: 'ExamCalibri', cambria: 'ExamCambria', georgia: 'ExamGeorgia' })[state.settings.font_family] || 'ExamSerif';
-        return Promise.all(['400', '700'].map((w) => document.fonts.load(w + ' 11pt ' + f)).concat(document.fonts.load('italic 400 11pt ' + f))).catch(() => {});
+        const map = { sans: 'ExamSans', serif: 'ExamSerif', times: 'ExamTimes', arial: 'ExamArial', calibri: 'ExamCalibri', cambria: 'ExamCambria', georgia: 'ExamGeorgia' };
+        const fams = [...new Set([map[state.settings.font_family] || 'ExamSerif', map[hdrKey()] || 'ExamSerif'])];
+        return Promise.all(fams.flatMap((f) => ['400', '700'].map((w) => document.fonts.load(w + ' 11pt ' + f)).concat(document.fonts.load('italic 400 11pt ' + f)))).catch(() => {});
     };
-    document.querySelector('[data-k="settings.font_family"]').addEventListener('change', () => ensureFonts().then(renderPreview));
+    ['settings.font_family', 'settings.header_font_family'].forEach((k) => document.querySelector('[data-k="' + k + '"]').addEventListener('change', () => ensureFonts().then(renderPreview)));
     ensureFonts().then(renderPreview);
     renderPreview();
 
