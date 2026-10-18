@@ -110,6 +110,8 @@ class ExamController extends Controller
             'bank_item_id' => $q->bank_item_id,
             'image_path' => $q->image_path ?? '',
             'image_scale' => (int) ($q->image_scale ?: 100),
+            'image_align' => $q->image_align ?: 'left',
+            'image_pos' => $q->image_pos ?: 'below',
         ])->values();
 
         return view('exams.edit', [
@@ -189,6 +191,8 @@ class ExamController extends Controller
             'questions.*.answer_lines' => ['nullable', 'integer', 'between:0,20'],
             'questions.*.bank_item_id' => ['nullable', 'integer', 'exists:question_bank_items,id'],
             'questions.*.image_scale' => ['nullable', 'integer', 'between:10,200'],
+            'questions.*.image_align' => ['nullable', Rule::in(['left', 'center', 'right'])],
+            'questions.*.image_pos' => ['nullable', Rule::in(['above', 'below', 'end'])],
             'questions.*.image_path' => ['nullable', 'string', 'max:120', 'regex:#^exam-images/'.$exam->id.'-[a-f0-9]{20}-\d{2,4}x\d{2,4}\.(png|jpg)$#'],
         ]);
 
@@ -234,6 +238,8 @@ class ExamController extends Controller
                     'bank_item_id' => $q['bank_item_id'] ?? null,
                     'image_path' => ($q['image_path'] ?? '') ?: null,
                     'image_scale' => (int) ($q['image_scale'] ?? 100) ?: 100,
+                    'image_align' => $q['image_align'] ?? 'left',
+                    'image_pos' => $q['image_pos'] ?? 'below',
                 ]);
             }
         });
@@ -301,6 +307,8 @@ class ExamController extends Controller
             'answer_lines' => (int) $q->answer_lines,
             'image_path' => (string) ($q->image_path ?? ''),
             'image_scale' => (int) ($q->image_scale ?: 100),
+            'image_align' => $q->image_align ?: 'left',
+            'image_pos' => $q->image_pos ?: 'below',
         ])->values()->all();
     }
 

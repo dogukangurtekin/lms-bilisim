@@ -150,6 +150,7 @@
     .qopts{margin-top:4px;display:grid;gap:2px}
     .qopts.inline{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
     .qo{word-break:break-word}.qo b{margin-right:3px}
+    .qimg-opts{display:grid;grid-template-columns:1fr;gap:4px;margin:2px 0}.qimg-opts label{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569}.qimg-opts select{flex:1;min-width:0;font-size:12px;padding:3px 4px}
     .qimg-size{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;margin:2px 0}.qimg-size input{flex:1;min-width:0}
     .qimg{display:block;margin-top:5px;max-width:100%}
     .qlines i{display:block;height:25px;border-bottom:1px dotted #64748b}
@@ -372,7 +373,8 @@
         if (dw > maxW) { dh *= maxW / dw; dw = maxW; }
         return [Math.max(1, Math.round(dw)), Math.max(1, Math.round(dh))];
     };
-    const imgHtml = (q) => { const sz = imgSize(q.image_path, curColW - 40, 200, q.image_scale); return sz ? '<img class="qimg" src="' + esc(LOGO_BASE + q.image_path) + '" width="' + sz[0] + '" height="' + sz[1] + '" alt="">' : ''; };
+    const imgHtml = (q) => { const sz = imgSize(q.image_path, curColW - 40, 200, q.image_scale); return sz ? '<div class="qimgw" style="text-align:' + (['center', 'right'].includes(q.image_align) ? q.image_align : 'left') + '"><img class="qimg" src="' + esc(LOGO_BASE + q.image_path) + '" width="' + sz[0] + '" height="' + sz[1] + '" alt=""></div>' : ''; };
+    const imgAt = (q, where) => ((['above', 'end'].includes(q.image_pos) ? q.image_pos : 'below') === where ? imgHtml(q) : '');
     function blockHtml(q, i) {
         const pts = state.settings.show_points && Number(q.points) > 0 ? '<span class="qp">(' + esc(String(q.points).replace('.', ',')) + ' p)</span>' : '';
         let inner = '';
@@ -380,18 +382,18 @@
         if (q.type === 'multiple_choice') {
             const opts = q.options.map((o, k) => '<div class="qo"><b>' + optLabel(k) + '</b>' + esc(o) + '</div>').join('');
             const short = state.exam.columns === 1 && q.options.length <= 4 && q.options.every((o) => o.length <= 20);
-            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qopts' + (short ? ' inline' : '') + '">' + opts + '</div>';
+            inner = imgAt(q, 'above') + '<div class="qtext">' + text + pts + '</div>' + imgAt(q, 'below') + '<div class="qopts' + (short ? ' inline' : '') + '">' + opts + '</div>' + imgAt(q, 'end');
         } else if (q.type === 'true_false') {
-            inner = '<div class="qtext"><b>(&nbsp;&nbsp;&nbsp;&nbsp;)</b> ' + text + pts + '</div>' + imgHtml(q) + '';
+            inner = imgAt(q, 'above') + '<div class="qtext"><b>(&nbsp;&nbsp;&nbsp;&nbsp;)</b> ' + text + pts + '</div>' + imgAt(q, 'below') + imgAt(q, 'end');
         } else if (q.type === 'open_ended') {
-            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qlines">' + '<i></i>'.repeat(Math.max(0, Math.min(20, Number(q.answer_lines) || 0))) + '</div>';
+            inner = imgAt(q, 'above') + '<div class="qtext">' + text + pts + '</div>' + imgAt(q, 'below') + '<div class="qlines">' + '<i></i>'.repeat(Math.max(0, Math.min(20, Number(q.answer_lines) || 0))) + '</div>' + imgAt(q, 'end');
         } else if (q.type === 'matching') {
             const n = q.options.length, order = matchOrder(n);
             const left = q.options.map((o, k) => '<div><b>(&nbsp;&nbsp;&nbsp;)</b> ' + (k + 1) + '. ' + esc(o.l) + '</div>').join('');
             const right = order.map((src, k) => '<div><b>' + optLabel(k) + '</b> ' + esc(q.options[src].r) + '</div>').join('');
-            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '<div class="qmatch"><div>' + left + '</div><div>' + right + '</div></div>';
+            inner = imgAt(q, 'above') + '<div class="qtext">' + text + pts + '</div>' + imgAt(q, 'below') + '<div class="qmatch"><div>' + left + '</div><div>' + right + '</div></div>' + imgAt(q, 'end');
         } else {
-            inner = '<div class="qtext">' + text + pts + '</div>' + imgHtml(q) + '';
+            inner = imgAt(q, 'above') + '<div class="qtext">' + text + pts + '</div>' + imgAt(q, 'below') + imgAt(q, 'end');
         }
         const sec = q.section_title && q.section_title.trim() ? '<div class="qsec">' + esc(q.section_title) + '</div>' : '';
         return '<div class="qblk' + (i === selected ? ' sel' : '') + '" data-i="' + i + '">' + sec
@@ -556,7 +558,9 @@
         }).join('');
     }
 
-    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div class="xe-f">Görsel' + (q.image_path ? '<div class="qimg-row"><img src="' + esc(LOGO_BASE + q.image_path) + '" alt=""><button type="button" class="xe-mini" data-act="imgdel">Kaldır</button></div><label class="qimg-size">Boyut <input type="range" data-imgscale min="10" max="200" step="5" value="' + (Number(q.image_scale) || 100) + '"> <b>%' + (Number(q.image_scale) || 100) + '</b></label>' : '')
+    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div class="xe-f">Görsel' + (q.image_path ? '<div class="qimg-row"><img src="' + esc(LOGO_BASE + q.image_path) + '" alt=""><button type="button" class="xe-mini" data-act="imgdel">Kaldır</button></div><label class="qimg-size">Boyut <input type="range" data-imgscale min="10" max="200" step="5" value="' + (Number(q.image_scale) || 100) + '"> <b>%' + (Number(q.image_scale) || 100) + '</b></label>'
+        + '<div class="qimg-opts"><label>Hizalama <select data-imgalign>' + [['left', 'Sola'], ['center', 'Ortala'], ['right', 'Sağa']].map((o) => '<option value="' + o[0] + '"' + ((q.image_align || 'left') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>'
+        + '<label>Konum <select data-imgpos>' + [['above', 'Sorunun üstünde'], ['below', 'Soru metninin altında'], ['end', 'Şıklardan sonra (en altta)']].map((o) => '<option value="' + o[0] + '"' + ((q.image_pos || 'below') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label></div>' : '')
         + '<label class="xe-mini" style="text-align:center;cursor:pointer">🖼 ' + (q.image_path ? 'Değiştir' : 'Görsel ekle') + '<input type="file" data-img accept="image/png,image/jpeg,image/webp" style="display:none"></label></div>'
         + '<div><button type="button" class="xe-mini" data-act="tobank"' + (q.bank_item_id ? ' disabled' : '') + '>' + (q.bank_item_id ? '✓ Havuzda' : '📚 Havuza kaydet') + '</button></div></div>');
 
@@ -576,7 +580,7 @@
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
                 answer: window.ExamQ.answerOf(q),
-                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null, image_path: q.image_path || null, image_scale: Number(q.image_scale) || 100,
+                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null, image_path: q.image_path || null, image_scale: Number(q.image_scale) || 100, image_align: q.image_align || 'left', image_pos: q.image_pos || 'below',
             })),
         };
     }
@@ -665,6 +669,8 @@
     $('xe-list').addEventListener('input', (ev) => {
         const card = ev.target.closest('.xe-q'); if (!card) return;
         const q = state.questions[Number(card.dataset.i)], t = ev.target;
+        if (t.dataset.imgalign !== undefined) { q.image_align = t.value; schedulePreview(); markDirty(); return; }
+        if (t.dataset.imgpos !== undefined) { q.image_pos = t.value; schedulePreview(); markDirty(); return; }
         if (t.dataset.imgscale !== undefined) { q.image_scale = Number(t.value) || 100; const b = t.parentNode.querySelector('b'); if (b) b.textContent = '%' + q.image_scale; schedulePreview(); markDirty(); return; }
         if (!window.ExamQ.applyInput(q, t, card)) return;
         const hdr = card.querySelector('.xe-qt'); if (hdr && t.dataset.q === 'body') hdr.textContent = (q.body || '').split('\n')[0] || TYPE_NAME[q.type];

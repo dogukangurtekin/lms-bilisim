@@ -506,7 +506,9 @@ class Builder
         $add = function (string $xml) use (&$paraList): void { $paraList[] = $xml; };
 
         $first = [$numRun];
-        $imgP = $this->imagePara($q, $columns, $hang);
+        $imgFull = $this->imagePara($q, $columns, $hang);
+        $imgPos = in_array($q['image_pos'] ?? 'below', ['above', 'end'], true) ? $q['image_pos'] : 'below';
+        $imgP = $imgPos === 'below' ? $imgFull : '';
         switch ($q['type']) {
             case 'multiple_choice':
                 $first[] = Xml::run($body);
@@ -608,6 +610,12 @@ class Builder
                 }
         }
 
+        if ($imgFull !== '' && $imgPos === 'above') {
+            array_unshift($paraList, $imgFull);
+        } elseif ($imgFull !== '' && $imgPos === 'end') {
+            $paraList[] = $imgFull;
+        }
+
         // Blok sonu aralığı: son paragrafın sonuna boşluk paragrafı
         $x .= implode('', $paraList);
         $x .= Xml::para([], ['before' => 0, 'after' => 0, 'line' => max(20, $pad)]);
@@ -632,7 +640,7 @@ class Builder
         $rid = 'rIdQ'.$n;
         $this->images[] = ['rid' => $rid, 'ext' => str_ends_with($path, '.jpg') ? 'jpg' : 'png', 'bytes' => (string) file_get_contents(public_path($path))];
 
-        return Xml::para([$this->drawingRun($rid, $sz[0] * 9525, $sz[1] * 9525, 100 + $n, 'Soru görseli '.$n)], ['keepNext' => true, 'keepLines' => true, 'ind' => ['left' => $left], 'before' => 60, 'after' => 60]);
+        return Xml::para([$this->drawingRun($rid, $sz[0] * 9525, $sz[1] * 9525, 100 + $n, 'Soru görseli '.$n)], ['keepNext' => true, 'keepLines' => true, 'ind' => ['left' => $left], 'jc' => in_array($q['image_align'] ?? 'left', ['center', 'right'], true) ? $q['image_align'] : null, 'before' => 60, 'after' => 60]);
     }
 
     private function answerPara(string $text, int $left): string
