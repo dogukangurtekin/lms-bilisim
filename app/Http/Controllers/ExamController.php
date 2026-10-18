@@ -566,13 +566,13 @@ class ExamController extends Controller
         return response()->json(['ok' => true, 'path' => 'exam-images/'.$name, 'url' => asset('exam-images/'.$name)]);
     }
 
-    /** Sınavın artık hiçbir soruda kullanılmayan görsellerini siler (yeni yüklenenlere 10 dk tolerans). */
+    /** Sınavın artık hiçbir soruda kullanılmayan görsellerini siler (yeni yüklenenlere 24 saat tolerans). */
     private function pruneImages(Exam $exam, bool $all = false): void
     {
         $used = $all ? [] : $exam->questions()->pluck('image_path')->filter()->all();
         foreach (glob(public_path('exam-images/'.$exam->id.'-*')) ?: [] as $file) {
             $rel = 'exam-images/'.basename($file);
-            if (! in_array($rel, $used, true) && ($all || filemtime($file) < time() - 600)) {
+            if (! in_array($rel, $used, true) && ($all || filemtime($file) < time() - 86400)) {
                 @unlink($file);
             }
         }
