@@ -9,8 +9,8 @@
 <h2>1. Veri sorumlusu ve veri işleyen sıfatları</h2>
 <ul>
     <li><strong>Okul veri sorumlusudur:</strong> Okul tarafından Platform’a tanımlanan öğrenci, öğretmen, yönetici ve veli bilgilerinin hangi amaçla ve hangi hukuki sebeple işleneceğine karar veren veri sorumlusu, hizmeti satın alan ilgili okul yönetimidir.</li>
-    <li><strong>Bilişim Kod veri işleyendir:</strong> Platform Yönetimi (Doğukan Gürtekin), bu verileri yalnızca okul yönetiminin talimatları doğrultusunda, sistemin çalışabilmesi ve eğitim süreçlerinin yürütülebilmesi için barındıran ve işleyen veri işleyendir.</li>
-    <li><strong>Doğrudan ilettiğiniz bilgilerde Doğukan Gürtekin veri sorumlusudur:</strong> Sitedeki “Demo Talep Et” formu veya e-posta aracılığıyla doğrudan Platform Yönetimi’ne ilettiğiniz bilgilerin veri sorumlusu Doğukan Gürtekin’dir. İletişim: {{ config('app.contact_email') }}</li>
+    <li><strong>Bilişim Kod veri işleyendir:</strong> Platform Yönetimi, bu verileri yalnızca okul yönetiminin talimatları doğrultusunda, sistemin çalışabilmesi ve eğitim süreçlerinin yürütülebilmesi için barındıran ve işleyen veri işleyendir.</li>
+    <li><strong>Doğrudan ilettiğiniz bilgilerde Bilişim Kod veri sorumlusudur:</strong> Sitedeki “Demo Talep Et” formu veya e-posta aracılığıyla doğrudan Platform Yönetimi’ne ilettiğiniz bilgilerin veri sorumlusu Bilişim Kod’dur. İletişim: {{ config('app.contact_email') }}</li>
 </ul>
 
 <h2>2. İşlenen kişisel veriler ve amaçlar</h2>
