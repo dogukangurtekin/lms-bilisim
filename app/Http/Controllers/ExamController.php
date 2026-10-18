@@ -109,6 +109,7 @@ class ExamController extends Controller
             'answer_lines' => (int) $q->answer_lines,
             'bank_item_id' => $q->bank_item_id,
             'image_path' => $q->image_path ?? '',
+            'image_scale' => (int) ($q->image_scale ?: 100),
         ])->values();
 
         return view('exams.edit', [
@@ -187,6 +188,7 @@ class ExamController extends Controller
             'questions.*.section_title' => ['nullable', 'string', 'max:200'],
             'questions.*.answer_lines' => ['nullable', 'integer', 'between:0,20'],
             'questions.*.bank_item_id' => ['nullable', 'integer', 'exists:question_bank_items,id'],
+            'questions.*.image_scale' => ['nullable', 'integer', 'between:10,200'],
             'questions.*.image_path' => ['nullable', 'string', 'max:120', 'regex:#^exam-images/'.$exam->id.'-[a-f0-9]{20}-\d{2,4}x\d{2,4}\.(png|jpg)$#'],
         ]);
 
@@ -231,6 +233,7 @@ class ExamController extends Controller
                     'answer_lines' => (int) ($q['answer_lines'] ?? 0),
                     'bank_item_id' => $q['bank_item_id'] ?? null,
                     'image_path' => ($q['image_path'] ?? '') ?: null,
+                    'image_scale' => (int) ($q['image_scale'] ?? 100) ?: 100,
                 ]);
             }
         });
@@ -297,6 +300,7 @@ class ExamController extends Controller
             'section_title' => (string) ($q->section_title ?? ''),
             'answer_lines' => (int) $q->answer_lines,
             'image_path' => (string) ($q->image_path ?? ''),
+            'image_scale' => (int) ($q->image_scale ?: 100),
         ])->values()->all();
     }
 

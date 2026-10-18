@@ -43,7 +43,7 @@ class ExamLayout
     }
 
     /** Soru görselinin ekrandaki/PDF'teki boyutu; ölçü dosya adındaki "-{G}x{Y}" bölümünden okunur. [genişlik, yükseklik] ya da null. */
-    public static function imageSize(?string $path, int $maxW, int $maxH = 200): ?array
+    public static function imageSize(?string $path, int $maxW, int $maxH = 200, int $scale = 100): ?array
     {
         if (! $path || ! preg_match('/-(\d{2,4})x(\d{2,4})\.(png|jpg)$/', $path, $m)) {
             return null;
@@ -59,8 +59,16 @@ class ExamLayout
             $dh = $maxH;
             $dw = $dh * $w / $h;
         }
+        // Kullanıcı ölçeği (%10–200); sütun genişliğini aşamaz.
+        $f = max(10, min(200, $scale ?: 100)) / 100;
+        $dw *= $f;
+        $dh *= $f;
+        if ($dw > $maxW) {
+            $dh *= $maxW / $dw;
+            $dw = $maxW;
+        }
 
-        return [(int) round($dw), (int) round($dh)];
+        return [max(1, (int) round($dw)), max(1, (int) round($dh))];
     }
 
     /** İçinde bulunulan eğitim-öğretim yılı (Eylül'den itibaren yeni yıl): 2026-2027. */
@@ -176,7 +184,7 @@ class ExamLayout
             } elseif (($q['type'] ?? '') === 'open_ended') {
                 $h += ((int) ($q['answer_lines'] ?? 0)) * 25;
             }
-            if ($sz = self::imageSize($q['image_path'] ?? null, $colW - 40)) {
+            if ($sz = self::imageSize($q['image_path'] ?? null, $colW - 40, 200, (int) ($q['image_scale'] ?? 100))) {
                 $h += $sz[1] + 8;
             }
             $heights[] = $h;

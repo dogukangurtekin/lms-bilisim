@@ -624,7 +624,7 @@ class Builder
         }
         $contentPx = (int) round($this->contentTw / 15);
         $colPx = $columns === 2 ? (int) floor(($contentPx - 24) / 2) : $contentPx;
-        $sz = \App\Support\ExamLayout::imageSize($path, $colPx - 40);
+        $sz = \App\Support\ExamLayout::imageSize($path, $colPx - 40, 200, (int) ($q['image_scale'] ?? 100));
         if (! $sz) {
             return '';
         }

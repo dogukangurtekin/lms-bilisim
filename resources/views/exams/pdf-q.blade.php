@@ -10,7 +10,7 @@
     $ans = (string) ($q['answer'] ?? '');
     $opts = (array) ($q['options'] ?? []);
     $imgHtml = '';
-    $imgSz = \App\Support\ExamLayout::imageSize($q['image_path'] ?? null, $colW - 40);
+    $imgSz = \App\Support\ExamLayout::imageSize($q['image_path'] ?? null, $colW - 40, 200, (int) ($q['image_scale'] ?? 100));
     if ($imgSz && is_file(public_path($q['image_path']))) {
         $mime = str_ends_with($q['image_path'], '.jpg') ? 'jpeg' : 'png';
         $imgHtml = '<div style="margin-top:5px"><img src="data:image/'.$mime.';base64,'.base64_encode((string) file_get_contents(public_path($q['image_path']))).'" style="width:'.$imgSz[0].'px;height:'.$imgSz[1].'px"></div>';

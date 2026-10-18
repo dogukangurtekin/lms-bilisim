@@ -150,6 +150,7 @@
     .qopts{margin-top:4px;display:grid;gap:2px}
     .qopts.inline{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
     .qo{word-break:break-word}.qo b{margin-right:3px}
+    .qimg-size{display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;margin:2px 0}.qimg-size input{flex:1;min-width:0}
     .qimg{display:block;margin-top:5px;max-width:100%}
     .qlines i{display:block;height:25px;border-bottom:1px dotted #64748b}
     .qmatch{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:5px}
@@ -362,14 +363,16 @@
     const optLabel = (k) => ({ paren: LETTERS[k] + ')', bracket: '(' + LETTERS[k] + ')', dot: LETTERS[k] + '.' }[state.settings.opt_style] || LETTERS[k] + ')');
     const numLabel = (i) => ({ dot: (i + 1) + '.', paren: (i + 1) + ')', soru: 'Soru ' + (i + 1) + '.' }[state.settings.num_style] || (i + 1) + '.');
     let curColW = 680;
-    const imgSize = (path, maxW, maxH = 200) => {
+    const imgSize = (path, maxW, maxH = 200, scale = 100) => {
         const m = /-(\d{2,4})x(\d{2,4})\.(png|jpg)$/.exec(path || ''); if (!m) return null;
         const w = Number(m[1]), h = Number(m[2]); if (!w || !h) return null;
         let dw = Math.min(w, maxW), dh = dw * h / w;
         if (dh > maxH) { dh = maxH; dw = dh * w / h; }
-        return [Math.round(dw), Math.round(dh)];
+        const f = Math.max(10, Math.min(200, Number(scale) || 100)) / 100; dw *= f; dh *= f;
+        if (dw > maxW) { dh *= maxW / dw; dw = maxW; }
+        return [Math.max(1, Math.round(dw)), Math.max(1, Math.round(dh))];
     };
-    const imgHtml = (q) => { const sz = imgSize(q.image_path, curColW - 40); return sz ? '<img class="qimg" src="' + esc(LOGO_BASE + q.image_path) + '" width="' + sz[0] + '" height="' + sz[1] + '" alt="">' : ''; };
+    const imgHtml = (q) => { const sz = imgSize(q.image_path, curColW - 40, 200, q.image_scale); return sz ? '<img class="qimg" src="' + esc(LOGO_BASE + q.image_path) + '" width="' + sz[0] + '" height="' + sz[1] + '" alt="">' : ''; };
     function blockHtml(q, i) {
         const pts = state.settings.show_points && Number(q.points) > 0 ? '<span class="qp">(' + esc(String(q.points).replace('.', ',')) + ' p)</span>' : '';
         let inner = '';
@@ -553,7 +556,7 @@
         }).join('');
     }
 
-    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div class="xe-f">Görsel' + (q.image_path ? '<div class="qimg-row"><img src="' + esc(LOGO_BASE + q.image_path) + '" alt=""><button type="button" class="xe-mini" data-act="imgdel">Kaldır</button></div>' : '')
+    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div class="xe-f">Görsel' + (q.image_path ? '<div class="qimg-row"><img src="' + esc(LOGO_BASE + q.image_path) + '" alt=""><button type="button" class="xe-mini" data-act="imgdel">Kaldır</button></div><label class="qimg-size">Boyut <input type="range" data-imgscale min="10" max="200" step="5" value="' + (Number(q.image_scale) || 100) + '"> <b>%' + (Number(q.image_scale) || 100) + '</b></label>' : '')
         + '<label class="xe-mini" style="text-align:center;cursor:pointer">🖼 ' + (q.image_path ? 'Değiştir' : 'Görsel ekle') + '<input type="file" data-img accept="image/png,image/jpeg,image/webp" style="display:none"></label></div>'
         + '<div><button type="button" class="xe-mini" data-act="tobank"' + (q.bank_item_id ? ' disabled' : '') + '>' + (q.bank_item_id ? '✓ Havuzda' : '📚 Havuza kaydet') + '</button></div></div>');
 
@@ -573,7 +576,7 @@
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
                 answer: window.ExamQ.answerOf(q),
-                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null, image_path: q.image_path || null,
+                section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null, image_path: q.image_path || null, image_scale: Number(q.image_scale) || 100,
             })),
         };
     }
@@ -631,7 +634,7 @@
             const res = await fetch(IMG_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
             const j = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'));
-            q.image_path = j.path; changed(true); setStatus('ok', 'Görsel eklendi');
+            q.image_path = j.path; q.image_scale = 100; changed(true); setStatus('ok', 'Görsel eklendi');
         } catch (err) { setStatus('err', err.message); }
     });
 
@@ -662,6 +665,7 @@
     $('xe-list').addEventListener('input', (ev) => {
         const card = ev.target.closest('.xe-q'); if (!card) return;
         const q = state.questions[Number(card.dataset.i)], t = ev.target;
+        if (t.dataset.imgscale !== undefined) { q.image_scale = Number(t.value) || 100; const b = t.parentNode.querySelector('b'); if (b) b.textContent = '%' + q.image_scale; schedulePreview(); markDirty(); return; }
         if (!window.ExamQ.applyInput(q, t, card)) return;
         const hdr = card.querySelector('.xe-qt'); if (hdr && t.dataset.q === 'body') hdr.textContent = (q.body || '').split('\n')[0] || TYPE_NAME[q.type];
         schedulePreview(); markDirty();
