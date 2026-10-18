@@ -263,6 +263,23 @@ document.addEventListener('DOMContentLoaded', () => {
       // Desktop: menu button intentionally disabled.
     });
   }
+  // Yönetici/öğretmen: menüyü küçült / büyüt (masaüstü; tercih tarayıcıda saklanır)
+  const miniBtn = document.getElementById('sidebar-mini-toggle');
+  if (miniBtn) {
+    const MINI_KEY = 'staff_sidebar_mini';
+    document.querySelectorAll('.sidebar > a').forEach((a) => { if (!a.title) a.title = a.textContent.trim().replace(/\s+/g, ' '); });
+    const sync = () => { miniBtn.setAttribute('aria-pressed', document.body.classList.contains('sidebar-mini') ? 'true' : 'false'); };
+    sync();
+    miniBtn.addEventListener('click', () => {
+      const on = document.body.classList.toggle('sidebar-mini');
+      try { localStorage.setItem(MINI_KEY, on ? '1' : '0'); } catch (e) {}
+      sync();
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 960) document.body.classList.remove('sidebar-mini');
+      else { try { if (localStorage.getItem(MINI_KEY) === '1') document.body.classList.add('sidebar-mini'); } catch (e) {} }
+    });
+  }
   if (mobileBackdrop) {
     mobileBackdrop.addEventListener('click', closeMobileSidebar);
   }

@@ -1236,3 +1236,23 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   .dashboard-widget-grid > .dashboard-widget-qr{display:flex !important;grid-column:span 1;order:-999}
   .widget-library-panel{right:10px;left:10px;top:auto;bottom:16px;width:auto;max-height:55vh}
 }
+
+/* Yönetici/öğretmen menüsü: küçült / büyüt (yalnızca masaüstü) */
+.sidebar-mini-toggle{display:none}
+@media (min-width: 961px){
+  .sidebar-mini-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:36px;margin:0 0 8px;padding:6px 10px;border:1px solid var(--app-border, var(--line));border-radius:10px;background:transparent;color:var(--ink-soft);font:600 13px var(--font-display, inherit);cursor:pointer}
+  .sidebar-mini-toggle:hover{background:var(--violet-tint);color:var(--app-primary, var(--violet-ink))}
+  .sidebar-mini-toggle svg{width:16px;height:16px;flex:none;transition:transform .2s}
+  .sidebar,.main{transition:width .18s ease,margin-left .18s ease}
+  body.sidebar-mini .sidebar{width:72px;padding:14px 8px}
+  body.sidebar-mini .main{margin-left:72px}
+  body.sidebar-mini .sidebar-mini-toggle{min-width:0;padding:6px 0}
+  body.sidebar-mini .sidebar-mini-toggle .lbl{display:none}
+  body.sidebar-mini .sidebar-mini-toggle svg{transform:rotate(180deg)}
+  body.sidebar-mini .sidebar-pro .sidebar-logo--brand{width:44px;height:44px;margin-bottom:2px}
+  body.sidebar-mini .sidebar-brand p{display:none}
+  body.sidebar-mini .sidebar-brand{margin-bottom:8px}
+  body.sidebar-mini .sidebar a{font-size:0;gap:0;justify-content:center;padding:12px 0;border-left-width:1px;min-width:0}
+  body.sidebar-mini .sidebar a .nav-icon{width:22px;height:22px}
+  body.sidebar-mini .sidebar a .nav-icon svg{width:20px;height:20px}
+}
