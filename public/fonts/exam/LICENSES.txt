@@ -1,0 +1,6 @@
+Sınav Oluştur modülünde kullanılan yazı tipleri (Word'deki Times New Roman / Arial / Calibri / Cambria / Georgia ile aynı ölçülere sahip, Türkçe karakter destekli):
+Tinos (Times New Roman uyumlu)  - Apache License 2.0
+Arimo (Arial uyumlu)            - Apache License 2.0
+Carlito (Calibri uyumlu)        - SIL Open Font License 1.1
+Caladea (Cambria uyumlu)        - Apache License 2.0 / SIL OFL
+Gelasio (Georgia uyumlu)        - SIL Open Font License 1.1

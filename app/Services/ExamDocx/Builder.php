@@ -144,6 +144,7 @@ class Builder
         }
         $m = $this->marginTw;
         $x .= '<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="'.$m.'" w:right="'.$m.'" w:bottom="'.$m.'" w:left="'.$m.'" w:header="360" w:footer="360" w:gutter="0"/>';
+        $x .= $this->pgBorders();
         $x .= $cols === 2 ? '<w:cols w:num="2" w:space="360" w:sep="1"/>' : '<w:cols w:space="720"/>';
 
         return $x.'</w:sectPr>';
@@ -165,9 +166,28 @@ class Builder
             .'</w:styles>';
     }
 
+    /** Seçilen yazı tipinin Word'deki karşılığı (önizleme/PDF aynı ölçülü uyumlu fontu kullanır). */
     private function font(): string
     {
-        return ($this->s['font_family'] ?? 'serif') === 'sans' ? 'Arial' : 'Times New Roman';
+        return ['serif' => 'Times New Roman', 'sans' => 'Arial', 'times' => 'Times New Roman', 'arial' => 'Arial', 'calibri' => 'Calibri', 'cambria' => 'Cambria', 'georgia' => 'Georgia'][$this->s['font_family'] ?? 'serif'] ?? 'Times New Roman';
+    }
+
+    /** Sayfa çerçevesi (Tablolu şablonda başlık tablosuyla hizalı; diğerlerinde kenardan içeride). */
+    private function pgBorders(): string
+    {
+        if (empty($this->s['page_border'])) {
+            return '';
+        }
+        if ($this->exam->template === 'table') {
+            $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="16" w:space="6" w:color="000000"/>';
+
+            return '<w:pgBorders w:offsetFrom="text">'.$side('top').$side('left').$side('bottom').$side('right').'</w:pgBorders>';
+        }
+        $space = max(4, min(31, (int) round($this->marginTw / 20 / 2)));
+        $c = Xml::hex($this->s['accent']);
+        $side = fn (string $n) => '<w:'.$n.' w:val="single" w:sz="12" w:space="'.$space.'" w:color="'.$c.'"/>';
+
+        return '<w:pgBorders w:offsetFrom="page">'.$side('top').$side('left').$side('bottom').$side('right').'</w:pgBorders>';
     }
 
     private function footerXml(): string
@@ -348,8 +368,11 @@ class Builder
         $fs = ((int) $this->s['font_size']) * 2;
         $up = fn ($t) => \App\Support\ExamLayout::upper($t);
         $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
-        $w = array_map(fn ($p) => (int) round($this->contentTw * $p / 100), $pct);
-        $w[6] = $this->contentTw - array_sum(array_slice($w, 0, 6));
+        // Sayfa çerçevesi açıksa tablo çerçeveye hizalanır (her yandan 6 pt = 120 twips dışarı taşar)
+        $framed = ! empty($this->s['page_border']);
+        $tw = $this->contentTw + ($framed ? 240 : 0);
+        $w = array_map(fn ($p) => (int) round($tw * $p / 100), $pct);
+        $w[6] = $tw - array_sum(array_slice($w, 0, 6));
 
         $l3 = collect([$e->grade_level ? $e->grade_level.'. SINIF' : null, $up($e->subject), $up($e->title)])->filter()->implode(' ');
         $lines = collect([$up($e->term), $up($e->school_name), $l3])->filter();
@@ -378,12 +401,12 @@ class Builder
                 ['xml' => ''], ['xml' => ''], ['xml' => ''], ['xml' => ''],
             ]],
         ];
-        $b = ['single', 12, '000000'];
+        $b = ['single', 16, '000000'];
         $x = '';
         if ($this->mode === 'teacher') {
             $x .= Xml::para([Xml::run('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
-        $x .= Xml::table($rows, $w, ['borders' => ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b, 'insideH' => $b, 'insideV' => $b]]);
+        $x .= Xml::table($rows, $w, ['borders' => ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b, 'insideH' => $b, 'insideV' => $b]] + ($framed ? ['ind' => -120] : []));
         $ins = trim((string) ($this->s['instructions'] ?? ''));
         if ($ins !== '') {
             $x .= Xml::para([Xml::run($ins, ['i' => 1, 'color' => '334155', 'sz' => $fs - 2])], ['before' => 100, 'after' => 0]);

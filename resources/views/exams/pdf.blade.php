@@ -1,5 +1,11 @@
 @php
-    $fam = $s['font_family'] === 'sans' ? "'DejaVu Sans', sans-serif" : "'DejaVu Serif', serif";
+    // Word'deki fontlarla aynı ölçülü, Türkçe destekli yazı tipleri (public/fonts/exam)
+    $examFonts = ['times' => ['ExamTimes', 'Tinos', 'serif'], 'arial' => ['ExamArial', 'Arimo', 'sans-serif'], 'calibri' => ['ExamCalibri', 'Carlito', 'sans-serif'], 'cambria' => ['ExamCambria', 'Caladea', 'serif'], 'georgia' => ['ExamGeorgia', 'Gelasio', 'serif']];
+    $fk = $s['font_family'] ?? 'serif';
+    $custom = $examFonts[$fk] ?? null;
+    $fam = $custom ? "'".$custom[0]."', ".$custom[2] : ($fk === 'sans' ? "'DejaVu Sans', sans-serif" : "'DejaVu Serif', serif");
+    $tblFrame = $exam->template === 'table' && ! empty($s['page_border']);
+    $fpad = 8; // çerçeve ile içerik arasındaki boşluk
     $ac = $s['accent'];
     $padB = ['compact' => 6, 'relaxed' => 20][$s['spacing']] ?? 12;
     $bi = (int) round($margin / 2);
@@ -38,6 +44,12 @@
 <title>{{ $exam->title }}</title>
 <style>
     @page { margin: 0; }
+@if($custom)
+    @font-face { font-family: '{{ $custom[0] }}'; font-style: normal; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Regular.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $custom[0] }}'; font-style: normal; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Bold.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $custom[0] }}'; font-style: italic; font-weight: normal; src: url('{{ public_path('fonts/exam/'.$custom[1].'-Italic.ttf') }}') format('truetype'); }
+    @font-face { font-family: '{{ $custom[0] }}'; font-style: italic; font-weight: bold; src: url('{{ public_path('fonts/exam/'.$custom[1].'-BoldItalic.ttf') }}') format('truetype'); }
+@endif
     body { margin: 0; padding: 0; font-family: {!! $fam !!}; font-size: {{ (int) $s['font_size'] }}pt; line-height: 1.35; color: #111; }
     .pg { position: relative; width: 794px; height: 1118px; overflow: hidden; page-break-after: always; }
     .pg.last { page-break-after: auto; }
@@ -86,7 +98,8 @@
 @if($mode !== 'key')
 @foreach($pages as $pIdx => $pg)
     <div class="pg {{ ($pIdx === $total - 1 && ! $withKey) ? 'last' : '' }}">
-        @if(! empty($s['page_border']))<div class="frame"></div>@endif
+        @if(! empty($s['page_border']) && ! $tblFrame)<div class="frame"></div>@endif
+        @if($tblFrame)<div style="position:absolute;left:{{ $margin - $fpad }}px;top:{{ $margin }}px;width:{{ $contentW + 2 * $fpad - 4 }}px;height:{{ 1118 - 2 * $margin - (! empty($s['page_numbers']) ? 26 : 0) + $fpad - 4 }}px;border:2px solid #000"></div>@endif
         @if(trim((string) ($s['watermark'] ?? '')) !== '')<div class="wm">{{ $s['watermark'] }}</div>@endif
         <div class="inner">
             @if($pIdx === 0 && $tpl === 'table')
@@ -97,11 +110,13 @@
                     $lines = collect([$up($exam->term), $up($exam->school_name), $l3])->filter();
                     $lg1 = $logoUri($s['logo_path'] ?? null);
                     $lg2 = $logoUri($s['logo2_path'] ?? null);
-                    $cell = 'border:1.5px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
+                    $cell = 'border:2px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
+                    $tw = $contentW + ($tblFrame ? 2 * $fpad : 0);
+                    $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $tw);
                 @endphp
-                <div class="ph">
-                    @if($mode === 'teacher')<div class="tag">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
-                    <table style="width:{{ $contentW }}px;border-collapse:collapse">
+                <div class="ph" style="{{ $tblFrame ? 'margin-left:-'.$fpad.'px;' : '' }}">
+                    @if($mode === 'teacher')<div class="tag" style="{{ $tblFrame ? 'padding-right:'.$fpad.'px' : '' }}">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
+                    <table style="width:{{ $tw }}px;border-collapse:collapse">
                         <tr style="height:86px">
                             <td style="{{ $cell }}width:{{ $px(0) }}px;text-align:center">@if($lg1)<img src="{{ $lg1 }}" style="max-width:{{ $px(0) - 12 }}px;max-height:78px">@endif</td>
                             <td colspan="5" style="{{ $cell }}width:{{ $px(1, 2, 3, 4, 5) }}px;text-align:center;font-size:1.08em;line-height:1.3">@foreach($lines as $ln)<div>{{ $ln }}</div>@endforeach</td>
@@ -143,7 +158,7 @@
                     </div>
                 </div>
             @endif
-            <div style="position:relative;width:{{ $contentW }}px;height:{{ $pIdx === 0 ? $contentH - $headerH : $contentH }}px">
+            <div style="position:relative;width:{{ $contentW }}px;height:{{ $pIdx === 0 ? $contentH - $headerH : $contentH }}px;{{ $tblFrame && $pIdx > 0 ? 'margin-top:'.$fpad.'px;' : '' }}">
                 @foreach($pg as $cIdx => $col)
                     @if($cIdx > 0)<div style="position:absolute;left:{{ $colW + 11 }}px;top:0;width:1px;height:{{ $pIdx === 0 ? $contentH - $headerH : $contentH }}px;background:#cbd5e1"></div>@endif
                     <div style="position:absolute;left:{{ $cIdx * ($colW + 24) }}px;top:0;width:{{ $colW }}px">

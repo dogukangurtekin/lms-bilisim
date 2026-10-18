@@ -11,6 +11,26 @@
     @font-face{font-family:'ExamSans';font-weight:700;font-style:normal;src:url('{{ asset('fonts/dejavu/DejaVuSans-Bold.ttf') }}')}
     @font-face{font-family:'ExamSans';font-weight:400;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSans-Oblique.ttf') }}')}
     @font-face{font-family:'ExamSans';font-weight:700;font-style:italic;src:url('{{ asset('fonts/dejavu/DejaVuSans-BoldOblique.ttf') }}')}
+    @font-face{font-family:'ExamTimes';font-weight:400;font-style:normal;src:url('{{ asset('fonts/exam/Tinos-Regular.ttf') }}')}
+    @font-face{font-family:'ExamTimes';font-weight:700;font-style:normal;src:url('{{ asset('fonts/exam/Tinos-Bold.ttf') }}')}
+    @font-face{font-family:'ExamTimes';font-weight:400;font-style:italic;src:url('{{ asset('fonts/exam/Tinos-Italic.ttf') }}')}
+    @font-face{font-family:'ExamTimes';font-weight:700;font-style:italic;src:url('{{ asset('fonts/exam/Tinos-BoldItalic.ttf') }}')}
+    @font-face{font-family:'ExamArial';font-weight:400;font-style:normal;src:url('{{ asset('fonts/exam/Arimo-Regular.ttf') }}')}
+    @font-face{font-family:'ExamArial';font-weight:700;font-style:normal;src:url('{{ asset('fonts/exam/Arimo-Bold.ttf') }}')}
+    @font-face{font-family:'ExamArial';font-weight:400;font-style:italic;src:url('{{ asset('fonts/exam/Arimo-Italic.ttf') }}')}
+    @font-face{font-family:'ExamArial';font-weight:700;font-style:italic;src:url('{{ asset('fonts/exam/Arimo-BoldItalic.ttf') }}')}
+    @font-face{font-family:'ExamCalibri';font-weight:400;font-style:normal;src:url('{{ asset('fonts/exam/Carlito-Regular.ttf') }}')}
+    @font-face{font-family:'ExamCalibri';font-weight:700;font-style:normal;src:url('{{ asset('fonts/exam/Carlito-Bold.ttf') }}')}
+    @font-face{font-family:'ExamCalibri';font-weight:400;font-style:italic;src:url('{{ asset('fonts/exam/Carlito-Italic.ttf') }}')}
+    @font-face{font-family:'ExamCalibri';font-weight:700;font-style:italic;src:url('{{ asset('fonts/exam/Carlito-BoldItalic.ttf') }}')}
+    @font-face{font-family:'ExamCambria';font-weight:400;font-style:normal;src:url('{{ asset('fonts/exam/Caladea-Regular.ttf') }}')}
+    @font-face{font-family:'ExamCambria';font-weight:700;font-style:normal;src:url('{{ asset('fonts/exam/Caladea-Bold.ttf') }}')}
+    @font-face{font-family:'ExamCambria';font-weight:400;font-style:italic;src:url('{{ asset('fonts/exam/Caladea-Italic.ttf') }}')}
+    @font-face{font-family:'ExamCambria';font-weight:700;font-style:italic;src:url('{{ asset('fonts/exam/Caladea-BoldItalic.ttf') }}')}
+    @font-face{font-family:'ExamGeorgia';font-weight:400;font-style:normal;src:url('{{ asset('fonts/exam/Gelasio-Regular.ttf') }}')}
+    @font-face{font-family:'ExamGeorgia';font-weight:700;font-style:normal;src:url('{{ asset('fonts/exam/Gelasio-Bold.ttf') }}')}
+    @font-face{font-family:'ExamGeorgia';font-weight:400;font-style:italic;src:url('{{ asset('fonts/exam/Gelasio-Italic.ttf') }}')}
+    @font-face{font-family:'ExamGeorgia';font-weight:700;font-style:italic;src:url('{{ asset('fonts/exam/Gelasio-BoldItalic.ttf') }}')}
     .xe-menu{position:relative}
     .xe-dd{position:absolute;right:0;top:44px;z-index:30;background:#fff;border:1px solid #dbe5f2;border-radius:12px;box-shadow:0 14px 30px rgba(15,23,42,.18);min-width:250px;padding:6px;display:none}
     .xe-dd.open{display:block}
@@ -40,7 +60,9 @@
     .wt-panel button.p{background:#2563eb;color:#fff;border-color:transparent}
     .th-table{border:2px solid #111!important}.th-table i{background:linear-gradient(90deg,#cbd5e1 22%,#94a3b8 22% 78%,#cbd5e1 78%)!important;height:12px}
     .th-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
-    .th-tbl td{border:1.5px solid #111;padding:4px 6px;font-weight:700;vertical-align:middle}
+    .th-tbl td{border:2px solid #000;padding:4px 6px;font-weight:700;vertical-align:middle}
+    .ph-tbl{margin-left:-8px;margin-right:-8px}
+    .tbl-frame{position:absolute;border:2px solid #000;box-sizing:border-box;pointer-events:none}
     .th-tbl td.c{text-align:center;padding:4px}
     .th-tbl td.t{text-align:center;font-size:1.08em;line-height:1.3}
     .th-tbl .lb{font-size:.9em;white-space:nowrap}.th-tbl .sm{font-size:.78em;text-align:center}.th-tbl .big{font-size:1.1em;text-align:center}
@@ -95,6 +117,11 @@
     .paper{position:relative;width:794px;height:1123px;background:#fff;margin-bottom:24px;box-shadow:0 10px 30px rgba(15,23,42,.18);color:#111;overflow:hidden;box-sizing:border-box;line-height:1.35}
     .paper.fam-serif,.measure.fam-serif{font-family:ExamSerif,'DejaVu Serif',serif}
     .paper.fam-sans,.measure.fam-sans{font-family:ExamSans,'DejaVu Sans',sans-serif}
+    .paper.fam-times,.measure.fam-times{font-family:ExamTimes,'Times New Roman',serif}
+    .paper.fam-arial,.measure.fam-arial{font-family:ExamArial,Arial,sans-serif}
+    .paper.fam-calibri,.measure.fam-calibri{font-family:ExamCalibri,Calibri,sans-serif}
+    .paper.fam-cambria,.measure.fam-cambria{font-family:ExamCambria,Cambria,serif}
+    .paper.fam-georgia,.measure.fam-georgia{font-family:ExamGeorgia,Georgia,serif}
     .measure{position:absolute;left:-99999px;top:0;visibility:hidden;box-sizing:border-box}
     .paper .cols{display:grid;gap:24px;align-items:start}
     .paper .col{min-width:0;overflow:hidden}
@@ -238,7 +265,7 @@
             <div class="xe-cols"><button type="button" data-cols="1">▯ Tek sütun</button><button type="button" data-cols="2">▯▯ İki sütun</button></div>
         </div>
         <div class="xe-row2">
-            <label class="xe-f">Yazı tipi<select data-k="settings.font_family"><option value="serif">Serif (DejaVu)</option><option value="sans">Sans (DejaVu)</option></select></label>
+            <label class="xe-f">Yazı tipi<select data-k="settings.font_family"><optgroup label="Word ile aynı ölçülü"><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option></optgroup><optgroup label="Diğer"><option value="serif">DejaVu Serif</option><option value="sans">DejaVu Sans</option></optgroup></select></label>
             <label class="xe-f">Yazı boyutu<select data-k="settings.font_size" data-num>@for($i=9;$i<=16;$i++)<option value="{{ $i }}">{{ $i }} pt</option>@endfor</select></label>
         </div>
         <label class="xe-f">Kenar boşluğu (mm)<input type="number" data-k="settings.margin_mm" data-num min="8" max="30"></label>
@@ -368,7 +395,7 @@
         const lines = [up(e.term), up(e.school_name), l3].filter(Boolean).map((t) => '<div>' + esc(t) + '</div>').join('');
         const cg = '<colgroup><col style="width:12.3%"><col style="width:13.5%"><col style="width:10.5%"><col style="width:7.5%"><col style="width:21.2%"><col style="width:21.4%"><col style="width:13.6%"></colgroup>';
         const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
-        return '<div class="ph"><table class="th-tbl">' + cg
+        return '<div class="ph' + (s.page_border ? ' ph-tbl' : '') + '"><table class="th-tbl">' + cg
             + '<tr style="height:86px"><td class="c">' + img(s.logo_path) + '</td><td class="t" colspan="5">' + lines + '</td><td class="c">' + img(s.logo2_path) + '</td></tr>'
             + '<tr style="height:46px"><td class="lb">AD SOYAD:</td><td colspan="3"></td><td class="sm">' + (e.duration_min ? 'Sınav süresi ' + esc(e.duration_min) + ' dakikadır.' : '') + '</td><td class="sm">TARİH: ' + esc(date) + '</td><td class="big">PUAN</td></tr>'
             + '<tr style="height:40px"><td class="lb">SINIF:</td><td></td><td class="lb">NO:</td><td></td><td></td><td></td><td></td></tr>'
@@ -415,7 +442,8 @@
         const colW = n === 2 ? Math.floor((contentW - gap) / 2) : contentW;
         curColW = colW;
         const footer = s.page_numbers ? 26 : 0;
-        const contentH = PAGE_H - 2 * margin - footer;
+        const frameOn = e.template === 'table' && !!s.page_border; // başlık tablosuyla hizalı, sayfanın altına kadar süren çerçeve
+        const contentH = PAGE_H - 2 * margin - footer - (frameOn ? 8 : 0);
         const fam = 'fam-' + s.font_family, tpl = 'tpl-' + e.template + ' sp-' + s.spacing;
         const vars = '--ac:' + s.accent + ';--bi:' + Math.round(margin / 2) + 'px;';
         const fs = 'font-size:' + s.font_size + 'pt;';
@@ -440,11 +468,12 @@
         const html = pages.map((pg, pIdx) => {
             const colsHtml = pg.cols.map((idxs) => '<div class="col" style="height:' + (contentH - (pIdx === 0 ? headerH : 0)) + 'px">' + idxs.map((k) => blockHtml(state.questions[k], k)).join('') + '</div>').join('');
             const empty = (!state.questions.length && pIdx === 0) ? '<div style="color:#94a3b8;text-align:center;padding:60px 0;font-weight:700">Soldaki "Soru Ekle" düğmeleriyle ilk sorunuzu ekleyin.</div>' : '';
-            return '<div class="paper ' + fam + ' ' + tpl + (n === 2 ? ' two' : '') + (s.page_border ? ' bordered' : '') + '" style="' + fs + vars + 'padding:' + margin + 'px">'
+            return '<div class="paper ' + fam + ' ' + tpl + (n === 2 ? ' two' : '') + (s.page_border && !frameOn ? ' bordered' : '') + '" style="' + fs + vars + 'padding:' + margin + 'px">'
                 + (s.watermark && s.watermark.trim() ? '<div class="wm">' + esc(s.watermark) + '</div>' : '')
                 + (pIdx === 0 ? headerHtml() : '')
                 + empty
-                + '<div class="cols" style="grid-template-columns:repeat(' + n + ',1fr)">' + colsHtml + '</div>'
+                + (frameOn ? '<div class="tbl-frame" style="left:' + (margin - 8) + 'px;top:' + margin + 'px;width:' + (contentW + 16) + 'px;height:' + (PAGE_H - 2 * margin - footer + 8) + 'px"></div>' : '')
+                + '<div class="cols" style="grid-template-columns:repeat(' + n + ',1fr);' + (frameOn && pIdx > 0 ? 'margin-top:8px' : '') + '">' + colsHtml + '</div>'
                 + (s.page_numbers ? '<div class="pg-no" style="height:' + footer + 'px;line-height:' + footer + 'px">Sayfa ' + (pIdx + 1) + ' / ' + total + '</div>' : '')
                 + '</div>';
         }).join('');
@@ -633,14 +662,14 @@
         plain: { accent: '#334155', spacing: 'compact', num_style: 'paren', opt_style: 'paren', page_border: false },
         quiz: { accent: '#0f766e', spacing: 'compact', num_style: 'soru', opt_style: 'dot', page_border: true },
         school: { accent: '#1e3a8a', spacing: 'normal', num_style: 'dot', opt_style: 'paren', page_border: true },
-        table: { accent: '#000000', spacing: 'normal', num_style: 'dot', opt_style: 'paren', page_border: false },
+        table: { accent: '#000000', spacing: 'normal', num_style: 'dot', opt_style: 'paren', page_border: true, font_family: 'calibri' },
     };
     $('tpl-gal').addEventListener('click', (ev) => {
         const b = ev.target.closest('[data-tpl]'); if (!b) return;
         state.exam.template = b.dataset.tpl;
         Object.assign(state.settings, PRESETS[b.dataset.tpl] || {});
         if (b.dataset.tpl === 'school' && state.settings.logo_path) state.settings.show_logo = true;
-        syncControls(); schedulePreview(); markDirty();
+        syncControls(); ensureFonts().then(() => schedulePreview()); markDirty();
     });
     $('sw-row').addEventListener('click', (ev) => {
         const b = ev.target.closest('[data-ac]'); if (!b) return;
@@ -752,7 +781,7 @@
     syncControls(); refreshFinalBtn(); refreshCols(); renderList();
     const ensureFonts = () => {
         if (!document.fonts || !document.fonts.load) return Promise.resolve();
-        const f = state.settings.font_family === 'sans' ? 'ExamSans' : 'ExamSerif';
+        const f = ({ sans: 'ExamSans', serif: 'ExamSerif', times: 'ExamTimes', arial: 'ExamArial', calibri: 'ExamCalibri', cambria: 'ExamCambria', georgia: 'ExamGeorgia' })[state.settings.font_family] || 'ExamSerif';
         return Promise.all(['400', '700'].map((w) => document.fonts.load(w + ' 11pt ' + f)).concat(document.fonts.load('italic 400 11pt ' + f))).catch(() => {});
     };
     document.querySelector('[data-k="settings.font_family"]').addEventListener('change', () => ensureFonts().then(renderPreview));

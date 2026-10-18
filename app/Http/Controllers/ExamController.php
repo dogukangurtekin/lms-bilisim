@@ -134,7 +134,7 @@ class ExamController extends Controller
             'exam.status' => ['required', 'in:draft,final'],
             'settings' => ['required', 'array'],
             'settings.font_size' => ['required', 'integer', 'between:9,16'],
-            'settings.font_family' => ['required', 'in:serif,sans'],
+            'settings.font_family' => ['required', 'in:serif,sans,times,arial,calibri,cambria,georgia'],
             'settings.margin_mm' => ['required', 'integer', 'between:8,30'],
             'settings.show_points' => ['required', 'boolean'],
             'settings.student_box' => ['required', 'boolean'],
@@ -245,11 +245,16 @@ class ExamController extends Controller
         $contentW = ExamLayout::PAGE_W - 2 * $margin;
         $colW = $columns === 2 ? (int) floor(($contentW - 24) / 2) : $contentW;
 
+        // dompdf, özel yazı tiplerinin ölçü dosyalarını (UFM) burada saklar; klasör yoksa Türkçe karakterler bozulur
+        if (! is_dir(storage_path('fonts'))) {
+            @mkdir(storage_path('fonts'), 0755, true);
+        }
+
         $pdf = Pdf::loadView('exams.pdf', [
             'exam' => $exam, 's' => $s, 'qs' => $qs, 'pages' => $pages, 'mode' => $mode === 'student_key' ? 'student' : $mode,
             'withKey' => $mode === 'student_key', 'columns' => $columns, 'margin' => $margin, 'contentW' => $contentW, 'colW' => $colW,
             'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
-        ])->setPaper('a4', 'portrait')->setOptions(['dpi' => 96, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
+        ])->setPaper('a4', 'portrait')->setOption('enable_font_subsetting', true); // not: setOptions() (toplu) özel yazı tiplerinin (@font-face) kaydını bozuyor; varsayılanlar zaten dpi 96 / uzaktan erişim kapalı
 
         $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
 
