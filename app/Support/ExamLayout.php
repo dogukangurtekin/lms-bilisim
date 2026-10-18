@@ -63,6 +63,12 @@ class ExamLayout
         return [(int) round($dw), (int) round($dh)];
     }
 
+    /** Türkçe büyük harf (i→İ, ı→I). */
+    public static function upper(?string $s): string
+    {
+        return mb_strtoupper(strtr((string) $s, ['i' => 'İ', 'ı' => 'I']), 'UTF-8');
+    }
+
     /** Sayfada soruların kullanabileceği yükseklik (kenar boşlukları, sayfa numarası ve güvenlik payı düşülmüş). */
     public static function contentHeight(array $settings): int
     {

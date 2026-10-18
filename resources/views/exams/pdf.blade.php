@@ -14,6 +14,15 @@
         $logo = 'data:image/'.$ext.';base64,'.base64_encode((string) file_get_contents(public_path($s['logo_path'])));
     }
     $tpl = $exam->template;
+    $logoUri = function (?string $path) {
+        if (! $path || ! is_file(public_path($path))) {
+            return null;
+        }
+        $e = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return 'data:image/'.($e === 'jpg' ? 'jpeg' : $e).';base64,'.base64_encode((string) file_get_contents(public_path($path)));
+    };
+    $up = fn ($t) => \App\Support\ExamLayout::upper($t);
     $keyOf = function (array $q) {
         $a = (string) ($q['answer'] ?? '');
         return match ($q['type']) {
@@ -36,8 +45,6 @@
     .frame { position: absolute; left: {{ $bi }}px; top: {{ $bi }}px; width: {{ 794 - 2 * $bi }}px; height: {{ 1118 - 2 * $bi }}px; border: 1.5px solid {{ $ac }}; }
     .wm { position: absolute; left: 0; top: 520px; width: 794px; text-align: center; font-size: 84px; font-weight: bold; color: #e5e7eb; transform: rotate(-30deg); text-transform: uppercase; }
     .pgno { position: absolute; left: 0; bottom: 0; width: 794px; height: 26px; line-height: 26px; text-align: center; font-size: 8.5pt; color: #64748b; }
-    .wf-serif { font-family: 'DejaVu Serif', serif; }
-    .wf-sans { font-family: 'DejaVu Sans', sans-serif; }
     table { border-collapse: collapse; }
     td { padding: 0; vertical-align: top; }
     .qblk { padding-bottom: {{ $padB }}px; }
@@ -82,10 +89,39 @@
         @if(! empty($s['page_border']))<div class="frame"></div>@endif
         @if(trim((string) ($s['watermark'] ?? '')) !== '')<div class="wm">{{ $s['watermark'] }}</div>@endif
         <div class="inner">
-            @if($pIdx === 0 && $wordHeader !== null)
+            @if($pIdx === 0 && $tpl === 'table')
+                @php
+                    $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
+                    $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $contentW);
+                    $l3 = collect([$exam->grade_level ? $exam->grade_level.'. SINIF' : null, $up($exam->subject), $up($exam->title)])->filter()->implode(' ');
+                    $lines = collect([$up($exam->term), $up($exam->school_name), $l3])->filter();
+                    $lg1 = $logoUri($s['logo_path'] ?? null);
+                    $lg2 = $logoUri($s['logo2_path'] ?? null);
+                    $cell = 'border:1.5px solid #000;padding:4px 6px;font-weight:bold;vertical-align:middle;';
+                @endphp
                 <div class="ph">
                     @if($mode === 'teacher')<div class="tag">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
-                    {!! $wordHeader !!}
+                    <table style="width:{{ $contentW }}px;border-collapse:collapse">
+                        <tr style="height:86px">
+                            <td style="{{ $cell }}width:{{ $px(0) }}px;text-align:center">@if($lg1)<img src="{{ $lg1 }}" style="max-width:{{ $px(0) - 12 }}px;max-height:78px">@endif</td>
+                            <td colspan="5" style="{{ $cell }}width:{{ $px(1, 2, 3, 4, 5) }}px;text-align:center;font-size:1.08em;line-height:1.3">@foreach($lines as $ln)<div>{{ $ln }}</div>@endforeach</td>
+                            <td style="{{ $cell }}width:{{ $px(6) }}px;text-align:center">@if($lg2)<img src="{{ $lg2 }}" style="max-width:{{ $px(6) - 12 }}px;max-height:78px">@endif</td>
+                        </tr>
+                        <tr style="height:46px">
+                            <td style="{{ $cell }}font-size:0.9em;white-space:nowrap">AD SOYAD:</td>
+                            <td colspan="3" style="{{ $cell }}"></td>
+                            <td style="{{ $cell }}font-size:0.78em;text-align:center">{{ $exam->duration_min ? 'Sınav süresi '.$exam->duration_min.' dakikadır.' : '' }}</td>
+                            <td style="{{ $cell }}font-size:0.78em;text-align:center">TARİH: {{ $date }}</td>
+                            <td style="{{ $cell }}font-size:1.1em;text-align:center">PUAN</td>
+                        </tr>
+                        <tr style="height:40px">
+                            <td style="{{ $cell }}font-size:0.9em;white-space:nowrap">SINIF:</td>
+                            <td style="{{ $cell }}"></td>
+                            <td style="{{ $cell }}font-size:0.9em;white-space:nowrap">NO:</td>
+                            <td style="{{ $cell }}"></td><td style="{{ $cell }}"></td><td style="{{ $cell }}"></td><td style="{{ $cell }}"></td>
+                        </tr>
+                    </table>
+                    @if(trim((string) ($s['instructions'] ?? '')) !== '')<div class="ph-ins">{!! nl2br(e($s['instructions'])) !!}</div>@endif
                 </div>
             @elseif($pIdx === 0)
                 @php

@@ -14,6 +14,7 @@ class Exam extends Model
         'plain' => 'Sade Test',
         'quiz' => 'Kısa Quiz',
         'school' => 'Okul Logolu',
+        'table' => 'Tablolu (Okul)',
     ];
 
     protected $fillable = [

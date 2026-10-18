@@ -163,10 +163,20 @@ class Xml
 
         $trs = '';
         foreach ($rows as $row) {
-            $trPr = '<w:cantSplit/>'.(! empty($o['rowHeight']) ? '<w:trHeight w:val="'.(int) $o['rowHeight'].'" w:hRule="atLeast"/>' : '');
+            // Satır ['cells' => [...], 'h' => twips] biçiminde de verilebilir (satıra özel yükseklik)
+            $rowH = $o['rowHeight'] ?? null;
+            if (isset($row['cells'])) {
+                $rowH = $row['h'] ?? $rowH;
+                $row = $row['cells'];
+            }
+            $trPr = '<w:cantSplit/>'.(! empty($rowH) ? '<w:trHeight w:val="'.(int) $rowH.'" w:hRule="atLeast"/>' : '');
             $tcs = '';
-            foreach ($row as $ci => $cell) {
-                $tcPr = '<w:tcW w:w="'.(int) $widths[$ci].'" w:type="dxa"/>';
+            $gi = 0; // ızgara sütun göstergesi
+            foreach ($row as $cell) {
+                $span = max(1, (int) ($cell['span'] ?? 1));
+                $cw = array_sum(array_slice($widths, $gi, $span));
+                $gi += $span;
+                $tcPr = '<w:tcW w:w="'.(int) $cw.'" w:type="dxa"/>'.($span > 1 ? '<w:gridSpan w:val="'.$span.'"/>' : '');
                 if (! empty($cell['borders'])) {
                     $cb = '';
                     foreach (['top', 'left', 'bottom', 'right'] as $side) {

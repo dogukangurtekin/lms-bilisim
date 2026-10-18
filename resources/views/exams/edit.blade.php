@@ -38,6 +38,12 @@
     .wt-panel{border:1px solid #fcd34d;background:#fffbeb;border-radius:12px;padding:10px;display:grid;gap:7px;font-size:12.5px;font-weight:700;color:#78350f}
     .wt-panel button{border:0;border-radius:9px;padding:8px 10px;font:inherit;font-weight:800;font-size:12.5px;cursor:pointer;background:#fff;color:#0f172a;border:1px solid #e5e7eb;text-align:left}
     .wt-panel button.p{background:#2563eb;color:#fff;border-color:transparent}
+    .th-table{border:2px solid #111!important}.th-table i{background:linear-gradient(90deg,#cbd5e1 22%,#94a3b8 22% 78%,#cbd5e1 78%)!important;height:12px}
+    .th-tbl{width:100%;border-collapse:collapse;table-layout:fixed}
+    .th-tbl td{border:1.5px solid #111;padding:4px 6px;font-weight:700;vertical-align:middle}
+    .th-tbl td.c{text-align:center;padding:4px}
+    .th-tbl td.t{text-align:center;font-size:1.08em;line-height:1.3}
+    .th-tbl .lb{font-size:.9em;white-space:nowrap}.th-tbl .sm{font-size:.78em;text-align:center}.th-tbl .big{font-size:1.1em;text-align:center}
     .tpl-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
     .tpl-card{border:2px solid #e2e8f0;border-radius:11px;background:#fff;padding:6px 3px 5px;font-size:10.5px;font-weight:800;color:#334155;cursor:pointer;text-align:center;line-height:1.15}
     .tpl-card.on{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
@@ -120,8 +126,6 @@
     .qmatch{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:5px}
     .qmatch div div{margin-bottom:3px;word-break:break-word}
     .ph{margin-bottom:12px}
-    .wf-serif{font-family:ExamSerif,'DejaVu Serif',serif}.wf-sans{font-family:ExamSans,'DejaVu Sans',sans-serif}
-    .ph-word img{max-width:100%}
     .ph-school{text-align:center;font-weight:800;letter-spacing:.02em;text-transform:uppercase;font-size:1.05em}
     .ph-title{text-align:center;font-weight:800;font-size:1.35em;margin:2px 0}
     .ph-info{text-align:center;color:#334155;font-size:.95em}
@@ -257,7 +261,7 @@
         <label class="xe-f">Şık biçimi<select data-k="settings.opt_style"><option value="paren">A)</option><option value="bracket">(A)</option><option value="dot">A.</option></select></label>
         <label class="xe-sw"><input type="checkbox" data-k="settings.page_border"> Sayfa çerçevesi</label>
         <label class="xe-f" style="margin-top:9px">Filigran (isteğe bağlı)<input type="text" data-k="settings.watermark" maxlength="40" placeholder="Örn. ÖRNEKTİR"></label>
-        <div class="xe-f">Okul logosu
+        <div class="xe-f">Logo (sol üst)
             <div class="logo-box">
                 <img id="logo-img" alt="" style="display:none">
                 <div style="display:grid;gap:6px;flex:1">
@@ -266,14 +270,22 @@
                     <label class="xe-sw" style="font-size:12px"><input type="checkbox" data-k="settings.show_logo"> Başlıkta göster</label>
                 </div>
             </div>
+        </div>
+        <div class="xe-f">Logo 2 (sağ üst — Tablolu şablon)
+            <div class="logo-box">
+                <img id="logo2-img" alt="" style="display:none">
+                <div style="display:grid;gap:6px;flex:1">
+                    <label class="xe-mini" style="text-align:center;cursor:pointer">📤 Logo yükle<input type="file" id="logo2-file" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+                    <button type="button" class="xe-mini" id="logo2-del" style="display:none">Logoyu kaldır</button>
+                </div>
+            </div>
             <small style="color:#64748b;font-weight:600">PNG, JPG veya WEBP · en fazla 1 MB</small>
         </div>
         <h3 style="margin:14px 0 8px">📎 Word Şablonu</h3>
         <div class="xe-f">
             <div id="wt-current" class="wt-cur" style="display:none"><span id="wt-name"></span><button type="button" class="xe-mini" id="wt-del">Kaldır</button></div>
             <label class="xe-mini" style="text-align:center;cursor:pointer">📤 Word kâğıdı yükle (.docx)<input type="file" id="wt-file" accept=".docx" style="display:none"></label>
-            <small style="color:#64748b;font-weight:600;line-height:1.4">Kendi sınav kâğıdınızı yükleyin: başlık, alt bilgi ve stiller korunur; kâğıttaki sorular okunup editöre eklenir. Word çıktısında sorular şablonun soru bölümüne yazılır; üst kısım (yazı, logo, tablo hücreleri) <b>şablondaki haliyle aynen</b> kalır, önizleme ve PDF'te de aynı başlık gösterilir. Soru yerini kendiniz belirlemek için şablona <b>&#123;&#123;SORULAR&#125;&#125;</b> yazabilirsiniz.</small>
-            <label class="xe-sw" style="font-size:12px"><input type="checkbox" data-k="settings.use_word_header"> Başlığı Word şablonundan al (önizleme ve PDF)</label>
+            <small style="color:#64748b;font-weight:600;line-height:1.4">Kendi sınav kâğıdınızı yükleyin: başlık, alt bilgi ve stiller korunur; kâğıttaki sorular okunup editöre eklenir. Word çıktısında sorular şablonun soru bölümüne yazılır (başlıktaki tarih/puan gibi alanlar şablondaki haliyle kalır). Soru yerini kendiniz belirlemek için şablona <b>&#123;&#123;SORULAR&#125;&#125;</b> yazabilirsiniz.</small>
             <div id="wt-panel" class="wt-panel" style="display:none"></div>
         </div>
         <label class="xe-f" style="margin-top:9px">Sınav açıklaması<textarea data-k="settings.instructions" maxlength="1000" rows="3" style="border:1px solid #cbd5e1;border-radius:9px;padding:7px 9px;font:inherit;font-size:13px" placeholder="Örn. Her soru 10 puandır. Süre 40 dakikadır."></textarea></label>
@@ -302,7 +314,6 @@
         questions: (INIT.questions || []).map((q) => ({ uid: uidSeq++, ...q, options: q.options || [] })),
     };
     let selected = state.questions.length ? 0 : -1;
-    let wordHeader = INIT.word_header || '';
     let lastLayout = null, lastHeaderH = 0;
     let dirty = false, saving = false, saveTimer = null, previewTimer = null;
 
@@ -347,10 +358,25 @@
 
     /* ---------- önizleme: üst bilgi ---------- */
     function totalPoints() { return state.questions.reduce((a, q) => a + (Number(q.points) || 0), 0); }
+    // Tablolu (okul) başlık: logo - başlık satırları - logo / AD SOYAD - süre - tarih - PUAN / SINIF - NO hücreleri
+    function tableHeader() {
+        const e = state.exam, s = state.settings;
+        const up = (t) => String(t || '').toLocaleUpperCase('tr');
+        const img = (p) => p ? '<img src="' + esc(LOGO_BASE + p) + '" alt="" style="max-width:100%;max-height:78px;display:block;margin:0 auto">' : '';
+        const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '…/…/……';
+        const l3 = [e.grade_level ? e.grade_level + '. SINIF' : '', up(e.subject), up(e.title)].filter(Boolean).join(' ');
+        const lines = [up(e.term), up(e.school_name), l3].filter(Boolean).map((t) => '<div>' + esc(t) + '</div>').join('');
+        const cg = '<colgroup><col style="width:12.3%"><col style="width:13.5%"><col style="width:10.5%"><col style="width:7.5%"><col style="width:21.2%"><col style="width:21.4%"><col style="width:13.6%"></colgroup>';
+        const ins = s.instructions && s.instructions.trim() ? '<div class="ph-ins">' + esc(s.instructions) + '</div>' : '';
+        return '<div class="ph"><table class="th-tbl">' + cg
+            + '<tr style="height:86px"><td class="c">' + img(s.logo_path) + '</td><td class="t" colspan="5">' + lines + '</td><td class="c">' + img(s.logo2_path) + '</td></tr>'
+            + '<tr style="height:46px"><td class="lb">AD SOYAD:</td><td colspan="3"></td><td class="sm">' + (e.duration_min ? 'Sınav süresi ' + esc(e.duration_min) + ' dakikadır.' : '') + '</td><td class="sm">TARİH: ' + esc(date) + '</td><td class="big">PUAN</td></tr>'
+            + '<tr style="height:40px"><td class="lb">SINIF:</td><td></td><td class="lb">NO:</td><td></td><td></td><td></td><td></td></tr>'
+            + '</table>' + ins + '</div>';
+    }
     function headerHtml() {
         const e = state.exam, s = state.settings;
-        // Word şablonu varsa başlık şablondaki haliyle (metin, logo, hücreler) kullanılır; sistem kendi başlığını üretmez.
-        if (s.word_template_name && s.use_word_header !== false) return '<div class="ph ph-word">' + wordHeader + '</div>';
+        if (e.template === 'table') return tableHeader();
         const info = [e.subject, e.grade_level ? e.grade_level + '. Sınıf' : '', e.class_label, e.term].filter(Boolean).map(esc).join(' · ');
         const date = e.exam_date ? e.exam_date.split('-').reverse().join('.') : '';
         const meta = '<div class="ph-meta"><span>Tarih: ' + esc(date || '…/…/……') + '</span><span>Süre: ' + (e.duration_min ? esc(e.duration_min) + ' dk' : '……') + '</span><span>Toplam Puan: ' + esc(String(Math.round(totalPoints() * 100) / 100).replace('.', ',')) + '</span></div>';
@@ -468,7 +494,7 @@
         const numOrNull = (v) => (v === '' || v === null || v === undefined || Number.isNaN(Number(v))) ? null : Number(v);
         return {
             exam: { ...e, grade_level: numOrNull(e.grade_level), duration_min: numOrNull(e.duration_min), exam_date: e.exam_date || null, columns: e.columns === 2 ? 2 : 1 },
-            settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers, page_border: !!s.page_border, show_logo: !!s.show_logo, use_word_header: s.use_word_header !== false },
+            settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers, page_border: !!s.page_border, show_logo: !!s.show_logo },
             layout: lastLayout, layout_header_h: lastHeaderH,
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
@@ -580,6 +606,9 @@
         const img = $('logo-img'), has = !!state.settings.logo_path;
         img.style.display = has ? '' : 'none'; if (has) img.src = LOGO_BASE + state.settings.logo_path;
         $('logo-del').style.display = has ? '' : 'none';
+        const img2 = $('logo2-img'), has2 = !!state.settings.logo2_path;
+        img2.style.display = has2 ? '' : 'none'; if (has2) img2.src = LOGO_BASE + state.settings.logo2_path;
+        $('logo2-del').style.display = has2 ? '' : 'none';
         const wn = state.settings.word_template_name || '';
         $('wt-current').style.display = wn ? 'flex' : 'none'; $('wt-name').textContent = wn;
     };
@@ -604,6 +633,7 @@
         plain: { accent: '#334155', spacing: 'compact', num_style: 'paren', opt_style: 'paren', page_border: false },
         quiz: { accent: '#0f766e', spacing: 'compact', num_style: 'soru', opt_style: 'dot', page_border: true },
         school: { accent: '#1e3a8a', spacing: 'normal', num_style: 'dot', opt_style: 'paren', page_border: true },
+        table: { accent: '#000000', spacing: 'normal', num_style: 'dot', opt_style: 'paren', page_border: false },
     };
     $('tpl-gal').addEventListener('click', (ev) => {
         const b = ev.target.closest('[data-tpl]'); if (!b) return;
@@ -619,25 +649,29 @@
 
     // logo yükleme / kaldırma
     const LOGO_URL = @json(route('exams.logo.upload', $exam));
-    $('logo-file').addEventListener('change', async () => {
-        const f = $('logo-file').files[0]; if (!f) return;
-        if (f.size > 1024 * 1024) { setStatus('err', 'Logo en fazla 1 MB olabilir.'); return; }
-        setStatus('', 'Logo yükleniyor…');
-        const fd = new FormData(); fd.append('logo', f);
-        try {
-            const res = await fetch(LOGO_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
-            const j = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(j.errors ? Object.values(j.errors)[0][0] : (j.message || 'Logo yüklenemedi'));
-            state.settings.logo_path = j.logo_path; state.settings.show_logo = true;
-            syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Logo yüklendi');
-        } catch (err) { setStatus('err', err.message); }
-        $('logo-file').value = '';
-    });
-    $('logo-del').addEventListener('click', async () => {
-        try { await fetch(LOGO_URL, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); } catch (_) {}
-        state.settings.logo_path = ''; state.settings.show_logo = false;
-        syncControls(); schedulePreview(); markDirty();
-    });
+    const bindLogo = (slot, key, fileId, delId) => {
+        $(fileId).addEventListener('change', async () => {
+            const f = $(fileId).files[0]; if (!f) return;
+            if (f.size > 1024 * 1024) { setStatus('err', 'Logo en fazla 1 MB olabilir.'); return; }
+            setStatus('', 'Logo yükleniyor…');
+            const fd = new FormData(); fd.append('logo', f); fd.append('slot', String(slot));
+            try {
+                const res = await fetch(LOGO_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
+                const j = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(j.errors ? Object.values(j.errors)[0][0] : (j.message || 'Logo yüklenemedi'));
+                state.settings[key] = j.logo_path; if (slot === 1) state.settings.show_logo = true;
+                syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Logo yüklendi');
+            } catch (err) { setStatus('err', err.message); }
+            $(fileId).value = '';
+        });
+        $(delId).addEventListener('click', async () => {
+            try { await fetch(LOGO_URL + '?slot=' + slot, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); } catch (_) {}
+            state.settings[key] = ''; if (slot === 1) state.settings.show_logo = false;
+            syncControls(); schedulePreview(); markDirty();
+        });
+    };
+    bindLogo(1, 'logo_path', 'logo-file', 'logo-del');
+    bindLogo(2, 'logo2_path', 'logo2-file', 'logo2-del');
     function refreshCols() { document.querySelectorAll('[data-cols]').forEach((b) => b.classList.toggle('on', Number(b.dataset.cols) === state.exam.columns)); }
     document.querySelectorAll('[data-cols]').forEach((b) => b.addEventListener('click', () => { state.exam.columns = Number(b.dataset.cols); refreshCols(); schedulePreview(); markDirty(); }));
 
@@ -758,8 +792,7 @@
             const res = await fetch(WT_URL, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: fd });
             const j = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(j.message || (j.errors ? Object.values(j.errors)[0][0] : 'Yüklenemedi (' + res.status + ')'));
-            state.settings.word_template_name = j.name; state.settings.use_word_header = true; wordHeader = j.header_html || '';
-            syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Şablon eklendi');
+            state.settings.word_template_name = j.name; syncControls(); setStatus('ok', 'Şablon eklendi');
             const n = j.questions.length, nt = j.notes.skipped_tables, nm = j.notes.mc_without_answer;
             if (!n) { panel.style.display = 'grid'; panel.innerHTML = '<div>Şablon eklendi. Kâğıtta numaralı soru bulunamadı; soruları editörden ekleyebilirsiniz.</div><button type="button" id="wt-close">Tamam</button>'; $('wt-close').onclick = () => { panel.style.display = 'none'; }; return; }
             panel.style.display = 'grid';
@@ -779,7 +812,7 @@
     });
     $('wt-del').addEventListener('click', async () => {
         try { await fetch(WT_URL, { method: 'DELETE', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } }); } catch (_) {}
-        state.settings.word_template_name = ''; wordHeader = ''; syncControls(); schedulePreview(); markDirty(); setStatus('ok', 'Şablon kaldırıldı');
+        state.settings.word_template_name = ''; syncControls(); setStatus('ok', 'Şablon kaldırıldı');
     });
 
     // PDF menüsü

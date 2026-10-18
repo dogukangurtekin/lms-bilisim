@@ -39,7 +39,9 @@ class Builder
     /** Şablonsuz paket. */
     public function build(): string
     {
-        $withLogo = $this->logoData();
+        $isTable = $this->exam->template === 'table';
+        $withLogo = $isTable ? $this->logoData('logo_path', false, 78) : $this->logoData();
+        $withLogo2 = $isTable ? $this->logoData('logo2_path', false, 78) : null;
         $files = [];
 
         $body = '';
@@ -53,7 +55,7 @@ class Builder
             $body .= $this->keyXml(true);
             $sect = $this->sectPr(1, false, $refs);
         } else {
-            $body .= $this->headerBlock($withLogo);
+            $body .= $this->headerBlock($withLogo, $withLogo2);
             // Başlık bölümü (tek sütun) burada biter
             $body .= Xml::para([], ['after' => 0, 'before' => 0, 'line' => 20, 'sect' => $this->sectPr(1, false, $refs)]);
             $questions = $this->questionsXml($columns);
@@ -93,6 +95,10 @@ class Builder
         if ($withLogo) {
             $rels .= '<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>';
             $files['word/media/logo.png'] = $withLogo['png'];
+        }
+        if ($withLogo2) {
+            $rels .= '<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo2.png"/>';
+            $files['word/media/logo2.png'] = $withLogo2['png'];
         }
 
         $files['[Content_Types].xml'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
@@ -191,12 +197,12 @@ class Builder
     /*  Başlık bloğu                                                       */
     /* ------------------------------------------------------------------ */
 
-    private function logoData(): ?array
+    private function logoData(string $key = 'logo_path', bool $needShow = true, int $maxH = 56): ?array
     {
-        if (empty($this->s['show_logo']) || empty($this->s['logo_path']) || ! is_file(public_path($this->s['logo_path']))) {
+        if (($needShow && empty($this->s['show_logo'])) || empty($this->s[$key]) || ! is_file(public_path($this->s[$key]))) {
             return null;
         }
-        $raw = (string) file_get_contents(public_path($this->s['logo_path']));
+        $raw = (string) file_get_contents(public_path($this->s[$key]));
         if (! function_exists('imagecreatefromstring')) {
             return null;
         }
@@ -215,16 +221,16 @@ class Builder
         if ($w < 1 || $h < 1) {
             return null;
         }
-        $cy = 56 * 9525;
-        $cx = min((int) round($cy * $w / $h), 120 * 9525);
+        $cy = $maxH * 9525;
+        $cx = min((int) round($cy * $w / $h), 130 * 9525);
         $cy = (int) round($cx * $h / $w);
 
         return ['png' => $png, 'cx' => $cx, 'cy' => $cy];
     }
 
-    private function logoRun(array $logo): string
+    private function logoRun(array $logo, string $rid = 'rId5', int $id = 1): string
     {
-        return $this->drawingRun('rId5', $logo['cx'], $logo['cy'], 1, 'logo.png');
+        return $this->drawingRun($rid, $logo['cx'], $logo['cy'], $id, $rid === 'rId6' ? 'logo2.png' : 'logo.png');
     }
 
     /** Satır içi resim (logo ve soru görselleri için ortak). */
@@ -252,8 +258,11 @@ class Builder
         return rtrim(rtrim(number_format((float) $v, 2, ',', ''), '0'), ',');
     }
 
-    private function headerBlock(?array $logo): string
+    private function headerBlock(?array $logo, ?array $logo2 = null): string
     {
+        if ($this->exam->template === 'table') {
+            return $this->tableHeaderXml($logo, $logo2);
+        }
         $e = $this->exam;
         $s = $this->s;
         $ac = Xml::hex($s['accent']);
@@ -330,6 +339,57 @@ class Builder
         }
 
         return $paras.Xml::para([], ['before' => 0, 'after' => 120, 'line' => 120]);
+    }
+
+    /** Tablolu (okul) başlık: logo | başlık satırları | logo ; AD SOYAD | süre | tarih | PUAN ; SINIF | NO hücreleri. */
+    private function tableHeaderXml(?array $logo, ?array $logo2): string
+    {
+        $e = $this->exam;
+        $fs = ((int) $this->s['font_size']) * 2;
+        $up = fn ($t) => \App\Support\ExamLayout::upper($t);
+        $pct = [12.3, 13.5, 10.5, 7.5, 21.2, 21.4, 13.6];
+        $w = array_map(fn ($p) => (int) round($this->contentTw * $p / 100), $pct);
+        $w[6] = $this->contentTw - array_sum(array_slice($w, 0, 6));
+
+        $l3 = collect([$e->grade_level ? $e->grade_level.'. SINIF' : null, $up($e->subject), $up($e->title)])->filter()->implode(' ');
+        $lines = collect([$up($e->term), $up($e->school_name), $l3])->filter();
+        $titleXml = $lines->map(fn ($t) => Xml::para([Xml::run($t, ['b' => 1, 'sz' => $fs + 2])], ['jc' => 'center', 'before' => 20, 'after' => 20]))->implode('');
+        $c = fn (string $t, array $o = [], string $jc = 'left') => Xml::para([Xml::run($t, ['b' => 1] + $o)], ['jc' => $jc, 'before' => 20, 'after' => 20]);
+        $logoCell = fn (?array $l, string $rid, int $id) => ['xml' => $l ? Xml::para([$this->logoRun($l, $rid, $id)], ['jc' => 'center']) : '', 'vAlign' => 'center'];
+        $date = $e->exam_date ? $e->exam_date->format('d.m.Y') : '…/…/……';
+
+        $rows = [
+            ['h' => 1300, 'cells' => [
+                $logoCell($logo, 'rId5', 1),
+                ['xml' => $titleXml, 'span' => 5, 'vAlign' => 'center'],
+                $logoCell($logo2, 'rId6', 2),
+            ]],
+            ['h' => 700, 'cells' => [
+                ['xml' => $c('AD SOYAD:', ['sz' => $fs]), 'vAlign' => 'center'],
+                ['xml' => '', 'span' => 3],
+                ['xml' => $c($e->duration_min ? 'Sınav süresi '.$e->duration_min.' dakikadır.' : '', ['sz' => $fs - 3], 'center'), 'vAlign' => 'center'],
+                ['xml' => $c('TARİH: '.$date, ['sz' => $fs - 3], 'center'), 'vAlign' => 'center'],
+                ['xml' => $c('PUAN', ['sz' => $fs + 2], 'center'), 'vAlign' => 'center'],
+            ]],
+            ['h' => 600, 'cells' => [
+                ['xml' => $c('SINIF:', ['sz' => $fs]), 'vAlign' => 'center'],
+                ['xml' => ''],
+                ['xml' => $c('NO:', ['sz' => $fs]), 'vAlign' => 'center'],
+                ['xml' => ''], ['xml' => ''], ['xml' => ''], ['xml' => ''],
+            ]],
+        ];
+        $b = ['single', 12, '000000'];
+        $x = '';
+        if ($this->mode === 'teacher') {
+            $x .= Xml::para([Xml::run('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
+        }
+        $x .= Xml::table($rows, $w, ['borders' => ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b, 'insideH' => $b, 'insideV' => $b]]);
+        $ins = trim((string) ($this->s['instructions'] ?? ''));
+        if ($ins !== '') {
+            $x .= Xml::para([Xml::run($ins, ['i' => 1, 'color' => '334155', 'sz' => $fs - 2])], ['before' => 100, 'after' => 0]);
+        }
+
+        return $x.Xml::para([], ['before' => 0, 'after' => 120, 'line' => 120]);
     }
 
     /* ------------------------------------------------------------------ */

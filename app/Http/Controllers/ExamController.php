@@ -74,8 +74,7 @@ class ExamController extends Controller
         'watermark' => '',
         'show_logo' => false,
         'logo_path' => '',
-        // Word şablonu varsa başlık şablondaki haliyle kullanılır (önizleme ve PDF)
-        'use_word_header' => true,
+        'logo2_path' => '', // Tablolu şablonda sağ üst logo
     ];
 
     public function edit(Request $request, Exam $exam)
@@ -112,7 +111,6 @@ class ExamController extends Controller
                     'status' => $exam->status,
                 ],
                 'settings' => array_diff_key(array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings), ['layout' => 1, 'layout_header_h' => 1]),
-                'word_header' => $this->wordHeaderHtml($exam),
                 'questions' => $questions,
             ],
         ]);
@@ -149,8 +147,8 @@ class ExamController extends Controller
             'settings.page_border' => ['required', 'boolean'],
             'settings.watermark' => ['nullable', 'string', 'max:40'],
             'settings.show_logo' => ['required', 'boolean'],
-            'settings.use_word_header' => ['nullable', 'boolean'],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
+            'settings.logo2_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'layout' => ['nullable', 'array', 'max:80'],
             'layout_header_h' => ['nullable', 'integer', 'between:0,700'],
             'layout.*' => ['array', 'max:2'],
@@ -251,7 +249,6 @@ class ExamController extends Controller
             'exam' => $exam, 's' => $s, 'qs' => $qs, 'pages' => $pages, 'mode' => $mode === 'student_key' ? 'student' : $mode,
             'withKey' => $mode === 'student_key', 'columns' => $columns, 'margin' => $margin, 'contentW' => $contentW, 'colW' => $colW,
             'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
-            'wordHeader' => (($s['use_word_header'] ?? true) && $this->wordTemplatePath($exam)) ? $this->wordHeaderHtml($exam, $s) : null,
         ])->setPaper('a4', 'portrait')->setOptions(['dpi' => 96, 'isRemoteEnabled' => false, 'defaultFont' => 'DejaVu Sans']);
 
         $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
@@ -289,24 +286,6 @@ class ExamController extends Controller
         $path = $this->templateDir().'/'.$name;
 
         return is_file($path) ? $path : null;
-    }
-
-    /** Word şablonunun başlığını HTML olarak döndürür (şablon yoksa ya da okunamazsa ''). */
-    private function wordHeaderHtml(Exam $exam, ?array $settings = null): string
-    {
-        $path = $this->wordTemplatePath($exam);
-        if (! $path) {
-            return '';
-        }
-        $s = $settings ?? array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings);
-        $contentPx = ExamLayout::PAGE_W - 2 * (int) round(((int) $s['margin_mm']) * ExamLayout::MM);
-        try {
-            return (new DocxTemplate($path))->headerHtml($contentPx);
-        } catch (\Throwable $e) {
-            report($e);
-
-            return '';
-        }
     }
 
     private function deleteWordTemplateFile(Exam $exam): void
@@ -357,7 +336,7 @@ class ExamController extends Controller
         $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['word_template' => $name, 'word_template_name' => $orig]);
         $exam->save();
 
-        return response()->json(['ok' => true, 'name' => $orig, 'questions' => $parsed['questions'], 'header' => $parsed['header'], 'notes' => $parsed['notes'], 'header_html' => $this->wordHeaderHtml($exam->fresh())]);
+        return response()->json(['ok' => true, 'name' => $orig, 'questions' => $parsed['questions'], 'header' => $parsed['header'], 'notes' => $parsed['notes']]);
     }
 
     public function deleteWordTemplate(Request $request, Exam $exam): JsonResponse
@@ -461,28 +440,30 @@ class ExamController extends Controller
         $name = bin2hex(random_bytes(12)).'.'.$ext;
         $file->move($dir, $name);
 
-        $this->deleteLogoFile($exam);
+        $key = (int) $request->input('slot', 1) === 2 ? 'logo2_path' : 'logo_path';
+        $this->deleteLogoFile($exam, $key);
         $path = 'exam-logos/'.$name;
-        $settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['logo_path' => $path, 'show_logo' => true]);
+        $settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, [$key => $path] + ($key === 'logo_path' ? ['show_logo' => true] : []));
         $exam->settings = $settings;
         $exam->save();
 
-        return response()->json(['ok' => true, 'logo_path' => $path, 'url' => asset($path)]);
+        return response()->json(['ok' => true, 'logo_path' => $path, 'slot' => $key === 'logo2_path' ? 2 : 1, 'url' => asset($path)]);
     }
 
     public function deleteLogo(Request $request, Exam $exam): JsonResponse
     {
         $this->authorizeOwner($request, $exam);
-        $this->deleteLogoFile($exam);
-        $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, ['logo_path' => '', 'show_logo' => false]);
+        $key = (int) $request->query('slot', 1) === 2 ? 'logo2_path' : 'logo_path';
+        $this->deleteLogoFile($exam, $key);
+        $exam->settings = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings, [$key => ''] + ($key === 'logo_path' ? ['show_logo' => false] : []));
         $exam->save();
 
         return response()->json(['ok' => true]);
     }
 
-    private function deleteLogoFile(Exam $exam): void
+    private function deleteLogoFile(Exam $exam, string $key = 'logo_path'): void
     {
-        $old = (string) data_get($exam->settings, 'logo_path', '');
+        $old = (string) data_get($exam->settings, $key, '');
         if ($old !== '' && preg_match('#^exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp)$#', $old)) {
             @unlink(public_path($old));
         }
@@ -581,11 +562,13 @@ class ExamController extends Controller
             $new->save();
 
             $settings = (array) $exam->settings;
-            $logo = (string) ($settings['logo_path'] ?? '');
-            if ($logo !== '' && is_file(public_path($logo)) && preg_match('/\.(png|jpe?g|webp)$/', $logo, $m)) {
-                $nl = 'exam-logos/'.bin2hex(random_bytes(12)).'.'.$m[1];
-                @copy(public_path($logo), public_path($nl));
-                $settings['logo_path'] = $nl;
+            foreach (['logo_path', 'logo2_path'] as $lk) {
+                $logo = (string) ($settings[$lk] ?? '');
+                if ($logo !== '' && is_file(public_path($logo)) && preg_match('/\.(png|jpe?g|webp)$/', $logo, $m)) {
+                    $nl = 'exam-logos/'.bin2hex(random_bytes(12)).'.'.$m[1];
+                    @copy(public_path($logo), public_path($nl));
+                    $settings[$lk] = $nl;
+                }
             }
             if ($tpl = $this->wordTemplatePath($exam)) {
                 $nt = bin2hex(random_bytes(12)).'.docx';
@@ -617,6 +600,7 @@ class ExamController extends Controller
     {
         $this->authorizeOwner($request, $exam);
         $this->deleteLogoFile($exam);
+        $this->deleteLogoFile($exam, 'logo2_path');
         $this->deleteWordTemplateFile($exam);
         $this->pruneImages($exam, true);
         $exam->delete();
