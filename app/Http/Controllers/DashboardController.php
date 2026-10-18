@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ContentProgress;
 use App\Models\Course;
+use App\Models\CourseHomework;
 use App\Models\Grade;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -136,14 +137,24 @@ class DashboardController extends Controller
                 ->when($activeClassIds !== [], fn ($q) => $q->whereIn('id', $activeClassIds))
                 ->count();
 
-            $totalCourses = Course::query()
-                ->whereNull('parent_course_id')
-                ->when(! $isAdmin, function ($q) use ($teacher) {
-                    $teacherId = (int) ($teacher?->id ?? 0);
-                    $q->where('teacher_id', $teacherId);
-                })
-                ->when($activeClassIds !== [], fn ($q) => $q->whereIn('school_class_id', $activeClassIds))
-                ->count();
+            // Dersler sınıfa doğrudan değil, "ders atama" (course_homeworks) üzerinden bağlanır; courses.school_class_id
+            // neredeyse hiç dolu olmadığından sınıf seçilince sayı 0 çıkıyordu. Seçili sınıflara (öğretmende kendi sınıflarına)
+            // atanmış derslerin, öğretmende ayrıca kendi derslerinin benzersiz sayısı alınır.
+            $courseClassIds = $activeClassId > 0 ? [$activeClassId] : (! $isAdmin ? $teacherClassIds : []);
+            if ($isAdmin && $courseClassIds === []) {
+                $totalCourses = Course::query()->whereNull('parent_course_id')->count();
+            } else {
+                $assigned = CourseHomework::query()->whereIn('school_class_id', $courseClassIds ?: [0])->pluck('course_id')->all();
+                $direct = Course::query()->whereIn('school_class_id', $courseClassIds ?: [0])->pluck('id')->all();
+                $own = ! $isAdmin ? Course::query()->where('teacher_id', (int) ($teacher?->id ?? 0))->pluck('id')->all() : [];
+                $allIds = array_values(array_unique(array_merge($assigned, $direct, $own)));
+                $totalCourses = $allIds === [] ? 0 : Course::query()
+                    ->whereIn('id', $allIds)
+                    ->get(['id', 'parent_course_id'])
+                    ->map(fn ($c) => (int) ($c->parent_course_id ?: $c->id))
+                    ->unique()
+                    ->count();
+            }
 
             $gradeCount = Grade::query()
                 ->when($scoped, fn ($q) => $q->whereIn('student_id', $studentIds))
