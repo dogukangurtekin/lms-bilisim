@@ -227,6 +227,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin,teacher', 'exam.access'])->prefix('sinav-olustur')->name('exams.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ExamController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\ExamController::class, 'store'])->name('store');
+        Route::get('/soru-havuzu', [\App\Http\Controllers\QuestionBankController::class, 'index'])->name('bank.index');
+        Route::get('/soru-havuzu/ara', [\App\Http\Controllers\QuestionBankController::class, 'search'])->name('bank.search');
+        Route::post('/soru-havuzu', [\App\Http\Controllers\QuestionBankController::class, 'store'])->middleware('throttle:60,1')->name('bank.store');
+        Route::put('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'update'])->name('bank.update');
+        Route::delete('/soru-havuzu/{item}', [\App\Http\Controllers\QuestionBankController::class, 'destroy'])->name('bank.destroy');
         Route::get('/{exam}', [\App\Http\Controllers\ExamController::class, 'edit'])->name('edit');
         Route::put('/{exam}', [\App\Http\Controllers\ExamController::class, 'update'])->middleware('throttle:120,1')->name('update');
         Route::delete('/{exam}', [\App\Http\Controllers\ExamController::class, 'destroy'])->name('destroy');

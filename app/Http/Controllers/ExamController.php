@@ -135,9 +135,7 @@ class ExamController extends Controller
             'questions.*.bank_item_id' => ['nullable', 'integer', 'exists:question_bank_items,id'],
         ]);
 
-        $clean = static fn ($v): string => mb_substr(trim((string) $v), 0, 500);
-
-        DB::transaction(function () use ($exam, $data, $clean): void {
+        DB::transaction(function () use ($exam, $data): void {
             $meta = $data['exam'];
             $exam->fill([
                 'title' => $meta['title'],
@@ -156,12 +154,7 @@ class ExamController extends Controller
 
             $exam->questions()->delete();
             foreach ($data['questions'] as $i => $q) {
-                $options = [];
-                foreach ((array) ($q['options'] ?? []) as $opt) {
-                    $options[] = is_array($opt)
-                        ? ['l' => $clean($opt['l'] ?? ''), 'r' => $clean($opt['r'] ?? '')]
-                        : $clean($opt);
-                }
+                $options = self::cleanOptions((array) ($q['options'] ?? []));
                 ExamQuestion::query()->create([
                     'exam_id' => $exam->id,
                     'sort_order' => $i + 1,
@@ -178,6 +171,20 @@ class ExamController extends Controller
         });
 
         return response()->json(['ok' => true, 'saved_at' => now()->format('H:i:s')]);
+    }
+
+    /** Seçenek / eşleştirme çiftlerini temizler (kırpma + uzunluk sınırı). */
+    public static function cleanOptions(array $options): array
+    {
+        $clean = static fn ($v): string => mb_substr(trim((string) $v), 0, 500);
+        $out = [];
+        foreach ($options as $opt) {
+            $out[] = is_array($opt)
+                ? ['l' => $clean($opt['l'] ?? ''), 'r' => $clean($opt['r'] ?? '')]
+                : $clean($opt);
+        }
+
+        return $out;
     }
 
     public function destroy(Request $request, Exam $exam): RedirectResponse

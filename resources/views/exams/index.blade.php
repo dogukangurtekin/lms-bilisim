@@ -1,7 +1,7 @@
 @extends('layout.app')
 @section('title','Sınav Oluştur')
 @section('content')
-<div class="top"><h1>📝 Sınav Oluştur</h1></div>
+<div class="top"><h1>📝 Sınav Oluştur</h1><a class="btn" href="{{ route('exams.bank.index') }}" style="margin-left:auto">📚 Soru Havuzu</a></div>
 
 <style>
     .ex-wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}

@@ -1,14 +1,24 @@
 @extends('layout.app')
 @section('title','Sınav Editörü')
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/exam-q.css') }}?v={{ @filemtime(public_path('css/exam-q.css')) }}">
 <style>
     .xe-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .xe-top h1{margin:0;font-size:22px;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .xe-chip{padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:800;background:#e2e8f0;color:#475569}
     .xe-chip.ok{background:#dcfce7;color:#166534}.xe-chip.dirty{background:#fef3c7;color:#92400e}.xe-chip.err{background:#fee2e2;color:#991b1b}
-    .xe-btn{height:40px;padding:0 16px;border-radius:11px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-weight:800;font-size:13.5px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
-    .xe-btn.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);border-color:transparent;color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.28)}
-    .xe-btn.final{background:#16a34a;border-color:transparent;color:#fff}
+    .xe-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#eef2f7;padding:4px;border-radius:12px;margin-bottom:12px}
+    .xe-tabs button{border:0;background:transparent;border-radius:9px;padding:8px 4px;font-weight:800;font-size:12.5px;color:#475569;cursor:pointer}
+    .xe-tabs button.on{background:#fff;color:#1d4ed8;box-shadow:0 3px 8px rgba(15,23,42,.1)}
+    .pl-filters{display:grid;gap:8px;margin-bottom:12px}
+    .pl-filters input[type=search],.pl-filters select{width:100%;height:36px;border:1px solid #cbd5e1;border-radius:9px;padding:0 9px;font:inherit;font-size:13px;background:#fff}
+    .pl-card{border:1px solid #e2e8f0;border-radius:12px;padding:10px;margin-bottom:8px;display:grid;gap:6px;background:#fff}
+    .pl-tags{display:flex;gap:5px;flex-wrap:wrap}.pl-tags span{padding:1px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#e0e7ff;color:#3730a3}
+    .pl-tags .kolay{background:#dcfce7;color:#166534}.pl-tags .orta{background:#fef3c7;color:#92400e}.pl-tags .zor{background:#fee2e2;color:#991b1b}
+    .pl-body{font-size:12.8px;font-weight:600;color:#0f172a;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word}
+    .pl-meta{font-size:11.5px;color:#64748b;font-weight:700}
+    .pl-add{height:32px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:800;font-size:12.5px;cursor:pointer}
+    .pl-add:disabled{background:#dcfce7;color:#166534;cursor:default}
     .xe-grid{display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr) minmax(250px,290px);gap:14px;align-items:start}
     .xe-panel{background:#fff;border:1px solid #dbe5f2;border-radius:16px;padding:14px;box-shadow:0 8px 20px rgba(15,23,42,.04)}
     .xe-panel h3{margin:0 0 10px;font-size:15px}
@@ -23,20 +33,6 @@
     .xe-q.sel .xe-qh{background:#eff6ff}
     .xe-qn{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:#2563eb;color:#fff;display:grid;place-items:center;font-weight:900;font-size:12.5px}
     .xe-qt{flex:1 1 auto;min-width:0;font-size:12.5px;font-weight:700;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .xe-ic{border:0;background:#e2e8f0;border-radius:8px;width:28px;height:28px;cursor:pointer;font-weight:900;color:#334155}
-    .xe-ic:hover{background:#cbd5e1}.xe-ic.del:hover{background:#fecaca;color:#b91c1c}
-    .xe-qb{padding:10px;display:grid;gap:9px;border-top:1px solid #e2e8f0}
-    .xe-f{display:grid;gap:3px;font-size:11.5px;font-weight:800;color:#475569}
-    .xe-f input,.xe-f select,.xe-f textarea,.xe-qb input[type=text],.xe-qb input[type=number]{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:7px 9px;font:inherit;font-weight:600;font-size:13px;background:#fff}
-    .xe-f textarea{min-height:76px;resize:vertical}
-    .xe-f input,.xe-f select{height:36px}
-    .xe-opt{display:flex;align-items:center;gap:6px}
-    .xe-opt b{flex:0 0 22px;color:#2563eb}.xe-opt input[type=radio]{width:auto;margin:0}
-    .xe-mini{border:0;background:#f1f5f9;border-radius:8px;padding:5px 10px;font-weight:800;font-size:12px;cursor:pointer;color:#334155}
-    .xe-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .xe-empty{padding:18px 8px;text-align:center;color:#94a3b8;font-weight:700;font-size:13px}
-    .xe-sw{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#334155}
-    .xe-sw input{width:auto}
     .xe-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .xe-cols button{border:2px solid #e2e8f0;border-radius:11px;background:#fff;padding:8px;font-weight:800;font-size:12.5px;cursor:pointer;color:#334155}
     .xe-cols button.on{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
@@ -101,6 +97,8 @@
 
 <div class="xe-grid">
     <aside class="xe-panel xe-left">
+        <div class="xe-tabs" id="xe-tabs"><button type="button" class="on" data-tab="q">📝 Sorular</button><button type="button" data-tab="pool">📚 Soru Havuzu</button></div>
+        <div id="tab-q">
         <h3>➕ Soru Ekle</h3>
         <div class="xe-types" id="xe-types">
             <button type="button" class="xe-type" data-add="multiple_choice"><span>🔘</span>Çoktan Seçmeli</button>
@@ -111,6 +109,21 @@
         </div>
         <h3>Sorular <span id="xe-count" style="color:#64748b;font-weight:700"></span></h3>
         <div id="xe-list"></div>
+        </div>
+        <div id="tab-pool" style="display:none">
+            <div class="pl-filters">
+                <input type="search" id="pl-q" placeholder="Havuzda ara…">
+                <div class="xe-row2">
+                    <select id="pl-diff"><option value="">Tüm zorluklar</option><option value="kolay">Kolay</option><option value="orta">Orta</option><option value="zor">Zor</option></select>
+                    <select id="pl-type"><option value="">Tüm tipler</option><option value="multiple_choice">Çoktan seçmeli</option><option value="true_false">Doğru / Yanlış</option><option value="fill_blank">Boşluk doldurma</option><option value="open_ended">Açık uçlu</option><option value="matching">Eşleştirme</option></select>
+                </div>
+                <label class="xe-sw"><input type="checkbox" id="pl-match"> Sınavın dersi / düzeyiyle sınırla</label>
+                <label class="xe-sw"><input type="checkbox" id="pl-mine"> Yalnızca benim sorularım</label>
+            </div>
+            <div id="pl-list"></div>
+            <button type="button" class="xe-btn" id="pl-more" style="display:none;margin:8px auto 0;height:36px">Daha fazla</button>
+            <div style="margin-top:10px;font-size:12.5px;font-weight:800"><a href="{{ route('exams.bank.index') }}" target="_blank" style="color:#2563eb">📚 Havuzu yönet / yeni soru ekle →</a></div>
+        </div>
     </aside>
 
     <section class="pv-wrap" id="pv-wrap">
@@ -149,6 +162,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/exam-q.js') }}?v={{ @filemtime(public_path('js/exam-q.js')) }}"></script>
 <script>
 (() => {
     const INIT = @json($payload);
@@ -157,8 +171,7 @@
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const nl = (s) => esc(s).replace(/\n/g, '<br>');
-    const LETTERS = 'ABCDEFGHIJ';
-    const TYPE_NAME = { multiple_choice: 'Çoktan seçmeli', true_false: 'Doğru / Yanlış', fill_blank: 'Boşluk doldurma', open_ended: 'Açık uçlu', matching: 'Eşleştirme' };
+    const { LETTERS, TYPE_NAME, newQuestion: mkQuestion, matchOrder, matchKey } = window.ExamQ;
     const PAGE_W = 794, PAGE_H = 1123, MM = 3.7795;
 
     let uidSeq = 1;
@@ -170,23 +183,7 @@
     let selected = state.questions.length ? 0 : -1;
     let dirty = false, saving = false, saveTimer = null, previewTimer = null;
 
-    /* ---------- soru fabrikası ---------- */
-    function newQuestion(type) {
-        const base = { uid: uidSeq++, type, body: '', options: [], answer: '', points: 5, section_title: '', answer_lines: 0, bank_item_id: null };
-        if (type === 'multiple_choice') { base.options = ['', '', '', '']; base.answer = 'A'; }
-        if (type === 'true_false') { base.answer = 'D'; }
-        if (type === 'fill_blank') { base.body = ''; }
-        if (type === 'open_ended') { base.answer_lines = 3; base.points = 10; }
-        if (type === 'matching') { base.options = [{ l: '', r: '' }, { l: '', r: '' }, { l: '', r: '' }, { l: '', r: '' }]; base.points = 10; }
-        return base;
-    }
-    const shiftFor = (n) => Math.max(1, Math.floor(n / 2));
-    // Eşleştirmede sağ sütun karışık gösterilir; doğru eşleşme anahtarı üretilir (ör. 1-C 2-A).
-    function matchOrder(n) { const s = shiftFor(n); return Array.from({ length: n }, (_, j) => (j + s) % n); }
-    function matchKey(q) {
-        const n = q.options.length, order = matchOrder(n);
-        return q.options.map((_, i) => (i + 1) + '-' + LETTERS[order.indexOf(i)]).join(' ');
-    }
+    const newQuestion = (type) => ({ uid: uidSeq++, ...mkQuestion(type) });
 
     /* ---------- önizleme: soru bloğu ---------- */
     function blockHtml(q, i) {
@@ -315,38 +312,7 @@
         }).join('');
     }
 
-    function editorHtml(q, i) {
-        let f = '<div class="xe-qb">';
-        f += '<label class="xe-f">Bölüm başlığı (isteğe bağlı)<input type="text" data-q="section_title" value="' + esc(q.section_title) + '" maxlength="200" placeholder="Örn. A. Çoktan Seçmeli Sorular"></label>';
-        f += '<label class="xe-f">' + TYPE_NAME[q.type] + ' — soru metni<textarea data-q="body" maxlength="6000" placeholder="' + (q.type === 'fill_blank' ? 'Boşlukları ........ ile gösterin' : 'Soru metnini yazın') + '">' + esc(q.body) + '</textarea></label>';
-        if (q.type === 'multiple_choice') {
-            f += '<div class="xe-f">Seçenekler (doğru olanı işaretleyin)</div>';
-            q.options.forEach((o, k) => {
-                f += '<div class="xe-opt"><input type="radio" name="ans' + q.uid + '" data-ans="' + LETTERS[k] + '"' + (q.answer === LETTERS[k] ? ' checked' : '') + '><b>' + LETTERS[k] + ')</b>'
-                    + '<input type="text" data-opt="' + k + '" value="' + esc(o) + '" maxlength="500">'
-                    + (q.options.length > 2 ? '<button type="button" class="xe-ic del" data-act="optdel" data-k="' + k + '">✕</button>' : '') + '</div>';
-            });
-            if (q.options.length < 6) f += '<div><button type="button" class="xe-mini" data-act="optadd">+ Seçenek ekle</button></div>';
-        } else if (q.type === 'true_false') {
-            f += '<div class="xe-f">Doğru cevap</div><div class="xe-row2"><label class="xe-sw"><input type="radio" name="ans' + q.uid + '" data-ans="D"' + (q.answer !== 'Y' ? ' checked' : '') + '> Doğru</label><label class="xe-sw"><input type="radio" name="ans' + q.uid + '" data-ans="Y"' + (q.answer === 'Y' ? ' checked' : '') + '> Yanlış</label></div>';
-        } else if (q.type === 'matching') {
-            f += '<div class="xe-f">Eşleşen çiftler (sol ↔ sağ)</div>';
-            q.options.forEach((o, k) => {
-                f += '<div class="xe-opt"><b>' + (k + 1) + '</b><input type="text" data-pl="' + k + '" value="' + esc(o.l) + '" placeholder="Sol" maxlength="500"><input type="text" data-pr="' + k + '" value="' + esc(o.r) + '" placeholder="Sağ" maxlength="500">'
-                    + (q.options.length > 2 ? '<button type="button" class="xe-ic del" data-act="pairdel" data-k="' + k + '">✕</button>' : '') + '</div>';
-            });
-            if (q.options.length < 8) f += '<div><button type="button" class="xe-mini" data-act="pairadd">+ Çift ekle</button></div>';
-            f += '<div class="xe-f" id="mk' + q.uid + '">Doğru eşleşme: ' + esc(matchKey(q)) + '</div>';
-        } else if (q.type === 'open_ended') {
-            f += '<div class="xe-row2"><label class="xe-f">Cevap satırı<input type="number" data-q="answer_lines" min="0" max="20" value="' + Number(q.answer_lines) + '"></label>'
-                + '<label class="xe-f">Puan<input type="number" data-q="points" min="0" max="1000" step="0.5" value="' + Number(q.points) + '"></label></div>';
-            f += '<label class="xe-f">Cevap anahtarı (öğretmen için)<textarea data-q="answer" maxlength="2000">' + esc(q.answer) + '</textarea></label>';
-        } else if (q.type === 'fill_blank') {
-            f += '<label class="xe-f">Doğru cevap<input type="text" data-q="answer" value="' + esc(q.answer) + '" maxlength="2000"></label>';
-        }
-        if (q.type !== 'open_ended') f += '<label class="xe-f">Puan<input type="number" data-q="points" min="0" max="1000" step="0.5" value="' + Number(q.points) + '"></label>';
-        return f + '</div>';
-    }
+    const editorHtml = (q) => window.ExamQ.formHtml(q, { section: true, points: true, uid: q.uid }).replace(/<\/div>$/, '<div><button type="button" class="xe-mini" data-act="tobank"' + (q.bank_item_id ? ' disabled' : '') + '>' + (q.bank_item_id ? '✓ Havuzda' : '📚 Havuza kaydet') + '</button></div></div>');
 
     /* ---------- durum / kaydet ---------- */
     function setStatus(kind, text) { const c = $('xe-status'); c.className = 'xe-chip ' + kind; c.textContent = text; }
@@ -362,7 +328,7 @@
             settings: { ...s, font_size: Number(s.font_size), margin_mm: Number(s.margin_mm), show_points: !!s.show_points, student_box: !!s.student_box, page_numbers: !!s.page_numbers },
             questions: state.questions.map((q) => ({
                 type: q.type, body: q.body || '', options: q.options, points: Number(q.points) || 0,
-                answer: q.type === 'matching' ? matchKey(q) : (q.answer || ''),
+                answer: window.ExamQ.answerOf(q),
                 section_title: q.section_title || '', answer_lines: Number(q.answer_lines) || 0, bank_item_id: q.bank_item_id || null,
             })),
         };
@@ -401,23 +367,15 @@
         else if (act === 'down' && i < state.questions.length - 1) { [state.questions[i + 1], state.questions[i]] = [state.questions[i], state.questions[i + 1]]; selected = i + 1; }
         else if (act === 'dup') { const c = JSON.parse(JSON.stringify(q)); c.uid = uidSeq++; c.bank_item_id = null; state.questions.splice(i + 1, 0, c); selected = i + 1; }
         else if (act === 'del') { state.questions.splice(i, 1); selected = Math.min(selected, state.questions.length - 1); }
-        else if (act === 'optadd') { q.options.push(''); }
-        else if (act === 'optdel') { const k = Number(ev.target.dataset.k); q.options.splice(k, 1); if (LETTERS.indexOf(q.answer) >= q.options.length) q.answer = 'A'; }
-        else if (act === 'pairadd') { q.options.push({ l: '', r: '' }); }
-        else if (act === 'pairdel') { q.options.splice(Number(ev.target.dataset.k), 1); }
-        else return;
+        else if (act === 'tobank') { saveToBank(q); return; }
+        else if (!window.ExamQ.applyClick(q, ev.target)) return;
         changed(true);
     });
 
     $('xe-list').addEventListener('input', (ev) => {
         const card = ev.target.closest('.xe-q'); if (!card) return;
         const q = state.questions[Number(card.dataset.i)], t = ev.target;
-        if (t.dataset.q) { q[t.dataset.q] = t.type === 'number' ? t.value : t.value; if (t.dataset.q === 'points') q.points = t.value === '' ? 0 : Number(t.value); if (t.dataset.q === 'answer_lines') q.answer_lines = Number(t.value) || 0; }
-        else if (t.dataset.opt !== undefined) q.options[Number(t.dataset.opt)] = t.value;
-        else if (t.dataset.pl !== undefined) { q.options[Number(t.dataset.pl)].l = t.value; const mk = $('mk' + q.uid); if (mk) mk.textContent = 'Doğru eşleşme: ' + matchKey(q); }
-        else if (t.dataset.pr !== undefined) { q.options[Number(t.dataset.pr)].r = t.value; }
-        else if (t.dataset.ans) { q.answer = t.dataset.ans; }
-        else return;
+        if (!window.ExamQ.applyInput(q, t, card)) return;
         const hdr = card.querySelector('.xe-qt'); if (hdr && t.dataset.q === 'body') hdr.textContent = (q.body || '').split('\n')[0] || TYPE_NAME[q.type];
         schedulePreview(); markDirty();
         if (t.dataset.q === 'points') $('xe-count').textContent = '(' + state.questions.length + ' · ' + (Math.round(totalPoints() * 100) / 100) + ' puan)';
@@ -440,6 +398,68 @@
     });
     function refreshCols() { document.querySelectorAll('[data-cols]').forEach((b) => b.classList.toggle('on', Number(b.dataset.cols) === state.exam.columns)); }
     document.querySelectorAll('[data-cols]').forEach((b) => b.addEventListener('click', () => { state.exam.columns = Number(b.dataset.cols); refreshCols(); schedulePreview(); markDirty(); }));
+
+    /* ---------- soru havuzu (sol panel sekmesi) ---------- */
+    const BANK = { search: @json(route('exams.bank.search')), store: @json(route('exams.bank.store')) };
+    const pool = { page: 1, items: [], loading: false, timer: null };
+    const poolParams = () => {
+        const p = new URLSearchParams({ q: $('pl-q').value, difficulty: $('pl-diff').value, type: $('pl-type').value, scope: $('pl-mine').checked ? 'mine' : '' });
+        if ($('pl-match').checked) { if (state.exam.subject) p.set('subject', state.exam.subject); if (state.exam.grade_level) p.set('grade', state.exam.grade_level); }
+        return p;
+    };
+    async function loadPool(reset) {
+        if (pool.loading) return; pool.loading = true;
+        if (reset) { pool.page = 1; pool.items = []; }
+        try {
+            const res = await fetch(BANK.search + '?' + poolParams() + '&page=' + pool.page, { headers: { Accept: 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const j = await res.json();
+            pool.items = pool.items.concat(j.data); $('pl-more').style.display = j.has_more ? 'block' : 'none';
+        } catch (_) { $('pl-list').innerHTML = '<div class="xe-empty">Havuz yüklenemedi.</div>'; pool.loading = false; return; }
+        pool.loading = false; renderPool();
+    }
+    function renderPool() {
+        const used = new Set(state.questions.map((q) => q.bank_item_id).filter(Boolean));
+        $('pl-list').innerHTML = pool.items.length ? pool.items.map((i) =>
+            '<div class="pl-card" data-id="' + i.id + '"><div class="pl-tags"><span>' + TYPE_NAME[i.type] + '</span><span class="' + i.difficulty + '">' + ({ kolay: 'Kolay', orta: 'Orta', zor: 'Zor' }[i.difficulty]) + '</span></div>'
+            + '<div class="pl-body">' + esc(i.body) + '</div>'
+            + '<div class="pl-meta">' + [i.subject, i.grade_level ? i.grade_level + '. sınıf' : '', i.unit].filter(Boolean).map(esc).join(' · ') + '</div>'
+            + '<button type="button" class="pl-add"' + (used.has(i.id) ? ' disabled>✓ Sınavda' : '>+ Sınava ekle') + '</button></div>'
+        ).join('') : '<div class="xe-empty">Havuzda uygun soru bulunamadı.</div>';
+    }
+    function addFromBank(i) {
+        const q = newQuestion(i.type);
+        q.body = i.body; q.options = JSON.parse(JSON.stringify(i.options || [])); q.answer = i.answer || q.answer;
+        q.bank_item_id = i.id;
+        state.questions.push(q); selected = state.questions.length - 1;
+        renderList(); renderPool(); schedulePreview(); markDirty();
+    }
+    async function saveToBank(q) {
+        if (!(q.body || '').trim()) { setStatus('err', 'Önce soru metnini yazın.'); return; }
+        setStatus('', 'Havuza kaydediliyor…');
+        try {
+            const res = await fetch(BANK.store, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({
+                type: q.type, body: q.body, options: q.options, answer: window.ExamQ.answerOf(q), difficulty: 'orta',
+                subject: state.exam.subject || '', grade_level: state.exam.grade_level || null, unit: '', tags: '', is_shared: false }) });
+            if (!res.ok) throw new Error('Havuza kaydedilemedi (' + res.status + ')');
+            const j = await res.json(); q.bank_item_id = j.item.id;
+            renderList(); markDirty(); setStatus('ok', 'Soru havuza kaydedildi');
+        } catch (err) { setStatus('err', err.message); }
+    }
+    $('xe-tabs').addEventListener('click', (ev) => {
+        const b = ev.target.closest('[data-tab]'); if (!b) return;
+        document.querySelectorAll('#xe-tabs button').forEach((x) => x.classList.toggle('on', x === b));
+        $('tab-q').style.display = b.dataset.tab === 'q' ? '' : 'none';
+        $('tab-pool').style.display = b.dataset.tab === 'pool' ? '' : 'none';
+        if (b.dataset.tab === 'pool') { $('pl-match').checked = !!(state.exam.subject || state.exam.grade_level); loadPool(true); }
+    });
+    $('pl-list').addEventListener('click', (ev) => {
+        const btn = ev.target.closest('.pl-add'); if (!btn || btn.disabled) return;
+        const item = pool.items.find((x) => x.id === Number(btn.closest('.pl-card').dataset.id)); if (item) addFromBank(item);
+    });
+    $('pl-more').addEventListener('click', () => { pool.page++; loadPool(false); });
+    ['pl-diff', 'pl-type', 'pl-match', 'pl-mine'].forEach((id) => $(id).addEventListener('change', () => loadPool(true)));
+    $('pl-q').addEventListener('input', () => { clearTimeout(pool.timer); pool.timer = setTimeout(() => loadPool(true), 350); });
 
     $('xe-save').addEventListener('click', save);
     $('xe-final').addEventListener('click', () => { state.exam.status = state.exam.status === 'final' ? 'draft' : 'final'; refreshFinalBtn(); markDirty(); save(); });
