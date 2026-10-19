@@ -12,9 +12,12 @@
     $right = (array) ($q?->options['right'] ?? []);
     $opts = is_array($q?->options) ? $q->options : [];
 @endphp
+@include('competitions._theme')
 <style>
 .lq-stage{border-radius:18px;padding:16px;background:linear-gradient(160deg,#4c1d95,#6d28d9 42%,#7c3aed);color:#fff;border:1px solid rgba(255,255,255,.18)}
 .lq-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.lq-stage-lobby .lq-header{display:none}
+.lq-stage.cx{border-radius:22px;min-height:480px}
 .lq-title{margin:0;font-size:24px;font-weight:900}
 .lq-badges{display:flex;gap:8px;flex-wrap:wrap}
 .lq-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 10px;font-weight:700;font-size:13px}
@@ -38,7 +41,11 @@
 .lq-answer-btn.is-locked{opacity:.65;pointer-events:none}
 .lq-drag-list{display:grid;gap:8px}
 .lq-drag-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.lq-drag-row .form-control{margin:0}
+.lq-drag-row .form-control{margin:0;background:#fff!important;color:#0f172a!important;border:2px solid #c7d2fe;border-radius:12px;font-weight:800;font-size:20px;min-height:54px;padding:10px 14px;display:flex;align-items:center;-webkit-text-fill-color:#0f172a}
+.lq-drag-row div.form-control{background:#eef2ff!important;border-color:#a5b4fc}
+.lq-drag-row select.form-control{cursor:pointer}
+.lq-drag-row select.form-control option{color:#0f172a;background:#fff}
+@media (max-width:640px){.lq-drag-row{grid-template-columns:1fr}.lq-drag-row .form-control{font-size:17px}}
 .lq-state{background:#fff;color:#0f172a;border-radius:12px;padding:16px;font-weight:700}
 .lq-center-stage{min-height:420px;display:grid;place-items:center}
 .lq-wait-box{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
@@ -80,7 +87,7 @@
     @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardPrevRows' => $boardPrevRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
 @endif
 
-<div class="lq-stage">
+<div class="lq-stage {{ $session->status === 'lobby' ? 'cx lq-stage-lobby' : '' }}">
     <div class="lq-header">
         <h1 class="lq-title">{{ $session->quiz?->title ?? 'Canli Quiz' }}</h1>
         <div class="lq-badges">
@@ -93,14 +100,15 @@
     </div>
 
     @if($session->status === 'lobby')
-        <div class="lq-center-stage">
-            <div class="lq-wait-box">
-                <h3 class="lq-wait-title">Ogretmen Baslatmasini Bekliyorsun</h3>
-                <p>Katilim kodu ile lobiye girdin. Ogretmen "Herkese Baslat" dedigi an ilk soru
-                   herkes icin ayni anda baslayacak.</p>
-                <div class="lq-wait-count" id="lqLobbyCount">{{ $joinedCount ?? 0 }}</div>
-                <p class="lq-auto-note">Lobide bekleyen ogrenci sayisi</p>
-                <div class="lq-student-list" id="lqStudentParticipantList">
+        <div class="cx-bubbles"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="lq-center-stage" style="position:relative;z-index:1">
+            <div class="comp-wait-box">
+                <div class="cx-dots"><i></i><i></i><i></i><i></i><i></i></div>
+                <h3 class="comp-wait-title cx-title-wave">@foreach(preg_split('//u', 'Öğretmen Başlatmasını Bekliyorsun', -1, PREG_SPLIT_NO_EMPTY) as $i => $ch)<span style="animation-delay:{{ $i * .05 }}s">{{ $ch === ' ' ? "\u{00a0}" : $ch }}</span>@endforeach</h3>
+                <p>Lobiye girdin! Öğretmen <b style="color:#fff">"Herkese Başlat"</b> dediği an ilk soru herkes için aynı anda başlayacak. Hazır ol! 🔥</p>
+                <div class="cx-count" id="lqLobbyCount">{{ $joinedCount ?? 0 }}</div>
+                <p style="font-size:13px;margin:0">lobide bekleyen öğrenci</p>
+                <div class="cx-chipwall lq-student-list" id="lqStudentParticipantList">
                     @forelse(($participantRows ?? []) as $participant)
                         <span class="lq-student-chip">{{ $participant['student_name'] }}</span>
                     @empty
@@ -330,7 +338,7 @@
     // hemen sonra tek seferde (aşama geçişi) sorgulanır. Her öğrenciye küçük rastgele gecikme
     // eklenerek aynı anda gelen istek yığılması da önlenir.
     // Cevabını verip bekleyen öğrenci, herkes bitince ara ekrana çabuk geçsin diye biraz daha sık sorgular.
-    const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 3000 : 4000;
+    const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 1500 : 4000;
     const nextSyncDelay = () => {
         if (initialPhase === 'final') return 6000;         // final ekranı: sadece "yarışma bitti mi" kontrolü
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);

@@ -406,7 +406,17 @@ class RaceController extends Controller
             ->values()
             ->all();
 
+        $text = (string) $room->text;
+        $count = count($rows);
+
         return [
+            'text' => $text,
+            'totalCharacters' => mb_strlen($text, 'UTF-8'),
+            'totalWords' => $text === '' ? 0 : count(preg_split('/\s+/u', trim($text))),
+            'participantCount' => $count,
+            'avgWpm' => $count ? round(array_sum(array_column($rows, 'wpm')) / $count, 1) : 0,
+            'avgAccuracy' => $count ? round(array_sum(array_column($rows, 'accuracy')) / $count, 1) : 0,
+            'avgProgress' => $count ? round(array_sum(array_column($rows, 'progress')) / $count, 1) : 0,
             'roomCode' => $room->code,
             'roomName' => $room->name,
             'status' => $room->status,

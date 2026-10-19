@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const miniBtn = document.getElementById('sidebar-mini-toggle');
   if (miniBtn) {
     const MINI_KEY = 'staff_sidebar_mini';
-    document.querySelectorAll('.sidebar > a').forEach((a) => { if (!a.title) a.title = a.textContent.trim().replace(/\s+/g, ' '); });
+    document.querySelectorAll('.sidebar > a, .student-sidebar-nav > a').forEach((a) => { if (!a.title) a.title = a.textContent.trim().replace(/\s+/g, ' '); });
     const sync = () => { miniBtn.setAttribute('aria-pressed', document.body.classList.contains('sidebar-mini') ? 'true' : 'false'); };
     sync();
     miniBtn.addEventListener('click', () => {

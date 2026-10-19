@@ -37,7 +37,8 @@
   var MAX_LIVES = 2;                              // her bölümde 2 can: yanlış hamle bir can götürür
 
   function loadStore() { try { var p = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (p && typeof p === 'object') store = Object.assign(store, p); } catch (e) {} try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch (e) {} }
-  function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+  var isCompetition = /^competition-\d+$/.test(assignmentId);
+  function saveStore() { if (isCompetition) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function elapsed() { return Math.max(0, Math.round((Date.now() - sessionStartedAt) / 1000)); }
@@ -114,16 +115,15 @@
     var hand = $('hand'); hand.textContent = '';
     var isRoam = level.mode === 'roam';
     $('roamPad').classList.toggle('hidden', !isRoam);
-    $('btnHint').classList.toggle('hidden', false);
-    $('handTitle').textContent = isRoam ? 'Serbest Gezinti' : level.mode === 'find' ? 'Doğru kartı seç' : 'Kartların';
+    $('handTitle').textContent = isRoam ? 'Serbest Gezinti' : level.mode === 'find' ? 'Doğru kartın numarasına bas' : 'Kartların';
     $('handSub').textContent = isRoam ? '' : (st.hand.length + ' kart');
-    if (isRoam) { hand.innerHTML = '<p style="font-weight:700;color:#5b7096;margin:4px 2px;line-height:1.6">Ok tuşları, <code>WASD</code> ya da ekrandaki düğmelerle noktayı hedefe götür.</p>'; renderPlayed(); return; }
+    if (isRoam) { hand.innerHTML = '<p style="font-weight:700;color:#5b7096;margin:4px 2px;line-height:1.6">Ok tuşları ya da <code>WASD</code> ile noktayı hedefe götür.</p>'; renderPlayed(); return; }
     st.hand.forEach(function (id, n) {
       var card = level.cards.filter(function (c) { return c.id === id; })[0];
       var b = document.createElement('button'); b.type = 'button'; b.className = 'dc-cardbtn'; b.dataset.id = id; b.style.setProperty('--cc', COLORS[(id - 1) % COLORS.length]);
       var lines = card.lines.map(function (l, i) { return '<span class="ln" data-ln="' + i + '">' + (colorize(l) || ' ') + '</span>'; }).join('');
       b.innerHTML = '<span class="dc-cardnum">' + (n + 1) + '</span><div class="dc-codecard"><pre class="dc-code">' + lines + '</pre></div>';
-      b.addEventListener('click', function () { playCard(id); });
+      b.tabIndex = -1; b.setAttribute('aria-disabled', 'true'); // kartlar yalnızca klavyeden (1-9) oynanır
       hand.appendChild(b);
     });
     renderPlayed();
@@ -135,13 +135,12 @@
   }
   function cardEl(id) { return $('hand').querySelector('.dc-cardbtn[data-id="' + id + '"]'); }
 
-  function starsFor() { var base = st.wrong === 0 ? 3 : st.wrong === 1 ? 2 : 1; return st.hints > 0 ? Math.min(base, 2) : base; }
+  function starsFor() { var base = st.wrong === 0 ? 3 : st.wrong === 1 ? 2 : 1; return base; }
   function updateBar() {
     var lv = $('lives'); lv.textContent = '';
     for (var h = 0; h < MAX_LIVES; h++) { var s = document.createElement('i'); s.className = 'heart ' + (h < st.lives ? 'on' : 'off') + (st.justLost === h ? ' lost' : ''); s.textContent = '♥'; lv.appendChild(s); }
     lv.title = 'Kalan can: ' + st.lives + ' / ' + MAX_LIVES; st.justLost = -1;
     var s = starsFor(); $('chipStars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
-    $('btnHint').textContent = '💡 İpucu' + (st.hints ? ' (' + st.hints + ')' : '');
   }
 
   // ------------------------------------------------------------------ adımları oynat
@@ -161,7 +160,13 @@
   function resetDot(pos) { var dot = $('dot'); dot.classList.remove('fall', 'bump', 'win'); placeDot(pos, true); }
 
   // ------------------------------------------------------------------ oyun akışı
-  function loseLife() { st.lives = Math.max(0, st.lives - 1); st.wrong++; st.justLost = st.lives; updateBar(); return st.lives <= 0; }
+  var LIFE_PENALTY_XP = 5;
+  function showXpLoss(n) {
+    var d = document.createElement('div'); d.className = 'dc-xploss';
+    d.innerHTML = '<span class="dc-xploss-ico">💔</span><b>-' + n + ' XP</b><small>Can kaybettin!</small>';
+    document.body.appendChild(d); setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 2100);
+  }
+  function loseLife() { st.lives = Math.max(0, st.lives - 1); st.wrong++; st.xpLost = (st.xpLost || 0) + LIFE_PENALTY_XP; st.justLost = st.lives; updateBar(); showXpLoss(LIFE_PENALTY_XP); return st.lives <= 0; }
   async function outOfLives() { say('Canların bitti! Bölüm baştan başlıyor.', 'bad', 2600); await delay(1500); restartLevel('lives'); }
   async function playCard(id) {
     if (!st || st.busy || st.won) return;
@@ -173,7 +178,7 @@
     var failed = !res.ok || level.mode === 'find';
     if (failed) {
       var dead = loseLife();
-      say((res.failure === 'pit' ? 'Çukura düştü!' : res.failure === 'wall' ? 'Duvara çarptı!' : res.failure === 'loop' ? 'Kart sonsuza dek dönüyor!' : 'Bu kart noktayı hedefe götürmedi.') + (dead ? '' : ' Bir can gitti, kalan: ' + st.lives + '.'), 'bad');
+      say((res.failure === 'pit' ? 'Çukura düştü!' : res.failure === 'wall' ? 'Duvara çarptı!' : res.failure === 'loop' ? 'Kart sonsuza dek dönüyor!' : 'Bu kart noktayı hedefe götürmedi.') + (dead ? '' : ' Bir can gitti (-5 XP), kalan: ' + st.lives + '.'), 'bad');
       if (el) { el.classList.add('shake'); setTimeout(function () { el.classList.remove('shake'); }, 450); }
       await delay(450); resetDot(st.pos);
       if (dead) { await outOfLives(); return; }
@@ -182,14 +187,14 @@
     // başarılı ama hedefe varılmadı: kart harcanır, kontrol noktası güncellenir
     st.pos = res.end; st.hand = st.hand.filter(function (x) { return x !== id; }); st.played.push(id);
     renderHand(); updateBar();
-    if (!st.hand.length) { var dead2 = loseLife(); say('Kart kalmadı ama hedefe ulaşamadın. ' + (dead2 ? 'Canların da bitti!' : 'Bir can gitti, kalan: ' + st.lives + '.') + ' Baştan başlıyoruz!', 'bad', 2600); await delay(1700); restartLevel(dead2 ? 'lives' : true); return; }
+    if (!st.hand.length) { var dead2 = loseLife(); say('Kart kalmadı ama hedefe ulaşamadın. ' + (dead2 ? 'Canların da bitti!' : 'Bir can gitti (-5 XP), kalan: ' + st.lives + '.') + ' Baştan başlıyoruz!', 'bad', 2600); await delay(1700); restartLevel(dead2 ? 'lives' : true); return; }
     st.busy = false;
   }
   // keepStats: undefined = sıfırdan · true = can/hata/ipucu korunur · 'lives' = hata/ipucu korunur, canlar yenilenir
   function restartLevel(keepStats) {
     if (!level) return;
     var old = st;
-    st = { pos: { x: level.start.x, y: level.start.y, dir: level.start.dir }, hand: level.cards.map(function (c) { return c.id; }), played: [], busy: false, won: false, wrong: keepStats && old ? old.wrong : 0, hints: keepStats && old ? old.hints : 0, lives: keepStats === true && old ? old.lives : MAX_LIVES, justLost: -1 };
+    st = { pos: { x: level.start.x, y: level.start.y, dir: level.start.dir }, hand: level.cards.map(function (c) { return c.id; }), played: [], busy: false, won: false, wrong: keepStats && old ? old.wrong : 0, hints: keepStats && old ? old.hints : 0, lives: keepStats === true && old ? old.lives : MAX_LIVES, xpLost: keepStats && old ? (old.xpLost || 0) : 0, justLost: -1 };
     resetDot(st.pos); renderHand(); updateBar(); clearHint();
   }
   async function roamMove(dir) {
@@ -198,13 +203,14 @@
     var res = E.runCard(world, st.pos, [{ t: 'move', dir: dir, n: 1, ln: 0 }]);
     await play(res, null);
     if (res.goal) { await win(); return; }
-    if (res.failure === 'pit') { var dead3 = loseLife(); say('Çukura düştün! ' + (dead3 ? '' : 'Bir can gitti, kalan: ' + st.lives + '.'), 'bad'); await delay(450); st.pos = { x: level.start.x, y: level.start.y, dir: level.start.dir }; resetDot(st.pos); if (dead3) { await outOfLives(); return; } }
+    if (res.failure === 'pit') { var dead3 = loseLife(); say('Çukura düştün! ' + (dead3 ? '' : 'Bir can gitti (-5 XP), kalan: ' + st.lives + '.'), 'bad'); await delay(450); st.pos = { x: level.start.x, y: level.start.y, dir: level.start.dir }; resetDot(st.pos); if (dead3) { await outOfLives(); return; } }
     else if (res.failure === 'wall') { /* sadece çarptı */ }
     else st.pos = res.end;
     st.busy = false;
   }
   function clearHint() { Array.prototype.forEach.call(document.querySelectorAll('.dc-cardbtn.hint'), function (b) { b.classList.remove('hint'); }); }
   function showHint() {
+    return;   // ipucu kaldırıldı
     if (!st || st.busy || st.won) return;
     if (level.mode === 'roam') { st.hints++; updateBar(); say('Turuncu hedefe doğru ilerle; duvarları ve çukurları dolan.', '', 2600); return; }
     var temp = { cells: level.cells, start: st.pos, cards: st.hand.map(function (hid) { return level.cards.filter(function (c) { return c.id === hid; })[0]; }) };
@@ -218,16 +224,22 @@
   async function win() {
     st.won = true; SFX.win();
     var stars = starsFor(), rec = store.done[level.id], firstTime = !rec;
-    store.done[level.id] = { stars: Math.max(rec ? rec.stars : 0, stars), wrong: rec ? Math.min(rec.wrong, st.wrong) : st.wrong, at: Date.now() };
+    var gained = Math.max(0, level.xp - (st.xpLost || 0));   // her kaybedilen can -5 XP
+    store.done[level.id] = { stars: Math.max(rec ? rec.stars : 0, stars), wrong: rec ? Math.min(rec.wrong, st.wrong) : st.wrong, xp: rec && rec.xp != null ? Math.max(rec.xp, gained) : (rec ? level.xp : gained), at: Date.now() };
     store.last = idx; saveStore(); updateHeader();
-    emitLevelCompleted(stars); emitGameUpdate(); emitRangeIfNeeded();
+    emitLevelCompleted(stars, gained); emitGameUpdate(); emitRangeIfNeeded();
     await delay(900);
     $('winStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
     $('winText').textContent = stars === 3 ? 'Hiç can kaybetmeden çözdün, harika!' : stars === 2 ? 'Güzel iş! Canını kaybetmeden çözersen 3 yıldız alırsın.' : 'Bölümü bitirdin. Kodları dikkatle okuyarak tekrar dene, daha çok yıldız kazan!';
-    $('winXp').textContent = firstTime ? '+' + level.xp + ' XP' : 'Tekrar oynadın ✓';
+    $('winXp').textContent = firstTime ? '+' + gained + ' XP' + (st.xpLost ? ' (−' + st.xpLost + ' kaybedilen can)' : '') : 'Tekrar oynadın ✓';
     var last = idx >= levels.length - 1; $('winNext').classList.toggle('hidden', last);
     $('winModal').classList.remove('hidden');
     st.busy = false;
+    if (!isStaff && !last) {   // öğrenci: bölüm bitince sonraki bölüm otomatik açılır
+      $('winNext').textContent = 'Sonraki bölüme geçiliyor…';
+      var wonIdx = idx;
+      setTimeout(function () { if (idx === wonIdx && !$('winModal').classList.contains('hidden')) { $('winModal').classList.add('hidden'); openLevel(idx + 1); } }, 2600);
+    } else { $('winNext').textContent = 'Sonraki ▶'; }
   }
 
   // ------------------------------------------------------------------ seviye açma / seçici
@@ -236,7 +248,7 @@
   function updateHeader() {
     var done = levels.filter(isDone).length;
     $('pillProgress').textContent = done + ' / ' + levels.length;
-    $('pillXp').textContent = '⭐ ' + ALL.reduce(function (s, l) { return s + (store.done[l.id] ? l.xp : 0); }, 0) + ' XP';
+    $('pillXp').textContent = '⭐ ' + ALL.reduce(function (s, l) { return s + (store.done[l.id] ? (store.done[l.id].xp != null ? store.done[l.id].xp : l.xp) : 0); }, 0) + ' XP';
     $('btnPrev').disabled = idx <= 0; $('btnNext').disabled = idx >= levels.length - 1 || idx + 1 > unlockedMax();
   }
   function prepare(l) {
@@ -282,13 +294,13 @@
   function levelsList() { return levels.map(function (l) { return { id: l.id, name: l.title, completed: isDone(l), stars: store.done[l.id] ? store.done[l.id].stars : 0 }; }); }
   function post(m) { try { if (window.parent && window.parent !== window) window.parent.postMessage(m, '*'); } catch (e) {} }
   function emitGameUpdate() { post({ type: 'GAME_UPDATE', source: 'dot-cards', assignmentId: assignmentId || null, assignmentTitle: assignmentTitle, levelStart: levelStart, levelEnd: endEff(), levels: levelsList(), currentLevelIndex: idx, progressPercent: pct() }); }
-  function emitLevelCompleted(stars) {
-    post({ type: 'LEVEL_COMPLETED', source: 'dot-cards', assignmentId: assignmentId || null, assignmentTitle: assignmentTitle, levelId: String(level.id), levelNo: idx + 1, levelStart: levelStart, levelEnd: endEff(), completedLevelIds: relIds(), currentLevelIndex: idx, percent: pct(), progressPercent: pct(), xp: level.xp, stars: stars, elapsedSeconds: elapsed(), levels: levelsList() });
+  function emitLevelCompleted(stars, gained) {
+    post({ type: 'LEVEL_COMPLETED', source: 'dot-cards', assignmentId: assignmentId || null, assignmentTitle: assignmentTitle, levelId: String(level.id), levelNo: idx + 1, levelStart: levelStart, levelEnd: endEff(), completedLevelIds: relIds(), currentLevelIndex: idx, percent: pct(), progressPercent: pct(), xp: gained != null ? gained : level.xp, stars: stars, elapsedSeconds: elapsed(), levels: levelsList() });
   }
   function emitRangeIfNeeded() {
     if (!isAssignmentMode || rangeCompleteFired || !levels.length || levels.filter(isDone).length < levels.length) return;
     rangeCompleteFired = true;
-    post({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'dot-cards', assignmentId: assignmentId, assignmentTitle: assignmentTitle, levelStart: levelStart, levelEnd: endEff(), completedLevelIds: relIds(), xp: levels.reduce(function (s, l) { return s + l.xp; }, 0), elapsedSeconds: elapsed(), currentLevelIndex: idx });
+    post({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'dot-cards', assignmentId: assignmentId, assignmentTitle: assignmentTitle, levelStart: levelStart, levelEnd: endEff(), completedLevelIds: relIds(), xp: levels.reduce(function (s, l) { var r = store.done[l.id]; return s + (r && r.xp != null ? r.xp : l.xp); }, 0), elapsedSeconds: elapsed(), currentLevelIndex: idx });
   }
   function resolveGrant() {
     if (isStaff || !needsGrantCheck) return Promise.resolve();
@@ -308,7 +320,6 @@
     if (level && level.mode === 'roam' && KEYDIR[ev.key]) { ev.preventDefault(); roamMove(KEYDIR[ev.key]); return; }
     if (ev.key >= '1' && ev.key <= '9' && st && level.mode !== 'roam') { var id = st.hand[+ev.key - 1]; if (id) playCard(id); return; }
     if (ev.key === 'r' || ev.key === 'R') { restartLevel(true); return; }
-    if (ev.key === 'h' || ev.key === 'H') showHint();
   }
   function bind() {
     document.addEventListener('keydown', onKey);
@@ -321,7 +332,7 @@
     $('btnHint').addEventListener('click', showHint);
     $('btnSound').addEventListener('click', function () { soundOn = !soundOn; $('btnSound').textContent = soundOn ? '🔊' : '🔇'; try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (e) {} });
     Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', closeModals); });
-    Array.prototype.forEach.call(document.querySelectorAll('#roamPad button'), function (b) { b.addEventListener('click', function () { roamMove(b.dataset.dir); }); });
+    Array.prototype.forEach.call(document.querySelectorAll('#roamPad button'), function (b) { b.tabIndex = -1; });  // yön düğmeleri sadece gösterge; hareket klavyeyle
     $('winNext').addEventListener('click', function () { $('winModal').classList.add('hidden'); openLevel(idx + 1); });
     $('winRetry').addEventListener('click', function () { $('winModal').classList.add('hidden'); restartLevel(); });
     $('btnClose').addEventListener('click', function () { post({ type: 'REQUEST_CLOSE_ACTIVITY', source: 'dot-cards' }); });
@@ -330,11 +341,14 @@
 
   function init() {
     loadStore();
+    if (isCompetition) { store.done = {}; store.last = 0; }   // yarışmada her giriş sıfırdan, bölümler sırayla açılır
     resolveGrant().then(function () {
       if (grantDenied) { document.body.innerHTML = '<div style="padding:40px;max-width:520px;margin:60px auto;text-align:center;font:800 17px Nunito,sans-serif;color:#7f1d1d;background:#fee2e2;border-radius:20px">Bu oyuna sadece atanmış ödev aralığından erişebilirsiniz.</div>'; return; }
       levels = ALL.filter(function (l) { return l.id >= levelStart && l.id <= levelEndParam; });
       levels.forEach(prepare);
       $('btnSound').textContent = soundOn ? '🔊' : '🔇';
+      $('btnHint').classList.add('hidden');
+      if (!isStaff) { ['btnLevels', 'btnPrev', 'btnNext'].forEach(function (id) { $(id).classList.add('hidden'); }); }   // öğrenci bölümler arasında gezinemez
       bind();
       var start = levels.length ? Math.min(unlockedMax(), levels.length - 1) : 0;
       if (isStaff) start = Math.min(store.last || 0, levels.length - 1);

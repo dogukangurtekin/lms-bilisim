@@ -785,7 +785,7 @@
             + '<div class="pl-body">' + esc(i.body) + '</div>'
             + '<div class="pl-meta">' + [i.subject, i.grade_level ? i.grade_level + '. sınıf' : '', i.unit].filter(Boolean).map(esc).join(' · ') + '</div>'
             + '<button type="button" class="pl-add"' + (used.has(i.id) ? ' disabled>✓ Sınavda' : '>+ Sınava ekle') + '</button></div>'
-        ).join('') : '<div class="xe-empty">Havuzda uygun soru bulunamadı.</div>';
+        ).join('') : '<div class="xe-empty">Havuzda uygun soru bulunamadı.' + ($('pl-match').checked ? '<br><small>“Sınavın dersi / düzeyiyle sınırla” açık; kapatıp tüm havuza bakabilirsin.</small>' : '') + '</div>';
     }
     function addFromBank(i) {
         if (state.questions.length >= 300) { setStatus('err', 'Bir sınava en fazla 300 soru eklenebilir.'); return; }

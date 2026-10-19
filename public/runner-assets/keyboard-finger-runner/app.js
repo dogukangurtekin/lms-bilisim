@@ -4,6 +4,12 @@
   var KB = window.KBVisual, BYCH = KB.BYCH, BYCODE = KB.BYCODE, COLORS = KB.COLORS, FNAME = KB.FNAME;
   var kb = KB.mount($('#kb'), $('#hands'));
   var TOTAL = 1000;
+  /* canlı yarışma modu: ?assignmentId=competition-N&from=a&to=b */
+  var qp = new URLSearchParams(location.search), asg = qp.get('assignmentId') || '';
+  var comp = /^competition-\d+$/.test(asg), cFrom = Math.max(1, Math.min(TOTAL, parseInt(qp.get('from'), 10) || 1));
+  var cTo = Math.max(cFrom, Math.min(TOTAL, parseInt(qp.get('to'), 10) || cFrom));
+  function post(m) { try { if (window.parent && window.parent !== window) window.parent.postMessage(m, '*'); } catch (e) {} }
+  if (comp) document.body.classList.add('comp');
 
   /* ================= müfredat: sıralar (dünyalar) ================= */
   var WORLDS = [
@@ -169,7 +175,14 @@
       el.innerHTML = ch && k ? '<div class="keytile" style="background:' + COLORS[k.f] + '">' + ch.toLocaleUpperCase('tr') + '</div>' : '';
     } else {
       var h = '';
-      for (var i = 0; i < text.length; i++) { var c = text.charAt(i), cl = 'ch' + (i < pos ? ' done' : i === pos ? ' cur' : '') + (c === ' ' ? ' sp' : ''); h += '<span class="' + cl + '">' + (c === ' ' ? '&nbsp;' : c) + '</span>'; }
+      var inW = false;
+      for (var i = 0; i < text.length; i++) {
+        var c = text.charAt(i), cl = 'ch' + (i < pos ? ' done' : i === pos ? ' cur' : '') + (c === ' ' ? ' sp' : '');
+        if (c !== ' ' && !inW) { h += '<span class="wd">'; inW = true; }
+        if (c === ' ' && inW) { h += '</span>'; inW = false; }
+        h += '<span class="' + cl + '">' + (c === ' ' ? '&nbsp;' : c) + '</span>';
+      }
+      if (inW) h += '</span>';
       el.innerHTML = h; var cu = el.querySelector('.cur'); if (cu) el.scrollTop = Math.max(0, cu.offsetTop - el.offsetTop - 60);
     }
     $('#progBar').style.width = (pos / text.length * 100) + '%';
@@ -212,7 +225,8 @@
     if (e.code === 'Space' || /^(Backspace|Quote|Slash)$/.test(e.code)) e.preventDefault();
     press(e.code);
   });
-  $('#kb').addEventListener('mousedown', function (e) { var k = e.target.closest('.k'); if (k && view === 'play') press(k.dataset.code); });
+  // Ekrandaki klavye sadece gösterge: fareyle/dokunarak harf girilemez, yalnızca gerçek klavye tuşları sayılır.
+  $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
 
   function finish() {
     finished = true; stopTimer(); finalSec = Math.max(1, (Date.now() - startAt) / 1000);
@@ -223,16 +237,21 @@
     if (!old || s > old.s || (s === old.s && wpm > old.w)) store.done[cur.n] = { s: s, w: wpm, a: acc };
     else if (old && wpm > old.w) old.w = wpm;
     persist();
+    if (comp && s > 0) {
+      var doneN = cur.n - cFrom + 1, totN = cTo - cFrom + 1;
+      post({ type: 'LEVEL_COMPLETED', source: 'keyboard-finger-runner', assignmentId: asg, levelId: String(cur.n), levelNo: cur.n, levelStart: cFrom, levelEnd: cTo, currentLevelIndex: cur.n - 1, progressPercent: Math.round(doneN / totN * 100), xp: s * 10, stars: s, elapsedSeconds: Math.round(finalSec) });
+      if (cur.n >= cTo) post({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'keyboard-finger-runner', assignmentId: asg, levelStart: cFrom, levelEnd: cTo, xp: 0, currentLevelIndex: cur.n - 1 });
+    }
     $('#stars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
     $('#resTitle').textContent = s === 3 ? 'Mükemmel!' : s === 2 ? 'Çok iyi!' : s === 1 ? 'Bölüm geçildi!' : 'Tekrar dene';
     $('#resText').textContent = 'Doğruluk %' + acc + ' · ' + wpm + ' kelime/dk · ' + Math.round(finalSec) + ' sn · ' + errors + ' hata';
     $('#resGoal').textContent = s === 0 ? 'Geçmek için en az %80 doğruluk gerekir.' : s < 3 ? '3 yıldız için %97 doğruluk ve ' + cur.target + ' kelime/dk gerekir.' : 'Hedefi aştın!';
-    $('#btnNext').style.display = s >= 1 && cur.n < TOTAL ? '' : 'none';
+    $('#btnNext').style.display = s >= 1 && cur.n < (comp ? cTo : TOTAL) ? '' : 'none';
     $('#result').hidden = false;
   }
   $('#btnAgain').addEventListener('click', function () { startLevel(cur.n); });
   $('#btnNext').addEventListener('click', function () { if (cur.n < TOTAL) startLevel(cur.n + 1); });
 
-  renderMenu(); show('menu');
+  if (comp) startLevel(cFrom); else { renderMenu(); show('menu'); }
   window.KBF = { level: level, WORLDS: WORLDS };
 })();

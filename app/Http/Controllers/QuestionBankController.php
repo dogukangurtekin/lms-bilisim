@@ -52,7 +52,10 @@ class QuestionBankController extends Controller
             $q->where('owner_id', $user->id);
         }
         if (($s = trim((string) $request->query('subject', ''))) !== '') {
-            $q->where('subject', 'like', '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $s).'%');
+            $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $s).'%';
+            // Sınav dersi ("BİLİŞİM TEKNOLOJİLERİ VE YAZILIM DERSİ") havuzdaki kısa ders adını ("Bilişim Teknolojileri") içerebilir; iki yönde de eşleştir.
+            $q->where(fn ($w) => $w->where('subject', 'like', $like)
+                ->orWhereRaw("subject <> '' and ? like concat('%', replace(replace(replace(subject, '\\\\', ''), '%', ''), '_', ''), '%')", [$s]));
         }
         if (($g = (int) $request->query('grade', 0)) > 0) {
             $q->where('grade_level', $g);

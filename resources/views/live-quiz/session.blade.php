@@ -7,6 +7,7 @@
     $left = (array) ($current?->options['left'] ?? []);
     $right = (array) ($current?->options['right'] ?? []);
 @endphp
+@include('competitions._theme')
 <style>
 .lq-timer-bar{height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:8px}
 .lq-timer-fill{height:100%;background:linear-gradient(90deg,#22c55e,#4f46e5);width:100%;transition:width .25s linear}
@@ -29,22 +30,25 @@
 <div class="top"><h1>Canli Quiz Oturumu</h1></div>
 
 @if($session->status === 'lobby')
-<div class="card" style="margin-bottom:12px;text-align:center;padding:28px;">
-    <p style="margin:0;color:#64748b;font-weight:700;">Katilim Kodu</p>
-    <div class="lq-lobby-code">{{ $session->join_code }}</div>
-    <p style="margin-top:8px;">Ogrenciler koda girip lobiye katilsin. Herkes hazir oldugunda asagidaki butona basin,
-       soru suresi <strong>o an</strong> tum ogrenciler icin ayni anda baslar.</p>
-    <p><strong>Lobide bekleyen ogrenci: <span id="lqLobbyJoined">{{ $session->participants()->count() }}</span></strong></p>
-    <div class="lq-participant-grid" id="lqParticipantList">
+<div class="cx" style="margin-bottom:12px;text-align:center;padding:28px;">
+    <div class="cx-bubbles"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p style="margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px">Katılım Kodu</p>
+    <div class="cx-keys" aria-label="{{ $session->join_code }}">
+        @foreach(str_split($session->join_code) as $ch)<span class="cx-key">{{ $ch }}</span>@endforeach
+    </div>
+    <p style="max-width:640px;margin:0 auto 10px">Öğrenciler <b style="color:#fff">Canlı Quiz</b> bölümünden bu kodu girip lobiye katılır. Herkes hazır olunca butona bas, soru süresi <b style="color:#fff">aynı anda</b> başlasın.</p>
+    <div class="cx-count"><span id="lqLobbyJoined">{{ $session->participants()->count() }}</span></div>
+    <p style="margin:2px 0 8px">lobide bekleyen öğrenci</p>
+    <div class="cx-chipwall lq-participant-grid" id="lqParticipantList" style="max-width:960px">
         @forelse($participantRows as $participant)
             <span class="lq-participant-chip">{{ $participant['student_name'] }}</span>
         @empty
             <span class="lq-participant-empty">Henüz katılan öğrenci yok.</span>
         @endforelse
     </div>
-    <form method="POST" action="{{ route('live-quiz.session.launch', $session) }}">
+    <form method="POST" action="{{ route('live-quiz.session.launch', $session) }}" style="margin-top:10px">
         @csrf
-        <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Baslat</button>
+        <button class="btn btn-start" type="submit">▶ Herkese Başlat</button>
     </form>
 </div>
 @else

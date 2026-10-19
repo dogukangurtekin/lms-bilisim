@@ -13,6 +13,7 @@ use App\Models\StudentReport;
 use App\Models\UserProfile;
 use App\Support\Utf8Text;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -205,6 +206,20 @@ class LiveQuizController extends Controller
         return redirect()->route('live-quiz.index')->with('ok', "{$closed} aktif quiz oturumu kapatıldı ve raporları hazırlandı.");
     }
 
+    /** O, 0, I ve 1 içermeyen (karışmayan) 6 karakterli katılım kodu. */
+    private function generateJoinCode(): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while (LiveQuizSession::query()->where('join_code', $code)->exists());
+
+        return $code;
+    }
+
     public function start(LiveQuiz $quiz)
     {
         $this->authorizeQuizManagement($quiz);
@@ -216,7 +231,7 @@ class LiveQuizController extends Controller
         $session = LiveQuizSession::query()->create([
             'live_quiz_id' => $quiz->id,
             'teacher_user_id' => auth()->id(),
-            'join_code' => strtoupper(Str::random(6)),
+            'join_code' => $this->generateJoinCode(),
             'status' => 'lobby',
             'phase' => 'lobby',
             'current_index' => 0,
@@ -436,6 +451,7 @@ class LiveQuizController extends Controller
     public function studentPlay(LiveQuizSession $session)
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
+        $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless(in_array($session->status, ['lobby', 'live', 'finished'], true), 403);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
@@ -485,6 +501,7 @@ class LiveQuizController extends Controller
     public function studentSessionStatus(LiveQuizSession $session)
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
+        $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
 
@@ -504,6 +521,7 @@ class LiveQuizController extends Controller
     public function studentAnswer(Request $request, LiveQuizSession $session)
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
+        $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
         if ($session->status !== 'live' || $session->phase !== 'question' || $session->is_locked) {
@@ -1119,16 +1137,43 @@ class LiveQuizController extends Controller
         }
 
         $joinedCount = $session->participants()->count();
-        $answeredCount = LiveQuizAnswer::query()
+        $answeredIds = LiveQuizAnswer::query()
             ->where('live_quiz_session_id', $session->id)
             ->where('question_index', $currentIndex)
-            ->count();
+            ->pluck('student_user_id')
+            ->unique()
+            ->values()
+            ->all();
+        $answeredCount = count($answeredIds);
 
-        if ($session->phase === 'question' && ($nowMs >= $endsAtMs || ($joinedCount > 0 && $answeredCount >= $joinedCount))) {
+        // Herkes cevapladıysa kalan süre beklenmez. "Herkes" = katılan ve ekranı açık olan öğrenciler:
+        // sayfayı kapatmış / bağlantısı kopmuş öğrenci yüzünden tüm sınıf boşuna beklemesin.
+        $allAnswered = $joinedCount > 0 && $answeredCount >= $joinedCount;
+        if (!$allAnswered && $answeredCount > 0 && $session->phase === 'question') {
+            $pending = $session->participants()
+                ->whereNotIn('student_user_id', $answeredIds)
+                ->pluck('student_user_id')
+                ->filter(fn ($id) => $this->studentRecentlySeen($session, (int) $id, $nowMs));
+            $allAnswered = $pending->isEmpty();
+        }
+
+        if ($session->phase === 'question' && ($nowMs >= $endsAtMs || $allAnswered)) {
             return $this->beginQuestionResults($session, $nowMs);
         }
 
         return $session->fresh(['quiz.questions']);
+    }
+
+    private function touchStudentPresence(LiveQuizSession $session, int $userId): void
+    {
+        Cache::put("lq:seen:{$session->id}:{$userId}", $this->nowMs(), 120);
+    }
+
+    private function studentRecentlySeen(LiveQuizSession $session, int $userId, int $nowMs): bool
+    {
+        $seen = (int) Cache::get("lq:seen:{$session->id}:{$userId}", 0);
+
+        return $seen > 0 && ($nowMs - $seen) <= 20000;
     }
 
     private function nowMs(): int

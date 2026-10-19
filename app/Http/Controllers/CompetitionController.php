@@ -28,6 +28,11 @@ class CompetitionController extends Controller
         'silent-teacher-runner',
         'connect-the-dots-runner',
         'bee-garden-runner',
+        'dot-cards-runner',
+        'word-bee-runner',
+        'number-bee-runner',
+        'flowchart-runner',
+        'web-lab-runner',
     ];
 
     private const JOIN_CODE_CHARACTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -51,6 +56,18 @@ class CompetitionController extends Controller
         return array_intersect_key($all, array_flip(self::ELIGIBLE_SLUGS));
     }
 
+    /** Oda oluşturma listesi: seviye tabanlı oyunlar + Klavye Yarışması (kendi oda ekranında açılır). */
+    private function listedGames(): array
+    {
+        $games = $this->eligibleGames();
+        $all = ActivityController::games();
+        if (isset($all['keyboard-race'])) {
+            $games['keyboard-race'] = $all['keyboard-race'];
+        }
+
+        return $games;
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -67,7 +84,7 @@ class CompetitionController extends Controller
         $classes = SchoolClass::query()->orderBy('name')->orderBy('section')->get();
 
         return view('competitions.index', [
-            'games' => $this->eligibleGames(),
+            'games' => $this->listedGames(),
             'rooms' => $rooms,
             'classes' => $classes,
         ]);
@@ -75,6 +92,11 @@ class CompetitionController extends Controller
 
     public function store(Request $request)
     {
+        // Klavye Yarışması farklı bir oda sistemiyle çalışır: öğretmen metni seçip odayı kendi ekranında açar.
+        if ($request->input('game_slug') === 'keyboard-race') {
+            return redirect()->route('keyboard-race.index');
+        }
+
         $games = $this->eligibleGames();
         $data = $request->validate([
             'game_slug' => ['required', 'string'],

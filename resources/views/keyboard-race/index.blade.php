@@ -156,7 +156,9 @@
 
 /* ---- Yeni nesil yazım arayüzü ---- */
 .rt-stage{position:relative;border-radius:16px;background:linear-gradient(160deg,#0f172a,#1e2a44);padding:18px 20px;min-height:150px;cursor:text;box-shadow:inset 0 0 0 1px rgba(148,163,184,.25)}
-.rt-stage .typing-box{background:transparent!important;border:0!important;padding:0!important;color:#64748b;font-family:"Consolas","Courier New",monospace;font-size:clamp(20px,2.4vw,28px)!important;line-height:2.1!important;max-height:calc(2.1em * 3);overflow:hidden;scroll-behavior:smooth;word-break:break-word}
+.rt-stage .typing-box{background:transparent!important;border:0!important;padding:0!important;color:#64748b;font-family:"Consolas","Courier New",monospace;font-size:clamp(20px,2.4vw,28px)!important;line-height:2.1!important;max-height:calc(2.1em * 3);overflow:hidden;scroll-behavior:smooth;word-break:normal;overflow-wrap:normal;white-space:normal}
+.rt-stage .rw{display:inline-block;white-space:nowrap}
+.rt-stage .rc.sp{white-space:pre}
 .rt-stage .rc{padding:2px 0;border-radius:6px;transition:background .08s}
 .rt-stage .rc.ok{color:#34d399}
 .rt-stage .rc.bad{color:#fff;background:#ef4444}
@@ -212,8 +214,8 @@
                     <select id="textTemplate" class="race-input" style="height:42px"></select>
                 </div>
                 <div style="grid-column:1 / -1">
-                    <label for="customRaceText" style="display:block;font-size:13px;margin-bottom:6px;color:#cbd5e1">Kendi metnin (opsiyonel)</label>
-                    <textarea id="customRaceText" rows="4" class="race-input" placeholder="Metni buraya yaz. Boş bırakırsan seçtiğin şablon kullanılır."></textarea>
+                    <label for="customRaceText" style="display:block;font-size:13px;margin-bottom:6px;color:#cbd5e1">Yarış metni (şablon seçince burada görünür, değiştirirsen "Kendi metnim" olur)</label>
+                    <textarea id="customRaceText" rows="4" class="race-input" placeholder="Metni buraya yaz veya yukarıdan bir şablon seç."></textarea>
                 </div>
             </div>
         </div>
@@ -386,12 +388,14 @@
     };
 
     const raceTextTemplates = [
-        'çocuklar bugün özgün bir şiir okuyup güçlü sözcükleri özenle seçti ve sınıftaki tüm arkadaşlarıyla güzel düşüncelerini paylaştı',
-        'öğretmen küçük bir ışık altında çalışan öğrencilerin çözüm üretirken sabırlı olmasını ve hiçbir ayrıntıyı gözden kaçırmamasını istedi',
-        'bilgisayar kullanırken doğru tuşlara özenle basmak yazı hızını geliştirir çünkü düzenli çalışma güçlü bir alışkanlık oluşturur',
-        'yağmurlu bir öğleden sonra gökyüzündeki renkli gökkuşağını izleyen çocuklar doğanın şaşırtıcı güzelliği üzerine konuştu',
-        'özgür düşünceyle üretilen yaratıcı projeler iş birliğini güçlendirir ve öğrencilerin çözüm odaklı çalışmasına önemli katkı sağlar',
+        'okul sınıf öğretmen öğrenci defter kalem kitap çanta tahta ders programı teneffüs zil ödev sınav karne not başarı çalışkan dikkatli sorumluluk saygı sevgi paylaşım dayanışma arkadaşlık kütüphane laboratuvar atölye bahçe spor salonu konferans salonu sabah güne güçlü başlamak için kahvaltı yapmak düzenli uyumak ve zamanında okula gelmek gerekir her ders yeni bir kapı açar merak eden öğrenci araştırır soru sorar cevap arar ve öğrendiklerini arkadaşlarıyla paylaşır matematik fen bilimleri türkçe sosyal bilgiler hayat bilgisi görsel sanatlar müzik beden eğitimi yabancı dil bilişim teknolojileri rehberlik dersleri öğrencilerin her yönden gelişmesini sağlar bilgi paylaştıkça çoğalır emek verilen her çalışma bir gün mutlaka karşılığını bulur okumak yazmak dinlemek konuşmak düşünmek üretmek öğrenmenin temel basamaklarıdır sınıfta söz alarak konuşmak başkalarını sabırla dinlemek iyi bir öğrencinin özelliğidir proje ödevleri takım çalışması sunum hazırlama araştırma yapma ve rapor yazma becerilerini geliştirir her hafta yapılan değerlendirme çalışmaları eksikleri görmemize yardım eder',
+        'bilgisayar klavye fare ekran yazıcı tarayıcı kulaklık mikrofon kamera işlemci bellek depolama internet ağ sunucu bulut yazılım donanım işletim sistemi program uygulama dosya klasör simge pencere menü araç çubuğu masaüstü kaydetmek açmak kapatmak kopyalamak yapıştırmak silmek taşımak adlandırmak arşivlemek şifre güvenlik koruma yedekleme virüs güncelleme kullanıcı hesap oturum açmak çıkış yapmak algoritma adım adım çözüm yolu bulmaktır değişken sayı metin liste döngü koşul fonksiyon hata ayıklama test etmek yeni bir proje oluşturmak için önce problemi anlamak sonra planlamak ardından kodlamak en sonunda denemek gerekir blok kodlama ile çocuklar mantıklı düşünmeyi öğrenir robot sensör motor hareket ışık ses algılama programlama yaratıcı bir süreçtir güvenli internet kullanımı için kişisel bilgilerimizi paylaşmamalı tanımadığımız kişilerle yazışmamalı ve şüpheli bağlantılara tıklamamalıyız dijital vatandaş olmak sorumlu davranmayı gerektirir',
+        'güneş ay dünya yıldız gezegen uydu gökyüzü evren uzay teleskop roket astronot yörünge gece gündüz mevsim ilkbahar yaz sonbahar kış sıcaklık yağmur kar dolu rüzgar bulut şimşek fırtına gökkuşağı hava durumu nem basınç su döngüsü buharlaşma yoğuşma çökelme akarsu göl deniz okyanus yeraltı suyu bitki hayvan canlı cansız hücre doku organ sistem solunum dolaşım sindirim boşaltım sinir kas kemik iskelet kalp akciğer beyin mide bağırsak böbrek karaciğer deney gözlem ölçüm tahmin hipotez sonuç rapor madde atom molekül element bileşik karışım katı sıvı gaz erime donma kaynama ısı ışık ses elektrik mıknatıs kuvvet hareket enerji iş güç hız yol zaman bilim insanları merak eder soru sorar deney yapar sonuçları dikkatle yorumlar ve yeni keşiflere ulaşır doğayı korumak geri dönüşüm temiz enerji ağaç dikmek su tasarrufu yapmak gelecek nesillere yaşanabilir bir dünya bırakmanın en güzel yoludur',
+        'sayı rakam toplama çıkarma çarpma bölme kesir ondalık yüzde oran orantı ortalama denklem eşitsizlik problem çözüm üçgen kare dikdörtgen daire çember çokgen açı kenar köşe çevre alan hacim simetri dönüşüm tablo grafik veri olasılık kümeler mantık örüntü sıralama karşılaştırma tahmin işlem öncelik harita yön kuzey güney doğu batı paralel meridyen kıta ülke şehir köy kasaba bölge iklim bitki örtüsü nüfus göç ticaret tarım sanayi turizm ulaşım iletişim tarih cumhuriyet atatürk bayram vatan millet bayrak istiklal marşı demokrasi seçim hak özgürlük adalet eşitlik görev sorumluluk aile toplum kültür gelenek görenek örf adet el sanatları müze anıt kale cami köprü hamam çeşme kitabe yazıt uygarlık medeniyet keşif icat buluş mimar sinan ilk çağ orta çağ yeni çağ yakın çağ geçmişimizi bilmek bugünü anlamamıza ve geleceği planlamamıza yardımcı olur',
+        'türkçe harf hece sözcük cümle paragraf metin başlık konu ana fikir yardımcı fikir özet kompozisyon hikaye masal fıkra şiir dize kıta uyak ölçü tema kahraman olay yer zaman anlatıcı diyalog betimleme öyküleme açıklama sözlük eş anlamlı zıt anlamlı eş sesli deyim atasözü yazım kuralları noktalama büyük harf küçük harf ünlü ünsüz kalın ince düz yuvarlak geniş dar kitap okumak hayal gücümüzü geliştirir kelime dağarcığımızı zenginleştirir ve bizi farklı dünyalara götürür dürüstlük çalışkanlık yardımseverlik cesaret hoşgörü nezaket sabır merhamet vefa cömertlik paylaşmak karşılıksız iyilik yapmak büyüklere saygı küçüklere sevgi göstermek doğruyu söylemek verilen sözü tutmak başkalarının eşyasına zarar vermemek temiz ve düzenli olmak çevreyi korumak hayvanları sevmek ağaçlara bakmak israf etmemek zamanı verimli kullanmak hedef belirlemek planlı çalışmak vazgeçmemek hata yapınca üzülmek yerine denemek ve yeniden denemek başarının sırrıdır',
+        'pencere kapı masa sandalye dolap çanta ayakkabı mont eldiven atkı bere şemsiye saat takvim harita pusula dürbün büyüteç cetvel gönye pergel silgi kalemtıraş boya fırça palet tuval resim heykel seramik müzik gitar piyano keman flüt davul ritim melodi şarkı koro orkestra tiyatro sahne dekor kostüm sinema film belgesel çizgi film kitap dergi gazete haber röportaj makale fotoğraf albüm hatıra gezi piknik kamp doğa yürüyüşü bisiklet yüzme futbol basketbol voleybol atletizm jimnastik satranç dama bulmaca zeka oyunları takım ruhu centilmenlik adil oyun kazanmak kadar kaybetmeyi de kabullenmek gerekir sağlıklı beslenmek bol su içmek mevsim sebze ve meyvelerini tüketmek haftada üç gün spor yapmak düzenli uyumak ekran karşısında geçirilen süreyi sınırlamak vücudumuzun ve zihnimizin iyi çalışmasını sağlar günün sonunda yaptıklarımızı düşünmek yarın için küçük hedefler koymak gelişmenin en güzel yoludur',
     ];
+    const raceTemplateNames = ['Okul ve ders', 'Bilişim teknolojileri', 'Fen bilimleri', 'Matematik ve sosyal bilgiler', 'Türkçe ve değerler', 'Karışık günlük kelimeler'];
     const raceSample = raceTextTemplates[0];
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
@@ -426,15 +430,35 @@
     function getSelectedRaceText() {
         const custom = normalizeAndSanitizeRaceText(el.customRaceText?.value || '');
         if (custom.length >= 30) return custom;
-        return normalizeAndSanitizeRaceText(el.textTemplate?.value || raceSample);
+        const tpl = el.textTemplate?.value;
+        return normalizeAndSanitizeRaceText(tpl && tpl !== CUSTOM_TEMPLATE ? tpl : raceSample);
     }
+
+    const CUSTOM_TEMPLATE = '__custom__';
 
     function initializeTeacherTextConfig() {
         if (!el.textTemplate) return;
         el.textTemplate.innerHTML = raceTextTemplates
-            .map((text, index) => `<option value="${escapeHtml(text)}">Şablon ${index + 1}</option>`)
-            .join('');
+            .map((text, index) => `<option value="${escapeHtml(text)}">Şablon ${index + 1} · ${raceTemplateNames[index] || 'Genel'}</option>`)
+            .join('') + `<option value="${CUSTOM_TEMPLATE}">Kendi metnim</option>`;
         el.textTemplate.value = raceSample;
+        if (el.customRaceText) el.customRaceText.value = raceSample;
+
+        // Şablon seçilince metni kutuda göster; kutuda değişiklik yapılırsa seçimi otomatik "Kendi metnim" yap.
+        el.textTemplate.addEventListener('change', () => {
+            if (!el.customRaceText) return;
+            if (el.textTemplate.value === CUSTOM_TEMPLATE) {
+                el.customRaceText.focus();
+                return;
+            }
+            el.customRaceText.value = el.textTemplate.value;
+        });
+        el.customRaceText?.addEventListener('input', () => {
+            const current = el.textTemplate.value;
+            if (current !== CUSTOM_TEMPLATE && el.customRaceText.value !== current) {
+                el.textTemplate.value = CUSTOM_TEMPLATE;
+            }
+        });
     }
 
     async function api(path, options = {}) {
@@ -852,30 +876,92 @@
     }
 
     function buildRaceReportHtml(report) {
-        const rows = Array.isArray(report?.participants) ? report.participants : [];
+        let rows = Array.isArray(report?.participants) ? report.participants.slice() : [];
+        // Sunucu raporu boş dönerse ekrandaki son sıralamadan doldur.
+        if (!rows.length && Array.isArray(state.lastBoardRows)) rows = state.lastBoardRows.slice();
+        const esc = (v) => escapeHtml(String(v ?? ''));
+        const num = (v, d = 1) => Number(v || 0).toFixed(d);
+        const fmtDate = (iso) => {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            return Number.isNaN(d.getTime()) ? '-' : d.toLocaleString('tr-TR');
+        };
+        const fmtDur = (sec) => {
+            if (sec === null || sec === undefined || sec === '') return '-';
+            const n = Math.max(0, Number(sec));
+            return `${Math.floor(n / 60)} dk ${n % 60} sn`;
+        };
+        const count = rows.length;
+        const avg = (key) => count ? rows.reduce((t, r) => t + Number(r[key] || 0), 0) / count : 0;
+        const avgWpm = report?.avgWpm ?? avg('wpm');
+        const avgAcc = report?.avgAccuracy ?? avg('accuracy');
+        const avgProg = report?.avgProgress ?? avg('progress');
+        const finishedCount = rows.filter((r) => Number(r.progress || 0) >= 99.9).length;
+        const totalXp = rows.reduce((t, r) => t + Number(r.xpEarned || 0), 0);
+        const best = rows.reduce((m, r) => (!m || Number(r.wpm || 0) > Number(m.wpm || 0) ? r : m), null);
+        const bestAcc = rows.reduce((m, r) => (!m || Number(r.accuracy || 0) > Number(m.accuracy || 0) ? r : m), null);
+        const medals = ['🥇', '🥈', '🥉'];
+        const level = (r) => {
+            const w = Number(r.wpm || 0), a = Number(r.accuracy || 0);
+            if (w >= 40 && a >= 95) return 'Çok iyi';
+            if (w >= 25 && a >= 90) return 'İyi';
+            if (w >= 12 && a >= 80) return 'Gelişiyor';
+            return 'Çalışmalı';
+        };
         const list = rows.map((r, idx) => `
             <tr>
-                <td>${idx + 1}</td>
-                <td>${r.userName || '-'}</td>
-                <td>${Number(r.progress || 0).toFixed(1)}%</td>
-                <td>${Number(r.wpm || 0).toFixed(1)}</td>
-                <td>${Number(r.accuracy || 0).toFixed(1)}%</td>
-                <td>${r.correctCharacters ?? 0}</td>
-                <td>${r.completionSeconds ?? '-'}</td>
-                <td>${r.elapsedSeconds ?? 0}</td>
-                <td>${r.xpEarned ?? 0}</td>
-            </tr>
-        `).join('');
-        return `
-<!doctype html>
-<html lang="tr"><head><meta charset="UTF-8"><title>Klavye Yarisi Raporu</title>
-<style>body{font-family:Arial,sans-serif;padding:16px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;font-size:13px}th{background:#f3f4f6;text-align:left}</style>
-</head><body>
-<h2>Klavye Yarisi Raporu</h2>
-<p><b>Oda:</b> ${report?.roomCode || '-'} | <b>Ad:</b> ${report?.roomName || '-'}</p>
-<p><b>Baslangic:</b> ${report?.startedAt || '-'} | <b>Bitis:</b> ${report?.finishedAt || '-'} | <b>Toplam Sure:</b> ${report?.durationSeconds ?? '-'} sn</p>
-<table><thead><tr><th>#</th><th>Ogrenci</th><th>Ilerleme</th><th>WPM</th><th>Dogruluk</th><th>Dogru Harf</th><th>Bitiris (sn)</th><th>Gecen Sure (sn)</th><th>XP</th></tr></thead><tbody>${list}</tbody></table>
-<script>window.onload=()=>window.print();<\/script>
+                <td class="c">${medals[idx] || idx + 1}</td>
+                <td><b>${esc(r.userName) || '-'}</b></td>
+                <td class="c">${num(r.progress)}%<div class="bar"><i style="width:${Math.min(100, Number(r.progress || 0))}%"></i></div></td>
+                <td class="c">${num(r.wpm)}</td>
+                <td class="c">${num(r.accuracy)}%</td>
+                <td class="c">${r.correctCharacters ?? 0}</td>
+                <td class="c">${r.completionSeconds != null ? fmtDur(r.completionSeconds) : 'Bitirmedi'}</td>
+                <td class="c">${fmtDur(r.elapsedSeconds ?? 0)}</td>
+                <td class="c">${r.xpEarned ?? 0}</td>
+                <td class="c">${level(r)}</td>
+            </tr>`).join('') || '<tr><td colspan="10" class="c" style="padding:24px;color:#64748b">Bu yarışma için henüz öğrenci sonucu yok.</td></tr>';
+        const text = String(report?.text || '').trim();
+        const csvRows = [['Sıra', 'Öğrenci', 'İlerleme %', 'Kelime/dk', 'Doğruluk %', 'Doğru harf', 'Bitiş (sn)', 'Geçen süre (sn)', 'XP']]
+            .concat(rows.map((r, i) => [i + 1, r.userName || '', num(r.progress), num(r.wpm), num(r.accuracy), r.correctCharacters ?? 0, r.completionSeconds ?? '', r.elapsedSeconds ?? 0, r.xpEarned ?? 0]));
+        const csv = csvRows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+        const csvHref = 'data:text/csv;charset=utf-8,' + encodeURIComponent('﻿' + csv);
+        return `<!doctype html>
+<html lang="tr"><head><meta charset="UTF-8"><title>Klavye Yarışması Raporu</title>
+<style>
+*{box-sizing:border-box}body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:24px;color:#0f172a;background:#fff}
+h1{margin:0 0 4px;font-size:24px}.sub{color:#475569;font-size:14px;margin:0 0 16px}
+.tools{display:flex;gap:8px;margin-bottom:16px}.tools button,.tools a{border:0;background:#4f46e5;color:#fff;padding:9px 16px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none}.tools a{background:#0f766e}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:14px;font-size:13px}.meta div{background:#f1f5f9;border-radius:10px;padding:8px 12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}.card{border:1px solid #e2e8f0;border-radius:12px;padding:12px;text-align:center}.card small{display:block;color:#64748b;font-size:12px}.card b{font-size:24px}
+table{border-collapse:collapse;width:100%;margin-top:8px}th,td{border:1px solid #e2e8f0;padding:8px;font-size:13px}th{background:#eef2ff;text-align:center}td.c{text-align:center}tr:nth-child(even) td{background:#f8fafc}
+.bar{height:6px;background:#e2e8f0;border-radius:9px;margin-top:4px;overflow:hidden}.bar i{display:block;height:100%;background:#22c55e}
+h2{font-size:16px;margin:22px 0 6px}.txt{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-family:Consolas,monospace;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.note{font-size:12px;color:#64748b;margin-top:14px}
+@media print{.tools{display:none}body{padding:0}@page{margin:14mm}}
+</style></head><body>
+<h1>⌨️ Klavye Yarışması Raporu</h1>
+<p class="sub">${esc(report?.roomName) || 'Klavye yarışması'} · Oda kodu: <b>${esc(report?.roomCode) || '-'}</b></p>
+<div class="tools"><button onclick="window.print()">Yazdır / PDF</button><a href="${csvHref}" download="klavye-yarisma-raporu.csv">Excel (CSV) indir</a></div>
+<div class="meta">
+  <div><b>Başlangıç:</b> ${fmtDate(report?.startedAt)}</div>
+  <div><b>Bitiş:</b> ${fmtDate(report?.finishedAt)}</div>
+  <div><b>Süre:</b> ${fmtDur(report?.durationSeconds)}</div>
+  <div><b>Metin:</b> ${report?.totalWords ?? '-'} kelime · ${report?.totalCharacters ?? '-'} karakter</div>
+</div>
+<div class="cards">
+  <div class="card"><small>Katılan öğrenci</small><b>${count}</b></div>
+  <div class="card"><small>Metni bitiren</small><b>${finishedCount}</b></div>
+  <div class="card"><small>Ortalama hız</small><b>${num(avgWpm)}</b><small>kelime/dk</small></div>
+  <div class="card"><small>Ortalama doğruluk</small><b>%${num(avgAcc)}</b></div>
+  <div class="card"><small>Ortalama ilerleme</small><b>%${num(avgProg)}</b></div>
+  <div class="card"><small>Toplam XP</small><b>${totalXp}</b></div>
+</div>
+${best ? `<p><b>En hızlı:</b> ${esc(best.userName)} (${num(best.wpm)} kelime/dk) &nbsp;·&nbsp; <b>En doğru:</b> ${esc(bestAcc.userName)} (%${num(bestAcc.accuracy)})</p>` : ''}
+<h2>Öğrenci Sonuçları</h2>
+<table><thead><tr><th>Sıra</th><th>Öğrenci</th><th>İlerleme</th><th>Kelime/dk</th><th>Doğruluk</th><th>Doğru harf</th><th>Bitiriş süresi</th><th>Geçen süre</th><th>XP</th><th>Değerlendirme</th></tr></thead><tbody>${list}</tbody></table>
+${text ? `<h2>Yarış Metni</h2><div class="txt">${esc(text)}</div>` : ''}
+<p class="note">Değerlendirme: Çok iyi (40+ kelime/dk ve %95+ doğruluk), İyi (25+ ve %90+), Gelişiyor (12+ ve %80+), Çalışmalı (diğer). Rapor ${new Date().toLocaleString('tr-TR')} tarihinde oluşturuldu.</p>
 </body></html>`;
     }
 
@@ -913,8 +999,9 @@
 
     function openRaceReport() {
         if (!state.finalReport) return;
-        const win = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=800');
-        if (!win) return;
+        // 'noopener' kullanılırsa window.open null döner ve sekme boş kalır; bu yüzden kullanılmıyor.
+        const win = window.open('', '_blank', 'width=1100,height=800');
+        if (!win) { setStatus('Rapor penceresi engellendi. Tarayıcıda açılır pencerelere izin verin.'); return; }
         win.document.open();
         win.document.write(buildRaceReportHtml(state.finalReport));
         win.document.close();
@@ -986,13 +1073,21 @@
     const kbv = window.KBVisual ? window.KBVisual.mount(document.getElementById('rtKb'), document.getElementById('rtHands')) : null;
 
     function renderTypingText(input, target) {
-        const chars = target.split('').map((char, i) => {
-            const shown = char === ' ' ? '&nbsp;' : escapeHtml(char);
-            const sp = char === ' ' ? ' sp' : '';
-            if (i < input.length) return `<span class="rc ${input[i] === char ? 'ok' : 'bad'}${sp}">${shown}</span>`;
-            if (i === input.length && state.startedAtMs && !state.finished) return `<span class="rc cur${sp}">${shown}</span>`;
-            return `<span class="rc${sp}">${shown}</span>`;
+        // Kelimeler bölünmesin: her kelime kendi nowrap kutusunda, satır sadece boşlukta kırılır.
+        const chars = [];
+        let word = '';
+        const flush = () => { if (word) { chars.push(`<span class="rw">${word}</span>`); word = ''; } };
+        target.split('').forEach((char, i) => {
+            const isSp = char === ' ';
+            const shown = isSp ? ' ' : escapeHtml(char);
+            const sp = isSp ? ' sp' : '';
+            let html;
+            if (i < input.length) html = `<span class="rc ${input[i] === char ? 'ok' : 'bad'}${sp}">${shown}</span>`;
+            else if (i === input.length && state.startedAtMs && !state.finished) html = `<span class="rc cur${sp}">${shown}</span>`;
+            else html = `<span class="rc${sp}">${shown}</span>`;
+            if (isSp) { flush(); chars.push(html); } else word += html;
         });
+        flush();
         el.typingText.innerHTML = chars.join('');
         const cur = el.typingText.querySelector('.rc.cur');
         if (cur) {
@@ -1078,6 +1173,7 @@
                 xpEarned: Number(row.xpEarned || row.xp_earned || 0),
             }))
             .sort((a, b) => (b.progress - a.progress) || (b.wpm - a.wpm) || (b.accuracy - a.accuracy));
+        state.lastBoardRows = rows;
         el.leaderboardWrap.style.display = 'block';
         el.leaderboard.classList.add('result-fade');
         el.leaderboard.innerHTML = rows.map((row, index) => `

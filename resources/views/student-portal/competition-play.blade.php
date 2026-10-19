@@ -1,52 +1,24 @@
 @extends('layout.app')
 @section('title','Canlı Yarışma')
 @section('content')
-<style>
-.comp-play-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
-.comp-play-badges{display:flex;gap:8px;flex-wrap:wrap}
-.comp-play-badge{background:#eef2ff;border:1px solid #c7d2fe;border-radius:999px;padding:6px 12px;font-weight:800;font-size:13px;color:#3730a3}
-.comp-play-timer-bar{height:12px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-bottom:14px}
-.comp-play-timer-fill{height:100%;background:linear-gradient(90deg,#22c55e,#4f46e5);width:100%;transition:width .25s linear}
-.comp-play-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
-.comp-play-frame-wrap{border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;background:#000;position:relative}
-.comp-play-frame-wrap iframe{width:100%;display:block;border:0}
-.comp-wait-stage{min-height:420px;display:grid;place-items:center}
-.comp-wait-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:26px;min-width:min(560px,92vw);text-align:center}
-.comp-wait-title{margin:0 0 8px;font-size:32px;font-weight:900}
-.comp-wait-count{font-size:64px;line-height:1;font-weight:900;margin:10px 0;color:#4f46e5}
-.comp-joined-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));justify-items:stretch;align-content:start;gap:8px;margin-top:16px;width:100%;max-width:none;text-align:left}
-.comp-joined-tile{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:7px;min-width:0;padding:7px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc}
-.comp-joined-tile img{width:32px;height:32px;border-radius:8px;object-fit:cover;border:1px solid #e5e7eb;background:#f1f5f9}
-.comp-joined-tile .empty{width:32px;height:32px;border-radius:8px;border:1px solid #e5e7eb;background:#f1f5f9;display:grid;place-items:center;color:#94a3b8;font-weight:800}
-.comp-joined-tile span{min-width:0;font-size:12px;color:#475569;text-align:left;overflow-wrap:anywhere;line-height:1.25}
-@media(max-width:1100px){.comp-joined-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:800px){.comp-joined-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:560px){.comp-joined-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.comp-joined-tile{padding:6px}}
-@media(max-width:360px){.comp-joined-grid{grid-template-columns:minmax(0,1fr)}}
+@include('competitions._theme')
 
-/* --- Bolum tamamlandi gecisi: konfeti + yumusak fade/scale ----------- */
-.comp-celebrate-wrap{position:relative}
-.comp-celebrate-fadeout{transition:opacity .5s ease,transform .5s ease;opacity:0;transform:scale(.97)}
-#compConfettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:9999}
-.comp-done-enter{opacity:0;transform:translateY(14px) scale(.96)}
-.comp-done-enter-active{opacity:1;transform:translateY(0) scale(1);transition:opacity .5s ease,transform .5s ease}
-.comp-trophy{font-size:56px;line-height:1;display:inline-block;animation:comp-trophy-bounce 1s ease 1}
-@keyframes comp-trophy-bounce{
-    0%{transform:scale(.2) rotate(-15deg);opacity:0}
-    55%{transform:scale(1.15) rotate(8deg);opacity:1}
-    75%{transform:scale(.95) rotate(-4deg)}
-    100%{transform:scale(1) rotate(0)}
-}
-</style>
-
+<div class="cx">
 <div class="comp-play-bar">
-    <h1 style="margin:0">{{ $gameName }} — Canlı Yarışma</h1>
+    <div class="cx-hero-icon">🎮</div>
+    <div>
+        <h1>{{ $gameName }}</h1>
+        <p style="margin:2px 0 0;color:rgba(255,255,255,.85);font-size:13px">Canlı Yarışma · Kod <b class="code">{{ $room->join_code }}</b></p>
+    </div>
     <div class="comp-play-badges">
-        <span class="comp-play-badge">Kod: {{ $room->join_code }}</span>
         @if($room->status === 'live')
-            <span class="comp-play-badge">Kalan Süre: <span id="compPlayCountdown">--</span> sn</span>
-            <span class="comp-play-badge">Sıralaman: <span id="compPlayRank">-</span>/<span id="compPlayTotal">-</span></span>
-            <span class="comp-play-badge">XP: <span id="compPlayXp">0</span></span>
+            <span class="comp-play-badge">⏱ <span id="compPlayCountdown">--</span> sn</span>
+            <span class="comp-play-badge">🏅 <span id="compPlayRank">-</span>/<span id="compPlayTotal">-</span></span>
+            <span class="comp-play-badge">⭐ <span id="compPlayXp">0</span> XP</span>
+        @elseif($room->status === 'lobby')
+            <span class="cx-chip lobby">⏳ Lobide</span>
+        @else
+            <span class="cx-chip done">🏁 Bitti</span>
         @endif
     </div>
 </div>
@@ -58,10 +30,11 @@
 @if($room->status === 'lobby')
     <div class="comp-wait-stage">
         <div class="comp-wait-box">
+            <div class="cx-dots"><i></i><i></i><i></i><i></i><i></i></div>
             <h3 class="comp-wait-title">Öğretmen Başlatmasını Bekliyorsun</h3>
-            <p>Katılım kodu ile lobiye girdin. Öğretmen "Herkese Başlat" dediği an yarışma herkes için aynı anda başlayacak.</p>
+            <p>Lobiye girdin! Öğretmen <b style="color:#fff">"Herkese Başlat"</b> dediği an yarışma herkes için aynı anda başlayacak. Hazır ol, parmaklarını ısıt! 🔥</p>
             <div class="comp-wait-count" id="compLobbyCount">-</div>
-            <p style="color:#64748b;font-size:13px">Lobide bekleyen öğrenci sayısı</p>
+            <p style="font-size:13px;margin:0">lobide bekleyen öğrenci</p>
             <div class="comp-joined-grid" id="compLobbyStudents"></div>
         </div>
     </div>
@@ -76,19 +49,21 @@
             <h3 class="comp-wait-title">Bölümünü Tamamladın!</h3>
             <p>Harika iş çıkardın! Diğer öğrenciler devam ederken süre dolmasını bekle, sıralama canlı olarak güncellenmeye devam ediyor.</p>
             <div class="comp-wait-count" id="compPlayDoneCountdown">-</div>
-            <p style="color:#64748b;font-size:13px">saniye kaldı</p>
+            <p style="font-size:13px;margin:0">saniye kaldı</p>
         </div>
     </div>
     <canvas id="compConfettiCanvas"></canvas>
 @else
     <div class="comp-wait-stage">
         <div class="comp-wait-box">
+            <div class="comp-trophy">🏁</div>
             <h3 class="comp-wait-title">Yarışma Sona Erdi</h3>
             <p>Sonuçlar öğretmen ekranında görüntüleniyor.</p>
-            <a class="btn" href="{{ route('student.competitions.join.form') }}">Yeni Bir Yarışmaya Katıl</a>
+            <a class="btn btn-primary" href="{{ route('student.competitions.join.form') }}">Yeni Bir Yarışmaya Katıl</a>
         </div>
     </div>
 @endif
+</div>
 
 @push('scripts')
 <script>

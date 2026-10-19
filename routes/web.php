@@ -413,17 +413,17 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:student')->group(function () {
         Route::get('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentIndex'])->name('student.messages.index');
         Route::post('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentSend'])->middleware('throttle:10,1')->name('student.messages.send');
-        Route::get('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoinForm'])->name('student.live-quiz.join.form');
-        Route::post('/ogrenci/canli-quiz', [LiveQuizController::class, 'studentJoin'])->name('student.live-quiz.join');
+        Route::redirect('/ogrenci/canli-quiz', '/ogrenci/canli-yarismalar')->name('student.live-quiz.join.form');
+        Route::post('/ogrenci/canli-quiz', [\App\Http\Controllers\StudentLiveEntryController::class, 'join'])->name('student.live-quiz.join');
         Route::get('/ogrenci/canli-quiz/anlik-katil/{session}', [LiveQuizController::class, 'studentInstantJoin'])->name('student.live-quiz.instant-join');
         Route::get('/ogrenci/canli-quiz/aktif-oturum', [LiveQuizController::class, 'studentActiveSession'])->name('student.live-quiz.active');
         Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play');
         Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status');
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
 
-        Route::get('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoinForm'])->name('student.competitions.join.form');
+        Route::get('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'form'])->name('student.competitions.join.form');
         Route::get('/ogrenci/canli-yarismalar-aktif', [CompetitionController::class, 'studentActiveRoom'])->name('student.competitions.active');
-        Route::post('/ogrenci/canli-yarismalar', [CompetitionController::class, 'studentJoin'])->name('student.competitions.join');
+        Route::post('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'join'])->name('student.competitions.join');
         Route::get('/ogrenci/canli-yarismalar/{room}', [CompetitionController::class, 'studentPlay'])->name('student.competitions.play');
         Route::get('/ogrenci/canli-yarismalar/{room}/durum', [CompetitionController::class, 'studentStatus'])->name('student.competitions.status');
         Route::post('/ogrenci/canli-yarismalar/{room}/ilerleme', [CompetitionController::class, 'reportProgress'])->name('student.competitions.progress');

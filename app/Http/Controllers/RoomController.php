@@ -35,7 +35,7 @@ class RoomController extends Controller
         }
 
         $room = Room::create([
-            'code' => strtoupper(Str::random(6)),
+            'code' => $this->generateRoomCode(),
             'name' => $payload['name'],
             'text' => $normalizedText,
             'status' => 'waiting',
@@ -179,5 +179,19 @@ class RoomController extends Controller
         }
 
         return Student::query()->where('user_id', $userId)->exists();
+    }
+
+    /** O, 0, I ve 1 içermeyen, benzersiz 6 karakterli oda kodu (tek giriş ekranında karışmaması için). */
+    private function generateRoomCode(): string
+    {
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        do {
+            $code = '';
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        } while (Room::query()->where('code', $code)->exists());
+
+        return $code;
     }
 }

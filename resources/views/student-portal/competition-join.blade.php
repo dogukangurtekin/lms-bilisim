@@ -1,18 +1,29 @@
 @extends('layout.app')
 @section('title','Canlı Yarışmalar')
 @section('content')
-<div class="top"><h1>Canlı Yarışmaya Katıl</h1></div>
-<div class="card" style="max-width:520px;">
-    @if($errors->any())
-        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#b91c1c;padding:12px 14px;margin-bottom:16px;font-size:15px;font-weight:700;">
-            ⚠️ {{ $errors->first() }}
+@include('competitions._theme')
+<div class="cx">
+    <div class="cx-hero">
+        <div class="cx-hero-icon">🎮</div>
+        <div>
+            <h1>Canlı Yarışmaya Katıl</h1>
+            <p>Öğretmeninin verdiği 6 haneli kodu yaz, bekleme odasına gir.</p>
         </div>
-    @endif
-    <form method="POST" action="{{ route('student.competitions.join') }}">
-        @csrf
-        <label>Kod (Öğretmenden al)</label>
-        <input class="form-control" type="text" name="join_code" maxlength="6" required placeholder="ABC123" style="text-transform:uppercase;">
-        <button class="btn btn-primary" type="submit">Yarışmaya Katıl</button>
-    </form>
+        <div class="cx-chips"><span class="cx-chip">⚡ Hazır ol!</span></div>
+    </div>
+    <div class="comp-wait-stage" style="min-height:340px">
+        <div class="comp-wait-box" style="max-width:520px">
+            @if($errors->any())
+                <div class="cx-err">⚠️ {{ $errors->first() }}</div>
+            @endif
+            <form method="POST" action="{{ route('student.competitions.join') }}">
+                @csrf
+                <label for="joinCode" style="text-align:left">Katılım kodu (öğretmenden al)</label>
+                <input id="joinCode" class="form-control" type="text" name="join_code" maxlength="6" required placeholder="ABC123" autocomplete="off" autofocus
+                       style="text-transform:uppercase;text-align:center;font-size:34px;font-weight:900;letter-spacing:.3em;min-height:68px;margin-bottom:14px">
+                <button class="btn btn-primary btn-start" type="submit" style="width:100%">🚀 Yarışmaya Katıl</button>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection

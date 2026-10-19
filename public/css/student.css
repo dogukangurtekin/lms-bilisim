@@ -634,3 +634,24 @@ body.role-student .detail-grid p{margin:0 0 8px}
 @media (max-width:520px){
   body.role-student .lesson-card-grid{grid-template-columns:1fr}
 }
+
+/* Öğrenci menüsü: küçült / büyüt (yalnızca masaüstü) */
+@media (min-width: 961px){
+  body.role-student .sidebar,body.role-student .main{transition:width .18s ease,margin-left .18s ease}
+  body.role-student .sidebar-mini-toggle{margin:0 0 8px;border-radius:999px;background:#fff;border-color:#EADFCF;color:var(--s-text)}
+  body.role-student .sidebar-mini-toggle:hover{background:var(--s-signal-tint);color:var(--s-signal)}
+  body.role-student.sidebar-mini .sidebar{width:76px;padding:16px 8px}
+  body.role-student.sidebar-mini .main{margin-left:76px}
+  body.role-student.sidebar-mini .student-sidebar-top{padding-bottom:8px;margin-bottom:6px}
+  body.role-student.sidebar-mini .sidebar-logo{width:48px;height:48px}
+  body.role-student.sidebar-mini .sidebar-brand p{display:none}
+  body.role-student.sidebar-mini .sidebar a{font-size:0;gap:0;justify-content:center;padding:12px 0;min-width:0}
+  body.role-student.sidebar-mini .sidebar a .nav-icon{width:22px;height:22px}
+  body.role-student.sidebar-mini .sidebar a .nav-icon svg{width:20px;height:20px}
+  body.role-student.sidebar-mini .student-sidebar-nav{padding-right:0}
+  body.role-student.sidebar-mini .student-sidebar-time{padding:8px 4px;text-align:center}
+  body.role-student.sidebar-mini .student-sidebar-time span{display:none}
+  body.role-student.sidebar-mini .student-sidebar-time strong{font-size:10px;margin-top:0;word-break:break-word}
+  body.role-student.sidebar-mini .student-sidebar-time .btn{font-size:0;padding:0;min-width:0;height:40px}
+  body.role-student.sidebar-mini .student-sidebar-time .btn::before{content:"⎋";font-size:18px}
+}

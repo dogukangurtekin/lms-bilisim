@@ -76,3 +76,9 @@ button{font:inherit;cursor:pointer}
 .box h2{margin:6px 0}.resgoal{color:var(--mut);font-size:13px;margin:4px 0 0}
 .row{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
 @media(max-width:900px){.board{grid-template-columns:1fr 1fr}.stage{grid-column:1/3;order:-1;min-height:230px}.stats{flex-direction:row}.big{font-size:30px}.hero{grid-template-columns:1fr}}
+
+.wd{display:inline-flex;white-space:nowrap}
+body.comp #btnBackWorld,body.comp #btnWorld{display:none}
+
+/* Klavye, eller ve hedef harf sadece gösterge: fare etkileşimi kapalı */
+#kb, #kb *, #hands, #target, #target * { pointer-events: none !important; cursor: default; user-select: none; }

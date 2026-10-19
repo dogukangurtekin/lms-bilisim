@@ -1,29 +1,7 @@
 @extends('layout.app')
 @section('title','Yarışma Odası')
 @section('content')
-<style>
-.comp-timer-bar{height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin-top:8px}
-.comp-timer-fill{height:100%;background:linear-gradient(90deg,#22c55e,#4f46e5);width:100%;transition:width .25s linear}
-.comp-timer-fill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
-.comp-big-clock{font-size:34px;font-weight:800;color:#1e293b}
-.comp-lobby-code{font-size:44px;font-weight:900;letter-spacing:4px;color:#4f46e5}
-.comp-student-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-content:start;justify-items:stretch}
-.comp-rank-row{display:grid;grid-template-columns:26px 32px minmax(0,1fr);grid-template-rows:auto auto;gap:5px 6px;align-items:center;align-content:start;min-width:0;padding:8px;border-radius:10px;background:#f8fafc;will-change:transform;border-left:3px solid transparent}
-.comp-rank-row.leader{border-left-color:#f59e0b}
-.comp-rank-row .comp-rank-no{font-weight:900;color:#64748b}
-.comp-rank-row.leader .comp-rank-no{color:#b45309}
-.comp-rank-avatar{grid-column:2;grid-row:1;width:32px;height:32px;border-radius:8px;object-fit:cover;background:#e2e8f0}
-.comp-rank-avatar.empty{display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8}
-.comp-rank-name{grid-column:3;grid-row:1;min-width:0;font-size:12px;line-height:1.25;overflow-wrap:anywhere}
-.comp-rank-status{grid-column:2 / 4;grid-row:2;color:#64748b;font-size:11px;line-height:1.25;overflow-wrap:anywhere}
-.comp-rank-row.status-green{background:#dcfce7}
-.comp-rank-row.status-orange{background:#ffedd5}
-.comp-rank-row.status-red{background:#fee2e2}
-@media(max-width:1100px){.comp-student-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:800px){.comp-student-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:560px){.comp-student-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.comp-rank-row{padding:6px}}
-@media(max-width:360px){.comp-student-grid{grid-template-columns:minmax(0,1fr)}}
-</style>
+@include('competitions._theme')
 <div class="modal" id="compDeleteModal">
     <div class="modal-card">
         <div class="modal-head"><strong>Odayı Sil</strong></div>
@@ -36,24 +14,38 @@
         </form>
     </div>
 </div>
-<div class="top"><h1>Yarışma Odası — {{ $room->game_name }}</h1></div>
+<div class="cx">
+<div class="cx-hero">
+    <div class="cx-hero-icon">🏆</div>
+    <div>
+        <h1>{{ $room->game_name }}</h1>
+        <p>Seviye {{ $room->level_from }}–{{ $room->level_to }} · Süre {{ (int) ($room->duration_seconds / 60) }} dk · Kod <b class="code">{{ $room->join_code }}</b></p>
+    </div>
+    <div class="cx-chips">
+        @if($room->status === 'lobby')<span class="cx-chip lobby" id="compStatusChip">⏳ Lobide</span>
+        @elseif($room->status === 'live')<span class="cx-chip live" id="compStatusChip">● Canlı</span>
+        @else<span class="cx-chip done" id="compStatusChip">🏁 Bitti</span>@endif
+        <span class="cx-chip">👥 <span id="compChipCount">{{ $room->participants()->count() }}</span></span>
+    </div>
+</div>
 
 @if($room->status === 'lobby')
-<div class="card" style="margin-bottom:12px;text-align:center;padding:28px;">
-    <p style="margin:0;color:#64748b;font-weight:700;">Katılım Kodu</p>
+<div class="cx-panel cx-lobby">
+    <p style="margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px">Katılım Kodu</p>
     <div class="comp-lobby-code">{{ $room->join_code }}</div>
-    <p style="margin-top:8px;">Öğrenciler "Canlı Yarışmalar"dan kodu girip lobiye katılsın. Herkes hazır olduğunda
-       aşağıdaki butona basınca yarışma <strong>o an</strong> tüm öğrenciler için aynı anda başlar.</p>
-    <p><strong>Lobide bekleyen öğrenci: <span id="compLobbyJoined">{{ $room->participants()->count() }}</span></strong></p>
-    <p style="color:#64748b;font-size:13px">Seviye aralığı: {{ $room->level_from }}–{{ $room->level_to }} | Süre: {{ (int) ($room->duration_seconds / 60) }} dk</p>
-    <form method="POST" action="{{ route('competitions.room.launch', $room) }}" style="display:inline-block">
-        @csrf
-        <button class="btn btn-primary" type="submit" style="font-size:18px;padding:12px 28px;">Herkese Başlat</button>
-    </form>
-    <button type="button" class="btn btn-danger comp-delete-trigger" style="display:inline-block;margin-left:8px">Odayı Sil</button>
+    <p style="max-width:640px;margin:0 auto 12px">Öğrenciler <b style="color:#fff">Canlı Yarışmalar</b> bölümünden bu kodu girip lobiye katılır. Herkes hazır olunca butona bas, yarışma <b style="color:#fff">aynı anda</b> başlasın.</p>
+    <div class="cx-big"><span id="compLobbyJoined">{{ $room->participants()->count() }}</span></div>
+    <p style="margin:4px 0 16px">lobide bekleyen öğrenci</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <form method="POST" action="{{ route('competitions.room.launch', $room) }}" style="margin:0">
+            @csrf
+            <button class="btn btn-start" type="submit">▶ Herkese Başlat</button>
+        </form>
+        <button type="button" class="btn btn-danger comp-delete-trigger">🗑 Odayı Sil</button>
+    </div>
 </div>
-<div class="card">
-    <h3>Katılan Öğrenciler <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
+<div class="cx-panel">
+    <h3>Katılan Öğrenciler <span id="compJoinedCount" style="color:#94a3b8;font-weight:600">({{ $room->participants()->count() }} katılımcı)</span></h3>
     <div id="compLeaderboard" class="comp-student-grid">
         @forelse($rows as $row)
             <div class="comp-rank-row" data-student="{{ $row['student_user_id'] }}">
@@ -67,39 +59,39 @@
                 <div class="comp-rank-status">Bekliyor</div>
             </div>
         @empty
-            <p style="color:#64748b">Henüz katılan öğrenci yok.</p>
+            <p>Henüz katılan öğrenci yok.</p>
         @endforelse
     </div>
 </div>
 @else
-<div class="card" style="margin-bottom:12px;">
-    <p><strong>Oyun:</strong> {{ $room->game_name }} | <strong>Kod:</strong> {{ $room->join_code }} |
-       <strong>Seviye:</strong> {{ $room->level_from }}–{{ $room->level_to }}</p>
-    <p><strong>Durum:</strong> <span id="compStatusText">{{ $room->status === 'live' ? 'Canlı' : 'Bitti' }}</span></p>
-
+<div class="cx-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+        <div>
+            <p style="margin:0;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Durum: <span id="compStatusText" style="color:#fff">{{ $room->status === 'live' ? 'Canlı' : 'Bitti' }}</span></p>
+            @if($room->status === 'live')
+                <span class="comp-big-clock"><span id="compCountdown">--</span> sn</span>
+            @endif
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+            @if($room->status === 'live')
+            <form method="POST" action="{{ route('competitions.room.finish', $room) }}" style="margin:0">@csrf<button class="btn btn-danger" type="submit">⏹ Yarışmayı Bitir</button></form>
+            @endif
+            <a class="btn" href="{{ route('competitions.index') }}">← Canlı Yarışmalar</a>
+            <button type="button" class="btn btn-danger comp-delete-trigger">🗑 Odayı Sil</button>
+        </div>
+    </div>
     @if($room->status === 'live')
-    <div>
-        <span class="comp-big-clock"><span id="compCountdown">--</span> sn</span>
         <div class="comp-timer-bar"><div class="comp-timer-fill" id="compTimerFill"></div></div>
-    </div>
     @endif
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-        @if($room->status === 'live')
-        <form method="POST" action="{{ route('competitions.room.finish', $room) }}">@csrf<button class="btn btn-danger" type="submit">Yarışmayı Bitir</button></form>
-        @endif
-        <a class="btn" href="{{ route('competitions.index') }}">Canlı Yarışmalar'a Dön</a>
-        <button type="button" class="btn btn-danger comp-delete-trigger">Odayı Sil</button>
-    </div>
 </div>
 
-<div class="card">
-    <h3>Canlı Sıralama <span id="compJoinedCount">({{ $room->participants()->count() }} katılımcı)</span></h3>
+<div class="cx-panel">
+    <h3>Canlı Sıralama <span id="compJoinedCount" style="color:#94a3b8;font-weight:600">({{ $room->participants()->count() }} katılımcı)</span></h3>
     <div id="compLeaderboard" class="comp-student-grid">
         @forelse($rows as $i => $row)
             @php($statusClass = $row['finished'] ? 'status-green' : ($row['progress_percent'] >= 50 ? 'status-orange' : 'status-red'))
             <div class="comp-rank-row {{ $i === 0 ? 'leader' : '' }} {{ $statusClass }}" data-student="{{ $row['student_user_id'] }}">
-                <div class="comp-rank-no">#{{ $i + 1 }}</div>
+                <div class="comp-rank-no">{{ $i === 0 ? '👑' : '#'.($i + 1) }}</div>
                 @if($row['avatar_url'])
                     <img class="comp-rank-avatar" src="{{ $row['avatar_url'] }}" alt="{{ $row['avatar_name'] }}">
                 @else
@@ -109,11 +101,12 @@
                 <div class="comp-rank-status">%{{ number_format($row['progress_percent'], 0) }} — {{ $row['xp_earned'] }} XP{{ $row['completed_seconds'] !== null ? ' — '.$row['completed_seconds'].' sn' : '' }}{{ $row['finished'] ? ' ✅' : '' }}</div>
             </div>
         @empty
-            <p style="color:#64748b">Henüz ilerleme verisi yok.</p>
+            <p>Henüz ilerleme verisi yok.</p>
         @endforelse
     </div>
 </div>
 @endif
+</div>
 
 @push('scripts')
 <script>
@@ -185,7 +178,7 @@
     function renderLeaderboard(rows) {
         if (!leaderboardEl) return;
         if (!rows.length) {
-            leaderboardEl.innerHTML = '<p style="color:#64748b">Henüz ilerleme verisi yok.</p>';
+            leaderboardEl.innerHTML = '<p style="color:#94a3b8">Henüz ilerleme verisi yok.</p>';
             rowElements.clear();
             return;
         }
@@ -231,7 +224,7 @@
                 el.classList.add(statusClass);
                 const timeSuffix = row.completed_seconds !== null && row.completed_seconds !== undefined ? ` — ${row.completed_seconds} sn` : '';
                 el.innerHTML = `
-                    <div class="comp-rank-no">#${i + 1}</div>
+                    <div class="comp-rank-no">${i === 0 ? '👑' : '#' + (i + 1)}</div>
                     ${avatarHtml}
                     <div class="comp-rank-name">${row.name}</div>
                     <div class="comp-rank-status">%${Math.round(row.progress_percent)} — ${row.xp_earned} XP${timeSuffix}${row.finished ? ' ✅' : ''}</div>
@@ -291,6 +284,8 @@
 
             if (lobbyJoinedEl) lobbyJoinedEl.textContent = String(data.joined ?? 0);
             if (joinedCountEl) joinedCountEl.textContent = `(${data.joined ?? 0} katılımcı)`;
+            const chipCountEl = document.getElementById('compChipCount');
+            if (chipCountEl) chipCountEl.textContent = String(data.joined ?? 0);
 
             if (data.status === 'finished' && status !== 'finished') {
                 window.location.reload();

@@ -56,6 +56,8 @@ class ActivityController extends Controller
         if ($isStudent && $user?->student instanceof Student) {
             $allowedSlugs = $this->gameAccess->allowedSlugsForStudent($user->student);
             $visibleGames = array_intersect_key(self::games(), array_flip($allowedSlugs));
+            // Klavye yarışmasına öğrenciler yalnızca "Canlı Yarışmalar" giriş sayfasından kodla katılır.
+            unset($visibleGames['keyboard-race']);
         }
         if ($isTeacher && $user?->teacher) {
             $assignedGameActivities = TeacherGameAssignment::query()

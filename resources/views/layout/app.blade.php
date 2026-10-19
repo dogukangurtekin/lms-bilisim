@@ -41,7 +41,7 @@
     class="{{ auth()->user()?->role?->slug ? 'role-'.auth()->user()->role->slug : 'role-guest' }} @yield('body_class')"
     style="--app-bg:{{ $theme['bg'] }};--app-text:{{ $theme['text'] }};--app-muted:{{ $theme['muted'] }};--app-panel:{{ $theme['panel'] }};--app-surface:{{ $theme['surface'] }};--app-border:{{ $theme['border'] }};--app-primary:{{ $theme['primary'] }};--app-secondary:{{ $theme['secondary'] }};--app-hero-start:{{ $theme['heroStart'] }};--app-hero-end:{{ $theme['heroEnd'] }};"
 >
-<script>try{if(localStorage.getItem('staff_sidebar_mini')==='1'&&!document.body.classList.contains('role-student')&&window.innerWidth>960)document.body.classList.add('sidebar-mini')}catch(e){}</script>
+<script>try{if(localStorage.getItem('staff_sidebar_mini')==='1'&&window.innerWidth>960)document.body.classList.add('sidebar-mini')}catch(e){}</script>
 @if(auth()->user()?->hasRole('student'))
 <style>
 .play-compact .layout{

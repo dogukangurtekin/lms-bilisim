@@ -9,6 +9,9 @@
             <img src="{{ \App\Support\Brand::logoUrl() }}" alt="Logo" class="sidebar-logo sidebar-logo--brand">
             <p>Bilişim Platformu</p>
         </a>
+        <button type="button" class="sidebar-mini-toggle" id="sidebar-mini-toggle" aria-label="Menüyü küçült / büyüt" title="Menüyü küçült / büyüt">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="chev" d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lbl">Menüyü küçült</span>
+        </button>
         <nav class="student-sidebar-nav">
             <a class="{{ request()->routeIs('student.portal.dashboard') ? 'active' : '' }}" href="{{ route('student.portal.dashboard') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panelim

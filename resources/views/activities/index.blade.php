@@ -220,6 +220,8 @@
                             <div class="actions">
                                 @if($slug === 'live-quiz')
                                     <a class="btn" href="{{ route('live-quiz.index') }}">Oyunu Aç</a>
+                                @elseif($slug === 'keyboard-race')
+                                    <a class="btn" href="{{ route('keyboard-race.index') }}">Yarışma Aç</a>
                                 @else
                                     <a class="btn" href="{{ route('activities.play', ['target' => $game['url']]) }}">Oyunu Aç</a>
                                     <a class="btn" href="{{ route('activities.assignments.create', $slug) }}">Ödevi Oluştur</a>
@@ -256,7 +258,7 @@
                             $game = $games[$assignment->game_slug] ?? null;
                             $gameUrl = $assignment->game_slug === 'live-quiz'
                                 ? route('live-quiz.index')
-                                : ($game ? route('activities.play', ['target' => $game['url'] . '?role=teacher']) : '#');
+                                : ($assignment->game_slug === 'keyboard-race' ? route('keyboard-race.index') : ($game ? route('activities.play', ['target' => $game['url'] . '?role=teacher']) : '#'));
                             $assignedByName = trim((string) ($assignment->assignedBy?->name ?? ''));
                         @endphp
                         <article class="activity-item activity-card">
@@ -265,7 +267,7 @@
                                 <h3>{{ $assignment->game_name }}</h3>
                                 <div class="actions">
                                     <a class="btn" href="{{ $gameUrl }}">Oyunu Aç</a>
-                                    @if($assignment->game_slug !== 'live-quiz')
+                                    @if(! in_array($assignment->game_slug, ['live-quiz', 'keyboard-race'], true))
                                         <a class="btn" href="{{ route('activities.assignments.create', $assignment->game_slug) }}">Ödevi Oluştur</a>
                                     @endif
                                 </div>
@@ -278,19 +280,10 @@
         @else
             <div class="activity-grid" style="margin-bottom:14px;">
                 <article class="activity-item activity-card">
-                    <img src="{{ asset('quiz.png') }}" alt="Canlı Quiz">
-                    <div class="activity-body">
-                        <h3>Canlı Quiz</h3>
-                        <div class="actions">
-                            <a class="btn" href="{{ route('student.live-quiz.join.form') }}">Kod ile Katıl</a>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="activity-item activity-card">
                     <img src="{{ asset('klavye.jpg') }}?v={{ @filemtime(public_path('klavye.jpg')) ?: 1 }}" alt="Canlı Yarışmalar">
                     <div class="activity-body">
                         <h3>Canlı Yarışmalar</h3>
+                        <p style="margin:0 0 8px;color:#64748b;font-size:13px">Canlı quiz, oyun yarışması ve klavye yarışması için tek giriş.</p>
                         <div class="actions">
                             <a class="btn" href="{{ route('student.competitions.join.form') }}">Kod ile Katıl</a>
                         </div>

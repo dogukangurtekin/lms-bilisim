@@ -1,13 +1,7 @@
 @extends('layout.app')
 @section('title','Canlı Yarışmalar')
 @section('content')
-<style>
-.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.comp-card{border:1px solid #dbe3ef;border-radius:14px;background:#fff;padding:16px}
-.comp-row{display:grid;gap:6px;margin-bottom:10px}
-.comp-row label{font-size:13px;font-weight:700;color:#475569}
-@media (max-width:900px){.comp-grid{grid-template-columns:1fr}}
-</style>
+@include('competitions._theme')
 <div class="modal" id="compDeleteModal">
     <div class="modal-card">
         <div class="modal-head"><strong>Odayı Sil</strong></div>
@@ -20,19 +14,22 @@
         </form>
     </div>
 </div>
-<div class="top"><h1>Canlı Yarışmalar</h1></div>
-<p style="color:#64748b;margin-top:-6px">
-    Oyun ve etkinlikler arasından bir oyun seçip bir yarışma odası oluştur. Öğrenciler odaya katılım koduyla girer,
-    "Herkese Başlat" dediğinde herkes aynı anda başlar; süre dolunca ya da seviyeler bitince yarışma otomatik sona erer
-    ve canlı sıralama en önde gidenin en üstte olduğu şekilde gösterilir.
-</p>
+<div class="cx">
+<div class="cx-hero">
+    <div class="cx-hero-icon">🏁</div>
+    <div>
+        <h1>Canlı Yarışmalar</h1>
+        <p>Bir oyun seç, oda oluştur. Öğrenciler kodla katılır, "Herkese Başlat" ile herkes aynı anda başlar; canlı sıralama en önde gideni üstte gösterir.</p>
+    </div>
+    <div class="cx-chips"><span class="cx-chip">🎮 {{ count($games) }} oyun</span><span class="cx-chip">🏠 {{ $rooms->count() }} oda</span></div>
+</div>
 
-<div class="comp-grid">
-    <div class="comp-card">
+<div class="cx-grid">
+    <div class="cx-panel">
         <h3>Yeni Yarışma Odası Oluştur</h3>
-        <form method="POST" action="{{ route('competitions.store') }}">
+        <form method="POST" action="{{ route('competitions.store') }}" id="compCreateForm">
             @csrf
-            <div class="comp-row">
+            <div class="cx-row">
                 <label>Oyun / Etkinlik</label>
                 <select class="form-control" name="game_slug" required>
                     <option value="">Seçiniz...</option>
@@ -41,7 +38,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="comp-row">
+            <div class="cx-row">
                 <label>Sınıf (boş bırakırsan tüm sınıflar katılabilir)</label>
                 <select class="form-control" name="school_class_id">
                     <option value="">Tüm sınıflar</option>
@@ -50,7 +47,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="comp-row">
+            <div class="cx-row">
                 <label>Seviye Aralığı</label>
                 <div style="display:flex;gap:8px;align-items:center">
                     <input class="form-control" type="number" name="level_from" min="1" value="{{ old('level_from', 1) }}" required style="margin:0">
@@ -58,18 +55,18 @@
                     <input class="form-control" type="number" name="level_to" min="1" value="{{ old('level_to', 5) }}" required style="margin:0">
                 </div>
             </div>
-            <div class="comp-row">
+            <div class="cx-row">
                 <label>Süre (dakika)</label>
                 <input class="form-control" type="number" name="duration_minutes" min="1" max="120" value="{{ old('duration_minutes', 10) }}" required>
             </div>
             @if($errors->any())
-                <div style="color:#dc2626;font-size:13px;margin-bottom:8px">{{ $errors->first() }}</div>
+                <div class="cx-err">{{ $errors->first() }}</div>
             @endif
-            <button class="btn btn-primary" type="submit">Yarışma Odası Oluştur</button>
+            <button class="btn btn-primary" type="submit" style="width:100%;font-size:16px">🚀 Yarışma Odası Oluştur</button>
         </form>
     </div>
 
-    <div class="comp-card">
+    <div class="cx-panel light">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
             <h3 style="margin:0">Geçmiş / Aktif Odalar</h3>
             @if(auth()->user()?->hasRole('admin') && $rooms->isNotEmpty())
@@ -87,12 +84,12 @@
                 @forelse($rooms as $room)
                     <tr>
                         <td>{{ $room->game_name }}</td>
-                        <td>{{ $room->join_code }}</td>
+                        <td><span class="code">{{ $room->join_code }}</span></td>
                         <td>{{ $room->schoolClass ? $room->schoolClass->name.'/'.$room->schoolClass->section : 'Tümü' }}</td>
                         <td>
-                            @if($room->status === 'lobby') Lobide
-                            @elseif($room->status === 'live') Canlı
-                            @else Bitti
+                            @if($room->status === 'lobby') <span class="tag lobby">Lobide</span>
+                            @elseif($room->status === 'live') <span class="tag live">● Canlı</span>
+                            @else <span class="tag done">Bitti</span>
                             @endif
                         </td>
                         <td style="display:flex;gap:6px;flex-wrap:wrap">
@@ -108,8 +105,26 @@
         </div>
     </div>
 </div>
+</div>
 
 <script>
+(() => {
+    // Klavye Yarışması seçilince seviye/süre alanları gerekmez: oda kendi ekranında (metin seçimiyle) açılır.
+    const form = document.getElementById('compCreateForm');
+    const sel = form?.querySelector('select[name="game_slug"]');
+    const btn = form?.querySelector('button[type="submit"]');
+    const sync = () => {
+        const kb = sel?.value === 'keyboard-race';
+        form.querySelectorAll('input[name="level_from"], input[name="level_to"], input[name="duration_minutes"]').forEach((i) => {
+            i.required = !kb;
+            const row = i.closest('.cx-row');
+            if (row) row.style.display = kb ? 'none' : '';
+        });
+        if (btn) btn.textContent = kb ? '⌨️ Klavye Yarışması Odası Aç' : '🚀 Yarışma Odası Oluştur';
+    };
+    sel?.addEventListener('change', sync);
+    sync();
+})();
 (() => {
     const modal = document.getElementById('compDeleteModal');
     const form = document.getElementById('compDeleteForm');

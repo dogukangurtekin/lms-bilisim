@@ -114,3 +114,17 @@ code { font-family: var(--mono); background: #eaf1ff; border: 1px solid #cfdcfb;
 .dc-lives .heart.off { color: #475569; text-shadow: none; transform: scale(.88); }
 .dc-lives .heart.lost { animation: heartLost .7s ease; }
 @keyframes heartLost { 0% { transform: scale(1.5); color: #ff4d6d; } 40% { transform: scale(1.2) rotate(-14deg); } 100% { transform: scale(.88); color: #475569; } }
+
+/* Kartlar ve yön düğmeleri sadece klavyeyle oynanır: fare etkileşimi kapalı */
+#hand, #hand .dc-cardbtn, #roamPad { pointer-events: none; cursor: default; user-select: none; }
+.dc-cardbtn:hover:not(:disabled) .dc-codecard { transform: none; box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 12px 18px rgba(15,45,92,.16); }
+.dc-cardbtn:active:not(:disabled) .dc-codecard { transform: none; }
+#roamPad button { cursor: default; }
+
+/* Can kaybı bildirimi: -5 XP */
+.dc-xploss { position: fixed; left: 50%; top: 38%; z-index: 300; transform: translate(-50%, -50%); pointer-events: none; text-align: center; padding: 18px 34px; border-radius: 24px; background: linear-gradient(160deg, #7f1d1d, #be123c); color: #fff; box-shadow: 0 20px 50px rgba(190,18,60,.5); animation: xpLoss 2.1s ease forwards; }
+.dc-xploss b { display: block; font-size: 46px; font-weight: 900; line-height: 1; text-shadow: 0 4px 14px rgba(0,0,0,.35); }
+.dc-xploss small { display: block; margin-top: 6px; font-weight: 800; font-size: 15px; opacity: .95; }
+.dc-xploss-ico { display: block; font-size: 44px; animation: xpHeart .5s ease 2; }
+@keyframes xpLoss { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.5); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); } 25% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; transform: translate(-50%, -58%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -90%) scale(.95); } }
+@keyframes xpHeart { 0%,100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.3) rotate(-12deg); } }
