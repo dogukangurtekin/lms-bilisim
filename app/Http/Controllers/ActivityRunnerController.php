@@ -86,6 +86,21 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('web-lab-runner');
     }
 
+    public function keyboardFinger()
+    {
+        return $this->serveRunner('keyboard-finger-runner');
+    }
+
+    public function word()
+    {
+        return $this->serveRunner('word-runner');
+    }
+
+    public function excel()
+    {
+        return $this->serveRunner('excel-runner');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());

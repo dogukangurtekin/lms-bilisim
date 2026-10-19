@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>Klavye Parmak Eğitimi</title>
+<link rel="stylesheet" href="./kbvisual.css?v=3">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body class="kbv">
+
+<!-- 1) SIRALAR (dünyalar) -->
+<section id="menu" class="view">
+  <header class="hero">
+    <div>
+      <h1>⌨️ Klavye Parmak Eğitimi</h1>
+      <p>1000 bölümde on parmakla yazmayı öğren. Sıra sıra ilerle, yıldız topla!</p>
+    </div>
+    <div class="sum">
+      <div><b id="sumDone">0</b><span>/ 1000 bölüm</span></div>
+      <div><b id="sumStars">0</b><span>★ yıldız</span></div>
+      <div><b id="sumWpm">0</b><span>en iyi kelime/dk</span></div>
+    </div>
+    <div class="hero-actions">
+      <button id="btnContinue" class="primary">▶ Devam et</button>
+      <label class="opt"><input type="checkbox" id="optOpen"> Tüm bölümleri aç</label>
+      <button id="btnReset" class="ghost">İlerlemeyi sıfırla</button>
+    </div>
+  </header>
+  <div class="worlds" id="worlds"></div>
+</section>
+
+<!-- 2) BÖLÜMLER -->
+<section id="world" class="view" hidden>
+  <header class="bar">
+    <button id="btnBackMenu" class="ghost">← Sıralar</button>
+    <div class="wtitle"><h2 id="wName"></h2><small id="wDesc"></small></div>
+    <div class="wprog"><span id="wProg"></span></div>
+  </header>
+  <div class="nodes" id="nodes"></div>
+</section>
+
+<!-- 3) OYUN -->
+<section id="play" class="view" hidden>
+  <header class="bar">
+    <button id="btnBackWorld" class="ghost">← Bölümler</button>
+    <div class="wtitle"><h2 id="pTitle"></h2><small id="pGoal"></small></div>
+    <label class="opt"><input type="checkbox" id="optHints" checked> Klavye ipucu</label>
+  </header>
+  <main class="board">
+    <section class="stats">
+      <div class="card acc zero" id="cardAcc"><h3>Doğruluk</h3><div class="big" id="acc">%0</div><small id="errs">0 hata</small><div class="bar2"><i id="accBar" style="width:0"></i></div></div>
+      <div class="card"><h3>Kelime/dk</h3><div class="big" id="wpm">0</div></div>
+      <div class="card"><h3>Süre</h3><div class="big" id="time">0:00</div></div>
+    </section>
+    <section class="stage" id="stage">
+      <div class="prog"><i id="progBar"></i></div>
+      <div id="target" class="target"></div>
+      <div id="msg" class="msg"></div>
+      <button id="btnStart" class="primary start">▶ Başla</button>
+    </section>
+    <section class="hands">
+      <svg id="hands" viewBox="0 20 520 225" aria-hidden="true"></svg>
+      <div class="handnote" id="handNote">Yanlış basınca doğru parmak burada yanar.</div>
+    </section>
+  </main>
+  <section class="kbwrap"><div id="kb" class="kb"></div></section>
+</section>
+
+<div class="modal" id="result" hidden>
+  <div class="box">
+    <div class="stars" id="stars"></div>
+    <h2 id="resTitle"></h2>
+    <p id="resText"></p>
+    <p id="resGoal" class="resgoal"></p>
+    <div class="row"><button id="btnWorld" class="ghost">Bölümler</button><button id="btnAgain" class="ghost">Tekrar</button><button id="btnNext" class="primary">Sonraki ▶</button></div>
+  </div>
+</div>
+<script src="./kbvisual.js?v=3"></script>
+<script src="./app.js"></script>
+</body>
+</html>

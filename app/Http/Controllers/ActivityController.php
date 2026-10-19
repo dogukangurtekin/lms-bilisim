@@ -38,6 +38,9 @@ class ActivityController extends Controller
             'number-bee-runner' => ['name' => 'Sayı Arısı: Rakam Avı', 'image' => 'number-bee-icon.svg', 'url' => '/number-bee-runner'],
             'flowchart-runner' => ['name' => 'Flowchart Programlama', 'image' => 'flowchart.png', 'url' => '/flowchart-runner'],
             'web-lab-runner' => ['name' => 'Web Atölyesi (HTML, CSS, JS)', 'image' => 'web-lab-icon.svg', 'url' => '/web-lab-runner'],
+            'keyboard-finger-runner' => ['name' => 'Klavye Parmak Eğitimi', 'image' => 'keyboard-finger-icon.svg', 'url' => '/keyboard-finger-runner'],
+            'word-runner' => ['name' => 'Word Belge Editörü', 'image' => 'word-icon.svg', 'url' => '/word-runner'],
+            'excel-runner' => ['name' => 'Excel Hesap Tablosu', 'image' => 'excel-icon.svg', 'url' => '/excel-runner'],
         ];
     }
 

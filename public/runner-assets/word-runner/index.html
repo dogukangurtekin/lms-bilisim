@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#185abd">
+<title>Word Belge Editörü</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="titlebar">
+  <div class="logo">W</div>
+  <input id="docName" value="Belge1" aria-label="Belge adı" spellcheck="false">
+  <span id="saveState" class="savestate">Kaydedildi</span>
+  <div class="tb-actions">
+    <button id="btnNew" title="Yeni belge">Yeni</button>
+    <button id="btnOpen" title="HTML/TXT dosyası aç">Aç</button>
+    <button id="btnSave" title="Belgeyi kaydet (Ctrl+S)">Kaydet</button>
+    <button id="btnDoc" title="Word (.doc) olarak indir">.doc indir</button>
+    <button id="btnHtml" title="HTML olarak indir">.html</button>
+    <button id="btnPrint" title="Yazdır / PDF">Yazdır / PDF</button>
+    <input type="file" id="fileOpen" accept=".html,.htm,.txt,.doc" hidden>
+  </div>
+</header>
+
+<nav class="ribbon-tabs" id="ribbonTabs">
+  <button class="active" data-tab="home">Giriş</button>
+  <button data-tab="insert">Ekle</button>
+  <button data-tab="layout">Düzen</button>
+  <button data-tab="view">Görünüm</button>
+</nav>
+
+<section class="ribbon" id="ribbon">
+  <div class="panel active" data-panel="home">
+    <div class="group">
+      <div class="row">
+        <button data-cmd="undo" title="Geri al (Ctrl+Z)">↶</button>
+        <button data-cmd="redo" title="Yinele (Ctrl+Y)">↷</button>
+        <button id="btnPaste" title="Yapıştır">📋</button>
+        <button data-cmd="removeFormat" title="Biçimi temizle">Tx</button>
+      </div>
+      <label>Geri al</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <select id="fontName" title="Yazı tipi">
+          <option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Georgia</option>
+          <option>Verdana</option><option>Tahoma</option><option>Courier New</option><option>Comic Sans MS</option><option>Trebuchet MS</option>
+        </select>
+        <select id="fontSize" title="Yazı boyutu">
+          <option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>14</option>
+          <option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
+        </select>
+        <button id="btnGrow" title="Büyüt">A▲</button>
+        <button id="btnShrink" title="Küçült">A▼</button>
+      </div>
+      <div class="row">
+        <button data-cmd="bold" class="b" title="Kalın (Ctrl+B)">K</button>
+        <button data-cmd="italic" class="i" title="İtalik (Ctrl+I)">İ</button>
+        <button data-cmd="underline" class="u" title="Altı çizili (Ctrl+U)">A</button>
+        <button data-cmd="strikeThrough" class="s" title="Üstü çizili">ab</button>
+        <button data-cmd="subscript" title="Alt simge">x₂</button>
+        <button data-cmd="superscript" title="Üst simge">x²</button>
+        <label class="color" title="Yazı rengi">A<input type="color" id="fontColor" value="#000000"></label>
+        <label class="color hl" title="Vurgu rengi">🖍<input type="color" id="hiColor" value="#ffff00"></label>
+      </div>
+      <label>Yazı tipi</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button data-cmd="insertUnorderedList" title="Madde işaretleri">• ≡</button>
+        <button data-cmd="insertOrderedList" title="Numaralandırma">1. ≡</button>
+        <button data-cmd="outdent" title="Girintiyi azalt">⇤</button>
+        <button data-cmd="indent" title="Girintiyi artır">⇥</button>
+      </div>
+      <div class="row">
+        <button data-cmd="justifyLeft" title="Sola hizala">⯇</button>
+        <button data-cmd="justifyCenter" title="Ortala">≡</button>
+        <button data-cmd="justifyRight" title="Sağa hizala">⯈</button>
+        <button data-cmd="justifyFull" title="İki yana yasla">☰</button>
+        <select id="lineHeight" title="Satır aralığı">
+          <option value="1">1.0</option><option value="1.15" selected>1.15</option><option value="1.5">1.5</option><option value="2">2.0</option><option value="2.5">2.5</option>
+        </select>
+      </div>
+      <label>Paragraf</label>
+    </div>
+    <div class="group">
+      <div class="row styles">
+        <button data-block="P" class="st">Normal</button>
+        <button data-block="H1" class="st h1">Başlık 1</button>
+        <button data-block="H2" class="st h2">Başlık 2</button>
+        <button data-block="H3" class="st h3">Başlık 3</button>
+        <button data-block="BLOCKQUOTE" class="st q">Alıntı</button>
+        <button data-block="PRE" class="st c">Kod</button>
+      </div>
+      <label>Stiller</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button id="btnFind" title="Bul ve değiştir (Ctrl+F)">🔍 Bul / Değiştir</button>
+        <button data-cmd="selectAll" title="Tümünü seç">Tümünü seç</button>
+      </div>
+      <label>Düzenleme</label>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="insert">
+    <div class="group">
+      <div class="row">
+        <button id="btnTable">▦ Tablo</button>
+        <button id="btnImage">🖼 Resim</button>
+        <input type="file" id="fileImage" accept="image/*" hidden>
+        <button id="btnLink">🔗 Bağlantı</button>
+        <button id="btnHr">― Çizgi</button>
+        <button id="btnPageBreak">⤓ Sayfa sonu</button>
+        <button id="btnDate">📅 Tarih</button>
+        <button id="btnSymbol">Ω Simge</button>
+      </div>
+      <label>Ekle</label>
+    </div>
+    <div class="group tablectl" id="tableCtl">
+      <div class="row">
+        <button data-t="addRow">+ Satır</button>
+        <button data-t="addCol">+ Sütun</button>
+        <button data-t="delRow">− Satır</button>
+        <button data-t="delCol">− Sütun</button>
+        <button data-t="delTable">Tabloyu sil</button>
+        <button data-t="shade">Hücre rengi</button>
+      </div>
+      <label>Tablo araçları (imleç tablodayken)</label>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="layout">
+    <div class="group">
+      <div class="row">
+        <select id="pageSize" title="Kağıt boyutu"><option value="a4">A4</option><option value="letter">Letter</option><option value="a5">A5</option></select>
+        <select id="pageOrient"><option value="p">Dikey</option><option value="l">Yatay</option></select>
+        <select id="pageMargin"><option value="25">Normal kenar boşluğu</option><option value="12">Dar</option><option value="38">Geniş</option></select>
+      </div>
+      <label>Sayfa yapısı</label>
+    </div>
+    <div class="group">
+      <div class="row"><label class="chk"><input type="checkbox" id="chkLines"> Cetvel çizgileri</label><label class="chk"><input type="checkbox" id="chkSpell" checked> Yazım denetimi</label></div>
+      <label>Seçenekler</label>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="view">
+    <div class="group">
+      <div class="row">
+        <button id="zoomOut">−</button><span id="zoomVal">100%</span><button id="zoomIn">+</button><button id="zoomFit">Sığdır</button>
+      </div>
+      <label>Yakınlaştırma</label>
+    </div>
+    <div class="group">
+      <div class="row"><button id="btnDark">🌙 Koyu / Açık</button></div>
+      <label>Tema</label>
+    </div>
+  </div>
+</section>
+
+<main class="workspace" id="workspace">
+  <div class="stage" id="stage">
+    <div class="page" id="page"><div id="editor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true"><p><br></p></div></div>
+  </div>
+</main>
+
+<div class="statusbar">
+  <span id="stWords">0 kelime</span><span id="stChars">0 karakter</span><span id="stPages">1 sayfa</span>
+  <span class="grow"></span><span id="stHint">Türkçe</span>
+</div>
+
+<div class="modal" id="findBox" hidden>
+  <div class="box">
+    <h3>Bul ve Değiştir</h3>
+    <input id="findText" placeholder="Aranan"><input id="replText" placeholder="Yeni metin">
+    <div class="row"><button id="findNext">Sonrakini bul</button><button id="replOne">Değiştir</button><button id="replAll">Tümünü değiştir</button><button id="findClose">Kapat</button></div>
+    <small id="findInfo"></small>
+  </div>
+</div>
+<div class="modal" id="symBox" hidden>
+  <div class="box"><h3>Simge Ekle</h3><div id="symGrid" class="symgrid"></div><div class="row"><button id="symClose">Kapat</button></div></div>
+</div>
+<div class="modal" id="tblBox" hidden>
+  <div class="box"><h3>Tablo Ekle</h3>
+    <div class="row"><label>Satır <input type="number" id="tblRows" value="3" min="1" max="50"></label><label>Sütun <input type="number" id="tblCols" value="3" min="1" max="20"></label></div>
+    <div class="row"><button id="tblOk">Ekle</button><button id="tblCancel">İptal</button></div></div>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>

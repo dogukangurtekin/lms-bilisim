@@ -4,6 +4,7 @@
 @section('body_class', 'play-compact')
 
 @section('content')
+<link rel="stylesheet" href="/runner-assets/keyboard-finger-runner/kbvisual.css?v=3">
 <style>
 .race-shell {
     position: relative;
@@ -152,6 +153,23 @@
     0% { opacity: 0; transform: translateY(6px); }
     100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ---- Yeni nesil yazım arayüzü ---- */
+.rt-stage{position:relative;border-radius:16px;background:linear-gradient(160deg,#0f172a,#1e2a44);padding:18px 20px;min-height:150px;cursor:text;box-shadow:inset 0 0 0 1px rgba(148,163,184,.25)}
+.rt-stage .typing-box{background:transparent!important;border:0!important;padding:0!important;color:#64748b;font-family:"Consolas","Courier New",monospace;font-size:clamp(20px,2.4vw,28px)!important;line-height:2.1!important;max-height:calc(2.1em * 3);overflow:hidden;scroll-behavior:smooth;word-break:break-word}
+.rt-stage .rc{padding:2px 0;border-radius:6px;transition:background .08s}
+.rt-stage .rc.ok{color:#34d399}
+.rt-stage .rc.bad{color:#fff;background:#ef4444}
+.rt-stage .rc.cur{background:#6366f1;color:#fff;animation:rt-blink 1s steps(2) infinite}
+.rt-stage .rc.cur.sp,.rt-stage .rc.bad.sp{min-width:.5em}
+@keyframes rt-blink{50%{background:#818cf8}}
+.rt-input{position:absolute!important;inset:0;width:100%;height:100%;opacity:0;resize:none;margin:0!important;z-index:3;cursor:text}
+.rt-hint{position:absolute;right:14px;bottom:10px;font-size:12px;font-weight:700;color:#94a3b8;pointer-events:none}
+.rt-kbd{display:grid;grid-template-columns:minmax(200px,300px) minmax(0,1fr);gap:12px;margin-top:14px;align-items:center}
+.rt-hands{background:rgba(255,255,255,.06);border-radius:16px;padding:10px;text-align:center}
+.rt-hands svg{width:100%;height:auto;max-height:200px}
+.rt-note{margin-top:6px;border-radius:999px;background:rgba(148,163,184,.2);padding:7px 12px;font-size:13px;font-weight:700}
+@media(max-width:900px){.rt-kbd{grid-template-columns:1fr}}
 </style>
 
 <div class="course-show-shell">
@@ -227,8 +245,11 @@
         <div id="raceArena" class="race-arena">
         <div class="race-dashboard"><div class="race-panel" style="margin-top:0">
             <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px"><strong>Yarış Metni</strong><span class="race-xp-note" id="liveXpText">0 XP</span></div>
-            <div id="typingText" class="typing-box" style="line-height:1.8;font-size:18px"></div>
-            <textarea id="typingInput" rows="3" class="race-input" style="margin-top:8px" placeholder="Yarış başlayınca buraya yaz..." disabled></textarea>
+            <div id="typingStage" class="rt-stage">
+                <div id="typingText" class="typing-box"></div>
+                <textarea id="typingInput" rows="3" class="race-input rt-input" aria-label="Yarış metnini buraya yaz" autocomplete="off" autocapitalize="off" spellcheck="false" disabled></textarea>
+                <div class="rt-hint" id="rtHint">Yarış başlayınca yazmaya başla</div>
+            </div>
         </div><div id="selfPerformancePanel" class="race-panel" style="margin-top:0"><strong>Anlık Performans</strong>
 
         <div style="margin-top:14px">
@@ -252,6 +273,11 @@
         <div style="display:none"><b id="metricErrorRate">% 0,00</b></div>
         </div></div>
 
+        <div id="kbvSection" class="kbv rt-kbd">
+            <div class="rt-hands"><svg id="rtHands" viewBox="0 20 520 225" aria-hidden="true"></svg><div class="rt-note" id="rtNote">Sıradaki harf için doğru parmak burada yanar.</div></div>
+            <div class="kbwrap"><div id="rtKb" class="kb"></div></div>
+        </div>
+
         <div style="margin-top:14px">
             <h3 id="liveDataTitle" style="margin:0;font-size:20px">Canlı Rakipler</h3>
             <div id="opponents" style="margin-top:8px;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
@@ -271,6 +297,7 @@
 @push('scripts')
 <script src="/js/vendor/socket.io.min.js" crossorigin="anonymous"></script>
 <script src="/js/vendor/confetti.browser.js"></script>
+<script src="/runner-assets/keyboard-finger-runner/kbvisual.js?v=3"></script>
 <script>
 (() => {
     const AUTH_USER_ID = {{ (int) (auth()->id() ?? 0) }};
@@ -956,14 +983,35 @@
         };
     }
 
+    const kbv = window.KBVisual ? window.KBVisual.mount(document.getElementById('rtKb'), document.getElementById('rtHands')) : null;
+
     function renderTypingText(input, target) {
         const chars = target.split('').map((char, i) => {
-            if (i >= input.length) return `<span style="color:#64748b">${escapeHtml(char)}</span>`;
-            return input[i] === char
-                ? `<span style="color:#34d399">${escapeHtml(char)}</span>`
-                : `<span style="color:#fb7185">${escapeHtml(char)}</span>`;
+            const shown = char === ' ' ? '&nbsp;' : escapeHtml(char);
+            const sp = char === ' ' ? ' sp' : '';
+            if (i < input.length) return `<span class="rc ${input[i] === char ? 'ok' : 'bad'}${sp}">${shown}</span>`;
+            if (i === input.length && state.startedAtMs && !state.finished) return `<span class="rc cur${sp}">${shown}</span>`;
+            return `<span class="rc${sp}">${shown}</span>`;
         });
         el.typingText.innerHTML = chars.join('');
+        const cur = el.typingText.querySelector('.rc.cur');
+        if (cur) {
+            const box = el.typingText;
+            const lh = cur.offsetHeight || 40;
+            box.scrollTop = Math.max(0, cur.offsetTop - box.offsetTop - lh * 1.2);
+        }
+        updateKeyboardHint(input, target);
+    }
+
+    function updateKeyboardHint(input, target) {
+        if (!kbv) return;
+        const running = state.startedAtMs && !state.finished && !state.isSpectator;
+        const next = running ? target[input.length] : null;
+        const k = kbv.hint(next || '', true);
+        const note = document.getElementById('rtNote');
+        if (note) {
+            note.textContent = k ? `Sıradaki: ${next === ' ' ? 'boşluk' : next.toLocaleUpperCase('tr-TR')} · ${window.KBVisual.FNAME[k.f]}` : 'Sıradaki harf için doğru parmak burada yanar.';
+        }
     }
 
     function escapeHtml(value) {
@@ -1098,6 +1146,20 @@
     el.startRaceBtn.addEventListener('click', () => startRace().catch((err) => setStatus(err.message)));
     el.endRaceBtn.addEventListener('click', () => endRaceAndDownloadReport().catch((err) => setStatus(err.message)));
     el.typingInput.addEventListener('input', onTyping);
+    el.typingInput.addEventListener('keydown', (e) => {
+        if (!kbv || state.isSpectator || !state.startedAtMs) return;
+        kbv.flash(e.code, 'press', 90);
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+            const expected = state.roomText[el.typingInput.value.length];
+            if (expected && e.key.toLocaleLowerCase('tr-TR') !== expected) {
+                kbv.flash(e.code, 'wrong', 250);
+                const note = document.getElementById('rtNote');
+                const k = window.KBVisual.BYCH[expected];
+                if (note && k) note.textContent = `Yanlış! ${expected === ' ' ? 'Boşluk' : expected.toLocaleUpperCase('tr-TR')} için ${window.KBVisual.FNAME[k.f]} kullan.`;
+            }
+        }
+    });
+    document.getElementById('typingStage')?.addEventListener('click', () => { if (!el.typingInput.disabled) el.typingInput.focus(); });
     el.openReportBtn?.addEventListener('click', openRaceReport);
     el.themeToggle?.addEventListener('click', () => {
         const current = el.raceShell?.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -1128,6 +1190,8 @@
         el.startRaceBtn.style.display = 'none';
         el.endRaceBtn.style.display = 'none';
         el.typingInput.style.display = 'none';
+        document.getElementById('kbvSection').style.display = 'none';
+        document.getElementById('rtHint').style.display = 'none';
         el.selfPerformancePanel.style.display = 'none';
         el.raceArena.querySelector('.race-dashboard').style.gridTemplateColumns = '1fr';
         el.liveDataTitle.textContent = 'Canlı Öğrenci Verileri';

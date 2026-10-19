@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#107c41">
+<title>Excel Hesap Tablosu</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="titlebar">
+  <div class="logo">X</div>
+  <input id="bookName" value="Çalışma Kitabı1" aria-label="Dosya adı" spellcheck="false">
+  <span id="saveState" class="savestate">Kaydedildi</span>
+  <div class="tb-actions">
+    <button id="btnNew">Yeni</button>
+    <button id="btnSample" title="Örnek not tablosu yükle">Örnek tablo</button>
+    <button id="btnImport">CSV aç</button>
+    <button id="btnCsv">CSV indir</button>
+    <button id="btnXls">.xls indir</button>
+    <input type="file" id="fileCsv" accept=".csv,.tsv,.txt" hidden>
+  </div>
+</header>
+
+<nav class="ribbon-tabs" id="ribbonTabs">
+  <button class="active" data-tab="home">Giriş</button>
+  <button data-tab="formulas">Formüller</button>
+  <button data-tab="data">Veri</button>
+  <button data-tab="insert">Ekle</button>
+</nav>
+
+<section class="ribbon">
+  <div class="panel active" data-panel="home">
+    <div class="group">
+      <div class="row">
+        <button id="btnUndo" title="Geri al (Ctrl+Z)">↶</button>
+        <button id="btnRedo" title="Yinele (Ctrl+Y)">↷</button>
+        <button id="btnCopy" title="Kopyala (Ctrl+C)">⧉</button>
+        <button id="btnCut" title="Kes (Ctrl+X)">✂</button>
+        <button id="btnPaste" title="Yapıştır (Ctrl+V)">📋</button>
+      </div><label>Pano</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button data-fmt="b" class="b" title="Kalın (Ctrl+B)">K</button>
+        <button data-fmt="i" class="i" title="İtalik (Ctrl+I)">İ</button>
+        <button data-fmt="u" class="u" title="Altı çizili (Ctrl+U)">A</button>
+        <label class="color" title="Dolgu rengi">🪣<input type="color" id="fillColor" value="#ffff00"></label>
+        <label class="color" title="Yazı rengi">A<input type="color" id="textColor" value="#c00000"></label>
+        <select id="borderSel" title="Kenarlıklar">
+          <option value="">▦ Kenarlık</option><option value="all">Tüm kenarlıklar</option><option value="outer">Dış kenarlık</option><option value="bottom">Alt kenarlık</option><option value="none">Kenarlık yok</option>
+        </select>
+      </div><label>Yazı tipi</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button data-al="left" title="Sola">⯇</button>
+        <button data-al="center" title="Ortala">≡</button>
+        <button data-al="right" title="Sağa">⯈</button>
+        <button id="btnWrap" title="Metni kaydır">↵</button>
+      </div><label>Hizalama</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <select id="nfSel" title="Sayı biçimi">
+          <option value="gen">Genel</option><option value="num">Sayı (1.234,50)</option><option value="cur">Para birimi (₺)</option>
+          <option value="pct">Yüzde (%)</option><option value="date">Tarih</option><option value="time">Saat</option><option value="sci">Bilimsel</option>
+        </select>
+        <button id="btnDecInc" title="Ondalık artır">.0→</button>
+        <button id="btnDecDec" title="Ondalık azalt">←.0</button>
+      </div><label>Sayı</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button id="btnTableFmt" title="Seçimi tablo olarak biçimlendir">▤ Tablo olarak biçimlendir</button>
+        <button id="btnClearFmt">Biçimi temizle</button>
+        <button id="btnClear">Hücreleri temizle</button>
+      </div><label>Stiller</label>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="formulas">
+    <div class="group">
+      <div class="row">
+        <button id="btnSum" title="Otomatik toplam (Alt+=)">Σ Otomatik Toplam</button>
+        <select id="autoFn" title="Hızlı işlev">
+          <option value="">Hızlı işlev…</option><option value="TOPLA">TOPLA</option><option value="ORTALAMA">ORTALAMA</option>
+          <option value="BAĞ_DEĞ_SAY">BAĞ_DEĞ_SAY</option><option value="MAK">MAK</option><option value="MİN">MİN</option>
+        </select>
+      </div><label>Otomatik toplam</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <select id="fnInsert" title="İşlev ekle"><option value="">fx İşlev ekle…</option></select>
+        <button id="btnShowF" title="Formülleri göster / gizle (Ctrl+`)">Formülleri göster</button>
+      </div><label>İşlev kitaplığı</label>
+    </div>
+    <div class="group note">
+      <small>Formül <b>=</b> ile başlar. Bağımsız değişkenleri <b>;</b> veya <b>,</b> ile ayırın.<br>Örnek: <code>=TOPLA(A1:A10)</code> · <code>=EĞER(B2&gt;=50;"Geçti";"Kaldı")</code> · <code>=DÜŞEYARA(F1;A2:C20;3;0)</code><br>Formül yazarken başka hücreye tıklayarak adres ekleyebilirsiniz. Sayfalar arası: <code>=Sayfa2!A1</code></small>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="data">
+    <div class="group">
+      <div class="row">
+        <button id="btnSortAsc">A→Z Sırala</button>
+        <button id="btnSortDesc">Z→A Sırala</button>
+        <button id="btnFilter">⛛ Filtre</button>
+      </div><label>Sırala ve filtrele (aktif sütuna göre)</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button id="btnFreeze">❄ Üst satırı dondur</button>
+        <button id="btnAddRowsB">+ Satır ekle</button>
+        <button id="btnAddColsB">+ Sütun ekle</button>
+      </div><label>Görünüm</label>
+    </div>
+  </div>
+
+  <div class="panel" data-panel="insert">
+    <div class="group">
+      <div class="row">
+        <button id="btnInsRow">Üste satır ekle</button>
+        <button id="btnDelRow">Satırı sil</button>
+        <button id="btnInsCol">Sola sütun ekle</button>
+        <button id="btnDelCol">Sütunu sil</button>
+      </div><label>Hücreler</label>
+    </div>
+    <div class="group">
+      <div class="row">
+        <button id="btnChart">📊 Grafik ekle</button>
+      </div><label>Grafik</label>
+    </div>
+  </div>
+</section>
+
+<div class="fbar">
+  <input id="nameBox" value="A1" aria-label="Ad kutusu" spellcheck="false">
+  <span class="fx">fx</span>
+  <input id="fInput" aria-label="Formül çubuğu" spellcheck="false" autocomplete="off">
+  <div id="hint" class="hint" hidden></div>
+</div>
+
+<main class="sheetwrap" id="wrap">
+  <table id="grid" class="grid"></table>
+  <input id="cellEdit" class="cell-edit" hidden autocomplete="off" spellcheck="false">
+  <div id="fillHandle" class="fill-handle" hidden></div>
+</main>
+
+<footer class="bottom">
+  <div class="tabs" id="sheetTabs"></div>
+  <button id="addSheet" title="Yeni sayfa">＋</button>
+  <span class="grow"></span>
+  <span id="stats" class="stats"></span>
+</footer>
+
+<div class="modal" id="chartBox" hidden>
+  <div class="box">
+    <h3>Grafik</h3>
+    <div class="row">
+      <select id="chartType"><option value="bar">Sütun</option><option value="line">Çizgi</option><option value="pie">Pasta</option></select>
+      <label><input type="checkbox" id="chartHdr" checked> İlk satır / sütun başlık</label>
+    </div>
+    <canvas id="chartCv" width="560" height="320"></canvas>
+    <div class="row"><button id="chartPng">PNG indir</button><button id="chartClose">Kapat</button></div>
+  </div>
+</div>
+<div class="ctx" id="ctx" hidden></div>
+<script src="./engine.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
