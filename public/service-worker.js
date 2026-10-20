@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.5.5";
+const SW_VERSION = "v1.5.6";
 const CACHE_NAMES = {
   shell: `shell-${SW_VERSION}`,
   static: `static-${SW_VERSION}`,
@@ -166,7 +166,9 @@ self.addEventListener("activate", (event) => {
     ).then(async () => {
       if ("navigationPreload" in self.registration) {
         try {
-          await self.registration.navigationPreload.enable();
+          // Navigation preload kapalı: runner/iframe gibi SW'nin respondWith yapmadığı gezinmelerde
+          // kullanılmayan preload isteği iptal olup konsola uyarı düşürüyordu.
+          await self.registration.navigationPreload.disable();
         } catch (_) {}
       }
       await self.clients.claim();

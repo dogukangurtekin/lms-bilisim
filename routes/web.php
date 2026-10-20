@@ -187,6 +187,7 @@ Route::middleware('auth')->group(function () {
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');
       Route::post('/etkinlikler/ogretmenden-kaldir/toplu', [ActivityController::class, 'unassignTeacherBulk'])->name('activities.unassign.teacher.bulk');
+      Route::view('/hyperframes', 'admin.hyperframes')->middleware('role:admin')->name('admin.hyperframes');
       Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
     Route::get('/qr-okut/{student}', [QrLoginController::class, 'scannerPage'])->middleware('role:admin,teacher')->name('qr.login.scanner');
     Route::post('/qr/verify', [QrLoginController::class, 'verify'])->middleware('role:admin,teacher')->name('qr.verify');
@@ -422,6 +423,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
 
         Route::get('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'form'])->name('student.competitions.join.form');
+        Route::get('/ogrenci/canli-yarismalar-acik', [CompetitionController::class, 'studentOpenRoom'])->name('student.competitions.open');
+        Route::get('/ogrenci/canli-yarismalar/{room}/katil', [CompetitionController::class, 'studentJoinOpen'])->name('student.competitions.open-join');
         Route::get('/ogrenci/canli-yarismalar-aktif', [CompetitionController::class, 'studentActiveRoom'])->name('student.competitions.active');
         Route::post('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'join'])->name('student.competitions.join');
         Route::get('/ogrenci/canli-yarismalar/{room}', [CompetitionController::class, 'studentPlay'])->name('student.competitions.play');

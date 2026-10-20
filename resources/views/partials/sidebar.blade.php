@@ -88,6 +88,11 @@
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 016 6v3.4l1.7 2.6c.6.9-.1 2-1.2 2H5.5c-1.1 0-1.8-1.1-1.2-2L6 11.4V8a6 6 0 016-6zm0 20a3 3 0 002.8-2H9.2a3 3 0 002.8 2z"/></svg></span>Bildirimler
         </a>
         @endif
+        @if(auth()->user()?->hasRole('admin'))
+        <a class="{{ request()->routeIs('admin.hyperframes') ? 'active' : '' }}" href="{{ route('admin.hyperframes') }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11a2 2 0 012 2v2.4l4-2.4v10l-4-2.4V17a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>HyperFrames
+        </a>
+        @endif
         <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
             <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
         </a>

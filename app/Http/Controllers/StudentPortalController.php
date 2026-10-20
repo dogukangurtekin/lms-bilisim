@@ -1434,6 +1434,6 @@ class StudentPortalController extends Controller
             return (int) $stat->total_seconds;
         });
 
-        return response()->json(['ok' => true, 'total_seconds' => $totalSeconds]);
+        return response()->json(['ok' => true, 'total_seconds' => $totalSeconds, 'open_room' => CompetitionController::openRoomPayload(auth()->id())]);
     }
 }

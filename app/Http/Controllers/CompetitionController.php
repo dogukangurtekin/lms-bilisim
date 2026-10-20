@@ -105,6 +105,7 @@ class CompetitionController extends Controller
             'level_from' => ['required', 'integer', 'min:1', 'max:500'],
             'level_to' => ['required', 'integer', 'min:1', 'max:500', 'gte:level_from'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:120'],
+            'is_open' => ['nullable', 'boolean'],
         ]);
 
         if (! isset($games[$data['game_slug']])) {
@@ -120,8 +121,13 @@ class CompetitionController extends Controller
             'level_to' => (int) $data['level_to'],
             'duration_seconds' => (int) $data['duration_minutes'] * 60,
             'join_code' => $this->generateJoinCode(),
+            'is_open' => (bool) ($data['is_open'] ?? false),
             'status' => 'lobby',
         ]);
+
+        if ($room->is_open) {
+            $this->notifyOpenRoom($room);
+        }
 
         return redirect()->route('competitions.room.show', $room)->with('ok', 'Yarisma odasi olusturuldu. Ogrenciler katilinca "Herkese Baslat" butonuna basin.');
     }
@@ -209,6 +215,76 @@ class CompetitionController extends Controller
             'joined' => $room->participants()->count(),
             'rows' => $this->leaderboardRows($room),
         ]);
+    }
+
+    /** Kodsuz oda açılınca uygun öğrencilerin hesabına bir kez bildirim (push + bildirim listesi) gönderir. */
+    private function notifyOpenRoom(CompetitionRoom $room): void
+    {
+        try {
+            $userIds = Student::query()
+                ->when($room->school_class_id, fn ($q) => $q->where('school_class_id', $room->school_class_id))
+                ->whereNotNull('user_id')
+                ->pluck('user_id')
+                ->all();
+            app(\App\Services\PushNotificationService::class)->sendToUsers(
+                $userIds,
+                'competition_open',
+                '🏆 Canlı yarışma başladı!',
+                $room->game_name.' yarışmasına şimdi katıl.',
+                url('/ogrenci/canli-yarismalar'),
+                ['competition_room_id' => $room->id]
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** Sağ alttaki bildirim için: öğrencinin katılabileceği kodsuz oda var mı? */
+    public static function openRoomPayload(?int $userId): array
+    {
+        $room = CompetitionRoom::openFor($userId);
+        if (! $room) {
+            return ['active' => false];
+        }
+
+        return [
+            'active' => true,
+            'room_id' => $room->id,
+            'game_name' => $room->game_name,
+            'status' => $room->status,
+            'join_url' => route('student.competitions.open-join', $room),
+        ];
+    }
+
+    public function studentOpenRoom()
+    {
+        abort_unless(auth()->user()?->hasRole('student'), 403);
+
+        return response()->json(self::openRoomPayload(auth()->id()));
+    }
+
+    /** Kodsuz katılım: sağ alttaki bildirimden tek tıkla odaya girer. */
+    public function studentJoinOpen(CompetitionRoom $room)
+    {
+        abort_unless(auth()->user()?->hasRole('student'), 403);
+        $room = $this->syncRoomByTimer($room);
+        if (! $room->is_open || ! in_array($room->status, ['lobby', 'live'], true)) {
+            return redirect()->route('student.competitions.join.form')->withErrors(['join_code' => 'Bu yarışma artık açık değil.']);
+        }
+        if (! $this->studentCanJoin($room, auth()->id())) {
+            return redirect()->route('student.competitions.join.form')->withErrors(['join_code' => 'Bu yarışma senin sınıfına açık değil.']);
+        }
+
+        CompetitionParticipant::query()->updateOrCreate(
+            ['competition_room_id' => $room->id, 'student_user_id' => auth()->id()],
+            [
+                'user_name' => (string) (auth()->user()?->name ?? 'Ogrenci'),
+                'joined_at_ms' => $this->nowMs(),
+                'is_spectator' => false,
+            ]
+        );
+
+        return redirect()->route('student.competitions.play', $room)->with('ok', 'Odaya katıldın.');
     }
 
     public function studentJoinForm()

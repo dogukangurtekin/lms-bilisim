@@ -28,6 +28,28 @@
             </form>
         </div>
     </div>
+
+    @if(($openRooms ?? collect())->isNotEmpty())
+    <div class="cx-panel" style="margin-top:18px">
+        <h3 style="margin:0 0 4px">🏆 Açık Canlı Yarışmalar</h3>
+        <p style="margin:0 0 12px;font-size:13px;opacity:.85">Kod girmeden, aşağıdan tek tıkla katılabilirsin.</p>
+        <div style="display:grid;gap:10px">
+            @foreach($openRooms as $openRoom)
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)">
+                    <div style="min-width:0">
+                        <b style="font-size:16px">{{ $openRoom->game_name }}</b>
+                        <div style="font-size:12px;opacity:.85">
+                            Seviye {{ $openRoom->level_from }}–{{ $openRoom->level_to }} · {{ (int) ($openRoom->duration_seconds / 60) }} dk ·
+                            {{ $openRoom->status === 'live' ? '● Canlı' : '⏳ Lobide' }}
+                            @if($openRoom->schoolClass) · {{ $openRoom->schoolClass->name }}/{{ $openRoom->schoolClass->section }} @endif
+                        </div>
+                    </div>
+                    <a class="btn btn-primary" href="{{ route('student.competitions.open-join', $openRoom) }}">Yarışmaya Katıl</a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 </div>
 <script>
 document.getElementById('joinCode')?.addEventListener('input', function () {

@@ -64,6 +64,17 @@
 .play-compact .main > :not(.course-show-shell){
     display:none !important;
 }
+
+.comp-open-toast{position:fixed;right:18px;bottom:18px;z-index:99990;display:none;max-width:min(340px,calc(100vw - 28px));padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,#6d28d9,#db2777);color:#fff;box-shadow:0 18px 44px rgba(76,29,149,.5);font-family:inherit}
+.comp-open-toast.show{display:block;animation:compToastIn .7s cubic-bezier(.2,1.2,.3,1) both,compToastPulse 2.4s ease-in-out .8s infinite}
+.comp-open-toast b{display:block;font-size:15px;font-weight:900;margin-bottom:2px}
+.comp-open-toast span{display:block;font-size:13px;opacity:.92;margin-bottom:10px}
+.comp-open-toast button{width:100%;border:0;border-radius:12px;padding:10px 14px;background:#fff;color:#6d28d9;font-weight:900;font-size:14px;cursor:pointer}
+.comp-open-toast .comp-open-dot{position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:compDot 1.6s infinite}
+@keyframes compToastIn{0%{opacity:0;transform:translateY(40px) scale(.85)}100%{opacity:1;transform:none}}
+@keyframes compToastPulse{0%,100%{box-shadow:0 18px 44px rgba(76,29,149,.5)}50%{box-shadow:0 18px 54px rgba(219,39,119,.75)}}
+@keyframes compDot{0%{box-shadow:0 0 0 0 rgba(34,197,94,.7)}70%{box-shadow:0 0 0 12px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@media (prefers-reduced-motion:reduce){.comp-open-toast.show,.comp-open-dot{animation:none}}
 .live-quiz-overlay {
     position: fixed;
     inset: 0;
@@ -193,6 +204,17 @@
     });
 })();
 </script>
+@if(auth()->user()?->hasRole('student') && !request()->routeIs('student.competitions.play', 'student.live-quiz.play'))
+@php
+    $openCompRoom = \App\Models\CompetitionRoom::openFor(auth()->id());
+@endphp
+<form id="compOpenToast" class="comp-open-toast {{ $openCompRoom ? 'show' : '' }}" method="GET" action="{{ $openCompRoom ? route('student.competitions.open-join', $openCompRoom) : '#' }}" role="alert">
+    <i class="comp-open-dot" aria-hidden="true"></i>
+    <b>🏆 Canlı yarışma açık!</b>
+    <span id="compOpenToastName">{{ $openCompRoom?->game_name }}</span>
+    <button type="submit">Canlı Yarışmaya Katıl</button>
+</form>
+@endif
 @if(auth()->user()?->hasRole('student'))
 <div id="liveQuizOverlay" class="live-quiz-overlay" role="dialog" aria-modal="true" aria-label="Canli quiz bildirimi">
     <div class="live-quiz-overlay-card">
@@ -675,7 +697,7 @@
         if (inFlight) return;
         inFlight = true;
         try {
-            await fetch(pingUrl, {
+            const res = await fetch(pingUrl, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -684,6 +706,22 @@
                     'Accept': 'application/json',
                 },
             });
+            // Kodsuz canlı yarışma açılıp kapandığında sağ alt bildirimi ayrı bir yoklama olmadan günceller.
+            try {
+                const toast = document.getElementById('compOpenToast');
+                if (toast && res.ok) {
+                    const data = await res.json();
+                    const room = data && data.open_room;
+                    if (room && room.active && room.join_url) {
+                        toast.action = room.join_url;
+                        const nameEl = document.getElementById('compOpenToastName');
+                        if (nameEl) nameEl.textContent = room.game_name || '';
+                        toast.classList.add('show');
+                    } else {
+                        toast.classList.remove('show');
+                    }
+                }
+            } catch (_) {}
         } catch (_) {
             // Sessizce gec: oturum ping'i sadece canlı tutma amaçlıdır.
         } finally {

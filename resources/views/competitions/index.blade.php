@@ -59,6 +59,12 @@
                 <label>Süre (dakika)</label>
                 <input class="form-control" type="number" name="duration_minutes" min="1" max="120" value="{{ old('duration_minutes', 10) }}" required>
             </div>
+            <div class="cx-row" id="compOpenRow">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                    <input type="checkbox" name="is_open" value="1" style="width:auto;margin:0" @checked(old('is_open'))>
+                    Kodsuz oda: giriş yapan öğrenciler sağ alttaki bildirimle kod girmeden katılsın
+                </label>
+            </div>
             @if($errors->any())
                 <div class="cx-err">{{ $errors->first() }}</div>
             @endif
@@ -84,7 +90,7 @@
                 @forelse($rooms as $room)
                     <tr>
                         <td>{{ $room->game_name }}</td>
-                        <td><span class="code">{{ $room->join_code }}</span></td>
+                        <td>@if($room->is_open)<span class="tag">Kodsuz</span>@else<span class="code">{{ $room->join_code }}</span>@endif</td>
                         <td>{{ $room->schoolClass ? $room->schoolClass->name.'/'.$room->schoolClass->section : 'Tümü' }}</td>
                         <td>
                             @if($room->status === 'lobby') <span class="tag lobby">Lobide</span>
@@ -120,6 +126,7 @@
             const row = i.closest('.cx-row');
             if (row) row.style.display = kb ? 'none' : '';
         });
+        const openRow = document.getElementById('compOpenRow'); if (openRow) openRow.style.display = kb ? 'none' : '';
         if (btn) btn.textContent = kb ? '⌨️ Klavye Yarışması Odası Aç' : '🚀 Yarışma Odası Oluştur';
     };
     sel?.addEventListener('change', sync);

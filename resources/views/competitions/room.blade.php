@@ -19,7 +19,7 @@
     <div class="cx-hero-icon">🏆</div>
     <div>
         <h1>{{ $room->game_name }}</h1>
-        <p>Seviye {{ $room->level_from }}–{{ $room->level_to }} · Süre {{ (int) ($room->duration_seconds / 60) }} dk · Kod <b class="code">{{ $room->join_code }}</b></p>
+        <p>Seviye {{ $room->level_from }}–{{ $room->level_to }} · Süre {{ (int) ($room->duration_seconds / 60) }} dk · @if($room->is_open)<b>Kodsuz oda</b>@else Kod <b class="code">{{ $room->join_code }}</b>@endif</p>
     </div>
     <div class="cx-chips">
         @if($room->status === 'lobby')<span class="cx-chip lobby" id="compStatusChip">⏳ Lobide</span>
@@ -31,9 +31,15 @@
 
 @if($room->status === 'lobby')
 <div class="cx-panel cx-lobby">
+    @if($room->is_open)
+    <p style="margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px">Kodsuz Oda</p>
+    <div class="comp-lobby-code" style="font-size:34px">Sağ alttaki bildirimle katılım</div>
+    <p style="max-width:640px;margin:0 auto 12px">Giriş yapan öğrencilerin ekranının sağ altında <b style="color:#fff">Canlı Yarışmaya Katıl</b> bildirimi görünür; tek tıkla lobiye katılırlar.
+    @else
     <p style="margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12px">Katılım Kodu</p>
     <div class="comp-lobby-code">{{ $room->join_code }}</div>
-    <p style="max-width:640px;margin:0 auto 12px">Öğrenciler <b style="color:#fff">Canlı Yarışmalar</b> bölümünden bu kodu girip lobiye katılır. Herkes hazır olunca butona bas, yarışma <b style="color:#fff">aynı anda</b> başlasın.</p>
+    <p style="max-width:640px;margin:0 auto 12px">Öğrenciler <b style="color:#fff">Canlı Yarışmalar</b> bölümünden bu kodu girip lobiye katılır.
+    @endif Herkes hazır olunca butona bas, yarışma <b style="color:#fff">aynı anda</b> başlasın.</p>
     <div class="cx-big"><span id="compLobbyJoined">{{ $room->participants()->count() }}</span></div>
     <p style="margin:4px 0 16px">lobide bekleyen öğrenci</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">

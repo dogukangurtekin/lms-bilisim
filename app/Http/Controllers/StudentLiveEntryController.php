@@ -19,7 +19,9 @@ class StudentLiveEntryController extends Controller
     {
         abort_unless(auth()->user()?->hasRole('student'), 403);
 
-        return view('student-portal.live-entry');
+        return view('student-portal.live-entry', [
+            'openRooms' => CompetitionRoom::openListFor(auth()->id()),
+        ]);
     }
 
     public function join(Request $request)
