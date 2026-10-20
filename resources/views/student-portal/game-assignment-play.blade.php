@@ -1,10 +1,17 @@
 @extends('layout.app')
 @section('title','Etkinlik Odev Oynatici')
-@section('body_class','play-compact')
 @section('content')
 <div class="card course-show-shell" style="padding:12px">
+    @php($levelless = in_array($assignment->game_slug, ['excel-runner', 'word-runner', 'python-editor'], true))
     <div class="card" style="padding:10px">
+        @if($levelless)
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+                <b>{{ $assignment->title }}</b>
+                <button type="submit" form="game-assignment-complete-form" class="btn" style="margin-left:auto" onclick="return confirm('Ödevi tamamladığınızı onaylıyor musunuz?')">✓ Ödevi Tamamladım</button>
+            </div>
+        @else
         <p><b>{{ $assignment->title }}</b> | <b>Kurallar:</b> Sadece verilen level araliginda ({{ $assignment->level_from }}-{{ $assignment->level_to }}) ilerleyin.</p>
+        @endif
         <iframe
             id="assignment-runner"
             allow="camera *; microphone *; fullscreen *"

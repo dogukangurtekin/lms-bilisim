@@ -115,8 +115,8 @@ code { font-family: var(--mono); background: #eaf1ff; border: 1px solid #cfdcfb;
 .dc-lives .heart.lost { animation: heartLost .7s ease; }
 @keyframes heartLost { 0% { transform: scale(1.5); color: #ff4d6d; } 40% { transform: scale(1.2) rotate(-14deg); } 100% { transform: scale(.88); color: #475569; } }
 
-/* Kartlar ve yön düğmeleri sadece klavyeyle oynanır: fare etkileşimi kapalı */
-#hand, #hand .dc-cardbtn, #roamPad { pointer-events: none; cursor: default; user-select: none; }
+/* Kartlar ve yön düğmeleri: PC'de yalnızca klavye, telefon/tablette dokunma */
+#hand, #hand .dc-cardbtn, #roamPad { cursor: default; user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }  /* fare app.js'de yok sayılır, dokunma çalışır */
 .dc-cardbtn:hover:not(:disabled) .dc-codecard { transform: none; box-shadow: 0 6px 0 rgba(0,0,0,.22), 0 12px 18px rgba(15,45,92,.16); }
 .dc-cardbtn:active:not(:disabled) .dc-codecard { transform: none; }
 #roamPad button { cursor: default; }

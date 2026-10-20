@@ -25,17 +25,19 @@ html, body {
 }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 14px 12px 24px;
-  gap: 10px;
+  padding: 8px 12px 10px;
+  gap: 6px;
 }
 
 .app-title {
-  margin: 4px 0 2px;
-  font-size: clamp(22px, 4.6vw, 36px);
+  margin: 0;
+  font-size: clamp(16px, min(4.6vw, 4vh), 30px);
   font-weight: 900;
   letter-spacing: 1.5px;
   text-align: center;
@@ -50,7 +52,11 @@ html, body {
   background: linear-gradient(165deg, var(--navy-1), var(--navy-2));
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 28px;
-  padding: 14px 16px 0;
+  padding: 8px 14px 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 22px 46px rgba(11, 36, 71, .38), inset 0 1px 0 rgba(255, 255, 255, .16);
   overflow: hidden;
 }
@@ -103,8 +109,10 @@ html, body {
 .board-stage {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  padding: 12px 4px 18px;
+  gap: 14px;
+  padding: 6px 4px 8px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .grid-panel {
@@ -112,7 +120,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: clamp(280px, 42vw, 460px);
+  min-height: 0;
   border-radius: 24px;
   background:
     radial-gradient(circle at 50% 0%, rgba(96, 165, 250, .25), transparent 62%),
@@ -136,15 +144,15 @@ html, body {
 
 .dot-grid {
   display: grid;
-  gap: clamp(20px, 5.5vw, 52px);
+  gap: clamp(8px, min(5.5vw, 5.2vh), 52px);
   position: relative;
   justify-items: center;
   align-items: center;
 }
 
 .dot {
-  width: clamp(12px, 2.6vw, 18px);
-  height: clamp(12px, 2.6vw, 18px);
+  width: clamp(10px, min(2.6vw, 2.6vh), 18px);
+  height: clamp(10px, min(2.6vw, 2.6vh), 18px);
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #ffffff, #bcd6ff 70%);
   box-shadow: 0 0 0 4px rgba(147, 197, 253, .18), 0 0 14px rgba(147, 197, 253, .55);
@@ -163,8 +171,8 @@ html, body {
 
 .dot-grid .pen {
   position: absolute;
-  width: clamp(40px, 9vw, 58px);
-  height: clamp(40px, 9vw, 58px);
+  width: clamp(30px, min(9vw, 8vh), 58px);
+  height: clamp(30px, min(9vw, 8vh), 58px);
   transform: translate(-50%, -70%) rotate(0deg);
   pointer-events: none;
   transition: left .18s ease, top .18s ease, transform .18s ease;
@@ -178,7 +186,7 @@ html, body {
   gap: 12px;
   background: linear-gradient(180deg, #1c3a80, #132a5f);
   border-top: 1px solid rgba(255, 255, 255, .16);
-  padding: 12px 14px;
+  padding: 8px 14px;
   border-radius: 18px 18px 0 0;
   flex-wrap: wrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
@@ -291,7 +299,7 @@ html, body {
   text-align: center;
   color: #dbe7ff;
   font-weight: 900;
-  padding-bottom: 12px;
+  padding-bottom: 4px;
 }
 .feedback.ok { color: #86efac; }
 .feedback.bad { color: #fca5a5; }
@@ -318,5 +326,11 @@ html, body {
   .cmd-btn { width: 42px; height: 42px; }
   .slot { width: 42px; height: 42px; }
   .grid-panel::before { font-size: 10px; left: 10px; }
+}
+@media (max-height: 760px) {
+  .cmd-btn, .slot { width: 40px; height: 40px; }
+  .slot-tray { min-height: 54px; padding: 7px 12px; }
+  .feedback { min-height: 0; }
+  .board-top { margin-bottom: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

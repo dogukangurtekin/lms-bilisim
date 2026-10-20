@@ -1,9 +1,13 @@
 @extends('layout.app')
 @section('title','Odev Oynatici')
-@section('body_class','play-compact')
 @section('content')
 <div class="course-show-shell">
-<div class="top"><h1>{{ $homework->title }}</h1></div>
+@php($levelless = in_array($gameSlug ?? '', ['excel-runner', 'word-runner', 'python-editor'], true))
+<div class="top" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>{{ $homework->title }}</h1>
+@if($levelless)
+    <button type="submit" form="homework-complete-form" class="btn" style="margin-left:auto" onclick="return confirm('Ödevi tamamladığınızı onaylıyor musunuz?')">✓ Ödevi Tamamladım</button>
+@endif
+</div>
 <div class="card" style="padding:12px">
     <p><b>Tip:</b> {{ strtoupper($homework->assignment_type) }} | <b>Level Araligi:</b> {{ $homework->level_from ?? '-' }} - {{ $homework->level_to ?? '-' }}</p>
     <p>{{ $homework->details }}</p>

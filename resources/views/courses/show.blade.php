@@ -162,6 +162,13 @@
                     if (dx < 0) nextBtn.click();
                     else prevBtn.click();
                 }, { passive: true });
+                document.addEventListener('keydown', function (event) {
+                    if (event.altKey || event.ctrlKey || event.metaKey) return;
+                    const t = event.target;
+                    if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+                    if (event.key === 'ArrowRight') { event.preventDefault(); nextBtn.click(); }
+                    else if (event.key === 'ArrowLeft') { event.preventDefault(); if (!prevBtn.disabled) prevBtn.click(); }
+                });
                 window.addEventListener('resize', fitStage);
                 render();
             });

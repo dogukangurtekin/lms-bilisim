@@ -16,7 +16,7 @@ class CompetitionController extends Controller
     /**
      * "Canlı Yarışmalar" icin uygun oyunlar: seviye (from/to) tabanli
      * ilerleyen, ActivityRunnerController'in grant mekanizmasiyla uyumlu
-     * calisanlar. keyboard-race/block-builder-studio/flamestone-game/
+     * calisanlar. keyboard-race (ayri oda sistemi)/block-builder-studio/flamestone-game/
      * python-editor seviye araligi kavramini kullanmadigindan disaridadir.
      */
     public const ELIGIBLE_SLUGS = [
@@ -33,6 +33,7 @@ class CompetitionController extends Controller
         'number-bee-runner',
         'flowchart-runner',
         'web-lab-runner',
+        'keyboard-finger-runner',
     ];
 
     private const JOIN_CODE_CHARACTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

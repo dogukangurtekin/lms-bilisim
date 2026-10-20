@@ -434,6 +434,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/derslerim', [StudentPortalController::class, 'courses'])->name('student.portal.courses');
         Route::post('/ogrenci/derslerim/{course}/tamamla', [StudentPortalController::class, 'completeCourse'])->name('student.portal.course.complete');
         Route::post('/ogrenci/derslerim/{course}/ilerleme', [StudentPortalController::class, 'saveCourseProgress'])->middleware('throttle:120,1')->name('student.portal.course.progress');
+        Route::get('/ogrenci/ders-oyun-gorevi/{gate}', [StudentPortalController::class, 'lessonGameTask'])->whereNumber('gate')->middleware('throttle:60,1')->name('student.portal.lesson-game-task');
         Route::get('/ogrenci/odevlerim', [StudentPortalController::class, 'assignments'])->name('student.portal.assignments');
         Route::get('/ogrenci/arkadaslarim', [StudentPortalController::class, 'friends'])->name('student.portal.friends');
         Route::get('/ogrenci/sinif-panosu', [StudentPortalController::class, 'classBoard'])->name('student.portal.class-board');

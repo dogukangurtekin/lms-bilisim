@@ -172,7 +172,8 @@
     let lastSentAt = 0;
     let lastSentPct = -1;
     let accumulatedXp = 0;
-    const countedLevelIds = new Set();
+    const countedLevelIds = new Set();   // ilerleme yüzdesi için (oyunun bildirdiği sıra numaralarıyla)
+    const xpCountedIds = new Set();      // XP'nin tekrar eklenmemesi için (levelId ile)
 
     const computePercent = () => {
         const completedLevels = Math.min(totalLevels, countedLevelIds.size);
@@ -196,9 +197,7 @@
         const now = Date.now();
         syncCompletedLevels(payload);
         const computedPct = computePercent();
-        const completionReported = rangeCompleted
-            || computedPct >= 100
-            || Number(payload?.progressPercent ?? payload?.progress_percent ?? 0) >= 100;
+        const completionReported = rangeCompleted || computedPct >= 100;
         const pct = completionReported ? 100 : Math.max(0, Math.min(99, computedPct));
         if (!force && now - lastSentAt < 1500 && Math.abs(pct - lastSentPct) < 1) return;
         lastSentAt = now;
@@ -308,10 +307,14 @@
             const progressData = { ...data, currentLevelIndex };
             const levelId = data.levelId ?? currentLevelIndex;
             const levelKey = levelId !== undefined && levelId !== null ? String(levelId) : null;
-            if (levelKey !== null && !countedLevelIds.has(levelKey)) {
-                countedLevelIds.add(levelKey);
+            if (levelKey !== null && !xpCountedIds.has(levelKey)) {
+                xpCountedIds.add(levelKey);
                 accumulatedXp += Math.max(0, Number(data.xp ?? 0));
             }
+            // Yüzde: bazı oyunlar aynı olayda hem mutlak 'levelId' hem de göreli 'completedLevelIds' gönderir.
+            // İkisini birlikte saymak aralık 1'den başlamıyorsa her bölümü iki kez sayıp erken %100 gösteriyordu.
+            // Oyun tamamlanan bölüm listesi veriyorsa yalnızca onu, vermiyorsa levelId'yi sayıyoruz.
+            if (!Array.isArray(data.completedLevelIds) && levelKey !== null) countedLevelIds.add(levelKey);
             sendProgress(progressData, true);
         } else if (data.type === 'ASSIGNMENT_RANGE_COMPLETED') {
             if (xpEl) xpEl.textContent = String(accumulatedXp);

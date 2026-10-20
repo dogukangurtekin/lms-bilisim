@@ -80,5 +80,6 @@ button{font:inherit;cursor:pointer}
 .wd{display:inline-flex;white-space:nowrap}
 body.comp #btnBackWorld,body.comp #btnWorld{display:none}
 
-/* Klavye, eller ve hedef harf sadece gösterge: fare etkileşimi kapalı */
-#kb, #kb *, #hands, #target, #target * { pointer-events: none !important; cursor: default; user-select: none; }
+/* Eller ve hedef harf sadece gösterge; ekran klavyesine yalnızca dokunma (telefon/tablet) kabul edilir, fare yok sayılır (app.js) */
+#hands, #target, #target * { pointer-events: none !important; cursor: default; user-select: none; }
+#kb, #kb * { cursor: default; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }

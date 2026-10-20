@@ -130,20 +130,28 @@
         </form>
 
     @if($user->hasRole('admin', 'teacher'))
-        @php($slideTimerOn = \App\Support\SlideTimerSetting::enabled())
-        <div class="card" style="border:1.5px solid {{ $slideTimerOn ? '#dbe5f2' : '#a7f3d0' }};">
-            <h3 style="margin:0 0 4px;">⏱️ Ders Slayt Süresi</h3>
+        @php($slideModes = \App\Support\SlideTimerSetting::modesByGroup())
+        <div class="card" style="border:1.5px solid #dbe5f2;">
+            <h3 style="margin:0 0 4px;">⏱️ Ders Slayt Geçişi</h3>
             <p style="margin:0 0 12px;color:#475569">
-                Öğrenciler derste her sayfada belirli bir süre (sınıf düzeyine göre 10-15 sn) beklemeden sonraki sayfaya geçemez.
-                Bu ayar tüm öğrenciler için geçerlidir.
-                Şu an: <strong style="color:{{ $slideTimerOn ? '#1d4ed8' : '#15803d' }}">{{ $slideTimerOn ? 'AÇIK (bekleme süresi var)' : 'KAPALI (öğrenciler beklemeden geçebilir)' }}</strong>
+                Her sınıf grubu için öğrencilerin sonraki sayfaya nasıl geçeceğini ayrı ayrı seçin.
+                <b>Saniye:</b> her sayfada bekleme süresi · <b>Oyun:</b> her 3 slaytta bir Compute It görevi (diğer sayfalarda 8 sn) · <b>Kapalı:</b> beklemeden geçer.
             </p>
             <form method="POST" action="{{ route('profile.slide-timer.update') }}">
                 @csrf
-                <input type="hidden" name="enabled" value="{{ $slideTimerOn ? 0 : 1 }}">
-                <button type="submit" class="btn {{ $slideTimerOn ? 'btn-danger' : '' }}">
-                    {{ $slideTimerOn ? '⏱️ Slayt Süresini Kapat' : '⏱️ Slayt Süresini Aç' }}
-                </button>
+                <div style="display:grid;gap:10px;max-width:520px">
+                    @foreach(\App\Support\SlideTimerSetting::GROUPS as $gKey => $gLabel)
+                        <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:800">
+                            <span>{{ $gLabel }}</span>
+                            <select name="modes[{{ $gKey }}]" style="min-width:230px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px">
+                                <option value="timer" @selected($slideModes[$gKey] === 'timer')>⏱️ Saniye</option>
+                                <option value="game" @selected($slideModes[$gKey] === 'game')>🎮 Oyun (Compute It)</option>
+                                <option value="off" @selected($slideModes[$gKey] === 'off')>⛔ İkisi de kapalı</option>
+                            </select>
+                        </label>
+                    @endforeach
+                </div>
+                <button type="submit" class="btn" style="margin-top:12px">Kaydet</button>
             </form>
         </div>
     @endif

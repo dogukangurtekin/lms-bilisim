@@ -225,8 +225,16 @@
     if (e.code === 'Space' || /^(Backspace|Quote|Slash)$/.test(e.code)) e.preventDefault();
     press(e.code);
   });
-  // Ekrandaki klavye sadece gösterge: fareyle/dokunarak harf girilemez, yalnızca gerçek klavye tuşları sayılır.
+  // Ekrandaki klavye: PC'de yalnızca gerçek klavye; dokunmatik cihazda ekran tuşları çalışır.
+  // Telefon/tablette dokunma kabul edilir; fare (PC) yok sayılır.
   $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
+  $('#kb').addEventListener('pointerdown', function (e) {
+    if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+    if (view !== 'play' || !$('#result').hidden) return;
+    e.preventDefault();
+    var el = e.target.closest ? e.target.closest('.k') : null;
+    if (el && el.dataset.code) press(el.dataset.code);
+  });
 
   function finish() {
     finished = true; stopTimer(); finalSec = Math.max(1, (Date.now() - startAt) / 1000);

@@ -119,12 +119,15 @@ class ProfileController extends Controller
     {
         abort_unless($request->user()?->hasRole('admin', 'teacher'), 403);
 
-        $data = $request->validate(['enabled' => ['required', 'boolean']]);
-        \App\Support\SlideTimerSetting::set((bool) $data['enabled']);
+        $keys = array_keys(\App\Support\SlideTimerSetting::GROUPS);
+        $rules = [];
+        foreach ($keys as $key) {
+            $rules['modes.'.$key] = ['required', 'in:timer,game,off'];
+        }
+        $data = $request->validate($rules);
+        \App\Support\SlideTimerSetting::saveGroups($data['modes']);
 
-        return back()->with('success', $data['enabled']
-            ? 'Slayt süresi açıldı. Öğrenciler sayfalarda bekleme süresine uyacak.'
-            : 'Slayt süresi kapatıldı. Öğrenciler sayfaları beklemeden geçebilir.');
+        return back()->with('success', 'Slayt geçiş ayarları sınıf gruplarına göre kaydedildi.');
     }
 
     public function updateTeacherXpGift(Request $request): RedirectResponse

@@ -1293,6 +1293,31 @@ class StudentPortalController extends Controller
         return view('student-portal.game-assignment-play', compact('assignment', 'student', 'gameUrl'));
     }
 
+    /**
+     * Ders slaytları arasındaki Compute It görevi: her görev (gate) için kolay bölümlerden
+     * (1-8) sıradaki level'a özel, tek level'lık oturum izni verir ve oyun adresini döndürür.
+     */
+    public function lessonGameTask(int $gate)
+    {
+        $student = $this->getStudent();
+        abort_unless(\App\Support\SlideTimerSetting::gameEnabledFor($student), 404);
+
+        $easyLevels = 8;
+        $level = (($gate - 1) % $easyLevels) + 1;
+
+        request()->session()->put('runner_grant', [
+            'slug' => 'compute-it-runner',
+            'from' => $level,
+            'to' => $level,
+            'homework_id' => null,
+            'expires_at' => now()->addHours(3)->timestamp,
+        ]);
+
+        $query = http_build_query(['from' => $level, 'to' => $level, 'levelStart' => $level, 'levelEnd' => $level, 'hint' => 1, 'lesson' => 1]);
+
+        return response()->json(['ok' => true, 'level' => $level, 'url' => url('/compute-it-runner').'?'.$query]);
+    }
+
     public function completeGameAssignment(GameAssignment $assignment)
     {
         $student = $this->getStudent();

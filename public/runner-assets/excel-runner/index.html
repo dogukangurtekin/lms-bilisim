@@ -45,8 +45,8 @@
         <button data-fmt="b" class="b" title="Kalın (Ctrl+B)">K</button>
         <button data-fmt="i" class="i" title="İtalik (Ctrl+I)">İ</button>
         <button data-fmt="u" class="u" title="Altı çizili (Ctrl+U)">A</button>
-        <label class="color" title="Dolgu rengi">🪣<input type="color" id="fillColor" value="#ffff00"></label>
-        <label class="color" title="Yazı rengi">A<input type="color" id="textColor" value="#c00000"></label>
+        <label class="color" title="Dolgu (hücre) rengi" id="fillLbl">🪣<i class="cbar" id="fillBar"></i><input type="color" id="fillColor" value="#ffff00"></label>
+        <label class="color" title="Yazı rengi" id="textLbl">A<i class="cbar" id="textBar"></i><input type="color" id="textColor" value="#c00000"></label>
         <select id="borderSel" title="Kenarlıklar">
           <option value="">▦ Kenarlık</option><option value="all">Tüm kenarlıklar</option><option value="outer">Dış kenarlık</option><option value="bottom">Alt kenarlık</option><option value="none">Kenarlık yok</option>
         </select>
@@ -152,6 +152,12 @@
   <button id="addSheet" title="Yeni sayfa">＋</button>
   <span class="grow"></span>
   <span id="stats" class="stats"></span>
+  <span class="zoombox" title="Yakınlaştır (Ctrl + fare tekerleği)">
+    <button id="zoomOut" aria-label="Uzaklaştır">−</button>
+    <input type="range" id="zoomRange" min="50" max="200" step="10" value="100" aria-label="Yakınlaştırma">
+    <button id="zoomIn" aria-label="Yakınlaştır">+</button>
+    <button id="zoomPct" title="%100'e sıfırla">100%</button>
+  </span>
 </footer>
 
 <div class="modal" id="chartBox" hidden>

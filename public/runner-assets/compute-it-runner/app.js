@@ -1936,6 +1936,18 @@
     if (boardEl) boardEl.style.opacity = "0.45";
   }
 
+  // Ders slaytları arasındaki görevde (hint=1) öğrenci ipucu isteyebilir: seviyenin ipucu metni gösterilir.
+  const btnHint = document.getElementById("btn-hint");
+  if (btnHint && params.get("hint") === "1") {
+    btnHint.hidden = false;
+    btnHint.addEventListener("click", () => {
+      const lv = levels[levelIndex];
+      if (!runnerStatusEl || !lv) return;
+      runnerStatusEl.hidden = false;
+      runnerStatusEl.textContent = "💡 " + (lv.tip || "Hedefe giden yolu adım adım düşün.");
+    });
+  }
+
   async function applySessionGrant() {
     if (!needsGrantCheck || isStaff) {
       grantReady = true;

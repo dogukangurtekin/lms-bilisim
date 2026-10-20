@@ -332,7 +332,19 @@
     $('btnHint').addEventListener('click', showHint);
     $('btnSound').addEventListener('click', function () { soundOn = !soundOn; $('btnSound').textContent = soundOn ? '🔊' : '🔇'; try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch (e) {} });
     Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', closeModals); });
-    Array.prototype.forEach.call(document.querySelectorAll('#roamPad button'), function (b) { b.tabIndex = -1; });  // yön düğmeleri sadece gösterge; hareket klavyeyle
+    Array.prototype.forEach.call(document.querySelectorAll('#roamPad button'), function (b) { b.tabIndex = -1; });
+    // Dokunma (telefon/tablet) kartları ve yön düğmelerini kullanır; fare (PC) yok sayılır.
+    function touchOnly(ev) { return ev.pointerType === 'touch' || ev.pointerType === 'pen'; }
+    $('hand').addEventListener('pointerdown', function (ev) {
+      if (!touchOnly(ev)) return;
+      var b = ev.target.closest('.dc-cardbtn'); if (!b || !st || level.mode === 'roam') return;
+      ev.preventDefault(); playCard(+b.dataset.id);
+    });
+    $('roamPad').addEventListener('pointerdown', function (ev) {
+      if (!touchOnly(ev)) return;
+      var b = ev.target.closest('button[data-dir]'); if (!b) return;
+      ev.preventDefault(); roamMove(b.dataset.dir);
+    });
     $('winNext').addEventListener('click', function () { $('winModal').classList.add('hidden'); openLevel(idx + 1); });
     $('winRetry').addEventListener('click', function () { $('winModal').classList.add('hidden'); restartLevel(); });
     $('btnClose').addEventListener('click', function () { post({ type: 'REQUEST_CLOSE_ACTIVITY', source: 'dot-cards' }); });

@@ -380,3 +380,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+.actions button[hidden] { display: none; }
+#btn-hint { background: rgba(250, 204, 21, .18); border: 1px solid rgba(250, 204, 21, .5); box-shadow: none; color: #fde68a; }

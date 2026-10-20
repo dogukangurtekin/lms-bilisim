@@ -72,3 +72,10 @@ label.color input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;
 .ctx div:hover{background:var(--hover)}
 @media(max-width:700px){.tb-actions{margin-left:0}}
 .grid.freeze tr:nth-child(2) th.rh{top:24px;z-index:4}
+
+label.color{flex-direction:column}
+label.color .cbar{position:absolute;left:5px;right:5px;bottom:2px;height:4px;border-radius:2px;background:var(--c,#ffff00);pointer-events:none}
+.zoombox{display:flex;align-items:center;gap:4px;margin-left:10px}
+.zoombox input[type=range]{width:110px;accent-color:var(--green)}
+.zoombox button{min-width:28px;padding:2px 6px}
+#zoomPct{min-width:52px;font-size:12px}

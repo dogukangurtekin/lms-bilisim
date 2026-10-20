@@ -247,6 +247,12 @@
     .course-show-timer{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:rgba(255,255,255,.9);border:1px solid rgba(37,99,235,.12);box-shadow:0 12px 28px rgba(15,23,42,.05)}
     .course-show-timer-label,.course-show-timer-clock{color:#1e293b;font-size:14px;font-weight:900;white-space:nowrap}
     .course-show-timer-clock{min-width:48px;text-align:right;color:#1d4ed8}
+    .course-show-timer{grid-template-columns:auto minmax(0,1fr) auto auto}
+    #student-course-game-open[hidden]{display:none}
+    .sc-game-banner{position:absolute;left:50%;top:18px;z-index:2;transform:translate(-50%,-140%);padding:12px 22px;border-radius:999px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-weight:900;font-size:17px;box-shadow:0 12px 30px rgba(0,0,0,.4);white-space:nowrap;pointer-events:none;opacity:0}
+    .sc-game-banner.show{animation:scBanner 3.6s ease forwards}
+    @keyframes scBanner{0%{opacity:0;transform:translate(-50%,-140%) scale(.9)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}20%{transform:translate(-50%,0) scale(1)}30%{transform:translate(-50%,0) scale(1.05)}40%{transform:translate(-50%,0) scale(1)}85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-140%)}}
+    @media (max-width:640px){.sc-game-banner{font-size:14px;padding:9px 14px;white-space:normal;text-align:center;width:88%}}
     .course-show-timer-bar{height:12px;border-radius:999px;background:#e2e8f0;overflow:hidden}
     .course-show-timer-fill{width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#4f46e5);transition:width .25s linear,background .2s ease}
     .course-show-timer-fill.is-warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
@@ -355,6 +361,17 @@
                         <div id="student-course-timer-fill" class="course-show-timer-fill"></div>
                     </div>
                     <span id="student-course-timer-clock" class="course-show-timer-clock">{{ $slideWaitSeconds }} sn</span>
+                    <button type="button" id="student-course-game-open" class="btn" hidden>🎮 Görevi Aç</button>
+                </div>
+                <div id="student-course-game-modal" style="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;padding:14px">
+                    <div style="position:relative;background:#0b1e45;border-radius:18px;width:min(980px,100%);height:min(720px,94vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.5)">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;color:#fff;font-weight:800">
+                            <span>🎮 Mola görevi: Compute It seviyesini geç, sonraki sayfa açılsın</span>
+                            <button type="button" id="student-course-game-close" class="btn" style="padding:6px 12px">Kapat</button>
+                        </div>
+                        <div id="student-course-game-banner" class="sc-game-banner" aria-live="polite">🎮 Sonraki slayt için oyunu tamamla!</div>
+                        <iframe id="student-course-game-frame" allow="fullscreen *" style="flex:1;width:100%;border:0;background:#0b1e45"></iframe>
+                    </div>
                 </div>
             @endif
 
@@ -450,8 +467,15 @@
                 let solvedQuestionsTotal = 0;
                 let correctQuestionsTotal = 0;
                 let wrongQuestionsTotal = 0;
-                const slideWaitMs = @json($slideWaitSeconds * 1000);
-                const slideTimerEnabled = @json(\App\Support\SlideTimerSetting::enabled());
+                const slideWaitMs = @json(\App\Support\SlideTimerSetting::gameEnabledFor($student ?? null) ? 8000 : $slideWaitSeconds * 1000);   // oyun modunda sayfa aralarında sabit 8 sn
+                const slideTimerEnabled = @json(\App\Support\SlideTimerSetting::enabledFor($student ?? null));
+                const slideGameEnabled = @json(\App\Support\SlideTimerSetting::gameEnabledFor($student ?? null));
+                const GAME_EVERY = 3;
+                const gameOpenBtn = document.getElementById('student-course-game-open');
+                const gameModal = document.getElementById('student-course-game-modal');
+                const gameFrame = document.getElementById('student-course-game-frame');
+                const gameCloseBtn = document.getElementById('student-course-game-close');
+                const gameLockedIndexes = new Set();
                 let slideUnlockAt = 0;
                 let slideTimer = null;
                 let slideUnlocked = previewMode;
@@ -578,8 +602,22 @@
                     const isSummarySlide = String(slides[idx]?.dataset?.slideSummary || '0') === '1';
                     const isQuestionSlide = !!slides[idx]?.querySelector('[data-sqz-question]');
                     const isLastSlide = idx === slides.length - 1;
-                    const skipSlideTimer = !slideTimerEnabled || isQuestionSlide || isSummarySlide || isLastSlide;
+                    const skipSlideTimer = !(slideTimerEnabled || slideGameEnabled) || isQuestionSlide || isSummarySlide || isLastSlide;
                     const wasAlreadyUnlocked = unlockedSlideIndexes.has(idx);
+                    // Oyun modu: her 3. içerik sayfasında Compute It görevi geçilmeden ilerlenemez.
+                    const isGameGate = slideGameEnabled && !previewMode && !isQuestionSlide && !isSummarySlide && !isLastSlide && ((idx + 1) % GAME_EVERY === 0);
+                    if (gameOpenBtn) gameOpenBtn.hidden = true;
+                    if (isGameGate) {
+                        slideUnlocked = wasAlreadyUnlocked;
+                        if (timerBox) { timerBox.style.display = ''; timerBox.classList.toggle('is-ready', wasAlreadyUnlocked); }
+                        if (timerFill) { timerFill.style.width = wasAlreadyUnlocked ? '0%' : '100%'; timerFill.classList.remove('is-warn'); }
+                        if (timerLabel) timerLabel.textContent = wasAlreadyUnlocked ? 'Görevi tamamladın' : 'Mola görevi: oyunu geçince sonraki sayfa açılır';
+                        if (timerClock) timerClock.textContent = wasAlreadyUnlocked ? 'Hazır' : '';
+                        if (gameOpenBtn) gameOpenBtn.hidden = wasAlreadyUnlocked;
+                        syncNextButton();
+                        if (!wasAlreadyUnlocked) openGameModal();   // oyun doğrudan ekrana gelir
+                        return;
+                    }
                     slideUnlocked = previewMode || skipSlideTimer || wasAlreadyUnlocked;
 
                     if (timerBox) timerBox.style.display = skipSlideTimer ? 'none' : '';
@@ -600,6 +638,53 @@
                     updateSlideTimer();
                     slideTimer = setInterval(updateSlideTimer, 250);
                 }
+
+                function unlockCurrentSlideByGame() {
+                    slideUnlocked = true;
+                    unlockedSlideIndexes.add(idx);
+                    if (timerBox) timerBox.classList.add('is-ready');
+                    if (timerLabel) timerLabel.textContent = 'Görevi tamamladın, sonraki sayfaya geçebilirsin';
+                    if (timerClock) timerClock.textContent = 'Hazır';
+                    if (timerFill) timerFill.style.width = '0%';
+                    if (gameOpenBtn) gameOpenBtn.hidden = true;
+                    syncNextButton();
+                }
+                function closeGameModal() {
+                    if (gameModal) gameModal.style.display = 'none';
+                    if (gameFrame) gameFrame.src = 'about:blank';
+                }
+                async function openGameModal() {
+                    if (!gameModal || !gameFrame) return;
+                    if (gameModal.parentNode !== document.body) document.body.appendChild(gameModal);
+                    const gate = Math.floor((idx + 1) / GAME_EVERY), gateIdx = idx;
+                    try {
+                        const res = await fetch(@json(url('/ogrenci/ders-oyun-gorevi')) + '/' + gate, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+                        const data = await res.json();
+                        if (!res.ok || !data.url) throw new Error('grant');
+                        if (idx !== gateIdx) return;   // istek sürerken sayfa değiştiyse açma
+                        gameFrame.src = data.url;
+                        gameModal.style.display = 'flex';
+                        const bn = document.getElementById('student-course-game-banner');
+                        if (bn) { bn.classList.remove('show'); void bn.offsetWidth; bn.classList.add('show'); }
+                    } catch (e) {
+                        // Görev açılamazsa öğrenci derste takılı kalmasın.
+                        unlockCurrentSlideByGame();
+                    }
+                }
+                if (gameOpenBtn) gameOpenBtn.addEventListener('click', openGameModal);
+                if (gameCloseBtn) gameCloseBtn.addEventListener('click', closeGameModal);
+                window.addEventListener('message', (event) => {
+                    const data = event && event.data;
+                    if (!data || typeof data !== 'object' || data.source !== 'compute-it') return;
+                    if (data.type !== 'LEVEL_COMPLETED' && data.type !== 'ASSIGNMENT_RANGE_COMPLETED') return;
+                    if (!gameModal || gameModal.style.display === 'none') return;
+                    const doneIdx = idx;
+                    unlockCurrentSlideByGame();
+                    setTimeout(() => {
+                        closeGameModal();
+                        if (idx === doneIdx && !nextBtn.disabled) nextBtn.click();   // görev bitince sonraki slayt kendiliğinden açılır
+                    }, 1200);
+                });
 
                 function fitIframeToHolder(iframe, holder) {
                     if (!iframe || !holder) return;
@@ -977,6 +1062,10 @@
                 });
 
                 document.addEventListener('keydown', function (event) {
+                    if (event.altKey || event.ctrlKey || event.metaKey) return;
+                    const t = event.target;
+                    if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+                    if (gameModal && gameModal.style.display === 'flex') return;
                     if (event.key === 'ArrowLeft') {
                         event.preventDefault();
                         if (idx > 0) prevBtn.click();

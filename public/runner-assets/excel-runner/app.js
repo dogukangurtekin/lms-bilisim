@@ -184,7 +184,7 @@
   });
   function startResize(c, e) {
     var x0 = e.clientX, w0 = S().colW[c] || DEF_W;
-    function mv(ev) { var w = Math.max(24, w0 + ev.clientX - x0); S().colW[c] = w; cols[c].style.width = w + 'px'; placeHandle(); }
+    function mv(ev) { var w = Math.max(24, w0 + (ev.clientX - x0) / (zoom / 100)); S().colW[c] = w; cols[c].style.width = w + 'px'; placeHandle(); }
     function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); saveSoon(); }
     document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
   }
@@ -388,8 +388,35 @@
   $$('[data-fmt]').forEach(function (b) { b.addEventListener('click', function () { toggleFmt(b.dataset.fmt); wrap.focus(); }); });
   $$('[data-al]').forEach(function (b) { b.addEventListener('click', function () { var al = b.dataset.al; setFmt(function (x) { if (x.al === al) delete x.al; else x.al = al; }); }); });
   $('#btnWrap').addEventListener('click', function () { var cur = getCell(anchor.r, anchor.c), on = !(cur && cur.wr); setFmt(function (x) { if (on) x.wr = 1; else delete x.wr; }); });
-  $('#fillColor').addEventListener('input', function () { var v = this.value; setFmt(function (x) { x.bg = v; }); });
-  $('#textColor').addEventListener('input', function () { var v = this.value; setFmt(function (x) { x.fg = v; }); });
+  function paintBars() { $('#fillBar').style.setProperty('--c', $('#fillColor').value); $('#textBar').style.setProperty('--c', $('#textColor').value); }
+  $('#fillColor').addEventListener('input', function () { var v = this.value; paintBars(); setFmt(function (x) { x.bg = v; }); });
+  $('#textColor').addEventListener('input', function () { var v = this.value; paintBars(); setFmt(function (x) { x.fg = v; }); });
+  paintBars();
+
+  /* ================= yakınlaştırma ================= */
+  var zoom = 100, ZKEY = 'excelRunnerZoom';
+  function setZoom(z, keep) {
+    z = Math.max(50, Math.min(200, Math.round(z / 10) * 10));
+    var cx = wrap.scrollLeft + wrap.clientWidth / 2, cy = wrap.scrollTop + wrap.clientHeight / 2, k = z / zoom;
+    zoom = z; $('#grid').style.zoom = z / 100;
+    $('#zoomRange').value = z; $('#zoomPct').textContent = z + '%';
+    if (keep !== false) { wrap.scrollLeft = cx * k - wrap.clientWidth / 2; wrap.scrollTop = cy * k - wrap.clientHeight / 2; }
+    try { localStorage.setItem(ZKEY, String(z)); } catch (e) {}
+    if (editing) positionEdit();
+    placeHandle();
+  }
+  $('#zoomIn').addEventListener('click', function () { setZoom(zoom + 10); });
+  $('#zoomOut').addEventListener('click', function () { setZoom(zoom - 10); });
+  $('#zoomRange').addEventListener('input', function () { setZoom(+this.value); });
+  $('#zoomPct').addEventListener('click', function () { setZoom(100); });
+  wrap.addEventListener('wheel', function (e) { if (!e.ctrlKey) return; e.preventDefault(); setZoom(zoom + (e.deltaY < 0 ? 10 : -10)); }, { passive: false });
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || editing) return;
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); setZoom(zoom + 10); }
+    else if (e.key === '-') { e.preventDefault(); setZoom(zoom - 10); }
+    else if (e.key === '0') { e.preventDefault(); setZoom(100); }
+  });
+  try { var zs = +localStorage.getItem(ZKEY); if (zs >= 50 && zs <= 200) setZoom(zs, false); } catch (e) {}
   $('#nfSel').addEventListener('change', function () { var v = this.value; setFmt(function (x) { if (v === 'gen') { delete x.nf; delete x.dp; } else { x.nf = v; if (v === 'pct') x.dp = 0; else if (v === 'num' || v === 'cur') x.dp = 2; else delete x.dp; } }); wrap.focus(); });
   function decimals(d) { setFmt(function (x) { if (!x.nf || x.nf === 'gen') { x.nf = 'num'; x.dp = 2; } var cur = x.dp == null ? 2 : x.dp; x.dp = Math.max(0, Math.min(10, cur + d)); }); }
   $('#btnDecInc').addEventListener('click', function () { decimals(1); });
