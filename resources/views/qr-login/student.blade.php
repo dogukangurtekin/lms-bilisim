@@ -21,11 +21,15 @@
         token = data.token || '';
         tokenEl.textContent = token || 'Token yok';
         if (!token) return;
-        setInterval(async () => {
+        const startedAt = Date.now();
+        const timer = setInterval(async () => {
+            // Süresiz açık kalan sayfalar sunucuyu yormasın: 5 dakika sonra ya da sekme gizliyken yoklama yapılmaz.
+            if (Date.now() - startedAt > 5 * 60 * 1000) { clearInterval(timer); return; }
+            if (document.hidden) return;
             const r = await fetch('{{ url('/qr/guest/status') }}/' + encodeURIComponent(token));
             const s = await r.json().catch(() => ({}));
             if (s.approved && s.redirect) window.location.href = s.redirect;
-        }, 1200);
+        }, 3000);
     }
     start().catch(() => statusEl.textContent = 'QR baslatilamadi');
 })();

@@ -58,10 +58,10 @@ Route::get('/', function () {
     return view('home');
 });
 // Herkese açık (giriş gerektirmez) oyunlar: anasayfadaki "Oyunlar" menüsü. Admin profilinden açılıp kapatılır.
-Route::get('/oyun-listesi', [ActivityRunnerController::class, 'publicIndex'])->name('public.games');
-Route::get('/oyun/flamestone-game/seviyeler', [LevelController::class, 'publicIndex'])->name('public.flamestone.levels');
-Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'publicFeed'])->name('public.dot-connect.levels');
-Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->name('public.game');
+Route::get('/oyun-listesi', [ActivityRunnerController::class, 'publicIndex'])->middleware('throttle:60,1')->name('public.games');
+Route::get('/oyun/flamestone-game/seviyeler', [LevelController::class, 'publicIndex'])->middleware('throttle:60,1')->name('public.flamestone.levels');
+Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'publicFeed'])->middleware('throttle:60,1')->name('public.dot-connect.levels');
+Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:60,1')->name('public.game');
 Route::get('/kelime-arisi', fn () => redirect()->route('public.game', 'word-bee-runner'))->name('public.word-bee');
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->middleware('throttle:5,10')->name('support-requests.demo');
 Route::view('/gizlilik-politikasi', 'legal.privacy')->name('legal.privacy');

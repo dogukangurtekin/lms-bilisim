@@ -332,6 +332,7 @@
             // olarak yokluyoruz.
             const activeUrl = @json(route('student.competitions.active'));
             let redirected = false;
+            let timer = null;
             const poll = async () => {
                 if (redirected || document.hidden) return;
                 try {
@@ -340,12 +341,17 @@
                     const data = await res.json();
                     if (data.active && data.status === 'live' && data.room_id) {
                         redirected = true;
+                        if (timer) clearInterval(timer);
                         window.location.href = '/ogrenci/canli-yarismalar/' + data.room_id;
+                        return;
                     }
+                    // Katıldığı ve henüz başlamamış (lobide) bir oda yoksa yoklamayı tamamen durdur:
+                    // yarışmaya katılmayan hiçbir öğrenci bu sayfada sürekli istek atmaz.
+                    if (!data.active && timer) { clearInterval(timer); timer = null; }
                 } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
             };
             poll();
-            setInterval(poll, 8000);
+            timer = setInterval(poll, 8000);
         })();
     </script>
 @endif

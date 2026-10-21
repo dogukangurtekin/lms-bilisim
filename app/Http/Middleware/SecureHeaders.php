@@ -44,7 +44,7 @@ class SecureHeaders
         if ($request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
-        if ($request->is('api/*')) {
+        if ($request->is('api/*') && ! $request->is('api/competitions/lobby/*')) {
             $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
             $response->headers->set('Pragma', 'no-cache');
         }

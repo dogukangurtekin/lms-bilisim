@@ -220,6 +220,14 @@ class CompetitionController extends Controller
     /** Kodsuz oda açılınca uygun öğrencilerin hesabına bir kez bildirim (push + bildirim listesi) gönderir. */
     private function notifyOpenRoom(CompetitionRoom $room): void
     {
+        // Yüzlerce öğrenciye push gönderimi öğretmenin isteğini bekletmesin: yanıt gönderildikten sonra çalışır.
+        app()->terminating(function () use ($room) {
+            $this->sendOpenRoomNotification($room);
+        });
+    }
+
+    private function sendOpenRoomNotification(CompetitionRoom $room): void
+    {
         try {
             $userIds = Student::query()
                 ->when($room->school_class_id, fn ($q) => $q->where('school_class_id', $room->school_class_id))
@@ -425,32 +433,71 @@ class CompetitionController extends Controller
         $room = $this->syncRoomByTimer($room);
         abort_unless($this->studentCanJoin($room, auth()->id()), 403);
 
-        // Yüzlerce öğrenci aynı odayı birkaç saniyede bir yokladığı için sıralama ve katılımcı sayısı odaya özel 3 sn önbelleğe alınır.
-        $cached = \Illuminate\Support\Facades\Cache::remember('comp_status_rows:'.$room->id, 3, fn () => [
+        $summary = $this->statusSummary($room, (int) auth()->id());
+
+        return response()->json($summary + [
+            'students' => array_map(fn ($row) => [
+                'name' => $row['name'],
+                'avatar_url' => $row['avatar_url'],
+            ], $this->statusRows($room)['rows']),
+        ]);
+    }
+
+    /** Yüzlerce öğrenci aynı odayı sorduğu için sıralama ve katılımcı sayısı odaya özel 3 sn önbelleğe alınır. */
+    private function statusRows(CompetitionRoom $room): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('comp_status_rows:'.$room->id, 3, fn () => [
             'rows' => $this->leaderboardRows($room),
             'joined' => $room->participants()->count(),
         ]);
-        $rows = $cached['rows'];
+    }
+
+    /** Yarışma durumu + öğrencinin sırası. İlerleme isteğinin yanıtında da döner (ayrı durum yoklaması gerekmez). */
+    private function statusSummary(CompetitionRoom $room, int $userId): array
+    {
+        $cached = $this->statusRows($room);
         $myRank = 0;
-        foreach ($rows as $i => $row) {
-            if ((int) $row['student_user_id'] === (int) auth()->id()) {
+        foreach ($cached['rows'] as $i => $row) {
+            if ((int) $row['student_user_id'] === $userId) {
                 $myRank = $i + 1;
                 break;
             }
         }
+
+        return [
+            'status' => $room->status,
+            'ends_at_ms' => (int) ($room->ends_at_ms ?? 0),
+            'server_now_ms' => $this->nowMs(),
+            'joined' => $cached['joined'],
+            'my_rank' => $myRank,
+            'total' => count($cached['rows']),
+        ];
+    }
+
+    /** Lobi sayfası için anahtarlı, oturumsuz ve CDN'de önbelleğe alınabilir adres (yalnızca odaya katılan öğrenciye verilir). */
+    public static function lobbyKey(CompetitionRoom $room): string
+    {
+        return substr(hash_hmac('sha256', 'comp-lobby:'.$room->id, (string) config('app.key')), 0, 24);
+    }
+
+    public static function lobbyUrlFor(CompetitionRoom $room): string
+    {
+        return url('/api/competitions/lobby/'.$room->id.'/'.self::lobbyKey($room));
+    }
+
+    public function publicLobby(CompetitionRoom $room, string $key)
+    {
+        abort_unless(hash_equals(self::lobbyKey($room), $key), 404);
+        $room = $this->syncRoomByTimer($room);
+        $cached = $this->statusRows($room);
 
         return response()->json([
             'status' => $room->status,
             'ends_at_ms' => (int) ($room->ends_at_ms ?? 0),
             'server_now_ms' => $this->nowMs(),
             'joined' => $cached['joined'],
-            'my_rank' => $myRank,
-            'total' => count($rows),
-            'students' => array_map(fn ($row) => [
-                'name' => $row['name'],
-                'avatar_url' => $row['avatar_url'],
-            ], $rows),
-        ]);
+            'students' => array_map(fn ($row) => ['name' => $row['name'], 'avatar_url' => $row['avatar_url']], $cached['rows']),
+        ])->header('Cache-Control', 'public, max-age=3, s-maxage=3');
     }
 
     /**
@@ -506,7 +553,8 @@ class CompetitionController extends Controller
             $this->awardCompetitionXp($participant->student_user_id, max(0, $xp - $previousXp));
         });
 
-        return response()->json(['ok' => true]);
+        // Sıra ve durum bu yanıtla döner: yarışma sayfasının ayrı durum yoklaması yapmasına gerek kalmaz.
+        return response()->json(['ok' => true] + $this->statusSummary($room, (int) auth()->id()));
     }
 
     public function teacherReportProgress(Request $request, CompetitionRoom $room): JsonResponse

@@ -70,6 +70,7 @@
 (() => {
     const status = @json($room->status);
     const statusUrl = @json(route('student.competitions.status', $room));
+    const lobbyUrl = @json(\App\Http\Controllers\CompetitionController::lobbyUrlFor($room));   // oturumsuz, CDN'de önbelleğe alınır
     const progressUrl = @json(route('student.competitions.progress', $room));
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
@@ -91,7 +92,7 @@
         const pollLobby = async () => {
             if (document.hidden) return;
             try {
-                const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+                const res = await fetch(lobbyUrl, { headers: { 'Accept': 'application/json' }, credentials: 'omit' });
                 if (!res.ok) return;
                 const data = await res.json();
                 if (lobbyCountEl) lobbyCountEl.textContent = String(data.joined ?? 0);
@@ -102,7 +103,7 @@
             } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
         };
         pollLobby();
-        setInterval(pollLobby, 3000);
+        setInterval(pollLobby, 5000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) pollLobby(); });
         return;
     }
@@ -140,23 +141,29 @@
     setInterval(tick, 500);
     tick();
 
+    // Durum (sıra, süre, bitti mi) artık oyunun gönderdiği ilerleme isteğinin yanıtıyla gelir; her öğrenci için
+    // saniyelik durum yoklaması yok. Öğrenci bir süre ilerleme göndermese de durum, öğretmen yarışmayı erken bitirdiğinde
+    // fark edilsin diye yalnızca 30 sn'de bir (sekme görünürken) güvenlik amaçlı sorulur.
+    const applyStatus = (data) => {
+        if (!data) return;
+        if (data.server_now_ms) clockOffsetMs = data.server_now_ms - Date.now();
+        endsAtMs = data.ends_at_ms || endsAtMs;
+        if (rankEl && data.my_rank !== undefined) rankEl.textContent = String(data.my_rank || '-');
+        if (totalEl && data.total !== undefined) totalEl.textContent = String(data.total || '-');
+        if (data.status === 'finished') {
+            window.location.reload();
+        }
+    };
     const pollStatus = async () => {
         if (document.hidden) return;
         try {
             const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
-            const data = await res.json();
-            clockOffsetMs = data.server_now_ms - Date.now();
-            endsAtMs = data.ends_at_ms || endsAtMs;
-            if (rankEl) rankEl.textContent = String(data.my_rank || '-');
-            if (totalEl) totalEl.textContent = String(data.total || '-');
-            if (data.status === 'finished') {
-                window.location.reload();
-            }
+            applyStatus(await res.json());
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
     pollStatus();
-    setInterval(pollStatus, 4000);
+    setInterval(pollStatus, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) pollStatus(); });
 
     // --- Oyun iframe'inden gelen ilerleme olaylarini sunucuya ilet -------
@@ -225,7 +232,7 @@
                 current_level_index: Number(payload.currentLevelIndex ?? 0),
                 xp: accumulatedXp,
             }),
-        }).catch(() => {});
+        }).then((res) => (res.ok ? res.json() : null)).then((data) => { if (data && typeof applyStatus === 'function') applyStatus(data); }).catch(() => {});
     };
 
     // --- Basit konfeti patlamasi (harici kutuphane yok, hafif canvas) ----

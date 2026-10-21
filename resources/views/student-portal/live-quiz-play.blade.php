@@ -300,7 +300,7 @@
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
     pollLobby();
-    setInterval(pollLobby, 2500);
+    setInterval(pollLobby, 5000);
     @endif
 
     @if($session->status === 'live')

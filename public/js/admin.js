@@ -237,12 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
     setInterval(render, 1000);
     ping();
-    setInterval(ping, 120000);
+    setInterval(ping, 300000);
     window.addEventListener('beforeunload', pingOnClose);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         pingOnClose();
-      } else if (Date.now() - lastPingAt > 90000) {
+      } else if (Date.now() - lastPingAt > 120000) {
         ping();
       }
     });

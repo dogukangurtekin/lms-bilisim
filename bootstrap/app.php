@@ -57,7 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('notifications:attendance-reminders')->everyMinute();
+        // Komut günde bir kez gönderir (bugün gönderildiyse çıkar); her dakika yerine saatlik çalışması yeterli ve süreç sayısını 60 kat azaltır.
+        $schedule->command('notifications:attendance-reminders')->hourly()->withoutOverlapping(10);
         $schedule->command('activity-logs:purge')->dailyAt('00:30');
     })
     ->create();

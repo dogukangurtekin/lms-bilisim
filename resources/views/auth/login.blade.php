@@ -769,7 +769,13 @@
         modal.classList.add('open');
         try { await generate(); } catch (_) { statusEl.textContent = 'QR olusturulamadi'; return; }
         if (poll) clearInterval(poll);
-        poll = setInterval(check, 1200);
+        const pollStartedAt = Date.now();
+        poll = setInterval(() => {
+            // QR penceresi açık unutulursa sunucu yorulmasın: 5 dakika sonra durur, sekme gizliyken sormaz.
+            if (Date.now() - pollStartedAt > 5 * 60 * 1000) { clearInterval(poll); poll = null; statusEl.textContent = 'QR süresi doldu, pencereyi kapatıp yeniden açın.'; return; }
+            if (document.hidden) return;
+            check();
+        }, 3000);
     });
     const close = () => { modal.classList.remove('open'); if (poll) { clearInterval(poll); poll = null; } };
     closeBtn.addEventListener('click', close);

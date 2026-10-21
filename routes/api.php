@@ -46,6 +46,11 @@ Route::prefix('client')->group(function () {
 
 // user_id istemciden değil oturumdan alınır; aksi halde herhangi biri bir
 // öğretmenin id'sini göndererek oda başlatıp bitirebilirdi.
+// Canlı yarışma lobisi: anahtarlı, oturumsuz, 3 sn CDN önbelleği (yüzlerce öğrenci tek istek gibi görünür).
+Route::get('/competitions/lobby/{room}/{key}', [\App\Http\Controllers\CompetitionController::class, 'publicLobby'])
+    ->where(['room' => '[0-9]+', 'key' => '[a-f0-9]{24}'])
+    ->middleware('throttle:120,1');
+
 Route::prefix('race')->middleware(['web', 'auth', \App\Http\Middleware\UseAuthenticatedUserId::class])->group(function () {
     Route::get('/rooms/active', [RaceController::class, 'active']);
     Route::get('/my-runs', [RaceController::class, 'myRuns']);
