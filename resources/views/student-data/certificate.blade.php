@@ -8,7 +8,13 @@
     @php
         $styleKey = in_array(($certificateStyle ?? 'secondary'), ['primary', 'secondary', 'highschool'], true) ? $certificateStyle : 'secondary';
         $levelLabels = ['primary' => 'İlkokul', 'secondary' => 'Ortaokul', 'highschool' => 'Lise'];
-        $studentName = trim((string) ($student->user?->name ?? '-'));
+        $rawName = trim((string) ($student->user?->name ?? '-'));
+        $trUpper = fn (string $c) => mb_strtoupper(strtr($c, ['i' => 'İ', 'ı' => 'I']), 'UTF-8');
+        $trLower = fn (string $c) => mb_strtolower(strtr($c, ['İ' => 'i', 'I' => 'ı']), 'UTF-8');
+        $studentName = implode('', array_map(
+            fn ($part) => ($part === '' || preg_match('/^[\s\-]+$/u', $part)) ? $part : $trUpper(mb_substr($part, 0, 1, 'UTF-8')).$trLower(mb_substr($part, 1, null, 'UTF-8')),
+            preg_split('/(\s+|-)/u', $rawName, -1, PREG_SPLIT_DELIM_CAPTURE)
+        ));
         $className = trim((string) ($student->schoolClass?->name ?? '')) ?: '-';
         $sectionName = trim((string) ($student->schoolClass?->section ?? '')) ?: '-';
         $schoolLabel = trim((string) $schoolName);
@@ -66,8 +72,14 @@
         .ribbon svg{width:5mm;height:5mm}
 
         .content{position:absolute;inset:26mm 24mm 22mm;display:flex;flex-direction:column;align-items:center;text-align:center}
+        .logo-badge,.level-badge{position:absolute;top:22mm;width:32mm;height:32mm;border-radius:50%;display:grid;place-items:center;z-index:2}
+        .logo-badge{left:30mm;background:#fff;border:1.2mm solid var(--gold);box-shadow:0 0 0 1.2mm #fff,0 0 0 1.9mm var(--gold-2),0 3mm 6mm rgba(15,23,42,.28)}
+        .logo-badge img{width:25mm;height:25mm;object-fit:contain;filter:drop-shadow(0 .4mm .6mm rgba(15,23,42,.25))}
+        .level-badge{right:30mm;background:linear-gradient(145deg,var(--c1),var(--c2));color:#fff;border:1.2mm solid var(--gold);box-shadow:0 0 0 1.2mm #fff,0 0 0 1.9mm var(--gold-2),0 3mm 6mm rgba(15,23,42,.28);text-align:center;line-height:1.15}
+        .level-badge b{display:block;font-size:4.4mm;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+        .level-badge span{display:block;font-size:2.6mm;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.9;margin-top:.8mm}
+        .level-badge svg{width:5mm;height:5mm;margin:0 auto 1mm;display:block;color:var(--gold-2)}
         .brand{display:flex;align-items:center;gap:4mm;margin-top:1mm}
-        .brand img{width:17mm;height:17mm;object-fit:contain}
         .brand .school{font-weight:900;font-size:6mm;letter-spacing:.02em;color:var(--ink);line-height:1.1}
         .brand .level{font-size:3.2mm;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:1mm}
         .title{font-family:Georgia,"Times New Roman",serif;font-size:15mm;font-weight:700;letter-spacing:.06em;margin:5mm 0 0;line-height:1;
@@ -138,9 +150,17 @@
                 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></svg>
             </div>
 
+            <div class="logo-badge"><img src="{{ $logoUrl }}" alt="Bilişim Kod"></div>
+            <div class="level-badge" aria-hidden="true">
+                <div>
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></svg>
+                    <b>{{ $levelLabels[$styleKey] }}</b>
+                    <span>Bilişim</span>
+                </div>
+            </div>
+
             <div class="content">
                 <div class="brand">
-                    <img src="{{ $logoUrl }}" alt="Logo">
                     <div>
                         <div class="school">{{ $schoolLabel }}</div>
                         <div class="level">{{ $levelLabels[$styleKey] }} · Bilişim Teknolojileri</div>
