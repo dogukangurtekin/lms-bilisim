@@ -58,7 +58,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         // Komut günde bir kez gönderir (bugün gönderildiyse çıkar); her dakika yerine saatlik çalışması yeterli ve süreç sayısını 60 kat azaltır.
-        $schedule->command('notifications:attendance-reminders')->hourly()->withoutOverlapping(10);
-        $schedule->command('activity-logs:purge')->dailyAt('00:30');
+        // Komutlar süreç açmadan (aynı süreçte) çalışır: zamanlayıcı hem cron'dan hem de web adresinden (/api/cron/...) tetiklenebilir.
+        $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('notifications:attendance-reminders'))
+            ->name('attendance-reminders')->hourly()->withoutOverlapping(10);
+        $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('activity-logs:purge'))
+            ->name('activity-logs-purge')->dailyAt('00:30')->withoutOverlapping(30);
+        // Zamanlayıcının (cron) gerçekten çalıştığını gösteren işaret: son çalışma zamanı önbelleğe yazılır.
+        $schedule->call(fn () => \Illuminate\Support\Facades\Cache::put('scheduler_heartbeat', now()->toIso8601String(), 7200))
+            ->name('scheduler-heartbeat')->everyFiveMinutes();
     })
     ->create();

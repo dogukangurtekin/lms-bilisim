@@ -51,6 +51,26 @@ Route::get('/competitions/lobby/{room}/{key}', [\App\Http\Controllers\Competitio
     ->where(['room' => '[0-9]+', 'key' => '[a-f0-9]{24}'])
     ->middleware('throttle:120,1');
 
+// Zamanlayıcıyı web üzerinden tetikleme (hosting cron'u PHP 7.4 dosyası çalıştırabilir ama PHP 8.2 komutu çalıştıramıyorsa):
+// cron -> domains/bilisimkod.com/cron-ping.php -> bu adres. Anahtar APP_KEY'den türetilir; aynı anda tek çalışma (kilit), dakikada en fazla 6 istek.
+Route::get('/cron/{token}', function (string $token) {
+    $expected = substr(hash_hmac('sha256', 'scheduler-cron', (string) config('app.key')), 0, 40);
+    abort_unless(hash_equals($expected, $token), 404);
+
+    $lock = \Illuminate\Support\Facades\Cache::lock('cron-web-run', 240);
+    if (! $lock->get()) {
+        return response('busy', 200)->header('Content-Type', 'text/plain');
+    }
+    try {
+        \Illuminate\Support\Facades\Artisan::call('schedule:run');
+        $out = trim(\Illuminate\Support\Facades\Artisan::output());
+    } finally {
+        $lock->release();
+    }
+
+    return response('ok '.now()->toIso8601String().' '.$out, 200)->header('Content-Type', 'text/plain');
+})->where('token', '[a-f0-9]{40}')->middleware('throttle:6,1');
+
 Route::prefix('race')->middleware(['web', 'auth', \App\Http\Middleware\UseAuthenticatedUserId::class])->group(function () {
     Route::get('/rooms/active', [RaceController::class, 'active']);
     Route::get('/my-runs', [RaceController::class, 'myRuns']);
