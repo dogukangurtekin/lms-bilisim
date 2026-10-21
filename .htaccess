@@ -37,4 +37,8 @@
     <FilesMatch "\.(css|js)$">
         Header set Cache-Control "public, max-age=2592000"
     </FilesMatch>
+    # PWA dosyaları her sayfa açılışında yeniden istenmesin (erişim günlüğünde ≈%7 yük): 1 gün.
+    <FilesMatch "^(manifest\.webmanifest|manifest\.json|offline\.html)$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
 </IfModule>

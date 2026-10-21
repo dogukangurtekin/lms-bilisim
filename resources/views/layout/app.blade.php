@@ -241,6 +241,12 @@
 
     async function checkActiveQuiz() {
         if (busy) return;
+        // Sayfa değiştirdikçe her açılışta sormak yerine aynı sekmede en fazla 30 sn'de bir sorulur (erişim günlüğünde ≈%7 yük).
+        try {
+            const last = Number(sessionStorage.getItem('lq_checked_at') || 0);
+            if (Date.now() - last < 30000) return;
+            sessionStorage.setItem('lq_checked_at', String(Date.now()));
+        } catch (_) { /* sessionStorage yok: her seferinde sor */ }
         busy = true;
         try {
             const response = await fetch('{{ route('student.live-quiz.active') }}', {

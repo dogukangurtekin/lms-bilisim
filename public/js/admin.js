@@ -203,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
       render();
     };
     let lastPingAt = 0;
+    let pingTimer = null;
     const ping = async () => {
       if (!pingUrl || !csrf) return;
       if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
@@ -217,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           credentials: 'same-origin',
         });
+        if (res.status === 419 || res.status === 401) { clearInterval(pingTimer); return; }   // oturum/CSRF süresi dolmuş: aynı hatayı tekrar tekrar gönderme
         if (!res.ok) return;
         const payload = await res.json();
         if (payload && typeof payload.total_seconds !== 'undefined') {
@@ -237,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
     setInterval(render, 1000);
     ping();
-    setInterval(ping, 300000);
+    pingTimer = setInterval(ping, 300000);
     window.addEventListener('beforeunload', pingOnClose);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
