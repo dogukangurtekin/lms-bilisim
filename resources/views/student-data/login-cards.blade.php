@@ -5,9 +5,19 @@
     @include('partials.pwa-head')
     <title>Öğrenci Giriş Kartları</title>
     <style>
-        body{font-family:"Segoe UI",Arial,sans-serif;background:#e5e7eb;margin:0;color:#111}
-        .tools{padding:12px;text-align:center;display:flex;justify-content:center;gap:10px}
-        .btn{border:0;background:#111;color:#fff;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+        body{font-family:"Segoe UI",Arial,sans-serif;background:#f1f5f9;margin:0;color:#111}
+        /* Üst araç çubuğu: Başarı İstatistikleri / Öğrenci Verileri sayfalarıyla aynı görünüm (A4 kart tasarımı değişmedi) */
+        .tools{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06);margin-bottom:14px}
+        .tools-title{display:flex;align-items:center;gap:12px;min-width:0}
+        .tools-title strong{display:block;font-size:18px;color:#0f172a;font-weight:900}
+        .tools-title small{display:block;font-size:12px;color:#64748b;font-weight:700;margin-top:2px}
+        .tools-actions{display:flex;flex-wrap:wrap;gap:8px}
+        .btn{border:1px solid #e2e8f0;background:#fff;color:#0f172a;border-radius:10px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+        .btn:hover{background:#f8fafc}
+        .btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+        .btn.primary:hover{background:#1d4ed8}
+        .btn[disabled]{opacity:.55;cursor:wait}
+        @media (max-width:600px){.tools{padding:10px 12px}.tools-actions{width:100%}.tools-actions .btn{flex:1 1 auto;justify-content:center}}
         .sheet{width:210mm;min-height:297mm;margin:0 auto 12px;background:#fff;padding:10mm;box-sizing:border-box}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
         .download-progress{
@@ -116,7 +126,17 @@
 </head>
 <body>
 <div class="tools">
-    <button class="btn" id="download-pdf-btn" type="button">İndir (PDF)</button>
+    <div class="tools-title">
+        <div>
+            <strong>🪪 Öğrenci Giriş Kartları</strong>
+            <small>{{ $students->count() }} kart · {{ (int) ceil($students->count() / 10) }} A4 sayfa</small>
+        </div>
+    </div>
+    <div class="tools-actions">
+        <a class="btn" href="{{ route('student-data.index') }}">← Öğrenci Verileri</a>
+        <button class="btn" type="button" onclick="window.print()">🖨 Yazdır</button>
+        <button class="btn primary" id="download-pdf-btn" type="button">⬇ İndir (PDF)</button>
+    </div>
 </div>
 <div id="download-progress" class="download-progress" aria-live="polite">
     <div class="download-progress-title">İndirme hazırlanıyor</div>

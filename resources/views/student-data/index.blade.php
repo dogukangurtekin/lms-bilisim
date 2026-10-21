@@ -1,145 +1,194 @@
 @extends('layout.app')
 @section('title', 'Öğrenci Verileri')
 @section('content')
+@php
+    $listRows = $students instanceof \Illuminate\Contracts\Pagination\Paginator ? $students->getCollection() : collect($students);
+    $pageXp = (int) $listRows->sum(fn ($st) => (int) ($stats[$st->id]['xp'] ?? 0));
+    $pageBadges = (int) $listRows->sum(fn ($st) => (int) ($stats[$st->id]['badges'] ?? 0));
+    $maxXp = max(1, (int) $listRows->max(fn ($st) => (int) ($stats[$st->id]['xp'] ?? 0)));
+    $totalCount = method_exists($students, 'total') ? $students->total() : $listRows->count();
+    $firstNo = method_exists($students, 'firstItem') ? (int) ($students->firstItem() ?? 1) : 1;
+@endphp
 <style>
-    .student-filter .field-wrap{min-width:140px}
-    .student-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    /* Başarı İstatistikleri ile aynı görünüm dili (an-*) */
+    .an-wrap{display:grid;gap:14px}
+    .an-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+    .an-filter label{display:grid;gap:4px;font-size:12px;font-weight:700;color:#475569}
+    .an-filter select,.an-filter input{min-width:140px;margin:0}
+    .an-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .an-kpi{border:1px solid #e2e8f0;border-radius:14px;padding:12px;background:#fff}
+    .an-kpi span{display:block;font-size:12px;font-weight:700;color:#64748b}
+    .an-kpi strong{display:block;font-size:26px;font-weight:900;margin-top:4px;color:#0f172a}
+    .an-kpi small{display:block;margin-top:2px;font-size:12px;font-weight:700;color:#64748b}
+    .an-card{border:1px solid #e2e8f0;border-radius:14px;padding:14px;background:#fff}
+    .an-card h3{margin:0 0 4px;font-size:16px}
+    .an-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}
+    .an-table{width:100%;border-collapse:collapse;font-size:13px}
+    .an-table th,.an-table td{padding:9px 10px;border-bottom:1px solid #eef2f7;text-align:left;vertical-align:middle}
+    .an-table th{font-size:12px;color:#475569;background:#f8fafc;white-space:nowrap}
+    .an-table tr:hover td{background:#faf9ff}
+    .an-table td.num,.an-table th.num{text-align:right}
+    .an-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#eff6ff;color:#1d4ed8;white-space:nowrap}
+    .an-empty{text-align:center;padding:30px;color:#64748b;font-weight:700}
+    .an-note{font-size:12px;color:#64748b;line-height:1.5}
+    /* Bu sayfaya özel */
+    .sd-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .sd-actions .btn{margin:0}
+    .sd-person{display:flex;align-items:center;gap:10px;min-width:190px}
+    .sd-ava{width:38px;height:38px;border-radius:50%;object-fit:cover;flex:0 0 auto;border:2px solid #e2e8f0;background:#f1f5f9}
+    .sd-ava.ph{display:grid;place-items:center;font-weight:900;font-size:14px;color:#1d4ed8;background:#eff6ff}
+    .sd-person strong{display:block;font-size:13px;color:#0f172a}
+    .sd-person small{display:block;font-size:11px;color:#64748b}
+    .sd-rank{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:50%;background:#e2e8f0;font-size:12px;font-weight:800;color:#334155}
+    .sd-rank.top{background:#fde68a;color:#92400e}
+    .sd-xp{min-width:120px}
+    .sd-xp b{font-size:13px;color:#0f172a}
+    .sd-bar{height:6px;border-radius:99px;background:#e2e8f0;overflow:hidden;margin-top:4px}
+    .sd-bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed)}
+    .sd-row-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+    .sd-row-actions .btn{padding:5px 10px;font-size:12px;margin:0}
+    .sd-push{display:inline-block;width:11px;height:11px;border-radius:999px;border:1px solid rgba(15,23,42,.15)}
+    #student-login-modal > div,#student-login-modal .sd-modal-card{border-radius:16px !important}
+    @media (max-width:1100px){.an-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:768px){
-        .student-top-actions{display:grid;grid-template-columns:1fr;gap:10px}
-        .student-top-actions .btn{width:100%}
-        .student-filter{display:grid !important;grid-template-columns:1fr;gap:10px;align-items:stretch !important}
-        .student-filter .field-wrap{min-width:0;width:100%}
-        .student-filter input,.student-filter select{width:100%}
-        .student-table-wrap table{min-width:760px}
+        .sd-actions{display:grid;grid-template-columns:1fr;gap:10px}
+        .sd-actions .btn{width:100%}
+        .an-filter select,.an-filter input{min-width:0;width:100%}
+        .an-filter label{flex:1 1 140px}
+        .an-table{min-width:820px}
     }
 </style>
 <div class="top">
     <h1>Öğrenci Verileri</h1>
-    <div class="actions student-top-actions">
-        <a class="btn" href="{{ route('student-data.analytics') }}" style="background:#5B3DF5;color:#fff;font-weight:800">📊 Başarı İstatistikleri</a>
-        <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">Giriş Kartları (A4)</a>
-        <button class="btn" type="button" id="bulk-report-preview-btn">Gelişim Raporları Önizle</button>
-        <button class="btn" type="button" id="bulk-report-download-btn">Gelişim Raporları İndir</button>
-        <a class="btn" href="{{ route('parent-whatsapp.report-list', ['format' => 'xlsx']) }}" target="_blank" id="parent-sms-list-btn">Veli SMS Excel Listesi</a>
-        <button class="btn btn-success" type="button" id="parent-sms-send-btn">Toplu SMS Gönder</button>
+    <div class="actions sd-actions">
+        <a class="btn btn-primary" href="{{ route('student-data.analytics') }}">📊 Başarı İstatistikleri</a>
+        <a class="btn" href="{{ route('student-data.login-cards') }}" target="_blank">🪪 Giriş Kartları (A4)</a>
+        <button class="btn" type="button" id="bulk-report-preview-btn">📄 Gelişim Raporları Önizle</button>
+        <button class="btn" type="button" id="bulk-report-download-btn">⬇ Gelişim Raporları İndir</button>
+        <a class="btn" href="{{ route('parent-whatsapp.report-list', ['format' => 'xlsx']) }}" target="_blank" id="parent-sms-list-btn">📋 Veli SMS Excel Listesi</a>
+        <button class="btn btn-success" type="button" id="parent-sms-send-btn">✉ Toplu SMS Gönder</button>
     </div>
 </div>
 
-<div class="card">
-    <form id="student-data-filter-form" method="GET" class="actions student-filter" style="margin-bottom:12px;align-items:end;flex-wrap:wrap">
+<div class="an-wrap">
+    <form id="student-data-filter-form" method="GET" class="card an-filter student-filter">
         <input type="hidden" name="list" value="1">
-        <div class="field-wrap" style="min-width:260px">
-            <label>Arama</label>
+        <label style="min-width:260px;flex:2 1 260px">Arama
             <input id="student-data-q" name="q" value="{{ $q ?? request('q') }}" placeholder="Ad soyad, no, kullanıcı adı, e-posta, sınıf">
-        </div>
-        <div class="field-wrap" style="min-width:170px">
-            <label>Sınıf</label>
+        </label>
+        <label>Sınıf
             <select id="student-data-class-name" name="class_name">
                 <option value="">Tüm sınıflar</option>
                 @foreach(($classNames ?? collect()) as $cn)
                     <option value="{{ $cn }}" @selected(($className ?? request('class_name')) === $cn)>{{ $cn }}</option>
                 @endforeach
             </select>
-        </div>
-        <div class="field-wrap" style="min-width:140px">
-            <label>Şube</label>
+        </label>
+        <label>Şube
             <select id="student-data-section" name="section">
                 <option value="">Tüm şubeler</option>
                 @foreach(($sections ?? collect()) as $sec)
                     <option value="{{ $sec }}" @selected(($section ?? request('section')) === $sec)>{{ $sec }}</option>
                 @endforeach
             </select>
-        </div>
-        <div class="field-wrap" style="min-width:150px">
-            <label>Sayfa Başına</label>
+        </label>
+        <label>Sayfa başına
             <select id="student-data-per-page" name="per_page">
                 @foreach([20, 50, 100, 200] as $size)
                     <option value="{{ $size }}" @selected((int) (($perPage ?? request('per_page', 50))) === $size)>{{ $size }}</option>
                 @endforeach
             </select>
-        </div>
-        <div class="field-wrap" style="min-width:230px">
-            <button class="btn" type="button" id="class-report-preview-btn" disabled>Sınıf Gelişim Karnesini Önizle</button>
-        </div>
+        </label>
+        <button class="btn" type="button" id="class-report-preview-btn" disabled>📘 Sınıf Gelişim Karnesini Önizle</button>
     </form>
 
-    <div class="student-table-wrap"><table>
-        <thead>
-        <tr>
-            <th>Sıra</th><th>Öğrenci</th><th>Sınıf</th><th>XP</th><th>Avatar</th><th>Rozet</th><th>İşlem</th>
-        </tr>
-        </thead>
-        <tbody>
-        @forelse($students as $student)
-            <tr>
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $student->user?->name }}</td>
-                <td>{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</td>
-                <td>{{ $stats[$student->id]['xp'] ?? 0 }}</td>
-                <td>
-                    @if($student->currentAvatar)
-                        <img src="{{ asset($student->currentAvatar->image_path) }}" alt="avatar" style="width:40px;height:40px;object-fit:cover;border-radius:6px;vertical-align:middle">
-                        {{ $student->currentAvatar->name }}
-                    @else
-                        -
-                    @endif
-                </td>
-                <td>{{ (int) ($stats[$student->id]['badges'] ?? 0) }}</td>
-                <td class="actions">
-                    <a class="btn" target="_blank" href="{{ route('student-data.certificate', $student) }}">Sertifika</a>
-                    <button
-                        class="btn student-login-info-btn"
-                        type="button"
-                        data-update-url="{{ route('students.update', $student) }}"
-                        data-delete-url="{{ route('students.destroy', $student) }}"
-                        data-name="{{ $student->user?->name }}"
-                        data-first-name="{{ \Illuminate\Support\Str::before($student->user?->name ?? '', ' ') }}"
-                        data-last-name="{{ \Illuminate\Support\Str::after($student->user?->name ?? '', ' ') }}"
-                        data-student-no="{{ $student->student_no }}"
-                        data-username="{{ $student->credential?->username ?: \Illuminate\Support\Str::before((string) ($student->user?->email ?? ''), '@') }}"
-                        data-password="{{ $student->credential?->plain_password }}"
-                        data-class-id="{{ $student->school_class_id }}"
-                    >
-                        Giriş Bilgileri
-                    </button>
-                    <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelişim Karnesi</a>
-                    @php
-                        $pushPerm = (string) ($pushPermissionByUser[$student->user_id] ?? '');
-                        $pushColor = match($pushPerm) {
-                            'granted' => '#0EA57A',
-                            'denied' => '#E14B4B',
-                            default => '#94a3b8',
-                        };
-                        $pushTitle = match($pushPerm) {
-                            'granted' => 'Bildirim izni açık',
-                            'denied' => 'Bildirim izni reddedilmiş',
-                            'default' => 'Bildirim izni henüz sorulmamış',
-                            default => 'Bildirim durumu bilinmiyor (henüz cihaz kaydı yok)',
-                        };
-                    @endphp
-                    <span title="{{ $pushTitle }}" style="display:inline-block;width:12px;height:12px;border-radius:999px;background:{{ $pushColor }};margin-left:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.08);"></span>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="7" style="text-align:center;color:#64748b">
-                    @if(request('list') !== '1' && empty(($q ?? request('q'))) && empty(($className ?? request('class_name'))) && empty(($section ?? request('section'))))
-                        Listeleme için arama veya filtre giriniz.
-                    @else
-                        Arama kriterine uygun öğrenci bulunamadı.
-                    @endif
-                </td>
-            </tr>
-        @endforelse
-        </tbody>
-    </table></div>
-</div>
-
-@if($students instanceof \Illuminate\Contracts\Pagination\Paginator)
-    <div style="margin-top:12px">
-        {{ $students->links() }}
+    @if($listRows->isNotEmpty())
+    <div class="an-kpis">
+        <div class="an-kpi"><span>Listelenen öğrenci</span><strong>{{ number_format($totalCount, 0, ',', '.') }}</strong><small>bu sayfada {{ $listRows->count() }}</small></div>
+        <div class="an-kpi"><span>Toplam XP (bu sayfa)</span><strong>{{ number_format($pageXp, 0, ',', '.') }}</strong><small>en yüksek: {{ number_format($maxXp, 0, ',', '.') }} XP</small></div>
+        <div class="an-kpi"><span>Ortalama XP</span><strong>{{ number_format($listRows->count() ? $pageXp / $listRows->count() : 0, 0, ',', '.') }}</strong><small>öğrenci başına</small></div>
+        <div class="an-kpi"><span>Toplam rozet (bu sayfa)</span><strong>{{ number_format($pageBadges, 0, ',', '.') }}</strong><small>kazanılan rozetler</small></div>
     </div>
-@endif
+    @endif
+
+    <div class="an-card">
+        <div class="an-table-wrap"><table class="an-table">
+            <thead>
+            <tr>
+                <th>#</th><th>Öğrenci</th><th>Sınıf</th><th>XP</th><th>Avatar</th><th class="num">Rozet</th><th>Bildirim</th><th class="num">İşlem</th>
+            </tr>
+            </thead>
+            <tbody>
+            @forelse($students as $student)
+                @php
+                    $xpv = (int) ($stats[$student->id]['xp'] ?? 0);
+                    $uname = $student->credential?->username ?: \Illuminate\Support\Str::before((string) ($student->user?->email ?? ''), '@');
+                    $pushPerm = (string) ($pushPermissionByUser[$student->user_id] ?? '');
+                    $pushColor = match($pushPerm) { 'granted' => '#0EA57A', 'denied' => '#E14B4B', default => '#94a3b8' };
+                    $pushTitle = match($pushPerm) {
+                        'granted' => 'Bildirim izni açık',
+                        'denied' => 'Bildirim izni reddedilmiş',
+                        'default' => 'Bildirim izni henüz sorulmamış',
+                        default => 'Bildirim durumu bilinmiyor (henüz cihaz kaydı yok)',
+                    };
+                    $no = $firstNo + $loop->index;
+                @endphp
+                <tr>
+                    <td><span class="sd-rank{{ $no <= 3 ? ' top' : '' }}">{{ $no }}</span></td>
+                    <td>
+                        <div class="sd-person">
+                            @if($student->currentAvatar)
+                                <img class="sd-ava" src="{{ asset($student->currentAvatar->image_path) }}" alt="" loading="lazy">
+                            @else
+                                <span class="sd-ava ph">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr((string) $student->user?->name, 0, 1)) }}</span>
+                            @endif
+                            <div><strong>{{ $student->user?->name }}</strong><small>{{ $uname ?: '—' }}@if($student->student_no) · No {{ $student->student_no }}@endif</small></div>
+                        </div>
+                    </td>
+                    <td><span class="an-pill">{{ $student->schoolClass?->name }}/{{ $student->schoolClass?->section }}</span></td>
+                    <td class="sd-xp"><b>{{ number_format($xpv, 0, ',', '.') }}</b><div class="sd-bar"><i style="width:{{ round($xpv / $maxXp * 100) }}%"></i></div></td>
+                    <td>{{ $student->currentAvatar?->name ?? '—' }}</td>
+                    <td class="num">{{ (int) ($stats[$student->id]['badges'] ?? 0) }}</td>
+                    <td><span class="sd-push" style="background:{{ $pushColor }}" title="{{ $pushTitle }}"></span></td>
+                    <td>
+                        <div class="sd-row-actions">
+                            <a class="btn" target="_blank" href="{{ route('student-data.certificate', $student) }}">Sertifika</a>
+                            <button
+                                class="btn student-login-info-btn"
+                                type="button"
+                                data-update-url="{{ route('students.update', $student) }}"
+                                data-delete-url="{{ route('students.destroy', $student) }}"
+                                data-name="{{ $student->user?->name }}"
+                                data-first-name="{{ \Illuminate\Support\Str::before($student->user?->name ?? '', ' ') }}"
+                                data-last-name="{{ \Illuminate\Support\Str::after($student->user?->name ?? '', ' ') }}"
+                                data-student-no="{{ $student->student_no }}"
+                                data-username="{{ $uname }}"
+                                data-password="{{ $student->credential?->plain_password }}"
+                                data-class-id="{{ $student->school_class_id }}"
+                            >Giriş Bilgileri</button>
+                            <a class="btn" target="_blank" href="{{ route('student-data.progress-report', $student) }}">Gelişim Karnesi</a>
+                        </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="8" class="an-empty">
+                        @if(request('list') !== '1' && empty(($q ?? request('q'))) && empty(($className ?? request('class_name'))) && empty(($section ?? request('section'))))
+                            Listeleme için arama veya filtre giriniz.
+                        @else
+                            Arama kriterine uygun öğrenci bulunamadı.
+                        @endif
+                    </td>
+                </tr>
+            @endforelse
+            </tbody>
+        </table></div>
+    </div>
+
+    @if($students instanceof \Illuminate\Contracts\Pagination\Paginator)
+        <div>{{ $students->links() }}</div>
+    @endif
+</div>
 
 <div id="student-login-modal" style="position:fixed;inset:0;background:rgba(2,6,23,.65);display:none;align-items:center;justify-content:center;z-index:1600;padding:16px">
     <div style="width:min(560px,100%);background:#fff;border-radius:12px;padding:16px;box-shadow:0 24px 48px rgba(2,6,23,.35)">
