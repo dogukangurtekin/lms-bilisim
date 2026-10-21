@@ -7,6 +7,7 @@ use App\Models\StudentActivityLog;
 use App\Models\StudentTimeStat;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class TrackStudentActiveTime
@@ -35,14 +36,39 @@ class TrackStudentActiveTime
         'logout.get'                      => null,
     ];
 
+    /** Sık aralıkla gelen hafif yoklama istekleri: yazma/aktivite logu için en fazla 15 sn'de bir DB'ye gidilir. */
+    private const LIGHT_ROUTES = [
+        'student.live-quiz.status',
+        'student.live-quiz.active',
+        'student.competitions.status',
+        'student.competitions.active',
+        'student.competitions.open',
+        'student.competitions.progress',
+        'student.portal.course.progress',
+        'student.portal.time.ping',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         if ($user && $user->hasRole('student')) {
-            $student = Student::where('user_id', $user->id)->first();
+            // Öğrenci id'si 10 dk önbellekten gelir (her istekte Student sorgusu atılmaz).
+            $studentId = Cache::remember('student_id_by_user:'.$user->id, 600, fn () => Student::where('user_id', $user->id)->value('id'));
+            $student = $studentId ? (object) ['id' => (int) $studentId] : null;
 
             if ($student) {
+                // Birkaç saniyede bir gelen yoklama/durum istekleri (yarışma durumu, canlı quiz, ilerleme kaydı...) için
+                // 15 sn içinde zaten yazıldıysa veritabanına hiç dokunulmaz. Atlanan saniyeler bir sonraki yazımda diff olarak
+                // eklendiğinden toplam süre değişmez.
+                $routeName0 = $request->route()?->getName();
+                if (in_array($routeName0, self::LIGHT_ROUTES, true)) {
+                    $seen = (int) Cache::get('ts_seen:'.$student->id, 0);
+                    if ($seen > 0 && (now()->timestamp - $seen) < 15) {
+                        return $next($request);
+                    }
+                }
+
                 // 1) Süre takibi (mevcut mantık)
                 $stat = StudentTimeStat::firstOrCreate(
                     ['student_id' => $student->id],
@@ -67,6 +93,7 @@ class TrackStudentActiveTime
                 }
                 $stat->last_seen_at = $now;
                 $stat->save();
+                Cache::put('ts_seen:'.$student->id, $now->timestamp, 120);
 
                 // 2) Aktivite logu — sadece GET istekleri, ping ve ajax hariç
                 $routeName = $request->route()?->getName();
