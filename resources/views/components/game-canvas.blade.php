@@ -21,13 +21,14 @@
             <span id="flame-time" class="fs-chip">Süre: 0 sn</span>
         </div>
         <div class="fs-filters">
-            <select id="flame-difficulty-filter">
-                <option value="all">Tüm</option>
-                <option value="easy">Kolay</option>
-                <option value="medium">Orta</option>
-                <option value="hard">Zor</option>
-            </select>
-            <select id="flame-level-select" style="min-width:190px;"></select>
+            <div class="fs-level-nav" role="group" aria-label="Seviye seçimi">
+                <button id="flame-level-prev" class="fs-btn fs-btn-ghost fs-icon" type="button" aria-label="Önceki seviye" title="Önceki seviye">‹</button>
+                <button id="flame-level-picker" class="fs-level-picker" type="button" aria-haspopup="dialog" aria-label="Seviye listesini aç">
+                    <span id="flame-picker-name">Seviye 1</span>
+                    <small id="flame-picker-meta">Kolay</small>
+                </button>
+                <button id="flame-level-next" class="fs-btn fs-btn-ghost fs-icon" type="button" aria-label="Sonraki seviye" title="Sonraki seviye">›</button>
+            </div>
             <button id="flame-fullscreen-btn" class="fs-btn fs-btn-ghost" type="button">Tam Ekran</button>
         </div>
     </div>
@@ -69,5 +70,14 @@
         </aside>
     </div>
 
-    <div id="flame-level-previews" class="fs-previews"></div>
+    <div id="flame-picker-modal" class="fs-modal" hidden role="dialog" aria-modal="true" aria-labelledby="flame-picker-title">
+        <div class="fs-modal-backdrop" data-close></div>
+        <div class="fs-modal-card">
+            <div class="fs-modal-head">
+                <h3 id="flame-picker-title">Seviyeler</h3>
+                <button class="fs-btn fs-btn-ghost fs-icon" type="button" data-close aria-label="Kapat">✕</button>
+            </div>
+            <div id="flame-picker-body" class="fs-picker-body"></div>
+        </div>
+    </div>
 </section>

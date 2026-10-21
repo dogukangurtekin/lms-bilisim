@@ -798,6 +798,7 @@
                     if (nextLabel) nextLabel.textContent = isSummary ? 'Dersi Bitir' : 'İleri';
                     bindQuestionInteractions();
                     startSlideTimer();
+                    if (isSummary || idx >= slides.length - 1) autoCompleteLesson();
                     saveProgress(); // her sayfa değişiminde anlık konum kaydı
                 }
 
@@ -1118,6 +1119,32 @@
 
                 function progressKey(snap) {
                     return JSON.stringify([snap.slide_index, Object.assign({}, snap.state, { elapsed: 0 })]);
+                }
+
+                // Son sayfaya (ders özeti) gelindiği anda ders otomatik tamamlanır: öğrenci "Dersi Bitir"e basmayı unutsa
+                // ya da ana sayfaya geçse bile ders tamamlanmış sayılır. Sunucu tarafı tekrarı yok sayar (XP bir kez verilir).
+                let autoCompleteSent = false;
+                function autoCompleteLesson() {
+                    if (previewMode || !completeForm || autoCompleteSent) return;
+                    autoCompleteSent = true;
+                    const body = new URLSearchParams();
+                    body.set('earned_xp', String(Math.max(earnedXpTotal, totalXp)));
+                    body.set('duration_seconds', String(Math.max(0, Math.round((Date.now() - startedAt) / 1000))));
+                    body.set('solved_questions', String(Math.min(correctQuestionsTotal, totalQuestions)));
+                    body.set('correct_questions', String(correctQuestionsTotal));
+                    body.set('wrong_questions', String(wrongQuestionsTotal));
+                    fetch(completeForm.action, {
+                        method: 'POST',
+                        keepalive: true,
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: body.toString(),
+                    }).then((res) => { if (!res.ok) autoCompleteSent = false; }).catch(() => { autoCompleteSent = false; });
                 }
 
                 function saveProgress() {

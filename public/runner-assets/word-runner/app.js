@@ -3,7 +3,8 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var ed = $('#editor'), page = $('#page'), stage = $('#stage');
-  var KEY = 'bk_word_doc_v1';
+  var SS = window.SaveSlots || { inAssignment: false, blocked: false, draftKey: function (k) { return k; } };
+  var KEY = SS.draftKey('bk_word_doc_v1');   // kullanıcıya (ve ödeve) özel anahtar: başka öğrencinin belgesi görünmez
   var zoom = 1, savedRange = null, dirtyTimer = null;
 
   function exec(cmd, val) { ed.focus(); document.execCommand(cmd, false, val == null ? null : val); updateUI(); markDirty(); }
@@ -249,6 +250,7 @@
     clearTimeout(dirtyTimer); dirtyTimer = setTimeout(save, 700);
   }
   function save() {
+    if (SS.blocked) return;
     try {
       localStorage.setItem(KEY, JSON.stringify({ name: $('#docName').value, html: ed.innerHTML, size: $('#pageSize').value, orient: $('#pageOrient').value, margin: $('#pageMargin').value }));
       $('#saveState').textContent = 'Kaydedildi';
@@ -274,7 +276,7 @@
       'table{border-collapse:collapse}td,th{border:1px solid #888;padding:4px 8px}img{max-width:100%}blockquote{margin-left:24px;border-left:4px solid #9bb7e5;padding-left:12px;font-style:italic}' +
       'pre{background:#f1f3f6;padding:8px;white-space:pre-wrap}hr.pb{border:0;page-break-after:always}</style></head><body>' + ed.innerHTML + '</body></html>';
   }
-  $('#btnSave').addEventListener('click', function () { save(); });
+  $('#btnSave').addEventListener('click', function () { save(); if (window.SaveSlots && SaveSlots.save) SaveSlots.save(); });
   $('#btnDoc').addEventListener('click', function () {
     var h = fullHtml().replace('<html>', '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">');
     download(fileName('.doc'), 'application/msword', '﻿' + h);
@@ -322,6 +324,25 @@
   window.addEventListener('beforeunload', save);
   document.execCommand('defaultParagraphSeparator', false, 'p');
   document.execCommand('styleWithCSS', false, true);
-  load(); applyLayout(); stats();
+  // Ödev olarak açıldığında belge BOŞ başlar; önceki belge varsa Kayıtlarım penceresi sorar.
+  var pendingDraft = null;
+  if (SS.inAssignment) { try { pendingDraft = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {} } else { load(); }
+  applyLayout(); stats();
+  if (window.SaveSlots && SaveSlots.mount) {
+    var docState = function () { return JSON.stringify({ name: $('#docName').value, html: ed.innerHTML, size: $('#pageSize').value, orient: $('#pageOrient').value, margin: $('#pageMargin').value }); };
+    SaveSlots.mount({
+      app: 'word', title: 'Belge', draftStorageKey: KEY, noSaveButton: true,
+      getState: docState,
+      currentName: function () { return $('#docName').value; },
+      setState: function (js) {
+        var d = JSON.parse(js);
+        $('#docName').value = d.name || 'Belge1'; ed.innerHTML = d.html || '<p><br></p>';
+        if (d.size) $('#pageSize').value = d.size; if (d.orient) $('#pageOrient').value = d.orient; if (d.margin) $('#pageMargin').value = d.margin;
+        applyLayout(); stats(); markDirty();
+      },
+      readDraft: function () { return pendingDraft ? { data: JSON.stringify(pendingDraft), name: pendingDraft.name } : null; },
+      isBlankData: function (js) { try { var d = JSON.parse(js); return !String(d.html || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim(); } catch (e) { return true; } }
+    });
+  }
   if (window.innerWidth < 900) setTimeout(function () { $('#zoomFit').click(); }, 50);
 })();

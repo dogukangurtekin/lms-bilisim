@@ -28,6 +28,7 @@
   var role = (function () {
     var r = (params.get('role') || '').toLowerCase();
     if (r !== 'teacher' && r !== 'admin') { try { r = (localStorage.getItem('runner_role') || '').toLowerCase(); } catch (e) { r = ''; } }
+    if (window.RUNNER_PUBLIC) return 'student';
     return (r === 'teacher' || r === 'admin') ? r : 'student';
   })();
   var assignmentTitle = String(params.get('assignmentTitle') || '3D Blok Kodlama Ödevi');
@@ -53,7 +54,8 @@
   if (!isStaff() && queryRange()) S.levelRange = queryRange();
 
   // ------------------------------------------------------------------ ilerleme (localStorage)
-  var KEY = 'b3d.v2';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  var KEY = 'b3d.v2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
   var prog = (function () {
     try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
     return { v: VERSION, done: {}, ws: {}, last: 0 };

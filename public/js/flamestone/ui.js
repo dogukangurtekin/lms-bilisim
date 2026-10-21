@@ -37,9 +37,13 @@ function bindGamePage() {
   const levelMeta = document.getElementById('flame-level-meta');
   const stepsEl = document.getElementById('flame-steps');
   const timeEl = document.getElementById('flame-time');
-  const difficultyFilter = document.getElementById('flame-difficulty-filter');
-  const levelSelect = document.getElementById('flame-level-select');
-  const previewsEl = document.getElementById('flame-level-previews');
+  const pickerBtn = document.getElementById('flame-level-picker');
+  const pickerName = document.getElementById('flame-picker-name');
+  const pickerMeta = document.getElementById('flame-picker-meta');
+  const prevLevelBtn = document.getElementById('flame-level-prev');
+  const nextLevelBtn = document.getElementById('flame-level-next');
+  const pickerModal = document.getElementById('flame-picker-modal');
+  const pickerBody = document.getElementById('flame-picker-body');
   const restartBtn = document.getElementById('flame-restart-btn');
   const nextBtn = document.getElementById('flame-next-btn');
   const fsBtn = document.getElementById('flame-fullscreen-btn');
@@ -75,24 +79,14 @@ function bindGamePage() {
     return 'hard';
   };
 
-  const isLockedIndex = (idx) => !!allowedRange && ((idx + 1) < allowedRange.start || (idx + 1) > allowedRange.end);
-
-  const tileColor = (ch) => ({ '#':'#334155','B':'#d97706','b':'#fb923c','T':'#ef4444','K':'#facc15','D':'#38bdf8','G':'#22c55e','S':'#60a5fa','X':'#a78bfa' }[ch] || '#0f172a');
-  const renderMiniMap = (cnv, grid) => {
-    if (!cnv || !Array.isArray(grid) || !grid.length) return;
-    const ctx = cnv.getContext('2d');
-    const h = grid.length;
-    const w = String(grid[0] || '').length;
-    const cell = Math.max(2, Math.floor(Math.min(cnv.width / w, cnv.height / h)));
-    ctx.clearRect(0, 0, cnv.width, cnv.height);
-    for (let y = 0; y < h; y += 1) {
-      const row = String(grid[y] || '');
-      for (let x = 0; x < w; x += 1) {
-        ctx.fillStyle = tileColor(row[x] || '.');
-        ctx.fillRect(x * cell, y * cell, cell - 1, cell - 1);
-      }
-    }
-  };
+  // Herkese açık sürüm: bölümler sırayla açılır, tamamlananlar tarayıcıda saklanır.
+  const PUBLIC = !!window.FLAMESTONE_PUBLIC;
+  const publicKey = 'flamestone_public_done_v1';
+  const publicDone = new Set();
+  if (PUBLIC) { try { JSON.parse(localStorage.getItem(publicKey) || '[]').forEach((id) => publicDone.add(String(id))); } catch (_) {} }
+  const publicHighestDone = () => { let m = -1; allLevels.forEach((lv, i) => { if (publicDone.has(String(lv.id ?? i))) m = i; }); return m; };
+  const publicLocked = (idx) => allLevels.indexOf(levels[idx]) > publicHighestDone() + 1;
+  const isLockedIndex = (idx) => (PUBLIC ? publicLocked(idx) : (!!allowedRange && ((idx + 1) < allowedRange.start || (idx + 1) > allowedRange.end)));
 
   const showToast = (msg) => { toastEl.textContent = msg || ''; };
 
@@ -112,6 +106,10 @@ function bindGamePage() {
       showToast(`Basarili! ${moves} adim.`);
       const absLevelNo = current + 1;
       completedLevelNos.add(absLevelNo);
+      if (PUBLIC && level) {
+        publicDone.add(String(level.id ?? (allLevels.indexOf(level))));
+        try { localStorage.setItem(publicKey, JSON.stringify(Array.from(publicDone))); } catch (_) {}
+      }
       const durationSeconds = Math.max(0, Math.round((Date.now() - levelStartedAt) / 1000));
       try {
         window.parent?.postMessage({ type: 'LEVEL_COMPLETED', source: 'flamestone-game', levelNo: absLevelNo, levelId: absLevelNo, xp: 20, moves, completedLevelIds: Array.from(completedLevelNos).sort((a,b)=>a-b), elapsedSeconds: durationSeconds }, '*');
@@ -119,20 +117,54 @@ function bindGamePage() {
       if (allowedRange && absLevelNo >= allowedRange.end) {
         try { window.parent?.postMessage({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'flamestone-game', xp: completedLevelNos.size * 20, completedLevelIds: Array.from(completedLevelNos).sort((a,b)=>a-b), elapsedSeconds: durationSeconds }, '*'); } catch (_) {}
       }
-      if (level?.id) {
+      if (level?.id && !PUBLIC) {
         try { await fetchJson(scoreUrl, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf }, body: JSON.stringify({ level_id: level.id, moves, duration_seconds: durationSeconds }) }); } catch (_) {}
       }
       setTimeout(() => goNext(), 700);
     },
   });
 
+  const DIFF_LABEL = { easy: 'Kolay', medium: 'Orta', hard: 'Zor' };
+  const isDoneIndex = (i) => (PUBLIC
+    ? publicDone.has(String(levels[i]?.id ?? i))
+    : completedLevelNos.has(i + 1));
+
+  function openPicker() {
+    pickerBody.innerHTML = '';
+    ['easy', 'medium', 'hard'].forEach((diff) => {
+      const items = levels.map((lv, i) => ({ lv, i })).filter((x) => detectDifficulty(x.lv.name, x.i) === diff);
+      if (!items.length) return;
+      const sec = document.createElement('div');
+      sec.className = 'fs-picker-group';
+      const finished = items.filter((x) => isDoneIndex(x.i)).length;
+      sec.innerHTML = `<h4>${DIFF_LABEL[diff]} <small>${finished} / ${items.length} seviye</small></h4>`;
+      const grid = document.createElement('div');
+      grid.className = 'fs-picker-grid';
+      items.forEach(({ lv, i }) => {
+        const locked = isLockedIndex(i);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `fs-tile${isDoneIndex(i) ? ' done' : ''}${i === current ? ' current' : ''}`;
+        b.disabled = locked;
+        b.innerHTML = `${locked ? '<span class="lock">🔒</span>' : ''}<span class="t-num">${i + 1}</span><span class="t-state">${isDoneIndex(i) ? '✓ Bitti' : (i === current ? 'Şimdi' : DIFF_LABEL[diff])}</span>`;
+        b.addEventListener('click', () => { loadLevel(i); closePicker(); });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      pickerBody.appendChild(sec);
+    });
+    pickerModal.hidden = false;
+  }
+  function closePicker() { pickerModal.hidden = true; }
+
   function renderLevelInfo() {
     const lv = levels[current];
     if (!lv) return;
     levelTitle.textContent = lv.name || `Level ${current + 1}`;
     levelMeta.textContent = `Grid: ${lv.data.grid[0].length}x${lv.data.grid.length} | Level ${current + 1}/${levels.length}`;
-    levelSelect.value = String(current);
-    previewsEl.querySelectorAll('.flame-preview-card').forEach((b) => b.classList.toggle('is-active', Number(b.getAttribute('data-idx')) === current));
+    if (pickerName) pickerName.textContent = `Seviye ${current + 1}`;
+    if (pickerMeta) pickerMeta.textContent = DIFF_LABEL[detectDifficulty(lv.name, current)] || '';
+    if (prevLevelBtn) prevLevelBtn.disabled = current <= 0;
   }
 
   function loadLevel(index) {
@@ -164,32 +196,14 @@ function bindGamePage() {
   }
 
   const applyFilter = () => {
-    const f = String(difficultyFilter?.value || 'all');
-    levels = allLevels.filter((lv, idx) => (f === 'all' ? true : detectDifficulty(lv.name, idx) === f));
+    levels = allLevels.slice();
     if (!levels.length) {
-      levelSelect.innerHTML = '';
-      previewsEl.innerHTML = '<p class="fs-empty">Filtreye uygun level bulunamadı.</p>';
+      showToast('Level bulunamadı.');
       return;
     }
 
-    levelSelect.innerHTML = levels.map((lv, i) => `<option value="${i}" ${isLockedIndex(i) ? 'disabled' : ''}>${i + 1}. ${lv.name}${isLockedIndex(i) ? ' (Kilitli)' : ''}</option>`).join('');
-    previewsEl.innerHTML = levels.map((lv, i) => `
-      <button type="button" class="flame-preview-card${isLockedIndex(i) ? ' is-locked' : ''}${i === current ? ' is-active' : ''}" data-idx="${i}">
-        <canvas width="96" height="96" data-map="${i}"></canvas>
-        <div class="fs-pv-name">${i + 1}. ${lv.name}${isLockedIndex(i) ? ' - Kilitli' : ''}</div>
-      </button>
-    `).join('');
-
-    previewsEl.querySelectorAll('canvas[data-map]').forEach((c) => {
-      const i = Number(c.getAttribute('data-map') || 0);
-      renderMiniMap(c, levels[i]?.data?.grid || []);
-    });
-    previewsEl.querySelectorAll('.flame-preview-card').forEach((btn) => {
-      btn.addEventListener('click', () => loadLevel(Number(btn.getAttribute('data-idx') || 0)));
-    });
-
     if (current >= levels.length || isLockedIndex(current)) {
-      current = allowedRange ? Math.max(0, allowedRange.start - 1) : 0;
+      current = PUBLIC ? Math.max(0, Math.min(levels.length - 1, publicHighestDone() + 1)) : (allowedRange ? Math.max(0, allowedRange.start - 1) : 0);
     }
     loadLevel(Math.min(current, levels.length - 1));
   };
@@ -205,8 +219,11 @@ function bindGamePage() {
   controls.forEach((btn) => btn.addEventListener('click', () => handleDir(btn.dataset.dir)));
   restartBtn?.addEventListener('click', () => loadLevel(current));
   nextBtn?.addEventListener('click', () => goNext());
-  levelSelect?.addEventListener('change', (e) => loadLevel(Number(e.target.value || 0)));
-  difficultyFilter?.addEventListener('change', () => { current = 0; applyFilter(); });
+  pickerBtn?.addEventListener('click', openPicker);
+  prevLevelBtn?.addEventListener('click', () => loadLevel(current - 1));
+  nextLevelBtn?.addEventListener('click', () => goNext());
+  pickerModal?.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closePicker(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pickerModal && !pickerModal.hidden) closePicker(); });
   fsBtn?.addEventListener('click', async () => {
     if (!document.fullscreenElement) await root.requestFullscreen?.();
     else await document.exitFullscreen?.();
@@ -222,7 +239,7 @@ function bindGamePage() {
         allowedRange = { start: from, end: to };
       } catch (_) {
         showToast('Bu oyuna sadece atanmis odev araligindan erisebilirsiniz.');
-        restartBtn.disabled = true; nextBtn.disabled = true; levelSelect.disabled = true;
+        restartBtn.disabled = true; nextBtn.disabled = true; if (pickerBtn) pickerBtn.disabled = true;
         controls.forEach((btn) => { btn.disabled = true; });
         return;
       }

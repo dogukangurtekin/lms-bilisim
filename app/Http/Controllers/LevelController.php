@@ -97,6 +97,27 @@ class LevelController extends Controller
         ], 201);
     }
 
+    /** Herkese açık Flamestone: yalnızca sistem seviyeleri (öğretmen yapımı seviyeler hariç), giriş gerekmez. */
+    public function publicIndex(): JsonResponse
+    {
+        abort_unless(\App\Support\PublicGamesSetting::gameEnabled('flamestone-game'), 404);
+        if (Level::query()->whereNull('user_id')->count() < 50) {
+            $this->ensureSystemLevels();
+        }
+        $levels = Level::query()->whereNull('user_id')->orderBy('id')->get(['id', 'name', 'data']);
+
+        return response()->json([
+            'ok' => true,
+            'items' => $levels->map(fn (Level $level) => [
+                'id' => (int) $level->id,
+                'name' => (string) $level->name,
+                'data' => (array) ($level->data ?? []),
+                'user_id' => null,
+                'author' => null,
+            ])->values()->all(),
+        ]);
+    }
+
     private function ensureSystemLevels(): void
     {
         $expected = $this->defaultLevels();

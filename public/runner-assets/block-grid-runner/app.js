@@ -48,7 +48,8 @@
   if (!isStaff() && queryRange()) S.levelRange = queryRange();
 
   // ------------------------------------------------------------------ ilerleme (localStorage)
-  var KEY = 'bgr.v2';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  var KEY = 'bgr.v2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
   var prog = (function () {
     try { var p = JSON.parse(localStorage.getItem(KEY) || 'null'); if (p && p.v === VERSION) return p; } catch (e) {}
     return { v: VERSION, done: {}, ws: {}, last: 0 };

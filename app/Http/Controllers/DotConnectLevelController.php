@@ -79,6 +79,13 @@ class DotConnectLevelController extends Controller
     /**
      * JSON feed consumed by the connect-the-dots-runner game engine.
      */
+    public function publicFeed(): JsonResponse
+    {
+        abort_unless(\App\Support\PublicGamesSetting::gameEnabled('connect-the-dots-runner'), 404);
+
+        return $this->feed();
+    }
+
     public function feed(): JsonResponse
     {
         $levels = DotConnectLevel::query()

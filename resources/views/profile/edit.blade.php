@@ -157,6 +157,34 @@
     @endif
 
     @if($user->hasRole('admin'))
+        @php($pgOn = \App\Support\PublicGamesSetting::enabled())
+        @php($pgGames = \App\Support\PublicGamesSetting::perGame())
+        @php($pgAll = \App\Http\Controllers\ActivityController::games())
+        <div class="card" style="border:1.5px solid {{ $pgOn ? '#a7f3d0' : '#dbe5f2' }};">
+            <h3 style="margin:0 0 4px;">🎮 Herkese Açık Oyunlar (Anasayfa)</h3>
+            <p style="margin:0 0 12px;color:#475569">
+                Açıkken ziyaretçiler giriş yapmadan anasayfadaki <b>Oyunlar</b> menüsünden aşağıdaki oyunları oynar; ilerleme kendi tarayıcılarında saklanır.
+                Şu an: <strong style="color:{{ $pgOn ? '#15803d' : '#64748b' }}">{{ $pgOn ? 'AÇIK' : 'KAPALI (hiçbir oyun görünmez)' }}</strong>
+            </p>
+            <form method="POST" action="{{ route('profile.public-games.update') }}">
+                @csrf
+                <label style="display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:10px;cursor:pointer">
+                    <input type="checkbox" name="enabled" value="1" style="width:auto;margin:0" @checked($pgOn)> Herkese açık oyunlar açık
+                </label>
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 16px;margin-bottom:12px">
+                    @foreach(\App\Support\PublicGamesSetting::GAMES as $pgSlug => $pgDesc)
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                            <input type="checkbox" name="games[{{ $pgSlug }}]" value="1" style="width:auto;margin:0" @checked($pgGames[$pgSlug] ?? true)>
+                            {{ $pgAll[$pgSlug]['name'] ?? $pgSlug }}
+                        </label>
+                    @endforeach
+                </div>
+                <button type="submit" class="btn">Kaydet</button>
+            </form>
+        </div>
+    @endif
+
+    @if($user->hasRole('admin'))
         @php($teacherXpGiftOn = \App\Support\TeacherXpGiftSetting::enabled())
         <div class="card" style="border:1.5px solid {{ $teacherXpGiftOn ? '#a7f3d0' : '#dbe5f2' }};">
             <h3 style="margin:0 0 4px;">🎁 Öğretmenlere XP Hediyesi</h3>

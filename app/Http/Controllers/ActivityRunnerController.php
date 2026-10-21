@@ -251,7 +251,33 @@ class ActivityRunnerController extends Controller
         ];
     }
 
-    private function serveRunner(string $slug)
+    /** Anasayfadaki "Oyunlar" listesi (giriş gerektirmez). */
+    public function publicIndex()
+    {
+        $all = ActivityController::games();
+        $games = [];
+        foreach (\App\Support\PublicGamesSetting::openGames() as $slug => $desc) {
+            if (isset($all[$slug])) {
+                $games[] = ['slug' => $slug, 'name' => $all[$slug]['name'], 'image' => $all[$slug]['image'], 'desc' => $desc];
+            }
+        }
+
+        return view('public-games', ['games' => $games, 'enabled' => \App\Support\PublicGamesSetting::enabled()]);
+    }
+
+    /** Herkese açık oyun: giriş/ödev/izin kontrolü yok, ilerleme ziyaretçinin tarayıcısında tutulur. */
+    public function publicPlay(string $slug)
+    {
+        abort_unless(\App\Support\PublicGamesSetting::gameEnabled($slug), 404);
+
+        if ($slug === 'flamestone-game') {
+            return view('flamestone.public');
+        }
+
+        return $this->serveRunner($slug, true);
+    }
+
+    private function serveRunner(string $slug, bool $public = false)
     {
         $request = request();
         $requestUri = $request->getRequestUri();
@@ -267,7 +293,7 @@ class ActivityRunnerController extends Controller
             return redirect()->to($target, 302);
         }
 
-        $user = auth()->user();
+        $user = $public ? null : auth()->user();
         if ($user && ! $user->student) {
             $role = (string) $request->query('role', '');
             $targetRole = $user->hasRole('admin') ? 'admin' : 'teacher';
@@ -347,7 +373,7 @@ class ActivityRunnerController extends Controller
         $appJsVersion = File::exists($appJsPath) ? File::lastModified($appJsPath) : time();
         $styleCssVersion = File::exists($styleCssPath) ? File::lastModified($styleCssPath) : time();
         $inject = '<base href="' . e($runnerBase) . '">' .
-            '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';</script>';
+            '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';' . 'window.RUNNER_USER=' . json_encode(auth()->id() ?: null) . ';' . ($public ? 'window.RUNNER_PUBLIC=true;try{history.replaceState(null,"",location.pathname)}catch(e){}' : '') . '</script>';
         $html = preg_replace('/<head>/i', '<head>' . $inject, $html, 1) ?? $html;
         $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
         $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo.png') . '"', $html);

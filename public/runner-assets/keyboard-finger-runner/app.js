@@ -110,8 +110,9 @@
 
   /* ================= ilerleme ================= */
   var store = { done: {}, open: false };
-  try { var sv = JSON.parse(localStorage.getItem('bk_kbfinger2') || 'null'); if (sv && sv.done) store = sv; } catch (e) {}
-  function persist() { try { localStorage.setItem('bk_kbfinger2', JSON.stringify(store)); } catch (e) {} }
+  var KB_KEY = 'bk_kbfinger2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
+  try { var sv = JSON.parse(localStorage.getItem(KB_KEY) || 'null'); if (sv && sv.done) store = sv; } catch (e) {}
+  function persist() { try { localStorage.setItem(KB_KEY, JSON.stringify(store)); } catch (e) {} }
   function maxDone() { var m = 0; Object.keys(store.done).forEach(function (k) { if (store.done[k].s >= 1 && +k > m) m = +k; }); return m; }
   function isOpen(n) { return store.open || n === 1 || !!(store.done[n - 1] && store.done[n - 1].s >= 1) || !!store.done[n]; }
   function stars(n) { return store.done[n] ? store.done[n].s : 0; }

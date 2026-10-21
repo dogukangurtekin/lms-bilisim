@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "line_trace_progress_v3";
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  const STORAGE_KEY = "line_trace_progress_v3" + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
   const query = new URLSearchParams(window.location.search);
   const roleParam = (query.get("role") || "").toLowerCase();
   const runnerRole = (roleParam === "teacher" || roleParam === "admin") ? roleParam : "student";

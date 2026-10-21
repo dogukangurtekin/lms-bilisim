@@ -432,16 +432,20 @@ class StudentProgressReportService
             ],
             [
                 'label' => 'Canlı Quiz',
-                'value' => $pct($quizCompletedCount, max($quizJoinedCount, $quizCompletedCount)),
-                'done' => $quizCompletedCount,
+                // Yalnızca katıldığı quiz sayısı gösterilir (4/5 gibi oran değil).
+                'value' => max($quizJoinedCount, $quizCompletedCount) > 0 ? 100 : 0,
+                'done' => max($quizJoinedCount, $quizCompletedCount),
                 'total' => max($quizJoinedCount, $quizCompletedCount),
+                'caption' => max($quizJoinedCount, $quizCompletedCount) . ' quiz',
                 'color' => '#06b6d4',
             ],
             [
                 'label' => 'Canlı Yarışma',
-                'value' => $pct($competitionCompletedCount, $competitionJoinedCount),
-                'done' => $competitionCompletedCount,
-                'total' => $competitionJoinedCount,
+                // Yalnızca katıldığı yarışma sayısı gösterilir (4/5 gibi oran değil).
+                'value' => max($competitionJoinedCount, $competitionCompletedCount) > 0 ? 100 : 0,
+                'done' => max($competitionJoinedCount, $competitionCompletedCount),
+                'total' => max($competitionJoinedCount, $competitionCompletedCount),
+                'caption' => max($competitionJoinedCount, $competitionCompletedCount) . ' yarışma',
                 'color' => '#ef4444',
             ],
         ];
@@ -814,9 +818,10 @@ class StudentProgressReportService
         if ($cats->isNotEmpty()) {
             $best = $cats->sortByDesc(fn ($c) => [(int) $c['value'], (int) $c['total']])->first();
             $weak = $cats->filter(fn ($c) => (int) $c['value'] < 100)->sortBy(fn ($c) => [(int) $c['value'], -(int) $c['total']])->first();
-            $text = "En güçlü alanı {$best['label']} (%{$best['value']}, {$best['done']}/{$best['total']}).";
+            $detail = fn (array $c) => isset($c['caption']) ? "{$c['caption']} katılım" : "%{$c['value']}, {$c['done']}/{$c['total']}";
+            $text = "En güçlü alanı {$best['label']} ({$detail($best)}).";
             if ($weak && $weak['label'] !== $best['label']) {
-                $text .= " Daha çok destek gereken alan {$weak['label']} (%{$weak['value']}, {$weak['done']}/{$weak['total']}).";
+                $text .= " Daha çok destek gereken alan {$weak['label']} ({$detail($weak)}).";
             } elseif (! $weak) {
                 $text .= ' Görev aldığı tüm alanlarda tam tamamlama var.';
             }

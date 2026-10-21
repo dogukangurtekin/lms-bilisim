@@ -18,13 +18,13 @@
   var assignmentTitle = String(params.get('assignmentTitle') || 'Kod Kartları Ödevi').trim();
   var rangeFrom = Math.max(1, Number(params.get('levelStart') || params.get('from') || 0));
   var rangeTo = Math.max(rangeFrom, Number(params.get('levelEnd') || params.get('to') || rangeFrom));
-  var hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
+  var hasRange = !window.RUNNER_PUBLIC && Number.isFinite(rangeFrom) && rangeFrom > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
   var needsGrantCheck = runnerRole === 'student' && (!!assignmentId || hasRange || enforceGrant);
   var grantDenied = false;
   var levelStart = hasRange ? rangeFrom : 1, levelEndParam = hasRange ? rangeTo : levelStart;
   var isAssignmentMode = !!assignmentId || hasRange;
-  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = 6; }   // ödevsiz öğrenci: ilk 6 seviye
+  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = window.RUNNER_PUBLIC ? 9999 : 6; }   // ödevsiz öğrenci: ilk 6 seviye
   if (isStaff) { isAssignmentMode = false; levelStart = 1; levelEndParam = 9999; }
   var sessionStartedAt = Date.now(), rangeCompleteFired = false;
 

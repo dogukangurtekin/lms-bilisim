@@ -242,10 +242,11 @@
         .activity-log-table td, .activity-log-table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .activity-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
         .activity-columns > div { min-width: 0; }
-        .activity-col-title { margin: 0 0 4px; padding-bottom: 4px; border-bottom: 2px solid #bfdbfe; font-size: 13px; color: #1e3a8a; }
-        .activity-columns h4 { font-size: 12px; }
+        .activity-col-title { margin: 0 0 3px; padding-bottom: 3px; border-bottom: 2px solid #bfdbfe; font-size: 9px; color: #1e3a8a; }
+        .activity-columns h4 { font-size: 8px; margin: 6px 0 3px !important; }
+        .activity-columns h4 small { font-size: 6.5px; }
         .activity-columns .activity-log-table th,
-        .activity-columns .activity-log-table td { font-size: 9.5px; padding: 4px 3px; white-space: normal; }
+        .activity-columns .activity-log-table td { font-size: 6.5px; line-height: 1.2; padding: 2px 1.5px; white-space: normal; }
         .activity-columns .activity-log-table .clamp { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .activity-columns .activity-log-table td.activity-title { white-space: nowrap; overflow: hidden; }
         .activity-columns .activity-log-table--compact td.col-xp { text-align: center; font-weight: 700; }
@@ -255,6 +256,7 @@
         .activity-columns .activity-log-table--compact th { white-space: nowrap; }
         .activity-columns .activity-log-table--compact th.col-xp, .activity-columns .activity-log-table--compact th.col-dy, .activity-columns .activity-log-table--compact th.col-status { text-align: center; }
         .activity-log-table--compact .status-icon { display: inline-block; vertical-align: middle; }
+        .activity-columns .activity-log-table--compact .status-icon { width: 9px; height: 9px; }
 
         .page-no {
             position: absolute;

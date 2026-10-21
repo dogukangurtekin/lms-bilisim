@@ -5,7 +5,7 @@
   const isStaff = role === "teacher" || role === "admin";
   const initialRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
   const initialRangeEndRaw = Math.max(initialRangeStart, Number(params.get("levelEnd") || params.get("to") || initialRangeStart));
-  const hasInitialRange = Number.isFinite(initialRangeStart) && initialRangeStart > 0;
+  const hasInitialRange = !window.RUNNER_PUBLIC && Number.isFinite(initialRangeStart) && initialRangeStart > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
   const needsGrantCheck = role === "student" && (hasInitialRange || enforceGrant);
   const appBase = (window.RUNNER_APP_BASE || "").replace(/\/$/, "");
@@ -45,6 +45,23 @@
   let assignmentLocked = false;
   let startedAt = Date.now();
   let completedLevelIds = [];
+  // Herkese açık sürüm: tamamlanan bölümler tarayıcıda saklanır, bölümler sırayla açılır.
+  const PUBLIC_KEY = "connect_dots_public_progress_v1";
+  const isPublicRun = !!window.RUNNER_PUBLIC;
+  function savePublicProgress() {
+    if (!isPublicRun) return;
+    try { localStorage.setItem(PUBLIC_KEY, JSON.stringify(completedLevelIds)); } catch (e) {}
+  }
+  function restorePublicProgress() {
+    if (!isPublicRun) return;
+    try {
+      const ids = JSON.parse(localStorage.getItem(PUBLIC_KEY) || "[]");
+      if (Array.isArray(ids)) completedLevelIds = ids.map(Number).filter(Number.isFinite);
+    } catch (e) {}
+  }
+  function nextAllowed(level) {
+    return levelIndex < levels.length - 1 && (!isPublicRun || completedLevelIds.includes(level.id));
+  }
   let queue = [];
   let running = false;
 
@@ -294,7 +311,8 @@
     if (matches) {
       setFeedback("Harika! Şekli doğru çizdin. 🎉", "ok");
       if (!completedLevelIds.includes(level.id)) completedLevelIds.push(level.id);
-      btnNext.disabled = levelIndex >= levels.length - 1;
+      savePublicProgress();
+      btnNext.disabled = !nextAllowed(level);
       updateHeader();
       handleLevelCompleted(level);
     } else {
@@ -363,7 +381,7 @@
       const cmd = btn.dataset.cmd;
       btn.style.display = level.allowedCommands.includes(cmd) ? "" : "none";
     });
-    btnNext.disabled = levelIndex >= levels.length - 1;
+    btnNext.disabled = !nextAllowed(level);
     updateHeader();
     startedAt = Date.now();
   }
@@ -378,10 +396,11 @@
     if (level) resetPlay(level);
   });
   btnNext.addEventListener("click", () => {
+    if (btnNext.disabled) return;
     if (levelIndex < levels.length - 1) loadLevel(levelIndex + 1);
   });
   btnBack.addEventListener("click", () => {
-    const target = appBase + "/etkinlikler";
+    const target = appBase + (isPublicRun ? "/oyun-listesi" : "/etkinlikler");
     try {
       if (window.top && window.top !== window) {
         window.top.location.href = target;
@@ -445,7 +464,7 @@
     if (!grantOk) return;
 
     try {
-      const res = await fetch(appBase + "/connect-the-dots-runner/levels", { credentials: "same-origin" });
+      const res = await fetch(appBase + (isPublicRun ? "/oyun/connect-the-dots-runner/levels" : "/connect-the-dots-runner/levels"), { credentials: "same-origin" });
       if (!res.ok) {
         showFatalError("Bölümler yüklenemedi (HTTP " + res.status + "). Sayfayı yenileyin.");
         return;
@@ -462,7 +481,9 @@
       return;
     }
 
-    const initialIndex = !isStaff && range ? Math.min(range.startIdx, levels.length - 1) : 0;
+    restorePublicProgress();
+    const firstOpen = isPublicRun ? levels.findIndex((lv) => !completedLevelIds.includes(lv.id)) : 0;
+    const initialIndex = !isStaff && range ? Math.min(range.startIdx, levels.length - 1) : (isPublicRun ? (firstOpen < 0 ? levels.length - 1 : firstOpen) : 0);
     loadLevel(Math.max(0, initialIndex));
   }
 

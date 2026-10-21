@@ -130,6 +130,17 @@ class ProfileController extends Controller
         return back()->with('success', 'Slayt geçiş ayarları sınıf gruplarına göre kaydedildi.');
     }
 
+    public function updatePublicGames(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        \App\Support\PublicGamesSetting::save($request->boolean('enabled'), (array) $request->input('games', []));
+
+        return back()->with('success', $request->boolean('enabled')
+            ? 'Herkese açık oyunlar kaydedildi. Seçili oyunlar anasayfadaki Oyunlar menüsünde görünür.'
+            : 'Herkese açık oyunlar kapatıldı. Anasayfadaki Oyunlar menüsü boş görünecek.');
+    }
+
     public function updateTeacherXpGift(Request $request): RedirectResponse
     {
         abort_unless($request->user()?->hasRole('admin'), 403);

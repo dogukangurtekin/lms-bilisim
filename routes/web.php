@@ -52,21 +52,17 @@ Route::get('/bakim-durumu', fn () => response()
     ->json(['maintenance' => \App\Support\MaintenanceMode::active()])
     ->header('Cache-Control', 'no-store'))->name('maintenance.status');
 
+// Anasayfa giriş yapmış kullanıcıyı otomatik yönlendirmez; "Giriş Yap" / "Hemen Başla" bağlantıları
+// giriş yapılmışsa kullanıcının paneline (öğrenci: Öğrenci Paneli, admin/öğretmen: Pano) götürür.
 Route::get('/', function () {
-    $user = auth()->user();
-
-    if ($user) {
-        if ($user->hasRole('student')) {
-            return redirect()->route('student.portal.dashboard');
-        }
-
-        if ($user->hasRole('admin') || $user->hasRole('teacher')) {
-            return redirect()->route('dashboard');
-        }
-    }
-
     return view('home');
 });
+// Herkese açık (giriş gerektirmez) oyunlar: anasayfadaki "Oyunlar" menüsü. Admin profilinden açılıp kapatılır.
+Route::get('/oyun-listesi', [ActivityRunnerController::class, 'publicIndex'])->name('public.games');
+Route::get('/oyun/flamestone-game/seviyeler', [LevelController::class, 'publicIndex'])->name('public.flamestone.levels');
+Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'publicFeed'])->name('public.dot-connect.levels');
+Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->name('public.game');
+Route::get('/kelime-arisi', fn () => redirect()->route('public.game', 'word-bee-runner'))->name('public.word-bee');
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->middleware('throttle:5,10')->name('support-requests.demo');
 Route::view('/gizlilik-politikasi', 'legal.privacy')->name('legal.privacy');
 Route::view('/kullanim-sartlari', 'legal.terms')->name('legal.terms');
@@ -159,6 +155,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profilim', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profilim', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
+    Route::post('/profilim/herkese-acik-oyunlar', [ProfileController::class, 'updatePublicGames'])->name('profile.public-games.update');
     Route::post('/profilim/slayt-suresi', [ProfileController::class, 'updateSlideTimer'])->name('profile.slide-timer.update');
     Route::post('/profilim/ogretmen-xp-hediyesi', [ProfileController::class, 'updateTeacherXpGift'])->name('profile.teacher-xp-gift.update');
     Route::post('/profilim/sinav-olustur', [ProfileController::class, 'updateExamBuilder'])->name('profile.exam-builder.update');
@@ -187,7 +184,6 @@ Route::middleware('auth')->group(function () {
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');
       Route::post('/etkinlikler/ogretmenden-kaldir/toplu', [ActivityController::class, 'unassignTeacherBulk'])->name('activities.unassign.teacher.bulk');
-      Route::view('/hyperframes', 'admin.hyperframes')->middleware('role:admin')->name('admin.hyperframes');
       Route::get('/qr-giris', [QrLoginController::class, 'menuPage'])->middleware('role:admin,teacher')->name('qr.login.menu');
     Route::get('/qr-okut/{student}', [QrLoginController::class, 'scannerPage'])->middleware('role:admin,teacher')->name('qr.login.scanner');
     Route::post('/qr/verify', [QrLoginController::class, 'verify'])->middleware('role:admin,teacher')->name('qr.verify');

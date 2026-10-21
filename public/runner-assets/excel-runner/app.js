@@ -3,7 +3,8 @@
   var XL = window.XL;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var KEY = 'bk_excel_wb_v1';
+  var SS = window.SaveSlots || { inAssignment: false, blocked: false, draftKey: function (k) { return k; } };
+  var KEY = SS.draftKey('bk_excel_wb_v1');   // kullanıcıya (ve ödeve) özel anahtar: başka öğrencinin çalışması görünmez
   var DEF_W = 90, MAX_ROWS = 1000, MAX_COLS = 100;
 
   var wb, calc, tds = [], cols = [], grid = $('#grid'), wrap = $('#wrap');
@@ -31,7 +32,7 @@
   function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restoreSnap(undoStack.pop()); }
   function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restoreSnap(redoStack.pop()); }
   function saveSoon() { $('#saveState').textContent = 'Kaydediliyor…'; clearTimeout(saveTimer); saveTimer = setTimeout(save, 600); }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(wb)); $('#saveState').textContent = 'Kaydedildi'; } catch (e) { $('#saveState').textContent = 'Kaydedilemedi'; } }
+  function save() { if (SS.blocked) return; try { localStorage.setItem(KEY, JSON.stringify(wb)); $('#saveState').textContent = 'Kaydedildi'; } catch (e) { $('#saveState').textContent = 'Kaydedilemedi'; } }
   function load() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d && d.sheets && d.sheets.length) return d; } catch (e) {} return null; }
   function changed() { calc.reset(); refreshAll(); updateBar(); saveSoon(); }
   function mutate(fn) { pushUndo(); fn(); changed(); }
@@ -833,7 +834,23 @@
   window.addEventListener('resize', placeHandle);
 
   /* ================= başlat ================= */
-  wb = load() || newBook(); newCalc();
+  // Ödev olarak açıldığında çalışma kitabı BOŞ başlar; önceki çalışma varsa Kayıtlarım penceresi sorar.
+  var pendingDraft = SS.inAssignment ? load() : null;
+  wb = (SS.inAssignment ? null : load()) || newBook(); newCalc();
   $('#bookName').value = wb.name || 'Çalışma Kitabı1';
   renderSheetTabs(); buildGrid(); setSel(0, 0); wrap.focus();
+  if (window.SaveSlots && SaveSlots.mount) {
+    SaveSlots.mount({
+      app: 'excel', title: 'Çalışma Kitabı', draftStorageKey: KEY,
+      getState: function () { return JSON.stringify(wb); },
+      currentName: function () { return $('#bookName').value || wb.name; },
+      setState: function (js) {
+        wb = JSON.parse(js); newCalc(); undoStack = []; redoStack = [];
+        $('#bookName').value = wb.name || 'Çalışma Kitabı1';
+        buildGrid(); setSel(0, 0); renderSheetTabs(); saveSoon();
+      },
+      readDraft: function () { return pendingDraft ? { data: JSON.stringify(pendingDraft), name: pendingDraft.name } : null; },
+      isBlankData: function (js) { try { return JSON.parse(js).sheets.every(function (s) { return !Object.keys(s.cells || {}).length; }); } catch (e) { return true; } }
+    });
+  }
 })();

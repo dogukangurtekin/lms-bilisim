@@ -382,3 +382,27 @@ body {
 }
 .actions button[hidden] { display: none; }
 #btn-hint { background: rgba(250, 204, 21, .18); border: 1px solid rgba(250, 204, 21, .5); box-shadow: none; color: #fde68a; }
+
+/* Seviye seçici penceresi */
+.level-pill-btn { font: inherit; color: inherit; cursor: pointer; }
+.level-pill-btn:hover { filter: brightness(1.12); }
+.picker-card { width: min(880px, 94vw); max-height: 90vh; overflow: auto; text-align: left; }
+.picker-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.picker-head h3 { margin: 0; font-size: 20px; font-weight: 900; }
+.picker-x { min-width: 38px; padding: 6px 10px; }
+.picker-group { margin-bottom: 16px; }
+.picker-group h4 { margin: 0 0 8px; font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.picker-group h4 small { color: var(--soft); font-weight: 800; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.picker-tile {
+  position: relative; display: grid; gap: 2px; justify-items: center; padding: 10px 4px 8px; border-radius: 14px;
+  border: 2px solid var(--line); background: #f4f8ff; color: var(--ink); font: inherit; font-weight: 900; cursor: pointer;
+  transition: transform .12s, border-color .12s;
+}
+.picker-tile:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--brand); }
+.picker-tile .t-num { font-size: 18px; }
+.picker-tile .t-state { font-size: 11px; color: var(--soft); font-weight: 800; }
+.picker-tile.done { border-color: #86efac; background: #e8f9ee; }
+.picker-tile.current { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(37, 99, 235, .25); }
+.picker-tile:disabled { opacity: .45; cursor: not-allowed; }
+.picker-tile .lock { position: absolute; top: 4px; right: 5px; font-size: 11px; }

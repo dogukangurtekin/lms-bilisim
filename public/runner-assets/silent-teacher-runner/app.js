@@ -28,13 +28,13 @@ const assignmentId = String(params.get("assignmentId") || "").trim();
 const assignmentTitle = String(params.get("assignmentTitle") || "Python Quiz Lab Odevi").trim();
 const queryRangeStart = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
 const queryRangeEnd = Math.max(queryRangeStart, Number(params.get("levelEnd") || params.get("to") || queryRangeStart));
-const hasQueryRange = Number.isFinite(queryRangeStart) && queryRangeStart > 0;
+const hasQueryRange = !window.RUNNER_PUBLIC && Number.isFinite(queryRangeStart) && queryRangeStart > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
 const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
 let levelStart = hasQueryRange ? queryRangeStart : 1;
 let levelEndRaw = hasQueryRange ? queryRangeEnd : levelStart;
 let levelEnd = Math.min(sections.length, levelEndRaw);
 let isAssignmentMode = !!assignmentId || hasQueryRange;
-if (runnerRole === "student" && !isAssignmentMode) {
+if (runnerRole === "student" && !isAssignmentMode && !window.RUNNER_PUBLIC) {
   isAssignmentMode = true;
   levelStart = 1;
   levelEnd = Math.min(sections.length, 2);
@@ -60,6 +60,23 @@ let answered = false;
 let totalCorrect = 0;
 let pendingSectionIndex = null;
 const completedSectionIds = new Set();
+
+// Herkese açık sürüm: tamamlanan bölümler tarayıcıda saklanır, oyun kaldığı bölümden devam eder.
+const PUBLIC_PROGRESS_KEY = "silent_teacher_public_progress_v1";
+function savePublicProgress() {
+  if (!window.RUNNER_PUBLIC) return;
+  try { localStorage.setItem(PUBLIC_PROGRESS_KEY, JSON.stringify(Array.from(completedSectionIds))); } catch (e) {}
+}
+if (window.RUNNER_PUBLIC) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PUBLIC_PROGRESS_KEY) || "[]");
+    if (Array.isArray(saved)) saved.forEach((id) => { const n = Number(id); if (n >= 1 && n <= sections.length) completedSectionIds.add(n); });
+    let next = 0;
+    while (next < sections.length - 1 && completedSectionIds.has(next + 1)) next++;
+    unlockedSectionIndex = next;
+    sectionIndex = next;
+  } catch (e) {}
+}
 
 const sectionListEl = document.getElementById("section-list");
 const sectionTitleEl = document.getElementById("section-title");
@@ -301,6 +318,7 @@ function onAnswer(selected, btnEl) {
 
 function completeSection() {
   completedSectionIds.add(sectionIndex + 1);
+  savePublicProgress();
   emitSectionCompleted();
 
   if (sectionIndex < allowedEndIdx) {
@@ -349,7 +367,7 @@ function denyRunnerAccess(message) {
 
 async function resolveAssignmentRangeFromGrant() {
   const grantUrl = (window.RUNNER_APP_BASE || "").replace(/\/$/, "") + "/runner-grant/silent-teacher-runner" + window.location.search;
-  if (runnerRole === "teacher" || runnerRole === "admin") return;
+  if (runnerRole === "teacher" || runnerRole === "admin" || window.RUNNER_PUBLIC) return;
   if (!needsGrantCheck) {
     try {
       const probe = await fetch(grantUrl, {

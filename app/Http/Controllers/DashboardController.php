@@ -242,6 +242,7 @@ class DashboardController extends Controller
             $absentToday = max(0, $totalStudents - $activeStudents);
             $participationRate = $totalStudents > 0 ? (int) round(($activeStudents / $totalStudents) * 100) : 0;
             $progressRate = max(0, min(100, (int) round($blendedSuccessRate)));
+            $participationProgressRate = $progressRate; // eski hesap: ilerleme kaydı olan öğrenci oranı
 
             $completedContentCountByUser = ContentProgress::query()
                 ->selectRaw('user_id, COUNT(*) as completed_count')
@@ -283,14 +284,101 @@ class DashboardController extends Controller
                 null,
                 false
             )['students'];
+            $bucketStudents = array_fill_keys(array_keys($bucketLabels), []);
+            // Sıralama puanı (sınıflar karışık, tek liste): yalnızca ders tamamlama oranına bakmaz.
+            // %40 XP + %35 tamamlanan ödev sayısı + %25 başarı puanı; XP ve ödev sayısı tüm öğrencilerin en yükseğine göre ölçeklenir.
+            $maxXp = max(1, (int) collect($scoredStudents)->max('total_xp'));
+            $maxHomeworkDone = max(1, (int) collect($scoredStudents)->max('homework_done'));
+            $rankScoreList = [];
+            $rankedRows = [];
             foreach ($scoredStudents as $scored) {
                 $gradeBuckets[$bucketLabels[$scored['bucket']]]++;
+                // Pop-up için: öğrencinin puanı hangi verilerden geliyor (not / ders / ödev) ile birlikte.
+                $rankScore = round(
+                    100 * (0.40 * ((int) $scored['total_xp'] / $maxXp)
+                        + 0.35 * ((int) $scored['homework_done'] / $maxHomeworkDone)
+                        + 0.25 * ((float) $scored['score'] / 100)),
+                    1
+                );
+                $rankScoreList[] = $rankScore;
+                $rankedRows[] = [
+                    'name' => $this->normalizeDashboardText((string) $scored['name']),
+                    'class_label' => $this->normalizeDashboardText((string) $scored['class_label']),
+                    'xp' => (int) $scored['total_xp'],
+                    'homework_done' => (int) $scored['homework_done'],
+                    'homework_total' => (int) $scored['homework_total'],
+                    'lesson_done' => (int) $scored['lesson_done'],
+                    'lesson_total' => (int) $scored['lesson_total'],
+                    'score' => (float) $scored['score'],
+                    'rank_score' => $rankScore,
+                    'xp_part' => round(40 * ((int) $scored['total_xp'] / $maxXp), 1),
+                    'homework_part' => round(35 * ((int) $scored['homework_done'] / $maxHomeworkDone), 1),
+                    'score_part' => round(25 * ((float) $scored['score'] / 100), 1),
+                ];
+                $bucketStudents[$scored['bucket']][] = [
+                    'rank_score' => $rankScore,
+                    'xp' => (int) $scored['total_xp'],
+                    'name' => $this->normalizeDashboardText((string) $scored['name']),
+                    'class_label' => $this->normalizeDashboardText((string) $scored['class_label']),
+                    'score' => $scored['score'],
+                    'grade_avg' => $scored['grade_avg'] === null ? null : round((float) $scored['grade_avg'], 1),
+                    'lesson_done' => $scored['lesson_done'],
+                    'lesson_total' => $scored['lesson_total'],
+                    'lesson_pct' => $scored['lesson_pct'],
+                    'lesson_scaled' => $scored['lesson_scaled'],
+                    'homework_done' => $scored['homework_done'],
+                    'homework_total' => $scored['homework_total'],
+                    'homework_pct' => $scored['homework_pct'],
+                    'homework_scaled' => $scored['homework_scaled'],
+                ];
+            }
+            foreach ($bucketStudents as $bucketKey => $list) {
+                usort($list, fn ($a, $b) => [$b['rank_score'], $b['xp'], $b['homework_done'], $b['score']] <=> [$a['rank_score'], $a['xp'], $a['homework_done'], $a['score']]);
+                $bucketStudents[$bucketKey] = $list;
+            }
+            $bucketKeyByLabel = array_flip($bucketLabels);
+            // "Ortalama Not" widget'ına tıklanınca açılan detay penceresi: değerin hangi verilerden geldiği.
+            usort($rankedRows, fn ($a, $b) => [$b['rank_score'], $b['xp'], $b['homework_done']] <=> [$a['rank_score'], $a['xp'], $a['homework_done']]);
+            $rankedCount = max(1, count($rankedRows));
+            $avgOf = fn (string $key) => round(array_sum(array_column($rankedRows, $key)) / $rankedCount, 1);
+            $classBreakdown = collect($rankedRows)->groupBy('class_label')->map(function ($rows, $label) {
+                $n = max(1, $rows->count());
+
+                return [
+                    'class_label' => (string) $label,
+                    'students' => $rows->count(),
+                    'avg_xp' => round($rows->avg('xp'), 0),
+                    'avg_homework_done' => round($rows->avg('homework_done'), 1),
+                    'avg_score' => round($rows->avg('score'), 1),
+                    'avg_rank' => round($rows->avg('rank_score'), 1),
+                ];
+            })->sortByDesc('avg_rank')->values()->all();
+            $avgBreakdown = [
+                'value' => $rankedRows === [] ? 0 : (int) round(array_sum(array_column($rankedRows, 'rank_score')) / $rankedCount),
+                'students' => count($rankedRows),
+                'max_xp' => $maxXp,
+                'max_homework_done' => $maxHomeworkDone,
+                'avg_xp' => $avgOf('xp'),
+                'avg_homework_done' => $avgOf('homework_done'),
+                'avg_score' => $avgOf('score'),
+                'avg_xp_part' => $avgOf('xp_part'),
+                'avg_homework_part' => $avgOf('homework_part'),
+                'avg_score_part' => $avgOf('score_part'),
+                'classes' => $classBreakdown,
+                'rows' => $rankedRows,
+            ];
+            // "Ortalama Not / Genel Başarı" widget'ı: eskiden yalnızca 'ilerleme kaydı olan öğrenci oranı'ydı (bir ödev/ders tamamlayan herkes sayılıyor, bu yüzden %90+ çıkıyordu).
+            // Artık Başarı Dağılımı popup'ındaki sıralama puanının (XP + tamamlanan ödev + başarı puanı) öğrenci ortalamasıdır.
+            if ($rankScoreList !== []) {
+                $progressRate = max(0, min(100, (int) round(array_sum($rankScoreList) / count($rankScoreList))));
             }
             $gradeTotal = max(1, array_sum($gradeBuckets));
             $gradeDistribution = collect($gradeBuckets)->map(fn ($count, $label) => [
                 'label' => $label,
+                'bucket' => $bucketKeyByLabel[$label],
                 'count' => (int) $count,
                 'percent' => (int) round(($count / $gradeTotal) * 100),
+                'students' => $bucketStudents[$bucketKeyByLabel[$label]],
             ])->values()->all();
 
             $activityBuckets = ['Çok Aktif (20+)' => 0, 'Aktif (11-20)' => 0, 'Orta (6-10)' => 0, 'Pasif (0-5)' => 0];
@@ -448,7 +536,7 @@ class DashboardController extends Controller
                     'avg_completion' => $progressRate,
                     'total_xp' => $totalXp,
                     'participation' => $participationRate,
-                    'progress' => $progressRate,
+                    'progress' => $participationProgressRate,
                     'total_classes' => $totalClasses,
                     'total_courses' => $totalCourses,
                     'absent_today' => $absentToday,
@@ -460,7 +548,7 @@ class DashboardController extends Controller
                     'avg_completion' => $progressRate,
                     'total_xp' => $totalXp,
                     'participation' => $participationRate,
-                    'progress' => $progressRate,
+                    'progress' => $participationProgressRate,
                     'total_classes' => $totalClasses,
                     'total_courses' => $totalCourses,
                     'absent_today' => $absentToday,
@@ -480,6 +568,7 @@ class DashboardController extends Controller
                     'low_activity' => $lowActivity?->class_name ?? '-',
                 ],
                 'chart_widgets' => $chartWidgets,
+                'avg_breakdown' => $avgBreakdown,
                 'top_students' => $topStudents,
                 'class_rankings' => $classRankings,
             ];

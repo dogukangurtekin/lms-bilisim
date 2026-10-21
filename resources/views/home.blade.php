@@ -273,6 +273,13 @@
 </head>
 <body>
 <a href="#icerik" class="skip-link">İçeriğe geç</a>
+@php
+    $authUser = auth()->user();
+    $loginUrl = route('login');
+    if ($authUser) {
+        $loginUrl = $authUser->hasRole('student') ? route('student.portal.dashboard') : route('dashboard');
+    }
+@endphp
 <div x-data="{ demoOpen:{{ session('ok') || $errors->any() ? 'true' : 'false' }}, scrolled:false }" x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 8)">
 
     <nav class="nav" aria-label="Ana menü" :class="{ 'is-scrolled': scrolled }">
@@ -289,7 +296,7 @@
             </div>
             <div class="nav-cta">
                 <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="dialog" @click="demoOpen = true">Demo Talep Et</button>
-                <a href="{{ route('login') }}" class="btn btn-primary btn-sm">Giriş Yap</a>
+                <a href="{{ $loginUrl }}" class="btn btn-primary btn-sm">{{ $authUser ? 'Panele Git' : 'Giriş Yap' }}</a>
             </div>
         </div>
     </nav>
@@ -301,8 +308,11 @@
                 <h1>Kodlama dersini <em>ödev</em> olmaktan çıkarıp<br>alışkanlığa dönüştürün.</h1>
                 <p class="hero-lead">Bilişim Kod; ders anlatımı, kodlama oyunları, canlı quiz, ödev takibi ve veli bildirimini tek panelde toplayan okul altyapısıdır. Öğretmen ders hazırlar, öğrenci oynayarak öğrenir, siz ilerlemeyi tek ekrandan izlersiniz.</p>
                 <div class="hero-cta">
-                    <a href="{{ route('login') }}" class="btn btn-primary">Hemen Başla</a>
+                    <a href="{{ $loginUrl }}" class="btn btn-primary">{{ $authUser ? 'Panele Git' : 'Hemen Başla' }}</a>
                     <button type="button" class="btn btn-ghost" @click="demoOpen = true">Demo Talep Et</button>
+                    @if(count(\App\Support\PublicGamesSetting::openGames()) > 0)
+                    <a href="{{ route('public.games') }}" class="btn btn-ghost">🎮 Oyunları Dene</a>
+                    @endif
                 </div>
                 <div class="hero-stages">
                     <span class="stage-chip">🧩 Blok Kodlama</span>
@@ -414,7 +424,7 @@
                 </div>
                 <div class="cta-band-actions">
                     <button type="button" class="btn btn-primary" @click="demoOpen = true">Demo Talep Et</button>
-                    <a href="{{ route('login') }}" class="btn btn-ghost">Hesabım Var, Giriş Yap</a>
+                    <a href="{{ $loginUrl }}" class="btn btn-ghost">{{ $authUser ? 'Panele Git' : 'Hesabım Var, Giriş Yap' }}</a>
                 </div>
             </div>
         </section>

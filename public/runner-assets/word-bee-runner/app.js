@@ -5,7 +5,9 @@
   var E = window.WordBeeEngine;
   var ALL = Array.isArray(window.WORD_BEE_LEVELS) ? window.WORD_BEE_LEVELS : [];
   var $ = function (id) { return document.getElementById(id); };
-  var STORE_KEY = 'word_bee_progress_v1', SOUND_KEY = 'word_bee_sound';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  var COMP_KEY = (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
+  var STORE_KEY = (window.RUNNER_PUBLIC ? 'word_bee_public_progress_v1' : 'word_bee_progress_v1') + COMP_KEY, SOUND_KEY = 'word_bee_sound';
   var CAT_LABEL = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', expert: 'Uzman' };
   var ARROW = { N: '▲', S: '▼', E: '▶', W: '◀' };
 
@@ -13,18 +15,19 @@
   var params = new URLSearchParams(window.location.search);
   var roleParam = (params.get('role') || '').toLowerCase();
   var runnerRole = (roleParam === 'teacher' || roleParam === 'admin') ? roleParam : 'student';
-  var isStaff = runnerRole === 'teacher' || runnerRole === 'admin';
+  var isPublic = !!window.RUNNER_PUBLIC;   // anasayfadaki herkese açık sürüm: izin kontrolü yok, 1. bölümden başlar, ilerleme tarayıcıda kalır
+  var isStaff = !isPublic && (runnerRole === 'teacher' || runnerRole === 'admin');
   var assignmentId = String(params.get('assignmentId') || '').trim();
   var assignmentTitle = String(params.get('assignmentTitle') || 'Kelime Arısı Ödevi').trim();
   var rangeFrom = Math.max(1, Number(params.get('levelStart') || params.get('from') || 0));
   var rangeTo = Math.max(rangeFrom, Number(params.get('levelEnd') || params.get('to') || rangeFrom));
   var hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
   var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
-  var needsGrantCheck = runnerRole === 'student' && (!!assignmentId || hasRange || enforceGrant);
+  var needsGrantCheck = !isPublic && runnerRole === 'student' && (!!assignmentId || hasRange || enforceGrant);
   var grantDenied = false;
-  var levelStart = hasRange ? rangeFrom : 1, levelEndParam = hasRange ? rangeTo : levelStart;
-  var isAssignmentMode = !!assignmentId || hasRange;
-  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = 6; }   // ödevsiz öğrenci: ilk 6 seviye
+  var levelStart = (hasRange && !isPublic) ? rangeFrom : 1, levelEndParam = (hasRange && !isPublic) ? rangeTo : levelStart;
+  var isAssignmentMode = !isPublic && (!!assignmentId || hasRange);
+  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = isPublic ? 9999 : 6; }   // ödevsiz öğrenci: ilk 6 seviye; herkese açık sürümde tüm bölümler sırayla açılır
   if (isStaff) { isAssignmentMode = false; levelStart = 1; levelEndParam = 9999; }
   var sessionStartedAt = Date.now(), rangeCompleteFired = false;
 
@@ -387,13 +390,12 @@
   }
 
   // ------------------------------------------------------------------ olaylar
-  var KEYDIR = { ArrowUp: 'N', ArrowDown: 'S', ArrowLeft: 'W', ArrowRight: 'E' };
   function modalOpen() { return !$('pickerModal').classList.contains('hidden') || !$('helpModal').classList.contains('hidden') || !$('winModal').classList.contains('hidden'); }
   function onKey(ev) {
     if (ev.target && /^(SELECT|INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
     if (!$('pickerModal').classList.contains('hidden') || !$('helpModal').classList.contains('hidden')) { if (ev.key === 'Escape') closeModals(); return; }
     if (!$('winModal').classList.contains('hidden')) { if (ev.key === 'Enter' && !$('winNext').classList.contains('hidden')) $('winNext').click(); return; }
-    if (KEYDIR[ev.key] && !st.busy) { ev.preventDefault(); addToActive({ t: 'm', d: KEYDIR[ev.key] }); return; }
+    // Klavye ok tuşlarıyla blok ekleme kapalı: oklar yalnızca fare/dokunma ile seçilir.
     if (ev.key === 'Enter') { ev.preventDefault(); runAll(); return; }
     if (ev.key === 'r' || ev.key === 'R') { stopRun(); resetBoardState(); return; }
     if (ev.key === 'h' || ev.key === 'H') showHint();

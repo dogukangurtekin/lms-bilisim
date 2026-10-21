@@ -9,7 +9,8 @@
   var NW = 170, NH = 56, DW = 190, DH = 94;
   var TYPE_LABEL = { start: 'Başla', end: 'Bitir', input: 'Girdi', output: 'Çıktı', process: 'İşlem', decision: 'Karar' };
   var CAT_LABEL = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', expert: 'Uzman' };
-  var STORE_KEY = 'flowchart_progress_v1';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  var STORE_KEY = 'flowchart_progress_v1' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
   var COACH_KEY = 'flowchart_coach_v1';
 
   // ------------------------------------------------------------------ kullanıcı / ödev parametreleri (diğer runner'larla aynı sözleşme)
@@ -21,14 +22,14 @@
   var assignmentTitle = String(params.get('assignmentTitle') || 'Flowchart Programlama Ödevi').trim();
   var rangeFrom = Math.max(1, Number(params.get('levelStart') || params.get('from') || 0));
   var rangeTo = Math.max(rangeFrom, Number(params.get('levelEnd') || params.get('to') || rangeFrom));
-  var hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
+  var hasRange = !window.RUNNER_PUBLIC && Number.isFinite(rangeFrom) && rangeFrom > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
   var needsGrantCheck = runnerRole === 'student' && (!!assignmentId || hasRange || enforceGrant);
   var grantDenied = false;
   var levelStart = hasRange ? rangeFrom : 1;
   var levelEndParam = hasRange ? rangeTo : levelStart;
   var isAssignmentMode = !!assignmentId || hasRange;
-  if (!isStaff && !isAssignmentMode) { isAssignmentMode = false; levelStart = 1; levelEndParam = 3; }   // ödevsiz öğrenci: ilk 3 görev + serbest çalışma
+  if (!isStaff && !isAssignmentMode) { isAssignmentMode = false; levelStart = 1; levelEndParam = window.RUNNER_PUBLIC ? 9999 : 3; }   // ödevsiz öğrenci: ilk 3 görev + serbest çalışma
   if (isStaff) { isAssignmentMode = false; levelStart = 1; levelEndParam = 9999; }
   var sessionStartedAt = Date.now();
   var rangeCompleteFired = false;

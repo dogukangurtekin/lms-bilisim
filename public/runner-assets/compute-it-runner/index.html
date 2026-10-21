@@ -16,7 +16,7 @@
     <div class="board-wrap">
       <div class="top-row">
         <div class="brand"><span class="brand-logo" aria-hidden="true">🧮</span><span class="brand-name">Compute&nbsp;It</span></div>
-        <div class="level-pill">Seviye: <span id="level-no">1</span></div>
+        <button type="button" id="level-picker" class="level-pill level-pill-btn" aria-haspopup="dialog" aria-label="Seviye listesini aç">Seviye: <span id="level-no">1</span> ▾</button>
         <div class="progress-pill">Tamamlanan: <span id="done-no">0</span>/<span id="total-no">0</span></div>
         <div class="xp-pill"><span class="xp-star" aria-hidden="true">⭐</span> XP: <span id="count-xp">0</span></div>
       </div>
@@ -45,6 +45,17 @@
     </div>
     </div>
   </div>
+  <div id="picker-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+    <div class="modal-backdrop" data-picker-close></div>
+    <div class="modal-content picker-card">
+      <div class="picker-head">
+        <h3 id="picker-title">Seviyeler</h3>
+        <button type="button" class="ghost picker-x" data-picker-close aria-label="Kapat">✕</button>
+      </div>
+      <div id="picker-body" class="picker-body"></div>
+    </div>
+  </div>
+
   <div id="designer-modal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content">

@@ -48,7 +48,7 @@
 </div>
 
 <div class="activity-play-frame-wrap">
-    <iframe id="activityPlayFrame" src="{{ $src }}" title="{{ $title }}" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <iframe id="activityPlayFrame" src="{{ $src }}" title="{{ $title }}" allow="fullscreen; autoplay"></iframe>
 </div>
 
 <script>

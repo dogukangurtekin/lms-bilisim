@@ -4,7 +4,8 @@
   const role = (params.get('role') || 'student').toLowerCase();
   const isStaff = role === 'admin' || role === 'teacher';
   const assignmentId = params.get('assignmentId') || '';
-  const STORAGE_KEY = 'web_lab_progress_v2';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  const STORAGE_KEY = 'web_lab_progress_v2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
 
   // 100 seviyelik öğrenme yolu levels.js içinde tanımlıdır (tools/learn-levels/web-lab.gen.mjs ile üretilir).
   const levels = window.WEB_LAB_LEVELS || [];

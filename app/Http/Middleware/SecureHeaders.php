@@ -33,7 +33,7 @@ class SecureHeaders
                 "img-src 'self' data: blob: https:",
                 "media-src 'self' data: blob:",
                 "connect-src 'self'",
-                $request->routeIs('admin.hyperframes') ? "frame-src 'self' https://www.hyperframes.dev" : "frame-src 'self'",
+                "frame-src 'self'",
                 "object-src 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",

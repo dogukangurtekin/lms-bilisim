@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Support;
+
+/**
+ * Anasayfadaki "Oyunlar" menüsünden giriş yapmadan açılan herkese açık oyunlar.
+ * Admin, profil sayfasından tümünü ya da tek tek oyunları açıp kapatabilir.
+ * Dosya yoksa tüm uygun oyunlar açıktır.
+ */
+class PublicGamesSetting
+{
+    /** Giriş/ödev/sunucu API'si olmadan çalıştığı doğrulanan oyunlar (slug => anasayfa kartı açıklaması). */
+    public const GAMES = [
+        'word-bee-runner' => 'Harfleri toplayarak kelimeyi hecele.',
+        'number-bee-runner' => 'Arıyı yönlendirip rakamları sırayla topla.',
+        'dot-cards-runner' => 'Kod kartlarını seç, küçük noktayı hedefe götür.',
+        'flowchart-runner' => 'Akış şemasıyla algoritma kurmayı öğren.',
+        'lightbot-runner' => 'Robotu komutlarla yönlendirip ışıkları yak.',
+        'connect-the-dots-runner' => 'Noktaları komutlarla birleştirip hedef şekli çiz.',
+        'flamestone-game' => 'Alev taşını engelleri aşarak hedefe ulaştır.',
+        'compute-it-runner' => 'Komutlarla hesaplayıp bölümleri çöz, sayaçları hedefe getir.',
+        'block-3d-runner' => '3D blok kodlama ile karakteri hedefe ulaştır.',
+        'silent-teacher-runner' => 'Python kodunu oku, çıktıyı tahmin et, soruları çöz.',
+        'bee-garden-runner' => 'CSS kodlayarak arıyı bahçede gezdir.',
+        'web-lab-runner' => 'HTML, CSS ve JavaScript ile mini web projeleri yap.',
+        'keyboard-finger-runner' => 'Doğru parmakla yazmayı adım adım öğren.',
+        'python-editor' => 'Tarayıcıda Python kodu yaz ve çalıştır.',
+        'word-runner' => 'Word benzeri belge editörüyle çalış.',
+        'excel-runner' => 'Excel benzeri hesap tablosunda formüllerle çalış.',
+    ];
+
+    private static ?array $data = null;
+
+    private static function path(): string
+    {
+        return storage_path('app/public-games.json');
+    }
+
+    private static function data(): array
+    {
+        if (self::$data !== null) {
+            return self::$data;
+        }
+        $enabled = true;
+        $games = [];
+        if (is_file(self::path())) {
+            $decoded = json_decode((string) @file_get_contents(self::path()), true);
+            if (is_array($decoded)) {
+                $enabled = (bool) ($decoded['enabled'] ?? true);
+                foreach ((array) ($decoded['games'] ?? []) as $slug => $on) {
+                    if (isset(self::GAMES[$slug])) {
+                        $games[$slug] = (bool) $on;
+                    }
+                }
+            }
+        }
+
+        return self::$data = ['enabled' => $enabled, 'games' => $games];
+    }
+
+    public static function enabled(): bool
+    {
+        return self::data()['enabled'];
+    }
+
+    public static function gameEnabled(string $slug): bool
+    {
+        return isset(self::GAMES[$slug]) && self::enabled() && (self::data()['games'][$slug] ?? true);
+    }
+
+    /** Menüde/listede görünecek açık oyunlar: slug => açıklama. */
+    public static function openGames(): array
+    {
+        return array_filter(self::GAMES, fn ($desc, $slug) => self::gameEnabled($slug), ARRAY_FILTER_USE_BOTH);
+    }
+
+    /** Admin ekranı için: tek tek ayar (genel anahtardan bağımsız). */
+    public static function perGame(): array
+    {
+        $out = [];
+        foreach (array_keys(self::GAMES) as $slug) {
+            $out[$slug] = self::data()['games'][$slug] ?? true;
+        }
+
+        return $out;
+    }
+
+    public static function save(bool $enabled, array $games): void
+    {
+        $clean = [];
+        foreach (array_keys(self::GAMES) as $slug) {
+            $clean[$slug] = ! empty($games[$slug]);
+        }
+        $data = ['enabled' => $enabled, 'games' => $clean];
+        file_put_contents(self::path(), json_encode($data), LOCK_EX);
+        self::$data = $data;
+    }
+}

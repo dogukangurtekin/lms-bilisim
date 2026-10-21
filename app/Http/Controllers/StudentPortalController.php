@@ -550,6 +550,15 @@ class StudentPortalController extends Controller
         if ($existing?->completed) {
             StudentCourseResume::query()->where('user_id', $student->user_id)->where('course_id', $course->id)->delete();
 
+            if (request()->expectsJson()) {
+                return response()->json(['ok' => true, 'completed' => true, 'already' => true, 'xp' => (int) $existing->xp_awarded]);
+            }
+
+            // Ders son sayfaya gelindiğinde otomatik tamamlanır; öğrenci "Dersi Bitir"e az önce basıyorsa tebrik mesajı gösterilir.
+            if ($existing->updated_at && $existing->updated_at->gt(now()->subHours(2))) {
+                return redirect()->route('student.portal.dashboard')->with('ok', 'Ders tamamlandi. Kazanilan XP: '.(int) $existing->xp_awarded);
+            }
+
             return redirect()->route('student.portal.courses')->with('ok', 'Bu dersi zaten tamamladiniz. Tekrar XP kazanamazsiniz.');
         }
 
@@ -613,6 +622,10 @@ class StudentPortalController extends Controller
         );
 
         StudentCourseResume::query()->where('user_id', $student->user_id)->where('course_id', $course->id)->delete();
+
+        if (request()->expectsJson()) {
+            return response()->json(['ok' => true, 'completed' => true, 'xp' => $earnedXp]);
+        }
 
         return redirect()->route('student.portal.dashboard')->with('ok', 'Ders tamamlandi. Kazanilan XP: '.$earnedXp);
     }
@@ -1147,12 +1160,17 @@ class StudentPortalController extends Controller
                     'expires_at' => now()->addHours(3)->timestamp,
                 ]);
                 $gameSlug = $homework->target_slug;
-                $query = http_build_query([
+                $queryParams = [
                     'from' => $from,
                     'to' => $to,
                     'levelStart' => $from,
                     'levelEnd' => $to,
-                ]);
+                ];
+                // Excel / Word ödevlerinde her ödev kendi (boş başlayan) çalışma alanını kullanır.
+                if (in_array($homework->target_slug, ['excel-runner', 'word-runner'], true)) {
+                    $queryParams['assignmentId'] = 'hw-'.$homework->id;
+                }
+                $query = http_build_query($queryParams);
                 $gameUrl = url($games[$homework->target_slug]['url']).'?'.$query;
             }
         }
@@ -1281,12 +1299,17 @@ class StudentPortalController extends Controller
             'expires_at' => now()->addHours(3)->timestamp,
         ]);
 
-        $query = http_build_query([
+        $queryParams = [
             'from' => $from,
             'to' => $to,
             'levelStart' => $from,
             'levelEnd' => $to,
-        ]);
+        ];
+        // Excel / Word ödevlerinde her ödev kendi (boş başlayan) çalışma alanını kullanır.
+        if (in_array($assignment->game_slug, ['excel-runner', 'word-runner'], true)) {
+            $queryParams['assignmentId'] = 'ga-'.$assignment->id;
+        }
+        $query = http_build_query($queryParams);
 
         $gameUrl = url('/'.$assignment->game_slug).'?'.$query;
 

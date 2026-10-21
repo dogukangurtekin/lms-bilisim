@@ -112,6 +112,57 @@
     }
     .leaderboard-full-btn:hover{background:#dbeafe;}
     .dashboard-shell.is-editing .leaderboard-full-btn{display:none;}
+    .avg-card{width:min(1040px,96vw);max-width:1040px;height:min(86vh,820px);display:flex;flex-direction:column;padding:0;overflow:hidden}
+    .avg-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg,#eff6ff,#f5f3ff)}
+    .avg-head-main{display:flex;align-items:center;gap:14px;min-width:0}
+    .avg-big{font-size:34px;font-weight:900;color:#1d4ed8;line-height:1}
+    .avg-head-main strong{display:block;font-size:16px;color:#0f172a}
+    .avg-head-main small{display:block;color:#64748b;font-size:12px;margin-top:2px}
+    .avg-tabs{display:flex;gap:6px;padding:10px 20px 0;border-bottom:1px solid #e2e8f0;background:#fff;flex:0 0 auto}
+    .avg-tab{border:0;background:transparent;padding:9px 14px;font:inherit;font-weight:800;font-size:13px;color:#64748b;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+    .avg-tab.is-active{color:#1d4ed8;border-bottom-color:#2563eb}
+    .avg-pane{display:none;flex:1 1 auto;min-height:0;overflow:auto;padding:16px 20px 20px}
+    .avg-pane.is-active{display:block}
+    .avg-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:16px}
+    .avg-box{border:1px solid #e2e8f0;background:#f8fafc;border-radius:14px;padding:12px 14px}
+    .avg-box b{display:block;font-size:22px;color:#0f172a}
+    .avg-box span{display:block;font-size:12px;color:#475569;line-height:1.45;margin-top:2px}
+    .avg-h{margin:18px 0 8px;font-size:14px;font-weight:900;color:#0f172a}
+    .avg-note{margin:0 0 10px;font-size:13px;color:#475569;line-height:1.6}
+    .avg-stack{display:flex;height:30px;border-radius:10px;overflow:hidden;background:#e2e8f0}
+    .avg-stack i{display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:800;color:#fff;min-width:0;white-space:nowrap}
+    .avg-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:#334155}
+    .avg-legend em{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+    .c-xp{background:#2563eb}.c-hw{background:#16a34a}.c-sc{background:#f59e0b}
+    .avg-tbl{width:100%;border-collapse:collapse;font-size:13px}
+    .avg-tbl th,.avg-tbl td{padding:9px 10px;border-bottom:1px solid #eef2f7;text-align:right;white-space:nowrap}
+    .avg-tbl th:first-child,.avg-tbl td:first-child{text-align:left}
+    .avg-tbl.left-2 th:nth-child(2),.avg-tbl.left-2 td:nth-child(2),.avg-tbl.left-3 th:nth-child(3),.avg-tbl.left-3 td:nth-child(3){text-align:left}
+    .avg-tbl thead th{position:sticky;top:0;background:#f1f5f9;font-weight:800;color:#334155;z-index:1}
+    .avg-tbl tbody tr:hover{background:#f8fafc}
+    .avg-bar{display:inline-block;vertical-align:middle;width:90px;height:8px;border-radius:99px;background:#e2e8f0;overflow:hidden;margin-left:8px}
+    .avg-bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed)}
+    .avg-search{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:12px;font:inherit;margin-bottom:10px}
+    .avg-rank{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:50%;background:#e2e8f0;font-size:12px;font-weight:800;color:#334155}
+    .avg-rank.top{background:#fde68a;color:#92400e}
+    .avg-tag{display:inline-block;padding:2px 8px;border-radius:99px;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:800}
+    @media (max-width:640px){.avg-head{padding:12px 14px}.avg-pane{padding:12px 14px 16px}.avg-tabs{padding:8px 14px 0}.avg-bar{display:none}}
+    .success-modal-card{width:min(96vw,860px);max-width:860px;max-height:88vh;display:flex;flex-direction:column;padding:20px}
+    .success-modal-note{margin:4px 0 0;font-size:12px;color:#64748b;line-height:1.5}
+    .success-modal-body{margin-top:12px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:6px}
+    .success-row{display:grid;grid-template-columns:34px minmax(0,1.2fr) 74px minmax(0,2.4fr);gap:10px;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:14px;background:#f8fafc}
+    .success-rank{width:28px;height:28px;border-radius:50%;background:#e2e8f0;color:#334155;font-size:12px;font-weight:800;display:grid;place-items:center}
+    .success-name strong{display:block;font-size:14px;color:#0f172a}
+    .success-name small{color:#64748b;font-size:11px}
+    .success-score{font-size:18px;font-weight:900;color:#1d4ed8;text-align:center}
+    .success-score small{display:block;font-size:10px;font-weight:700;color:#64748b}
+    .success-parts{display:flex;gap:6px;flex-wrap:wrap}
+    .success-part{font-size:11px;line-height:1.35;padding:4px 8px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+    .success-part b{display:block;font-size:12px}
+    .success-part.is-na{background:#f1f5f9;border-color:#e2e8f0;color:#94a3b8}
+    .chart-legend-item[data-success-bucket]:hover{background:#f1f5f9;border-radius:10px}
+    .chart-pie-slice[data-success-bucket]:hover{filter:brightness(1.08)}
+    @media (max-width:640px){.success-row{grid-template-columns:30px 1fr 56px}.success-parts{grid-column:1 / -1}}
     .leaderboard-modal-card{
         width:min(94vw,720px);
         max-width:720px;
@@ -299,9 +350,10 @@
                         <div><strong>Ortalama Not</strong><span>Genel başarı</span><small class="widget-class-tag">{{ $selectedClassLabel }}</small></div>
                         <button type="button" class="widget-toggle" data-widget-toggle="avg_completion" aria-label="Gizle" title="Gizle">-</button>
                     </div>
-                    <div class="metric-card">
+                    <div class="metric-card avg-detail-trigger" data-avg-detail role="button" tabindex="0" title="Bu değerin hangi verilerden geldiğini gör" style="cursor:pointer">
                         <strong>%{{ $dashboard['summary']['avg_completion'] }}</strong>
-                        <span>Yüzdelik başarı</span>
+                        <span>XP + ödev + başarı</span>
+                        <small style="display:block;margin-top:4px;color:#2563eb;font-weight:700;font-size:11px">Detay için tıkla</small>
                     </div>
                     <span class="widget-resize-handle" aria-hidden="true"></span>
                 </article>
@@ -430,6 +482,43 @@
                     </div>
                 </div>
 
+                @if(isset($dashboard['avg_breakdown']))
+                <script type="application/json" id="avg-breakdown-data">@json($dashboard['avg_breakdown'])</script>
+                <div class="modal avg-modal" id="avg-breakdown-modal">
+                    <div class="modal-card avg-card">
+                        <div class="avg-head">
+                            <div class="avg-head-main">
+                                <span class="avg-big" id="avg-modal-big">%0</span>
+                                <div><strong>Ortalama Not · Detay</strong><small id="avg-modal-sub"></small></div>
+                            </div>
+                            <button type="button" class="leaderboard-modal-close" id="avg-modal-close" aria-label="Kapat" title="Kapat">&times;</button>
+                        </div>
+                        <div class="avg-tabs" role="tablist">
+                            <button type="button" class="avg-tab is-active" data-avg-tab="ozet" role="tab">Özet</button>
+                            <button type="button" class="avg-tab" data-avg-tab="siniflar" role="tab">Sınıflar</button>
+                            <button type="button" class="avg-tab" data-avg-tab="ogrenciler" role="tab">Öğrenciler</button>
+                        </div>
+                        <div class="avg-pane is-active" id="avg-pane-ozet"></div>
+                        <div class="avg-pane" id="avg-pane-siniflar"></div>
+                        <div class="avg-pane" id="avg-pane-ogrenciler"></div>
+                    </div>
+                </div>
+                @endif
+
+                @if(isset($dashboard['chart_widgets']['success_distribution']))
+                <script type="application/json" id="success-students-data">@json(collect($dashboard['chart_widgets']['success_distribution']['items'] ?? [])->mapWithKeys(fn ($i) => [($i['bucket'] ?? '') => ['label' => $i['label'] ?? '', 'students' => $i['students'] ?? []]]))</script>
+                <div class="modal success-modal" id="success-students-modal">
+                    <div class="modal-card success-modal-card">
+                        <div class="modal-head">
+                            <strong id="success-modal-title">Öğrenciler</strong>
+                            <button type="button" class="leaderboard-modal-close" id="success-modal-close" aria-label="Kapat" title="Kapat">&times;</button>
+                        </div>
+                        <p class="success-modal-note">Liste tüm sınıflar karışık, <b>sıralama puanına</b> göre dizilir: %40 XP + %35 tamamlanan ödev sayısı + %25 başarı puanı (XP ve ödev sayısı tüm öğrencilerin en yükseğine göre ölçeklenir; sadece ders oranına bakılmaz). Başarı puanı = not ortalaması (varsa), ders ve ödev tamamlama değerlerinin ortalaması; ders ve ödev oranları sınıftaki en iyi öğrenciye göre ölçeklenir.</p>
+                        <div class="success-modal-body" id="success-modal-body"></div>
+                    </div>
+                </div>
+                @endif
+
                 @foreach(($dashboard['chart_widgets'] ?? []) as $key => $chart)
                     @php
                         $chartItems = (array) ($chart['items'] ?? []);
@@ -481,13 +570,13 @@
                                 <div class="chart-pie">
                                     <svg viewBox="0 0 100 100" class="chart-pie-svg" role="img" aria-label="{{ $chart['title'] ?? 'Pasta grafiği' }}">
                                         @foreach($pieSlices as $slicePath)
-                                            <path class="chart-pie-slice chart-pie-fill-{{ $loop->index + 1 }}" d="{{ $slicePath }}"></path>
+                                            <path class="chart-pie-slice chart-pie-fill-{{ $loop->index + 1 }}" d="{{ $slicePath }}"@if($key === 'success_distribution' && isset($chartItems[$loop->index]['bucket'])) data-success-bucket="{{ $chartItems[$loop->index]['bucket'] }}" style="cursor:pointer"@endif></path>
                                         @endforeach
                                     </svg>
                                 </div>
                                 <div class="chart-legend">
                                     @foreach($chartItems as $item)
-                                        <div class="chart-legend-item">
+                                        <div class="chart-legend-item"@if($key === 'success_distribution' && isset($item['bucket'])) data-success-bucket="{{ $item['bucket'] }}" role="button" tabindex="0" title="Öğrencileri göster" style="cursor:pointer"@endif>
                                             <span class="chart-dot chart-dot-{{ $loop->index + 1 }}"></span>
                                             <div class="chart-legend-main">
                                                 <strong>{{ $item['label'] ?? '-' }}</strong>
@@ -1371,6 +1460,158 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('open')) close();
     });
+})();
+</script>
+
+<script>
+(() => {
+    // Başarı Dağılımı: dilime / etikete tıklanınca o gruptaki öğrenciler ve puanlarının dayandığı veriler.
+    const dataEl = document.getElementById('success-students-data');
+    const modal = document.getElementById('success-students-modal');
+    if (!dataEl || !modal) return;
+    let data = {};
+    try { data = JSON.parse(dataEl.textContent || '{}'); } catch (_) { return; }
+    if (modal.parentNode !== document.body) document.body.appendChild(modal);
+    const titleEl = document.getElementById('success-modal-title');
+    const bodyEl = document.getElementById('success-modal-body');
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = (n) => String(n).replace('.', ',');
+    const part = (label, value, sub) => value === null || value === undefined
+        ? `<div class="success-part is-na"><b>${label}</b>Veri yok</div>`
+        : `<div class="success-part"><b>${label}: ${value}</b>${sub || ''}</div>`;
+
+    const open = (key) => {
+        const group = data[key];
+        if (!group) return;
+        const list = group.students || [];
+        titleEl.textContent = `${group.label} · ${list.length} öğrenci`;
+        bodyEl.innerHTML = list.length ? list.map((st, i) => `
+            <div class="success-row">
+                <div class="success-rank">${i + 1}</div>
+                <div class="success-name"><strong>${esc(st.name)}</strong><small>${esc(st.class_label)}</small></div>
+                <div class="success-score" title="Sıralama puanı">${fmt(st.rank_score)}<small>sıralama</small></div>
+                <div class="success-parts">
+                    ${part('XP', fmt(st.xp), 'toplam kazanılan XP')}
+                    ${part('Başarı puanı', fmt(st.score), 'not, ders ve ödev ortalaması')}
+                    ${part('Not ort.', st.grade_avg === null ? null : fmt(st.grade_avg), 'ders notlarından')}
+                    ${part('Ders', st.lesson_scaled === null ? null : '%' + fmt(st.lesson_scaled), `${st.lesson_done}/${st.lesson_total} tamamlandı (%${fmt(st.lesson_pct)}), sınıf en iyisine göre`)}
+                    ${part('Ödev', st.homework_scaled === null ? null : '%' + fmt(st.homework_scaled), `${st.homework_done}/${st.homework_total} tamamlandı (%${fmt(st.homework_pct)}), sınıf en iyisine göre`)}
+                </div>
+            </div>`).join('') : '<p style="color:#64748b;text-align:center;padding:24px 0">Bu grupta öğrenci yok.</p>';
+        modal.classList.add('open');
+    };
+    const close = () => modal.classList.remove('open');
+
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest ? e.target.closest('[data-success-bucket]') : null;
+        if (target) open(target.dataset.successBucket);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') close();
+        if ((e.key === 'Enter' || e.key === ' ') && document.activeElement?.dataset?.successBucket) {
+            e.preventDefault();
+            open(document.activeElement.dataset.successBucket);
+        }
+    });
+    document.getElementById('success-modal-close')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+})();
+</script>
+
+<script>
+(() => {
+    // Ortalama Not widget'ı: yüzdelik değerin hangi verilerden geldiğini gösteren sekmeli detay penceresi.
+    const dataEl = document.getElementById('avg-breakdown-data');
+    const modal = document.getElementById('avg-breakdown-modal');
+    if (!dataEl || !modal) return;
+    let d = {};
+    try { d = JSON.parse(dataEl.textContent || '{}'); } catch (_) { return; }
+    if (modal.parentNode !== document.body) document.body.appendChild(modal);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const f = (n, dp = 1) => Number(n ?? 0).toLocaleString('tr-TR', { maximumFractionDigits: dp });
+    const rows = d.rows || [];
+    const classes = d.classes || [];
+    const panes = { ozet: document.getElementById('avg-pane-ozet'), siniflar: document.getElementById('avg-pane-siniflar'), ogrenciler: document.getElementById('avg-pane-ogrenciler') };
+    let built = false;
+
+    const buildSummary = () => {
+        const xp = Number(d.avg_xp_part || 0), hw = Number(d.avg_homework_part || 0), sc = Number(d.avg_score_part || 0);
+        const total = Math.max(0.0001, xp + hw + sc);
+        const seg = (v, cls, label) => `<i class="${cls}" style="width:${(v / total * 100).toFixed(2)}%" title="${label}: ${f(v)}">${v / total > 0.12 ? label + ' ' + f(v) : ''}</i>`;
+        panes.ozet.innerHTML = `
+            <div class="avg-sum">
+                <div class="avg-box"><b>${f(d.students, 0)}</b><span>Öğrenci bu hesaba dahil</span></div>
+                <div class="avg-box"><b>${f(d.avg_xp, 0)} XP</b><span>Öğrenci başına ortalama XP<br>(en yüksek: ${f(d.max_xp, 0)} XP)</span></div>
+                <div class="avg-box"><b>${f(d.avg_homework_done)} ödev</b><span>Öğrenci başına ortalama tamamlanan ödev<br>(en çok: ${f(d.max_homework_done, 0)} ödev)</span></div>
+                <div class="avg-box"><b>${f(d.avg_score)}</b><span>Ortalama başarı puanı<br>(not, ders ve ödev ortalaması)</span></div>
+            </div>
+            <div class="avg-h">%${f(d.value, 0)} neyden oluşuyor?</div>
+            <div class="avg-stack">${seg(xp, 'c-xp', 'XP')}${seg(hw, 'c-hw', 'Ödev')}${seg(sc, 'c-sc', 'Başarı')}</div>
+            <div class="avg-legend">
+                <span><em class="c-xp"></em>XP: ${f(xp)} puan</span>
+                <span><em class="c-hw"></em>Ödev: ${f(hw)} puan</span>
+                <span><em class="c-sc"></em>Başarı: ${f(sc)} puan</span>
+            </div>
+            <div class="avg-h">Hesaplama</div>
+            <p class="avg-note">Her öğrencinin <b>sıralama puanı</b> = %40 XP + %35 tamamlanan ödev sayısı + %25 başarı puanı. XP ve ödev sayısı, listedeki en yüksek değere göre ölçeklenir (en çok XP'si olan öğrenci XP bölümünden tam 40 puan alır). Yukarıdaki yüzdelik değer, tüm öğrencilerin sıralama puanlarının ortalamasıdır.</p>
+            <table class="avg-tbl left-1"><thead><tr><th>Bileşen</th><th>Ortalama</th><th>Ağırlık</th><th>Ölçeklenmiş</th><th>Katkı (puan)</th></tr></thead>
+                <tbody>
+                    <tr><td>XP</td><td>${f(d.avg_xp, 0)} / ${f(d.max_xp, 0)}</td><td>%40</td><td>%${f(d.avg_xp / Math.max(1, d.max_xp) * 100)}</td><td><b>${f(xp)}</b></td></tr>
+                    <tr><td>Tamamlanan ödev</td><td>${f(d.avg_homework_done)} / ${f(d.max_homework_done, 0)}</td><td>%35</td><td>%${f(d.avg_homework_done / Math.max(1, d.max_homework_done) * 100)}</td><td><b>${f(hw)}</b></td></tr>
+                    <tr><td>Başarı puanı</td><td>${f(d.avg_score)} / 100</td><td>%25</td><td>%${f(d.avg_score)}</td><td><b>${f(sc)}</b></td></tr>
+                    <tr><td><b>Toplam</b></td><td></td><td>%100</td><td></td><td><b>${f(xp + hw + sc)}</b></td></tr>
+                </tbody></table>`;
+    };
+
+    const buildClasses = () => {
+        const maxRank = Math.max(1, ...classes.map((c) => Number(c.avg_rank) || 0));
+        panes.siniflar.innerHTML = `
+            <p class="avg-note">Sınıflar ortalama sıralama puanına göre dizildi. Çubuk, en yüksek sınıfa göre karşılaştırır.</p>
+            <table class="avg-tbl"><thead><tr><th>Sınıf</th><th>Öğrenci</th><th>Ort. XP</th><th>Ort. ödev</th><th>Ort. başarı</th><th>Ort. sıralama</th></tr></thead>
+            <tbody>${classes.map((c) => `<tr><td><b>${esc(c.class_label)}</b></td><td>${f(c.students, 0)}</td><td>${f(c.avg_xp, 0)}</td><td>${f(c.avg_homework_done)}</td><td>${f(c.avg_score)}</td><td><b>${f(c.avg_rank)}</b><span class="avg-bar"><i style="width:${(Number(c.avg_rank) / maxRank * 100).toFixed(1)}%"></i></span></td></tr>`).join('') || '<tr><td colspan="6">Veri yok</td></tr>'}</tbody></table>`;
+    };
+
+    const buildStudents = () => {
+        panes.ogrenciler.innerHTML = `
+            <input type="search" class="avg-search" id="avg-search" placeholder="Öğrenci adı ya da sınıf ara…" autocomplete="off">
+            <p class="avg-note" id="avg-count"></p>
+            <table class="avg-tbl left-2"><thead><tr><th>#</th><th>Öğrenci</th><th>Sınıf</th><th>XP</th><th>Ödev</th><th>Ders</th><th>Başarı</th><th>Sıralama</th></tr></thead>
+            <tbody id="avg-student-rows"></tbody></table>`;
+        const body = document.getElementById('avg-student-rows');
+        const count = document.getElementById('avg-count');
+        const draw = (q) => {
+            const term = (q || '').toLocaleLowerCase('tr').trim();
+            const list = rows.map((r, i) => ({ r, i })).filter(({ r }) => !term || (r.name + ' ' + r.class_label).toLocaleLowerCase('tr').includes(term));
+            count.textContent = `${f(list.length, 0)} / ${f(rows.length, 0)} öğrenci · sıralama puanına göre, tüm sınıflar karışık`;
+            body.innerHTML = list.map(({ r, i }) => `<tr><td><span class="avg-rank${i < 3 ? ' top' : ''}">${i + 1}</span></td><td><b>${esc(r.name)}</b></td><td><span class="avg-tag">${esc(r.class_label)}</span></td><td>${f(r.xp, 0)}</td><td>${r.homework_done}/${r.homework_total}</td><td>${r.lesson_total ? r.lesson_done + '/' + r.lesson_total : '—'}</td><td>${f(r.score)}</td><td><b>${f(r.rank_score)}</b></td></tr>`).join('') || '<tr><td colspan="8">Sonuç yok</td></tr>';
+        };
+        document.getElementById('avg-search').addEventListener('input', (e) => draw(e.target.value));
+        draw('');
+    };
+
+    const showTab = (name) => {
+        modal.querySelectorAll('.avg-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.avgTab === name));
+        Object.entries(panes).forEach(([k, el]) => el.classList.toggle('is-active', k === name));
+    };
+
+    const open = () => {
+        if (!built) {
+            document.getElementById('avg-modal-big').textContent = '%' + f(d.value, 0);
+            document.getElementById('avg-modal-sub').textContent = `${f(d.students, 0)} öğrenci · XP + ödev + başarı`;
+            buildSummary(); buildClasses(); buildStudents(); built = true;
+        }
+        showTab('ozet');
+        modal.classList.add('open');
+    };
+    const close = () => modal.classList.remove('open');
+    modal.querySelectorAll('.avg-tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.avgTab)));
+    document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-avg-detail]')) open(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') close();
+        if ((e.key === 'Enter' || e.key === ' ') && document.activeElement?.hasAttribute?.('data-avg-detail')) { e.preventDefault(); open(); }
+    });
+    document.getElementById('avg-modal-close')?.addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 })();
 </script>
 

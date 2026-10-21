@@ -151,6 +151,25 @@
         ? Math.max(competitionStartIndex, Math.min(LEVELS.length - 1, requestedEnd - 1))
         : LEVELS.length - 1;
     let currentLevelIndex = competitionStartIndex;
+    // Canlı yarışma: kilit, bu yarışmada gerçekten çözülen bölümlerden türetilir (önceki oyunlardan kalan ilerleme sayılmaz).
+    // Bölümler aralığın ilk bölümünden başlayarak sırayla açılır; aralık yalnızca hepsi çözülünce tamamlanmış sayılır.
+    const COMP_STORE = 'bee_garden_comp_' + competitionId;
+    const competitionSolved = new Set();
+    if (competitionMode) {
+        try {
+            const saved = JSON.parse(localStorage.getItem(COMP_STORE) || '[]');
+            if (Array.isArray(saved)) saved.forEach((n) => competitionSolved.add(Number(n)));
+        } catch (_) {}
+    }
+    function competitionUnlockedIndex() {
+        let u = competitionStartIndex;
+        while (u < competitionEndIndex && competitionSolved.has(u)) u += 1;
+        return u;
+    }
+    function competitionAllSolved() {
+        for (let i = competitionStartIndex; i <= competitionEndIndex; i += 1) if (!competitionSolved.has(i)) return false;
+        return true;
+    }
     let levelStartedAt = Date.now();
     let rangeCompletionSent = false;
     let currentState = {};
@@ -345,7 +364,9 @@
                 xp: levelXp,
                 duration: Math.max(0, Date.now() - levelStartedAt),
             }, '*');
-            if (currentLevelIndex >= competitionEndIndex && !rangeCompletionSent) {
+            competitionSolved.add(currentLevelIndex);
+            try { localStorage.setItem(COMP_STORE, JSON.stringify(Array.from(competitionSolved))); } catch (_) {}
+            if (competitionAllSolved() && !rangeCompletionSent) {
                 rangeCompletionSent = true;
                 window.parent?.postMessage({
                     type: 'ASSIGNMENT_RANGE_COMPLETED',
@@ -651,7 +672,7 @@
     });
 
     function updateNav() {
-        const unlockedIndex = loadProgress();
+        const unlockedIndex = competitionMode ? competitionUnlockedIndex() : loadProgress();
         levelLabelEl.textContent = 'Seviye ' + (currentLevelIndex + 1) + ' / ' + LEVELS.length + (LEVELS[currentLevelIndex] && LEVELS[currentLevelIndex].category ? ' · ' + (CATEGORY_LABEL[LEVELS[currentLevelIndex].category] || '') : '');
         prevBtn.disabled = currentLevelIndex <= competitionStartIndex;
         nextBtn.disabled = currentLevelIndex >= Math.min(unlockedIndex, competitionEndIndex);
@@ -659,6 +680,7 @@
 
     function goToLevel(index, forceReset) {
         checkToken++;
+        if (competitionMode && index > competitionUnlockedIndex()) index = competitionUnlockedIndex();   // kilitli bölüme atlanamaz
         currentLevelIndex = Math.max(competitionStartIndex, Math.min(competitionEndIndex, index));
         levelStartedAt = Date.now();
         const level = LEVELS[currentLevelIndex];
@@ -700,7 +722,7 @@
     function openPicker() {
         if (!pickerEl || !pickerBodyEl) return;
         pickerBodyEl.innerHTML = '';
-        const unlocked = competitionMode ? competitionEndIndex : loadProgress();
+        const unlocked = competitionMode ? competitionUnlockedIndex() : loadProgress();
         const groups = [];
         LEVELS.forEach((lv, i) => {
             if (i < competitionStartIndex || i > competitionEndIndex) return;
@@ -720,8 +742,8 @@
             g.items.forEach((x) => {
                 const b = document.createElement('button');
                 b.type = 'button';
-                const open = competitionMode ? true : x.i <= unlocked;
-                const done = !competitionMode && x.i < unlocked;
+                const open = x.i <= unlocked;
+                const done = competitionMode ? competitionSolved.has(x.i) : x.i < unlocked;
                 b.className = 'bg-pk-tile' + (done ? ' done' : '') + (x.i === currentLevelIndex ? ' current' : '');
                 b.disabled = !open;
                 b.innerHTML = (open ? '' : '<span class="bg-pk-lock">🔒</span>') + '<span class="bg-pk-num">' + (x.i + 1) + '</span><span class="bg-pk-bees">🐝 ' + x.lv.beeCount + '</span>';
@@ -741,7 +763,7 @@
 
     prevBtn.addEventListener('click', () => goToLevel(currentLevelIndex - 1));
     nextBtn.addEventListener('click', () => {
-        const unlockedIndex = loadProgress();
+        const unlockedIndex = competitionMode ? competitionUnlockedIndex() : loadProgress();
         if (currentLevelIndex < Math.min(unlockedIndex, competitionEndIndex)) goToLevel(currentLevelIndex + 1);
     });
 
@@ -751,7 +773,7 @@
         checkSolved();
     });
 
-    goToLevel(competitionMode ? competitionStartIndex : loadProgress());
+    goToLevel(competitionMode ? competitionUnlockedIndex() : loadProgress());
 
     // Açılış tanıtım kutusu: oyun her açıldığında animasyonlu şekilde belirir
     // ve kullanıcı "Anladım, Başla!" demeden altındaki oyunla etkileşime

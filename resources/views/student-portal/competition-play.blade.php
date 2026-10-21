@@ -41,7 +41,7 @@
 @elseif($room->status === 'live')
     @php($alreadyFinished = $participant->finished_at_ms !== null)
     <div class="comp-play-frame-wrap" id="compPlayFrameWrap" style="{{ $alreadyFinished ? 'display:none;' : '' }}">
-        <iframe id="compPlayFrame" src="{{ $iframeSrc }}" title="{{ $gameName }}" allow="fullscreen; autoplay" allowfullscreen></iframe>
+        <iframe id="compPlayFrame" src="{{ $iframeSrc }}" title="{{ $gameName }}" allow="fullscreen; autoplay"></iframe>
     </div>
     <div class="comp-wait-stage" id="compPlayDoneStage" style="{{ $alreadyFinished ? '' : 'display:none;' }}">
         <div class="comp-wait-box">
@@ -172,7 +172,19 @@
     let lastSentAt = 0;
     let lastSentPct = -1;
     let accumulatedXp = 0;
-    const countedLevelIds = new Set();   // ilerleme yüzdesi için (oyunun bildirdiği sıra numaralarıyla)
+    // Yüzde ve "yarış bitti" kararı YALNIZCA bu yarışmada oyunun gönderdiği LEVEL_COMPLETED olaylarından verilir.
+    // Oyunların GAME_UPDATE / ASSIGNMENT_RANGE_COMPLETED içindeki 'completedLevelIds' listesine güvenilmez:
+    // tarayıcıda önceki oyunlardan kalan tamamlanmış bölümleri de içerebildiği için aralığı 2 bölümde bitmiş gösteriyordu.
+    // Yenilenen sayfada ilerleme kaybolmasın diye bu yarışmaya özel olarak tarayıcıda saklanır.
+    const doneStoreKey = 'comp_done_levels_{{ (int) $room->id }}';
+    const countedLevelIds = new Set();
+    try {
+        const saved = JSON.parse(localStorage.getItem(doneStoreKey) || '[]');
+        if (Array.isArray(saved)) saved.forEach((id) => countedLevelIds.add(String(id)));
+    } catch (e) { /* localStorage kullanılamıyor */ }
+    const persistCounted = () => {
+        try { localStorage.setItem(doneStoreKey, JSON.stringify(Array.from(countedLevelIds))); } catch (e) { /* yok say */ }
+    };
     const xpCountedIds = new Set();      // XP'nin tekrar eklenmemesi için (levelId ile)
 
     const computePercent = () => {
@@ -181,12 +193,6 @@
     };
 
     const syncCompletedLevels = (payload) => {
-        const completedLevelIds = Array.isArray(payload?.completedLevelIds)
-            ? payload.completedLevelIds
-            : [];
-        completedLevelIds.forEach((levelId) => {
-            if (levelId !== undefined && levelId !== null) countedLevelIds.add(String(levelId));
-        });
         accumulatedXp = Math.max(
             accumulatedXp,
             Math.max(0, Number(payload?.xpEarned ?? payload?.xp_earned ?? payload?.xp ?? 0))
@@ -311,15 +317,23 @@
                 xpCountedIds.add(levelKey);
                 accumulatedXp += Math.max(0, Number(data.xp ?? 0));
             }
-            // Yüzde: bazı oyunlar aynı olayda hem mutlak 'levelId' hem de göreli 'completedLevelIds' gönderir.
-            // İkisini birlikte saymak aralık 1'den başlamıyorsa her bölümü iki kez sayıp erken %100 gösteriyordu.
-            // Oyun tamamlanan bölüm listesi veriyorsa yalnızca onu, vermiyorsa levelId'yi sayıyoruz.
-            if (!Array.isArray(data.completedLevelIds) && levelKey !== null) countedLevelIds.add(levelKey);
+            // Yüzde: bu yarışmada tamamlanan benzersiz bölümler (oyunun gönderdiği tamamlanmış listesi sayılmaz).
+            if (levelKey !== null) { countedLevelIds.add(levelKey); persistCounted(); }
             sendProgress(progressData, true);
         } else if (data.type === 'ASSIGNMENT_RANGE_COMPLETED') {
             if (xpEl) xpEl.textContent = String(accumulatedXp);
-            sendProgress(data, true, true);
-            showDoneStage();
+            // Yarış, yalnızca verilen aralıktaki TÜM bölümler bu yarışmada tamamlandıysa biter.
+            // Oyun aralığın kendi seviye sayısını bildiriyorsa (levelStart/levelEnd) ve oda aralığı daha genişse, oyunun sayısı esas alınır.
+            const gs = Number(data.levelStart);
+            const ge = Number(data.levelEnd);
+            const gameSpan = Number.isFinite(gs) && Number.isFinite(ge) && ge >= gs ? (ge - gs + 1) : totalLevels;
+            const requiredLevels = Math.max(1, Math.min(totalLevels, gameSpan));
+            if (countedLevelIds.size >= requiredLevels) {
+                sendProgress(data, true, true);
+                showDoneStage();
+            } else {
+                sendProgress(data, true, false);   // erken bildirimi yok say: öğrenci kalan bölümleri oynamaya devam eder
+            }
         }
     });
 

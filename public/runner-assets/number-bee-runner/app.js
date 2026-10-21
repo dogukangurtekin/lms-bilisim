@@ -5,7 +5,9 @@
   var E = window.NumberBeeEngine;
   var ALL = Array.isArray(window.NUMBER_BEE_LEVELS) ? window.NUMBER_BEE_LEVELS : [];
   var $ = function (id) { return document.getElementById(id); };
-  var STORE_KEY = 'number_bee_progress_v1', SOUND_KEY = 'number_bee_sound';
+  // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.
+  var COMP_KEY = (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
+  var STORE_KEY = 'number_bee_progress_v1' + COMP_KEY, SOUND_KEY = 'number_bee_sound';
   var CAT_LABEL = { easy: 'Kolay', medium: 'Orta', hard: 'Zor', expert: 'Uzman' };
   var ARROW = { N: '▲', S: '▼', E: '▶', W: '◀' };
 
@@ -18,13 +20,13 @@
   var assignmentTitle = String(params.get('assignmentTitle') || 'Sayı Arısı Ödevi').trim();
   var rangeFrom = Math.max(1, Number(params.get('levelStart') || params.get('from') || 0));
   var rangeTo = Math.max(rangeFrom, Number(params.get('levelEnd') || params.get('to') || rangeFrom));
-  var hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
+  var hasRange = !window.RUNNER_PUBLIC && Number.isFinite(rangeFrom) && rangeFrom > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   var enforceGrant = params.get('grant') === '1' || params.get('enforceGrant') === '1';
   var needsGrantCheck = runnerRole === 'student' && (!!assignmentId || hasRange || enforceGrant);
   var grantDenied = false;
   var levelStart = hasRange ? rangeFrom : 1, levelEndParam = hasRange ? rangeTo : levelStart;
   var isAssignmentMode = !!assignmentId || hasRange;
-  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = 6; }   // ödevsiz öğrenci: ilk 6 seviye
+  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = window.RUNNER_PUBLIC ? 9999 : 6; }   // ödevsiz öğrenci: ilk 6 seviye
   if (isStaff) { isAssignmentMode = false; levelStart = 1; levelEndParam = 9999; }
   var sessionStartedAt = Date.now(), rangeCompleteFired = false;
 

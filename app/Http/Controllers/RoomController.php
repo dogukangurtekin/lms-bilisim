@@ -18,7 +18,7 @@ class RoomController extends Controller
     {
         $payload = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'text' => ['required', 'string', 'min:30', 'max:1000'],
+            'text' => ['required', 'string', 'min:30', 'max:5000'],
             'user_name' => ['required', 'string', 'max:60'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
         ]);

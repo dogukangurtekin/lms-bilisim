@@ -7,7 +7,7 @@
   let sessionBaseSeconds = 0;
   let sessionStartedAt = Date.now();
   const initialRangeEndRaw = Math.max(initialRangeStart, Number(params.get("levelEnd") || params.get("to") || initialRangeStart));
-  const hasInitialRange = Number.isFinite(initialRangeStart) && initialRangeStart > 0;
+  const hasInitialRange = !window.RUNNER_PUBLIC && Number.isFinite(initialRangeStart) && initialRangeStart > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
   const isStaff = role === "teacher" || role === "admin";
   const needsGrantCheck = role === "student" && (hasInitialRange || enforceGrant);
@@ -1191,7 +1191,7 @@
   let editMode = "add";
   let editIndex = -1;
   let activeProgram = { moves: [], stepToLine: [], goal: [0, 0], conditionResult: null };
-  let levelRange = (!isStaff) ? { startIdx: 0, endIdx: 1 } : null; // {startIdx,endIdx}
+  let levelRange = (!isStaff && !window.RUNNER_PUBLIC) ? { startIdx: 0, endIdx: 1 } : null; // {startIdx,endIdx}; herkese açık sürümde sınır yok, bölümler sırayla açılır
   let assignmentRangeLocked = false;
   let showDoneTick = false;
   let trailByCell = new Map();
@@ -1205,6 +1205,25 @@
     levelRange = { startIdx: 0, endIdx: Math.max(0, levels.length - 1) };
   }
   enforceAssignmentSlice();
+
+  // Herkese açık sürüm: tamamlanan bölümler tarayıcıda saklanır, oyun kaldığı bölümden devam eder.
+  const PUBLIC_KEY = "compute_it_public_progress_v1";
+  function savePublicProgress() {
+    if (!window.RUNNER_PUBLIC) return;
+    try { localStorage.setItem(PUBLIC_KEY, JSON.stringify(Array.from(completed))); } catch (e) {}
+  }
+  function restorePublicProgress() {
+    if (!window.RUNNER_PUBLIC) return;
+    try {
+      const ids = JSON.parse(localStorage.getItem(PUBLIC_KEY) || "[]");
+      if (Array.isArray(ids)) ids.forEach((id) => completed.add(Number(id)));
+      if (doneNoEl) doneNoEl.textContent = String(completed.size);
+    } catch (e) {}
+  }
+  function firstUnfinishedIndex() {
+    const idx = levels.findIndex((l) => !completed.has(Number(l.id)));
+    return idx < 0 ? Math.max(0, levels.length - 1) : idx;
+  }
 
   function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
   function toInt(v, d = 0) { const n = Number(v); return Number.isFinite(n) ? Math.floor(n) : d; }
@@ -1694,6 +1713,7 @@
       btnNext.disabled = levelIndex >= endIdx;
       if (!completed.has(level.id)) {
         completed.add(level.id);
+        savePublicProgress();
         doneNoEl.textContent = String(completed.size);
       }
       // Assignment progress in parent must be updated even if this level
@@ -1846,6 +1866,75 @@
     if (data.type === "OPEN_DELETE_LEVEL") openDelete();
   });
 
+  // ---------- Seviye seçici penceresi (admin / öğretmen / öğrenci / herkese açık sürümde aynı) ----------
+  const pickerBtn = document.getElementById("level-picker");
+  const pickerModal = document.getElementById("picker-modal");
+  const pickerBody = document.getElementById("picker-body");
+
+  function canOpenIndex(i) {
+    if (isStaff) return true;
+    if (assignmentRangeLocked) return false;
+    let lo = 0;
+    let hi = levels.length - 1;
+    if (levelRange) {
+      lo = Math.max(0, Number(levelRange.startIdx || 0));
+      hi = Math.min(levels.length - 1, Math.max(lo, Number(levelRange.endIdx || hi)));
+    }
+    if (i < lo || i > hi) return false;
+    let first = lo;
+    while (first < hi && completed.has(Number(levels[first].id))) first++;
+    return i <= first;
+  }
+
+  function levelGroupName(level) {
+    const n = String(level?.name || "").replace(/\s*\d+\s*$/, "").trim();
+    return n || "Seviyeler";
+  }
+
+  function openPicker() {
+    if (!pickerModal || !pickerBody || !levels.length) return;
+    pickerBody.innerHTML = "";
+    const groups = [];
+    levels.forEach((lv, i) => {
+      const name = levelGroupName(lv);
+      let g = groups.find((x) => x.name === name);
+      if (!g) { g = { name, items: [] }; groups.push(g); }
+      g.items.push({ lv, i });
+    });
+    groups.forEach((g) => {
+      const sec = document.createElement("div");
+      sec.className = "picker-group";
+      const finished = g.items.filter((x) => completed.has(Number(x.lv.id))).length;
+      const title = document.createElement("h4");
+      title.innerHTML = "<span></span><small></small>";
+      title.firstChild.textContent = g.name;
+      title.lastChild.textContent = finished + " / " + g.items.length + " seviye";
+      sec.appendChild(title);
+      const grid = document.createElement("div");
+      grid.className = "picker-grid";
+      g.items.forEach(({ lv, i }) => {
+        const open = canOpenIndex(i);
+        const done = completed.has(Number(lv.id));
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "picker-tile" + (done ? " done" : "") + (i === levelIndex ? " current" : "");
+        b.disabled = !open;
+        b.innerHTML = (open ? "" : '<span class="lock">🔒</span>') +
+          '<span class="t-num">' + getLevelNo(lv, i) + '</span>' +
+          '<span class="t-state">' + (done ? "✓ Bitti" : (i === levelIndex ? "Şimdi" : "Aç")) + '</span>';
+        b.addEventListener("click", () => { loadLevel(i); closePicker(); });
+        grid.appendChild(b);
+      });
+      sec.appendChild(grid);
+      pickerBody.appendChild(sec);
+    });
+    pickerModal.classList.remove("hidden");
+  }
+  function closePicker() { if (pickerModal) pickerModal.classList.add("hidden"); }
+  if (pickerBtn) pickerBtn.addEventListener("click", openPicker);
+  if (pickerModal) pickerModal.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("[data-picker-close]")) closePicker(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && pickerModal && !pickerModal.classList.contains("hidden")) closePicker(); });
+
   function triggerMoveFromInput(dir) {
     if (!grantReady || grantDenied) return;
     if (dir === "right" || dir === "left" || dir === "up" || dir === "down") move(dir);
@@ -1982,9 +2071,10 @@
   (async () => {
     await applySessionGrant();
     if (!grantReady || grantDenied) return;
+    restorePublicProgress();
     const initialIndex = !isStaff && levelRange
       ? Math.max(0, Number(levelRange.startIdx || 0))
-      : 0;
+      : (window.RUNNER_PUBLIC ? firstUnfinishedIndex() : 0);
     loadLevel(initialIndex);
     requestAnimationFrame(focusGameControls);
     setTimeout(focusGameControls, 150);

@@ -23,7 +23,7 @@
   const assignmentTitle = String(params.get("assignmentTitle") || "Code Robot Lab Odevi").trim();
   const rangeFrom = Math.max(1, Number(params.get("levelStart") || params.get("from") || 0));
   const rangeTo = Math.max(rangeFrom, Number(params.get("levelEnd") || params.get("to") || rangeFrom));
-  const hasRange = Number.isFinite(rangeFrom) && rangeFrom > 0;
+  const hasRange = !window.RUNNER_PUBLIC && Number.isFinite(rangeFrom) && rangeFrom > 0;   // herkese açık sürümde ödev aralığı/izin kontrolü yok
   const enforceGrant = params.get("grant") === "1" || params.get("enforceGrant") === "1";
   const needsGrantCheck = runnerRole === "student" && (!!assignmentId || hasRange || enforceGrant);
   const isStaff = runnerRole === "teacher" || runnerRole === "admin";
@@ -34,7 +34,7 @@
   if (!isStaff && !isAssignmentMode) {
     isAssignmentMode = true;
     levelStart = 1;
-    levelEndParam = 2;
+    levelEndParam = window.RUNNER_PUBLIC ? 9999 : 2;
   }
   if (isStaff) {
     isAssignmentMode = false;
