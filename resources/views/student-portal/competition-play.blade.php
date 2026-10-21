@@ -89,6 +89,7 @@
             `).join('');
         };
         const pollLobby = async () => {
+            if (document.hidden) return;
             try {
                 const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
                 if (!res.ok) return;
@@ -101,7 +102,8 @@
             } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
         };
         pollLobby();
-        setInterval(pollLobby, 1500);
+        setInterval(pollLobby, 3000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) pollLobby(); });
         return;
     }
 
@@ -139,6 +141,7 @@
     tick();
 
     const pollStatus = async () => {
+        if (document.hidden) return;
         try {
             const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
@@ -153,7 +156,8 @@
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
     pollStatus();
-    setInterval(pollStatus, 2000);
+    setInterval(pollStatus, 4000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) pollStatus(); });
 
     // --- Oyun iframe'inden gelen ilerleme olaylarini sunucuya ilet -------
     // Oyunlar kendi ilerlemelerini "GAME_UPDATE" / "LEVEL_COMPLETED" /

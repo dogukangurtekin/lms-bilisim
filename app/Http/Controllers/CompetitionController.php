@@ -242,6 +242,16 @@ class CompetitionController extends Controller
     /** Sağ alttaki bildirim için: öğrencinin katılabileceği kodsuz oda var mı? */
     public static function openRoomPayload(?int $userId): array
     {
+        if (! $userId) {
+            return ['active' => false];
+        }
+
+        // Her öğrenci ~2 dk'da bir ping atar; açık oda sorgusu 15 sn önbellekten gelir (oda açılıp kapanması 15 sn gecikebilir).
+        return \Illuminate\Support\Facades\Cache::remember('open_room_payload:'.$userId, 15, fn () => self::buildOpenRoomPayload($userId));
+    }
+
+    private static function buildOpenRoomPayload(int $userId): array
+    {
         $room = CompetitionRoom::openFor($userId);
         if (! $room) {
             return ['active' => false];
@@ -415,7 +425,12 @@ class CompetitionController extends Controller
         $room = $this->syncRoomByTimer($room);
         abort_unless($this->studentCanJoin($room, auth()->id()), 403);
 
-        $rows = $this->leaderboardRows($room);
+        // Yüzlerce öğrenci aynı odayı birkaç saniyede bir yokladığı için sıralama ve katılımcı sayısı odaya özel 3 sn önbelleğe alınır.
+        $cached = \Illuminate\Support\Facades\Cache::remember('comp_status_rows:'.$room->id, 3, fn () => [
+            'rows' => $this->leaderboardRows($room),
+            'joined' => $room->participants()->count(),
+        ]);
+        $rows = $cached['rows'];
         $myRank = 0;
         foreach ($rows as $i => $row) {
             if ((int) $row['student_user_id'] === (int) auth()->id()) {
@@ -428,7 +443,7 @@ class CompetitionController extends Controller
             'status' => $room->status,
             'ends_at_ms' => (int) ($room->ends_at_ms ?? 0),
             'server_now_ms' => $this->nowMs(),
-            'joined' => $room->participants()->count(),
+            'joined' => $cached['joined'],
             'my_rank' => $myRank,
             'total' => count($rows),
             'students' => array_map(fn ($row) => [

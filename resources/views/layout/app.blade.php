@@ -410,11 +410,29 @@
         } catch (_) {}
     }
 
+    // Her sayfa açılışında 3-4 push isteği atmamak için başarılı kayıt 12 saat boyunca hatırlanır.
+    const pushSyncKey = 'webpush_synced_v2';
+    const pushUserId = @json(auth()->id());
+    const pushSyncedRecently = () => {
+        try {
+            const m = JSON.parse(localStorage.getItem(pushSyncKey) || 'null');
+            const perm = (window.Notification && Notification.permission) ? Notification.permission : 'default';
+            return !!m && m.u === pushUserId && m.p === perm && perm !== 'default' && (Date.now() - m.t) < 12 * 3600 * 1000;
+        } catch (_) { return false; }
+    };
+    const markPushSynced = () => {
+        try {
+            const perm = (window.Notification && Notification.permission) ? Notification.permission : 'default';
+            localStorage.setItem(pushSyncKey, JSON.stringify({ u: pushUserId, p: perm, t: Date.now() }));
+        } catch (_) {}
+    };
+
     async function registerWebPush() {
         if (!window.WEBPUSH_ENABLED) return;
         if (pushConfigMissing) return;
         if (pushAuthFailed) return;
         if (pushBusy) return;
+        if (pushSyncedRecently()) return;
         pushBusy = true;
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
             console.warn('[WebPush] Tarayici push API desteklemiyor.');
@@ -477,6 +495,7 @@
             } else {
                 await syncDeviceStatus('');
             }
+            markPushSynced();
         } catch (error) {
             console.error('[WebPush] Kayit/abonelik hatasi:', error);
             if (String(error?.message || '').includes('WEBPUSH_VAPID_PUBLIC_KEY')) {
@@ -686,64 +705,21 @@
 @if(auth()->check() && auth()->user()?->hasRole('student') && !request()->routeIs('student.live-quiz.play'))
 <script>
 (() => {
-    const pingUrl = @json(route('student.portal.time.ping'));
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    if (!pingUrl || !csrfToken) return;
-
-    let inFlight = false;
-    let timer = null;
-
-    const ping = async () => {
-        if (inFlight) return;
-        inFlight = true;
+    // Süre ping'i tek yerden (admin.js) atılır; burada yalnızca yanıttaki kodsuz yarışma bilgisi ile sağ alt bildirim güncellenir.
+    window.addEventListener('student-ping', (event) => {
         try {
-            const res = await fetch(pingUrl, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-            });
-            // Kodsuz canlı yarışma açılıp kapandığında sağ alt bildirimi ayrı bir yoklama olmadan günceller.
-            try {
-                const toast = document.getElementById('compOpenToast');
-                if (toast && res.ok) {
-                    const data = await res.json();
-                    const room = data && data.open_room;
-                    if (room && room.active && room.join_url) {
-                        toast.action = room.join_url;
-                        const nameEl = document.getElementById('compOpenToastName');
-                        if (nameEl) nameEl.textContent = room.game_name || '';
-                        toast.classList.add('show');
-                    } else {
-                        toast.classList.remove('show');
-                    }
-                }
-            } catch (_) {}
-        } catch (_) {
-            // Sessizce gec: oturum ping'i sadece canlı tutma amaçlıdır.
-        } finally {
-            inFlight = false;
-        }
-    };
-
-    ping();
-    timer = setInterval(ping, 60000);
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            ping();
-        }
-    });
-
-    window.addEventListener('pageshow', () => {
-        ping();
-    });
-
-    window.addEventListener('beforeunload', () => {
-        if (timer) clearInterval(timer);
+            const toast = document.getElementById('compOpenToast');
+            const room = event && event.detail && event.detail.open_room;
+            if (!toast) return;
+            if (room && room.active && room.join_url) {
+                toast.action = room.join_url;
+                const nameEl = document.getElementById('compOpenToastName');
+                if (nameEl) nameEl.textContent = room.game_name || '';
+                toast.classList.add('show');
+            } else {
+                toast.classList.remove('show');
+            }
+        } catch (_) {}
     });
 })();
 </script>

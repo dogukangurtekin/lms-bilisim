@@ -302,7 +302,7 @@
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     }
     poll();
-    setInterval(poll, status === 'lobby' ? 2000 : 1500);
+    setInterval(poll, status === 'lobby' ? 3000 : 2500);
 })();
 </script>
 @endpush

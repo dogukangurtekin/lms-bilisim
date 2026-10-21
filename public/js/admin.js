@@ -202,8 +202,11 @@ document.addEventListener('DOMContentLoaded', () => {
       startedAt = Date.now();
       render();
     };
+    let lastPingAt = 0;
     const ping = async () => {
       if (!pingUrl || !csrf) return;
+      if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
+      lastPingAt = Date.now();
       try {
         const res = await fetch(pingUrl, {
           method: 'POST',
@@ -219,6 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (payload && typeof payload.total_seconds !== 'undefined') {
           syncBase(payload.total_seconds);
         }
+        // Tek ping herkese yeter: kodsuz yarışma bildirimi gibi bileşenler bu olayı dinler.
+        window.dispatchEvent(new CustomEvent('student-ping', { detail: payload || {} }));
       } catch (_) {
         // Sessiz gec: sayac yerelde akmaya devam eder.
       }
@@ -231,11 +236,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     render();
     setInterval(render, 1000);
-    setInterval(ping, 30000);
+    ping();
+    setInterval(ping, 120000);
     window.addEventListener('beforeunload', pingOnClose);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         pingOnClose();
+      } else if (Date.now() - lastPingAt > 90000) {
+        ping();
       }
     });
   }

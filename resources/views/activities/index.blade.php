@@ -333,7 +333,7 @@
             const activeUrl = @json(route('student.competitions.active'));
             let redirected = false;
             const poll = async () => {
-                if (redirected) return;
+                if (redirected || document.hidden) return;
                 try {
                     const res = await fetch(activeUrl, { headers: { 'Accept': 'application/json' } });
                     if (!res.ok) return;
@@ -345,7 +345,7 @@
                 } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
             };
             poll();
-            setInterval(poll, 3000);
+            setInterval(poll, 8000);
         })();
     </script>
 @endif
