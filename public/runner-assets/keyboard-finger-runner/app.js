@@ -4,12 +4,13 @@
   var KB = window.KBVisual, BYCH = KB.BYCH, BYCODE = KB.BYCODE, COLORS = KB.COLORS, FNAME = KB.FNAME;
   var kb = KB.mount($('#kb'), $('#hands'));
   var TOTAL = 1000;
-  /* canlı yarışma modu: ?assignmentId=competition-N&from=a&to=b */
+  /* aralık modu: canlı yarışma (assignmentId=competition-N) ve ödev (hw-N / ga-N) + from=a&to=b.
+     Bu modlarda oyun menüsü yoktur: öğrenci aralığın İLK bölümünden başlar, bölümler yapıldıkça sırayla açılır. */
   var qp = new URLSearchParams(location.search), asg = qp.get('assignmentId') || '';
-  var comp = /^competition-\d+$/.test(asg), cFrom = Math.max(1, Math.min(TOTAL, parseInt(qp.get('from'), 10) || 1));
+  var comp = /^competition-\d+$/.test(asg), asgMode = /^(hw|ga)-\d+$/.test(asg), rangeMode = comp || asgMode, cFrom = Math.max(1, Math.min(TOTAL, parseInt(qp.get('from'), 10) || 1));
   var cTo = Math.max(cFrom, Math.min(TOTAL, parseInt(qp.get('to'), 10) || cFrom));
   function post(m) { try { if (window.parent && window.parent !== window) window.parent.postMessage(m, '*'); } catch (e) {} }
-  if (comp) document.body.classList.add('comp');
+  if (rangeMode) document.body.classList.add('comp');
 
   /* ================= müfredat: sıralar (dünyalar) ================= */
   var WORLDS = [
@@ -110,7 +111,7 @@
 
   /* ================= ilerleme ================= */
   var store = { done: {}, open: false };
-  var KB_KEY = 'bk_kbfinger2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^competition-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
+  var KB_KEY = 'bk_kbfinger2' + (function () { try { var a = new URLSearchParams(location.search).get('assignmentId') || ''; return /^(competition|hw|ga)-\d+$/.test(a) ? ':' + a : ''; } catch (e) { return ''; } })();
   try { var sv = JSON.parse(localStorage.getItem(KB_KEY) || 'null'); if (sv && sv.done) store = sv; } catch (e) {}
   function persist() { try { localStorage.setItem(KB_KEY, JSON.stringify(store)); } catch (e) {} }
   function maxDone() { var m = 0; Object.keys(store.done).forEach(function (k) { if (store.done[k].s >= 1 && +k > m) m = +k; }); return m; }
@@ -246,21 +247,25 @@
     if (!old || s > old.s || (s === old.s && wpm > old.w)) store.done[cur.n] = { s: s, w: wpm, a: acc };
     else if (old && wpm > old.w) old.w = wpm;
     persist();
-    if (comp && s > 0) {
+    if (rangeMode && s > 0) {
       var doneN = cur.n - cFrom + 1, totN = cTo - cFrom + 1;
       post({ type: 'LEVEL_COMPLETED', source: 'keyboard-finger-runner', assignmentId: asg, levelId: String(cur.n), levelNo: cur.n, levelStart: cFrom, levelEnd: cTo, currentLevelIndex: cur.n - 1, progressPercent: Math.round(doneN / totN * 100), xp: s * 10, stars: s, elapsedSeconds: Math.round(finalSec) });
-      if (cur.n >= cTo) post({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'keyboard-finger-runner', assignmentId: asg, levelStart: cFrom, levelEnd: cTo, xp: 0, currentLevelIndex: cur.n - 1 });
+      if (cur.n >= cTo && rangeAllDone()) post({ type: 'ASSIGNMENT_RANGE_COMPLETED', source: 'keyboard-finger-runner', assignmentId: asg, levelStart: cFrom, levelEnd: cTo, xp: 0, currentLevelIndex: cur.n - 1 });
     }
     $('#stars').textContent = '★'.repeat(s) + '☆'.repeat(3 - s);
     $('#resTitle').textContent = s === 3 ? 'Mükemmel!' : s === 2 ? 'Çok iyi!' : s === 1 ? 'Bölüm geçildi!' : 'Tekrar dene';
     $('#resText').textContent = 'Doğruluk %' + acc + ' · ' + wpm + ' kelime/dk · ' + Math.round(finalSec) + ' sn · ' + errors + ' hata';
     $('#resGoal').textContent = s === 0 ? 'Geçmek için en az %80 doğruluk gerekir.' : s < 3 ? '3 yıldız için %97 doğruluk ve ' + cur.target + ' kelime/dk gerekir.' : 'Hedefi aştın!';
-    $('#btnNext').style.display = s >= 1 && cur.n < (comp ? cTo : TOTAL) ? '' : 'none';
+    $('#btnNext').style.display = s >= 1 && cur.n < (rangeMode ? cTo : TOTAL) ? '' : 'none';
     $('#result').hidden = false;
   }
   $('#btnAgain').addEventListener('click', function () { startLevel(cur.n); });
   $('#btnNext').addEventListener('click', function () { if (cur.n < TOTAL) startLevel(cur.n + 1); });
 
-  if (comp) startLevel(cFrom); else { renderMenu(); show('menu'); }
+  // Aralıktaki tüm bölümler (en az 1 yıldızla) tamamlandı mı?
+  function rangeAllDone() { for (var n = cFrom; n <= cTo; n++) if (!store.done[n] || store.done[n].s < 1) return false; return true; }
+  // Aralık modunda her zaman aralığın ilk bitmemiş bölümünden başlar (yenilenirse kaldığı yerden devam eder).
+  function rangeStartLevel() { for (var n = cFrom; n <= cTo; n++) if (!store.done[n] || store.done[n].s < 1) return n; return cTo; }
+  if (rangeMode) startLevel(rangeStartLevel()); else { renderMenu(); show('menu'); }
   window.KBF = { level: level, WORLDS: WORLDS };
 })();

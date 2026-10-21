@@ -1166,8 +1166,8 @@ class StudentPortalController extends Controller
                     'levelStart' => $from,
                     'levelEnd' => $to,
                 ];
-                // Excel / Word ödevlerinde her ödev kendi (boş başlayan) çalışma alanını kullanır.
-                if (in_array($homework->target_slug, ['excel-runner', 'word-runner'], true)) {
+                // Excel / Word / Klavye ödevlerinde her ödev kendi (boş başlayan) çalışma alanı / ilerlemesini kullanır.
+                if (in_array($homework->target_slug, ['excel-runner', 'word-runner', 'keyboard-finger-runner'], true)) {
                     $queryParams['assignmentId'] = 'hw-'.$homework->id;
                 }
                 $query = http_build_query($queryParams);
@@ -1305,8 +1305,8 @@ class StudentPortalController extends Controller
             'levelStart' => $from,
             'levelEnd' => $to,
         ];
-        // Excel / Word ödevlerinde her ödev kendi (boş başlayan) çalışma alanını kullanır.
-        if (in_array($assignment->game_slug, ['excel-runner', 'word-runner'], true)) {
+        // Excel / Word / Klavye ödevlerinde her ödev kendi (boş başlayan) çalışma alanı / ilerlemesini kullanır.
+        if (in_array($assignment->game_slug, ['excel-runner', 'word-runner', 'keyboard-finger-runner'], true)) {
             $queryParams['assignmentId'] = 'ga-'.$assignment->id;
         }
         $query = http_build_query($queryParams);
