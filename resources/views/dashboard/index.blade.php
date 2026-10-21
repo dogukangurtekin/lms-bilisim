@@ -1377,7 +1377,9 @@
     });
 
     load();
-    setInterval(load, 20000);
+    // Aktif sınıflar listesi: 20 sn yerine 60 sn, sekme gizliyken yenilenmez.
+    setInterval(() => { if (!document.hidden) load(); }, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 })();
 
 // Başarı listesi: "Tüm Sıralamayı Göster" pop-up'ı

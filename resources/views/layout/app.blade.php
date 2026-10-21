@@ -417,7 +417,7 @@
         try {
             const m = JSON.parse(localStorage.getItem(pushSyncKey) || 'null');
             const perm = (window.Notification && Notification.permission) ? Notification.permission : 'default';
-            return !!m && m.u === pushUserId && m.p === perm && perm !== 'default' && (Date.now() - m.t) < 12 * 3600 * 1000;
+            return !!m && m.u === pushUserId && m.p === perm && (Date.now() - m.t) < 12 * 3600 * 1000;
         } catch (_) { return false; }
     };
     const markPushSynced = () => {
@@ -471,6 +471,7 @@
                 if (sub?.endpoint) await removeSubscriptionFromServer(sub.endpoint);
                 if (sub) await sub.unsubscribe();
                 await syncDeviceStatus(sub?.endpoint || '');
+                markPushSynced();   // izni reddeden kullanıcı her sayfada tekrar tekrar sorgulanmasın
                 return;
             }
 
@@ -478,6 +479,7 @@
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     await syncDeviceStatus(sub?.endpoint || '');
+                    markPushSynced();   // karar vermeyen kullanıcıda 12 saatte bir yeniden denenir (her sayfada değil)
                     return;
                 }
             }
