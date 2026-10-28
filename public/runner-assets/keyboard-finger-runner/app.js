@@ -4,6 +4,8 @@
   var KB = window.KBVisual, BYCH = KB.BYCH, BYCODE = KB.BYCODE, COLORS = KB.COLORS, FNAME = KB.FNAME;
   var kb = KB.mount($('#kb'), $('#hands'));
   var TOTAL = 1000;
+  // Herkese açık sürümde admin ilk N bölümle sınırlayabilir (0 = sınırsız).
+  var PUB_LIMIT = (window.RUNNER_PUBLIC && window.RUNNER_PUBLIC_LIMIT) ? Math.min(TOTAL, Number(window.RUNNER_PUBLIC_LIMIT)) : 0;
   /* aralık modu: canlı yarışma (assignmentId=competition-N) ve ödev (hw-N / ga-N) + from=a&to=b.
      Bu modlarda oyun menüsü yoktur: öğrenci aralığın İLK bölümünden başlar, bölümler yapıldıkça sırayla açılır. */
   var qp = new URLSearchParams(location.search), asg = qp.get('assignmentId') || '';
@@ -115,9 +117,9 @@
   try { var sv = JSON.parse(localStorage.getItem(KB_KEY) || 'null'); if (sv && sv.done) store = sv; } catch (e) {}
   function persist() { try { localStorage.setItem(KB_KEY, JSON.stringify(store)); } catch (e) {} }
   function maxDone() { var m = 0; Object.keys(store.done).forEach(function (k) { if (store.done[k].s >= 1 && +k > m) m = +k; }); return m; }
-  function isOpen(n) { return store.open || n === 1 || !!(store.done[n - 1] && store.done[n - 1].s >= 1) || !!store.done[n]; }
+  function isOpen(n) { if (PUB_LIMIT && n > PUB_LIMIT) return false; return store.open || n === 1 || !!(store.done[n - 1] && store.done[n - 1].s >= 1) || !!store.done[n]; }
   function stars(n) { return store.done[n] ? store.done[n].s : 0; }
-  function nextLevel() { for (var n = 1; n <= TOTAL; n++) if (!store.done[n] || store.done[n].s < 1) return n; return TOTAL; }
+  function nextLevel() { var T = PUB_LIMIT || TOTAL; for (var n = 1; n <= T; n++) if (!store.done[n] || store.done[n].s < 1) return n; return T; }
 
   /* ================= ekranlar ================= */
   var view = 'menu', curWorld = 0, cur = null;
@@ -160,6 +162,7 @@
   var text = '', pos = 0, errors = 0, typed = 0, startAt = 0, running = false, finished = false, timer = null, finalSec = 0, started = false;
   function stopTimer() { clearInterval(timer); running = false; }
   function startLevel(n) {
+    if (PUB_LIMIT && n > PUB_LIMIT) n = PUB_LIMIT;
     cur = level(n); show('play'); $('#result').hidden = true;
     stopTimer(); text = cur.text; pos = 0; errors = 0; typed = 0; startAt = 0; finished = false; started = false; finalSec = 0;
     $('#pTitle').textContent = 'Bölüm ' + n + ' · ' + cur.title.split(' · ')[0] + (cur.boss ? ' 👑' : '');
@@ -256,11 +259,11 @@
     $('#resTitle').textContent = s === 3 ? 'Mükemmel!' : s === 2 ? 'Çok iyi!' : s === 1 ? 'Bölüm geçildi!' : 'Tekrar dene';
     $('#resText').textContent = 'Doğruluk %' + acc + ' · ' + wpm + ' kelime/dk · ' + Math.round(finalSec) + ' sn · ' + errors + ' hata';
     $('#resGoal').textContent = s === 0 ? 'Geçmek için en az %80 doğruluk gerekir.' : s < 3 ? '3 yıldız için %97 doğruluk ve ' + cur.target + ' kelime/dk gerekir.' : 'Hedefi aştın!';
-    $('#btnNext').style.display = s >= 1 && cur.n < (rangeMode ? cTo : TOTAL) ? '' : 'none';
+    $('#btnNext').style.display = s >= 1 && cur.n < (rangeMode ? cTo : (PUB_LIMIT || TOTAL)) ? '' : 'none';
     $('#result').hidden = false;
   }
   $('#btnAgain').addEventListener('click', function () { startLevel(cur.n); });
-  $('#btnNext').addEventListener('click', function () { if (cur.n < TOTAL) startLevel(cur.n + 1); });
+  $('#btnNext').addEventListener('click', function () { if (cur.n < (PUB_LIMIT || TOTAL)) startLevel(cur.n + 1); });
 
   // Aralıktaki tüm bölümler (en az 1 yıldızla) tamamlandı mı?
   function rangeAllDone() { for (var n = cFrom; n <= cTo; n++) if (!store.done[n] || store.done[n].s < 1) return false; return true; }

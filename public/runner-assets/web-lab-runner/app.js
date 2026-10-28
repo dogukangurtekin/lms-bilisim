@@ -12,7 +12,8 @@
 
   const els={editor:$('editor'),lines:$('lineNumbers'),preview:$('preview'),list:$('levelList'),title:$('levelTitle'),tag:$('levelTag'),story:$('levelStory'),goal:$('levelGoal'),hints:$('hints'),result:$('result'),next:$('nextBtn'),prev:$('prevBtn'),xp:$('xpTotal'),progressText:$('progressText'),progressBar:$('progressBar')};
   const rangeStart=Math.max(0,Math.min(levels.length-1,(Number(params.get('from'))||1)-1));
-  const rangeEnd=Math.max(rangeStart,Math.min(levels.length-1,(Number(params.get('to'))||levels.length)-1));
+  const pubLimit=(window.RUNNER_PUBLIC&&window.RUNNER_PUBLIC_LIMIT)?Number(window.RUNNER_PUBLIC_LIMIT):0;   // herkese açık sürümde admin ilk N bölümle sınırlayabilir
+  const rangeEnd=Math.max(rangeStart,Math.min(levels.length-1,pubLimit?pubLimit-1:(Number(params.get('to'))||levels.length)-1));
   let state=loadState(), current=rangeStart, file='html', startedAt=Date.now(), timer, initialized=false;
 
   function loadState(){try{const v=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');return {completed:Array.isArray(v.completed)?v.completed:[],drafts:v.drafts||{}}}catch(_){return {completed:[],drafts:{}}}}

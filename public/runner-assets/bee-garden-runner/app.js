@@ -149,7 +149,7 @@
         : 0;
     const competitionEndIndex = competitionMode
         ? Math.max(competitionStartIndex, Math.min(LEVELS.length - 1, requestedEnd - 1))
-        : LEVELS.length - 1;
+        : ((window.RUNNER_PUBLIC && window.RUNNER_PUBLIC_LIMIT) ? Math.max(0, Math.min(LEVELS.length, Number(window.RUNNER_PUBLIC_LIMIT)) - 1) : LEVELS.length - 1);   // herkese açık sürümde admin ilk N bölümle sınırlayabilir
     let currentLevelIndex = competitionStartIndex;
     // Canlı yarışma: kilit, bu yarışmada gerçekten çözülen bölümlerden türetilir (önceki oyunlardan kalan ilerleme sayılmaz).
     // Bölümler aralığın ilk bölümünden başlayarak sırayla açılır; aralık yalnızca hepsi çözülünce tamamlanmış sayılır.
@@ -182,7 +182,7 @@
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             const parsed = raw ? JSON.parse(raw) : {};
-            return Math.max(0, Math.min(LEVELS.length - 1, parsed.unlockedIndex || 0));
+            return Math.max(0, Math.min(competitionEndIndex, parsed.unlockedIndex || 0));
         } catch (_) {
             return 0;
         }
