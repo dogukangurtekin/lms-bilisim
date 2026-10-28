@@ -292,7 +292,8 @@
                 <a href="#moduller">Modüller</a>
                 <a href="#kimler-icin">Kimler için</a>
                 <a href="#sss">SSS</a>
-                <a href="#iletisim">İletişim</a>
+                <a href="{{ route('pages.about') }}">Hakkımızda</a>
+                <a href="{{ route('pages.contact') }}">İletişim</a>
             </div>
             <div class="nav-cta">
                 <button type="button" class="btn btn-ghost btn-sm" aria-haspopup="dialog" @click="demoOpen = true">Demo Talep Et</button>
@@ -438,6 +439,10 @@
             </a>
             <div>© {{ date('Y') }} Bilişim Kod — Okullar için kodlama ve yapay zekâ platformu</div>
             <nav aria-label="Yasal bağlantılar" style="display:flex;flex-wrap:wrap;gap:8px 18px">
+            <a href="{{ route('pages.about') }}">Hakkımızda</a>
+            <a href="{{ route('pages.why') }}">Neden Biz</a>
+            <a href="{{ route('pages.features') }}">Neler Sunuyoruz</a>
+            <a href="{{ route('pages.contact') }}">İletişim</a>
                 <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>
                 <a href="{{ route('legal.terms') }}">Kullanım Şartları</a>
                 <a href="{{ route('legal.cookies') }}">Çerez Politikası</a>

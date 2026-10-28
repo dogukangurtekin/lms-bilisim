@@ -64,6 +64,10 @@ Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::c
 Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:60,1')->name('public.game');
 Route::get('/kelime-arisi', fn () => redirect()->route('public.game', 'word-bee-runner'))->name('public.word-bee');
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->middleware('throttle:5,10')->name('support-requests.demo');
+Route::view('/hakkimizda', 'pages.about')->name('pages.about');
+Route::view('/neden-biz', 'pages.why-us')->name('pages.why');
+Route::view('/neler-sunuyoruz', 'pages.features')->name('pages.features');
+Route::view('/iletisim', 'pages.contact')->name('pages.contact');
 Route::view('/gizlilik-politikasi', 'legal.privacy')->name('legal.privacy');
 Route::view('/kullanim-sartlari', 'legal.terms')->name('legal.terms');
 Route::view('/cerez-politikasi', 'legal.cookies')->name('legal.cookies');

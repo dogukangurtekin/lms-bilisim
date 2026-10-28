@@ -9,6 +9,10 @@ Hedef kitle: ilkokul, ortaokul ve lise düzeyindeki okullar, öğretmenler ve ö
 ## Sayfalar
 
 - [Ana sayfa](https://bilisimkod.com/): Platformun tanıtımı, modüller, SSS ve demo talep formu
+- [Neler Sunuyoruz](https://bilisimkod.com/neler-sunuyoruz): Platform modülleri
+- [Neden Biz](https://bilisimkod.com/neden-biz): Platformun avantajları
+- [Hakkımızda](https://bilisimkod.com/hakkimizda): Bilişim Kod'un amacı ve yaklaşımı
+- [İletişim](https://bilisimkod.com/iletisim): Demo talebi ve iletişim bilgileri
 - [Gizlilik Politikası ve KVKK](https://bilisimkod.com/gizlilik-politikasi): Kişisel verilerin işlenmesi
 - [Kullanım Şartları](https://bilisimkod.com/kullanim-sartlari): Platform kullanım kuralları
 - [Çerez Politikası](https://bilisimkod.com/cerez-politikasi): Kullanılan çerezler

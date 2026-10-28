@@ -18,6 +18,12 @@
     <meta property="og:description" content="{{ $description ?? 'Bilişim Kod - okullar için kodlama, robotik ve yapay zekâ platformu.' }}">
     <meta property="og:image" content="{{ url('/logo512.png') }}">
     @include('partials.analytics')
+    @isset($breadcrumb)
+    <script type="application/ld+json">{!! json_encode(['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Bilişim Kod', 'item' => url('/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => $breadcrumb, 'item' => $canonical ?? url()->current()],
+    ]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    @endisset
     <style>
         :root{--paper:#F7F6F2;--surface:#fff;--ink:#16182B;--ink-soft:#585A72;--line:#E4E1D8;--violet:#5B3DF5;--violet-ink:#3E28B8;--violet-tint:#EEEBFD}
         *{box-sizing:border-box}
@@ -32,6 +38,10 @@
         .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--ink);text-decoration:none}
         .brand img{width:32px;height:auto;border-radius:7px}
         .btn{display:inline-block;background:var(--violet);color:#fff;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:600;font-size:14.5px}
+        .site-nav{display:flex;flex-wrap:wrap;gap:6px 20px;margin-left:auto;font-size:14.5px}
+        .site-nav a{color:var(--ink-soft);text-decoration:none;font-weight:500}
+        .site-nav a:hover{color:var(--violet-ink)}
+        @media (max-width:760px){header.site .container{flex-wrap:wrap}.site-nav{order:3;width:100%;margin-left:0}}
         main{padding:40px 0 56px}
         h1{font-size:clamp(26px,5vw,36px);line-height:1.2;margin:0 0 8px}
         h2{font-size:20px;margin:32px 0 8px}
@@ -51,6 +61,12 @@
 <header class="site">
     <div class="container">
         <a href="/" class="brand"><img src="{{ asset('logo.webp') }}" alt="" width="32" height="18"> Bilişim Kod</a>
+        <nav class="site-nav" aria-label="Ana menü">
+            <a href="{{ route('pages.features') }}">Neler Sunuyoruz</a>
+            <a href="{{ route('pages.why') }}">Neden Biz</a>
+            <a href="{{ route('pages.about') }}">Hakkımızda</a>
+            <a href="{{ route('pages.contact') }}">İletişim</a>
+        </nav>
         <a href="{{ route('login') }}" class="btn">Giriş Yap</a>
     </div>
 </header>

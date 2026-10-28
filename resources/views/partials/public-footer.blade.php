@@ -2,6 +2,10 @@
     <div style="width:min(100% - 32px,1100px);margin-inline:auto;display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center">
         <div>© {{ date('Y') }} Bilişim Kod — Okullar için kodlama ve yapay zekâ platformu</div>
         <nav aria-label="Yasal bağlantılar" style="display:flex;flex-wrap:wrap;gap:8px 18px">
+            <a href="{{ route('pages.about') }}">Hakkımızda</a>
+            <a href="{{ route('pages.why') }}">Neden Biz</a>
+            <a href="{{ route('pages.features') }}">Neler Sunuyoruz</a>
+            <a href="{{ route('pages.contact') }}">İletişim</a>
             <a href="{{ route('legal.privacy') }}">Gizlilik Politikası</a>
             <a href="{{ route('legal.terms') }}">Kullanım Şartları</a>
             <a href="{{ route('legal.cookies') }}">Çerez Politikası</a>
