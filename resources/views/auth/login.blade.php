@@ -63,7 +63,11 @@
         @keyframes fly{0%,100%{transform:translate(0,0) rotate(-38deg)}50%{transform:translate(-14px,-22px) rotate(-38deg)}}
 
         /* ---------- right: form-side (fresh light style) ---------- */
-        .form-side{display:grid;place-items:center;padding:34px;background:var(--surface)}
+        .form-side{position:relative;display:grid;place-items:center;padding:34px;background:var(--surface)}
+        .back-home{position:absolute;top:20px;left:22px;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--line);border-radius:999px;color:var(--ink-soft);font-size:13.5px;font-weight:600;text-decoration:none;background:var(--surface);transition:border-color .15s,color .15s}
+        .back-home:hover{border-color:var(--violet);color:var(--violet-ink)}
+        .back-home:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+        @media (max-width:1100px){.form-side{padding-top:74px}}
         .login-form{width:min(420px,96%)}
         .login-form h2{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:28px;line-height:1.2;font-weight:700;color:var(--ink);text-align:center}
         .login-form p{margin:0 0 26px;color:var(--ink-soft);font-size:14.5px;text-align:center}
@@ -274,6 +278,7 @@
     </section>
 
     <section class="form-side">
+        <a href="{{ url('/') }}" class="back-home"><span aria-hidden="true">←</span> Ana sayfaya dön</a>
         <div class="login-form">
             <h2>Tekrar hoş geldin</h2>
             <p>Hesabına giriş yapmak için bilgilerini gir.</p>
