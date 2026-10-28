@@ -83,14 +83,15 @@ class DotConnectLevelController extends Controller
     {
         abort_unless(\App\Support\PublicGamesSetting::gameEnabled('connect-the-dots-runner'), 404);
 
-        return $this->feed();
+        return $this->feed(\App\Support\PublicGamesSetting::levelLimit());
     }
 
-    public function feed(): JsonResponse
+    public function feed(int $limit = 0): JsonResponse
     {
         $levels = DotConnectLevel::query()
             ->active()
             ->ordered()
+            ->when($limit > 0, fn ($q) => $q->limit($limit))
             ->get()
             ->map(function (DotConnectLevel $level) {
                 return [

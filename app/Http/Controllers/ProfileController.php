@@ -134,7 +134,13 @@ class ProfileController extends Controller
     {
         abort_unless($request->user()?->hasRole('admin'), 403);
 
-        \App\Support\PublicGamesSetting::save($request->boolean('enabled'), (array) $request->input('games', []));
+        $data = $request->validate([
+            'level_mode' => ['nullable', 'in:all,limited'],
+            'level_limit' => ['nullable', 'integer', 'min:1', 'max:' . \App\Support\PublicGamesSetting::MAX_LIMIT],
+        ]);
+        $limit = ($data['level_mode'] ?? 'all') === 'limited' ? (int) ($data['level_limit'] ?? 2) : 0;
+
+        \App\Support\PublicGamesSetting::save($request->boolean('enabled'), (array) $request->input('games', []), $limit);
 
         return back()->with('success', $request->boolean('enabled')
             ? 'Herkese açık oyunlar kaydedildi. Seçili oyunlar anasayfadaki Oyunlar menüsünde görünür.'

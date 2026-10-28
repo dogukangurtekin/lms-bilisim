@@ -52,6 +52,7 @@
   var isStaff = function () { return role === 'teacher' || role === 'admin' || S.staffFlag; };
   var isAdmin = function () { return role === 'admin'; };
   if (!isStaff() && queryRange()) S.levelRange = queryRange();
+  if (window.RUNNER_PUBLIC && window.RUNNER_PUBLIC_LIMIT) S.levelRange = { startIdx: 0, endIdx: window.RUNNER_PUBLIC_LIMIT - 1 };   // admin: herkese açık sürümde yalnızca ilk N bölüm
 
   // ------------------------------------------------------------------ ilerleme (localStorage)
   // Canlı yarışmada ilerleme yarışmaya özeldir: önceki oyunlardan kalan tamamlanmış bölümler kilidi açmaz / aralığı erken bitirmez.

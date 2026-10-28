@@ -27,7 +27,7 @@
   var grantDenied = false;
   var levelStart = (hasRange && !isPublic) ? rangeFrom : 1, levelEndParam = (hasRange && !isPublic) ? rangeTo : levelStart;
   var isAssignmentMode = !isPublic && (!!assignmentId || hasRange);
-  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = isPublic ? 9999 : 6; }   // ödevsiz öğrenci: ilk 6 seviye; herkese açık sürümde tüm bölümler sırayla açılır
+  if (!isStaff && !isAssignmentMode) { levelStart = 1; levelEndParam = isPublic ? (window.RUNNER_PUBLIC_LIMIT || 9999) : 6; }   // ödevsiz öğrenci: ilk 6 seviye; herkese açık sürümde tüm bölümler sırayla açılır
   if (isStaff) { isAssignmentMode = false; levelStart = 1; levelEndParam = 9999; }
   var sessionStartedAt = Date.now(), rangeCompleteFired = false;
 

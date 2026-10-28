@@ -373,7 +373,7 @@ class ActivityRunnerController extends Controller
         $appJsVersion = File::exists($appJsPath) ? File::lastModified($appJsPath) : time();
         $styleCssVersion = File::exists($styleCssPath) ? File::lastModified($styleCssPath) : time();
         $inject = '<base href="' . e($runnerBase) . '">' .
-            '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';' . 'window.RUNNER_USER=' . json_encode(auth()->id() ?: null) . ';' . ($public ? 'window.RUNNER_PUBLIC=true;try{history.replaceState(null,"",location.pathname)}catch(e){}' : '') . '</script>';
+            '<script>window.RUNNER_APP_BASE=' . json_encode($appBase, JSON_UNESCAPED_SLASHES) . ';' . 'window.RUNNER_USER=' . json_encode(auth()->id() ?: null) . ';' . ($public ? 'window.RUNNER_PUBLIC=true;window.RUNNER_PUBLIC_LIMIT=' . \App\Support\PublicGamesSetting::levelLimit() . ';try{history.replaceState(null,"",location.pathname)}catch(e){}' : '') . '</script>';
         $html = preg_replace('/<head>/i', '<head>' . $inject, $html, 1) ?? $html;
         $html = str_replace('href="../manifest.webmanifest"', 'href="' . e($appBase . '/manifest.webmanifest') . '"', $html);
         $html = str_replace('href="../logo192.png"', 'href="' . e($appBase . '/logo.png') . '"', $html);

@@ -1191,7 +1191,7 @@
   let editMode = "add";
   let editIndex = -1;
   let activeProgram = { moves: [], stepToLine: [], goal: [0, 0], conditionResult: null };
-  let levelRange = (!isStaff && !window.RUNNER_PUBLIC) ? { startIdx: 0, endIdx: 1 } : null; // {startIdx,endIdx}; herkese açık sürümde sınır yok, bölümler sırayla açılır
+  let levelRange = (!isStaff && !window.RUNNER_PUBLIC) ? { startIdx: 0, endIdx: 1 } : ((window.RUNNER_PUBLIC && window.RUNNER_PUBLIC_LIMIT) ? { startIdx: 0, endIdx: window.RUNNER_PUBLIC_LIMIT - 1 } : null); // {startIdx,endIdx}; herkese açık sürümde sınır yok, bölümler sırayla açılır
   let assignmentRangeLocked = false;
   let showDoneTick = false;
   let trailByCell = new Map();

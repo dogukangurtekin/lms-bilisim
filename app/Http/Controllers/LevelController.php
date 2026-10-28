@@ -104,7 +104,8 @@ class LevelController extends Controller
         if (Level::query()->whereNull('user_id')->count() < 50) {
             $this->ensureSystemLevels();
         }
-        $levels = Level::query()->whereNull('user_id')->orderBy('id')->get(['id', 'name', 'data']);
+        $limit = \App\Support\PublicGamesSetting::levelLimit();
+        $levels = Level::query()->whereNull('user_id')->orderBy('id')->when($limit > 0, fn ($q) => $q->limit($limit))->get(['id', 'name', 'data']);
 
         return response()->json([
             'ok' => true,

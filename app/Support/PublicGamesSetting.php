@@ -5,7 +5,8 @@ namespace App\Support;
 /**
  * Anasayfadaki "Oyunlar" menüsünden giriş yapmadan açılan herkese açık oyunlar.
  * Admin, profil sayfasından tümünü ya da tek tek oyunları açıp kapatabilir.
- * Dosya yoksa tüm uygun oyunlar açıktır.
+ * Dosya yoksa tüm uygun oyunlar ve tüm bölümler açıktır.
+ * Bölüm sınırı: 0 = tüm bölümler, N = her oyunda yalnızca ilk N bölüm (deneme amaçlı).
  */
 class PublicGamesSetting
 {
@@ -29,6 +30,8 @@ class PublicGamesSetting
         'excel-runner' => 'Excel benzeri hesap tablosunda formüllerle çalış.',
     ];
 
+    public const MAX_LIMIT = 20;
+
     private static ?array $data = null;
 
     private static function path(): string
@@ -43,10 +46,12 @@ class PublicGamesSetting
         }
         $enabled = true;
         $games = [];
+        $levelLimit = 0;
         if (is_file(self::path())) {
             $decoded = json_decode((string) @file_get_contents(self::path()), true);
             if (is_array($decoded)) {
                 $enabled = (bool) ($decoded['enabled'] ?? true);
+                $levelLimit = max(0, min(self::MAX_LIMIT, (int) ($decoded['level_limit'] ?? 0)));
                 foreach ((array) ($decoded['games'] ?? []) as $slug => $on) {
                     if (isset(self::GAMES[$slug])) {
                         $games[$slug] = (bool) $on;
@@ -55,12 +60,18 @@ class PublicGamesSetting
             }
         }
 
-        return self::$data = ['enabled' => $enabled, 'games' => $games];
+        return self::$data = ['enabled' => $enabled, 'games' => $games, 'level_limit' => $levelLimit];
     }
 
     public static function enabled(): bool
     {
         return self::data()['enabled'];
+    }
+
+    /** 0 = tüm bölümler açık; N = her oyunda yalnızca ilk N bölüm oynanır. */
+    public static function levelLimit(): int
+    {
+        return self::data()['level_limit'];
     }
 
     public static function gameEnabled(string $slug): bool
@@ -85,13 +96,13 @@ class PublicGamesSetting
         return $out;
     }
 
-    public static function save(bool $enabled, array $games): void
+    public static function save(bool $enabled, array $games, int $levelLimit = 0): void
     {
         $clean = [];
         foreach (array_keys(self::GAMES) as $slug) {
             $clean[$slug] = ! empty($games[$slug]);
         }
-        $data = ['enabled' => $enabled, 'games' => $clean];
+        $data = ['enabled' => $enabled, 'games' => $clean, 'level_limit' => max(0, min(self::MAX_LIMIT, $levelLimit))];
         file_put_contents(self::path(), json_encode($data), LOCK_EX);
         self::$data = $data;
     }

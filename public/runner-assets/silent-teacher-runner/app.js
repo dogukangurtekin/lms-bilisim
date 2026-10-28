@@ -44,6 +44,7 @@ let grantDenied = false;
 
 let allowedStartIdx = isAssignmentMode ? (levelStart - 1) : 0;
 let allowedEndIdx = isAssignmentMode ? (levelEnd - 1) : (sections.length - 1);
+if (window.RUNNER_PUBLIC && window.RUNNER_PUBLIC_LIMIT) allowedEndIdx = Math.min(sections.length, window.RUNNER_PUBLIC_LIMIT) - 1;   // admin: herkese açık sürümde yalnızca ilk N bölüm
 
 if (runnerRole === "teacher" || runnerRole === "admin") {
   isAssignmentMode = false;
@@ -73,6 +74,7 @@ if (window.RUNNER_PUBLIC) {
     if (Array.isArray(saved)) saved.forEach((id) => { const n = Number(id); if (n >= 1 && n <= sections.length) completedSectionIds.add(n); });
     let next = 0;
     while (next < sections.length - 1 && completedSectionIds.has(next + 1)) next++;
+    next = Math.min(next, allowedEndIdx);
     unlockedSectionIndex = next;
     sectionIndex = next;
   } catch (e) {}

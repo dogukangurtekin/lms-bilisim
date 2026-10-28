@@ -165,6 +165,7 @@
             <p style="margin:0 0 12px;color:#475569">
                 Açıkken ziyaretçiler giriş yapmadan anasayfadaki <b>Oyunlar</b> menüsünden aşağıdaki oyunları oynar; ilerleme kendi tarayıcılarında saklanır.
                 Şu an: <strong style="color:{{ $pgOn ? '#15803d' : '#64748b' }}">{{ $pgOn ? 'AÇIK' : 'KAPALI (hiçbir oyun görünmez)' }}</strong>
+                @if($pgOn) · Bölümler: <strong>{{ \App\Support\PublicGamesSetting::levelLimit() > 0 ? 'İlk ' . \App\Support\PublicGamesSetting::levelLimit() . ' bölüm (deneme)' : 'Tümü açık' }}</strong>@endif
             </p>
             <form method="POST" action="{{ route('profile.public-games.update') }}">
                 @csrf
@@ -179,6 +180,20 @@
                         </label>
                     @endforeach
                 </div>
+                @php($pgLimit = \App\Support\PublicGamesSetting::levelLimit())
+                <fieldset style="border:1px solid #dbe5f2;border-radius:10px;padding:10px 14px;margin:0 0 12px">
+                    <legend style="font-weight:800;padding:0 6px">Açık bölüm (level) sayısı</legend>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px">
+                        <input type="radio" name="level_mode" value="limited" style="width:auto;margin:0" @checked($pgLimit > 0)>
+                        Yalnızca deneme için: her oyunda ilk
+                        <input type="number" name="level_limit" min="1" max="{{ \App\Support\PublicGamesSetting::MAX_LIMIT }}" value="{{ $pgLimit > 0 ? $pgLimit : 2 }}" style="width:70px;margin:0"> bölüm açık
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <input type="radio" name="level_mode" value="all" style="width:auto;margin:0" @checked($pgLimit === 0)>
+                        Tüm bölümler açık
+                    </label>
+                    <p style="margin:8px 0 0;color:#64748b;font-size:13px">Bölümü olmayan araçlar (Python editörü, Word, Excel, Web Lab, klavye, CSS arısı) bu sınırdan etkilenmez.</p>
+                </fieldset>
                 <button type="submit" class="btn">Kaydet</button>
             </form>
         </div>

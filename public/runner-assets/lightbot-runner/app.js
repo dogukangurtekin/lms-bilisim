@@ -34,7 +34,7 @@
   if (!isStaff && !isAssignmentMode) {
     isAssignmentMode = true;
     levelStart = 1;
-    levelEndParam = window.RUNNER_PUBLIC ? 9999 : 2;
+    levelEndParam = window.RUNNER_PUBLIC ? (window.RUNNER_PUBLIC_LIMIT || 9999) : 2;
   }
   if (isStaff) {
     isAssignmentMode = false;
