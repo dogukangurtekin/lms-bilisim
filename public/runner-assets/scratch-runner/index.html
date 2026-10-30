@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#4c97ff">
+<meta name="theme-color" content="#855cd6">
 <title>Blok Kodlama Stüdyosu</title>
 <link rel="stylesheet" href="./style.css">
 </head>
@@ -25,46 +25,72 @@
 </header>
 
 <main class="app">
-  <aside id="palwrap">
-    <nav id="cats"></nav>
-    <div id="palette"></div>
-  </aside>
-
   <section id="workspace">
-    <div class="wstools">
-      <span>Seçili nesne: <b id="curName"></b></span>
-      <button id="btnClean">Düzenle</button>
+    <div class="tabs">
+      <button class="tab on" data-tab="code"><span class="ti">▤</span> Kod</button>
+      <button class="tab" data-tab="costumes"><span class="ti">🖌</span> Kostümler</button>
+      <button class="tab" data-tab="sounds"><span class="ti">🔊</span> Sesler</button>
+      <span class="grow"></span>
+      <span class="curlbl">Seçili nesne: <b id="curName"></b></span>
+      <button id="btnClean" title="Komut dizilerini düzenle">Düzenle</button>
     </div>
-    <div id="scripts"></div>
+    <div class="editor">
+      <aside id="palwrap">
+        <nav id="cats"></nav>
+        <div id="palette"></div>
+      </aside>
+      <div id="tabCode" class="tabpane">
+        <div id="scripts"></div>
+        <div class="zoombtns">
+          <button id="zIn" title="Yakınlaştır">＋</button>
+          <button id="zOut" title="Uzaklaştır">－</button>
+          <button id="zReset" title="Varsayılan boyut">＝</button>
+        </div>
+      </div>
+      <div id="tabCostumes" class="tabpane wide" hidden></div>
+      <div id="tabSounds" class="tabpane wide" hidden></div>
+    </div>
   </section>
 
   <aside id="right">
     <div class="stagebar">
-      <button id="btnFlag" class="flag" title="Başlat">🏁</button>
-      <button id="btnStop" class="stop" title="Durdur">⏹</button>
+      <span class="grow"></span>
+      <button id="btnFlag" class="iconbtn" title="Başlat" aria-label="Başlat"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M5 3v18" stroke="#4a9a54" stroke-width="2.5" stroke-linecap="round"/><path d="M5 4c4-2 7 2 11 0v9c-4 2-7-2-11 0z" fill="#59c059" stroke="#389438" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+      <button id="btnStop" class="iconbtn" title="Durdur" aria-label="Durdur"><svg viewBox="0 0 24 24" width="26" height="26"><polygon points="8,2 16,2 22,8 22,16 16,22 8,22 2,16 2,8" fill="#ec5959" stroke="#b94242" stroke-width="1.5"/></svg></button>
+      <span class="grow"></span>
+      <span class="seg">
+        <button id="btnStageSmall" title="Küçük sahne" aria-label="Küçük sahne"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="4" width="6" height="16" fill="currentColor"/></svg></button>
+        <button id="btnStageNorm" class="on" title="Normal sahne" aria-label="Normal sahne"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="12" y="4" width="9" height="16" fill="currentColor"/></svg></button>
+      </span>
+      <button id="btnFull" class="iconbtn sm" title="Tam ekran" aria-label="Tam ekran"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
     </div>
     <div id="stagebox">
       <canvas id="stage" width="480" height="360"></canvas>
       <div id="monitors"></div>
     </div>
-    <div class="panel">
-      <div class="ptitle">Nesneler <button id="btnAddSprite" title="Nesne ekle">＋</button></div>
-      <div id="spriteList"></div>
-      <div class="props">
-        <label>Ad <input id="pName"></label>
-        <label>x <input id="pX" type="number"></label>
-        <label>y <input id="pY" type="number"></label>
-        <label>Boyut <input id="pSize" type="number" min="5" max="500"></label>
-        <label>Yön <input id="pDir" type="number"></label>
-        <label class="chk"><input id="pShow" type="checkbox"> Görünür</label>
+
+    <div class="lower">
+      <div class="spritepanel">
+        <div class="proprow">
+          <span class="lbl">Nesne</span><input id="pName" class="wide" aria-label="Nesne adı">
+          <span class="lbl ax">↔ x</span><input id="pX" type="number" aria-label="x">
+          <span class="lbl ax">↕ y</span><input id="pY" type="number" aria-label="y">
+        </div>
+        <div class="proprow">
+          <span class="lbl">Göster</span>
+          <span class="seg"><button id="pShowOn" title="Göster" aria-label="Göster">👁</button><button id="pShowOff" title="Gizle" aria-label="Gizle">🚫</button></span>
+          <span class="lbl">Büyüklük</span><input id="pSize" type="number" min="5" max="500" aria-label="Büyüklük">
+          <span class="lbl">Yön</span><input id="pDir" type="number" aria-label="Yön">
+        </div>
+        <div id="spriteList"></div>
+        <button id="btnAddSprite" class="fab" title="Nesne ekle" aria-label="Nesne ekle">＋</button>
       </div>
-      <div class="rowbtns">
-        <button id="btnAddCostume">Kostüm ekle</button>
-        <button id="btnNextCostume">Sonraki kostüm</button>
-        <button id="btnDelSprite" class="danger">Nesneyi sil</button>
+      <div class="stagepanel">
+        <b>Sahne</b>
+        <div id="backThumb"></div>
+        <span class="lbl">Dekorlar</span>
+        <div id="backdrops"></div>
       </div>
-      <div class="ptitle">Arka plan</div>
-      <div id="backdrops"></div>
     </div>
   </aside>
 </main>
