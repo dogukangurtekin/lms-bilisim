@@ -53,6 +53,7 @@ class TrackStudentActiveTime
         $user = $request->user();
 
         if ($user && $user->hasRole('student')) {
+            \App\Support\ProcessSampler::maybeRecord();   // hesap işlem sayısı örneği (dakikada en çok bir kez)
             // Öğrenci id'si 10 dk önbellekten gelir (her istekte Student sorgusu atılmaz).
             $studentId = Cache::remember('student_id_by_user:'.$user->id, 600, fn () => Student::where('user_id', $user->id)->value('id'));
             $student = $studentId ? (object) ['id' => (int) $studentId] : null;
