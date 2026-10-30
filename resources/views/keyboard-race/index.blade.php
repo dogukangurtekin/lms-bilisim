@@ -478,7 +478,8 @@
                 return data;
             }
 
-            if (res.status !== 404 && res.status < 500) {
+            // Yalnızca 404'te ikinci adrese geçilir; sunucu hatasında (5xx) aynı isteği tekrarlayıp yükü ikiye katlamayız.
+            if (res.status !== 404) {
                 throw new Error(data.message || 'API istegi basarisiz.');
             }
 
@@ -556,7 +557,7 @@
 
     function startRoomPolling() {
         if (state.roomPollTimer || !state.roomCode) return;
-        state.roomPollTimer = setInterval(syncRoomSnapshot, 2000);
+        state.roomPollTimer = setInterval(() => { if (!document.hidden) syncRoomSnapshot(); }, 3000);   // arka plandaki sekme yoklama yapmaz
         syncRoomSnapshot();
     }
 
@@ -621,7 +622,7 @@
         syncProgress().catch((error) => setStatus(error.message));
         state.progressSyncTimer = setInterval(() => {
             syncProgress().catch((error) => setStatus(error.message));
-        }, 1000);
+        }, 2000);
     }
 
     function updateRaceTimerLabel() {

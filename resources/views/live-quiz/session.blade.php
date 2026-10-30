@@ -215,6 +215,7 @@
     tickClock();
 
     async function poll() {
+        if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
         try {
             const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
             if (!res.ok) return;
@@ -251,6 +252,7 @@
     }
     poll();
     setInterval(poll, 3000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
 })();
 </script>
 @endpush

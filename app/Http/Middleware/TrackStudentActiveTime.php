@@ -69,6 +69,14 @@ class TrackStudentActiveTime
                     }
                 }
 
+                // F5'e/hızlı sayfa değişimine karşı: son yazımdan beri 5 sn geçmediyse (ör. art arda yenileme)
+                // süre ve aktivite logu için veritabanına hiç yazılmaz. Atlanan saniyeler bir sonraki yazımda
+                // last_seen_at farkı olarak eklendiğinden toplam süre değişmez.
+                $lastWrite = (int) Cache::get('ts_seen:'.$student->id, 0);
+                if ($request->isMethod('GET') && $lastWrite > 0 && (now()->timestamp - $lastWrite) < 5) {
+                    return $next($request);
+                }
+
                 // 1) Süre takibi (mevcut mantık)
                 $stat = StudentTimeStat::firstOrCreate(
                     ['student_id' => $student->id],
@@ -109,6 +117,11 @@ class TrackStudentActiveTime
                         'student.live-quiz.join',
                     ];
                     $shouldLog = in_array($routeName, $postRoutes);
+                }
+
+                // Aynı sayfa 30 sn içinde tekrar açıldıysa (yenileme) ikinci kez loglanmaz.
+                if ($shouldLog && ! Cache::add('act_seen:'.$student->id.':'.md5($request->path()), 1, 30)) {
+                    $shouldLog = false;
                 }
 
                 if ($shouldLog) {

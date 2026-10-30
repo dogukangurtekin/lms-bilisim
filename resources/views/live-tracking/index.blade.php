@@ -195,7 +195,7 @@ function toggleAutoRefresh() {
 
 function startRefresh() {
     clearInterval(refreshInterval);
-    refreshInterval = setInterval(fetchData, 15000);
+    refreshInterval = setInterval(() => { if (!document.hidden) fetchData(); }, 15000);   // arka plandaki sekme yoklama yapmaz
 }
 
 async function fetchData() {
