@@ -89,18 +89,21 @@
                 </div>
             `).join('');
         };
+        let lobbyBusy = false, lobbyPauseUntil = 0;
         const pollLobby = async () => {
-            if (document.hidden) return;
+            // Önceki istek bitmeden yenisi atılmaz; engel/limit (403/429/503) alınırsa 30 sn susar.
+            if (document.hidden || lobbyBusy || Date.now() < lobbyPauseUntil) return;
+            lobbyBusy = true;
             try {
                 const res = await fetch(lobbyUrl, { headers: { 'Accept': 'application/json' }, credentials: 'omit' });
-                if (!res.ok) return;
+                if (!res.ok) { if ([403, 429, 503].includes(res.status)) lobbyPauseUntil = Date.now() + 30000; return; }
                 const data = await res.json();
                 if (lobbyCountEl) lobbyCountEl.textContent = String(data.joined ?? 0);
                 renderStudents(data.students);
                 if (data.status === 'live' || data.status === 'finished') {
                     window.location.reload();
                 }
-            } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+            } catch (e) { /* bir sonraki denemede tekrar denenecek */ } finally { lobbyBusy = false; }
         };
         pollLobby();
         setInterval(pollLobby, 5000);
@@ -154,13 +157,15 @@
             window.location.reload();
         }
     };
+    let statusBusy = false, statusPauseUntil = 0;
     const pollStatus = async () => {
-        if (document.hidden) return;
+        if (document.hidden || statusBusy || Date.now() < statusPauseUntil) return;
+        statusBusy = true;
         try {
             const res = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
-            if (!res.ok) return;
+            if (!res.ok) { if ([403, 429, 503].includes(res.status)) statusPauseUntil = Date.now() + 60000; return; }
             applyStatus(await res.json());
-        } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
+        } catch (e) { /* bir sonraki denemede tekrar denenecek */ } finally { statusBusy = false; }
     };
     pollStatus();
     setInterval(pollStatus, 30000);
