@@ -194,6 +194,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/canli-takip/ogrenci/{student}', [LiveTrackingController::class, 'show'])->name('live-tracking.show');
     });
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
+      Route::prefix('/scratch-api/projeler')->middleware('throttle:120,1')->group(function () {
+          Route::get('/', [\App\Http\Controllers\ScratchProjectController::class, 'index']);
+          Route::post('/', [\App\Http\Controllers\ScratchProjectController::class, 'store']);
+          Route::get('/{project}', [\App\Http\Controllers\ScratchProjectController::class, 'show'])->whereNumber('project');
+          Route::put('/{project}', [\App\Http\Controllers\ScratchProjectController::class, 'update'])->whereNumber('project');
+          Route::delete('/{project}', [\App\Http\Controllers\ScratchProjectController::class, 'destroy'])->whereNumber('project');
+      });
+      Route::get('/scratch-ogrenci-projeleri', [\App\Http\Controllers\ScratchProjectController::class, 'staff'])->middleware('role:admin,teacher')->name('scratch.staff');
       Route::get('/etkinlikler/oyna', [ActivityController::class, 'play'])->name('activities.play');
       Route::post('/etkinlikler/ogretmene-ata/toplu', [ActivityController::class, 'assignTeacherBulk'])->name('activities.assign.teacher.bulk');
       Route::post('/etkinlikler/ogretmenden-kaldir/toplu', [ActivityController::class, 'unassignTeacherBulk'])->name('activities.unassign.teacher.bulk');

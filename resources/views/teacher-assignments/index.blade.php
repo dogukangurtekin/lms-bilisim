@@ -3,7 +3,7 @@
 @section('content')
 <div class="top">
     <h1>Ödevler</h1>
-    <button class="btn" type="button" data-open-modal="homework-create-modal">Ödev Ver</button>
+    <span><a class="btn" href="{{ route('scratch.staff') }}">Öğrenci Blok Projeleri</a> <button class="btn" type="button" data-open-modal="homework-create-modal">Ödev Ver</button></span>
 </div>
 
 @php

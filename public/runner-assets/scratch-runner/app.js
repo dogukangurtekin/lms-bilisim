@@ -4,6 +4,19 @@
   var KEY = 'scratch-runner:' + (window.RUNNER_USER || 'anon');
   var CUR_KEY = KEY + ':current', LIST_KEY = KEY + ':projects';
 
+  /* Giriş yapmış kullanıcıda projeler sunucuya da kaydedilir (en fazla 10); ziyaretçide yalnızca tarayıcıya. */
+  var SERVER = !!window.RUNNER_USER && !window.RUNNER_PUBLIC, API = '/scratch-api/projeler', NOSAVE = false, MAXP = 10;
+  var VIEW_ID = parseInt(new URLSearchParams(location.search).get('project'), 10) || 0;
+  function xsrf() { var m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/); return m ? decodeURIComponent(m[1]) : ''; }
+  function api(method, url, body) {
+    return fetch(url, {
+      method: method, credentials: 'same-origin',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrf(), 'X-Requested-With': 'XMLHttpRequest' },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .catch(function () { return { ok: false, status: 0, j: {} }; });
+  }
+
   /* ---------- Blok tanımları ---------- */
   var CATS = [
     ['events', 'Olaylar', '#ffbf00'], ['motion', 'Hareket', '#4c97ff'], ['looks', 'Görünüm', '#9966ff'],
@@ -144,15 +157,31 @@
     var now = ser();
     if (now === last) return;
     undo.push(last); if (undo.length > 60) undo.shift();
-    last = now; scheduleSave();
+    P.ts = Date.now(); last = ser(); scheduleSave();
   }
-  function scheduleSave() { status('Kaydediliyor…'); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 400); }
+  var serverTimer = 0;
+  function scheduleSave() {
+    if (NOSAVE) return;
+    status('Kaydediliyor…'); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 400);
+    if (SERVER && P.sid) { clearTimeout(serverTimer); serverTimer = setTimeout(syncServer, 1500); }
+  }
+  function body() { return { name: P.name, data: ser(), client_ts: P.ts || Date.now() }; }
+  function syncServer() {
+    if (NOSAVE || !P.sid) return;
+    api('PUT', API + '/' + P.sid, body()).then(function (r) {
+      if (r.ok) status('Sunucuya kaydedildi');
+      else if (r.status === 404) { P.sid = null; status('Sunucu kaydı bulunamadı; "Kaydet" ile yeniden kaydet'); }
+      else if (r.status === 422 && r.j.error === 'name_taken') status('Aynı adlı başka proje var; adı değiştir');
+      else status('Sunucuya kaydedilemedi');
+    });
+  }
   function flush() {
+    if (NOSAVE) return;
     try { localStorage.setItem(CUR_KEY, ser()); status('Kaydedildi ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })); }
     catch (e) { status('Kaydedilemedi (depolama dolu)'); }
   }
   function loadState(json) { P = normalize(JSON.parse(json)); cur = P.sel; stopAll(); pen.clearRect(0, 0, 480, 360); refreshAll(); }
-  function doUndo() { if (!undo.length) return; var prev = undo.pop(); last = prev; loadState(prev); scheduleSave(); }
+  function doUndo() { if (!undo.length) return; var prev = undo.pop(); loadState(prev); P.ts = Date.now(); last = ser(); scheduleSave(); }
   function projectsList() { try { return JSON.parse(localStorage.getItem(LIST_KEY) || '{}'); } catch (e) { return {}; } }
 
   /* ---------- Yardımcılar ---------- */
@@ -652,14 +681,71 @@
     sp().scripts.forEach(function (sc, i) { sc.y = yy; els[i].style.top = yy + 'px'; yy += els[i].offsetHeight + 24; });
     commit();
   };
-  function resetWith(p) { stopAll(); P = normalize(p); cur = P.sel; pen.clearRect(0, 0, 480, 360); undo = []; last = ser(); refreshAll(); scheduleSave(); }
+  function resetWith(p, sid) { stopAll(); P = normalize(p); P.sid = sid || null; cur = P.sel; pen.clearRect(0, 0, 480, 360); undo = []; last = ser(); refreshAll(); scheduleSave(); }
+  function saveToServer() {
+    status('Kaydediliyor…');
+    (P.sid ? api('PUT', API + '/' + P.sid, body()) : api('POST', API, body())).then(function (r) {
+      if (r.ok) { P.sid = r.j.id; last = ser(); flush(); status('"' + P.name + '" sunucuya kaydedildi'); }
+      else if (r.status === 422 && r.j.error === 'limit') showLimit(r.j.projects || [], r.j.limit || MAXP);
+      else if (r.status === 422 && r.j.error === 'name_taken') { status('Kaydedilemedi'); alert('Bu adda başka bir projen var. Proje adını değiştirip tekrar dene.'); }
+      else if (r.status === 413) { status('Kaydedilemedi'); alert('Proje çok büyük (en fazla 1 MB).'); }
+      else { status('Sunucuya kaydedilemedi'); alert('Sunucuya kaydedilemedi. Bağlantını kontrol edip tekrar dene; proje bu tarayıcıda kayıtlı kalır.'); }
+    });
+  }
+  /* 10 proje dolu: en eski güncellenenleri silmeyi öner, yer açılınca kaydı otomatik tamamla. */
+  function showLimit(projects, limit) {
+    var box = div('plist'), msg = div(''), sorted = projects.slice().sort(function (a, b) { return String(a.updated_at).localeCompare(String(b.updated_at)); });
+    msg.innerHTML = '<b>En fazla ' + limit + ' proje saklayabilirsin.</b> Yeni projeyi kaydetmek için aşağıdakilerden birkaçını sil. En uzun süredir açmadıkların önerilenler olarak işaretlendi.';
+    box.appendChild(msg);
+    sorted.forEach(function (p, i) {
+      var it = div('pitem'), s0 = document.createElement('span'), d = document.createElement('button');
+      s0.innerHTML = esc(p.name) + (i < 3 ? ' <b style="color:#b45309">(önerilen)</b>' : '') + '<br><small>' + new Date(p.updated_at).toLocaleString('tr-TR') + '</small>';
+      d.textContent = 'Sil'; d.className = 'danger';
+      d.onclick = function () {
+        if (!confirm('"' + p.name + '" projesi kalıcı olarak silinsin mi?')) return;
+        api('DELETE', API + '/' + p.id).then(function (r) {
+          if (!r.ok) { alert('Silinemedi.'); return; }
+          if (P.sid === p.id) P.sid = null;
+          if ((r.j.projects || []).length < limit) { closeModal(); saveToServer(); } else showLimit(r.j.projects, limit);
+        });
+      };
+      it.appendChild(s0); it.appendChild(d); box.appendChild(it);
+    });
+    openModal('Proje sınırına ulaştın (' + sorted.length + '/' + limit + ')', box);
+  }
   $('#btnNew').onclick = function () { if (confirm('Yeni proje açılsın mı? Şu anki proje otomatik kaydedilmiş olarak kalır; adıyla saklamak için önce "Kaydet"e bas.')) resetWith(defaultProject()); };
   $('#btnSample').onclick = function () { if (confirm('Örnek proje açılsın mı?')) resetWith(sampleProject()); };
   $('#btnSave').onclick = function () {
+    if (NOSAVE) return;
+    if (SERVER) { saveToServer(); return; }
     var list = projectsList(), name = P.name; list[name] = { saved: Date.now(), data: ser() };
     try { localStorage.setItem(LIST_KEY, JSON.stringify(list)); flush(); status('"' + name + '" kaydedildi'); } catch (e) { status('Kaydedilemedi'); }
   };
+  function serverProjects() {
+    var box = div('plist'); box.textContent = 'Yükleniyor…'; openModal('Projelerim', box);
+    api('GET', API).then(function (r) {
+      box.textContent = '';
+      if (!r.ok) { box.textContent = 'Projeler alınamadı. Bağlantını kontrol et.'; return; }
+      var list = (r.j.projects || []).slice().reverse(), lim = r.j.limit || MAXP, head = div('');
+      head.innerHTML = '<b>' + list.length + ' / ' + lim + '</b> proje kayıtlı.' + (list.length >= lim ? ' Yenisini kaydetmek için birkaçını silmen gerekir.' : '');
+      box.appendChild(head);
+      if (!list.length) box.appendChild(document.createTextNode(' Henüz kayıtlı proje yok. "Kaydet" ile projeni sunucuya kaydet.'));
+      list.forEach(function (p) {
+        var it = div('pitem'), s0 = document.createElement('span'), o = document.createElement('button'), d = document.createElement('button');
+        s0.innerHTML = esc(p.name) + (p.id === P.sid ? ' <small>(açık)</small>' : '') + '<br><small>' + new Date(p.updated_at).toLocaleString('tr-TR') + '</small>';
+        o.textContent = 'Aç';
+        o.onclick = function () { api('GET', API + '/' + p.id).then(function (g) { if (g.ok) { resetWith(g.j.data, p.id); closeModal(); } else alert('Proje açılamadı.'); }); };
+        d.textContent = 'Sil'; d.className = 'danger';
+        d.onclick = function () {
+          if (!confirm('"' + p.name + '" projesi kalıcı olarak silinsin mi?')) return;
+          api('DELETE', API + '/' + p.id).then(function (x) { if (x.ok) { if (P.sid === p.id) P.sid = null; serverProjects(); } else alert('Silinemedi.'); });
+        };
+        it.appendChild(s0); it.appendChild(o); it.appendChild(d); box.appendChild(it);
+      });
+    });
+  }
   $('#btnProjects').onclick = function () {
+    if (SERVER) { serverProjects(); return; }
     var list = projectsList(), names = Object.keys(list), box = div('plist');
     if (!names.length) box.textContent = 'Henüz kaydedilmiş proje yok. "Kaydet" ile projeni adıyla sakla.';
     names.sort(function (a, b) { return list[b].saved - list[a].saved; }).forEach(function (n) {
@@ -688,11 +774,35 @@
   function refreshAll() { $('#projName').value = P.name; renderSprites(); renderBackdrops(); renderPalette(); renderScripts(); syncProps(); }
   $('#palette').addEventListener('pointerdown', onDown);
   $('#scripts').addEventListener('pointerdown', onDown);
-  window.addEventListener('pagehide', function () { clearTimeout(saveTimer); try { localStorage.setItem(CUR_KEY, ser()); } catch (e) {} });
+  window.addEventListener('pagehide', function () { if (NOSAVE) return; clearTimeout(saveTimer); try { localStorage.setItem(CUR_KEY, ser()); } catch (e) {} });
 
   var saved = null; try { saved = JSON.parse(localStorage.getItem(CUR_KEY) || 'null'); } catch (e) {}
   P = saved ? normalize(saved) : sampleProject(); cur = P.sel; last = ser();
   renderCats(); refreshAll();
+
+  if (SERVER && VIEW_ID) {
+    /* Öğretmen/admin inceleme modu: öğrencinin projesi açılır, hiçbir şey kaydedilmez. */
+    NOSAVE = true; document.body.classList.add('viewmode'); status('Proje yükleniyor…');
+    ['#btnSave', '#btnNew', '#btnSample', '#btnImport', '#btnProjects'].forEach(function (s) { $(s).style.display = 'none'; });
+    api('GET', API + '/' + VIEW_ID).then(function (r) {
+      if (!r.ok) { status('Proje açılamadı (yetkin olmayabilir)'); return; }
+      stopAll(); P = normalize(r.j.data); P.sid = null; cur = P.sel; last = ser(); undo = []; refreshAll();
+      status('İnceleme modu: ' + (r.j.owner || 'öğrenci') + ' · ' + r.j.name + ' (kaydedilmez)');
+    });
+  } else if (SERVER) {
+    /* Başka cihazda daha yeni kaydedilmiş proje varsa kaldığın yerden onu yükle. */
+    api('GET', API).then(function (r) {
+      if (!r.ok || !(r.j.projects || []).length) return;
+      var ids = r.j.projects.map(function (p) { return p.id; });
+      if (P.sid && ids.indexOf(P.sid) < 0) P.sid = null;
+      var latest = r.j.projects.slice().sort(function (a, b) { return b.client_ts - a.client_ts; })[0];
+      if (latest.client_ts > (P.ts || 0) || !saved) {
+        api('GET', API + '/' + latest.id).then(function (g) {
+          if (!g.ok) return; resetWith(g.j.data, latest.id); P.ts = latest.client_ts; last = ser(); status('Sunucudaki en güncel projen açıldı: ' + latest.name);
+        });
+      }
+    });
+  }
   window.__scratch = { P: function () { return P; }, spawn: spawn, startHats: startHats, tick: tick, stopAll: stopAll, ser: ser };
   requestAnimationFrame(frame);
 })();

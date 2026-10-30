@@ -310,7 +310,8 @@ class ActivityRunnerController extends Controller
                 || $request->query('grant') !== null
                 || $request->query('enforceGrant') !== null;
             if ($role !== $targetRole || $hasRangeParams) {
-                return redirect()->to(url("/{$slug}") . '?role=' . $targetRole);
+                $keep = (int) $request->query('project', 0);
+                return redirect()->to(url("/{$slug}") . '?role=' . $targetRole . ($keep > 0 ? '&project=' . $keep : ''));
             }
         }
 
