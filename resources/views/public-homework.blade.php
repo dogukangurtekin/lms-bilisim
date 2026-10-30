@@ -1,6 +1,9 @@
 @extends('layouts.public', ['title' => $title, 'description' => 'Bilişim Kod ödev sayfası.', 'robots' => 'noindex, nofollow'])
 
 @section('content')
+@if($gated)
+<div class="hw-blur" aria-hidden="true">
+@endif
 <p class="meta" style="margin-bottom:6px">{{ $typeLabel }}@if($contentName) · {{ $contentName }}@endif</p>
 <h1>{{ $title }}</h1>
 
@@ -15,6 +18,10 @@
     @endif
 </div>
 
+@if($gated)
+    <div style="height:90px;border-radius:14px;background:var(--line);margin-bottom:14px"></div>
+    <div style="height:260px;border-radius:14px;background:var(--line)"></div>
+@endif
 @if(trim($details) !== '')
     <h2 style="margin-top:0">Ödev açıklaması</h2>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;white-space:pre-line">{{ $details }}</div>
@@ -36,6 +43,28 @@
 @endif
 
 <p class="note" style="margin-top:32px">Bu sayfa linki bilen herkese açıktır; giriş gerekmez. İlerlemen ve puanın kaydedilmez. Okulundaki hesabınla giriş yapmak istersen <a href="{{ route('login') }}">buradan giriş yapabilirsin</a>.</p>
+@if($gated)
+</div>
+<style>
+    .hw-blur{filter:blur(9px);pointer-events:none;user-select:none;opacity:.8}
+    .hw-gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(247,246,242,.45)}
+    .hw-gate form{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(100%,420px);box-shadow:0 12px 40px rgba(22,24,43,.18)}
+    .hw-gate h2{margin:0 0 6px}
+    .hw-gate input{display:block;width:100%;font:inherit;padding:12px 14px;margin:14px 0 6px;border:1px solid var(--line);border-radius:10px}
+    .hw-gate .err{color:#b91c1c;font-size:14px;margin:0 0 6px}
+    .hw-gate button{width:100%;font:inherit;font-weight:600;padding:12px;border:0;border-radius:10px;background:var(--violet);color:#fff;cursor:pointer;margin-top:8px}
+</style>
+<div class="hw-gate" role="dialog" aria-modal="true" aria-labelledby="hw-gate-title">
+    <form method="POST" action="{{ route('public.homework.enter', $token) }}">
+        @csrf
+        <h2 id="hw-gate-title">Ödeve girmek için</h2>
+        <p class="meta" style="margin:0">Adını ve soyadını yaz.</p>
+        <input type="text" name="student_name" value="{{ old('student_name') }}" placeholder="Ad Soyad" autocomplete="name" maxlength="120" required autofocus>
+        @error('student_name')<p class="err">{{ $message }}</p>@enderror
+        <button type="submit">Ödevi Aç</button>
+    </form>
+</div>
+@endif
 
 @if($attachment)
 <style>

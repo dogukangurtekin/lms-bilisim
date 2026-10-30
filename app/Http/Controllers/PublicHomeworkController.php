@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
+use App\Models\PublicHomeworkEntry;
 use App\Services\LessonPresentation\SlidePresentationService;
 use App\Support\PublicHomework;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -32,9 +34,36 @@ class PublicHomeworkController extends Controller
         return ['game', $game];
     }
 
+    private function enteredName(string $token): ?string
+    {
+        $name = session('public_homework_names.' . $token);
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
+    /** Ad-soyad girilmeden ödev sayfası açılmaz; giriş kaydı öğretmenin listesinde görünür. */
+    public function enter(Request $request, string $token)
+    {
+        $this->resolve($token);
+        $data = $request->validate([
+            'student_name' => ['required', 'string', 'min:3', 'max:120', 'regex:/^\S+(\s+\S+)+$/u'],
+        ], [
+            'student_name.required' => 'Ad ve soyadınızı yazın.',
+            'student_name.regex' => 'Ad ve soyadınızı birlikte yazın.',
+            'student_name.min' => 'Ad ve soyadınızı birlikte yazın.',
+        ]);
+        $name = trim(preg_replace('/\s+/u', ' ', $data['student_name']));
+
+        PublicHomeworkEntry::create(['public_token' => $token, 'student_name' => $name]);
+        session()->put('public_homework_names.' . $token, $name);
+
+        return redirect()->route('public.homework.show', $token);
+    }
+
     public function show(string $token)
     {
         [$kind, $hw] = $this->resolve($token);
+        $gated = $this->enteredName($token) === null;
         $games = ActivityController::games();
 
         $data = [
@@ -77,12 +106,26 @@ class PublicHomeworkController extends Controller
             }
         }
 
+        if ($gated) {
+            // Ad-soyad girilmeden içerik sayfaya hiç gönderilmez; arka plan yalnızca bulanık bir taslaktır.
+            $data['details'] = '';
+            $data['attachment'] = null;
+            $data['action'] = null;
+            $data['levels'] = null;
+            $data['contentName'] = null;
+        }
+        $data['gated'] = $gated;
+        $data['token'] = $token;
+
         return view('public-homework', $data);
     }
 
     public function play(string $token)
     {
         [$kind, $hw] = $this->resolve($token);
+        if ($this->enteredName($token) === null) {
+            return redirect()->route('public.homework.show', $token);
+        }
         $slug = $kind === 'game' ? $hw->game_slug : ($hw->target_slug ?: null);
         abort_unless(PublicHomework::slugIsPlayablePublicly($slug), 404);
 
@@ -99,6 +142,9 @@ class PublicHomeworkController extends Controller
     public function lesson(string $token, SlidePresentationService $presentation)
     {
         [$kind, $hw] = $this->resolve($token);
+        if ($this->enteredName($token) === null) {
+            return redirect()->route('public.homework.show', $token);
+        }
         abort_unless($kind === 'course' && (string) $hw->assignment_type === 'lesson' && $hw->course, 404);
 
         return view('student-portal.course-show', [
@@ -115,6 +161,7 @@ class PublicHomeworkController extends Controller
     public function attachment(string $token, string $file)
     {
         [$kind, $hw] = $this->resolve($token);
+        abort_unless($this->enteredName($token) !== null, 403);
         abort_unless($kind === 'course' && $hw->attachment_path && Storage::disk('public')->exists($hw->attachment_path), 404);
 
         $ext = strtolower(pathinfo($hw->attachment_path, PATHINFO_EXTENSION));

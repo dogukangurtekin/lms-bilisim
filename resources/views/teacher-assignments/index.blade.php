@@ -45,7 +45,7 @@
         });
     @endphp
     <table>
-        <thead><tr><th>Ders</th><th>Başlık</th><th>Sınıf</th><th>Teslim</th><th>Tür</th><th>İşlemler</th></tr></thead>
+        <thead><tr><th>Ders</th><th>Başlık</th><th>Sınıf</th><th>Teslim</th><th>Tür</th><th>Giriş</th><th>İşlemler</th></tr></thead>
         <tbody>
         @forelse($groupedCourseHomeworks as $rows)
             @php
@@ -71,6 +71,7 @@
                 <td>{{ $classText !== '' ? $classText : '-' }}</td>
                 <td>{{ $h->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td>{{ strtoupper($h->assignment_type ?? 'lesson') }}</td>
+                <td>@include('teacher-assignments.partials.entry-count', ['token' => $h->is_public ? $h->public_token : null])</td>
                 <td class="actions">
                     <a class="btn" href="{{ route('teacher.assignments.course.show', $h) }}">Önizle</a>
                     <a class="btn" href="{{ route('teacher.assignments.course.edit', $h) }}">Güncelle</a>
@@ -85,7 +86,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6">Ödev bulunmuyor.</td></tr>
+            <tr><td colspan="7">Ödev bulunmuyor.</td></tr>
         @endforelse
         </tbody>
     </table>
@@ -95,7 +96,7 @@
 <div class="card">
     <h3>Oyun ve Uygulama Ödevleri</h3>
     <table>
-        <thead><tr><th>İçerik</th><th>Başlık</th><th>Teslim</th><th>Level</th><th>Veren</th><th>İşlemler</th></tr></thead>
+        <thead><tr><th>İçerik</th><th>Başlık</th><th>Teslim</th><th>Level</th><th>Veren</th><th>Giriş</th><th>İşlemler</th></tr></thead>
         <tbody>
         @forelse($gameAssignments as $a)
             <tr>
@@ -104,6 +105,7 @@
                 <td>{{ $a->due_date?->format('Y-m-d') ?? '-' }}</td>
                 <td>{{ $a->level_from ?? '-' }} - {{ $a->level_to ?? '-' }}</td>
                 <td>{{ $a->creator?->name ?? '-' }}</td>
+                <td>@include('teacher-assignments.partials.entry-count', ['token' => $a->is_public ? $a->public_token : null])</td>
                 <td class="actions">
                     <a class="btn" href="{{ route('teacher.assignments.game.show', $a) }}">Önizle</a>
                     <a class="btn" href="{{ route('teacher.assignments.game.edit', $a) }}">Güncelle</a>
@@ -115,7 +117,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6">Oyun/uygulama ödevi yok.</td></tr>
+            <tr><td colspan="7">Oyun/uygulama ödevi yok.</td></tr>
         @endforelse
         </tbody>
     </table>

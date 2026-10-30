@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseHomework;
 use App\Models\GameAssignment;
+use App\Models\PublicHomeworkEntry;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\LessonPresentation\SlidePresentationService;
@@ -98,7 +99,34 @@ class TeacherAssignmentController extends Controller
             ->orderBy('section')
             ->get();
 
-        return view('teacher-assignments.index', compact('courseHomeworks', 'gameAssignments', 'classes', 'ownerFilter'));
+        $tokens = $courseHomeworks->getCollection()->pluck('public_token')
+            ->merge($gameAssignments->getCollection()->pluck('public_token'))
+            ->filter()->unique()->values();
+        $entryCounts = $tokens->isEmpty() || ! PublicHomework::available()
+            ? collect()
+            : PublicHomeworkEntry::query()->whereIn('public_token', $tokens)
+                ->selectRaw('public_token, count(*) as total')->groupBy('public_token')->pluck('total', 'public_token');
+
+        return view('teacher-assignments.index', compact('courseHomeworks', 'gameAssignments', 'classes', 'ownerFilter', 'entryCounts'));
+    }
+
+    /** Herkese açık ödev linkine ad-soyad yazarak girenlerin listesi (yalnızca ödevi veren öğretmen / admin). */
+    public function publicEntries(string $token)
+    {
+        $user = auth()->user();
+        $course = CourseHomework::query()->where('public_token', $token)->where('is_public', true)->oldest('id')->first();
+        $game = $course ? null : GameAssignment::query()->where('public_token', $token)->where('is_public', true)->first();
+        $homework = $course ?? $game;
+        abort_unless($homework, 404);
+        abort_unless($user?->hasRole('admin') || (int) $homework->created_by === (int) $user?->id, 403);
+
+        $entries = PublicHomeworkEntry::query()->where('public_token', $token)->latest('id')->paginate(50);
+
+        return view('teacher-assignments.public-entries', [
+            'title' => (string) $homework->title,
+            'url' => PublicHomework::url($token),
+            'entries' => $entries,
+        ]);
     }
 
     public function storeHomework(Request $request)

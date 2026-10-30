@@ -67,6 +67,7 @@ Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->midd
 // Herkese açık ödev linki: giriş gerektirmez, linki bilen herkes açar.
 Route::prefix('/acik-odev/{token}')->middleware('throttle:60,1')->group(function () {
     Route::get('/', [\App\Http\Controllers\PublicHomeworkController::class, 'show'])->name('public.homework.show');
+    Route::post('/giris', [\App\Http\Controllers\PublicHomeworkController::class, 'enter'])->middleware('throttle:20,1')->name('public.homework.enter');
     Route::get('/oyna', [\App\Http\Controllers\PublicHomeworkController::class, 'play'])->name('public.homework.play');
     Route::get('/ders', [\App\Http\Controllers\PublicHomeworkController::class, 'lesson'])->name('public.homework.lesson');
     Route::get('/ek/{file}', [\App\Http\Controllers\PublicHomeworkController::class, 'attachment'])->where('file', '[A-Za-z0-9_\-]+\.[A-Za-z0-9]{2,5}')->name('public.homework.attachment');
@@ -376,6 +377,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/etkinlikler/{gameSlug}/odev-ver', [GameAssignmentController::class, 'store'])->name('activities.assignments.store');
         Route::get('/odevler', [TeacherAssignmentController::class, 'index'])->name('teacher.assignments.index');
         Route::post('/odevler/odev-ver', [TeacherAssignmentController::class, 'storeHomework'])->name('teacher.assignments.homework.store');
+        Route::get('/odevler/acik-giris/{token}', [TeacherAssignmentController::class, 'publicEntries'])->where('token', '[A-Za-z0-9]{20,40}')->name('teacher.assignments.public-entries');
         Route::get('/odevler/ders/{homework}', [TeacherAssignmentController::class, 'showCourseHomework'])->name('teacher.assignments.course.show');
         Route::get('/odevler/ders/{homework}/duzenle', [TeacherAssignmentController::class, 'editCourseHomework'])->name('teacher.assignments.course.edit');
         Route::put('/odevler/ders/{homework}', [TeacherAssignmentController::class, 'updateCourseHomework'])->name('teacher.assignments.course.update');
