@@ -67,7 +67,7 @@ class StudentXpConsistencyTest extends TestCase
             ->get(route('student-data.index', ['list' => 1, 'q' => 'Ali Yayla']))
             ->assertOk()
             ->assertSee('Ali Yayla')
-            ->assertSee('1064');
+            ->assertSee('1.064');
 
         $this->actingAs($admin)
             ->getJson(route('dashboard.ranking-by-class'))
