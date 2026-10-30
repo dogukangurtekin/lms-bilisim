@@ -580,6 +580,8 @@ class StudentPortalController extends Controller
             ? max(0, (int) $validated['earned_xp'])
             : 0;
         $earnedXp = max($earnedXp, max(0, (int) $slideXp));
+        // İstemciden gelen XP, dersin gerçek XP'sinin (+oyun/bonus payı) üstüne çıkamaz: konsoldan şişirme engellenir.
+        $earnedXp = min($earnedXp, max(0, (int) $slideXp) + 100);
         $durationSeconds = max(0, (int) ($validated['duration_seconds'] ?? 0));
         $solvedQuestions = isset($validated['solved_questions'])
             ? max(0, (int) $validated['solved_questions'])
@@ -1205,6 +1207,14 @@ class StudentPortalController extends Controller
             $xpAward = 15;
         } elseif (isset($validated['earned_xp'])) {
             $xpAward = max(15, (int) $validated['earned_xp']);
+            // İstemci XP'si ödevin kapsamına göre sınırlanır (genel ödev: 15; oyun/uygulama: level başına en çok 100).
+            if (in_array($homework->assignment_type, ['game', 'application'], true)) {
+                $levelCount = ($homework->level_from && $homework->level_to) ? max(1, (int) $homework->level_to - (int) $homework->level_from + 1) : 1;
+                $cap = max(15, (int) array_sum((array) $homework->level_points), $levelCount * 100);
+            } else {
+                $cap = 15;
+            }
+            $xpAward = min($xpAward, min($cap, 5000));
         }
 
         $progress = StudentHomeworkProgress::firstOrCreate(
@@ -1362,13 +1372,17 @@ class StudentPortalController extends Controller
         }
 
         $xpAward = 0;
+        $pointsByLevel = $assignment->levels->keyBy('level');
+        $defaultXp = 0;
+        for ($lvl = $from; $lvl <= $to; $lvl++) {
+            $defaultXp += (int) ($pointsByLevel->get($lvl)?->points ?? 10);
+        }
         if (isset($validated['earned_xp'])) {
-            $xpAward = max(0, (int) $validated['earned_xp']);
+            // İstemci XP'si ödev kapsamıyla sınırlı: level başına en çok 100 (konsoldan şişirmeye karşı).
+            $xpCap = min(5000, max($defaultXp, max(1, $to - $from + 1) * 100));
+            $xpAward = min($xpCap, max(0, (int) $validated['earned_xp']));
         } else {
-            $pointsByLevel = $assignment->levels->keyBy('level');
-            for ($lvl = $from; $lvl <= $to; $lvl++) {
-                $xpAward += (int) ($pointsByLevel->get($lvl)?->points ?? 10);
-            }
+            $xpAward = $defaultXp;
         }
 
         $progress = StudentGameAssignmentProgress::firstOrCreate(

@@ -8,6 +8,7 @@ use App\Models\StudentActivityLog;
 use App\Models\Teacher;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class LiveTrackingController extends Controller
 {
@@ -16,6 +17,33 @@ class LiveTrackingController extends Controller
     private function activitySince(): Carbon
     {
         return now(self::DISPLAY_TIMEZONE)->subDays(10)->utc();
+    }
+
+    /**
+     * Her öğrenci için tek seferde (öğrenci başına sorgu atmadan) log sayısı ve son hareket:
+     * [student_id => ['count' => int, 'last' => ?StudentActivityLog]].
+     */
+    private function activitySummaries($studentIds, Carbon $since): array
+    {
+        $ids = collect($studentIds)->values();
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $stats = StudentActivityLog::query()
+            ->whereIn('student_id', $ids)
+            ->where('logged_at', '>=', $since)
+            ->selectRaw('student_id, COUNT(*) AS c, MAX(id) AS last_id')
+            ->groupBy('student_id')
+            ->get();
+        $lastLogs = StudentActivityLog::query()->whereIn('id', $stats->pluck('last_id'))->get()->keyBy('student_id');
+
+        $out = [];
+        foreach ($stats as $row) {
+            $out[(int) $row->student_id] = ['count' => (int) $row->c, 'last' => $lastLogs->get($row->student_id)];
+        }
+
+        return $out;
     }
 
     /**
@@ -75,19 +103,18 @@ class LiveTrackingController extends Controller
         }
 
         // Tüm öğrencileri çek, son aktiviteye göre sırala, sonra paginate
-        $allStudents = $query->get()
-            ->map(function (Student $student) use ($since) {
-                $logs = StudentActivityLog::where('student_id', $student->id)
-                    ->where('logged_at', '>=', $since)
-                    ->orderByDesc('logged_at')
-                    ->get();
+        $found = $query->get();
+        $summaries = $this->activitySummaries($found->pluck('id'), $since);
+        $allStudents = $found
+            ->map(function (Student $student) use ($summaries) {
+                $last = $summaries[$student->id]['last'] ?? null;
 
                 return [
                     'student'     => $student,
-                    'log_count'   => $logs->count(),
-                    'last_seen'   => $logs->first()?->logged_at,
-                    'last_action' => $logs->first()?->action_label,
-                    'last_seen_time' => $logs->first()?->logged_at,
+                    'log_count'   => $summaries[$student->id]['count'] ?? 0,
+                    'last_seen'   => $last?->logged_at,
+                    'last_action' => $last?->action_label,
+                    'last_seen_time' => $last?->logged_at,
                 ];
             })
             ->sortByDesc('last_seen')
@@ -186,14 +213,15 @@ class LiveTrackingController extends Controller
             $query->whereHas('user', fn($q) => $q->where('name', 'like', "%{$search}%"));
         }
 
-        $rows = $query->get()
-            ->map(function (Student $student) use ($since) {
-                $logs = StudentActivityLog::where('student_id', $student->id)
-                    ->where('logged_at', '>=', $since)
-                    ->orderByDesc('logged_at')
-                    ->get();
+        // Aynı filtreyle birden çok öğretmen/sekme yenilese de sorgu 15 sn'de bir çalışır.
+        $cacheKey = 'live_tracking:'.md5(json_encode([$allowedClassIds, $classId, $search]));
+        $rows = Cache::remember($cacheKey, 15, function () use ($query, $since) {
+        $found = $query->get();
+        $summaries = $this->activitySummaries($found->pluck('id'), $since);
 
-                $last = $logs->first();
+        return $found
+            ->map(function (Student $student) use ($summaries) {
+                $last = $summaries[$student->id]['last'] ?? null;
                 return [
                     'id'          => $student->id,
                     'name'        => $student->user->name ?? '-',
@@ -202,12 +230,14 @@ class LiveTrackingController extends Controller
                     'last_seen_at' => $last?->logged_at?->getTimestamp() ?? 0,
                     'last_action' => $last?->action_label ?? '-',
                     'last_seen_time' => $last?->logged_at?->copy()->setTimezone(self::DISPLAY_TIMEZONE)->format('H:i') ?? '-',
-                    'log_count'   => $logs->count(),
+                    'log_count'   => $summaries[$student->id]['count'] ?? 0,
                     'detail_url'  => route('live-tracking.show', $student),
                 ];
             })
             ->sortByDesc('last_seen_at')
-            ->values();
+            ->values()
+            ->all();
+        });
 
         return response()->json($rows);
     }

@@ -5,6 +5,7 @@ use App\Http\Middleware\CheckForcedLogout;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
+use App\Http\Middleware\StudentRequestGuard;
 use App\Http\Middleware\TrackStudentActiveTime;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             CheckMaintenanceMode::class,
             CheckForcedLogout::class,
+            StudentRequestGuard::class,
             TrackStudentActiveTime::class,
         ]);
         // Not: giris formlari zaten @csrf iceriyor; bu route'lari CSRF

@@ -1377,8 +1377,8 @@
     });
 
     load();
-    // Aktif sınıflar listesi: 20 sn yerine 60 sn, sekme gizliyken yenilenmez.
-    setInterval(() => { if (!document.hidden) load(); }, 60000);
+    // Aktif sınıflar listesi: 20 sn yerine 120 sn, sekme gizliyken yenilenmez.
+    setInterval(() => { if (!document.hidden) load(); }, 120000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
 })();
 

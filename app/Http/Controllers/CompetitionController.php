@@ -535,7 +535,7 @@ class CompetitionController extends Controller
                 (float) ($data['progress_percent'] ?? 0)
             ));
             $levelIdx = max((int) $participant->current_level_index, (int) ($data['current_level_index'] ?? 0));
-            $xp = (int) ($data['xp'] ?? 0);
+            $xp = min(5000, (int) ($data['xp'] ?? 0));   // istemci değeri üst sınırlı (konsoldan şişirmeye karşı)
             $previousXp = (int) $participant->xp_earned;
 
             $update = [
