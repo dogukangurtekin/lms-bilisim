@@ -432,9 +432,20 @@ class RaceController extends Controller
         return max(0, $correctCharacters) * self::XP_PER_CORRECT_CHARACTER;
     }
 
+    /** Yarışta saniyede en fazla yazılabilecek doğru karakter (≈180 kelime/dk): istemci değeri bunun üstüne çıkamaz. */
+    private const MAX_CHARS_PER_SECOND = 15;
+
     private function normalizeCorrectCharacters(Room $room, int $correctCharacters): int
     {
-        return max(0, min(mb_strlen((string) $room->text, 'UTF-8'), $correctCharacters));
+        $cap = mb_strlen((string) $room->text, 'UTF-8');
+
+        // Sunucudaki gerçek geçen süreye göre makul üst sınır: konsoldan "tüm metni anında yazdım" denemesini engeller.
+        if ($room->started_at) {
+            $secs = min(self::RACE_DURATION_SECONDS + 10, max(0, (int) $room->started_at->diffInSeconds(now())));
+            $cap = min($cap, ($secs * self::MAX_CHARS_PER_SECOND) + 30);
+        }
+
+        return max(0, min($cap, $correctCharacters));
     }
 
     private function syncRaceXpToStudentReport(RaceResult $result, int $xpDelta): void

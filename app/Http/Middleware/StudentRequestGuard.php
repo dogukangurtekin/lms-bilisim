@@ -23,6 +23,7 @@ class StudentRequestGuard
 {
     private const LIMITS = [
         'live' => 600,  // canlı yarışma / canlı quiz (sık yoklama)
+        'race' => 240,  // Klavye Yarışı API'si (/api/race): ilerleme 2 sn + oda yoklaması 3 sn ≈ 50/dk, ~5 kat pay
         'nav' => 40,    // sayfa açma / yenileme (F5)
         'mut' => 90,    // POST/PUT/PATCH/DELETE
         'all' => 300,   // diğer tüm istekler (AJAX, yoklama vb.)
@@ -60,6 +61,9 @@ class StudentRequestGuard
 
     private function bucket(Request $request, string $name): string
     {
+        if ($request->is('api/race/*')) {
+            return 'race';
+        }
         if (Str::startsWith($name, ['student.competitions.', 'student.live-quiz.']) || $request->is('ogrenci/canli-*')) {
             return 'live';
         }
