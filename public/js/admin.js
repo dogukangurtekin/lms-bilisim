@@ -204,10 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let lastPingAt = 0;
     let pingTimer = null;
+    // Ping'ler sekmeler/sayfalar arasında ortak sınırlanır: okuldaki çok öğrenci sayfa değiştirirken
+    // aynı IP'den ardışık istek patlaması oluşup sunucu/hosting koruması 403 vermesin.
+    // (Geçen süre zaten her sayfa isteğinde sunucuda ayrıca sayılıyor.)
+    const PING_KEY = 'student_ping_at', BLOCK_KEY = 'student_ping_block_until';
+    const lsGet = (k) => { try { return Number(localStorage.getItem(k) || 0); } catch (_) { return 0; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch (_) {} };
+    const canPing = (minGapMs) => Date.now() >= lsGet(BLOCK_KEY) && Date.now() - lsGet(PING_KEY) >= minGapMs;
     const ping = async () => {
       if (!pingUrl || !csrf) return;
       if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
+      if (!canPing(90000)) return;   // son 90 sn içinde (herhangi bir sayfa/sekme) ping atıldıysa atlama
       lastPingAt = Date.now();
+      lsSet(PING_KEY, lastPingAt);
       try {
         const res = await fetch(pingUrl, {
           method: 'POST',
@@ -219,6 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
           credentials: 'same-origin',
         });
         if (res.status === 419 || res.status === 401) { clearInterval(pingTimer); return; }   // oturum/CSRF süresi dolmuş: aynı hatayı tekrar tekrar gönderme
+        if (res.status === 403 || res.status === 429 || res.status === 503) {   // engel/limit: 15 dk boyunca hiç ping atma
+          lsSet(BLOCK_KEY, Date.now() + 15 * 60 * 1000);
+          return;
+        }
         if (!res.ok) return;
         const payload = await res.json();
         if (payload && typeof payload.total_seconds !== 'undefined') {
@@ -232,6 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const pingOnClose = () => {
       if (!pingUrl || !csrf || !navigator.sendBeacon) return;
+      if (!canPing(120000)) return;   // sayfa kapanırken/gizlenirken en fazla 2 dakikada bir
+      lsSet(PING_KEY, Date.now());
       const data = new FormData();
       data.append('_token', csrf);
       navigator.sendBeacon(pingUrl, data);
