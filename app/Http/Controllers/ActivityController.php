@@ -41,7 +41,7 @@ class ActivityController extends Controller
             'keyboard-finger-runner' => ['name' => 'Klavye Parmak Eğitimi', 'image' => 'keyboard-finger-icon.svg', 'url' => '/keyboard-finger-runner'],
             'word-runner' => ['name' => 'Word Belge Editörü', 'image' => 'word-icon.svg', 'url' => '/word-runner'],
             'excel-runner' => ['name' => 'Excel Hesap Tablosu', 'image' => 'excel-icon.svg', 'url' => '/excel-runner'],
-            'scratch-runner' => ['name' => 'Blok Kodlama Stüdyosu (Scratch benzeri)', 'image' => 'scratch-icon.svg', 'url' => '/scratch-runner'],
+            'scratch-runner' => ['name' => 'Blok Kodlama Stüdyosu (Scratch benzeri)', 'image' => 'scratch-icon.svg?v=2', 'url' => '/scratch-runner'],
         ];
     }
 
