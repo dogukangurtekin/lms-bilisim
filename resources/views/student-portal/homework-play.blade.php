@@ -2,7 +2,7 @@
 @section('title','Odev Oynatici')
 @section('content')
 <div class="course-show-shell">
-@php($levelless = in_array($gameSlug ?? '', ['excel-runner', 'word-runner', 'python-editor'], true))
+@php($levelless = in_array($gameSlug ?? '', ['excel-runner', 'word-runner', 'python-editor', 'scratch-runner'], true))
 <div class="top" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h1>{{ $homework->title }}</h1>
 @if($levelless)
     <button type="submit" form="homework-complete-form" class="btn" style="margin-left:auto" onclick="return confirm('Ödevi tamamladığınızı onaylıyor musunuz?')">✓ Ödevi Tamamladım</button>

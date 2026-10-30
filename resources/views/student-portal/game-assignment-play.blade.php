@@ -2,7 +2,7 @@
 @section('title','Etkinlik Odev Oynatici')
 @section('content')
 <div class="card course-show-shell" style="padding:12px">
-    @php($levelless = in_array($assignment->game_slug, ['excel-runner', 'word-runner', 'python-editor'], true))
+    @php($levelless = in_array($assignment->game_slug, ['excel-runner', 'word-runner', 'python-editor', 'scratch-runner'], true))
     <div class="card" style="padding:10px">
         @if($levelless)
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">

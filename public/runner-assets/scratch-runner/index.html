@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4c97ff">
+<title>Blok Kodlama Stüdyosu</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<header class="top">
+  <div class="logo">▤</div>
+  <input id="projName" value="Projem" aria-label="Proje adı" spellcheck="false">
+  <span id="saveState" class="savestate">Kaydedildi</span>
+  <div class="tb">
+    <button id="btnUndo" title="Geri al (Ctrl+Z)">↶ Geri al</button>
+    <button id="btnNew">Yeni</button>
+    <button id="btnSample">Örnek</button>
+    <button id="btnSave">Kaydet</button>
+    <button id="btnProjects">Projelerim</button>
+    <button id="btnExport">İndir</button>
+    <button id="btnImport">Yükle</button>
+    <input type="file" id="fileImport" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<main class="app">
+  <aside id="palwrap">
+    <nav id="cats"></nav>
+    <div id="palette"></div>
+  </aside>
+
+  <section id="workspace">
+    <div class="wstools">
+      <span>Seçili nesne: <b id="curName"></b></span>
+      <button id="btnClean">Düzenle</button>
+    </div>
+    <div id="scripts"></div>
+  </section>
+
+  <aside id="right">
+    <div class="stagebar">
+      <button id="btnFlag" class="flag" title="Başlat">🏁</button>
+      <button id="btnStop" class="stop" title="Durdur">⏹</button>
+    </div>
+    <div id="stagebox">
+      <canvas id="stage" width="480" height="360"></canvas>
+      <div id="monitors"></div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">Nesneler <button id="btnAddSprite" title="Nesne ekle">＋</button></div>
+      <div id="spriteList"></div>
+      <div class="props">
+        <label>Ad <input id="pName"></label>
+        <label>x <input id="pX" type="number"></label>
+        <label>y <input id="pY" type="number"></label>
+        <label>Boyut <input id="pSize" type="number" min="5" max="500"></label>
+        <label>Yön <input id="pDir" type="number"></label>
+        <label class="chk"><input id="pShow" type="checkbox"> Görünür</label>
+      </div>
+      <div class="rowbtns">
+        <button id="btnAddCostume">Kostüm ekle</button>
+        <button id="btnNextCostume">Sonraki kostüm</button>
+        <button id="btnDelSprite" class="danger">Nesneyi sil</button>
+      </div>
+      <div class="ptitle">Arka plan</div>
+      <div id="backdrops"></div>
+    </div>
+  </aside>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="mcard">
+    <div class="mhead"><strong id="mTitle"></strong><button id="mClose">Kapat</button></div>
+    <div id="mBody"></div>
+  </div>
+</div>
+<div id="ghost"></div>
+<div id="indicator"></div>
+<script src="./app.js"></script>
+</body>
+</html>

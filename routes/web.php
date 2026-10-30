@@ -211,6 +211,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/keyboard-finger-runner', [ActivityRunnerController::class, 'keyboardFinger']);
     Route::get('/word-runner', [ActivityRunnerController::class, 'word']);
     Route::get('/excel-runner', [ActivityRunnerController::class, 'excel']);
+    Route::get('/scratch-runner', [ActivityRunnerController::class, 'scratch']);
     Route::get('/connect-the-dots-runner', [ActivityRunnerController::class, 'connectTheDots']);
     Route::get('/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'feed'])->name('dot-connect.feed');
     Route::get('/python-editor', [ActivityRunnerController::class, 'pythonEditor']);

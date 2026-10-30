@@ -28,6 +28,7 @@ class PublicGamesSetting
         'python-editor' => 'Tarayıcıda Python kodu yaz ve çalıştır.',
         'word-runner' => 'Word benzeri belge editörüyle çalış.',
         'excel-runner' => 'Excel benzeri hesap tablosunda formüllerle çalış.',
+        'scratch-runner' => 'Blokları sürükleyip birleştir, nesneleri programla, projeni kaydet.',
     ];
 
     public const MAX_LIMIT = 20;

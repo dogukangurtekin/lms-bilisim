@@ -101,6 +101,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('excel-runner');
     }
 
+    public function scratch()
+    {
+        return $this->serveRunner('scratch-runner');
+    }
+
     public function open(Request $request, string $slug)
     {
         $games = array_keys(ActivityController::games());
