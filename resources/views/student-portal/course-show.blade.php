@@ -1147,14 +1147,23 @@
                     }).then((res) => { if (!res.ok) autoCompleteSent = false; }).catch(() => { autoCompleteSent = false; });
                 }
 
-                function saveProgress() {
+                let lastSaveAt = 0, saveTimer = null;
+                function saveProgress(force) {
                     if (!resumeSaveUrl || !progressReady) return;
                     // Ders başında henüz bir şey yapılmadıysa gereksiz istek atma.
                     if (idx === 0 && answeredQuestionStates.size === 0 && awardedSlideIndexes.size === 0) return;
+                    // Hızlı slayt geçişlerinde en fazla 10 sn'de bir kaydedilir (bekleyen son durum zamanlayıcıyla gider);
+                    // sekme gizlenirken/sayfa kapanırken (force) hemen kaydedilir.
+                    const wait = force === true ? 0 : Math.max(0, 10000 - (Date.now() - lastSaveAt));
+                    if (wait > 0) {
+                        if (!saveTimer) saveTimer = setTimeout(() => { saveTimer = null; saveProgress(true); }, wait);
+                        return;
+                    }
                     const snap = snapshotProgress();
                     const key = progressKey(snap);
                     if (key === lastSavedKey) return;
                     lastSavedKey = key;
+                    lastSaveAt = Date.now();
                     fetch(resumeSaveUrl, {
                         method: 'POST',
                         keepalive: true,
@@ -1200,9 +1209,9 @@
 
                 // Sekme kapanırken / arka plana giderken son konumu da kaydet.
                 document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'hidden') saveProgress();
+                    if (document.visibilityState === 'hidden') saveProgress(true);
                 });
-                window.addEventListener('pagehide', saveProgress);
+                window.addEventListener('pagehide', () => saveProgress(true));
 
                 window.addEventListener('resize', fitStage);
                 render();
