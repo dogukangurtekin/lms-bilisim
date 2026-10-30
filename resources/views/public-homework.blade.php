@@ -23,6 +23,9 @@
 @if($attachment)
     <h2>Ödev dosyası <small style="font-weight:500;color:var(--ink-soft);font-size:14px">· {{ $attachment[0] }}</small></h2>
     <div id="hw-preview" class="hw-preview" data-url="{{ $attachment[1] }}" data-name="{{ $attachment[0] }}"><div class="sh-msg">Dosya yükleniyor…</div></div>
+    @if(preg_match('/\.(pdf|png|jpe?g|webp)$/i', $attachment[1]))
+        <a class="hw-open" href="{{ $attachment[1] }}" target="_blank" rel="noopener">⛶ Tam ekranda aç</a>
+    @endif
 @endif
 
 @if($action)
@@ -36,15 +39,20 @@
 
 @if($attachment)
 <style>
-    .hw-preview{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:80vh;min-height:120px}
-    .hw-preview img{display:block;max-width:100%;height:auto;margin:0 auto}
-    .hw-preview iframe{display:block;width:100%;height:75vh;border:0}
+    /* Ödev dosyası olan sayfada içerik alanı geniş olsun; önizleme tam genişliği kullansın */
+    main .container{width:min(100% - 24px,1040px)}
+    .hw-preview{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:auto;min-height:120px;width:100%}
+    .hw-preview img{display:block;width:100%;max-width:100%;height:auto}
+    .hw-preview iframe{display:block;width:100%;height:85vh;min-height:480px;border:0}
+    .hw-open{display:inline-block;margin:10px 0 0;font-size:14px;font-weight:600}
+    @media (max-width:560px){.hw-preview{border-radius:10px}.hw-preview iframe{height:75vh;min-height:360px}}
     .hw-preview .sh-msg{padding:28px 18px;text-align:center;color:var(--ink-soft)}
     .hw-preview .sh-pager{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;background:var(--violet-tint);border-bottom:1px solid var(--line)}
     .hw-preview .sh-pager button,.hw-preview .sh-sheet-tabs button{font:inherit;font-size:14px;padding:6px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer}
     .hw-preview .sh-pager button:disabled{opacity:.45;cursor:default}
     .hw-preview .sh-pager-info{font-size:14px;color:var(--ink-soft)}
-    .hw-preview .sh-docxhost{padding:12px;overflow:auto;background:#eceae3}
+    .hw-preview .sh-docxhost{padding:0;overflow:auto;background:#eceae3}
+    .hw-preview .docx-wrapper{padding:12px!important}
     .hw-preview .sh-docxhost section.docx{margin:0 auto 12px!important;box-shadow:0 2px 10px rgba(22,24,43,.12)}
     .hw-preview .sh-docx-page{padding:20px 24px;max-width:820px;margin:0 auto}
     .hw-preview .sh-sheet-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--violet-tint);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
@@ -60,7 +68,28 @@
 (function () {
     var box = document.getElementById('hw-preview');
     if (!box || !window.FilePreview) return;
-    window.FilePreview.render(box, box.dataset.url, box.dataset.name);
+    // Word sayfaları ve Excel tabloları kutu genişliğine göre ölçeklenir: mobilde sığar, geniş ekranda küçük kalmaz.
+    function fit() {
+        var w = box.clientWidth; if (!w) return;
+        var doc = box.querySelector('.docx-wrapper');
+        if (doc) {
+            doc.style.zoom = 1;
+            var nat = doc.scrollWidth || w;
+            doc.style.zoom = Math.max(0.3, Math.min(1.6, w / nat));
+        }
+        var sheet = box.querySelector('.sh-sheet'), tbl = sheet && sheet.querySelector('table');
+        if (tbl) {
+            sheet.style.zoom = 1;
+            var tw = tbl.scrollWidth + 24;
+            sheet.style.zoom = Math.max(0.6, Math.min(1.4, w / tw));
+        }
+    }
+    var raf = 0;
+    function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); }
+    new MutationObserver(schedule).observe(box, { childList: true, subtree: true });
+    window.addEventListener('resize', schedule);
+    window.addEventListener('orientationchange', schedule);
+    window.FilePreview.render(box, box.dataset.url, box.dataset.name).then(schedule);
 })();
 </script>
 @endif
