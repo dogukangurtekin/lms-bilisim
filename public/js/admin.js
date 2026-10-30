@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ping = async () => {
       if (!pingUrl || !csrf) return;
       if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
-      if (!canPing(90000)) return;   // son 90 sn içinde (herhangi bir sayfa/sekme) ping atıldıysa atlama
+      if (!canPing(290000)) return;   // son ~5 dk içinde (herhangi bir sayfa/sekme) ping atıldıysa atlama
       lastPingAt = Date.now();
       lsSet(PING_KEY, lastPingAt);
       try {
@@ -243,25 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sessiz gec: sayac yerelde akmaya devam eder.
       }
     };
-    const pingOnClose = () => {
-      if (!pingUrl || !csrf || !navigator.sendBeacon) return;
-      if (!canPing(120000)) return;   // sayfa kapanırken/gizlenirken en fazla 2 dakikada bir
-      lsSet(PING_KEY, Date.now());
-      const data = new FormData();
-      data.append('_token', csrf);
-      navigator.sendBeacon(pingUrl, data);
-    };
     render();
     setInterval(render, 1000);
     ping();
     pingTimer = setInterval(ping, 300000);
-    window.addEventListener('beforeunload', pingOnClose);
+    // Sayaç tarayıcıda akar; sunucu süreyi her sayfa isteğinde zaten sayar. Ping yalnızca 5 dakikada bir
+    // (sayfa açılışı/F5 ve sekmeye dönüş de bu sınıra tabi), kapanışta beacon yok.
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        pingOnClose();
-      } else if (Date.now() - lastPingAt > 120000) {
-        ping();
-      }
+      if (document.visibilityState === 'visible') ping();
     });
   }
 
