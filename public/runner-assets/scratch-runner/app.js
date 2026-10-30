@@ -163,10 +163,11 @@
   function scheduleSave() {
     if (NOSAVE) return;
     status('Kaydediliyor…'); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 400);
-    if (SERVER && P.sid) { clearTimeout(serverTimer); serverTimer = setTimeout(syncServer, 1500); }
+    if (SERVER && P.sid) { clearTimeout(serverTimer); serverTimer = setTimeout(syncServer, 10000); }   // sunucu yazımı en çok 10 sn'de bir (hosting I/O tasarrufu)
   }
   function body() { return { name: P.name, data: ser(), client_ts: P.ts || Date.now() }; }
   function syncServer() {
+    serverTimer = 0;
     if (NOSAVE || !P.sid) return;
     api('PUT', API + '/' + P.sid, body()).then(function (r) {
       if (r.ok) status('Sunucuya kaydedildi');
@@ -830,7 +831,12 @@
   function refreshAll() { $('#projName').value = P.name; renderSprites(); renderBackdrops(); renderPalette(); renderScripts(); syncProps(); if (typeof tab !== 'undefined' && tab === 'costumes') renderCostumes(); }
   $('#palette').addEventListener('pointerdown', onDown);
   $('#scripts').addEventListener('pointerdown', onDown);
-  window.addEventListener('pagehide', function () { if (NOSAVE) return; clearTimeout(saveTimer); try { localStorage.setItem(CUR_KEY, ser()); } catch (e) {} });
+  window.addEventListener('pagehide', function () {
+    if (NOSAVE) return; clearTimeout(saveTimer); try { localStorage.setItem(CUR_KEY, ser()); } catch (e) {}
+    if (SERVER && P.sid && serverTimer) {   // bekleyen sunucu yazımı sayfa kapanırken gönderilir (küçük projelerde; büyükte açılışta tamamlanır)
+      try { fetch(API + '/' + P.sid, { method: 'PUT', keepalive: true, credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrf() }, body: JSON.stringify(body()) }); } catch (e) {}
+    }
+  });
 
   var saved = null; try { saved = JSON.parse(localStorage.getItem(CUR_KEY) || 'null'); } catch (e) {}
   P = saved ? normalize(saved) : sampleProject(); cur = P.sel; last = ser();
@@ -851,6 +857,8 @@
       if (!r.ok || !(r.j.projects || []).length) return;
       var ids = r.j.projects.map(function (p) { return p.id; });
       if (P.sid && ids.indexOf(P.sid) < 0) P.sid = null;
+      var mine = r.j.projects.filter(function (p) { return p.id === P.sid; })[0];
+      if (mine && (P.ts || 0) > mine.client_ts) syncServer();   // yerelde daha yeni değişiklik varsa sunucuya tamamla
       var latest = r.j.projects.slice().sort(function (a, b) { return b.client_ts - a.client_ts; })[0];
       if (latest.client_ts > (P.ts || 0) || !saved) {
         api('GET', API + '/' + latest.id).then(function (g) {

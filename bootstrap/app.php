@@ -65,6 +65,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ->name('attendance-reminders')->hourly()->withoutOverlapping(10);
         $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('activity-logs:purge'))
             ->name('activity-logs-purge')->dailyAt('00:30')->withoutOverlapping(30);
+        // Dosya önbelleğindeki süresi dolmuş ölü dosyaları haftada bir temizler (disk I/O tasarrufu).
+        $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('cache:purge-expired'))
+            ->name('cache-purge-expired')->weeklyOn(0, '03:30')->withoutOverlapping(30);
         // Zamanlayıcının (cron) gerçekten çalıştığını gösteren işaret: son çalışma zamanı önbelleğe yazılır.
         $schedule->call(fn () => \Illuminate\Support\Facades\Cache::put('scheduler_heartbeat', now()->toIso8601String(), 7200))
             ->name('scheduler-heartbeat')->everyFiveMinutes();
