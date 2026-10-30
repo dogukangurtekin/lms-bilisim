@@ -104,7 +104,7 @@ class LevelController extends Controller
         if (Level::query()->whereNull('user_id')->count() < 50) {
             $this->ensureSystemLevels();
         }
-        $limit = \App\Support\PublicGamesSetting::levelLimit();
+        $limit = \App\Support\PublicGamesSetting::levelLimit('flamestone-game');
         $levels = Level::query()->whereNull('user_id')->orderBy('id')->when($limit > 0, fn ($q) => $q->limit($limit))->get(['id', 'name', 'data']);
 
         return response()->json([

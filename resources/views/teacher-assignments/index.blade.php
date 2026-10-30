@@ -155,6 +155,7 @@
             <label>Belge / Resim Yükleme</label>
             <input type="file" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp">
 
+            @include('partials.public-homework-field')
             <button class="btn" type="submit">Ödevi Kaydet</button>
         </form>
     </div>

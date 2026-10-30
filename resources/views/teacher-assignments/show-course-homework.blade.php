@@ -47,6 +47,8 @@
     <a class="btn" href="{{ route('teacher.assignments.index') }}">Odevlere Don</a>
 </div>
 
+@include('partials.public-homework-box', ['item' => $homework])
+
 @php
     $isLessonPreview = (string) ($homework->assignment_type ?? 'lesson') === 'lesson' && !empty($homework->course?->lesson_payload['slides']);
     $slides = $slides ?? ($isLessonPreview ? ($homework->course->lesson_payload['slides'] ?? []) : []);

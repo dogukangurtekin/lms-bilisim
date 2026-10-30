@@ -71,6 +71,7 @@
             @endforeach
         </div>
 
+        @include('partials.public-homework-field', ['checked' => $assignment->is_public])
         <button class="btn" type="submit" style="margin-top:12px">Guncelle</button>
     </form>
 </div>

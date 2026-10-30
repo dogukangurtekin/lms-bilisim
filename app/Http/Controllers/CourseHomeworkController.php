@@ -8,6 +8,7 @@ use App\Models\CourseHomework;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\PushNotificationService;
+use App\Support\PublicHomework;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -64,7 +65,15 @@ class CourseHomeworkController extends Controller
             'level_to' => ['nullable', 'integer', 'min:1', 'gte:level_from'],
             'level_points' => ['nullable', 'array'],
             'level_points.*' => ['nullable', 'integer', 'min:0', 'max:10000'],
+            'is_public' => ['nullable', 'boolean'],
         ]);
+
+        $isPublic = PublicHomework::available() && $request->boolean('is_public');
+        if ($isPublic && in_array($validated['assignment_type'], ['game', 'application'], true)
+            && ! PublicHomework::slugIsPlayablePublicly($validated['target_slug'] ?? null)) {
+            return back()->withInput()->withErrors(['is_public' => 'Seçtiğiniz etkinlik giriş yapmadan oynanamadığı için herkese açık ödev olarak verilemez.']);
+        }
+        $publicToken = $isPublic ? PublicHomework::newToken() : null;
 
         $points = [];
         if (! empty($validated['level_points']) && isset($validated['level_from'], $validated['level_to'])) {
@@ -88,7 +97,7 @@ class CourseHomeworkController extends Controller
                 'level_to' => $validated['level_to'] ?? null,
                 'level_points' => $points !== [] ? $points : null,
                 'created_by' => auth()->id(),
-            ]);
+            ] + ($isPublic ? ['is_public' => true, 'public_token' => $publicToken] : []));
         }
 
         $studentUserIds = Student::query()
@@ -116,6 +125,10 @@ class CourseHomeworkController extends Controller
             url('/odevler'),
             ['course_id' => $course->id]
         );
+
+        if ($isPublic) {
+            PublicHomework::flash($validated['title'], $publicToken, $validated['due_date'] ?? null);
+        }
 
         return redirect()->route('courses.homeworks.create', $course)->with('ok', count($classIds) . ' sinif icin odev olusturuldu.');
     }

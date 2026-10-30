@@ -20,11 +20,14 @@ class GameAssignment extends Model
         'level_from',
         'level_to',
         'grade_level_group',
+        'is_public',
+        'public_token',
         'created_by',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'is_public' => 'boolean',
     ];
 
     public function classes(): BelongsToMany

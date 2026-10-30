@@ -732,6 +732,7 @@
 })();
 </script>
 @endif
+@include('partials.public-homework-popup')
 @stack('scripts')
 <script src="{{ asset('pwa-init.js') }}" defer></script>
 </body>

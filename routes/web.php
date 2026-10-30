@@ -64,6 +64,13 @@ Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::c
 Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:60,1')->name('public.game');
 Route::get('/kelime-arisi', fn () => redirect()->route('public.game', 'word-bee-runner'))->name('public.word-bee');
 Route::post('/demo-talep', [SupportRequestController::class, 'storeDemo'])->middleware('throttle:5,10')->name('support-requests.demo');
+// Herkese açık ödev linki: giriş gerektirmez, linki bilen herkes açar.
+Route::prefix('/acik-odev/{token}')->middleware('throttle:60,1')->group(function () {
+    Route::get('/', [\App\Http\Controllers\PublicHomeworkController::class, 'show'])->name('public.homework.show');
+    Route::get('/oyna', [\App\Http\Controllers\PublicHomeworkController::class, 'play'])->name('public.homework.play');
+    Route::get('/ders', [\App\Http\Controllers\PublicHomeworkController::class, 'lesson'])->name('public.homework.lesson');
+    Route::get('/ek', [\App\Http\Controllers\PublicHomeworkController::class, 'attachment'])->name('public.homework.attachment');
+});
 Route::view('/hakkimizda', 'pages.about')->name('pages.about');
 Route::view('/neden-biz', 'pages.why-us')->name('pages.why');
 Route::view('/neler-sunuyoruz', 'pages.features')->name('pages.features');

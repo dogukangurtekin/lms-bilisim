@@ -8,6 +8,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\LessonPresentation\SlidePresentationService;
 use App\Services\PushNotificationService;
+use App\Support\PublicHomework;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -111,7 +112,11 @@ class TeacherAssignmentController extends Controller
             'class_ids' => ['nullable', 'array'],
             'class_ids.*' => $this->classIdRule($assignedClassIds),
             'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,webp', 'max:10240'],
+            'is_public' => ['nullable', 'boolean'],
         ]);
+
+        $isPublic = PublicHomework::available() && $request->boolean('is_public');
+        $publicToken = $isPublic ? PublicHomework::newToken() : null;
 
         $attachmentPath = null;
         $attachmentOriginalName = null;
@@ -147,7 +152,7 @@ class TeacherAssignmentController extends Controller
                 'level_to' => null,
                 'level_points' => null,
                 'created_by' => auth()->id(),
-            ]);
+            ] + ($isPublic ? ['is_public' => true, 'public_token' => $publicToken] : []));
         }
 
         $studentUserIds = Student::query()
@@ -175,6 +180,10 @@ class TeacherAssignmentController extends Controller
             url('/odevler'),
             ['trigger' => 'teacher_assignment']
         );
+
+        if ($isPublic) {
+            PublicHomework::flash((string) $validated['title'], $publicToken, $validated['due_date'] ?? null);
+        }
 
         return redirect()->route('teacher.assignments.index')->with('ok', 'Odev basariyla olusturuldu.');
     }
@@ -243,6 +252,24 @@ class TeacherAssignmentController extends Controller
         return view('teacher-assignments.edit-course-homework', compact('homework', 'classes', 'games'));
     }
 
+    /**
+     * Düzenleme formundaki "herkese açık" seçimi: link bir kez üretilir, kapatıp açınca aynı link geçerli kalır.
+     * Form alanı hiç gönderilmediyse (eski form / kolon yok) hiçbir şeye dokunulmaz.
+     */
+    private function publicLinkUpdate(Request $request, ?string $existingToken): array
+    {
+        if (! PublicHomework::available() || ! $request->has('is_public')) {
+            return [];
+        }
+        $on = $request->boolean('is_public');
+        $data = ['is_public' => $on];
+        if ($on && ! $existingToken) {
+            $data['public_token'] = PublicHomework::newToken();
+        }
+
+        return $data;
+    }
+
     public function updateCourseHomework(Request $request, CourseHomework $homework)
     {
         $user = auth()->user();
@@ -264,7 +291,13 @@ class TeacherAssignmentController extends Controller
             'level_points' => ['nullable', 'array'],
             'level_points.*' => ['nullable', 'integer', 'min:0', 'max:10000'],
             'attachment' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,webp', 'max:10240'],
+            'is_public' => ['nullable', 'boolean'],
         ]);
+        $publicData = $this->publicLinkUpdate($request, $homework->public_token);
+        if (($publicData['is_public'] ?? false) && in_array($validated['assignment_type'], ['game', 'application'], true)
+            && ! PublicHomework::slugIsPlayablePublicly($validated['target_slug'] ?? null)) {
+            return back()->withInput()->withErrors(['is_public' => 'Seçtiğiniz etkinlik giriş yapmadan oynanamadığı için herkese açık yapılamaz.']);
+        }
         $points = [];
         if (! empty($validated['level_points']) && isset($validated['level_from'], $validated['level_to'])) {
             for ($lvl = (int) $validated['level_from']; $lvl <= (int) $validated['level_to']; $lvl++) {
@@ -290,7 +323,7 @@ class TeacherAssignmentController extends Controller
             'level_from' => $validated['level_from'] ?? null,
             'level_to' => $validated['level_to'] ?? null,
             'level_points' => $points !== [] ? $points : null,
-        ]);
+        ] + $publicData);
 
         return redirect()->route('teacher.assignments.index')->with('ok', 'Ders odevi guncellendi.');
     }
@@ -380,6 +413,7 @@ class TeacherAssignmentController extends Controller
             'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => $this->classIdRule($assignedClassIds),
+            'is_public' => ['nullable', 'boolean'],
         ], [
             'title.required' => 'Odev adi zorunludur.',
             'due_date.required' => 'Odev teslim tarihi zorunludur.',
@@ -387,6 +421,11 @@ class TeacherAssignmentController extends Controller
             'level_to.required' => 'Level bitis zorunludur.',
             'class_ids.required' => 'En az bir sinif secmelisiniz.',
         ]);
+
+        $publicData = $this->publicLinkUpdate($request, $assignment->public_token);
+        if (($publicData['is_public'] ?? false) && ! PublicHomework::slugIsPlayablePublicly($assignment->game_slug)) {
+            return back()->withInput()->withErrors(['is_public' => 'Bu etkinlik giriş yapmadan oynanamadığı için herkese açık yapılamaz.']);
+        }
 
         // Sayfada artik tek tek level puani girilmiyor. Level araligi
         // degistiginde mevcut puanlar korunur, araliga yeni eklenen
@@ -399,7 +438,7 @@ class TeacherAssignmentController extends Controller
             'due_date' => $validated['due_date'] ?? null,
             'level_from' => $validated['level_from'] ?? null,
             'level_to' => $validated['level_to'] ?? null,
-        ]);
+        ] + $publicData);
         $assignment->classes()->sync($validated['class_ids']);
         $assignment->levels()->delete();
         $from = $validated['level_from'] ?? null;

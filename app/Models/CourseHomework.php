@@ -25,12 +25,15 @@ class CourseHomework extends Model
         'level_from',
         'level_to',
         'level_points',
+        'is_public',
+        'public_token',
         'created_by',
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'level_points' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function course(): BelongsTo

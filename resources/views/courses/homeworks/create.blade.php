@@ -57,6 +57,7 @@
         <label>Odev Detayi</label>
         <textarea name="details" rows="5" placeholder="Ogrencinin ne yapacagini yazin...">{{ old('details') }}</textarea>
 
+        @include('partials.public-homework-field')
         @if($errors->any())
             <div style="color:#b91c1c;margin:8px 0">{{ $errors->first() }}</div>
         @endif

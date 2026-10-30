@@ -7,6 +7,7 @@ use App\Models\GameAssignment;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Services\PushNotificationService;
+use App\Support\PublicHomework;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -109,6 +110,7 @@ class GameAssignmentController extends Controller
             'level_to' => ['required', 'integer', 'min:1', 'max:999', 'gte:level_from'],
             'class_ids' => ['required', 'array', 'min:1'],
             'class_ids.*' => ['integer', $classIdRule],
+            'is_public' => ['nullable', 'boolean'],
         ], [
             'title.required' => 'Ödev adı zorunludur.',
             'due_date.required' => 'Ödev teslim tarihi zorunludur.',
@@ -117,11 +119,17 @@ class GameAssignmentController extends Controller
             'class_ids.required' => 'En az bir sınıf seçmelisiniz.',
         ]);
 
+        $isPublic = PublicHomework::available() && $request->boolean('is_public');
+        if ($isPublic && ! PublicHomework::slugIsPlayablePublicly($gameSlug)) {
+            return back()->withInput()->withErrors(['is_public' => 'Bu etkinlik giriş yapmadan oynanamadığı için herkese açık ödev olarak verilemez.']);
+        }
+        $publicToken = $isPublic ? PublicHomework::newToken() : null;
+
         // Ogretmenin sayfada tek tek level puani girmesine gerek yok;
         // her level icin sabit bir varsayilan puan atanir.
         $defaultLevelPoints = 10;
 
-        DB::transaction(function () use ($validated, $games, $gameSlug, $defaultLevelPoints) {
+        DB::transaction(function () use ($validated, $games, $gameSlug, $defaultLevelPoints, $isPublic, $publicToken) {
             $assignment = GameAssignment::create([
                 'game_slug' => $gameSlug,
                 'game_name' => $games[$gameSlug]['name'],
@@ -130,7 +138,7 @@ class GameAssignmentController extends Controller
                 'level_from' => $validated['level_from'] ?? null,
                 'level_to' => $validated['level_to'] ?? null,
                 'created_by' => auth()->id(),
-            ]);
+            ] + ($isPublic ? ['is_public' => true, 'public_token' => $publicToken] : []));
 
             $assignment->classes()->sync($validated['class_ids']);
 
@@ -171,6 +179,10 @@ class GameAssignmentController extends Controller
             url('/odevler'),
             ['game_slug' => $gameSlug]
         );
+
+        if ($isPublic) {
+            PublicHomework::flash($validated['title'], $publicToken, $validated['due_date'] ?? null);
+        }
 
         return redirect()
             ->route('activities.assignments.create', $gameSlug)

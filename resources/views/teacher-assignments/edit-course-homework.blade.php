@@ -62,6 +62,7 @@
                 Mevcut dosya: <a href="{{ asset('storage/'.$homework->attachment_path) }}" target="_blank">{{ $homework->attachment_original_name ?? 'Ek dosya' }}</a>
             </p>
         @endif
+        @include('partials.public-homework-field', ['checked' => $homework->is_public])
         <button class="btn" type="submit">Güncelle</button>
     </form>
 </div>

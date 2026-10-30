@@ -48,6 +48,8 @@
     <a class="btn" href="{{ route('teacher.assignments.index') }}">Odevlere Don</a>
 </div>
 
+@include('partials.public-homework-box', ['item' => $assignment])
+
 <div class="card assignment-summary">
     <p><b>Icerik:</b> {{ $assignment->game_name }} ({{ $assignment->game_slug }})</p>
     <p><b>Baslik:</b> {{ $assignment->title }}</p>

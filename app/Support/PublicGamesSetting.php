@@ -31,6 +31,7 @@ class PublicGamesSetting
     ];
 
     public const MAX_LIMIT = 20;
+    public const MAX_HW_LIMIT = 999;
 
     private static ?array $data = null;
 
@@ -63,20 +64,46 @@ class PublicGamesSetting
         return self::$data = ['enabled' => $enabled, 'games' => $games, 'level_limit' => $levelLimit];
     }
 
+    /**
+     * Herkese açık ödev linkinden gelen ziyaretçi için oturuma yazılan izin:
+     * ['slug' => oyun, 'limit' => ilk N bölüm (0 = genel ayar)]. Yalnızca o oyun için geçerlidir.
+     */
+    private static function homeworkOverride(string $slug): ?array
+    {
+        try {
+            $o = session('public_homework');
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return is_array($o) && ($o['slug'] ?? null) === $slug ? $o : null;
+    }
+
     public static function enabled(): bool
     {
         return self::data()['enabled'];
     }
 
     /** 0 = tüm bölümler açık; N = her oyunda yalnızca ilk N bölüm oynanır. */
-    public static function levelLimit(): int
+    public static function levelLimit(?string $slug = null): int
     {
+        if ($slug !== null && ($o = self::homeworkOverride($slug)) && (int) ($o['limit'] ?? 0) > 0) {
+            return min(self::MAX_HW_LIMIT, (int) $o['limit']);
+        }
+
         return self::data()['level_limit'];
     }
 
     public static function gameEnabled(string $slug): bool
     {
-        return isset(self::GAMES[$slug]) && self::enabled() && (self::data()['games'][$slug] ?? true);
+        if (! isset(self::GAMES[$slug])) {
+            return false;
+        }
+        if (self::homeworkOverride($slug)) {
+            return true;
+        }
+
+        return self::enabled() && (self::data()['games'][$slug] ?? true);
     }
 
     /** Menüde/listede görünecek açık oyunlar: slug => açıklama. */

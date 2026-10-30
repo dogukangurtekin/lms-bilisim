@@ -122,6 +122,7 @@
             <div style="color:#b91c1c;margin:10px 0">{{ $errors->first() }}</div>
         @endif
 
+        @include('partials.public-homework-field', ['checked' => false])
         <button class="btn" type="submit">Ödevi Kaydet</button>
     </form>
 </div>
