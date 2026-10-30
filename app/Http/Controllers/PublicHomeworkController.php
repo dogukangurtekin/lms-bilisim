@@ -68,7 +68,12 @@ class PublicHomeworkController extends Controller
                 $data['action'] = ['Ödeve Başla', route('public.homework.play', $token)];
             }
             if ($hw->attachment_path) {
-                $data['attachment'] = [$hw->attachment_original_name ?: 'Ek dosya', route('public.homework.attachment', $token)];
+                // Uzantı URL'de görünür; önizleyici dosya türünü buradan anlar. Dosya indirilmez, sayfada gösterilir.
+                $ext = strtolower(pathinfo((string) $hw->attachment_path, PATHINFO_EXTENSION));
+                $data['attachment'] = [
+                    $hw->attachment_original_name ?: 'Ek dosya',
+                    route('public.homework.attachment', [$token, 'ek.' . $ext]),
+                ];
             }
         }
 
@@ -106,11 +111,30 @@ class PublicHomeworkController extends Controller
         ]);
     }
 
-    public function attachment(string $token)
+    /** Ek dosyayı önizleme için satır içi (inline) sunar; indirme penceresi açtırmaz. */
+    public function attachment(string $token, string $file)
     {
         [$kind, $hw] = $this->resolve($token);
         abort_unless($kind === 'course' && $hw->attachment_path && Storage::disk('public')->exists($hw->attachment_path), 404);
 
-        return Storage::disk('public')->download($hw->attachment_path, $hw->attachment_original_name ?: basename($hw->attachment_path));
+        $ext = strtolower(pathinfo($hw->attachment_path, PATHINFO_EXTENSION));
+        abort_unless(strtolower(pathinfo($file, PATHINFO_EXTENSION)) === $ext, 404);
+
+        $types = [
+            'pdf' => 'application/pdf',
+            'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ];
+        abort_unless(isset($types[$ext]), 404);
+
+        return response()->file(Storage::disk('public')->path($hw->attachment_path), [
+            'Content-Type' => $types[$ext],
+            'Content-Disposition' => 'inline; filename="ek.' . $ext . '"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
     }
 }

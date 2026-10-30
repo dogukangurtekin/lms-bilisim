@@ -69,7 +69,7 @@ Route::prefix('/acik-odev/{token}')->middleware('throttle:60,1')->group(function
     Route::get('/', [\App\Http\Controllers\PublicHomeworkController::class, 'show'])->name('public.homework.show');
     Route::get('/oyna', [\App\Http\Controllers\PublicHomeworkController::class, 'play'])->name('public.homework.play');
     Route::get('/ders', [\App\Http\Controllers\PublicHomeworkController::class, 'lesson'])->name('public.homework.lesson');
-    Route::get('/ek', [\App\Http\Controllers\PublicHomeworkController::class, 'attachment'])->name('public.homework.attachment');
+    Route::get('/ek/{file}', [\App\Http\Controllers\PublicHomeworkController::class, 'attachment'])->where('file', '[A-Za-z0-9_\-]+\.[A-Za-z0-9]{2,5}')->name('public.homework.attachment');
 });
 Route::view('/hakkimizda', 'pages.about')->name('pages.about');
 Route::view('/neden-biz', 'pages.why-us')->name('pages.why');
