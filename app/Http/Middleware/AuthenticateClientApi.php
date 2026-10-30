@@ -31,7 +31,7 @@ class AuthenticateClientApi
             $profileHash = $this->resolveProfileTokenHash($uid);
             if ($profileHash !== '' && hash_equals($profileHash, $incomingHash)) {
                 // Cache miss veya temizlenme durumlarında profildeki hash'i kabul et.
-                Cache::put($cacheKey, $profileHash, now()->addMinutes(max(30, (int) env('CLIENT_API_TOKEN_TTL_MINUTES', 1440))));
+                Cache::put($cacheKey, $profileHash, now()->addMinutes(max(30, config('app.client_api_token_ttl_minutes'))));
             } else {
             logger()->warning('client_api_unauthenticated:token_mismatch', [
                 'uid' => $uid,

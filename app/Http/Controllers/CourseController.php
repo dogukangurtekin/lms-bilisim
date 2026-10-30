@@ -1731,7 +1731,7 @@ class CourseController extends Controller
     private function resolveMagickBinary(): ?string
     {
         $candidates = array_filter([
-            env('MAGICK_BIN'),
+            config('app.magick_bin'),
             'magick',
             'C:\\Program Files\\ImageMagick-7.1.2-Q16-HDRI\\magick.exe',
             'C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe',

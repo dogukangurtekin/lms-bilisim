@@ -13,6 +13,9 @@ Bu proje, `public_html` kökünde çalışacak şekilde hazırlandı:
    - `php artisan migrate --force`
    - `php artisan storage:link` (gerekliyse)
    - `php artisan optimize`
+   - **Önbellek:** canlıda ayar ve rota önbelleği açıktır. `routes/`, `config/` veya `.env` değiştiğinde ve her deploy sonrası
+     `scripts/refresh-cache.sh` çalıştırın (`php artisan config:cache` + `route:cache`). Çalıştırılmazsa değişiklikler yansımaz.
+     Uygulama kodunda `env()` kullanmayın; değerleri `config/*.php` içinden okuyun (önbellek açıkken `env()` boş döner).
 3. `.env` içinde canlı ayarları doğrulayın:
    - `APP_ENV=production`
    - `APP_DEBUG=false`

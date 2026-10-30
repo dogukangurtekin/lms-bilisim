@@ -311,7 +311,7 @@
         '{{ url('index.php/api/race') }}',
     ];
     let activeApiBase = API_BASE_CANDIDATES[0];
-    const SOCKET_URL = '{{ env('SOCKET_SERVER_URL', 'http://localhost:3001') }}';
+    const SOCKET_URL = '{{ config('app.socket_server_url') }}';
     const params = new URLSearchParams(window.location.search);
     const actorRole = AUTH_ACTOR_ROLE === 'teacher' ? 'teacher' : 'student';
     const actorUserId = AUTH_USER_ID > 0 ? AUTH_USER_ID : null;

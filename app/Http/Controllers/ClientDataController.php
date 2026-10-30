@@ -919,7 +919,7 @@ class ClientDataController extends Controller
     private function issueClientToken(string $uid): string
     {
         $plain = Str::random(80);
-        $ttlMinutes = max(30, (int) env('CLIENT_API_TOKEN_TTL_MINUTES', 1440));
+        $ttlMinutes = max(30, config('app.client_api_token_ttl_minutes'));
         $hash = hash('sha256', $plain);
         Cache::put("client_api_token:{$uid}", $hash, now()->addMinutes($ttlMinutes));
         logger()->info('client_api_token_issued', [

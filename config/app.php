@@ -18,6 +18,12 @@ return [
     // Gizlilik politikasında gösterilecek iletişim e-postası (opsiyonel).
     'contact_email' => env('CONTACT_EMAIL', 'info@bilisimkod.com'),
 
+    // env() yalnızca config dosyalarında okunur (config:cache sonrası uygulama kodunda env() boş döner).
+    'client_api_token_ttl_minutes' => (int) env('CLIENT_API_TOKEN_TTL_MINUTES', 1440),
+    'magick_bin' => env('MAGICK_BIN'),
+    'school_name' => env('SCHOOL_NAME', env('APP_NAME', 'Okul')),
+    'socket_server_url' => env('SOCKET_SERVER_URL', 'http://localhost:3001'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

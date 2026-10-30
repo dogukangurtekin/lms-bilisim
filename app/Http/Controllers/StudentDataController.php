@@ -289,7 +289,7 @@ class StudentDataController extends Controller
             'xp' => $xp,
             'teacherName' => (string) ($student->schoolClass?->teacher?->user?->name ?? 'Ders Öğretmeni'),
             'principalName' => $principalName !== '' ? $principalName : 'Okul Müdürü',
-            'schoolName' => env('SCHOOL_NAME', env('APP_NAME', 'Okul')),
+            'schoolName' => config('app.school_name'),
             'certificateStyle' => $certificateStyle,
             'certificateNo' => 'CERT-'.str_pad((string) $student->id, 6, '0', STR_PAD_LEFT),
             'certificateDate' => now()->timezone('Europe/Istanbul')->format('d.m.Y'),
