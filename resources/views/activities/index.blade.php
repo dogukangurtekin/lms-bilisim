@@ -342,7 +342,8 @@
                     if (data.active && data.status === 'live' && data.room_id) {
                         redirected = true;
                         if (timer) clearInterval(timer);
-                        window.location.href = '/ogrenci/canli-yarismalar/' + data.room_id;
+                        // Yarışma başlayınca hepsi aynı saniyede yönlenmesin: 0–1,5 sn rastgele gecikme.
+                        setTimeout(() => { window.location.href = '/ogrenci/canli-yarismalar/' + data.room_id; }, Math.floor(Math.random() * 1500));
                         return;
                     }
                     // Katıldığı ve henüz başlamamış (lobide) bir oda yoksa yoklamayı tamamen durdur:

@@ -294,8 +294,8 @@
             }
             renderParticipants(data.participants);
             if (data.status === 'live') {
-                // Ogretmen "Herkese Baslat" dedi: soru ekranina gecmek icin yenile.
-                window.location.reload();
+                // Ogretmen "Herkese Baslat" dedi: soru ekranina gecmek icin yenile (0–1,5 sn rastgele gecikmeyle: yığılma olmasın).
+                if (!window.__lqReloadSoon) { window.__lqReloadSoon = true; setTimeout(() => window.location.reload(), Math.floor(Math.random() * 1500)); }
             }
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };

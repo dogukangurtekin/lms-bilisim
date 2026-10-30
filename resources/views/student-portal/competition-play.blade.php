@@ -69,6 +69,13 @@
 <script>
 (() => {
     const status = @json($room->status);
+    // Yüzlerce öğrenci aynı saniyede yenilenip sunucuyu yığmasın: 0–1,5 sn rastgele gecikme (yalnızca bir kez planlanır).
+    let reloadScheduled = false;
+    const reloadSoon = () => {
+        if (reloadScheduled) return;
+        reloadScheduled = true;
+        setTimeout(() => window.location.reload(), Math.floor(Math.random() * 1500));
+    };
     const statusUrl = @json(route('student.competitions.status', $room));
     const lobbyUrl = @json(\App\Http\Controllers\CompetitionController::lobbyUrlFor($room));   // oturumsuz, CDN'de önbelleğe alınır
     const progressUrl = @json(route('student.competitions.progress', $room));
@@ -101,7 +108,7 @@
                 if (lobbyCountEl) lobbyCountEl.textContent = String(data.joined ?? 0);
                 renderStudents(data.students);
                 if (data.status === 'live' || data.status === 'finished') {
-                    window.location.reload();
+                    reloadSoon();
                 }
             } catch (e) { /* bir sonraki denemede tekrar denenecek */ } finally { lobbyBusy = false; }
         };
@@ -138,7 +145,7 @@
             timerFillEl.classList.toggle('warn', leftSec <= 15);
         }
         if (leftMs <= 0) {
-            window.location.reload();
+            reloadSoon();
         }
     };
     setInterval(tick, 500);
@@ -154,7 +161,7 @@
         if (rankEl && data.my_rank !== undefined) rankEl.textContent = String(data.my_rank || '-');
         if (totalEl && data.total !== undefined) totalEl.textContent = String(data.total || '-');
         if (data.status === 'finished') {
-            window.location.reload();
+            reloadSoon();
         }
     };
     let statusBusy = false, statusPauseUntil = 0;
