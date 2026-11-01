@@ -266,6 +266,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{exam}/word', [\App\Http\Controllers\ExamController::class, 'word'])->middleware('throttle:20,1')->name('word');
         Route::post('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'uploadWordTemplate'])->middleware('throttle:10,1')->name('word.template.upload');
         Route::delete('/{exam}/word-sablon', [\App\Http\Controllers\ExamController::class, 'deleteWordTemplate'])->name('word.template.delete');
+        Route::post('/{exam}/odev-ver', [\App\Http\Controllers\ExamController::class, 'assign'])->middleware('throttle:20,1')->name('assign');
         Route::get('/{exam}/pdf', [\App\Http\Controllers\ExamController::class, 'pdf'])->middleware('throttle:20,1')->name('pdf');
         Route::post('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'uploadLogo'])->middleware('throttle:20,1')->name('logo.upload');
         Route::delete('/{exam}/logo', [\App\Http\Controllers\ExamController::class, 'deleteLogo'])->name('logo.delete');

@@ -32,7 +32,16 @@ class ExamController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
+        $classes = collect();
+        if ($tab === 'worksheet') {
+            $assigned = $isAdmin ? null : ($user->teacher?->classes()->pluck('school_classes.id')->all() ?? []);
+            $classes = \App\Models\SchoolClass::query()
+                ->when($assigned !== null, fn ($q) => $q->whereIn('id', $assigned))
+                ->orderBy('name')->orderBy('section')->get();
+        }
+
         return view('exams.index', [
+            'classes' => $classes,
             'tab' => $tab,
             'counts' => $counts,
             'exams' => $exams,
@@ -281,18 +290,56 @@ class ExamController extends Controller
     public function pdf(Request $request, Exam $exam)
     {
         $this->authorizeOwner($request, $exam);
-        @set_time_limit(180);
-        @ini_set('memory_limit', '512M');
 
         $mode = (string) $request->query('mode', $this->defaultMode($exam));
         if (! in_array($mode, ['student', 'student_key', 'teacher', 'key'], true)) {
             $mode = 'student';
         }
 
-        $qs = $this->exportQuestions($exam);
-
-        if ($qs === []) {
+        $pdf = $this->renderPdf($exam, $mode);
+        if ($pdf === null) {
             return redirect()->route('exams.edit', $exam)->with('error', 'PDF almak için sınava en az bir soru ekleyin.');
+        }
+
+        return $pdf->download(Str::slug($exam->title ?: 'sinav').$this->fileSuffix($exam, $mode).'.pdf');
+    }
+
+    /** Çalışma kâğıdını PDF olarak üretip klasik "Ödev Ver" akışıyla (sınıflar / herkese açık link) ödev olarak verir. */
+    public function assign(Request $request, Exam $exam)
+    {
+        $this->authorizeOwner($request, $exam);
+        abort_unless($exam->isWorksheet(), 404);
+
+        $mode = $this->defaultMode($exam);
+        $pdf = $this->renderPdf($exam, $mode);
+        if ($pdf === null) {
+            return back()->with('error', 'Ödev vermek için çalışma kâğıdına en az bir soru ekleyin.');
+        }
+
+        $name = Str::slug($exam->title ?: 'calisma-kagidi').$this->fileSuffix($exam, $mode).'.pdf';
+        $tmp = tempnam(sys_get_temp_dir(), 'ws');
+        file_put_contents($tmp, $pdf->output());
+
+        // Üretilen PDF, klasik ödevdeki "belge yükleme" alanı gibi eklenir: öğrenci ekranı, herkese açık link ve silme akışı aynen çalışır.
+        $request->files->set('attachment', new \Illuminate\Http\UploadedFile($tmp, $name, 'application/pdf', null, true));
+        $request->merge(['title' => trim((string) $request->input('title')) ?: $exam->title]);
+
+        try {
+            return app(\App\Http\Controllers\TeacherAssignmentController::class)->storeHomework($request);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    /** Sınav/çalışma kâğıdı PDF'ini üretir; soru yoksa null döner. */
+    private function renderPdf(Exam $exam, string $mode)
+    {
+        @set_time_limit(180);
+        @ini_set('memory_limit', '512M');
+
+        $qs = $this->exportQuestions($exam);
+        if ($qs === []) {
+            return null;
         }
 
         $s = array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings);
@@ -317,9 +364,7 @@ class ExamController extends Controller
             'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
         ])->setPaper('a4', 'portrait')->setOption('enable_font_subsetting', true); // not: setOptions() (toplu) özel yazı tiplerinin (@font-face) kaydını bozuyor; varsayılanlar zaten dpi 96 / uzaktan erişim kapalı
 
-        $suffix = $this->fileSuffix($exam, $mode);
-
-        return $pdf->download(Str::slug($exam->title ?: 'sinav').$suffix.'.pdf');
+        return $pdf;
     }
 
     /** Çalışma kâğıdında mod belirtilmezse cevap gösterimi ayarına göre çıktı alınır. */

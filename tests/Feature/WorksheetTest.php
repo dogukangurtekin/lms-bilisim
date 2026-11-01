@@ -81,4 +81,37 @@ class WorksheetTest extends TestCase
 
         $this->actingAs($admin)->post(route('exams.store'), $this->form(['kind' => 'bogus']))->assertSessionHasErrors('kind');
     }
+
+    public function test_worksheet_can_be_assigned_as_homework_with_public_link(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin)->post(route('exams.store'), $this->form(['kind' => 'worksheet', 'answer_mode' => 'inline']));
+        $ws = Exam::query()->where('kind', 'worksheet')->firstOrFail();
+        ExamQuestion::query()->create([
+            'exam_id' => $ws->id, 'sort_order' => 0, 'type' => 'multiple_choice', 'body' => 'En küçük asal sayı kaçtır?',
+            'options' => ['1', '2', '3', '4'], 'answer' => 'B', 'points' => 0,
+        ]);
+        // course_id'yi nullable yapan migration yalnızca MySQL'de çalışır; SQLite test veritabanında aynı durumu kur.
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\Schema::table('course_homeworks', fn ($t) => $t->unsignedBigInteger('course_id')->nullable()->change());
+        }
+        $class = \App\Models\SchoolClass::query()->create(['name' => '9', 'section' => 'A', 'grade_level' => 9, 'academic_year' => '2026-2027']);
+
+        $this->actingAs($admin)->get(route('exams.index', ['tab' => 'worksheet']))
+            ->assertOk()->assertSee('Ödev olarak ver')->assertSee('9/A');
+
+        $this->actingAs($admin)->post(route('exams.assign', $ws), [
+            'title' => 'Hafta 1 Çalışma Kâğıdı', 'class_ids' => [$class->id], 'is_public' => '1',
+        ])->assertRedirect(route('teacher.assignments.index'));
+
+        $hw = \App\Models\CourseHomework::query()->firstOrFail();
+        $this->assertSame('Hafta 1 Çalışma Kâğıdı', $hw->title);
+        $this->assertSame($class->id, (int) $hw->school_class_id);
+        $this->assertStringEndsWith('.pdf', (string) $hw->attachment_path);
+        $this->assertNotEmpty($hw->public_token);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($hw->attachment_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($hw->attachment_path);
+
+        $this->actingAs($admin)->post(route('exams.assign', $ws), ['title' => 'x'])->assertSessionHasErrors('class_ids');
+    }
 }

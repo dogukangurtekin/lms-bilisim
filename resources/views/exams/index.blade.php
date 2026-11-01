@@ -66,6 +66,7 @@
                     </div>
                     <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
                     @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="{{ $tab === 'worksheet' ? 'Çalışma kâğıdını (cevap ayarına göre) PDF olarak indir' : 'Öğrenci kâğıdını PDF olarak indir' }}">PDF</a><a href="{{ route('exams.word', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını Word olarak indir">Word</a>@endif
+                    @if($tab === 'worksheet' && $exam->questions_count > 0)<button type="button" class="btn" style="padding:7px 14px" data-assign="{{ route('exams.assign', $exam) }}" data-title="{{ $exam->title }}" title="Çalışma kâğıdını öğrencilere ödev olarak ver">📌 Ödev olarak ver</button>@endif
                     <form method="POST" action="{{ route('exams.duplicate', $exam) }}" class="ex-del">@csrf<button type="submit" style="background:#e0e7ff;color:#3730a3" title="Sınavın kopyasını oluştur">Kopyala</button></form>
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
@@ -162,6 +163,41 @@
     </aside>
     @endif
 </div>
+@if($tab === 'worksheet')
+<dialog id="ws-assign" style="border:0;border-radius:16px;padding:0;width:min(520px,94vw);box-shadow:0 20px 60px rgba(15,23,42,.35)">
+    <form method="POST" id="ws-assign-form" enctype="multipart/form-data" style="padding:18px 20px;display:grid;gap:8px">
+        @csrf
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:17px">📌 Çalışma Kâğıdını Ödev Olarak Ver</strong><button class="btn" type="button" id="ws-assign-close">Kapat</button></div>
+        <small style="color:#64748b">Çalışma kâğıdı PDF olarak ödeve eklenir (cevap ayarı: şu anki ayarına göre). Verdikten sonra kâğıtta yaptığın değişiklikler o ödeve yansımaz.</small>
+        <label>Ödev Başlığı</label>
+        <input name="title" id="ws-title" required maxlength="160">
+        <label>Sınıf / Şube</label>
+        <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="ws-all" name="all_classes" value="1" style="width:auto;margin:0"><span>{{ auth()->user()?->hasRole('teacher') ? 'Tüm Atandığım Sınıflara Ver' : 'Tüm Sınıflara Ver' }}</span></label>
+        <select name="class_ids[]" id="ws-classes" multiple size="6" style="min-height:130px">
+            @foreach($classes as $class)<option value="{{ $class->id }}">{{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}</option>@endforeach
+        </select>
+        <label>Son Teslim Tarihi</label>
+        <input type="date" name="due_date" min="{{ now()->toDateString() }}">
+        <label>Ödev Açıklaması</label>
+        <textarea name="details" rows="3">Çalışma kâğıdındaki soruları çalışarak cevaplayınız.</textarea>
+        @include('partials.public-homework-field')
+        <button class="btn" type="submit" style="background:#2563eb;color:#fff">Ödevi Ver</button>
+    </form>
+</dialog>
+<script>
+(() => {
+    const dlg = document.getElementById('ws-assign'), form = document.getElementById('ws-assign-form');
+    if (!dlg) return;
+    const all = document.getElementById('ws-all'), sel = document.getElementById('ws-classes');
+    document.querySelectorAll('[data-assign]').forEach((b) => b.addEventListener('click', () => {
+        form.action = b.dataset.assign; document.getElementById('ws-title').value = b.dataset.title; dlg.showModal();
+    }));
+    document.getElementById('ws-assign-close').addEventListener('click', () => dlg.close());
+    all.addEventListener('change', () => { sel.disabled = all.checked; });
+    form.addEventListener('submit', (e) => { if (!all.checked && !sel.selectedOptions.length) { e.preventDefault(); alert('En az bir sınıf seçin veya "Tüm Sınıflara Ver" kutusunu işaretleyin.'); } });
+})();
+</script>
+@endif
 @endsection
 
 @push('scripts')
