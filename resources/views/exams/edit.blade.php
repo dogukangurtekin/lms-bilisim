@@ -248,8 +248,17 @@
     <aside class="xe-panel xe-right">
         <h3>⚙️ Sınav Ayarları</h3>
         <label class="xe-f">Başlık<input type="text" data-k="exam.title" maxlength="200"></label>
-        <label class="xe-f">Okul adı<input type="text" data-k="exam.school_name" maxlength="200"></label>
-        <label class="xe-f">Ders<input type="text" data-k="exam.subject" maxlength="120"></label>
+        <label class="xe-f">Okul adı<select data-k="exam.school_name" data-keep>
+            <option value="">—</option>
+            <option value="Özel Gebze Özelsin Koleji Ortaokulu">Özel Gebze Özelsin Koleji Ortaokulu</option>
+            <option value="Özel Gebze Özelsin Koleji Anadolu Lisesi">Özel Gebze Özelsin Koleji Anadolu Lisesi</option>
+            <option value="Özel Gebze Özelsin Koleji Fen Lisesi">Özel Gebze Özelsin Koleji Fen Lisesi</option>
+            <option value="Özel Gebze Özelsin Koleji Fen ve Teknoloji Lisesi">Özel Gebze Özelsin Koleji Fen ve Teknoloji Lisesi</option>
+        </select></label>
+        <label class="xe-f">Ders<select data-k="exam.subject" data-keep>
+            <option value="">—</option>
+            <option value="Bilişim Teknolojileri ve Yazılım">Bilişim Teknolojileri ve Yazılım</option>
+        </select></label>
         <div class="xe-row2">
             <label class="xe-f">Sınıf düzeyi<select data-k="exam.grade_level" data-num><option value="">—</option>@for($i=1;$i<=12;$i++)<option value="{{ $i }}">{{ $i }}. sınıf</option>@endfor</select></label>
             <label class="xe-f">Şube<input type="text" data-k="exam.class_label" maxlength="60" placeholder="5/A"></label>
@@ -683,6 +692,10 @@
         document.querySelectorAll('[data-k]').forEach((el) => {
             const [grp, key] = el.dataset.k.split('.');
             const val = state[grp][key];
+            // Listede olmayan eski (serbest yazılmış) değerler kaybolmasın: seçenek olarak eklenir.
+            if (el.tagName === 'SELECT' && el.dataset.keep !== undefined && val && ![...el.options].some((o) => o.value === val)) {
+                const o = document.createElement('option'); o.value = val; o.textContent = val; el.appendChild(o);
+            }
             if (el.type === 'checkbox') el.checked = !!val; else el.value = val ?? '';
         });
         document.querySelectorAll('[data-tpl]').forEach((b) => b.classList.toggle('on', b.dataset.tpl === state.exam.template));
