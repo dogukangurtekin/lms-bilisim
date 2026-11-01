@@ -115,6 +115,32 @@
         show(0);
     }
 
+    // Telefon/tablette gömülü PDF görüntüleyici yalnızca ilk sayfayı gösterir (iOS) ya da hiç göstermez (Android): sayfaları alt alta çiz.
+    function wantsPdfPages() {
+        var ua = navigator.userAgent || '';
+        return /iPhone|iPad|iPod|Android|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) || (window.matchMedia && window.matchMedia('(max-width:1100px)').matches);
+    }
+    async function pdfPages(box, url, alive) {
+        await loadScript('/js/preview/pdfjs-pdf.min.js?v=1');
+        var lib = window.pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc = '/js/preview/pdfjs-pdf.worker.min.js?v=1';
+        var doc = await lib.getDocument({ url: url }).promise;
+        if (!alive()) return;
+        box.innerHTML = '<div class="sh-pdfpages" style="background:#eceae3;padding:8px"></div>';
+        var host = box.firstChild, dpr = Math.min(2, window.devicePixelRatio || 1);
+        for (var i = 1; i <= doc.numPages; i++) {
+            var page = await doc.getPage(i);
+            if (!alive()) return;
+            var base = page.getViewport({ scale: 1 });
+            var cssW = Math.max(240, (host.clientWidth || window.innerWidth) - 16);
+            var vp = page.getViewport({ scale: (cssW / base.width) * dpr });
+            var cv = document.createElement('canvas');
+            cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+            cv.style.cssText = 'display:block;width:100%;height:auto;margin:0 auto 8px;background:#fff;box-shadow:0 2px 10px rgba(22,24,43,.15)';
+            host.appendChild(cv);
+            await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        }
+    }
     // box: hedef element, url: ayni alan adindaki dosya, alive: iptal kontrolu
     async function render(box, url, name, alive) {
         alive = alive || function () { return true; };
@@ -124,7 +150,11 @@
             if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].indexOf(ext) > -1) {
                 box.innerHTML = '<img alt="' + esc(name) + '" src="' + url + '">';
             } else if (ext === 'pdf') {
-                box.innerHTML = '<iframe title="PDF" src="' + url + '"></iframe>';
+                var shown = false;
+                if (wantsPdfPages()) {
+                    try { await pdfPages(box, url, alive); shown = true; } catch (e) { shown = false; }
+                }
+                if (!shown && alive()) box.innerHTML = '<iframe title="PDF" src="' + url + '"></iframe>';
             } else if (['mp4', 'webm', 'mov'].indexOf(ext) > -1) {
                 box.innerHTML = '<video controls src="' + url + '"></video>';
             } else if (['mp3', 'wav', 'ogg', 'm4a'].indexOf(ext) > -1) {
