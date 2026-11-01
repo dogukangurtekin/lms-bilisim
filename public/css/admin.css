@@ -1315,3 +1315,7 @@ body.sidebar-mini .sidebar-staff .staff-who,body.sidebar-mini .sidebar-staff .st
 /* Grid içindeki kartlar tablo genişliğine göre büyüyüp sayfayı taşırıyordu (mobilde tablo kaydırılamıyordu): kartlar daralabilsin, tablo kendi kutusunda kaysın */
 .an-wrap>*,.an-card,.grid>*{min-width:0;max-width:100%}
 .an-table-wrap,.table-responsive{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+/* Kaydırılabilir kutu içindeki tablo kendi içinde ikinci bir kaydırma alanı oluşturmasın: içerik genişliğinde dursun, kutu kaydırsın */
+.an-table-wrap>table,.table-responsive>table{display:table;overflow:visible;width:max-content;min-width:100%}
+.an-wrap{grid-template-columns:minmax(0,1fr)}
