@@ -1256,3 +1256,12 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
   body.sidebar-mini .sidebar a .nav-icon{width:22px;height:22px}
   body.sidebar-mini .sidebar a .nav-icon svg{width:20px;height:20px}
 }
+/* Mobil tablolar: kelimeler harf harf bölünmesin, geniş tablo yatay kaydırılsın; işlem butonları yan yana kalsın */
+@media (max-width: 768px){
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  th,td{overflow-wrap:break-word;word-break:normal;min-width:84px;vertical-align:middle}
+  th{white-space:nowrap}
+}
+td.actions,th.actions{display:table-cell;flex-direction:row;white-space:nowrap;min-width:0}
+td.actions>*,td.actions form{display:inline-block;vertical-align:middle;margin:0 4px 4px 0}
+td.actions .btn,td.actions button{min-height:36px;min-width:0;padding:6px 12px;font-size:13px}
