@@ -183,7 +183,8 @@
 </style>
 
 <div class="xe-top">
-    <a class="xe-btn" href="{{ route('exams.index') }}">← Sınavlar</a>
+    @php($ws = ($exam->kind ?? 'exam') === 'worksheet')
+    <a class="xe-btn" href="{{ $ws ? route('exams.index', ['tab' => 'worksheet']) : route('exams.index') }}">{{ $ws ? '← Çalışma Kâğıtları' : '← Sınavlar' }}</a>
     <h1 id="xe-heading">{{ $exam->title }}</h1>
     <span class="xe-chip" id="xe-status">Kaydedildi</span>
     <button type="button" class="xe-btn" id="xe-final"></button>
@@ -192,18 +193,18 @@
     <div class="xe-menu">
         <button type="button" class="xe-btn" id="xe-pdf">📄 PDF ▾</button>
         <div class="xe-dd" id="xe-dd">
-            <button type="button" data-pdf="student">Öğrenci kâğıdı<small>Sorular, cevapsız</small></button>
-            <button type="button" data-pdf="student_key">Öğrenci kâğıdı + cevap anahtarı<small>Son sayfada cevap tablosu</small></button>
-            <button type="button" data-pdf="teacher">Öğretmen kâğıdı (cevaplı)<small>Doğru şıklar ve cevaplar işaretli</small></button>
+            <button type="button" data-pdf="student">{{ $ws ? 'Çalışma kâğıdı (cevapsız)' : 'Öğrenci kâğıdı' }}<small>Sorular, cevapsız</small></button>
+            <button type="button" data-pdf="student_key">{{ $ws ? 'Çalışma kâğıdı + cevap anahtarı' : 'Öğrenci kâğıdı + cevap anahtarı' }}<small>Son sayfada cevap tablosu</small></button>
+            <button type="button" data-pdf="teacher">{{ $ws ? 'Cevaplı çalışma kâğıdı' : 'Öğretmen kâğıdı (cevaplı)' }}<small>Doğru şıklar ve cevaplar işaretli</small></button>
             <button type="button" data-pdf="key">Yalnız cevap anahtarı<small>Tek tablo</small></button>
         </div>
     </div>
     <div class="xe-menu">
         <button type="button" class="xe-btn" id="xe-word">📝 Word ▾</button>
         <div class="xe-dd" id="xe-dd-w">
-            <button type="button" data-word="student">Öğrenci kâğıdı<small>Sorular, cevapsız</small></button>
-            <button type="button" data-word="student_key">Öğrenci kâğıdı + cevap anahtarı<small>Son sayfada cevap tablosu</small></button>
-            <button type="button" data-word="teacher">Öğretmen kâğıdı (cevaplı)<small>Doğru şıklar ve cevaplar işaretli</small></button>
+            <button type="button" data-word="student">{{ $ws ? 'Çalışma kâğıdı (cevapsız)' : 'Öğrenci kâğıdı' }}<small>Sorular, cevapsız</small></button>
+            <button type="button" data-word="student_key">{{ $ws ? 'Çalışma kâğıdı + cevap anahtarı' : 'Öğrenci kâğıdı + cevap anahtarı' }}<small>Son sayfada cevap tablosu</small></button>
+            <button type="button" data-word="teacher">{{ $ws ? 'Cevaplı çalışma kâğıdı' : 'Öğretmen kâğıdı (cevaplı)' }}<small>Doğru şıklar ve cevaplar işaretli</small></button>
             <button type="button" data-word="key">Yalnız cevap anahtarı<small>Tek tablo</small></button>
         </div>
     </div>
@@ -246,7 +247,7 @@
     </section>
 
     <aside class="xe-panel xe-right">
-        <h3>⚙️ Sınav Ayarları</h3>
+        <h3>⚙️ {{ $ws ? 'Çalışma Kâğıdı Ayarları' : 'Sınav Ayarları' }}</h3>
         <label class="xe-f">Başlık<input type="text" data-k="exam.title" maxlength="200"></label>
         <label class="xe-f">Okul adı<select data-k="exam.school_name" data-keep>
             <option value="">—</option>
@@ -264,13 +265,18 @@
             <label class="xe-f">Şube<input type="text" data-k="exam.class_label" maxlength="60" placeholder="5/A"></label>
         </div>
         <label class="xe-f">Eğitim-öğretim yılı<input type="text" data-k="settings.academic_year" maxlength="20" placeholder="2026-2027"></label>
+        @if($ws)
+        <label class="xe-f">Cevap gösterimi (PDF/Word varsayılanı)<select data-k="settings.answer_mode">@foreach(\App\Models\Exam::ANSWER_MODES as $k => $lbl)<option value="{{ $k }}">{{ $lbl }}</option>@endforeach</select></label>
+        @endif
+        @unless($ws)
         <div class="xe-row2">
             <label class="xe-f">Dönem<select data-k="settings.term_no"><option value="">—</option><option value="1">1. Dönem</option><option value="2">2. Dönem</option></select></label>
             <label class="xe-f">Yazılı no<select data-k="settings.exam_no"><option value="">—</option><option value="1">1. Yazılı</option><option value="2">2. Yazılı</option><option value="3">3. Yazılı</option><option value="4">4. Yazılı</option><option value="5">5. Yazılı</option></select></label>
         </div>
+        @endunless
         <div class="xe-row2">
             <label class="xe-f">Tarih<input type="date" data-k="exam.exam_date"></label>
-            <label class="xe-f">Süre (dk)<input type="number" data-k="exam.duration_min" data-num min="1" max="600"></label>
+            @unless($ws)<label class="xe-f">Süre (dk)<input type="number" data-k="exam.duration_min" data-num min="1" max="600"></label>@endunless
         </div>
         <div class="xe-f">Şablon
             <div class="tpl-gal" id="tpl-gal">

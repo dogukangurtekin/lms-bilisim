@@ -3,7 +3,17 @@
 @section('content')
 <div class="top"><h1>📝 Sınav Oluştur</h1><a class="btn" href="{{ route('exams.bank.index') }}" style="margin-left:auto">📚 Soru Havuzu</a></div>
 
+<nav class="ex-tabs">
+    <a href="{{ route('exams.index') }}" class="{{ $tab === 'exam' ? 'on' : '' }}">📝 Sınavlar <span>{{ (int) ($counts['exam'] ?? 0) }}</span></a>
+    <a href="{{ route('exams.index', ['tab' => 'worksheet']) }}" class="{{ $tab === 'worksheet' ? 'on' : '' }}">📄 Çalışma Kâğıtları <span>{{ (int) ($counts['worksheet'] ?? 0) }}</span></a>
+</nav>
+
 <style>
+    .ex-tabs{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+    .ex-tabs a{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;background:#fff;border:2px solid #dbe5f2;color:#334155;font-weight:800;text-decoration:none}
+    .ex-tabs a span{background:#e2e8f0;border-radius:999px;padding:1px 9px;font-size:12px}
+    .ex-tabs a.on{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
+    .ex-tabs a.on span{background:#bfdbfe}
     .ex-wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
     .ex-card{background:#fff;border:1px solid #dbe5f2;border-radius:18px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.05)}
     .ex-card h2{margin:0 0 4px;font-size:18px}
@@ -37,12 +47,12 @@
 
 <div class="ex-wrap">
     <section class="ex-card">
-        <h2>{{ $isAdmin ? 'Tüm Sınavlar' : 'Sınavlarım' }}</h2>
-        <p class="ex-sub">Hazırladığınız sınav kâğıtları burada listelenir. Bir sınava tıklayarak soru editörünü açın. Soru havuzu ve PDF/Word çıktısı sonraki adımlarda eklenecek.</p>
+        <h2>{{ $tab === 'worksheet' ? ($isAdmin ? 'Tüm Çalışma Kâğıtları' : 'Çalışma Kâğıtlarım') : ($isAdmin ? 'Tüm Sınavlar' : 'Sınavlarım') }}</h2>
+        <p class="ex-sub">{{ $tab === 'worksheet' ? 'Öğrencilerin çalışması için hazırladığınız, cevapları da yazılı çıktılar burada listelenir. Açarak soru havuzundan soru ekleyin; PDF cevaplı çıkar.' : 'Hazırladığınız sınav kâğıtları burada listelenir. Bir sınava tıklayarak soru editörünü açın. Soru havuzu ve PDF/Word çıktısı sonraki adımlarda eklenecek.' }}</p>
         <div class="ex-list">
             @forelse($exams as $exam)
                 <div class="ex-item">
-                    <div class="ex-ico">📄</div>
+                    <div class="ex-ico">{{ $tab === 'worksheet' ? '📑' : '📄' }}</div>
                     <div class="ex-meta">
                         <b><a href="{{ route('exams.edit', $exam) }}" style="color:inherit;text-decoration:none">{{ $exam->title }}</a></b>
                         <small>
@@ -55,18 +65,56 @@
                         </small>
                     </div>
                     <a href="{{ route('exams.edit', $exam) }}" class="btn" style="padding:7px 14px">Düzenle</a>
-                    @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını PDF olarak indir">PDF</a><a href="{{ route('exams.word', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını Word olarak indir">Word</a>@endif
+                    @if($exam->questions_count > 0)<a href="{{ route('exams.pdf', $exam) }}" class="btn" style="padding:7px 14px" title="{{ $tab === 'worksheet' ? 'Çalışma kâğıdını (cevap ayarına göre) PDF olarak indir' : 'Öğrenci kâğıdını PDF olarak indir' }}">PDF</a><a href="{{ route('exams.word', $exam) }}" class="btn" style="padding:7px 14px" title="Öğrenci kâğıdını Word olarak indir">Word</a>@endif
                     <form method="POST" action="{{ route('exams.duplicate', $exam) }}" class="ex-del">@csrf<button type="submit" style="background:#e0e7ff;color:#3730a3" title="Sınavın kopyasını oluştur">Kopyala</button></form>
                     <form method="POST" action="{{ route('exams.destroy', $exam) }}" class="ex-del" data-confirm="Bu sınav silinsin mi?">@csrf @method('DELETE')
                         <button type="submit">Sil</button>
                     </form>
                 </div>
             @empty
-                <div class="ex-empty">Henüz sınav yok. Sağdaki formdan ilk sınavınızı oluşturun.</div>
+                <div class="ex-empty">{{ $tab === 'worksheet' ? 'Henüz çalışma kâğıdı yok. Sağdaki formdan ilkini oluşturun.' : 'Henüz sınav yok. Sağdaki formdan ilk sınavınızı oluşturun.' }}</div>
             @endforelse
         </div>
     </section>
 
+    @if($tab === 'worksheet')
+    <aside class="ex-card">
+        <h2>Yeni Çalışma Kâğıdı</h2>
+        <p class="ex-sub">Öğrencilerin çalışması için soru havuzundan seçtiğiniz sorulardan, cevapları da yazılı bir çıktı hazırlayın.</p>
+        @if($errors->any())<div class="ex-err" style="margin-bottom:10px">{{ $errors->first() }}</div>@endif
+        <form method="POST" action="{{ route('exams.store') }}" class="ex-form">
+            @csrf
+            <input type="hidden" name="kind" value="worksheet">
+            <label>Çalışma kâğıdı başlığı<input name="title" value="{{ old('title') }}" maxlength="200" required placeholder="Örn. Algoritma ve Akış Şeması Çalışma Kâğıdı"></label>
+            <div class="ex-row">
+                <label>Ders
+                    <select name="subject"><option value="">—</option>@foreach(\App\Models\Exam::SUBJECTS as $sub)<option value="{{ $sub }}" @selected(old('subject') === $sub)>{{ $sub }}</option>@endforeach</select>
+                </label>
+                <label>Sınıf düzeyi
+                    <select name="grade_level"><option value="">—</option>@for($i=1;$i<=12;$i++)<option value="{{ $i }}" @selected((int) old('grade_level') === $i)>{{ $i }}. sınıf</option>@endfor</select>
+                </label>
+            </div>
+            <label>Okul adı
+                <select name="school_name"><option value="">—</option>@foreach(\App\Models\Exam::SCHOOLS as $sch)<option value="{{ $sch }}" @selected(old('school_name') === $sch)>{{ $sch }}</option>@endforeach</select>
+            </label>
+            <div class="ex-row">
+                <label>Eğitim-öğretim yılı<input name="academic_year" value="{{ old('academic_year', $defaultYear) }}" maxlength="20" placeholder="2026-2027"></label>
+                <label>Tarih<input type="date" name="exam_date" value="{{ old('exam_date') }}"></label>
+            </div>
+            <label>Cevap gösterimi
+                <select name="answer_mode">@foreach(\App\Models\Exam::ANSWER_MODES as $key => $label)<option value="{{ $key }}" @selected(old('answer_mode', 'inline') === $key)>{{ $label }}</option>@endforeach</select>
+            </label>
+            <label>Şablon
+                <select name="template">@foreach($templates as $key => $label)<option value="{{ $key }}" @selected(old('template', 'plain') === $key)>{{ $label }}</option>@endforeach</select>
+            </label>
+            <div class="ex-cols">
+                <label><input type="radio" name="columns" value="1" @checked((int) old('columns', 1) === 1)><i><span></span></i>Tek sütun</label>
+                <label><input type="radio" name="columns" value="2" @checked((int) old('columns', 1) === 2)><i><span></span><span></span></i>İki sütun</label>
+            </div>
+            <button type="submit" class="ex-submit">Çalışma Kâğıdını Oluştur</button>
+        </form>
+    </aside>
+    @else
     <aside class="ex-card">
         <div class="ex-word">
             <b>📎 Word kâğıdından başla</b>
@@ -112,6 +160,7 @@
             <button type="submit" class="ex-submit">Sınavı Oluştur</button>
         </form>
     </aside>
+    @endif
 </div>
 @endsection
 

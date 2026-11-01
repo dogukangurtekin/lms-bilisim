@@ -126,7 +126,7 @@
                     $px = fn (int ...$cols) => (int) round(array_sum(array_map(fn ($i) => $pct[$i], $cols)) / 100 * $tw);
                 @endphp
                 <div class="ph" style="{{ $tblFrame ? 'margin-left:-'.$fpad.'px;' : '' }}">
-                    @if($mode === 'teacher')<div class="tag" style="{{ $tblFrame ? 'padding-right:'.$fpad.'px' : '' }}">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
+                    @if($mode === 'teacher')<div class="tag" style="{{ $tblFrame ? 'padding-right:'.$fpad.'px' : '' }}">{{ $exam->isWorksheet() ? 'ÇALIŞMA KÂĞIDI — CEVAPLI' : 'ÖĞRETMEN NÜSHASI — CEVAPLI' }}</div>@endif
                     <table style="width:{{ $tw }}px;border-collapse:collapse">
                         <tr style="height:86px">
                             <td style="{{ $cell }}width:{{ $px(0) }}px;text-align:center">@if($lg1)<img src="{{ $lg1 }}" style="max-width:{{ $px(0) - 12 }}px;max-height:78px">@endif</td>
@@ -162,7 +162,7 @@
                         : $top;
                 @endphp
                 <div class="ph">
-                    @if($mode === 'teacher')<div class="tag">ÖĞRETMEN NÜSHASI — CEVAPLI</div>@endif
+                    @if($mode === 'teacher')<div class="tag">{{ $exam->isWorksheet() ? 'ÇALIŞMA KÂĞIDI — CEVAPLI' : 'ÖĞRETMEN NÜSHASI — CEVAPLI' }}</div>@endif
                     <div class="{{ $tpl === 'modern' ? '' : 'ph-box' }}">
                         @if($tpl === 'modern')<div class="ph-band">{!! $topWithLogo !!}</div><div class="ph-rest">@else {!! $topWithLogo !!} @endif
                         <table class="ph-meta"><tr><td style="text-align:left">Tarih: {{ $date }}</td><td style="text-align:center">Süre: {{ $exam->duration_min ? $exam->duration_min.' dk' : '……' }}</td><td style="text-align:right">Toplam Puan: {{ $fmt($totalPoints) }}</td></tr></table>

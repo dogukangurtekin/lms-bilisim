@@ -22,14 +22,19 @@ class ExamController extends Controller
         $user = $request->user();
         $isAdmin = $user->hasRole('admin');
 
-        $exams = Exam::query()
+        $tab = $request->query('tab') === 'worksheet' ? 'worksheet' : 'exam';
+        $scope = fn () => Exam::query()->when(! $isAdmin, fn ($q) => $q->where('user_id', $user->id));
+        $counts = $scope()->selectRaw('kind, count(*) as c')->groupBy('kind')->pluck('c', 'kind');
+        $exams = $scope()
             ->with('owner:id,name')
             ->withCount('questions')
-            ->when(! $isAdmin, fn ($q) => $q->where('user_id', $user->id))
+            ->where('kind', $tab)
             ->orderByDesc('updated_at')
             ->get();
 
         return view('exams.index', [
+            'tab' => $tab,
+            'counts' => $counts,
             'exams' => $exams,
             'isAdmin' => $isAdmin,
             'templates' => Exam::TEMPLATES,
@@ -51,7 +56,12 @@ class ExamController extends Controller
             'school_name' => ['nullable', 'string', 'max:200'],
             'template' => ['required', Rule::in(array_keys(Exam::TEMPLATES))],
             'columns' => ['required', 'integer', 'in:1,2'],
+            'kind' => ['nullable', Rule::in(['exam', 'worksheet'])],
+            'answer_mode' => ['nullable', Rule::in(array_keys(Exam::ANSWER_MODES))],
         ]);
+        $kind = ($data['kind'] ?? 'exam') === 'worksheet' ? 'worksheet' : 'exam';
+        $answerMode = (string) ($data['answer_mode'] ?? 'inline');
+        unset($data['kind'], $data['answer_mode']);
         $settings = array_merge(self::DEFAULT_SETTINGS, [
             'academic_year' => trim((string) ($data['academic_year'] ?? '')) ?: ExamLayout::academicYear($data['exam_date'] ?? null),
             'term_no' => (string) ($data['term_no'] ?? ''),
@@ -59,9 +69,23 @@ class ExamController extends Controller
         ]);
         unset($data['academic_year'], $data['term_no'], $data['exam_no']);
 
-        $exam = Exam::query()->create($data + ['user_id' => $request->user()->id, 'status' => 'draft', 'settings' => $settings]);
+        if ($kind === 'worksheet') {
+            // Çalışma kâğıdı: puan/süre yok, öğrenci çalışsın diye cevaplar çıktıya yazılır.
+            $settings['show_points'] = false;
+            $settings['answer_mode'] = $answerMode;
+            $settings['instructions'] = 'Soruları çalışarak cevaplayınız.';
+            $data['duration_min'] = null;
+            $settings['term_no'] = '';
+            $settings['exam_no'] = '';
+        }
 
-        return redirect()->route('exams.edit', $exam)->with('ok', '"'.$exam->title.'" sınavı oluşturuldu. Soruları ekleyebilirsiniz.');
+        $exam = Exam::query()->create($data + ['kind' => $kind, 'user_id' => $request->user()->id, 'status' => 'draft', 'settings' => $settings]);
+
+        $msg = $kind === 'worksheet'
+            ? '"'.$exam->title.'" çalışma kâğıdı oluşturuldu. Soruları soru havuzundan seçerek ekleyebilirsiniz.'
+            : '"'.$exam->title.'" sınavı oluşturuldu. Soruları ekleyebilirsiniz.';
+
+        return redirect()->route('exams.edit', $exam)->with('ok', $msg);
     }
 
     public const QUESTION_TYPES = ['multiple_choice', 'true_false', 'fill_blank', 'open_ended', 'matching'];
@@ -93,6 +117,8 @@ class ExamController extends Controller
         'border_width' => 2,
         'term_no' => '',
         'exam_no' => '',
+        // Çalışma kâğıdı: inline (cevaplı) | key_end (sonda cevap anahtarı) | none (cevapsız)
+        'answer_mode' => 'inline',
     ];
 
     public function edit(Request $request, Exam $exam)
@@ -130,6 +156,7 @@ class ExamController extends Controller
                     'template' => $exam->template,
                     'columns' => (int) $exam->columns,
                     'status' => $exam->status,
+                    'kind' => $exam->kind ?? 'exam',
                 ],
                 'settings' => array_diff_key(array_merge(self::DEFAULT_SETTINGS, (array) $exam->settings), ['layout' => 1, 'layout_header_h' => 1]),
                 'questions' => $questions,
@@ -174,6 +201,7 @@ class ExamController extends Controller
             'settings.border_width' => ['required', 'in:1,1.5,2,3,4'],
             'settings.term_no' => ['nullable', 'in:1,2'],
             'settings.exam_no' => ['nullable', 'in:1,2,3,4,5'],
+            'settings.answer_mode' => ['nullable', Rule::in(array_keys(Exam::ANSWER_MODES))],
             'settings.logo_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'settings.logo2_path' => ['nullable', 'string', 'max:120', 'regex:#^(exam-logos/[a-f0-9]{16,64}\.(png|jpe?g|webp))?$#'],
             'layout' => ['nullable', 'array', 'max:80'],
@@ -256,7 +284,7 @@ class ExamController extends Controller
         @set_time_limit(180);
         @ini_set('memory_limit', '512M');
 
-        $mode = (string) $request->query('mode', 'student');
+        $mode = (string) $request->query('mode', $this->defaultMode($exam));
         if (! in_array($mode, ['student', 'student_key', 'teacher', 'key'], true)) {
             $mode = 'student';
         }
@@ -289,9 +317,32 @@ class ExamController extends Controller
             'contentH' => ExamLayout::contentHeight($s), 'headerH' => ExamLayout::headerHeight($s),
         ])->setPaper('a4', 'portrait')->setOption('enable_font_subsetting', true); // not: setOptions() (toplu) özel yazı tiplerinin (@font-face) kaydını bozuyor; varsayılanlar zaten dpi 96 / uzaktan erişim kapalı
 
-        $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
+        $suffix = $this->fileSuffix($exam, $mode);
 
         return $pdf->download(Str::slug($exam->title ?: 'sinav').$suffix.'.pdf');
+    }
+
+    /** Çalışma kâğıdında mod belirtilmezse cevap gösterimi ayarına göre çıktı alınır. */
+    private function defaultMode(Exam $exam): string
+    {
+        if (! $exam->isWorksheet()) {
+            return 'student';
+        }
+
+        return match ((string) (((array) $exam->settings)['answer_mode'] ?? 'inline')) {
+            'key_end' => 'student_key',
+            'none' => 'student',
+            default => 'teacher',
+        };
+    }
+
+    private function fileSuffix(Exam $exam, string $mode): string
+    {
+        if ($exam->isWorksheet()) {
+            return ['student' => '-cevapsiz', 'student_key' => '-cevap-anahtarli', 'teacher' => '-cevapli', 'key' => '-cevap-anahtari'][$mode];
+        }
+
+        return ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
     }
 
     /** PDF ve Word çıktısı için sınav sorularını düz diziye çevirir. */
@@ -434,7 +485,7 @@ class ExamController extends Controller
         $this->authorizeOwner($request, $exam);
         @set_time_limit(120);
 
-        $mode = (string) $request->query('mode', 'student');
+        $mode = (string) $request->query('mode', $this->defaultMode($exam));
         if (! in_array($mode, ['student', 'student_key', 'teacher', 'key'], true)) {
             $mode = 'student';
         }
@@ -457,7 +508,7 @@ class ExamController extends Controller
                 throw $e;
             }
         }
-        $suffix = ['student' => '', 'student_key' => '-cevap-anahtarli', 'teacher' => '-ogretmen', 'key' => '-cevap-anahtari'][$mode];
+        $suffix = $this->fileSuffix($exam, $mode);
 
         return response()->streamDownload(function () use ($bin): void {
             echo $bin;

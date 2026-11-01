@@ -325,7 +325,7 @@ class Builder
 
         $paras = '';
         if ($this->mode === 'teacher') {
-            $paras .= Xml::para([$R('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
+            $paras .= Xml::para([$R($this->exam->isWorksheet() ? 'ÇALIŞMA KÂĞIDI — CEVAPLI' : 'ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
         // Satırlar sırayla: yıl, okul adı, ders adı, (en sonda) dönem ve yazılı numarası
         $TL = \App\Support\ExamLayout::titleLines($e, $s);
@@ -446,7 +446,7 @@ class Builder
         $b = ['single', $this->borderSz(), '000000'];
         $x = '';
         if ($this->mode === 'teacher') {
-            $x .= Xml::para([$R('ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
+            $x .= Xml::para([$R($this->exam->isWorksheet() ? 'ÇALIŞMA KÂĞIDI — CEVAPLI' : 'ÖĞRETMEN NÜSHASI — CEVAPLI', ['b' => 1, 'color' => 'B91C1C', 'sz' => 16])], ['jc' => 'right', 'after' => 60]);
         }
         $x .= Xml::table($rows, $w, ['borders' => ['top' => $b, 'left' => $b, 'bottom' => $b, 'right' => $b, 'insideH' => $b, 'insideV' => $b]] + ($framed ? ['ind' => -120] : []));
         return $x.Xml::para([], ['before' => 0, 'after' => 120, 'line' => 120]);

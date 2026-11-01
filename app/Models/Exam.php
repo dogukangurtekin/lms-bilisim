@@ -17,8 +17,24 @@ class Exam extends Model
         'table' => 'Tablolu (Okul)',
     ];
 
+    /** Çalışma kâğıdında cevapların çıktıya nasıl yazılacağı. */
+    public const ANSWER_MODES = [
+        'inline' => 'Her sorunun yanında cevaplı',
+        'key_end' => 'Sonda cevap anahtarı',
+        'none' => 'Cevapsız (boş çalışma kâğıdı)',
+    ];
+
+    public const SUBJECTS = ['Bilişim Teknolojileri ve Yazılım'];
+
+    public const SCHOOLS = [
+        'Özel Gebze Özelsin Koleji Ortaokulu',
+        'Özel Gebze Özelsin Koleji Anadolu Lisesi',
+        'Özel Gebze Özelsin Koleji Fen Lisesi',
+        'Özel Gebze Özelsin Koleji Fen ve Teknoloji Lisesi',
+    ];
+
     protected $fillable = [
-        'user_id', 'title', 'subject', 'grade_level', 'class_label', 'term', 'exam_date',
+        'kind', 'user_id', 'title', 'subject', 'grade_level', 'class_label', 'term', 'exam_date',
         'duration_min', 'school_name', 'template', 'columns', 'settings', 'status',
     ];
 
@@ -27,6 +43,11 @@ class Exam extends Model
         'settings' => 'array',
         'columns' => 'integer',
     ];
+
+    public function isWorksheet(): bool
+    {
+        return ($this->kind ?? 'exam') === 'worksheet';
+    }
 
     public function owner(): BelongsTo
     {
