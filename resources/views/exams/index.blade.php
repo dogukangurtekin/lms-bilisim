@@ -172,10 +172,7 @@
         <label>Ödev Başlığı</label>
         <input name="title" id="ws-title" required maxlength="160">
         <label>Sınıf / Şube</label>
-        <label style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" id="ws-all" name="all_classes" value="1" style="width:auto;margin:0"><span>{{ auth()->user()?->hasRole('teacher') ? 'Tüm Atandığım Sınıflara Ver' : 'Tüm Sınıflara Ver' }}</span></label>
-        <select name="class_ids[]" id="ws-classes" multiple size="6" style="min-height:130px">
-            @foreach($classes as $class)<option value="{{ $class->id }}">{{ $class->name }}/{{ $class->section }} - {{ $class->academic_year }}</option>@endforeach
-        </select>
+        @include('partials.class-picker', ['classes' => $classes, 'uid' => 'ws'])
         <label>Son Teslim Tarihi</label>
         <input type="date" name="due_date" min="{{ now()->toDateString() }}">
         <label>Ödev Açıklaması</label>
@@ -188,13 +185,10 @@
 (() => {
     const dlg = document.getElementById('ws-assign'), form = document.getElementById('ws-assign-form');
     if (!dlg) return;
-    const all = document.getElementById('ws-all'), sel = document.getElementById('ws-classes');
     document.querySelectorAll('[data-assign]').forEach((b) => b.addEventListener('click', () => {
         form.action = b.dataset.assign; document.getElementById('ws-title').value = b.dataset.title; dlg.showModal();
     }));
     document.getElementById('ws-assign-close').addEventListener('click', () => dlg.close());
-    all.addEventListener('change', () => { sel.disabled = all.checked; });
-    form.addEventListener('submit', (e) => { if (!all.checked && !sel.selectedOptions.length) { e.preventDefault(); alert('En az bir sınıf seçin veya "Tüm Sınıflara Ver" kutusunu işaretleyin.'); } });
 })();
 </script>
 @endif

@@ -98,7 +98,7 @@ class WorksheetTest extends TestCase
         $class = \App\Models\SchoolClass::query()->create(['name' => '9', 'section' => 'A', 'grade_level' => 9, 'academic_year' => '2026-2027']);
 
         $this->actingAs($admin)->get(route('exams.index', ['tab' => 'worksheet']))
-            ->assertOk()->assertSee('Ödev olarak ver')->assertSee('9/A');
+            ->assertOk()->assertSee("Ödev olarak ver")->assertSee("9/A")->assertSee("Kademe");
 
         $this->actingAs($admin)->post(route('exams.assign', $ws), [
             'title' => 'Hafta 1 Çalışma Kâğıdı', 'class_ids' => [$class->id], 'is_public' => '1',
