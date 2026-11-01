@@ -233,6 +233,7 @@
                     <select id="pl-diff"><option value="">Tüm zorluklar</option><option value="kolay">Kolay</option><option value="orta">Orta</option><option value="zor">Zor</option></select>
                     <select id="pl-type"><option value="">Tüm tipler</option><option value="multiple_choice">Çoktan seçmeli</option><option value="true_false">Doğru / Yanlış</option><option value="fill_blank">Boşluk doldurma</option><option value="open_ended">Açık uçlu</option><option value="matching">Eşleştirme</option></select>
                 </div>
+                <select id="pl-grade" style="width:100%"><option value="">Tüm sınıf düzeyleri</option>@for($i=1;$i<=12;$i++)<option value="{{ $i }}">{{ $i }}. sınıf</option>@endfor</select>
                 <label class="xe-sw"><input type="checkbox" id="pl-match"> Sınavın dersi / düzeyiyle sınırla</label>
                 <label class="xe-sw"><input type="checkbox" id="pl-mine"> Yalnızca benim sorularım</label>
             </div>
@@ -784,6 +785,7 @@
     const poolParams = () => {
         const p = new URLSearchParams({ q: $('pl-q').value, difficulty: $('pl-diff').value, type: $('pl-type').value, scope: $('pl-mine').checked ? 'mine' : '' });
         if ($('pl-match').checked) { if (state.exam.subject) p.set('subject', state.exam.subject); if (state.exam.grade_level) p.set('grade', state.exam.grade_level); }
+        if ($('pl-grade').value) p.set('grade', $('pl-grade').value);
         return p;
     };
     async function loadPool(reset) {
@@ -838,7 +840,7 @@
         const item = pool.items.find((x) => x.id === Number(btn.closest('.pl-card').dataset.id)); if (item) addFromBank(item);
     });
     $('pl-more').addEventListener('click', () => { pool.page++; loadPool(false); });
-    ['pl-diff', 'pl-type', 'pl-match', 'pl-mine'].forEach((id) => $(id).addEventListener('change', () => loadPool(true)));
+    ['pl-diff', 'pl-type', 'pl-grade', 'pl-match', 'pl-mine'].forEach((id) => $(id).addEventListener('change', () => loadPool(true)));
     $('pl-q').addEventListener('input', () => { clearTimeout(pool.timer); pool.timer = setTimeout(() => loadPool(true), 350); });
 
     $('xe-save').addEventListener('click', save);
