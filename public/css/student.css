@@ -655,3 +655,9 @@ body.role-student .detail-grid p{margin:0 0 8px}
   body.role-student.sidebar-mini .student-sidebar-time .btn{font-size:0;padding:0;min-width:0;height:40px}
   body.role-student.sidebar-mini .student-sidebar-time .btn::before{content:"⎋";font-size:18px}
 }
+
+/* Mobil tarayıcıda 100vh adres çubuğunun altına taşar; menünün en alt öğeleri görünmez kalırdı. 100dvh + güvenli alan boşluğu */
+body.role-student .sidebar{height:100vh;height:100dvh;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+@media (max-width:980px){
+  body.role-student .sidebar{height:100vh;height:100dvh;padding-bottom:calc(32px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+}

@@ -1,4 +1,4 @@
-<aside class="sidebar sidebar-pro">
+<aside class="sidebar sidebar-pro{{ auth()->user()?->hasRole('student') ? '' : ' sidebar-staff' }}">
     @if(auth()->user()?->hasRole('student'))
         @php
             $currentStudent = \App\Models\Student::where('user_id', auth()->id())->first();
@@ -57,53 +57,64 @@
         <button type="button" class="sidebar-mini-toggle" id="sidebar-mini-toggle" aria-label="Menüyü küçült / büyüt" title="Menüyü küçült / büyüt">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path class="chev" d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lbl">Menüyü küçült</span>
         </button>
-        <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panel
-        </a>
-        <a class="{{ request()->routeIs('classes.*') ? 'active' : '' }}" href="{{ route('classes.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v10l-9 5-9-5V9zm9-2.7L6 9.1l6 3.3 6-3.3-6-2.8z"/></svg></span>Sınıflar
-        </a>
-        @if(auth()->user()?->hasRole('admin'))
-        <a class="{{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 100-8 4 4 0 000 8zM8 12a4 4 0 100-8 4 4 0 000 8zm8 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5zM8 14c-3.314 0-6 2.239-6 5v1h6v-1c0-1.908.81-3.648 2.121-5A7.8 7.8 0 008 14z"/></svg></span>Kullanici Yonetimi
-        </a>
-        @endif
-        <a class="{{ request()->routeIs('qr.login.*') ? 'active' : '' }}" href="{{ route('qr.login.menu') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg></span>QR Giris
-        </a>
-        <a class="{{ request()->routeIs('courses.*') ? 'active' : '' }}" href="{{ route('courses.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9a3 3 0 013 3v11H7a3 3 0 00-3 3V5zm16 0h-4a3 3 0 00-3 3v11h7V5z"/></svg></span>Dersler
-        </a>
-        <a class="{{ request()->routeIs('teacher.assignments.*') ? 'active' : '' }}" href="{{ route('teacher.assignments.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12a2 2 0 012 2v16l-4-2-4 2-4-2-4 2V4a2 2 0 012-2zm2 5v2h8V7H8zm0 4v2h8v-2H8z"/></svg></span>Ödevler
-        </a>
-        <a class="{{ request()->routeIs('student-data.*') ? 'active' : '' }}" href="{{ route('student-data.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 8h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Öğrenci Verileri
-        </a>
-        <a class="{{ request()->routeIs('support-requests.*') ? 'active' : '' }}" href="{{ route('support-requests.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-9 9c0 2.21.8 4.23 2.13 5.79L4 21l3.32-1.14A8.97 8.97 0 0 0 12 21a9 9 0 1 0 0-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg></span>Taleplerim
-        </a>
-        @if(auth()->user()?->hasRole('admin'))
-        <a class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 016 6v3.4l1.7 2.6c.6.9-.1 2-1.2 2H5.5c-1.1 0-1.8-1.1-1.2-2L6 11.4V8a6 6 0 016-6zm0 20a3 3 0 002.8-2H9.2a3 3 0 002.8 2z"/></svg></span>Bildirimler
-        </a>
-        @endif
-        <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
-        </a>
-        <a class="{{ request()->routeIs('live-tracking.*') ? 'active' : '' }}" href="{{ route('live-tracking.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/><path d="M12 6v2m0 8v2M6 12H4m16 0h-2"/></svg></span>Canlı Takip
-        </a>
-        @if(\App\Support\ExamBuilderSetting::allowedFor(auth()->user()))
-        <a class="{{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6a1 1 0 01-1-1V3a1 1 0 011-1zm8 1.5V8h4.5L14 3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg></span>Sınav Oluştur
-        </a>
-        @endif
-        <a class="{{ request()->routeIs('coding.activities.*') ? 'active' : '' }}" href="{{ route('coding.activities.manage') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Günlük Çalışmalar
-        </a>
-        <a class="{{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
-            <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg></span>Profilim
-        </a>
+        <nav class="staff-nav" aria-label="Ana menü">
+            <div class="nav-group">Genel</div>
+            <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5V21h-6v-5h-6v5H3z"/></svg></span>Panel
+            </a>
+            <a class="{{ request()->routeIs('classes.*') ? 'active' : '' }}" href="{{ route('classes.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v10l-9 5-9-5V9zm9-2.7L6 9.1l6 3.3 6-3.3-6-2.8z"/></svg></span>Sınıflar
+            </a>
+            @if(auth()->user()?->hasRole('admin'))
+            <a class="{{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 100-8 4 4 0 000 8zM8 12a4 4 0 100-8 4 4 0 000 8zm8 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5zM8 14c-3.314 0-6 2.239-6 5v1h6v-1c0-1.908.81-3.648 2.121-5A7.8 7.8 0 008 14z"/></svg></span>Kullanici Yonetimi
+            </a>
+            @endif
+            <a class="{{ request()->routeIs('qr.login.*') ? 'active' : '' }}" href="{{ route('qr.login.menu') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg></span>QR Giris
+            </a>
+            <div class="nav-group">Eğitim</div>
+            <a class="{{ request()->routeIs('courses.*') ? 'active' : '' }}" href="{{ route('courses.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9a3 3 0 013 3v11H7a3 3 0 00-3 3V5zm16 0h-4a3 3 0 00-3 3v11h7V5z"/></svg></span>Dersler
+            </a>
+            <a class="{{ request()->routeIs('teacher.assignments.*') ? 'active' : '' }}" href="{{ route('teacher.assignments.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12a2 2 0 012 2v16l-4-2-4 2-4-2-4 2V4a2 2 0 012-2zm2 5v2h8V7H8zm0 4v2h8v-2H8z"/></svg></span>Ödevler
+            </a>
+            <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
+            </a>
+            @if(\App\Support\ExamBuilderSetting::allowedFor(auth()->user()))
+            <a class="{{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6a1 1 0 01-1-1V3a1 1 0 011-1zm8 1.5V8h4.5L14 3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2z"/></svg></span>Sınav Oluştur
+            </a>
+            @endif
+            <a class="{{ request()->routeIs('coding.activities.*') ? 'active' : '' }}" href="{{ route('coding.activities.manage') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Günlük Çalışmalar
+            </a>
+            <div class="nav-group">Takip</div>
+            <a class="{{ request()->routeIs('student-data.*') ? 'active' : '' }}" href="{{ route('student-data.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM7 8h10v2H7zm0 4h10v2H7zm0 4h6v2H7z"/></svg></span>Öğrenci Verileri
+            </a>
+            <a class="{{ request()->routeIs('live-tracking.*') ? 'active' : '' }}" href="{{ route('live-tracking.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/><path d="M12 6v2m0 8v2M6 12H4m16 0h-2"/></svg></span>Canlı Takip
+            </a>
+            <a class="{{ request()->routeIs('support-requests.*') ? 'active' : '' }}" href="{{ route('support-requests.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-9 9c0 2.21.8 4.23 2.13 5.79L4 21l3.32-1.14A8.97 8.97 0 0 0 12 21a9 9 0 1 0 0-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg></span>Taleplerim
+            </a>
+            @if(auth()->user()?->hasRole('admin'))
+            <a class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a6 6 0 016 6v3.4l1.7 2.6c.6.9-.1 2-1.2 2H5.5c-1.1 0-1.8-1.1-1.2-2L6 11.4V8a6 6 0 016-6zm0 20a3 3 0 002.8-2H9.2a3 3 0 002.8 2z"/></svg></span>Bildirimler
+            </a>
+            @endif
+            <div class="nav-group">Hesap</div>
+            <a class="{{ request()->routeIs('profile.*') ? 'active' : '' }}" href="{{ route('profile.edit') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg></span>Profilim
+            </a>
+        </nav>
+        <div class="staff-foot">
+            <span class="staff-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr((string) auth()->user()?->name, 0, 1)) }}</span>
+            <span class="staff-who"><strong>{{ auth()->user()?->name }}</strong><small>{{ auth()->user()?->hasRole('admin') ? 'Yönetici' : 'Öğretmen' }}</small></span>
+            <a class="staff-out" href="{{ route('logout.get') }}" title="Çıkış Yap" aria-label="Çıkış Yap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3H5a2 2 0 00-2 2v14a2 2 0 002 2h5v-2H5V5h5V3zm5.6 4.6L14.2 9l2 2H8v2h8.2l-2 2 1.4 1.4L20 12l-4.4-4.4z"/></svg></a>
+        </div>
     @endif
 </aside>

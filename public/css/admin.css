@@ -1265,3 +1265,49 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 td.actions,th.actions{display:table-cell;flex-direction:row;white-space:nowrap;min-width:0}
 td.actions>*,td.actions form{display:inline-block;vertical-align:middle;margin:0 4px 4px 0}
 td.actions .btn,td.actions button{min-height:36px;min-width:0;padding:6px 12px;font-size:13px}
+
+/* ===== Admin / öğretmen menüsü (yeni stil) ===== */
+.sidebar.sidebar-staff{display:flex;flex-direction:column;height:100vh;height:100dvh;padding:14px 12px 0;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#f7f6ff 100%);box-shadow:none}
+.sidebar-staff .sidebar-brand{margin-bottom:6px;flex:none}
+.sidebar-staff .sidebar-logo--brand{width:92px;height:92px;margin-bottom:0}
+.sidebar-staff .sidebar-brand p{font-size:14px}
+.sidebar-staff .sidebar-mini-toggle{flex:none}
+.staff-nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:2px 2px 16px;scrollbar-width:thin}
+.sidebar-staff .nav-group{margin:16px 10px 6px;font:800 11px var(--font-display, inherit);letter-spacing:.09em;text-transform:uppercase;color:#8b8da6}
+.sidebar-staff .nav-group:first-child{margin-top:4px}
+.sidebar-staff .staff-nav a{display:flex;align-items:center;gap:12px;margin:2px 0;padding:8px 10px;min-height:44px;border:0;border-left:0;border-radius:14px;font-size:14px;font-weight:600;color:#3d4059;background:transparent;transition:background .15s,color .15s,box-shadow .15s}
+.sidebar-staff .staff-nav a .nav-icon{flex:none;width:32px;height:32px;border-radius:10px;background:var(--violet-tint);color:var(--app-primary, var(--violet-ink));opacity:1;transition:background .15s,color .15s}
+.sidebar-staff .staff-nav a .nav-icon svg{width:18px;height:18px}
+.sidebar-staff .staff-nav a:hover{background:#f1eefe;color:var(--app-primary, var(--violet-ink));transform:none}
+.sidebar-staff .staff-nav a.active{background:var(--app-primary, var(--violet));color:#fff;font-weight:700;box-shadow:0 8px 18px -8px var(--app-primary, var(--violet))}
+.sidebar-staff .staff-nav a.active .nav-icon{background:rgba(255,255,255,.2);color:#fff}
+.staff-foot{flex:none;display:flex;align-items:center;gap:10px;margin:0 -12px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(255,255,255,.92)}
+.staff-avatar{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--violet-tint);color:var(--app-primary, var(--violet-ink));font:800 15px var(--font-display, inherit)}
+.staff-who{flex:1;min-width:0;display:grid;line-height:1.25}
+.staff-who strong{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.staff-who small{font-size:11.5px;color:#8b8da6;font-weight:600}
+.sidebar-staff .staff-out{flex:none;display:grid;place-items:center;width:40px;height:40px;min-height:40px;min-width:40px;padding:0;margin:0;border-radius:12px;color:#b42318;background:#fff1f0;border:0}
+.sidebar-staff .staff-out:hover{background:#ffe0dd;color:#912018}
+.staff-out svg{width:20px;height:20px;fill:currentColor}
+
+/* masaüstünde küçültülmüş menü */
+body.sidebar-mini .sidebar-staff .nav-group{height:1px;margin:10px 12px;padding:0;font-size:0;background:var(--line)}
+body.sidebar-mini .sidebar-staff .nav-group:first-child{display:none}
+body.sidebar-mini .sidebar-staff .staff-nav a{font-size:0;gap:0;justify-content:center;padding:6px 0;border-radius:12px}
+body.sidebar-mini .sidebar-staff .staff-nav a .nav-icon{width:36px;height:36px}
+body.sidebar-mini .sidebar-staff .staff-nav a .nav-icon svg{width:20px;height:20px}
+body.sidebar-mini .sidebar-staff .staff-foot{flex-direction:column;margin:0 -8px;padding:10px 6px calc(10px + env(safe-area-inset-bottom))}
+body.sidebar-mini .sidebar-staff .staff-who,body.sidebar-mini .sidebar-staff .staff-avatar{display:none}
+
+/* telefon / tablet: menü soldan açılır, en alttaki öğeye kadar kaydırılabilir */
+@media (max-width: 960px){
+  .sidebar.sidebar-staff{width:min(86vw,320px);height:100vh;height:100dvh;overflow:hidden;box-shadow:0 0 40px rgba(15,23,42,.25)}
+  .sidebar-staff .sidebar-logo--brand{width:64px;height:64px}
+  .sidebar-staff .sidebar-brand{margin-bottom:2px}
+  .sidebar-staff .staff-nav{padding-bottom:24px}
+  .sidebar-staff .staff-nav a{font-size:15px}
+}
+@media (max-height: 560px){
+  .sidebar-staff .sidebar-brand p{display:none}
+  .sidebar-staff .sidebar-logo--brand{width:44px;height:44px}
+}
