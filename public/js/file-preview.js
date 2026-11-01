@@ -120,26 +120,66 @@
         var ua = navigator.userAgent || '';
         return /iPhone|iPad|iPod|Android|Mobile/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) || (window.matchMedia && window.matchMedia('(max-width:1100px)').matches);
     }
+    function pdfStyle() {
+        if (document.getElementById('sh-pdfv-css')) return;
+        var st = document.createElement('style'); st.id = 'sh-pdfv-css';
+        st.textContent = '.sh-pdfv{display:flex;flex-direction:column;height:80vh;min-height:420px;background:#525659}'
+            + '.sh-pdfbar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:#323639;color:#fff;font:600 14px system-ui,sans-serif}'
+            + '.sh-pdfbar button,.sh-pdfbar a{min-width:36px;height:34px;padding:0 10px;border:0;border-radius:8px;background:#46494d;color:#fff;font:700 16px system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}'
+            + '.sh-pdfbar button:active,.sh-pdfbar a:active{background:#5d6165}.sh-pdfbar .grp{display:flex;align-items:center;gap:6px}.sh-pdfbar .zl{min-width:44px;text-align:center;font-size:13px}'
+            + '.sh-pdfscroll{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px;text-align:center}'
+            + '.sh-pdfscroll .pgs{display:inline-block;min-width:100%;text-align:center}'
+            + '.sh-pdfscroll canvas{display:block;margin:0 auto 10px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.45)}';
+        document.head.appendChild(st);
+    }
+    // Telefon/tablette gömülü PDF görüntüleyici yok; masaüstündeki gibi araç çubuklu, alt alta kaydırmalı bir görüntüleyici çiz.
     async function pdfPages(box, url, alive) {
         await loadScript('/js/preview/pdfjs-pdf.min.js?v=1');
         var lib = window.pdfjsLib;
         lib.GlobalWorkerOptions.workerSrc = '/js/preview/pdfjs-pdf.worker.min.js?v=1';
         var doc = await lib.getDocument({ url: url }).promise;
         if (!alive()) return;
-        box.innerHTML = '<div class="sh-pdfpages" style="background:#eceae3;padding:8px"></div>';
-        var host = box.firstChild, dpr = Math.min(2, window.devicePixelRatio || 1);
-        for (var i = 1; i <= doc.numPages; i++) {
-            var page = await doc.getPage(i);
-            if (!alive()) return;
-            var base = page.getViewport({ scale: 1 });
-            var cssW = Math.max(240, (host.clientWidth || window.innerWidth) - 16);
-            var vp = page.getViewport({ scale: (cssW / base.width) * dpr });
-            var cv = document.createElement('canvas');
-            cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
-            cv.style.cssText = 'display:block;width:100%;height:auto;margin:0 auto 8px;background:#fff;box-shadow:0 2px 10px rgba(22,24,43,.15)';
-            host.appendChild(cv);
-            await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        pdfStyle();
+        var n = doc.numPages;
+        box.innerHTML = '<div class="sh-pdfv"><div class="sh-pdfbar"><span class="pg">1 / ' + n + '</span>'
+            + '<span class="grp"><button type="button" data-z="-1" aria-label="Uzaklaştır">&minus;</button><span class="zl">100%</span><button type="button" data-z="1" aria-label="Yakınlaştır">+</button>'
+            + '<a href="' + url + '" target="_blank" rel="noopener" aria-label="Tam ekranda aç" title="Tam ekranda aç">&#x26F6;</a></span></div><div class="sh-pdfscroll"><div class="pgs"></div></div></div>';
+        var scroller = box.querySelector('.sh-pdfscroll'), host = box.querySelector('.pgs'), pgEl = box.querySelector('.pg'), zl = box.querySelector('.zl');
+        var steps = [0.6, 0.8, 1, 1.25, 1.5, 2, 3], zi = 2, dpr = Math.min(2, window.devicePixelRatio || 1), gen = 0, pages = [], canvases = [];
+        for (var i = 1; i <= n; i++) pages.push(await doc.getPage(i));
+        if (!alive()) return;
+        async function renderAll() {
+            var my = ++gen, z = steps[zi], keep = scroller.scrollTop / Math.max(1, scroller.scrollHeight);
+            zl.textContent = Math.round(z * 100) + '%';
+            var cssW = Math.max(200, scroller.clientWidth - 20) * z;
+            host.innerHTML = ''; canvases = [];
+            for (var k = 0; k < pages.length; k++) {
+                var base = pages[k].getViewport({ scale: 1 });
+                var px = Math.min(2600, cssW * dpr), vp = pages[k].getViewport({ scale: px / base.width });
+                var cv = document.createElement('canvas');
+                cv.width = Math.floor(vp.width); cv.height = Math.floor(vp.height);
+                cv.style.width = cssW + 'px'; cv.style.height = (cssW * base.height / base.width) + 'px';
+                host.appendChild(cv); canvases.push(cv);
+            }
+            scroller.scrollTop = keep * scroller.scrollHeight;
+            for (var j = 0; j < pages.length; j++) {
+                if (!alive() || my !== gen) return;
+                var vp2 = pages[j].getViewport({ scale: canvases[j].width / pages[j].getViewport({ scale: 1 }).width });
+                await pages[j].render({ canvasContext: canvases[j].getContext('2d'), viewport: vp2 }).promise;
+            }
         }
+        box.querySelectorAll('[data-z]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var nz = Math.max(0, Math.min(steps.length - 1, zi + Number(b.dataset.z)));
+                if (nz !== zi) { zi = nz; renderAll(); }
+            });
+        });
+        scroller.addEventListener('scroll', function () {
+            var mid = scroller.scrollTop + scroller.clientHeight / 3, cur = 1;
+            for (var c = 0; c < canvases.length; c++) { if (canvases[c].offsetTop <= mid) cur = c + 1; }
+            pgEl.textContent = cur + ' / ' + n;
+        });
+        await renderAll();
     }
     // box: hedef element, url: ayni alan adindaki dosya, alive: iptal kontrolu
     async function render(box, url, name, alive) {
