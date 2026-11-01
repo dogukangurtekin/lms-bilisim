@@ -1319,3 +1319,29 @@ body.sidebar-mini .sidebar-staff .staff-who,body.sidebar-mini .sidebar-staff .st
 /* Kaydırılabilir kutu içindeki tablo kendi içinde ikinci bir kaydırma alanı oluşturmasın: içerik genişliğinde dursun, kutu kaydırsın */
 .an-table-wrap>table,.table-responsive>table{display:table;overflow:visible;width:max-content;min-width:100%}
 .an-wrap{grid-template-columns:minmax(0,1fr)}
+
+/* ===== Telefon/tablet: sağ üstte profil avatarı (bildirim, mesaj, çıkış burada) ===== */
+.nav-avatar-wrap{display:none;position:relative;flex:none}
+.nav-avatar{position:relative;display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:50%;background:linear-gradient(135deg,var(--app-primary, var(--violet)),#8b5cf6);color:#fff;font:800 17px var(--font-display, inherit);cursor:pointer;box-shadow:0 4px 12px -4px rgba(91,61,245,.6)}
+.nav-avatar-dot{position:absolute;top:0;right:0;width:12px;height:12px;border-radius:50%;background:var(--signal, #ff7a45);border:2px solid #fff}
+.nav-umenu{position:absolute;right:0;top:calc(100% + 8px);z-index:150;width:min(270px,86vw);padding:6px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(15,23,42,.2)}
+.nav-umenu[hidden]{display:none}
+.nav-uhead{display:grid;padding:10px 12px 12px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.nav-uhead strong{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-uhead small{font-size:12px;font-weight:600;color:#8b8da6}
+.nav-umenu a,.nav-umenu button{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:0 12px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:600 14.5px var(--font-body, inherit);text-align:left;text-decoration:none;cursor:pointer}
+.nav-umenu a:hover,.nav-umenu button:hover{background:var(--violet-tint)}
+.nav-umenu .ico{flex:none;width:24px;text-align:center}
+.nav-umenu b{margin-left:auto;min-width:22px;padding:2px 7px;border-radius:999px;background:var(--signal, #ff7a45);color:#fff;font-size:12px;text-align:center}
+.nav-umenu a.out{margin-top:4px;color:#b42318}
+.nav-umenu a.out:hover{background:#fff1f0}
+
+@media (max-width: 980px){
+  .nav-avatar-wrap{display:block}
+  .navbar-actions>.notif-bell,.navbar-actions>.btn-logout,.notif-menu>.notif-bell{display:none !important}
+  .notif-menu{position:static}
+  .notif-panel{position:fixed;top:76px;left:50%;right:auto;transform:translateX(-50%);width:min(360px,calc(100vw - 24px));max-height:70vh;overflow:auto;z-index:1500}
+  body.role-student .student-sidebar-time .btn{display:none}
+}
+/* çıkış artık avatar menüsünde */
+@media (max-width: 960px){.staff-foot{display:none}}

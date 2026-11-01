@@ -60,8 +60,42 @@
         <a class="btn btn-logout" href="{{ route('logout.get') }}">
             <span class="logout-icon">⏻</span> Çıkış Yap
         </a>
+
+        {{-- Telefon/tablet: sağ üstte profil avatarı; bildirim, mesaj ve çıkış burada --}}
+        @php
+            $navRole = $currentUser?->hasRole('admin') ? 'Yönetici' : ($currentUser?->hasRole('teacher') ? 'Öğretmen' : 'Öğrenci');
+            $navInitial = mb_strtoupper(mb_substr((string) ($currentUser->name ?? '?'), 0, 1));
+            $navTotal = (int) $navUnreadCount + (int) ($msgBadge ?? 0);
+        @endphp
+        <div class="nav-avatar-wrap" id="navAvatarWrap">
+            <button type="button" class="nav-avatar" id="navAvatarBtn" aria-haspopup="true" aria-expanded="false" aria-label="Hesap menüsü">
+                <span>{{ $navInitial }}</span>
+                @if($navTotal > 0)<i class="nav-avatar-dot"></i>@endif
+            </button>
+            <div class="nav-umenu" id="navUMenu" hidden>
+                <div class="nav-uhead"><strong>{{ $currentUser->name ?? 'Misafir' }}</strong><small>{{ $navRole }}</small></div>
+                @if($msgIsStudent || $msgIsStaff)
+                    <a href="{{ $msgIsStudent ? route('student.messages.index') : route('staff.messages.index') }}"><span class="ico">💬</span>Mesajlar @if($msgBadge > 0)<b>{{ $msgBadge > 99 ? '99+' : $msgBadge }}</b>@endif</a>
+                @endif
+                <button type="button" id="navUNotif"><span class="ico">🔔</span>Bildirimler @if($navUnreadCount > 0)<b>{{ $navUnreadCount > 99 ? '99+' : $navUnreadCount }}</b>@endif</button>
+                <a class="out" href="{{ route('logout.get') }}"><span class="ico">⏻</span>Çıkış Yap</a>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var wrap = document.getElementById('navAvatarWrap'), btn = document.getElementById('navAvatarBtn'), menu = document.getElementById('navUMenu');
+    if (!wrap || !btn || !menu) return;
+    function setOpen(open) { menu.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(menu.hidden); });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+    var n = document.getElementById('navUNotif'), bell = document.getElementById('navNotifBellBtn');
+    if (n && bell) n.addEventListener('click', function (e) { e.stopPropagation(); setOpen(false); bell.click(); });
+})();
+</script>
 
 <script>
 (function () {
