@@ -34,6 +34,7 @@ class CompetitionController extends Controller
         'flowchart-runner',
         'web-lab-runner',
         'keyboard-finger-runner',
+        'scratch-runner',
     ];
 
     private const JOIN_CODE_CHARACTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -99,6 +100,10 @@ class CompetitionController extends Controller
         }
 
         $games = $this->eligibleGames();
+        // Blok Kodlama Stüdyosu seviyesizdir: süreli serbest proje; seviye aralığı kullanılmaz.
+        if ($request->input('game_slug') === 'scratch-runner') {
+            $request->merge(['level_from' => 1, 'level_to' => 1]);
+        }
         $data = $request->validate([
             'game_slug' => ['required', 'string'],
             'school_class_id' => ['nullable', 'exists:school_classes,id'],

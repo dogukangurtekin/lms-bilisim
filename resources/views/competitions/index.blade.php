@@ -121,7 +121,13 @@
     const btn = form?.querySelector('button[type="submit"]');
     const sync = () => {
         const kb = sel?.value === 'keyboard-race';
-        form.querySelectorAll('input[name="level_from"], input[name="level_to"], input[name="duration_minutes"]').forEach((i) => {
+        const noLevel = sel?.value === 'scratch-runner';   // seviyesiz: yalnızca süre gerekir
+        form.querySelectorAll('input[name="level_from"], input[name="level_to"]').forEach((i) => {
+            i.required = !kb && !noLevel;
+            const row = i.closest('.cx-row');
+            if (row) row.style.display = (kb || noLevel) ? 'none' : '';
+        });
+        form.querySelectorAll('input[name="duration_minutes"]').forEach((i) => {
             i.required = !kb;
             const row = i.closest('.cx-row');
             if (row) row.style.display = kb ? 'none' : '';

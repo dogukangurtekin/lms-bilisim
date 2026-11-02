@@ -170,6 +170,20 @@
   function touchAct() { lastAct = Date.now(); }
   ['pointerdown', 'keydown', 'pointermove', 'wheel', 'touchstart'].forEach(function (e) { document.addEventListener(e, touchAct, { passive: true }); });
   setInterval(function () { if (!document.hidden && Date.now() - lastAct < 60000) ACT += 5; }, 5000);
+  // Canlı yarışma: proje istatistiği (blok/betik/nesne) üst sayfaya periyodik bildirilir
+  if (window.parent !== window && /assignmentId=competition-/.test(location.search)) {
+    var lastStats = '';
+    setInterval(function () {
+      try {
+        var d = JSON.parse(ser()), b = 0, sc = 0;
+        var walk = function (n) { if (Array.isArray(n)) n.forEach(walk); else if (n && typeof n === 'object') { if (typeof n.op === 'string') b++; Object.keys(n).forEach(function (k) { walk(n[k]); }); } };
+        (d.sprites || []).forEach(function (s) { (s.scripts || []).forEach(function (x) { sc++; walk(x.blocks || []); }); });
+        var st = { type: 'SCRATCH_STATS', blocks: b, scripts: sc, sprites: (d.sprites || []).length, vars: Object.keys(d.vars || {}).length };
+        var key = JSON.stringify(st);
+        if (key !== lastStats) { lastStats = key; window.parent.postMessage(st, location.origin); }
+      } catch (e) {}
+    }, 4000);
+  }
   function body() { var d = ACT - ACTSENT; ACTSENT = ACT; return { name: P.name, data: ser(), client_ts: P.ts || Date.now(), secs: d }; }
   function syncServer() {
     serverTimer = 0;

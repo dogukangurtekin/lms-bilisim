@@ -328,6 +328,20 @@
     window.addEventListener('message', (ev) => {
         const data = ev.data;
         if (!data || typeof data !== 'object') return;
+        if (data.type === 'SCRATCH_STATS') {
+            // Seviyesiz serbest proje: ilerleme = blok sayısı (en çok %99), XP = blok + 3*betik + 5*nesne (en çok 100).
+            const blocks = Math.max(0, Number(data.blocks || 0));
+            const scripts = Math.max(0, Number(data.scripts || 0));
+            const sprites = Math.max(0, Number(data.sprites || 0));
+            accumulatedXp = Math.max(accumulatedXp, Math.min(100, blocks + 3 * scripts + 5 * sprites));
+            if (xpEl) xpEl.textContent = String(accumulatedXp);
+            fetch(progressUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                body: JSON.stringify({ progress_percent: Math.min(99, blocks), current_level_index: scripts, xp: accumulatedXp }),
+            }).then((res) => (res.ok ? res.json() : null)).then((d) => { if (d && typeof applyStatus === 'function') applyStatus(d); }).catch(() => {});
+            return;
+        }
         if (data.type === 'GAME_UPDATE') {
             syncCompletedLevels(data);
             sendProgress(data, false);
