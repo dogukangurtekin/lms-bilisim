@@ -165,7 +165,12 @@
     status('Kaydediliyor…'); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 400);
     if (SERVER && P.sid) { clearTimeout(serverTimer); serverTimer = setTimeout(syncServer, 10000); }   // sunucu yazımı en çok 10 sn'de bir (hosting I/O tasarrufu)
   }
-  function body() { return { name: P.name, data: ser(), client_ts: P.ts || Date.now() }; }
+  // Stüdyoda geçen etkin süre (sekme açık + son 60 sn içinde etkileşim): kayıtla birlikte fark olarak gönderilir
+  var ACT = 0, ACTSENT = 0, lastAct = Date.now();
+  function touchAct() { lastAct = Date.now(); }
+  ['pointerdown', 'keydown', 'pointermove', 'wheel', 'touchstart'].forEach(function (e) { document.addEventListener(e, touchAct, { passive: true }); });
+  setInterval(function () { if (!document.hidden && Date.now() - lastAct < 60000) ACT += 5; }, 5000);
+  function body() { var d = ACT - ACTSENT; ACTSENT = ACT; return { name: P.name, data: ser(), client_ts: P.ts || Date.now(), secs: d }; }
   function syncServer() {
     serverTimer = 0;
     if (NOSAVE || !P.sid) return;

@@ -360,6 +360,26 @@
         </div>
     </div>
 
+    @php $sc = data_get($report, 'scratch', []); @endphp
+    @if(!empty($sc['project_count']))
+    <article class="panel">
+        <h3>Blok Kodlama Stüdyosu</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:6px 0 8px">
+            @foreach([['Proje', $sc['project_count']], ['Süre', $sc['time_text']], ['Nesne', $sc['sprites']], ['Betik', $sc['scripts']], ['Blok', $sc['blocks']], ['Blok Çeşidi', $sc['block_types']], ['Değişken', $sc['variables']]] as [$lbl, $val])
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:6px 8px;text-align:center"><small style="display:block;opacity:.7">{{ $lbl }}</small><strong>{{ $val }}</strong></div>
+            @endforeach
+        </div>
+        <table class="report-table">
+            <thead><tr><th>Proje</th><th>Nesne</th><th>Betik</th><th>Blok</th><th>Süre</th><th>Son Düzenleme</th></tr></thead>
+            <tbody>
+            @foreach(array_slice($sc['projects'], 0, 5) as $sp)
+                <tr><td>{{ $sp['name'] }}</td><td>{{ $sp['sprites'] }}</td><td>{{ $sp['scripts'] }}</td><td>{{ $sp['blocks'] }}</td><td>{{ $sp['time_text'] }}</td><td>{{ $sp['updated_at'] ? \Carbon\Carbon::parse($sp['updated_at'])->format('d.m.Y H:i') : '-' }}</td></tr>
+            @endforeach
+            </tbody>
+        </table>
+    </article>
+    @endif
+
     <article class="panel">
         <div class="activity-columns">
             <div>

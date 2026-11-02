@@ -1,5 +1,5 @@
 @php
-    $order = ['Ders', 'Ders Ödevi', 'Ödev', 'Oyun Ödevi', 'Uygulama Ödevi', 'Oyun / Uygulama', 'Etkinlik', 'Günlük Egzersiz', 'Canlı Quiz', 'Canlı Yarışma', 'Klavye Yarışı'];
+    $order = ['Ders', 'Ders Ödevi', 'Ödev', 'Oyun Ödevi', 'Uygulama Ödevi', 'Oyun / Uygulama', 'Etkinlik', 'Günlük Egzersiz', 'Canlı Quiz', 'Canlı Yarışma', 'Klavye Yarışı', 'Blok Kodlama'];
     $groups = collect($log)->groupBy('kind');
     $sortedKinds = $groups->keys()->sortBy(function ($kind) use ($order) {
         $i = array_search($kind, $order, true);

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ScratchProject extends Model
 {
-    protected $fillable = ['user_id', 'name', 'data', 'size', 'client_ts'];
+    protected $fillable = ['user_id', 'name', 'data', 'size', 'active_seconds', 'client_ts'];
 
     public function user(): BelongsTo
     {

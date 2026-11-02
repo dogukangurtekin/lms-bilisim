@@ -47,6 +47,7 @@ class ScratchProjectController extends Controller
             'name' => ['required', 'string', 'max:120'],
             'data' => ['required', 'string'],
             'client_ts' => ['nullable', 'integer', 'min:0'],
+            'secs' => ['nullable', 'integer', 'min:0', 'max:1800'],
         ]);
         $data['name'] = trim(preg_replace('/\s+/u', ' ', $data['name']));
         abort_if($data['name'] === '', 422, 'Proje adı boş olamaz.');
@@ -54,6 +55,7 @@ class ScratchProjectController extends Controller
         $decoded = json_decode($data['data'], true);
         abort_unless(is_array($decoded) && isset($decoded['sprites']) && is_array($decoded['sprites']), 422, 'Geçersiz proje verisi.');
         $data['client_ts'] = (int) ($data['client_ts'] ?? 0);
+        $data['secs'] = (int) ($data['secs'] ?? 0);
 
         return $data;
     }
@@ -82,7 +84,7 @@ class ScratchProjectController extends Controller
         if (! $existing && ScratchProject::query()->where('user_id', $userId)->count() >= self::LIMIT) {
             return response()->json(['error' => 'limit', 'limit' => self::LIMIT, 'projects' => $this->listFor($userId)], 422);
         }
-        $payload = ['data' => $d['data'], 'size' => strlen($d['data']), 'client_ts' => $d['client_ts']];
+        $payload = ['data' => $d['data'], 'size' => strlen($d['data']), 'client_ts' => $d['client_ts'], 'active_seconds' => (int) ($existing?->active_seconds ?? 0) + $d['secs']];
         $project = $existing ?? new ScratchProject(['user_id' => $userId, 'name' => $d['name']]);
         $project->fill($payload)->save();
 
@@ -97,7 +99,7 @@ class ScratchProjectController extends Controller
         if ($clash) {
             return response()->json(['error' => 'name_taken'], 422);
         }
-        $project->fill(['name' => $d['name'], 'data' => $d['data'], 'size' => strlen($d['data']), 'client_ts' => $d['client_ts']])->save();
+        $project->fill(['name' => $d['name'], 'data' => $d['data'], 'size' => strlen($d['data']), 'client_ts' => $d['client_ts'], 'active_seconds' => (int) $project->active_seconds + $d['secs']])->save();
 
         return response()->json($this->summary($project->refresh()));
     }

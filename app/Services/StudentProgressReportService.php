@@ -704,6 +704,18 @@ class StudentProgressReportService
             ]);
         }
 
+        $scratch = $this->scratchSummary((int) $student->user_id);
+        foreach ($scratch['projects'] as $sp) {
+            $activityLog->push([
+                'kind' => 'Blok Kodlama',
+                'title' => $sp['name'],
+                'status' => 'Proje',
+                'xp' => 0,
+                'result' => $sp['blocks'].' blok · '.$sp['sprites'].' nesne · '.$sp['time_text'],
+                'sort_date' => $sp['updated_at'],
+            ]);
+        }
+
         $activityLog = $activityLog
             ->sortByDesc(fn ($item) => $item['sort_date'] ? Carbon::parse($item['sort_date'])->timestamp : 0)
             ->values();
@@ -744,6 +756,7 @@ class StudentProgressReportService
                 'avatar_count' => $student->avatars->count(),
                 'time_text' => $timeText,
                 'time_seconds' => $totalSeconds,
+                'scratch_seconds' => $scratch['seconds'],
             ],
             'courses' => $courses,
             'course_homeworks' => $courseHomeworks,
@@ -759,7 +772,71 @@ class StudentProgressReportService
             'course_items' => $courseItems,
             'live_items' => $liveItems,
             'activity_log' => $activityLog,
+            'scratch' => $scratch,
         ];
+    }
+
+    private function durationText(int $sec): string
+    {
+        if ($sec < 60) {
+            return $sec.' sn';
+        }
+        $h = intdiv($sec, 3600);
+        $m = intdiv($sec % 3600, 60);
+
+        return $h > 0 ? $h.' sa '.$m.' dk' : $m.' dk';
+    }
+
+    /** Blok Kodlama Stüdyosu projelerinden özet: proje/nesne/betik/blok sayıları, kullanılan blok çeşidi, değişken ve süre. */
+    private function scratchSummary(int $userId): array
+    {
+        $out = ['project_count' => 0, 'sprites' => 0, 'scripts' => 0, 'blocks' => 0, 'block_types' => 0, 'variables' => 0, 'seconds' => 0, 'time_text' => '0 sn', 'last_at' => null, 'projects' => []];
+        $types = [];
+        $walk = function ($node) use (&$walk, &$types): int {
+            $n = 0;
+            if (is_array($node)) {
+                if (isset($node['op']) && is_string($node['op'])) {
+                    $n++;
+                    $types[$node['op']] = true;
+                }
+                foreach ($node as $v) {
+                    if (is_array($v)) {
+                        $n += $walk($v);
+                    }
+                }
+            }
+
+            return $n;
+        };
+        foreach (\App\Models\ScratchProject::query()->where('user_id', $userId)->orderByDesc('updated_at')->get() as $p) {
+            $d = json_decode((string) $p->data, true);
+            if (! is_array($d)) {
+                continue;
+            }
+            $sprites = is_array($d['sprites'] ?? null) ? $d['sprites'] : [];
+            $scripts = 0;
+            $blocks = 0;
+            foreach ($sprites as $sp) {
+                foreach ((array) ($sp['scripts'] ?? []) as $sc) {
+                    $scripts++;
+                    $blocks += $walk($sc['blocks'] ?? []);
+                }
+            }
+            $vars = is_array($d['vars'] ?? null) ? count($d['vars']) : 0;
+            $secs = (int) $p->active_seconds;
+            $out['project_count']++;
+            $out['sprites'] += count($sprites);
+            $out['scripts'] += $scripts;
+            $out['blocks'] += $blocks;
+            $out['variables'] += $vars;
+            $out['seconds'] += $secs;
+            $out['last_at'] = $out['last_at'] ?? $p->updated_at;
+            $out['projects'][] = ['name' => (string) $p->name, 'sprites' => count($sprites), 'scripts' => $scripts, 'blocks' => $blocks, 'seconds' => $secs, 'time_text' => $this->durationText($secs), 'updated_at' => $p->updated_at];
+        }
+        $out['block_types'] = count($types);
+        $out['time_text'] = $this->durationText($out['seconds']);
+
+        return $out;
     }
     /**
      * Öğrenciye özel, veriye dayalı analiz maddeleri üretir.
