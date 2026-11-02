@@ -2,7 +2,9 @@
 @php
     $uid = $uid ?? 'cp';
     $oldIds = collect(old('class_ids', []))->map(fn ($id) => (int) $id)->all();
-    $groups = $classes->groupBy(fn ($c) => $c->grade_level ?: (preg_match('/^\d+/', (string) $c->name, $m) ? (int) $m[0] : 0))->sortKeys();
+    $gradeOf = fn ($c) => $c->grade_level ?: (preg_match('/^\d+/', (string) $c->name, $m) ? (int) $m[0] : 0);
+    $groups = $classes->groupBy($gradeOf)->sortKeys();
+    $sorted = $classes->sortBy(fn ($c) => sprintf('%03d|%s|%s', $gradeOf($c), mb_strtolower((string) $c->name), mb_strtolower((string) $c->section)))->values();
     $isTeacher = auth()->user()?->hasRole('teacher');
 @endphp
 <div class="cp" id="{{ $uid }}-cp">
@@ -31,16 +33,13 @@
                 <button type="button" class="cp-k" data-cp-grade="{{ $grade }}">{{ $grade ? $grade.'. sınıf' : 'Diğer' }}</button>
             @endforeach
         </div>
-        @foreach($groups as $grade => $items)
-            <div class="cp-grp" data-cp-group="{{ $grade }}">
-                <div class="cp-lab">{{ $grade ? $grade.'. sınıf şubeleri' : 'Diğer sınıflar' }}</div>
-                <div class="cp-row">
-                    @foreach($items->sortBy('section') as $class)
-                        <label class="cp-chip" title="{{ $class->academic_year }}"><input type="checkbox" name="class_ids[]" value="{{ $class->id }}" @checked(in_array((int) $class->id, $oldIds, true))><span>{{ $class->name }}/{{ $class->section }}</span></label>
-                    @endforeach
-                </div>
+        <div class="cp-grp">
+            <div class="cp-row">
+                @foreach($sorted as $class)
+                    <label class="cp-chip" title="{{ $class->academic_year }}"><input type="checkbox" name="class_ids[]" value="{{ $class->id }}" data-cp-g="{{ $gradeOf($class) }}" @checked(in_array((int) $class->id, $oldIds, true))><span>{{ $class->name }}/{{ $class->section }}</span></label>
+                @endforeach
             </div>
-        @endforeach
+        </div>
     @else
         <div class="cp-sum">Seçilebilir sınıf bulunamadı.</div>
     @endif
@@ -52,7 +51,7 @@
     const all = root.querySelector('[data-cp-all]');
     const boxes = [...root.querySelectorAll('input[name="class_ids[]"]')];
     const ks = [...root.querySelectorAll('[data-cp-grade]')];
-    const gradeBoxes = (g) => [...root.querySelectorAll('[data-cp-group="' + g + '"] input')];
+    const gradeBoxes = (g) => boxes.filter((b) => b.dataset.cpG === String(g));
     const sync = () => {
         root.classList.toggle('is-all', all.checked);
         all.closest('.cp-all').classList.toggle('on', all.checked);
