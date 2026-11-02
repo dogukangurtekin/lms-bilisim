@@ -17,7 +17,8 @@ class LiveTrackingTimezoneTest extends TestCase
 
     public function test_live_tracking_uses_istanbul_time_before_and_after_refresh(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-10-09 15:00:00', 'UTC'));
+        // Uygulama ve veritabani Turkiye saatiyle (UTC+3) calisir: kayitlar yerel saatle tutulur ve aynen gosterilir.
+        Carbon::setTestNow(Carbon::parse('2026-10-09 18:00:00', 'Europe/Istanbul'));
 
         try {
             $adminRole = Role::query()->create(['name' => 'Admin', 'slug' => 'admin']);
@@ -50,8 +51,8 @@ class LiveTrackingTimezoneTest extends TestCase
             ]);
 
             foreach ([
-                ['2026-10-09 09:15:00', 'Giriş yaptı'],
-                ['2026-10-09 10:30:00', 'Dersi açtı'],
+                ['2026-10-09 12:15:00', 'Giriş yaptı'],
+                ['2026-10-09 13:30:00', 'Dersi açtı'],
             ] as [$loggedAt, $label]) {
                 StudentActivityLog::query()->create([
                     'student_id' => $student->id,

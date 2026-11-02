@@ -59,6 +59,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Turkiye saati (UTC+3, yaz saati yok): TIMESTAMP kolonlari bu oturum saatine gore okunur/yazilir.
+            'timezone' => env('DB_TIMEZONE', '+03:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
                 // Paylaşımlı hosting'de kısa sürede çok sayıda yeni MySQL bağlantısı
@@ -85,6 +87,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Turkiye saati (UTC+3, yaz saati yok): TIMESTAMP kolonlari bu oturum saatine gore okunur/yazilir.
+            'timezone' => env('DB_TIMEZONE', '+03:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
                 // Paylaşımlı hosting'de kısa sürede çok sayıda yeni MySQL bağlantısı
