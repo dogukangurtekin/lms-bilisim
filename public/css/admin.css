@@ -276,7 +276,8 @@ body.lesson-fullscreen .mobile-sidebar-backdrop{display:none !important}
 }
 .modal{position:fixed;inset:0;background:rgba(22,24,43,.45);display:none;align-items:center;justify-content:center;z-index:1000}
 .modal.open{display:flex}
-.modal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;max-width:520px;width:100%}
+.modal{padding:12px}
+.modal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;max-width:520px;width:100%;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .modal-head strong{font-family:var(--font-display)}
 

@@ -45,6 +45,6 @@ class QuizSoundTest extends TestCase
         $session = LiveQuizSession::query()->create(['live_quiz_id' => $quiz->id, 'teacher_user_id' => $teacher->id, 'join_code' => 'SND001', 'status' => 'lobby', 'current_index' => 0, 'is_locked' => false]);
 
         $this->actingAs($teacher)->get(route('live-quiz.session.show', $session))
-            ->assertOk()->assertSee('js/quiz-sound.js', false)->assertSee('"volume":40', false);
+            ->assertOk()->assertSee('js/quiz-sound.js', false)->assertSee('"volume":40', false)->assertSee('lqSoundPanel', false);
     }
 }

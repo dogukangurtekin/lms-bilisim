@@ -50,6 +50,7 @@
         @csrf
         <button class="btn btn-start" type="submit">▶ Herkese Başlat</button>
     </form>
+    <div id="lqSoundPanel" style="text-align:left;max-width:760px;margin:14px auto 0"></div>
 </div>
 @else
 @include('live-quiz.partials.live-board', ['boardRows' => $boardRows, 'boardMeId' => 0, 'boardKey' => $session->id])
@@ -74,6 +75,7 @@
         <form method="POST" action="{{ route('live-quiz.session.finish', $session) }}">@csrf<button class="btn btn-danger" type="submit" @if($session->phase === 'final') style="font-size:18px;padding:12px 28px;" @endif>Yarışmayı Bitir</button></form>
         <a class="btn" href="{{ route('live-quiz.session.report', $session) }}">Detayli Rapor</a>
     </div>
+    <div id="lqSoundPanel"></div>
 </div>
 
 @if($session->status === 'live' && $session->phase === 'final')
@@ -148,6 +150,7 @@
     let lastTickSec = -1;
     if (qSound) {
         qSound.init(@json(\App\Support\QuizSoundSetting::all()), 'host');
+        qSound.mountPanel(document.getElementById('lqSoundPanel'));
         if (sessionStatus === 'lobby') qSound.music('lobby');
         else if (initialPhase === 'intro') qSound.play(@json((bool) ($current?->double_xp ?? false)) ? 'double' : 'start');
         else if (initialPhase === 'question') qSound.music('question');

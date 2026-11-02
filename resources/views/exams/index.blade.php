@@ -164,7 +164,7 @@
     @endif
 </div>
 @if($tab === 'worksheet')
-<dialog id="ws-assign" style="border:0;border-radius:16px;padding:0;width:min(520px,94vw);box-shadow:0 20px 60px rgba(15,23,42,.35)">
+<dialog id="ws-assign" style="border:0;border-radius:16px;padding:0;width:min(520px,94vw);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;box-shadow:0 20px 60px rgba(15,23,42,.35)">
     <form method="POST" id="ws-assign-form" enctype="multipart/form-data" style="padding:18px 20px;display:grid;gap:8px">
         @csrf
         <div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:17px">📌 Çalışma Kâğıdını Ödev Olarak Ver</strong><button class="btn" type="button" id="ws-assign-close">Kapat</button></div>
