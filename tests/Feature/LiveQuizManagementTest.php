@@ -28,7 +28,9 @@ class LiveQuizManagementTest extends TestCase
             ->get(route('live-quiz.edit', $quiz))
             ->assertOk()
             ->assertSee('Quiz düzenleniyor')
-            ->assertSee('Eski soru');
+            ->assertSee('Eski soru')
+            ->assertSee('Dosyadan Soru Yükle')
+            ->assertSee('Boş Şablonu İndir');
 
         $questions = [[
             'type' => 'multiple',

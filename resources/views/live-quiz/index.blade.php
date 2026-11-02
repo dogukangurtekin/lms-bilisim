@@ -65,6 +65,14 @@
             <div id="questionList" class="quiz-left-list"></div>
             <button type="button" class="btn quiz-left-add" id="addQuestionBtn">+ Yeni Soru</button>
             <button type="button" class="btn quiz-danger quiz-left-add" id="removeQuestionBtn">Seçili Soruyu Sil</button>
+            <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;display:grid;gap:6px">
+                <strong style="font-size:13px">Toplu soru (Excel / CSV)</strong>
+                <button type="button" class="btn quiz-left-add" id="qiTemplateBtn">⬇ Boş Şablonu İndir</button>
+                <button type="button" class="btn quiz-left-add" id="qiExportBtn">⬇ Mevcut Soruları İndir</button>
+                <button type="button" class="btn quiz-left-add" id="qiImportBtn">⬆ Dosyadan Soru Yükle</button>
+                <input type="file" id="qiFile" accept=".xlsx,.xls,.csv" style="display:none">
+                <div id="qiMsg" style="font-size:12.5px;color:#475569;white-space:pre-line"></div>
+            </div>
         </aside>
 
         <section class="quiz-card quiz-center">
@@ -430,6 +438,139 @@
         }));
         jsonInput.value = JSON.stringify(payload);
     }
+
+    // ---- Toplu soru: Excel/CSV şablonu indir, mevcut soruları indir, dosyadan yükle (SheetJS yerel dosyadan) ----
+    const QI_HEAD = ['Tür', 'Soru', 'A', 'B', 'C', 'D', 'E', 'F', 'Doğru Cevap', 'Süre (sn)', 'XP', 'Çift XP'];
+    const QI_EXAMPLES = [
+        ['Çoktan Seçmeli', 'Algoritma nedir?', 'Bir problemi çözme adımları', 'Bir oyun', 'Bir klasör', 'Bir tuş', '', '', 'A', 30, 10, 'Hayır'],
+        ['Doğru/Yanlış', 'Döngüler tekrar eden işleri kısaltır.', '', '', '', '', '', '', 'Doğru', 20, 10, 'Hayır'],
+        ['Sürükle Bırak', 'Eşleştirin', 'Kedi => Hayvan', 'Elma => Meyve', 'Masa => Eşya', '', '', '', '', 40, 15, 'Evet'],
+    ];
+    const qiMsg = document.getElementById('qiMsg');
+    const qiFile = document.getElementById('qiFile');
+    const say = (t) => { if (qiMsg) qiMsg.textContent = t; };
+    let xlsxPromise = null;
+    function loadXlsx() {
+        if (window.XLSX) return Promise.resolve();
+        if (!xlsxPromise) {
+            xlsxPromise = new Promise((res, rej) => {
+                const el = document.createElement('script');
+                el.src = '/js/preview/xlsx.full.min.js?v=2';
+                el.onload = res;
+                el.onerror = () => rej(new Error('Excel kütüphanesi yüklenemedi.'));
+                document.head.appendChild(el);
+            });
+        }
+        return xlsxPromise;
+    }
+    function download(rows, name) {
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [{ wch: 16 }, { wch: 46 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 14 }, { wch: 10 }, { wch: 8 }, { wch: 10 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Sorular');
+        const help = [
+            ['Canlı Quiz toplu soru formatı'],
+            ['Tür', 'Çoktan Seçmeli | Doğru/Yanlış | Sürükle Bırak'],
+            ['Çoktan Seçmeli', 'A–F sütunlarına şıkları yazın (en az 2). "Doğru Cevap" sütununa doğru şıkkın harfini yazın (A, B, C...).'],
+            ['Doğru/Yanlış', '"Doğru Cevap" sütununa Doğru veya Yanlış yazın. A–F boş kalabilir.'],
+            ['Sürükle Bırak', 'A–F sütunlarına "Sol öğe => Sağ öğe" biçiminde eşleşme çiftlerini yazın (en az 2). "Doğru Cevap" boş kalır.'],
+            ['Süre (sn)', 'Boşsa 30. En az 5.'],
+            ['XP', 'Boşsa 10.'],
+            ['Çift XP', 'Evet / Hayır (boşsa Hayır).'],
+            ['Not', 'İlk satır başlıktır; silmeyin. Dosya .xlsx veya .csv olabilir.'],
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(help), 'Açıklama');
+        XLSX.writeFile(wb, name);
+    }
+    const fold = (v) => String(v ?? '').trim().toLocaleLowerCase('tr').replace(/ı/g, 'i').normalize('NFD').replace(/[̀-ͯ]/g, '');
+    function rowToQuestion(r) {
+        const cell = (i) => String(r[i] ?? '').trim();
+        const text = cell(1);
+        if (!text) return { skip: true };
+        const t = fold(cell(0));
+        const type = t.includes('surukle') ? 'dragdrop' : (t.includes('dogru') && (t.includes('yanlis') || t.includes('/')) || t.startsWith('d/y') ? 'truefalse' : 'multiple');
+        const dur = Math.max(5, parseInt(cell(9), 10) || 30);
+        const xp = Math.max(1, parseInt(cell(10), 10) || 10);
+        const dbl = ['evet', 'e', '1', 'true', 'x'].includes(fold(cell(11)));
+        const q = { ...baseQuestion(), type, question: text, durationSec: dur, xp, doubleXp: dbl };
+        const raw = [2, 3, 4, 5, 6, 7].map(cell);
+        const ans = fold(cell(8));
+        if (type === 'truefalse') {
+            const yes = ['a', 'd', 'dogru', 'true', 'evet', '1'].includes(ans);
+            const no = ['b', 'y', 'yanlis', 'false', 'hayir', '0'].includes(ans);
+            if (!yes && !no) return { error: 'Doğru Cevap "Doğru" ya da "Yanlış" olmalı' };
+            q.options = ['Dogru', 'Yanlis'];
+            q.correct = yes ? 'A' : 'B';
+            return { q };
+        }
+        if (type === 'dragdrop') {
+            const pairs = raw.filter(Boolean).map((p) => p.split(/=>|->|=|\|/).map((x) => x.trim()));
+            if (pairs.length < 2 || pairs.some((p) => p.length < 2 || !p[0] || !p[1])) return { error: 'En az 2 "Sol => Sağ" çifti gerekli' };
+            q.leftItems = pairs.map((p) => p[0]);
+            q.rightItems = pairs.map((p) => p[1]);
+            q.correctMap = Object.fromEntries(pairs.map((_, i) => [String(i), i]));
+            return { q };
+        }
+        const letter = ans.toUpperCase().charAt(0);
+        const pos = letter.charCodeAt(0) - 65;
+        const opts = raw.filter(Boolean);
+        if (opts.length < 2) return { error: 'En az 2 şık gerekli' };
+        if (!(pos >= 0 && pos < 6) || !raw[pos]) return { error: 'Doğru Cevap harfi dolu bir şıkka işaret etmeli' };
+        q.options = opts;
+        q.correctIndex = raw.slice(0, pos).filter(Boolean).length;
+        return { q };
+    }
+    function questionToRow(q) {
+        const base = [q.type === 'truefalse' ? 'Doğru/Yanlış' : (q.type === 'dragdrop' ? 'Sürükle Bırak' : 'Çoktan Seçmeli'), q.question || ''];
+        let cols = ['', '', '', '', '', ''];
+        let ans = '';
+        if (q.type === 'truefalse') {
+            ans = (q.correct || 'A') === 'B' ? 'Yanlış' : 'Doğru';
+        } else if (q.type === 'dragdrop') {
+            cols = (q.leftItems || []).slice(0, 6).map((l, i) => `${l} => ${(q.rightItems || [])[Number((q.correctMap || {})[i] ?? i)] ?? ''}`);
+        } else {
+            cols = (q.options || []).slice(0, 6);
+            ans = String.fromCharCode(65 + Number(q.correctIndex || 0));
+        }
+        while (cols.length < 6) cols.push('');
+        return [...base, ...cols, ans, Number(q.durationSec || 30), Number(q.xp || 10), q.doubleXp ? 'Evet' : 'Hayır'];
+    }
+    document.getElementById('qiTemplateBtn')?.addEventListener('click', async () => {
+        try { await loadXlsx(); download([QI_HEAD, ...QI_EXAMPLES], 'canli-quiz-soru-sablonu.xlsx'); say('Şablon indirildi. Örnek satırları silip kendi sorularınızı yazın.'); } catch (e) { say(e.message); }
+    });
+    document.getElementById('qiExportBtn')?.addEventListener('click', async () => {
+        if (!questions.length) { say('İndirilecek soru yok.'); return; }
+        try { await loadXlsx(); download([QI_HEAD, ...questions.map(questionToRow)], 'canli-quiz-sorular.xlsx'); say(`${questions.length} soru indirildi.`); } catch (e) { say(e.message); }
+    });
+    document.getElementById('qiImportBtn')?.addEventListener('click', () => qiFile?.click());
+    qiFile?.addEventListener('change', async () => {
+        const file = qiFile.files && qiFile.files[0];
+        qiFile.value = '';
+        if (!file) return;
+        try {
+            await loadXlsx();
+            const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+            const start = rows.length && /^t[uü]r$/i.test(String(rows[0][0] ?? '').trim()) ? 1 : 0;
+            const added = [];
+            const problems = [];
+            rows.slice(start).forEach((r, i) => {
+                const res = rowToQuestion(r);
+                if (res.skip) return;
+                if (res.error) problems.push(`Satır ${i + 1 + start}: ${res.error}`);
+                else added.push(res.q);
+            });
+            if (!added.length) { say('Geçerli soru bulunamadı.' + (problems.length ? '\n' + problems.slice(0, 6).join('\n') : '')); return; }
+            if (added.length > 200) { say('Tek seferde en fazla 200 soru yüklenebilir.'); return; }
+            added.forEach((q) => questions.push(q));
+            selectQuestion(questions.length - added.length);
+            renderList();
+            say(`${added.length} soru eklendi.` + (problems.length ? `\n${problems.length} satır atlandı:\n` + problems.slice(0, 6).join('\n') : '') + '\nKaydetmek için aşağıdaki kaydet butonunu kullanın.');
+        } catch (e) {
+            say('Dosya okunamadı: ' + (e.message || 'geçersiz biçim'));
+        }
+    });
 
     addBtn.addEventListener('click', () => {
         questions.push(baseQuestion());
