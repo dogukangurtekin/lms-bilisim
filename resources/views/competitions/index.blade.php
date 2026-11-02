@@ -100,6 +100,7 @@
                         </td>
                         <td style="display:flex;gap:6px;flex-wrap:wrap">
                             <a class="btn" href="{{ route('competitions.room.show', $room) }}">Odaya Git</a>
+                            @if($room->status !== 'lobby')<a class="btn" href="{{ route('competitions.room.report', $room) }}">📊 Rapor</a>@endif
                             <button type="button" class="btn btn-danger comp-delete-trigger" data-delete-url="{{ route('competitions.room.destroy', $room) }}">Sil</button>
                         </td>
                     </tr>

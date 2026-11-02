@@ -208,6 +208,73 @@ class CompetitionController extends Controller
                 : 'Silinecek canlı yarışma oturumu bulunamadı.');
     }
 
+    /** Yarışma raporunu (özet, grafik veri ve satırlar) oyun türünden bağımsız hazırlar. */
+    private function buildReport(CompetitionRoom $room): array
+    {
+        $rows = $this->leaderboardRows($room);
+        $n = count($rows);
+        $finished = collect($rows)->where('finished', true);
+        $times = $finished->pluck('completed_seconds')->filter(fn ($t) => $t !== null)->values();
+        $xpTotal = (int) collect($rows)->sum('xp_earned');
+        $buckets = ['0-24' => 0, '25-49' => 0, '50-74' => 0, '75-99' => 0, '100' => 0];
+        foreach ($rows as $r) {
+            $p = (float) $r['progress_percent'];
+            $key = $p >= 100 ? '100' : ($p >= 75 ? '75-99' : ($p >= 50 ? '50-74' : ($p >= 25 ? '25-49' : '0-24')));
+            $buckets[$key]++;
+        }
+        $isScratch = $room->game_slug === 'scratch-runner';
+        $startedMs = (int) ($room->started_at_ms ?? 0);
+        $endMs = (int) ($room->finished_at_ms ?? 0);
+        $usedSeconds = ($startedMs > 0 && $endMs > 0) ? max(0, (int) round(($endMs - $startedMs) / 1000)) : null;
+
+        return [
+            'rows' => $rows,
+            'is_scratch' => $isScratch,
+            'level_label' => $isScratch ? 'Betik' : 'Bölüm',
+            'progress_label' => $isScratch ? 'Blok' : 'İlerleme (%)',
+            'participants' => $n,
+            'spectators' => (int) $room->participants()->where('is_spectator', true)->count(),
+            'finished_count' => $finished->count(),
+            'avg_progress' => $n ? round(collect($rows)->avg('progress_percent'), 1) : 0,
+            'avg_xp' => $n ? round($xpTotal / $n, 1) : 0,
+            'total_xp' => $xpTotal,
+            'max_xp' => $n ? (int) collect($rows)->max('xp_earned') : 0,
+            'avg_time' => $times->count() ? (int) round($times->avg()) : null,
+            'best_time' => $times->count() ? (int) $times->min() : null,
+            'buckets' => $buckets,
+            'started_at' => $startedMs > 0 ? \Carbon\Carbon::createFromTimestampMs($startedMs)->timezone(config('app.timezone')) : null,
+            'finished_at' => $endMs > 0 ? \Carbon\Carbon::createFromTimestampMs($endMs)->timezone(config('app.timezone')) : null,
+            'used_seconds' => $usedSeconds,
+        ];
+    }
+
+    public function report(CompetitionRoom $room)
+    {
+        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        $room = $this->syncRoomByTimer($room);
+        $room->load('schoolClass');
+
+        return view('competitions.report', ['room' => $room, 'r' => $this->buildReport($room)]);
+    }
+
+    public function reportCsv(CompetitionRoom $room)
+    {
+        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        $room = $this->syncRoomByTimer($room);
+        $r = $this->buildReport($room);
+        $name = 'yarisma-raporu-'.$room->id.'.csv';
+
+        return response()->streamDownload(function () use ($r): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Sıra', 'Öğrenci', $r['progress_label'], $r['level_label'], 'XP', 'Tamamlama (sn)', 'Durum'], ';');
+            foreach ($r['rows'] as $i => $row) {
+                fputcsv($out, [$i + 1, $row['name'], $row['progress_percent'], $row['current_level_index'], $row['xp_earned'], $row['completed_seconds'] ?? '', $row['finished'] ? 'Tamamladı' : 'Süre doldu'], ';');
+            }
+            fclose($out);
+        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     public function roomStatus(CompetitionRoom $room)
     {
         abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);

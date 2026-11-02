@@ -26,6 +26,7 @@
         @elseif($room->status === 'live')<span class="cx-chip live" id="compStatusChip">● Canlı</span>
         @else<span class="cx-chip done" id="compStatusChip">🏁 Bitti</span>@endif
         <span class="cx-chip">👥 <span id="compChipCount">{{ $room->participants()->count() }}</span></span>
+        @if($room->status !== 'lobby')<a class="cx-chip" href="{{ route('competitions.room.report', $room) }}" style="text-decoration:none">📊 Rapor</a>@endif
     </div>
 </div>
 

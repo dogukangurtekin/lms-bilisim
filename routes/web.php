@@ -360,6 +360,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/canli-yarismalar/oda/{room}', [CompetitionController::class, 'showRoom'])->name('competitions.room.show');
         Route::post('/canli-yarismalar/oda/{room}/herkese-baslat', [CompetitionController::class, 'launch'])->name('competitions.room.launch');
         Route::get('/canli-yarismalar/oda/{room}/durum', [CompetitionController::class, 'roomStatus'])->name('competitions.room.status');
+        Route::get('/canli-yarismalar/oda/{room}/rapor', [CompetitionController::class, 'report'])->name('competitions.room.report');
+        Route::get('/canli-yarismalar/oda/{room}/rapor.csv', [CompetitionController::class, 'reportCsv'])->name('competitions.room.report.csv');
         Route::post('/canli-yarismalar/oda/{room}/bitir', [CompetitionController::class, 'finish'])->name('competitions.room.finish');
         Route::delete('/canli-yarismalar/oturumlar/tumu', [CompetitionController::class, 'destroyAll'])->name('competitions.rooms.destroy-all');
         Route::delete('/canli-yarismalar/oda/{room}', [CompetitionController::class, 'destroy'])->name('competitions.room.destroy');
