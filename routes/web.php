@@ -340,6 +340,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/kodlama-etkinlikleri/{activity}/bugune-ata', [CodingActivityManagementController::class, 'assignToday'])->name('coding.activities.assign.today');
         Route::post('/kodlama-etkinlikleri/{activity}/ogrenciden-kaldir', [CodingActivityManagementController::class, 'unassignToday'])->name('coding.activities.unassign.today');
         Route::post('/canli-quiz', [LiveQuizController::class, 'store'])->name('live-quiz.store');
+        Route::post('/canli-quiz/ses-ayari', [LiveQuizController::class, 'updateSound'])->name('live-quiz.sound.update');
         Route::post('/canli-quiz/oturumlar/tumunu-kapat', [LiveQuizController::class, 'closeAllSessions'])->name('live-quiz.sessions.close-all');
         Route::delete('/canli-quiz/gecmis-oturumlar', [LiveQuizController::class, 'destroyHistory'])->name('live-quiz.sessions.history.destroy');
         Route::get('/canli-quiz/{quiz}/duzenle', [LiveQuizController::class, 'edit'])->name('live-quiz.edit');

@@ -269,6 +269,21 @@ class LiveQuizController extends Controller
         return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');
     }
 
+    /** Yalnızca admin: Canlı Quiz müzik ve ses efektlerini açar/kapatır, ses seviyesini ayarlar. */
+    public function updateSound(Request $request)
+    {
+        abort_unless(auth()->user()?->hasRole('admin'), 403);
+        $request->validate(['volume' => ['nullable', 'integer', 'min:0', 'max:100']]);
+        \App\Support\QuizSoundSetting::save([
+            'enabled' => $request->boolean('enabled'),
+            'music' => $request->boolean('music'),
+            'effects' => $request->boolean('effects'),
+            'volume' => (int) $request->input('volume', 70),
+        ]);
+
+        return redirect()->route('live-quiz.index')->with('ok', 'Ses ayarları kaydedildi.');
+    }
+
     public function showSession(LiveQuizSession $session)
     {
         $this->authorizeSessionManagement($session);

@@ -236,8 +236,22 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/quiz-sound.js') }}?v={{ @filemtime(public_path('js/quiz-sound.js')) ?: 1 }}"></script>
 <script>
 (() => {
+    // Öğrenci ses efektleri: soru açılışı, cevap kaydı, doğru/yanlış sonucu ve final.
+    const qSound = window.QuizSound;
+    if (qSound) {
+        qSound.init(@json(\App\Support\QuizSoundSetting::all()), 'player');
+        const sndStatus = @json($session->status);
+        const sndPhase = @json((string) $session->phase);
+        if (sndStatus === 'live') {
+            if (sndPhase === 'intro') qSound.play('start');
+            else if (sndPhase === 'results') qSound.play(document.querySelector('.lq-result-good') ? 'correct' : 'wrong');
+            else if (sndPhase === 'final') qSound.play('final');
+            else if (sndPhase === 'question' && document.getElementById('lqWaitingStage')) qSound.play('click');
+        }
+    }
     const formEl = document.querySelector('.lq-stage form');
     let autoSubmitted = false;
 

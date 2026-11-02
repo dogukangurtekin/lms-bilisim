@@ -45,6 +45,20 @@
         <h1>Canli Quiz Merkezi</h1>
     </div>
 
+    @if(auth()->user()?->hasRole('admin'))
+        @php $snd = \App\Support\QuizSoundSetting::all(); @endphp
+        <form method="POST" action="{{ route('live-quiz.sound.update') }}" class="card" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;border-left:5px solid #7c3aed;">
+            @csrf
+            <strong>🔊 Ses ve Müzik</strong>
+            <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" name="enabled" value="1" {{ $snd['enabled'] ? 'checked' : '' }}> Sesler açık</label>
+            <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" name="music" value="1" {{ $snd['music'] ? 'checked' : '' }}> Müzik (öğretmen ekranı)</label>
+            <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" name="effects" value="1" {{ $snd['effects'] ? 'checked' : '' }}> Ses efektleri</label>
+            <label style="display:flex;gap:8px;align-items:center;margin:0">Ses seviyesi <input type="range" name="volume" min="0" max="100" value="{{ $snd['volume'] }}" oninput="this.nextElementSibling.textContent=this.value"><span>{{ $snd['volume'] }}</span></label>
+            <button class="btn" type="submit">Kaydet</button>
+            <small style="color:#64748b;flex-basis:100%">Müzik ve efektler öğretmen ekranında (lobi, soru, sonuç, final) ve öğrenci ekranında (sonuç ve final efektleri) çalar. Her kullanıcı kendi ekranındaki 🔊 düğmesiyle sesi kısabilir.</small>
+        </form>
+    @endif
+
     @if($editingQuiz)
         <div class="card" style="border-left:5px solid #4f46e5;display:flex;justify-content:space-between;align-items:center;gap:12px;">
             <div><strong>Quiz düzenleniyor:</strong> {{ $editingQuiz->title }}</div>

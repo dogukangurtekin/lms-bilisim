@@ -136,11 +136,24 @@
 @endif
 
 @push('scripts')
+<script src="{{ asset('js/quiz-sound.js') }}?v={{ @filemtime(public_path('js/quiz-sound.js')) ?: 1 }}"></script>
 <script>
 (() => {
     const sessionStatus = @json($session->status);
     const initialPhase = @json((string) $session->phase);
     if (sessionStatus === 'finished') return;
+
+    // Müzik ve ses efektleri (öğretmen ekranı): lobi müziği, soru müziği + son 5 sn tik, sonuç ve final efekti.
+    const qSound = window.QuizSound;
+    let lastTickSec = -1;
+    if (qSound) {
+        qSound.init(@json(\App\Support\QuizSoundSetting::all()), 'host');
+        if (sessionStatus === 'lobby') qSound.music('lobby');
+        else if (initialPhase === 'intro') qSound.play(@json((bool) ($current?->double_xp ?? false)) ? 'double' : 'start');
+        else if (initialPhase === 'question') qSound.music('question');
+        else if (initialPhase === 'results') qSound.play('results');
+        else if (initialPhase === 'final') qSound.play('final');
+    }
 
     const statusUrl = @json(route('live-quiz.session.status', $session));
     const reportUrlDefault = @json(route('live-quiz.session.report', $session));
@@ -205,6 +218,10 @@
         const leftMs = Math.max(0, endsAtMs - nowMs);
         const leftSec = Math.ceil(leftMs / 1000);
         if (countdownEl) countdownEl.textContent = String(leftSec);
+        if (qSound && initialPhase === 'question' && leftSec > 0 && leftSec <= 5 && leftSec !== lastTickSec) {
+            lastTickSec = leftSec;
+            qSound.play('tick');
+        }
         if (timerFillEl) {
             const pct = durationMs > 0 ? Math.max(0, Math.min(100, (leftMs / durationMs) * 100)) : 0;
             timerFillEl.style.width = pct + '%';
