@@ -266,16 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <b>Ders İçeriği:</b>
                 <iframe id="detail-course-frame" src="about:blank" style="width:100%;min-height:72vh;border:1px solid #dbe5f2;border-radius:12px;display:block;margin-top:8px"></iframe>
             </div>
-            <div>
-                <b>Ödev Görseli:</b>
-                <div style="margin-top:8px">
-                    <a id="detail-image-link" href="#" target="_blank" style="display:none">
-                        <img id="detail-image" alt="Ödev görseli" style="max-width:100%;max-height:260px;border-radius:12px;border:1px solid #dbe5f2;object-fit:contain;cursor:zoom-in;display:block">
-                    </a>
-                    <span id="detail-no-image">Görsel yok</span>
-                </div>
+            <div id="detail-file-wrap" style="display:none">
+                <b>Ödev Dosyası:</b> <small id="detail-file-name" style="color:#64748b"></small>
+                <div id="detail-preview" class="hw-preview" style="margin-top:8px"><div class="sh-msg">Dosya yükleniyor…</div></div>
+                <a id="detail-file" class="hw-open" href="#" target="_blank" rel="noopener">⛶ Yeni sekmede aç</a>
             </div>
-            <p><b>Ek Dosya:</b> <a id="detail-file" href="#" target="_blank" style="display:none">Dosyayı Aç</a><span id="detail-no-file">Yok</span></p>
+            <p id="detail-no-file"><b>Ödev Dosyası:</b> Yok</p>
         </div>
         <div style="margin-top:14px">
             <label for="homework-note" style="display:block;font-weight:700;margin-bottom:6px">Öğrenci Notu</label>
@@ -296,6 +292,33 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 @push('scripts')
+<style>
+    /* Ödev detayı: herkese açık ödev sayfasındaki gibi geniş önizleme */
+    #student-homework-detail-modal{padding:12px;overflow:auto}
+    #student-homework-detail-modal .modal-card{max-width:min(1100px,100%);max-height:96vh;overflow:auto}
+    .hw-preview{background:#fff;border:1px solid #dbe5f2;border-radius:14px;overflow:auto;min-height:120px;width:100%}
+    .hw-preview img{display:block;width:100%;max-width:100%;height:auto}
+    .hw-preview iframe{display:block;width:100%;height:78vh;min-height:420px;border:0}
+    .hw-open{display:inline-block;margin:10px 0 0;font-size:14px;font-weight:600}
+    @media (max-width:560px){.hw-preview{border-radius:10px}.hw-preview iframe{height:70vh;min-height:340px}}
+    .hw-preview .sh-msg{padding:28px 18px;text-align:center;color:#64748b}
+    .hw-preview .sh-pager{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;background:#eef2ff;border-bottom:1px solid #dbe5f2}
+    .hw-preview .sh-pager button,.hw-preview .sh-sheet-tabs button{font:inherit;font-size:14px;padding:6px 12px;border:1px solid #dbe5f2;border-radius:8px;background:#fff;color:inherit;cursor:pointer}
+    .hw-preview .sh-pager button:disabled{opacity:.45;cursor:default}
+    .hw-preview .sh-pager-info{font-size:14px;color:#64748b}
+    .hw-preview .sh-docxhost{padding:0;overflow:auto;background:#eceae3}
+    .hw-preview .docx-wrapper{padding:12px!important}
+    .hw-preview .sh-docxhost section.docx{margin:0 auto 12px!important;box-shadow:0 2px 10px rgba(22,24,43,.12)}
+    .hw-preview .sh-docx-page{padding:20px 24px;max-width:820px;margin:0 auto}
+    .hw-preview .sh-sheet-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#eef2ff;border-bottom:1px solid #dbe5f2;position:sticky;top:0;z-index:2}
+    .hw-preview .sh-sheet-tabs button.on{background:#5b3df5;border-color:#5b3df5;color:#fff}
+    .hw-preview .sh-sheet{overflow:auto;padding:10px}
+    .hw-preview .sh-sheet table{width:auto;min-width:100%;font-size:13.5px}
+    .hw-preview .sh-sheet-imgs{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .hw-preview .sh-sheet-imgs-t{width:100%;font-weight:600}
+    .hw-preview .sh-sheet-imgs img{max-width:100%;height:auto;border:1px solid #dbe5f2}
+</style>
+<script src="{{ asset('js/file-preview.js') }}?v={{ @filemtime(public_path('js/file-preview.js')) ?: 1 }}"></script>
 <script>
 (function () {
     const modal = document.getElementById('student-homework-detail-modal');
@@ -305,9 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const descEl = document.getElementById('detail-description');
     const courseWrapEl = document.getElementById('detail-course-wrap');
     const courseFrameEl = document.getElementById('detail-course-frame');
-    const imageEl = document.getElementById('detail-image');
-    const imageLinkEl = document.getElementById('detail-image-link');
-    const noImageEl = document.getElementById('detail-no-image');
+    const fileWrapEl = document.getElementById('detail-file-wrap');
+    const fileNameEl = document.getElementById('detail-file-name');
+    const previewEl = document.getElementById('detail-preview');
     const fileEl = document.getElementById('detail-file');
     const noFileEl = document.getElementById('detail-no-file');
     const noteEl = document.getElementById('homework-note');
@@ -321,6 +344,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal() {
         modal.classList.remove('open');
+        if (previewEl) previewEl.innerHTML = '';
+    }
+
+    // Word sayfaları ve Excel tabloları kutu genişliğine göre ölçeklenir (herkese açık ödev sayfasıyla aynı davranış).
+    function fitPreview() {
+        const w = previewEl.clientWidth;
+        if (!w) return;
+        const doc = previewEl.querySelector('.docx-wrapper');
+        if (doc) {
+            doc.style.zoom = 1;
+            doc.style.zoom = Math.max(0.3, Math.min(1.6, w / (doc.scrollWidth || w)));
+        }
+        const sheet = previewEl.querySelector('.sh-sheet');
+        const tbl = sheet && sheet.querySelector('table');
+        if (tbl) {
+            sheet.style.zoom = 1;
+            sheet.style.zoom = Math.max(0.6, Math.min(1.4, w / (tbl.scrollWidth + 24)));
+        }
+    }
+    let fitRaf = 0;
+    function scheduleFit() { cancelAnimationFrame(fitRaf); fitRaf = requestAnimationFrame(fitPreview); }
+    if (previewEl) {
+        new MutationObserver(scheduleFit).observe(previewEl, { childList: true, subtree: true });
+        window.addEventListener('resize', scheduleFit);
     }
 
     document.querySelectorAll('[data-homework-detail]').forEach((btn) => {
@@ -343,47 +390,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (this.dataset.imageUrl) {
-                imageEl.src = this.dataset.imageUrl;
-                imageLinkEl.href = this.dataset.imageUrl;
-                imageLinkEl.style.display = 'inline-block';
-                noImageEl.style.display = 'none';
-            } else {
-                imageEl.removeAttribute('src');
-                imageLinkEl.removeAttribute('href');
-                imageLinkEl.style.display = 'none';
-                noImageEl.style.display = 'inline';
-            }
-
             if (this.dataset.fileUrl) {
                 fileEl.href = this.dataset.fileUrl;
-                fileEl.textContent = this.dataset.fileName || 'Dosyayı Aç';
-                fileEl.style.display = 'inline';
+                fileNameEl.textContent = this.dataset.fileName ? '· ' + this.dataset.fileName : '';
+                fileWrapEl.style.display = 'block';
                 noFileEl.style.display = 'none';
+                previewEl.innerHTML = '<div class="sh-msg">Dosya yükleniyor…</div>';
+                if (window.FilePreview) {
+                    window.FilePreview.render(previewEl, this.dataset.fileUrl, this.dataset.fileName || this.dataset.fileUrl).then(scheduleFit);
+                }
             } else {
                 fileEl.removeAttribute('href');
-                fileEl.style.display = 'none';
-                noFileEl.style.display = 'inline';
+                fileWrapEl.style.display = 'none';
+                noFileEl.style.display = 'block';
+                previewEl.innerHTML = '';
             }
 
             openModal();
         });
     });
-
-    if (imageLinkEl) {
-        imageLinkEl.addEventListener('click', function (event) {
-            event.preventDefault();
-            const src = imageEl?.src || this.href;
-            if (!src) return;
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.8);z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px;';
-            overlay.innerHTML = '<div style="position:relative;max-width:96vw;max-height:92vh"><button type="button" style="position:absolute;top:-12px;right:-12px;width:36px;height:36px;border:0;border-radius:9999px;background:#fff;font-size:22px;font-weight:700;cursor:pointer">×</button><img src="' + src + '" alt="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:12px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,.35)"></div>';
-            overlay.addEventListener('click', function (e) {
-                if (e.target === overlay || e.target.tagName === 'BUTTON') overlay.remove();
-            });
-            document.body.appendChild(overlay);
-        });
-    }
 
     closeButtons.forEach((button) => button.addEventListener('click', closeModal));
     modal?.addEventListener('click', (event) => {
