@@ -8,7 +8,7 @@
             <input type="text" readonly value="{{ $phUrl }}" onfocus="this.select()" style="flex:1;min-width:220px;margin:0">
             <button type="button" class="btn" data-copy-link="{{ $phUrl }}">📋 Kopyala</button>
             <a class="btn" target="_blank" rel="noopener" href="{{ $phUrl }}">↗ Linki Aç</a>
-            <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text={{ rawurlencode(($item->title ?? 'Ödev').' – '.$phUrl) }}">WhatsApp</a>
+            <a class="btn" target="_blank" rel="noopener" href="{{ \App\Support\PublicHomework::whatsappUrl($phUrl) }}">WhatsApp</a>
         </div>
     </div>
 @endif

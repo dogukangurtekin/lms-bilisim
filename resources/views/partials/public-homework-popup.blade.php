@@ -17,7 +17,7 @@
                 <button type="button" class="btn" data-copy-link="{{ $phl['url'] }}" style="white-space:nowrap">📋 Linki Kopyala</button>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-                <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text={{ rawurlencode($phl['title'].' – '.$phl['url']) }}" style="background:#16a34a;border-color:#16a34a;color:#fff">WhatsApp'ta Paylaş</a>
+                <a class="btn" target="_blank" rel="noopener" href="{{ \App\Support\PublicHomework::whatsappUrl($phl['url']) }}" style="background:#16a34a;border-color:#16a34a;color:#fff">WhatsApp'ta Paylaş</a>
                 <a class="btn" target="_blank" rel="noopener" href="{{ $phl['url'] }}">Linki Aç</a>
                 <button type="button" class="btn" id="public-hw-close" style="margin-left:auto;background:#e2e8f0;border-color:#e2e8f0;color:#0f172a">Kapat</button>
             </div>

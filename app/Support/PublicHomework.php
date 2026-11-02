@@ -37,6 +37,22 @@ class PublicHomework
         return url('/acik-odev/' . $token);
     }
 
+    /** WhatsApp'ta paylaşılan hazır veli mesajı: "Sınav Çalışma linki" yerine ödevin herkese açık linki yazılır. */
+    public static function whatsappMessage(string $publicUrl): string
+    {
+        $site = rtrim(url('/'), '/') . '/';
+
+        return "Değerli velim, Bilişim Teknolojileri sınavı için çalışma sayfasına ister {$site} adresinden öğrenciler kendi bilgileri (derste giriş bilgilerini öğrendiler) ile giriş yaparak veya aşağıda paylaştığım linke tıklayarak ulaşabilirsiniz. Bilgilerinize\n"
+            . "Sınav Çalışma linki: {$publicUrl}\n"
+            . "Doğukan Gürtekin\n"
+            . "Bilişim Teknolojileri Öğrt.";
+    }
+
+    public static function whatsappUrl(string $publicUrl): string
+    {
+        return 'https://wa.me/?text=' . rawurlencode(self::whatsappMessage($publicUrl));
+    }
+
     /** Oluşturma sonrası "Ödev bilgilendirme" penceresini tetikler (layout bunu gösterir). */
     public static function flash(string $title, string $token, ?string $due = null): void
     {
