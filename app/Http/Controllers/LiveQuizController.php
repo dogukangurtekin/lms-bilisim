@@ -316,36 +316,125 @@ class LiveQuizController extends Controller
         ]);
     }
 
-    public function sessionReport(LiveQuizSession $session)
+    /** Oturum raporu için özet, soru ve öğrenci verilerini hazırlar. */
+    private function buildQuizReport(LiveQuizSession $session): array
     {
-        $this->authorizeSessionManagement($session);
         $session->load(['quiz.questions', 'participants.studentUser']);
-
         $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
-        $answers = LiveQuizAnswer::query()
-            ->where('live_quiz_session_id', $session->id)
-            ->get()
-            ->groupBy('question_index');
+        $answersAll = LiveQuizAnswer::query()->where('live_quiz_session_id', $session->id)->get();
+        $answers = $answersAll->groupBy('question_index');
+        $participantCount = $session->participants->count();
+        $qTotal = $questions->count();
 
-        $questionBreakdown = $questions->map(function ($question, $index) use ($answers) {
+        $questionBreakdown = $questions->map(function ($question, $index) use ($answers, $participantCount) {
             $qAnswers = $answers->get($index, collect());
             $answered = $qAnswers->count();
             $correct = $qAnswers->where('is_correct', true)->count();
-            $avgAnsweredAtMs = $answered > 0 ? (int) round($qAnswers->avg('answered_at_ms')) : null;
+            $dist = [];
+            if ($question->type !== 'dragdrop') {
+                $options = array_values((array) $question->options);
+                foreach ($qAnswers->groupBy(fn ($a) => strtoupper((string) $a->selected_answer)) as $letter => $grp) {
+                    $idx = ord((string) $letter) - 65;
+                    $dist[] = ['letter' => (string) $letter, 'label' => (string) ($options[$idx] ?? $letter), 'count' => $grp->count(), 'is_correct' => strtoupper((string) $question->correct_answer) === (string) $letter];
+                }
+                usort($dist, fn ($x, $y) => strcmp($x['letter'], $y['letter']));
+            }
 
             return [
                 'index' => $index,
                 'question_text' => $question->question_text,
+                'type' => $question->type,
                 'answered' => $answered,
                 'correct' => $correct,
                 'wrong' => max(0, $answered - $correct),
+                'blank' => max(0, $participantCount - $answered),
+                'correct_pct' => $answered > 0 ? (int) round($correct / $answered * 100) : 0,
                 'avg_xp' => $answered > 0 ? round($qAnswers->avg('xp_earned'), 1) : 0,
+                'dist' => $dist,
             ];
         })->values()->all();
 
-        $rows = $this->leaderboardRows($session);
+        $byStudent = $answersAll->groupBy('student_user_id');
+        $rows = [];
+        foreach ($session->participants as $p) {
+            $g = $byStudent->get($p->student_user_id, collect());
+            $answered = $g->count();
+            $correct = $g->where('is_correct', true)->count();
+            $rows[] = [
+                'student_name' => $p->studentUser?->name ?? ('user_'.$p->student_user_id),
+                'answered' => $answered,
+                'correct' => $correct,
+                'wrong' => max(0, $answered - $correct),
+                'blank' => max(0, $qTotal - $answered),
+                'accuracy' => $answered > 0 ? (int) round($correct / $answered * 100) : 0,
+                'xp' => (int) $g->sum('xp_earned'),
+            ];
+        }
+        usort($rows, fn ($x, $y) => [$y['xp'], $y['correct']] <=> [$x['xp'], $x['correct']]);
 
-        return view('live-quiz.report', compact('session', 'questionBreakdown', 'rows'));
+        $totalAnswers = $answersAll->count();
+        $totalCorrect = $answersAll->where('is_correct', true)->count();
+        $buckets = ['0-24' => 0, '25-49' => 0, '50-74' => 0, '75-99' => 0, '100' => 0];
+        foreach ($rows as $r) {
+            $p = $r['accuracy'];
+            $buckets[$p >= 100 ? '100' : ($p >= 75 ? '75-99' : ($p >= 50 ? '50-74' : ($p >= 25 ? '25-49' : '0-24')))]++;
+        }
+        $xpTotal = array_sum(array_column($rows, 'xp'));
+        $n = count($rows);
+        $hardest = collect($questionBreakdown)->where('answered', '>', 0)->sortBy('correct_pct')->first();
+        $easiest = collect($questionBreakdown)->where('answered', '>', 0)->sortByDesc('correct_pct')->first();
+        $startMs = (int) ($session->started_at_ms ?? 0);
+        $endMs = (int) ($session->finished_at_ms ?? 0);
+
+        return [
+            'questions' => $questionBreakdown,
+            'rows' => $rows,
+            'participants' => $participantCount,
+            'active' => count(array_filter($rows, fn ($r) => $r['answered'] > 0)),
+            'question_total' => $qTotal,
+            'total_answers' => $totalAnswers,
+            'total_correct' => $totalCorrect,
+            'total_wrong' => max(0, $totalAnswers - $totalCorrect),
+            'total_blank' => max(0, $participantCount * $qTotal - $totalAnswers),
+            'accuracy' => $totalAnswers > 0 ? (int) round($totalCorrect / $totalAnswers * 100) : 0,
+            'avg_xp' => $n ? round($xpTotal / $n, 1) : 0,
+            'total_xp' => $xpTotal,
+            'max_xp' => $n ? max(array_column($rows, 'xp')) : 0,
+            'buckets' => $buckets,
+            'hardest' => $hardest,
+            'easiest' => $easiest,
+            'started_at' => $startMs > 0 ? \Carbon\Carbon::createFromTimestampMs($startMs)->timezone(config('app.timezone')) : null,
+            'finished_at' => $endMs > 0 ? \Carbon\Carbon::createFromTimestampMs($endMs)->timezone(config('app.timezone')) : null,
+            'used_seconds' => ($startMs > 0 && $endMs > 0) ? max(0, (int) round(($endMs - $startMs) / 1000)) : null,
+        ];
+    }
+
+    public function sessionReport(LiveQuizSession $session)
+    {
+        $this->authorizeSessionManagement($session);
+
+        return view('live-quiz.report', ['session' => $session, 'r' => $this->buildQuizReport($session)]);
+    }
+
+    public function sessionReportCsv(LiveQuizSession $session)
+    {
+        $this->authorizeSessionManagement($session);
+        $r = $this->buildQuizReport($session);
+
+        return response()->streamDownload(function () use ($r): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, ['Sıra', 'Öğrenci', 'Cevaplanan', 'Doğru', 'Yanlış', 'Boş', 'Doğruluk %', 'XP'], ';');
+            foreach ($r['rows'] as $i => $row) {
+                fputcsv($out, [$i + 1, $row['student_name'], $row['answered'], $row['correct'], $row['wrong'], $row['blank'], $row['accuracy'], $row['xp']], ';');
+            }
+            fputcsv($out, [], ';');
+            fputcsv($out, ['Soru', 'Soru metni', 'Cevaplayan', 'Doğru', 'Yanlış', 'Boş', 'Doğru %', 'Ort. XP'], ';');
+            foreach ($r['questions'] as $q) {
+                fputcsv($out, [$q['index'] + 1, $q['question_text'], $q['answered'], $q['correct'], $q['wrong'], $q['blank'], $q['correct_pct'], $q['avg_xp']], ';');
+            }
+            fclose($out);
+        }, 'canli-quiz-raporu-'.$session->id.'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     public function next(LiveQuizSession $session)

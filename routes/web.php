@@ -354,6 +354,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/canli-quiz/oturum/{session}/bitir', [LiveQuizController::class, 'finish'])->name('live-quiz.session.finish');
         Route::delete('/canli-quiz/oturum/{session}', [LiveQuizController::class, 'destroySession'])->name('live-quiz.session.destroy');
         Route::get('/canli-quiz/oturum/{session}/rapor', [LiveQuizController::class, 'sessionReport'])->name('live-quiz.session.report');
+        Route::get('/canli-quiz/oturum/{session}/rapor.csv', [LiveQuizController::class, 'sessionReportCsv'])->name('live-quiz.session.report.csv');
 
         Route::get('/canli-yarismalar', [CompetitionController::class, 'index'])->name('competitions.index');
         Route::post('/canli-yarismalar', [CompetitionController::class, 'store'])->name('competitions.store');
