@@ -74,7 +74,12 @@
             </div>
             <div style="grid-column:1 / -1">
                 <label>Kullanıcı Adı</label>
-                <input name="username" value="{{ old('username', $username) }}" required>
+                @if($user->hasRole('student'))
+                    <input name="username" value="{{ $username }}" readonly style="background:#f1f5f9;cursor:not-allowed">
+                    <small style="color:#64748b">Kullanıcı adını yalnızca yönetici değiştirebilir.</small>
+                @else
+                    <input name="username" value="{{ old('username', $username) }}" required>
+                @endif
             </div>
             <div>
                 <label>Yeni Şifre</label>

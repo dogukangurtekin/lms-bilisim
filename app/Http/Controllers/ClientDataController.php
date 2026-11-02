@@ -652,7 +652,8 @@ class ClientDataController extends Controller
         $base = $this->nativeUserData($user, $profile);
         $payload = $merge ? $this->normalizePayload($data, $base) : $this->normalizePayload($data, []);
         $user->name = (string) ($payload['username'] ?? $payload['name'] ?? $user->name ?? "user_{$id}");
-        if (isset($payload['email'])) $user->email = (string) $payload['email'];
+        // Öğrencinin kullanıcı adı (e-posta) bu API'den değiştirilemez; yalnızca admin panelinden değişir.
+        if (isset($payload['email']) && ! ($user->exists && $user->hasRole('student'))) $user->email = (string) $payload['email'];
         if (isset($payload['password']) && (string) $payload['password'] !== '') $user->password = Hash::make((string) $payload['password']);
         $user->save();
         $profile->username = (string) ($payload['username'] ?? $user->name);

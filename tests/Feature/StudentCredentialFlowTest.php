@@ -15,7 +15,7 @@ class StudentCredentialFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_student_password_change_updates_login_and_printable_credential(): void
+    public function test_student_password_change_updates_login_and_printable_credential_but_keeps_username(): void
     {
         $student = $this->createStudent('eski.kullanici', 'Eski123');
 
@@ -34,8 +34,9 @@ class StudentCredentialFlowTest extends TestCase
         $credential = StudentCredential::query()->where('student_id', $student->id)->firstOrFail();
 
         $this->assertTrue(Hash::check('Yeni456', $student->user->password));
-        $this->assertSame('ayse.yilmaz@school.local', $student->user->email);
-        $this->assertSame('ayse.yilmaz', $credential->username);
+        // Ogrenci kullanici adini degistiremez: gonderilen ayse.yilmaz yok sayilir.
+        $this->assertSame('eski.kullanici@school.local', $student->user->email);
+        $this->assertSame('eski.kullanici', $credential->username);
         $this->assertSame('Yeni456', $credential->plain_password);
         $this->assertGreaterThan(120, strlen((string) $credential->getRawOriginal('plain_password')));
     }

@@ -86,6 +86,13 @@ class UserManagementController extends Controller
         }
         $user->save();
 
+        // Öğrenci ise kullanıcı adı kaydı (öğrenci verileri / şifre listesi) e-postayla aynı kalsın.
+        $student = Student::query()->where('user_id', $user->id)->first();
+        if ($student) {
+            \App\Models\StudentCredential::query()->where('student_id', $student->id)
+                ->update(['username' => Str::before((string) $user->email, '@')]);
+        }
+
         return redirect()->route('users.index')->with('ok', 'Kullanici bilgileri guncellendi.');
     }
 

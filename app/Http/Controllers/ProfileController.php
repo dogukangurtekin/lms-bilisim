@@ -48,6 +48,11 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
+        // Öğrenciler kullanıcı adını değiştiremez; yalnızca admin değiştirebilir. Gelen değer yok sayılır.
+        $lockUsername = $user->hasRole('student');
+        if ($lockUsername) {
+            $request->merge(['username' => strtolower((string) strtok((string) $user->email, '@')) ?: 'ogrenci']);
+        }
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:60'],
             'last_name' => ['required', 'string', 'max:60'],
@@ -69,9 +74,9 @@ class ProfileController extends Controller
 
         $currentEmail = (string) ($user->email ?? '');
         $domain = str_contains($currentEmail, '@') ? (string) substr($currentEmail, strpos($currentEmail, '@') + 1) : 'school.local';
-        $newEmail = strtolower(trim($validated['username'])) . '@' . strtolower($domain);
+        $newEmail = $lockUsername ? $currentEmail : strtolower(trim($validated['username'])) . '@' . strtolower($domain);
 
-        $exists = \App\Models\User::query()
+        $exists = ! $lockUsername && \App\Models\User::query()
             ->where('id', '!=', $user->id)
             ->whereRaw('LOWER(email) = ?', [strtolower($newEmail)])
             ->exists();
@@ -79,7 +84,7 @@ class ProfileController extends Controller
             return back()->withErrors(['username' => 'Bu kullanici adi zaten kullanilmada.'])->withInput();
         }
 
-        DB::transaction(function () use ($user, $validated, $fullName, $newEmail): void {
+        DB::transaction(function () use ($user, $validated, $fullName, $newEmail, $lockUsername): void {
             $user->name = $fullName;
             $user->email = $newEmail;
             if (! empty($validated['password'])) {
@@ -90,7 +95,9 @@ class ProfileController extends Controller
             $student = $user->student()->first();
             if ($student) {
                 $credential = StudentCredential::query()->firstOrNew(['student_id' => $student->id]);
-                $credential->username = strtolower(trim($validated['username']));
+                if (! $lockUsername || ! $credential->exists) {
+                    $credential->username = strtolower(trim($validated['username']));
+                }
                 if (! empty($validated['password'])) {
                     $credential->plain_password = $validated['password'];
                 }
