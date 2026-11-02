@@ -5,6 +5,7 @@ use App\Http\Middleware\CheckForcedLogout;
 use App\Http\Middleware\CheckMaintenanceMode;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
+use App\Http\Middleware\SlowRequestLogger;
 use App\Http\Middleware\StudentRequestGuard;
 use App\Http\Middleware\TrackStudentActiveTime;
 use Illuminate\Foundation\Application;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecureHeaders::class);
+        $middleware->append(SlowRequestLogger::class);
         $middleware->web(append: [
             CheckMaintenanceMode::class,
             CheckForcedLogout::class,
