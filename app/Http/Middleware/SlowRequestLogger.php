@@ -14,15 +14,17 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SlowRequestLogger
 {
-    private int $queries = 0;
+    private static int $queries = 0;
 
-    private float $queryMs = 0.0;
+    private static float $queryMs = 0.0;
 
     public function handle(Request $request, Closure $next): Response
     {
+        self::$queries = 0;
+        self::$queryMs = 0.0;
         DB::listen(function ($q): void {
-            $this->queries++;
-            $this->queryMs += (float) $q->time;
+            self::$queries++;
+            self::$queryMs += (float) $q->time;
         });
 
         return $next($request);
@@ -51,8 +53,8 @@ class SlowRequestLogger
                 'route' => $request->route()?->getName() ?? $request->route()?->uri() ?? $request->path(),
                 'status' => $response->getStatusCode(),
                 'user' => $request->user()?->id,
-                'queries' => $this->queries,
-                'db_ms' => round($this->queryMs),
+                'queries' => self::$queries,
+                'db_ms' => round(self::$queryMs),
                 'mem_mb' => round(memory_get_peak_usage(true) / 1048576),
             ], JSON_UNESCAPED_UNICODE);
             @file_put_contents($file, $line."\n", FILE_APPEND | LOCK_EX);
