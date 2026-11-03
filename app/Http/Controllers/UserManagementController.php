@@ -151,7 +151,7 @@ class UserManagementController extends Controller
 
     /**
      * Öğretmene giriş bilgilerini WhatsApp ile göndermek için: öğretmenin şifresi geri okunamadığından yeni bir şifre
-     * oluşturulur, kaydedilir ve hazır mesajla WhatsApp açılır (eski şifre geçersiz olur).
+     * oluşturulur, kaydedilir ve hazır mesajla WhatsApp'ı açan bir ara sayfa gösterilir (eski şifre geçersiz olur).
      */
     public function whatsappCredentials(User $user)
     {
@@ -165,7 +165,9 @@ class UserManagementController extends Controller
             \App\Support\CredentialShare::message($user, (string) $user->email, $newPassword)
         );
 
-        return redirect()->away($url);
+        // Form gönderiminden sonra dış siteye yönlendirme CSP (form-action 'self') ile engellenir; bu yüzden ara sayfa açılır ve WhatsApp'a betikle geçilir.
+        return response()->view('users.whatsapp-open', ['url' => $url, 'name' => $user->name])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 
     public function destroy(User $user)

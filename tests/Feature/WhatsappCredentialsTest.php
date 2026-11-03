@@ -54,18 +54,19 @@ class WhatsappCredentialsTest extends TestCase
         $this->actingAs($this->admin)->get(route('users.index'))->assertSee('Bu öğrencinin kayıtlı giriş bilgisi yok');
     }
 
-    public function test_teacher_button_resets_password_and_redirects_to_whatsapp_with_the_new_one(): void
+    public function test_teacher_button_resets_password_and_opens_whatsapp_with_the_new_one(): void
     {
-        $r = $this->actingAs($this->admin)->post(route('users.whatsapp-credentials', $this->teacher));
-        $loc = (string) $r->headers->get('Location');
-        $this->assertStringStartsWith('https://wa.me/?text=', $loc);
+        // CSP form-action 'self' dış yönlendirmeyi engellediği için 302 değil, WhatsApp'a geçen bir ara sayfa döner.
+        $r = $this->actingAs($this->admin)->post(route('users.whatsapp-credentials', $this->teacher))->assertOk();
+        $html = html_entity_decode($r->getContent());
+        $this->assertSame(1, preg_match('#https://wa\.me/\?text=([^"\'\s<]+)#', $html, $m));
 
-        $text = urldecode(substr($loc, strlen('https://wa.me/?text=')));
+        $text = urldecode($m[1]);
         $this->assertStringContainsString('Sayın Hoca Hanım', $text);
         $this->assertStringContainsString(route('login'), $text);
         $this->assertStringContainsString('Kullanıcı adı: hoca@okul.com', $text);
-        preg_match('/Şifre: (\S+)/u', $text, $m);
-        $this->assertTrue(Hash::check($m[1], $this->teacher->fresh()->password));
+        preg_match('/Şifre: (\S+)/u', $text, $pm);
+        $this->assertTrue(Hash::check($pm[1], $this->teacher->fresh()->password));
         $this->assertFalse(Hash::check('oldpass123', $this->teacher->fresh()->password));
     }
 
