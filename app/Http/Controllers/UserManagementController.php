@@ -25,7 +25,7 @@ class UserManagementController extends Controller
         $classFilter = trim((string) $request->query('school_class_id', ''));
         $consentFilter = in_array($request->query('consent'), ['yes', 'no'], true) ? (string) $request->query('consent') : '';
         $users = User::query()
-            ->with(['role', 'teacher', 'student.schoolClass'])
+            ->with(['role', 'teacher', 'student.schoolClass', 'student.credential'])
             ->whereHas('role', fn ($r) => $r->where('slug', '!=', 'guest'))
             ->when($roleFilter !== '', fn ($q) => $q->whereHas('role', fn ($r) => $r->where('slug', $roleFilter)))
             ->when($search !== '', fn ($q) => $q->where(function ($sub) use ($search) {
@@ -147,6 +147,26 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')
             ->with('reset_password_name', $user->name)
             ->with('reset_password_value', $newPassword);
+    }
+
+    /**
+     * Öğretmene giriş bilgilerini WhatsApp ile göndermek için: öğretmenin şifresi geri okunamadığından yeni bir şifre
+     * oluşturulur, kaydedilir ve hazır mesajla WhatsApp açılır (eski şifre geçersiz olur).
+     */
+    public function whatsappCredentials(User $user)
+    {
+        abort_unless($user->hasRole('teacher'), 404);
+
+        $newPassword = Str::password(10, symbols: false);
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        $url = \App\Support\CredentialShare::url(
+            $user->teacher?->phone,
+            \App\Support\CredentialShare::message($user, (string) $user->email, $newPassword)
+        );
+
+        return redirect()->away($url);
     }
 
     public function destroy(User $user)

@@ -188,6 +188,18 @@
                                 <button class="btn" type="submit" style="padding:7px 12px;font-size:13px;">Şifre Sıfırla</button>
                             </form>
                         @endif
+                        @if($item->hasRole('student'))
+                            @php($waUrl = \App\Support\CredentialShare::studentUrl($item))
+                            @if($waUrl)
+                                <a class="btn" href="{{ $waUrl }}" target="_blank" rel="noopener" style="padding:7px 12px;font-size:13px;background:#16a34a;color:#fff;border-color:#16a34a" title="Giriş bilgilerini WhatsApp ile gönder{{ $item->student?->parent_phone ? ' (veli telefonu)' : ' (kişiyi sen seçersin)' }}">📲 WhatsApp</a>
+                            @else
+                                <button class="btn" type="button" disabled style="padding:7px 12px;font-size:13px" title="Bu öğrencinin kayıtlı giriş bilgisi yok">📲 WhatsApp</button>
+                            @endif
+                        @elseif($item->hasRole('teacher'))
+                            <form method="POST" action="{{ route('users.whatsapp-credentials', $item) }}" target="_blank" data-confirm="{{ $item->name }} için yeni bir şifre oluşturulacak (eski şifre geçersiz olur) ve giriş bilgileri WhatsApp'ta açılacak. Devam edilsin mi?" style="margin:0">@csrf
+                                <button class="btn" type="submit" style="padding:7px 12px;font-size:13px;background:#16a34a;color:#fff;border-color:#16a34a" title="Yeni şifre oluşturup giriş bilgilerini WhatsApp ile gönder">📲 WhatsApp</button>
+                            </form>
+                        @endif
                         @if($item->hasRole('admin'))
                             <button class="btn" type="button" disabled style="padding:7px 12px;font-size:13px;">Admin Silinemez</button>
                         @else

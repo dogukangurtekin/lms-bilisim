@@ -304,6 +304,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/kullanici-yonetimi/{user}/sinif', [UserManagementController::class, 'updateClass'])->name('users.update-class');
             Route::put('/kullanici-yonetimi/{user}', [UserManagementController::class, 'update'])->name('users.update');
             Route::post('/kullanici-yonetimi/{user}/sifre-sifirla', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+            Route::post('/kullanici-yonetimi/{user}/whatsapp-giris-bilgisi', [UserManagementController::class, 'whatsappCredentials'])->middleware('throttle:30,1')->name('users.whatsapp-credentials');
             Route::delete('/kullanici-yonetimi/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
             Route::get('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata', [TeacherClassAssignmentController::class, 'edit'])->name('users.teachers.classes.edit');
             Route::post('/kullanici-yonetimi/ogretmen/{teacher}/sinif-ata/kademe', [TeacherClassAssignmentController::class, 'assignByLevel'])->name('users.teachers.classes.assign-level');
