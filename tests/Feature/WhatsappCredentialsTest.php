@@ -8,7 +8,6 @@ use App\Models\Student;
 use App\Models\StudentCredential;
 use App\Models\Teacher;
 use App\Models\User;
-use App\Support\CredentialShare;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -36,24 +35,17 @@ class WhatsappCredentialsTest extends TestCase
         StudentCredential::query()->create(['student_id' => $st->id, 'username' => 'ali123', 'plain_password' => 'Sifre4567']);
     }
 
-    public function test_phone_normalisation(): void
-    {
-        $this->assertSame('905321112233', CredentialShare::phone('0532 111 22 33'));
-        $this->assertSame('905321112233', CredentialShare::phone('532-111-22-33'));
-        $this->assertSame('905321112233', CredentialShare::phone('+90 532 111 22 33'));
-        $this->assertNull(CredentialShare::phone('12'));
-        $this->assertNull(CredentialShare::phone(null));
-    }
-
     public function test_student_row_has_a_whatsapp_link_with_login_page_username_and_password(): void
     {
         $html = $this->actingAs($this->admin)->get(route('users.index'))->assertOk()->getContent();
         $this->assertStringContainsString('📲 WhatsApp', $html);
-        $this->assertSame(1, preg_match('#https://wa\.me/905554443322\?text=([^"\']+)#', $html, $m));
+        $this->assertSame(1, preg_match('#https://wa\.me/\?text=([^"\']+)#', $html, $m));
         $text = urldecode(html_entity_decode($m[1]));
         $this->assertStringContainsString(route('login'), $text);
         $this->assertStringContainsString('Kullanıcı adı: ali123', $text);
         $this->assertStringContainsString('Şifre: Sifre4567', $text);
+        $this->assertStringContainsString('Değerli velim, Ali Veli adlı öğrencimizin', $text);
+        $this->assertStringContainsString('Bilişim Teknolojileri Öğrt.', $text);
     }
 
     public function test_student_without_credential_gets_a_disabled_button(): void
@@ -66,9 +58,10 @@ class WhatsappCredentialsTest extends TestCase
     {
         $r = $this->actingAs($this->admin)->post(route('users.whatsapp-credentials', $this->teacher));
         $loc = (string) $r->headers->get('Location');
-        $this->assertStringStartsWith('https://wa.me/905321112233?text=', $loc);
+        $this->assertStringStartsWith('https://wa.me/?text=', $loc);
 
-        $text = urldecode(substr($loc, strlen('https://wa.me/905321112233?text=')));
+        $text = urldecode(substr($loc, strlen('https://wa.me/?text=')));
+        $this->assertStringContainsString('Sayın Hoca Hanım', $text);
         $this->assertStringContainsString(route('login'), $text);
         $this->assertStringContainsString('Kullanıcı adı: hoca@okul.com', $text);
         preg_match('/Şifre: (\S+)/u', $text, $m);

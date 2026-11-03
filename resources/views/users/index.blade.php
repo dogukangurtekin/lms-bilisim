@@ -191,7 +191,7 @@
                         @if($item->hasRole('student'))
                             @php($waUrl = \App\Support\CredentialShare::studentUrl($item))
                             @if($waUrl)
-                                <a class="btn" href="{{ $waUrl }}" target="_blank" rel="noopener" style="padding:7px 12px;font-size:13px;background:#16a34a;color:#fff;border-color:#16a34a" title="Giriş bilgilerini WhatsApp ile gönder{{ $item->student?->parent_phone ? ' (veli telefonu)' : ' (kişiyi sen seçersin)' }}">📲 WhatsApp</a>
+                                <a class="btn" href="{{ $waUrl }}" target="_blank" rel="noopener" style="padding:7px 12px;font-size:13px;background:#16a34a;color:#fff;border-color:#16a34a" title="Hazır mesajla WhatsApp'ı aç; alıcıyı (veli) sen seçersin">📲 WhatsApp</a>
                             @else
                                 <button class="btn" type="button" disabled style="padding:7px 12px;font-size:13px" title="Bu öğrencinin kayıtlı giriş bilgisi yok">📲 WhatsApp</button>
                             @endif

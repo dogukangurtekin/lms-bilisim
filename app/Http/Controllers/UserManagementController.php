@@ -162,7 +162,6 @@ class UserManagementController extends Controller
         $user->save();
 
         $url = \App\Support\CredentialShare::url(
-            $user->teacher?->phone,
             \App\Support\CredentialShare::message($user, (string) $user->email, $newPassword)
         );
 
