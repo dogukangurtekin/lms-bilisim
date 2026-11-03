@@ -61,6 +61,11 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner('bee-garden-runner');
     }
 
+    public function flexGoleti()
+    {
+        return $this->serveRunner('flex-goleti-runner');
+    }
+
     public function dotCards()
     {
         return $this->serveRunner('dot-cards-runner');

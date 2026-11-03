@@ -33,6 +33,7 @@ class ActivityController extends Controller
             'connect-the-dots-runner' => ['name' => 'Noktaları Birleştir', 'image' => 'connect-the-dots.svg', 'url' => '/connect-the-dots-runner'],
             'python-editor' => ['name' => 'Python Kod Editörü', 'image' => 'python.png', 'url' => '/python-editor'],
             'bee-garden-runner' => ['name' => 'Arı Bahçesi (CSS Kodlama)', 'image' => 'bee-garden-icon.png', 'url' => '/bee-garden-runner'],
+            'flex-goleti-runner' => ['name' => 'Flex Göleti: Kurbağa Zıplaması (CSS Flexbox)', 'image' => 'flex-goleti-icon.svg', 'url' => '/flex-goleti-runner'],
             'dot-cards-runner' => ['name' => 'Küçük Nokta: Kod Kartları', 'image' => 'dot-cards-icon.svg', 'url' => '/dot-cards-runner'],
             'word-bee-runner' => ['name' => 'Kelime Arısı: Harf Avı', 'image' => 'word-bee-icon.svg', 'url' => '/word-bee-runner'],
             'number-bee-runner' => ['name' => 'Sayı Arısı: Rakam Avı', 'image' => 'number-bee-icon.svg', 'url' => '/number-bee-runner'],

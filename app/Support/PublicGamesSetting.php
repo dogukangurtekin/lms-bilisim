@@ -23,6 +23,7 @@ class PublicGamesSetting
         'block-3d-runner' => '3D blok kodlama ile karakteri hedefe ulaştır.',
         'silent-teacher-runner' => 'Python kodunu oku, çıktıyı tahmin et, soruları çöz.',
         'bee-garden-runner' => 'CSS kodlayarak arıyı bahçede gezdir.',
+        'flex-goleti-runner' => 'CSS Flexbox kurallarını Türkçe yazıp kurbağaları nilüferlere zıplat.',
         'web-lab-runner' => 'HTML, CSS ve JavaScript ile mini web projeleri yap.',
         'keyboard-finger-runner' => 'Doğru parmakla yazmayı adım adım öğren.',
         'python-editor' => 'Tarayıcıda Python kodu yaz ve çalıştır.',
@@ -30,6 +31,9 @@ class PublicGamesSetting
         'excel-runner' => 'Excel benzeri hesap tablosunda formüllerle çalış.',
         'scratch-runner' => 'Blokları sürükleyip birleştir, nesneleri programla, projeni kaydet.',
     ];
+
+    /** Yeni eklenen oyunlar yönetici açana kadar herkese açık listede görünmez (yönetici profilinden işaretler). */
+    public const DEFAULT_OFF = ['flex-goleti-runner'];
 
     public const MAX_LIMIT = 20;
     public const MAX_HW_LIMIT = 999;
@@ -112,7 +116,7 @@ class PublicGamesSetting
             return true;
         }
 
-        return self::enabled() && (self::data()['games'][$slug] ?? true);
+        return self::enabled() && (self::data()['games'][$slug] ?? ! in_array($slug, self::DEFAULT_OFF, true));
     }
 
     /** Menüde/listede görünecek açık oyunlar: slug => açıklama. */
@@ -126,7 +130,7 @@ class PublicGamesSetting
     {
         $out = [];
         foreach (array_keys(self::GAMES) as $slug) {
-            $out[$slug] = self::data()['games'][$slug] ?? true;
+            $out[$slug] = self::data()['games'][$slug] ?? ! in_array($slug, self::DEFAULT_OFF, true);
         }
 
         return $out;

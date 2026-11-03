@@ -49,6 +49,7 @@ const RUNNER_SLUGS = [
   "dot-cards-runner",
   "word-bee-runner",
   "number-bee-runner",
+  "flex-goleti-runner",
 ];
 
 function isRunnerRequest(url) {

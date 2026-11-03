@@ -28,6 +28,7 @@ class CompetitionController extends Controller
         'silent-teacher-runner',
         'connect-the-dots-runner',
         'bee-garden-runner',
+        'flex-goleti-runner',
         'dot-cards-runner',
         'word-bee-runner',
         'number-bee-runner',

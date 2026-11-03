@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Flex Göleti - CSS Flexbox Oyunu</title>
+<meta name="theme-color" content="#0b3d3a">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../logo192.png">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="fg-shell">
+    <header class="fg-topbar">
+        <div class="fg-brand">
+            <img class="fg-logo" src="../../flex-goleti-icon.svg" alt="" width="44" height="44">
+            <div>
+                <strong>Flex Göleti</strong>
+                <span>CSS Flexbox ile kurbağaları nilüfere zıplat</span>
+            </div>
+        </div>
+        <div class="fg-progress" title="Genel ilerleme">
+            <span id="fgRank" class="fg-rank">Yavru Kurbağa</span>
+            <div class="fg-progress-bar"><i id="fgProgressFill"></i></div>
+            <span id="fgProgressText" class="fg-progress-text">0 / 100</span>
+        </div>
+        <div class="fg-level-nav">
+            <button id="fgPrevBtn" class="fg-nav-btn" type="button" aria-label="Önceki seviye">‹</button>
+            <button id="fgLevelsBtn" class="fg-nav-btn" type="button" aria-label="Bölümler" title="Bölümler">☰</button>
+            <span id="fgLevelLabel" class="fg-level-label">Seviye 1 / 100</span>
+            <button id="fgNextBtn" class="fg-nav-btn" type="button" aria-label="Sonraki seviye">›</button>
+        </div>
+    </header>
+
+    <main class="fg-main">
+        <section class="fg-left">
+            <div class="fg-card fg-task">
+                <div class="fg-task-head"><span id="fgCat" class="fg-cat">Kolay</span><h2 id="fgTitle">Görev</h2></div>
+                <p id="fgStory"></p>
+            </div>
+
+            <div id="fgLearn" class="fg-card fg-learn" hidden>
+                <div class="fg-learn-head">💡 Yeni Özellik</div>
+                <div id="fgLearnBody"></div>
+            </div>
+
+            <div class="fg-card fg-code">
+                <div class="fg-code-title">
+                    <i class="d r"></i><i class="d y"></i><i class="d g"></i><span>goleti.css</span>
+                    <label class="fg-real-toggle" title="Yazdığın kodun gerçek CSS karşılığını göster"><input id="fgRealToggle" type="checkbox"> Gerçek CSS</label>
+                </div>
+                <div id="fgCodeBlocks" class="fg-code-blocks"></div>
+                <div class="fg-code-actions">
+                    <button id="fgRunBtn" class="fg-btn fg-btn-run" type="button">▶ Çalıştır</button>
+                    <button id="fgResetBtn" class="fg-btn fg-btn-ghost" type="button">Sıfırla</button>
+                    <button id="fgHintBtn" class="fg-btn fg-btn-ghost" type="button">💡 İpucu</button>
+                </div>
+                <div id="fgStatus" class="fg-status" role="status" aria-live="polite"></div>
+                <div id="fgHint" class="fg-hint" hidden></div>
+            </div>
+
+            <details id="fgRealBox" class="fg-card fg-real" hidden>
+                <summary>Gerçek CSS karşılığı</summary>
+                <pre id="fgRealCss"></pre>
+            </details>
+        </section>
+
+        <section class="fg-right">
+            <div id="fgPondWrap" class="fg-pond-wrap">
+                <div id="fgPondScale" class="fg-pond-scale">
+                    <div id="fgPond" class="fg-pond">
+                        <div id="fgPads" class="gol-sahne gol-hedef" aria-hidden="true"></div>
+                        <div id="fgFrogs" class="gol-sahne gol-oyuncu"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="fg-legend">🐸 Her kurbağa, kendi renginin nilüferine oturmalı.</div>
+        </section>
+    </main>
+
+    <div id="fgWin" class="fg-win" hidden role="dialog" aria-modal="true">
+        <div class="fg-win-card">
+            <div class="fg-win-emoji">🐸🎉</div>
+            <h3 id="fgWinTitle">Harika! Hepsi nilüferde!</h3>
+            <div id="fgWinStars" class="fg-stars"></div>
+            <p id="fgWinText"></p>
+            <div class="fg-win-actions">
+                <button id="fgWinReplay" class="fg-btn fg-btn-ghost" type="button">Tekrar Dene</button>
+                <button id="fgWinNext" class="fg-btn fg-btn-run" type="button">Sonraki Seviye ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="fg-footer">Kodu Türkçe yazarsın, arka planda gerçek CSS Flexbox çalışır. İstersen gerçek CSS adlarını da yazabilirsin: justify-content, align-items, flex-direction…</footer>
+</div>
+
+<div id="fgPicker" class="fg-picker" hidden role="dialog" aria-modal="true" aria-label="Bölümler">
+    <div class="fg-picker-back" data-close></div>
+    <div class="fg-picker-card">
+        <div class="fg-picker-head"><h3>Bölümler</h3><button class="fg-nav-btn" type="button" data-close aria-label="Kapat">✕</button></div>
+        <div id="fgPickerBody" class="fg-picker-body"></div>
+    </div>
+</div>
+
+<div id="fgIntro" class="fg-intro" hidden>
+    <div class="fg-intro-card">
+        <div class="fg-intro-emoji">🐸</div>
+        <h2>Flex Göleti'ne Hoş Geldin!</h2>
+        <p>Zıpzıp ve arkadaşları nilüfer yapraklarına konmak istiyor ama göletin düzenini sen kuracaksın. Soldaki kod kutusuna <strong>Türkçe Flexbox kuralları</strong> yazarak kurbağaları yerlerine zıplat.</p>
+        <ul>
+            <li><b>1</b> Görevi oku, renkli nilüferleri gör.</li>
+            <li><b>2</b> Kod kutusuna kuralı yaz: <code>ana-hiza: son;</code></li>
+            <li><b>3</b> <b>Çalıştır</b>'a bas; kurbağalar yerine zıplasın! 🐸</li>
+        </ul>
+        <p class="fg-intro-note">100 seviye var: Kolay, Orta, Orta-Zor, Zor ve Uzman. Seviyeyi geçtikçe yenisi açılır.</p>
+        <button id="fgIntroStart" class="fg-btn fg-btn-run" type="button">Anladım, Başla! 🚀</button>
+    </div>
+</div>
+
+<script src="./levels.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
