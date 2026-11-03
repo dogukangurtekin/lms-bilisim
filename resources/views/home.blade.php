@@ -475,8 +475,12 @@
                     <input id="guest_email" name="guest_email" type="email" autocomplete="email" required maxlength="190" value="{{ old('guest_email') }}" placeholder="ornek@eposta.com">
                 </div>
                 <div class="field">
+                    <label for="school">Okul</label>
+                    <input id="school" name="school" type="text" required minlength="3" maxlength="190" value="{{ old('school') }}" placeholder="Hangi okulda görev yapıyorsunuz?">
+                </div>
+                <div class="field">
                     <label for="message">Mesaj</label>
-                    <textarea id="message" name="message" required maxlength="6000" placeholder="Okulunuz ve ihtiyacınız hakkında kısa bir not">{{ old('message') }}</textarea>
+                    <textarea id="message" name="message" required minlength="5" maxlength="6000" placeholder="Okulunuz ve ihtiyacınız hakkında kısa bir not">{{ old('message') }}</textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-ghost" @click="demoOpen = false">Vazgeç</button>

@@ -143,12 +143,18 @@ class SupportRequestController extends Controller
             return back()->with('ok', 'Demo talebiniz gönderildi.');
         }
         $data = $request->validate([
-            'guest_name' => ['required', 'string', 'max:190'],
+            'guest_name' => ['required', 'string', 'min:3', 'max:190'],
             'guest_email' => ['required', 'email', 'max:190'],
-            'message' => ['required', 'string', 'max:6000'],
-        ], [], [
+            'school' => ['required', 'string', 'min:3', 'max:190'],
+            'message' => ['required', 'string', 'min:5', 'max:6000'],
+        ], [
+            'required' => ':attribute alanı zorunludur.',
+            'min' => ':attribute çok kısa.',
+            'email' => 'Geçerli bir e-posta adresi yazın.',
+        ], [
             'guest_name' => 'Ad soyad',
             'guest_email' => 'E-posta',
+            'school' => 'Okul',
             'message' => 'Mesaj',
         ]);
 
@@ -161,7 +167,7 @@ class SupportRequestController extends Controller
             'guest_email' => (string) $data['guest_email'],
             'recipient_user_id' => $admin->id,
             'subject' => 'Demo Talebi: ' . $data['guest_name'],
-            'message' => "Ad Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\n\nMesaj:\n" . $data['message'],
+            'message' => "Ad Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\nOkul: {$data['school']}\n\nMesaj:\n" . $data['message'],
             'category' => 'other',
             'priority' => 'normal',
             'source' => 'demo',
@@ -198,7 +204,7 @@ class SupportRequestController extends Controller
 
         try {
             Mail::raw(
-                "Yeni demo talebi\n\nAd Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\n\nMesaj:\n{$data['message']}\n",
+                "Yeni demo talebi\n\nAd Soyad: {$data['guest_name']}\nE-posta: {$data['guest_email']}\nOkul: {$data['school']}\n\nMesaj:\n{$data['message']}\n",
                 function ($message) use ($to, $data) {
                     $message->to($to)
                         ->replyTo($data['guest_email'], $data['guest_name'])
