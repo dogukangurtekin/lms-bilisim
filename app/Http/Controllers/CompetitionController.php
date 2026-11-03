@@ -79,7 +79,7 @@ class CompetitionController extends Controller
 
         $rooms = CompetitionRoom::query()
             ->with('schoolClass')
-            ->when(! $isAdmin, fn ($q) => $q->where('teacher_user_id', $teacherId))
+            ->where('teacher_user_id', $teacherId)   // her kullanıcı (yönetici dahil) yalnızca kendi odalarını görür
             ->latest()
             ->limit(25)
             ->get();
@@ -140,7 +140,7 @@ class CompetitionController extends Controller
 
     public function showRoom(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
         $room = $this->syncRoomByTimer($room);
         $room->load('participants.studentUser');
 
@@ -152,7 +152,7 @@ class CompetitionController extends Controller
 
     public function launch(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
         if ($room->status !== 'lobby') {
             return back();
         }
@@ -169,7 +169,7 @@ class CompetitionController extends Controller
 
     public function finish(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
 
         if ($room->status !== 'finished') {
             $room->update([
@@ -183,7 +183,7 @@ class CompetitionController extends Controller
 
     public function destroy(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
 
         $room->delete();
 
@@ -195,9 +195,10 @@ class CompetitionController extends Controller
         abort_unless(auth()->user()?->hasRole('admin'), 403);
 
         $deletedRoomCount = DB::transaction(function (): int {
-            $roomCount = CompetitionRoom::query()->count();
+            $own = CompetitionRoom::query()->where('teacher_user_id', auth()->id());
+            $roomCount = (clone $own)->count();
 
-            CompetitionRoom::query()->eachById(fn (CompetitionRoom $room) => $room->delete());
+            $own->eachById(fn (CompetitionRoom $room) => $room->delete());
 
             return $roomCount;
         });
@@ -251,7 +252,7 @@ class CompetitionController extends Controller
 
     public function report(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
         $room = $this->syncRoomByTimer($room);
         $room->load('schoolClass');
 
@@ -260,7 +261,7 @@ class CompetitionController extends Controller
 
     public function reportCsv(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
         $room = $this->syncRoomByTimer($room);
         $r = $this->buildReport($room);
         $name = 'yarisma-raporu-'.$room->id.'.csv';
@@ -278,7 +279,7 @@ class CompetitionController extends Controller
 
     public function roomStatus(CompetitionRoom $room)
     {
-        abort_unless($room->teacher_user_id === auth()->id() || auth()->user()?->hasRole('admin'), 403);
+        abort_unless((int) $room->teacher_user_id === (int) auth()->id(), 403);
         $room = $this->syncRoomByTimer($room);
 
         return response()->json([

@@ -53,11 +53,12 @@ class CompetitionBulkDeleteTest extends TestCase
             ->assertRedirect(route('competitions.index'))
             ->assertSessionHas('ok');
 
-        $this->assertSame(0, CompetitionRoom::query()->count());
+        // Yönetici yalnızca kendi açtığı odaları siler; öğretmenin odası (yöneticiye görünmediği için) korunur.
+        $this->assertSame(1, CompetitionRoom::query()->count());
         $this->assertSame(2, CompetitionRoom::withTrashed()->count());
         $this->assertDatabaseCount('competition_participants', 2);
         $this->assertSoftDeleted($firstRoom);
-        $this->assertSoftDeleted($secondRoom);
+        $this->assertNotSoftDeleted($secondRoom);
     }
 
     public function test_teacher_cannot_bulk_delete_competition_sessions(): void

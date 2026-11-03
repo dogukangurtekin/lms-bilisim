@@ -76,7 +76,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
             <h3 style="margin:0">Geçmiş / Aktif Odalar</h3>
             @if(auth()->user()?->hasRole('admin') && $rooms->isNotEmpty())
-                <form method="POST" action="{{ route('competitions.rooms.destroy-all') }}" data-confirm="Tüm canlı yarışma oturumları ve katılımcı kayıtları kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?" style="margin:0">
+                <form method="POST" action="{{ route('competitions.rooms.destroy-all') }}" data-confirm="Senin açtığın tüm canlı yarışma oturumları ve katılımcı kayıtları kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?" style="margin:0">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-danger">Tüm Oturumları Sil</button>
