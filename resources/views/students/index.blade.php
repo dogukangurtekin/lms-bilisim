@@ -80,13 +80,14 @@
     @endif
 
     <table>
-        <thead><tr><th>ID</th><th>No</th><th>Ogrenci</th><th>Kullanici Adi</th><th>Sifre</th><th>Sinif</th><th>Islem</th></tr></thead>
+        <thead><tr><th>ID</th><th>No</th><th>Ogrenci</th>@if(auth()->user()?->hasRole('admin'))<th style="text-align:center" title="KVKK / kullanım şartları onayı">KVKK</th>@endif<th>Kullanici Adi</th><th>Sifre</th><th>Sinif</th><th>Islem</th></tr></thead>
         <tbody>
         @foreach($items as $item)
             <tr>
                 <td>{{ $item->id }}</td>
                 <td>{{ $item->student_no }}</td>
-                <td>{{ $item->user?->name }} @if(auth()->user()?->hasRole('admin'))@include('partials.consent-badge', ['u' => $item->user])@endif</td>
+                <td>{{ $item->user?->name }}</td>
+                @if(auth()->user()?->hasRole('admin'))<td style="text-align:center">@include('partials.consent-badge', ['u' => $item->user])</td>@endif
                 <td>{{ $item->credential?->username ?? '-' }}</td>
                 <td>{{ $item->credential?->plain_password ?? '-' }}</td>
                 <td>{{ $item->schoolClass?->name }}</td>

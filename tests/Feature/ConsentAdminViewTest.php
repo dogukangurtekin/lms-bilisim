@@ -37,7 +37,7 @@ class ConsentAdminViewTest extends TestCase
     public function test_admin_sees_consent_badges_counters_and_can_filter_students(): void
     {
         $r = $this->actingAs($this->admin)->get(route('students.index'))->assertOk();
-        $r->assertSee('Onaylı Ali')->assertSee('✅ Onayladı')->assertSee('⏳ Onaylamadı')->assertSee('1</span> / 2 öğrenci onayladı', false);
+        $r->assertSee('Onaylı Ali')->assertSee('>KVKK<', false)->assertSee('aria-label="Onayladı"', false)->assertSee('aria-label="Onaylamadı"', false)->assertSee('1</span> / 2 öğrenci onayladı', false);
 
         $this->actingAs($this->admin)->get(route('students.index', ['consent' => 'yes']))->assertSee('Onaylı Ali')->assertDontSee('Bekleyen Veli');
         $this->actingAs($this->admin)->get(route('students.index', ['consent' => 'no']))->assertSee('Bekleyen Veli')->assertDontSee('Onaylı Ali');
@@ -45,7 +45,7 @@ class ConsentAdminViewTest extends TestCase
 
     public function test_users_list_shows_status_and_filters(): void
     {
-        $this->actingAs($this->admin)->get(route('users.index'))->assertOk()->assertSee('Onayladı')->assertSee('Onaylamadı');
+        $this->actingAs($this->admin)->get(route('users.index'))->assertOk()->assertSee('>KVKK<', false)->assertSee('aria-label="Onayladı"', false)->assertSee('aria-label="Onaylamadı"', false);
         $this->actingAs($this->admin)->get(route('users.index', ['consent' => 'yes']))->assertSee('Onaylı Ali')->assertDontSee('Bekleyen Veli');
         $this->actingAs($this->admin)->get(route('users.index', ['consent' => 'no']))->assertSee('Bekleyen Veli')->assertDontSee('Onaylı Ali');
     }
@@ -53,6 +53,6 @@ class ConsentAdminViewTest extends TestCase
     public function test_teacher_does_not_see_consent_info_on_student_list(): void
     {
         $teacher = User::query()->where('email', 'te@t.l')->firstOrFail();
-        $this->actingAs($teacher)->get(route('students.index'))->assertOk()->assertDontSee('Onaylamadı')->assertDontSee('öğrenci onayladı');
+        $this->actingAs($teacher)->get(route('students.index'))->assertOk()->assertDontSee('>KVKK<', false)->assertDontSee('öğrenci onayladı');
     }
 }

@@ -152,13 +152,14 @@
     <form id="delete-selected-students-form" method="POST" action="{{ route('users.students.destroy-selected') }}" data-confirm="Seçili öğrenciler sistemden kaldırılsın mı?" style="display:none">@csrf @method('DELETE')</form>
     <div class="table-responsive users-table-wrap">
         <table>
-            <thead><tr><th><input type="checkbox" id="select-all-students" title="Tum ogrencileri sec"></th><th>ID</th><th>Ad</th><th>E-posta</th><th>Rol</th><th>Sınıf</th><th>İşlem</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="select-all-students" title="Tum ogrencileri sec"></th><th>ID</th><th>Ad</th><th style="text-align:center" title="KVKK / kullanım şartları onayı">KVKK</th><th>E-posta</th><th>Rol</th><th>Sınıf</th><th>İşlem</th></tr></thead>
             <tbody>
             @foreach($users as $item)
                 <tr>
                     <td>@if($item->hasRole('student'))<input type="checkbox" class="student-row-checkbox" form="delete-selected-students-form" name="user_ids[]" value="{{ $item->id }}">@endif</td>
                     <td>{{ $item->id }}</td>
-                    <td>{{ $item->name }} @include('partials.consent-badge', ['u' => $item])</td>
+                    <td>{{ $item->name }}</td>
+                    <td style="text-align:center">@include('partials.consent-badge', ['u' => $item])</td>
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role?->slug ?? '-' }}</td>
                     <td>
