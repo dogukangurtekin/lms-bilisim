@@ -85,8 +85,22 @@ class StudentController extends Controller
     {
         $data = $request->validated();
 
-        // Öğrenci kullanıcı adı (giriş adı) hiçbir şekilde değiştirilemez; gelen 'username' değeri yok sayılır.
-        DB::transaction(function () use ($student, $data) {
+        // Öğrenci kullanıcı adını yalnızca admin değiştirebilir (öğrenci kendi kullanıcı adını değiştiremez).
+        $newUsername = null;
+        if (auth()->user()?->hasRole('admin') && ! empty($data['username']) && $student->user) {
+            $candidate = strtolower(trim($data['username']));
+            $current = (string) $student->user->email;
+            if ($candidate !== strtolower((string) Str::before($current, '@'))) {
+                $domain = str_contains($current, '@') ? Str::after($current, '@') : 'school.local';
+                $taken = \App\Models\User::query()->where('id', '!=', $student->user_id)->whereRaw('LOWER(email) = ?', [$candidate.'@'.strtolower($domain)])->exists();
+                if ($taken) {
+                    return back()->withErrors(['username' => 'Bu kullanici adi zaten kullanilmada.'])->withInput();
+                }
+                $newUsername = $candidate.'@'.strtolower($domain);
+            }
+        }
+
+        DB::transaction(function () use ($student, $data, $newUsername) {
             $student->update([
                 'student_no' => $data['student_no'],
                 'school_class_id' => $data['school_class_id'],
@@ -95,11 +109,18 @@ class StudentController extends Controller
             $user = $student->user;
             if ($user) {
                 $user->name = trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? ''));
+                if ($newUsername !== null) {
+                    $user->email = $newUsername;
+                }
                 if (! empty($data['password'])) {
                     $user->password = $data['password'];
                 }
                 $user->save();
 
+                if ($newUsername !== null && empty($data['password'])) {
+                    \App\Models\StudentCredential::query()->where('student_id', $student->id)
+                        ->update(['username' => \Illuminate\Support\Str::before($newUsername, '@')]);
+                }
                 if (! empty($data['password'])) {
                     \App\Models\StudentCredential::query()->updateOrCreate(
                         ['student_id' => $student->id],

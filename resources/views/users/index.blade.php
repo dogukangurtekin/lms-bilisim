@@ -59,7 +59,7 @@
             @csrf
             @method('PUT')
             <div class="field-wrap" style="margin-bottom:10px"><label>Ad Soyad</label><input type="text" name="name" id="edit-user-name" required></div>
-            <div class="field-wrap" style="margin-bottom:10px"><label>Kullanıcı (E-posta)</label><input type="email" name="email" id="edit-user-email" required></div>
+            <div class="field-wrap" style="margin-bottom:10px"><label>Kullanıcı Adı</label><input type="text" name="email" id="edit-user-email" required maxlength="190" autocomplete="off"><small style="color:#64748b">Yalnızca kullanıcı adını yazarsan e-posta alan adı (ör. @school.local) korunur.</small></div>
             <div class="field-wrap" style="margin-bottom:10px"><label>Yeni Şifre (opsiyonel - boş bırakırsan değişmez)</label><input type="password" name="password" id="edit-user-password" minlength="4" placeholder="••••••••"></div>
             <div style="display:flex;gap:8px;justify-content:flex-end;">
                 <button type="button" class="btn" id="edit-user-cancel">Vazgeç</button>
@@ -171,11 +171,11 @@
                         @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
                             <a class="btn" href="{{ route('users.classes.edit', $item) }}" style="padding:7px 12px;font-size:13px;">Sınıf Ata</a>
                         @endif
+                        <button type="button" class="btn edit-user-trigger" style="padding:7px 12px;font-size:13px;"
+                            data-url="{{ route('users.update', $item) }}"
+                            data-name="{{ $item->name }}"
+                            data-email="{{ $item->email }}">Düzenle</button>
                         @if(in_array($item->role?->slug, ['teacher', 'admin'], true))
-                            <button type="button" class="btn edit-user-trigger" style="padding:7px 12px;font-size:13px;"
-                                data-url="{{ route('users.update', $item) }}"
-                                data-name="{{ $item->name }}"
-                                data-email="{{ $item->email }}">Düzenle</button>
                             <form method="POST" action="{{ route('users.reset-password', $item) }}" data-confirm="{{ $item->name }} için yeni bir şifre oluşturulsun mu?" style="margin:0">@csrf
                                 <button class="btn" type="submit" style="padding:7px 12px;font-size:13px;">Şifre Sıfırla</button>
                             </form>

@@ -71,23 +71,48 @@ class UserManagementController extends Controller
         return redirect()->route('users.index')->with('ok', 'Kullanici eklendi.');
     }
 
+    /** Admin: öğrenci/öğretmen/admin hesabının adını, kullanıcı adını ve şifresini günceller. */
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190', 'unique:users,email,' . $user->id],
+            // Yalnızca kullanıcı adı yazılırsa mevcut e-posta alan adı korunur (ali.veli -> ali.veli@school.local).
+            'email' => ['required', 'string', 'max:190', 'regex:/^[A-Za-z0-9._+\-]+(@[A-Za-z0-9.\-]+)?$/'],
             'password' => ['nullable', 'string', 'min:4'],
+        ], [
+            'email.regex' => 'Kullanıcı adı yalnızca harf, rakam, nokta, alt çizgi ve kısa çizgi içerebilir.',
         ]);
 
-        $user->name = $data['name'];
-        // Öğrenci kullanıcı adı (e-posta) hiçbir şekilde değiştirilemez.
-        if (! Student::query()->where('user_id', $user->id)->exists()) {
-            $user->email = strtolower(trim($data['email']));
+        $login = strtolower(trim($data['email']));
+        if (! str_contains($login, '@')) {
+            $current = (string) $user->email;
+            $domain = str_contains($current, '@') ? Str::after($current, '@') : 'school.local';
+            $login .= '@' . $domain;
         }
+        $taken = User::query()->where('id', '!=', $user->id)->whereRaw('LOWER(email) = ?', [$login])->exists();
+        if ($taken) {
+            return redirect()->route('users.index')->with('err', 'Bu kullanıcı adı başka bir hesapta kullanılıyor.');
+        }
+
+        $user->name = $data['name'];
+        $user->email = $login;
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
         }
         $user->save();
+
+        // Öğrenci ise giriş kartları / öğrenci verileri ekranındaki kayıt da eşit kalsın.
+        $student = Student::query()->where('user_id', $user->id)->first();
+        if ($student) {
+            $credential = \App\Models\StudentCredential::query()->firstOrNew(['student_id' => $student->id]);
+            $credential->username = Str::before($login, '@');
+            if (! empty($data['password'])) {
+                $credential->plain_password = $data['password'];
+            }
+            if ($credential->exists || ! empty($data['password'])) {
+                $credential->save();
+            }
+        }
 
         return redirect()->route('users.index')->with('ok', 'Kullanici bilgileri guncellendi.');
     }
