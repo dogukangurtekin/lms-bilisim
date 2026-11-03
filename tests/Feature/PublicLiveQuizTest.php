@@ -81,7 +81,7 @@ class PublicLiveQuizTest extends TestCase
         $this->assertSame('guest', $guest->role->slug);
         $this->assertAuthenticatedAs($guest);
 
-        $this->get(route('student.live-quiz.play', $session))->assertOk()->assertSee('Quizden ayrıl');
+        $this->get(route('student.live-quiz.play', $session))->assertOk()->assertSee('Quizden ayrıl')->assertSee('role-student guest-quiz', false);
         $this->getJson(route('student.live-quiz.status', $session))->assertOk()->assertJsonPath('status', 'live');
         $this->post(route('student.live-quiz.answer', $session), ['question_index' => 0, 'answer' => 'A'])->assertRedirect();
         $this->assertSame(1, LiveQuizAnswer::query()->where('student_user_id', $guest->id)->count());

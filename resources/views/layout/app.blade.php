@@ -38,7 +38,7 @@
 </head>
 <body
     data-theme="{{ $themeKey }}"
-    class="{{ auth()->user()?->role?->slug ? 'role-'.(auth()->user()->role->slug === 'guest' ? 'student play-compact' : auth()->user()->role->slug) : 'role-guest' }} @yield('body_class')"
+    class="{{ auth()->user()?->role?->slug ? 'role-'.(auth()->user()->role->slug === 'guest' ? 'student guest-quiz' : auth()->user()->role->slug) : 'role-guest' }} @yield('body_class')"
     style="--app-bg:{{ $theme['bg'] }};--app-text:{{ $theme['text'] }};--app-muted:{{ $theme['muted'] }};--app-panel:{{ $theme['panel'] }};--app-surface:{{ $theme['surface'] }};--app-border:{{ $theme['border'] }};--app-primary:{{ $theme['primary'] }};--app-secondary:{{ $theme['secondary'] }};--app-hero-start:{{ $theme['heroStart'] }};--app-hero-end:{{ $theme['heroEnd'] }};"
 >
 <script>try{if(localStorage.getItem('staff_sidebar_mini')==='1'&&window.innerWidth>960)document.body.classList.add('sidebar-mini')}catch(e){}</script>
@@ -64,6 +64,10 @@
 .play-compact .main > :not(.course-show-shell){
     display:none !important;
 }
+/* Misafir (hesapsız) quiz katılımcısı: yan menü/üst çubuk gizli, içerik tam genişlikte görünür. */
+.guest-quiz .layout{display:block}
+.guest-quiz .sidebar,.guest-quiz .mobile-sidebar-backdrop,.guest-quiz .navbar,.guest-quiz .footer,.guest-quiz #mobile-sidebar-backdrop{display:none !important}
+.guest-quiz .main{margin:0 !important;width:100% !important;max-width:100% !important;min-height:100vh}
 
 .comp-open-toast{position:fixed;right:18px;bottom:18px;z-index:99990;display:none;max-width:min(340px,calc(100vw - 28px));padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,#6d28d9,#db2777);color:#fff;box-shadow:0 18px 44px rgba(76,29,149,.5);font-family:inherit}
 .comp-open-toast.show{display:block;animation:compToastIn .7s cubic-bezier(.2,1.2,.3,1) both,compToastPulse 2.4s ease-in-out .8s infinite}
