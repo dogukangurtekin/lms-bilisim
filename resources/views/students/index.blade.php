@@ -58,11 +58,26 @@
                 @endforeach
             </select>
         </div>
+        @if(auth()->user()?->hasRole('admin'))
+        <div style="min-width:170px">
+            <label>Onay durumu</label>
+            <select name="consent">
+                <option value="">Tümü</option>
+                <option value="yes" @selected(($consent ?? '') === 'yes')>✅ Onayladı</option>
+                <option value="no" @selected(($consent ?? '') === 'no')>⏳ Onaylamadı</option>
+            </select>
+        </div>
+        @endif
         <input type="hidden" name="sort" value="{{ $sort ?? 'id' }}">
         <input type="hidden" name="dir" value="{{ $dir ?? 'desc' }}">
         <button class="btn" type="submit">Filtrele</button>
         <a class="btn" href="{{ route('students.index') }}">Temizle</a>
     </form>
+
+    @if(! empty($consentStats))
+        <p style="margin:0 0 10px;font-weight:700">KVKK / kullanım şartları onayı: <span style="color:#15803d">{{ $consentStats['ok'] }}</span> / {{ $consentStats['total'] }} öğrenci onayladı
+            @if($consentStats['total'] > $consentStats['ok']) · <span style="color:#b45309">{{ $consentStats['total'] - $consentStats['ok'] }} bekliyor</span>@endif</p>
+    @endif
 
     <table>
         <thead><tr><th>ID</th><th>No</th><th>Ogrenci</th><th>Kullanici Adi</th><th>Sifre</th><th>Sinif</th><th>Islem</th></tr></thead>
@@ -71,7 +86,7 @@
             <tr>
                 <td>{{ $item->id }}</td>
                 <td>{{ $item->student_no }}</td>
-                <td>{{ $item->user?->name }}</td>
+                <td>{{ $item->user?->name }} @if(auth()->user()?->hasRole('admin'))@include('partials.consent-badge', ['u' => $item->user])@endif</td>
                 <td>{{ $item->credential?->username ?? '-' }}</td>
                 <td>{{ $item->credential?->plain_password ?? '-' }}</td>
                 <td>{{ $item->schoolClass?->name }}</td>

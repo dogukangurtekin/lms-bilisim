@@ -43,7 +43,17 @@ class StudentController extends Controller
         $sort = in_array($request->string('sort')->toString(), ['id', 'student_no', 'created_at'], true) ? $request->string('sort')->toString() : 'id';
         $dir = $request->string('dir')->toString() === 'asc' ? 'asc' : 'desc';
 
+        // Yalnızca yönetici: KVKK / kullanım şartları onay durumu süzgeci ve sayaçları.
+        $consent = $isAdmin && in_array($request->query('consent'), ['yes', 'no'], true) ? (string) $request->query('consent') : '';
+        $consentStats = null;
+        if ($isAdmin) {
+            $total = Student::query()->count();
+            $okCount = Student::query()->whereHas('user', fn ($u) => \App\Support\ConsentPolicy::scopeQuery($u, 'yes'))->count();
+            $consentStats = ['ok' => $okCount, 'total' => $total];
+        }
+
         $items = Student::with(['user', 'schoolClass', 'credential'])
+            ->when($consent !== '', fn ($query) => $query->whereHas('user', fn ($u) => \App\Support\ConsentPolicy::scopeQuery($u, $consent)))
             ->when(! $isAdmin, fn ($query) => $query->whereIn('school_class_id', $teacherClassIds))
             ->when($name !== '', fn ($query) => $query->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$name}%")))
             ->when($className !== '', fn ($query) => $query->whereHas('schoolClass', fn ($c) => $c->where('name', $className)))
@@ -62,7 +72,7 @@ class StudentController extends Controller
         $classNames = $classes->pluck('name')->unique()->values();
         $sections = $classes->pluck('section')->unique()->values();
 
-        return view('students.index', compact('items', 'q', 'sort', 'dir', 'name', 'className', 'section', 'classNames', 'sections'));
+        return view('students.index', compact('items', 'q', 'sort', 'dir', 'name', 'className', 'section', 'classNames', 'sections', 'consent', 'consentStats'));
     }
 
     public function create() { return view('students.create'); }

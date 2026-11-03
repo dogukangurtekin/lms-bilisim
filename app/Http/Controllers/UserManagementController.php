@@ -23,6 +23,7 @@ class UserManagementController extends Controller
         $roleFilter = trim((string) $request->query('role', ''));
         $search = trim((string) $request->query('search', ''));
         $classFilter = trim((string) $request->query('school_class_id', ''));
+        $consentFilter = in_array($request->query('consent'), ['yes', 'no'], true) ? (string) $request->query('consent') : '';
         $users = User::query()
             ->with(['role', 'teacher', 'student.schoolClass'])
             ->whereHas('role', fn ($r) => $r->where('slug', '!=', 'guest'))
@@ -32,12 +33,13 @@ class UserManagementController extends Controller
                     ->orWhere('email', 'like', '%' . $search . '%');
             }))
             ->when($classFilter !== '', fn ($q) => $q->whereHas('student', fn ($s) => $s->where('school_class_id', $classFilter)))
+            ->when($consentFilter !== '', fn ($q) => \App\Support\ConsentPolicy::scopeQuery($q, $consentFilter))
             ->orderByRaw("case (select roles.slug from roles where roles.id = users.role_id) when 'admin' then 0 when 'teacher' then 1 else 2 end")
             ->orderByDesc('id')
             ->paginate(30)
             ->withQueryString();
         $classes = SchoolClass::query()->orderBy('name')->orderBy('section')->get();
-        return view('users.index', compact('users', 'classes', 'roleFilter', 'search', 'classFilter'));
+        return view('users.index', compact('users', 'classes', 'roleFilter', 'search', 'classFilter', 'consentFilter'));
     }
 
     public function store(Request $request)

@@ -27,6 +27,27 @@ class ConsentPolicy
         return (int) $user->consent_version < self::version();
     }
 
+    /** Kullanıcının onay durumu: 'ok' (güncel sürümü onayladı), 'old' (eski sürümü onayladı), 'none' (hiç onaylamadı). */
+    public static function status(?User $user): string
+    {
+        $v = (int) ($user?->consent_version ?? 0);
+
+        return $v >= self::version() ? 'ok' : ($v > 0 ? 'old' : 'none');
+    }
+
+    /** Bir kullanıcı sorgusunu onay durumuna göre süzer: 'yes' = güncel sürümü onaylayanlar, 'no' = onaylamayanlar. */
+    public static function scopeQuery($query, string $consent)
+    {
+        if ($consent === 'yes') {
+            return $query->where('consent_version', '>=', self::version());
+        }
+        if ($consent === 'no') {
+            return $query->where(fn ($q) => $q->whereNull('consent_version')->orWhere('consent_version', '<', self::version()));
+        }
+
+        return $query;
+    }
+
     /** Onaylanan belgeler: ne içerir, neden isteniyor. */
     public static function documents(): array
     {

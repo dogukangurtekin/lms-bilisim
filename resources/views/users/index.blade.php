@@ -131,8 +131,15 @@
                 <option value="student" {{ $roleFilter === 'student' ? 'selected' : '' }}>Öğrenci</option>
             </select>
         </div>
+        <div class="field-wrap"><label>Onay durumu</label>
+            <select name="consent">
+                <option value="" {{ ($consentFilter ?? '') === '' ? 'selected' : '' }}>Tümü</option>
+                <option value="yes" {{ ($consentFilter ?? '') === 'yes' ? 'selected' : '' }}>✅ Onayladı</option>
+                <option value="no" {{ ($consentFilter ?? '') === 'no' ? 'selected' : '' }}>⏳ Onaylamadı</option>
+            </select>
+        </div>
         <button class="btn" type="submit">Filtrele</button>
-        @if($search !== '' || $classFilter !== '' || $roleFilter !== '')
+        @if($search !== '' || $classFilter !== '' || $roleFilter !== '' || ($consentFilter ?? '') !== '')
             <a class="btn btn-ghost" href="{{ route('users.index') }}">Temizle</a>
         @endif
     </form>
@@ -151,7 +158,7 @@
                 <tr>
                     <td>@if($item->hasRole('student'))<input type="checkbox" class="student-row-checkbox" form="delete-selected-students-form" name="user_ids[]" value="{{ $item->id }}">@endif</td>
                     <td>{{ $item->id }}</td>
-                    <td>{{ $item->name }}</td>
+                    <td>{{ $item->name }} @include('partials.consent-badge', ['u' => $item])</td>
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role?->slug ?? '-' }}</td>
                     <td>
