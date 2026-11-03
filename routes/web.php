@@ -180,6 +180,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/sifre-yenile', [\App\Http\Controllers\ForcePasswordController::class, 'show'])->name('password.force.show');
     Route::get('/sifre-yenile/token', [\App\Http\Controllers\ForcePasswordController::class, 'token'])->middleware('throttle:60,1')->name('password.force.token');
     Route::post('/sifre-yenile', [\App\Http\Controllers\ForcePasswordController::class, 'update'])->middleware('throttle:10,1')->name('password.force.update');
+    // Giriş sonrası bir kereliğe mahsus (sürüm başına) KVKK aydınlatma / kullanım şartları / çerez onayı.
+    Route::get('/onay', [\App\Http\Controllers\ConsentController::class, 'show'])->name('consent.show');
+    Route::post('/onay', [\App\Http\Controllers\ConsentController::class, 'accept'])->middleware('throttle:20,1')->name('consent.accept');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
