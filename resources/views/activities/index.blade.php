@@ -94,12 +94,56 @@
         margin-top:16px;
     }
     .activity-item{
-        padding:16px;
+        position:relative;
+        padding:14px;
         border:1px solid #dbe7ff;
-        border-radius:18px;
-        background:#fff;
+        border-radius:20px;
+        background:linear-gradient(180deg,#ffffff 0%,#f7faff 100%);
         box-shadow:0 8px 24px rgba(37,99,235,.06);
         min-width:0;
+        transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+    }
+    .activity-item:hover{
+        transform:translateY(-4px);
+        border-color:#93b4ff;
+        box-shadow:0 16px 34px rgba(37,99,235,.16);
+    }
+    .activity-card img{
+        aspect-ratio:16/9;
+        height:auto !important;
+        box-shadow:inset 0 0 0 1px rgba(15,23,42,.06);
+        transition:transform .25s ease;
+    }
+    .activity-item:hover img{transform:scale(1.02)}
+    .activity-card h3{font-size:17px;font-weight:800;color:#0f172a}
+    .activity-card .actions .btn + .btn{
+        background:#fff;
+        color:#1d4ed8;
+        border:1.5px solid #bfd3ff;
+    }
+    .activity-card .actions .btn + .btn:hover{background:#eff6ff}
+    .act-dd{position:relative;min-width:0}
+    .act-dd > summary{
+        list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
+        padding:14px 16px;border:1px solid #cfe0ff;border-radius:14px;background:#fff;font-size:15px;font-weight:600;
+    }
+    .act-dd > summary::-webkit-details-marker{display:none}
+    .act-dd > summary::after{content:'▾';color:#64748b;margin-left:auto}
+    .act-dd[open] > summary{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+    .act-dd-count{min-width:26px;text-align:center;padding:2px 8px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:800}
+    .act-dd-menu{
+        position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);padding:10px;border:1px solid #cfe0ff;border-radius:14px;
+        background:#fff;box-shadow:0 18px 40px rgba(15,23,42,.18);
+    }
+    .act-dd-menu input[type=search]{width:100%;padding:10px 12px;border:1px solid #cfe0ff;border-radius:10px;margin-bottom:8px;box-sizing:border-box}
+    .act-dd-all{display:flex;align-items:center;gap:8px;font-weight:800;padding:6px 8px;border-bottom:1px solid #e2e8f0;margin-bottom:6px}
+    .act-dd-list{max-height:280px;overflow:auto;display:grid;gap:2px}
+    .act-dd-list label{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;min-width:0}
+    .act-dd-list label:hover{background:#eff6ff}
+    .act-dd-list label[hidden]{display:none}
+    .act-dd-list input,.act-dd-all input{width:18px;height:18px;flex:0 0 auto;margin:0}
+    @media (max-width: 760px){
+        .act-dd-list{max-height:50vh}
     }
     @media (max-width: 760px){
         .activities-form-grid{
@@ -170,21 +214,26 @@
                             </select>
                         </div>
                         <div>
-                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-                                <label style="display:flex;align-items:center;gap:8px;font-weight:700;">
-                                    <input type="checkbox" id="activities-select-all" style="width:18px;height:18px;">
-                                    Tümünü Seç
-                                </label>
-                                <button type="submit" class="btn">Öğretmene Ata</button>
-                            </div>
-                            <div class="activities-games-grid">
-                                @foreach($games as $slug => $game)
-                                    <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid #dbe7ff;border-radius:14px;background:#fff;cursor:pointer;min-width:0;">
-                                        <input type="checkbox" name="game_slugs[]" value="{{ $slug }}" class="activity-game-check" style="width:18px;height:18px;flex:0 0 auto;">
-                                        <span style="font-weight:600;min-width:0;overflow-wrap:anywhere;">{{ $game['name'] }}</span>
+                            <label style="display:block;font-weight:700;margin-bottom:8px;">Oyun ve Etkinlikler</label>
+                            <details class="act-dd" id="act-dd">
+                                <summary><span id="act-dd-label">Oyun ve etkinlik seçin</span><span class="act-dd-count" id="act-dd-count">0</span></summary>
+                                <div class="act-dd-menu">
+                                    <input type="search" id="act-dd-search" placeholder="Oyun ara…" autocomplete="off">
+                                    <label class="act-dd-all">
+                                        <input type="checkbox" id="activities-select-all">
+                                        Tümünü Seç
                                     </label>
-                                @endforeach
-                            </div>
+                                    <div class="act-dd-list">
+                                        @foreach($games as $slug => $game)
+                                            <label data-name="{{ \Illuminate\Support\Str::lower($game['name']) }}">
+                                                <input type="checkbox" name="game_slugs[]" value="{{ $slug }}" class="activity-game-check">
+                                                <span style="font-weight:600;min-width:0;overflow-wrap:anywhere;">{{ $game['name'] }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </details>
+                            <button type="submit" class="btn" style="margin-top:12px">Öğretmene Ata</button>
                         </div>
                     </div>
                 </form>
@@ -378,16 +427,35 @@
                 checks.forEach((check) => {
                     check.checked = slugs.includes(check.value);
                 });
-                if (selectAll) {
-                    selectAll.checked = checks.length > 0 && checks.every((check) => check.checked);
-                }
+                updateDd();
             };
+
+            const dd = document.getElementById('act-dd');
+            const ddLabel = document.getElementById('act-dd-label');
+            const ddCount = document.getElementById('act-dd-count');
+            const ddSearch = document.getElementById('act-dd-search');
+            const updateDd = () => {
+                const picked = checks.filter((c) => c.checked);
+                if (ddCount) ddCount.textContent = String(picked.length);
+                if (ddLabel) {
+                    ddLabel.textContent = picked.length === 0 ? 'Oyun ve etkinlik seçin'
+                        : (picked.length === 1 ? picked[0].closest('label').textContent.trim() : picked.length + ' oyun/etkinlik seçildi');
+                }
+                if (selectAll) selectAll.checked = checks.length > 0 && picked.length === checks.length;
+            };
+            checks.forEach((c) => c.addEventListener('change', updateDd));
+            ddSearch?.addEventListener('input', () => {
+                const q = ddSearch.value.trim().toLocaleLowerCase('tr');
+                checks.forEach((c) => { const l = c.closest('label'); l.hidden = q !== '' && !(l.dataset.name || '').includes(q); });
+            });
+            document.addEventListener('click', (e) => { if (dd && dd.open && !dd.contains(e.target)) dd.open = false; });
 
             if (selectAll) {
                 selectAll.addEventListener('change', () => {
                     checks.forEach((check) => {
                         check.checked = selectAll.checked;
                     });
+                    updateDd();
                 });
             }
 
