@@ -1327,16 +1327,20 @@ class StudentPortalController extends Controller
     }
 
     /**
-     * Ders slaytları arasındaki Compute It görevi: her görev (gate) için kolay bölümlerden
-     * (1-8) sıradaki level'a özel, tek level'lık oturum izni verir ve oyun adresini döndürür.
+     * Ders slaytları arasındaki Compute It görevi: her görev (gate) için orta zorluktaki
+     * bölümlerden (21-30 ve 35-60; 31-34 giriş bölümleridir) rastgele bir level seçer, o level'a özel
+     * tek level'lık oturum izni verir ve oyun adresini döndürür. Art arda aynı level gelmez.
      */
     public function lessonGameTask(int $gate)
     {
         $student = $this->getStudent();
         abort_unless(\App\Support\SlideTimerSetting::gameEnabledFor($student), 404);
 
-        $easyLevels = 8;
-        $level = (($gate - 1) % $easyLevels) + 1;
+        $pool = array_merge(range(21, 30), range(35, 60));
+        $last = (int) request()->session()->get('lesson_game_last_level', 0);
+        $candidates = array_values(array_diff($pool, [$last]));
+        $level = $candidates[random_int(0, count($candidates) - 1)];
+        request()->session()->put('lesson_game_last_level', $level);
 
         request()->session()->put('runner_grant', [
             'slug' => 'compute-it-runner',
