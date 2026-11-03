@@ -142,6 +142,7 @@
         @if($search !== '' || $classFilter !== '' || $roleFilter !== '' || ($consentFilter ?? '') !== '')
             <a class="btn btn-ghost" href="{{ route('users.index') }}">Temizle</a>
         @endif
+        <a class="btn" href="{{ route('users.consent-export', request()->query()) }}" title="KVKK onayını verenlerin ve vermeyenlerin listesini Excel'de açılacak CSV olarak indir (üstteki süzgeçler uygulanır)">📄 KVKK Döküm</a>
     </form>
     <div class="student-delete-tools" style="margin-bottom:12px">
         <button form="delete-selected-students-form" type="submit" class="btn btn-danger" style="padding:8px 14px;font-size:13px;">Seçilen Öğrencileri Sil</button>

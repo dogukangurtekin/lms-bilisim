@@ -42,6 +42,54 @@ class UserManagementController extends Controller
         return view('users.index', compact('users', 'classes', 'roleFilter', 'search', 'classFilter', 'consentFilter'));
     }
 
+    /**
+     * KVKK onay dökümü: kimin onayladığını / onaylamadığını CSV (Excel'de açılır) olarak indirir.
+     * Kullanıcı listesindeki süzgeçler (arama, sınıf, rol, onay durumu) aynen uygulanır; misafir katılımcılar yer almaz.
+     */
+    public function consentExport(Request $request)
+    {
+        $roleFilter = trim((string) $request->query('role', ''));
+        $search = trim((string) $request->query('search', ''));
+        $classFilter = trim((string) $request->query('school_class_id', ''));
+        $consentFilter = in_array($request->query('consent'), ['yes', 'no'], true) ? (string) $request->query('consent') : '';
+
+        $query = User::query()
+            ->with(['role', 'student.schoolClass', 'student.credential'])
+            ->whereHas('role', fn ($r) => $r->where('slug', '!=', 'guest'))
+            ->when($roleFilter !== '', fn ($q) => $q->whereHas('role', fn ($r) => $r->where('slug', $roleFilter)))
+            ->when($search !== '', fn ($q) => $q->where(fn ($sub) => $sub->where('name', 'like', '%' . $search . '%')->orWhere('email', 'like', '%' . $search . '%')))
+            ->when($classFilter !== '', fn ($q) => $q->whereHas('student', fn ($s) => $s->where('school_class_id', $classFilter)))
+            ->when($consentFilter !== '', fn ($q) => \App\Support\ConsentPolicy::scopeQuery($q, $consentFilter))
+            ->orderByRaw("case (select roles.slug from roles where roles.id = users.role_id) when 'admin' then 0 when 'teacher' then 1 else 2 end")
+            ->orderBy('name');
+
+        $roleLabels = ['admin' => 'Yönetici', 'teacher' => 'Öğretmen', 'student' => 'Öğrenci'];
+        $statusLabels = ['ok' => 'Onayladı', 'old' => 'Eski sürümü onayladı', 'none' => 'Onaylamadı'];
+        $file = 'kvkk-onay-dokumu-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($query, $roleLabels, $statusLabels): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");   // Excel'in Türkçe karakterleri doğru okuması için BOM
+            fputcsv($out, ['Ad Soyad', 'Kullanıcı Adı / E-posta', 'Rol', 'Sınıf', 'Onay Durumu', 'Onay Tarihi', 'Onaylanan Sürüm'], ';');
+            $query->chunk(200, function ($users) use ($out, $roleLabels, $statusLabels): void {
+                foreach ($users as $u) {
+                    $class = $u->student?->schoolClass;
+                    $status = \App\Support\ConsentPolicy::status($u);
+                    fputcsv($out, [
+                        $u->name,
+                        $u->student?->credential?->username ?: $u->email,
+                        $roleLabels[$u->role?->slug] ?? (string) $u->role?->slug,
+                        $class ? trim($class->name . ' ' . $class->section) : '',
+                        $statusLabels[$status],
+                        $u->consent_accepted_at ? \Illuminate\Support\Carbon::parse($u->consent_accepted_at)->format('d.m.Y H:i') : '',
+                        (int) $u->consent_version > 0 ? (int) $u->consent_version : '',
+                    ], ';');
+                }
+            });
+            fclose($out);
+        }, $file, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
