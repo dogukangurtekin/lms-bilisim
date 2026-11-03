@@ -39,7 +39,7 @@ class StudentUsernameTest extends TestCase
         // 1) Öğrenci kendi kullanıcı adını değiştiremez
         $this->actingAs($studentUser->fresh()->forceFill(['password_change_required' => false]))->put(route('profile.update'), ['first_name' => 'Ali', 'last_name' => 'Yeni', 'username' => 'hacker123'])->assertSessionHasNoErrors();
         $this->assertSame('ali.veli@school.local', $studentUser->fresh()->email);
-        $studentUser->forceFill(['password_change_required' => true])->save();   // 1. adım bayrağı kaldırmıştı; öğrenciyi yeniden zorunlu yap
+        User::query()->whereKey($studentUser->id)->update(['password_change_required' => true]);   // 1. adım bayrağı kaldırdı; DB'de yeniden zorunlu yap
 
         // 2) Admin: kullanıcı listesinde öğrenci için Düzenle düğmesi var
         $this->actingAs($admin)->get(route('users.index'))->assertOk()->assertSee('edit-user-trigger', false)->assertSee('Kullanıcı Adı');
