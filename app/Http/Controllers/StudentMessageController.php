@@ -32,6 +32,7 @@ class StudentMessageController extends Controller
         $messages = StudentMessage::query()
             ->with(['recipient', 'replier'])
             ->where('student_id', $student->id)
+            ->visibleToStudent()
             ->latest('id')
             ->limit(30)
             ->get();
@@ -145,11 +146,16 @@ class StudentMessageController extends Controller
         return back()->with('ok', 'Cevabın öğrenciye gönderildi.');
     }
 
-    /** Yönetici bir öğrenci mesajını gelen kutusundan kaldırır (öğrencinin kendi geçmişi etkilenmez). */
+    /**
+     * Yönetici (tüm mesajlar) ya da öğretmen (kendisine yazılanlar) bir öğrenci mesajını gelen kutusundan kaldırır.
+     * Cevaplanmamış bir mesaj silinirse öğrencinin ekranından da kalkar ve öğrenci yeniden mesaj yazabilir;
+     * cevaplanmış mesaj öğrencinin geçmişinde kalır.
+     */
     public function staffDestroy(Request $request, StudentMessage $message): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->hasRole('admin'), 403);
+        abort_unless($user->hasRole('admin', 'teacher'), 403);
+        abort_unless(StudentMessage::query()->visibleTo($user)->whereKey($message->id)->exists(), 403);
 
         $message->forceFill(['staff_deleted_at' => now(), 'staff_deleted_by' => $user->id])->save();
 

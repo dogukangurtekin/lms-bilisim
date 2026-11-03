@@ -37,8 +37,8 @@
                     <textarea name="reply_body" maxlength="1000" placeholder="Geri dönütünü yaz… (en fazla 1000 karakter)" required></textarea>
                     <div class="im-actions"><button type="submit" class="btn">↩️ Cevapla</button></div>
                 </form>
-                @if($isAdmin)
-                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı silmek istediğine emin misin?">
+                @if(auth()->user()?->hasRole('admin', 'teacher'))
+                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı cevaplamadan silersen öğrencinin ekranından da kalkar. Silinsin mi?">
                         @csrf @method('DELETE')
                         <button type="submit">🗑 Mesajı sil</button>
                     </form>
@@ -69,8 +69,8 @@
                 </div>
                 <div class="im-body">{{ $m->body }}</div>
                 <div class="im-reply"><small style="color:#64748b">{{ $m->replier?->name ?? 'Cevap' }} · {{ $m->replied_at?->format('d.m.Y H:i') }}</small><br>{{ $m->reply_body }}</div>
-                @if($isAdmin)
-                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı silmek istediğine emin misin?">
+                @if(auth()->user()?->hasRole('admin', 'teacher'))
+                    <form method="POST" action="{{ route('staff.messages.destroy', $m) }}" class="im-del" data-confirm="Bu mesajı silmek istediğine emin misin? (Öğrencinin geçmişinde cevabıyla kalır.)">
                         @csrf @method('DELETE')
                         <button type="submit">🗑 Sil</button>
                     </form>

@@ -198,7 +198,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,teacher')->group(function () {
         Route::get('/ogrenci-mesajlari', [StudentMessageController::class, 'staffIndex'])->name('staff.messages.index');
         Route::post('/ogrenci-mesajlari/{message}/cevapla', [StudentMessageController::class, 'staffReply'])->middleware('throttle:30,1')->name('staff.messages.reply');
-        Route::delete('/ogrenci-mesajlari/{message}', [StudentMessageController::class, 'staffDestroy'])->middleware('role:admin')->name('staff.messages.destroy');
+        Route::delete('/ogrenci-mesajlari/{message}', [StudentMessageController::class, 'staffDestroy'])->name('staff.messages.destroy');
         Route::delete('/ogrenci-mesajlari-cevaplananlar', [StudentMessageController::class, 'staffClearAnswered'])->middleware('role:admin')->name('staff.messages.clear-answered');
         Route::get('/canli-takip', [LiveTrackingController::class, 'index'])->name('live-tracking.index');
         Route::get('/canli-takip/guncelle', [LiveTrackingController::class, 'refresh'])->name('live-tracking.refresh');

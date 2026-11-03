@@ -44,6 +44,15 @@ class StudentMessage extends Model
         return $query->where('recipient_type', 'teacher')->where('recipient_user_id', $user->id);
     }
 
+    /**
+     * Öğrencinin kendi geçmişinde görünenler: personelin cevaplamadan sildiği mesajlar öğrenciden de kalkar
+     * (cevaplanmış mesajlar, cevabıyla birlikte öğrencinin geçmişinde kalır).
+     */
+    public function scopeVisibleToStudent($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('staff_deleted_at')->orWhereNotNull('replied_at'));
+    }
+
     /** Öğrencinin cevap bekleyen (cevaplanmamış) mesajı var mı? */
     public static function hasPendingFor(int $studentId): bool
     {
