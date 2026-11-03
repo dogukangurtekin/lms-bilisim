@@ -33,7 +33,7 @@
     <p class="lead">Hesabının güvenliği için yeni bir şifre belirlemen gerekiyor. Bu işlem <b>yalnızca bir kez</b> yapılır; şifreni güncelleyince devam edebilirsin.</p>
     <div class="hello">{{ $user->name }}</div>
 
-    <form method="POST" action="{{ route('password.force.update') }}" autocomplete="off">
+    <form method="POST" id="pwForm" action="{{ route('password.force.update') }}" data-token-url="{{ route('password.force.token') }}" autocomplete="off">
         @csrf
         <label for="pw1">Yeni şifre</label>
         <div class="field">
@@ -64,6 +64,19 @@ document.querySelectorAll('[data-eye]').forEach(function (b) {
         var i = document.getElementById(b.dataset.eye);
         i.type = i.type === 'password' ? 'text' : 'password';
     });
+});
+var form = document.getElementById('pwForm');
+form.addEventListener('submit', function (e) {
+    if (form.dataset.ready === '1') return;
+    e.preventDefault();
+    var btn = form.querySelector('button.go');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+    // Gönderimden hemen önce güncel CSRF belirtecini al: sayfa uzun süre açık kalsa da uyuşmazlık olmasın.
+    fetch(form.dataset.tokenUrl, { credentials: 'same-origin', cache: 'no-store', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && j.token) form.querySelector('[name=_token]').value = j.token; })
+        .catch(function () {})
+        .then(function () { form.dataset.ready = '1'; form.submit(); });
 });
 </script>
 </body>

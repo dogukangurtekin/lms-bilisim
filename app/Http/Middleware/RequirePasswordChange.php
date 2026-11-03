@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RequirePasswordChange
 {
     private const ALLOWED = [
-        'password.force.show', 'password.force.update', 'logout', 'logout.get', 'login', 'maintenance.status',
+        'password.force.show', 'password.force.update', 'password.force.token', 'logout', 'logout.get', 'login', 'maintenance.status',
     ];
 
     public function handle(Request $request, Closure $next): Response

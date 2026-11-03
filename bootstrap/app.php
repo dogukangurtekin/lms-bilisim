@@ -59,6 +59,21 @@ return Application::configure(basePath: dirname(__DIR__))
                 return redirect()->route('login', ['expired' => 1]);
             }
 
+            // Zorunlu şifre ekranında eski/uyuşmayan CSRF belirteci: 419 sayfası yerine formu yeni belirteçle geri getir.
+            if ($exception->getStatusCode() === 419
+                && $exception->getPrevious() instanceof TokenMismatchException
+                && $request->isMethod('post')
+                && $request->routeIs('password.force.update')) {
+                \Illuminate\Support\Facades\Log::warning('password_force_csrf_mismatch', [
+                    'user_id' => $request->user()?->id,
+                    'has_session_cookie' => $request->hasCookie((string) config('session.cookie')),
+                    'ua' => mb_substr((string) $request->userAgent(), 0, 160),
+                ]);
+
+                return redirect()->route('password.force.show')
+                    ->withErrors(['password' => 'Sayfa uzun süre açık kaldığı için yenilendi. Lütfen yeni şifreni bir kez daha yaz.']);
+            }
+
             return null;
         });
     })

@@ -3,26 +3,37 @@
 namespace App\Http\Controllers;
 
 use App\Models\StudentCredential;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 
 /** Öğrencinin ilk girişte zorunlu, tek seferlik şifre yenileme ekranı. */
 class ForcePasswordController extends Controller
 {
     private const TOO_SIMPLE = ['123456', '1234567', '12345678', '123456789', '111111', '000000', '123123', 'password', 'qwerty', 'sifre', 'şifre'];
 
-    public function show(Request $request): View|RedirectResponse
+    public function show(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         if (! $user->password_change_required) {
             return redirect()->route('dashboard');
         }
 
-        return view('auth.force-password', ['user' => $user]);
+        // Geri tuşu / önbellek eski CSRF belirteciyle açılmasın.
+        return response()->view('auth.force-password', ['user' => $user])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache');
+    }
+
+    /** Form gönderilmeden hemen önce güncel CSRF belirtecini verir (sayfa uzun süre açık kalsa da uyuşmazlık olmaz). */
+    public function token(Request $request): JsonResponse
+    {
+        return response()->json(['token' => csrf_token()])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     }
 
     public function update(Request $request): RedirectResponse
