@@ -7,6 +7,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecureHeaders;
 use App\Http\Middleware\SlowRequestLogger;
 use App\Http\Middleware\RequirePasswordChange;
+use App\Http\Middleware\RestrictGuestPlayer;
 use App\Http\Middleware\StudentRequestGuard;
 use App\Http\Middleware\TrackStudentActiveTime;
 use Illuminate\Foundation\Application;
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckMaintenanceMode::class,
             CheckForcedLogout::class,
             RequirePasswordChange::class,
+            RestrictGuestPlayer::class,
             StudentRequestGuard::class,
             TrackStudentActiveTime::class,
         ]);

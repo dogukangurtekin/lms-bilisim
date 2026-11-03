@@ -14,7 +14,7 @@ class PushNotificationService
 {
     public function sendToAll(string $type, string $title, string $body, ?string $url = null, array $context = []): array
     {
-        $userIds = User::query()->pluck('id')->all();
+        $userIds = User::query()->whereHas('role', fn ($q) => $q->where('slug', '!=', 'guest'))->pluck('id')->all();
         return $this->sendToUsers($userIds, $type, $title, $body, $url, $context);
     }
 

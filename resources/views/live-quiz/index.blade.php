@@ -183,6 +183,9 @@
                                 <select name="between_game" aria-label="Mini oyun" style="display:none;padding:8px;border:1px solid #cbd5e1;border-radius:8px" title="Oyun ve Etkinlikler'den; her soru arasında 11. bölümden sonraki 10 bölüm, herkese aynı">
                                     @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
                                 </select>
+                                @if(auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled())
+                                    <label style="display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px" title="Giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1" style="width:auto;margin:0"> 🌐 Herkese açık</label>
+                                @endif
                                 <button class="btn" type="submit">Canli Quizi Baslat</button>
                             </form>
                             <a class="btn" href="{{ route('live-quiz.edit', $quiz) }}">Düzenle</a>
@@ -221,7 +224,7 @@
                 @forelse($sessions as $s)
                     <tr>
                         <td>{{ $s->quiz?->title ?? '-' }}</td>
-                        <td>{{ $s->join_code }}</td>
+                        <td>{{ $s->join_code }}@if($s->is_public) <span style="font-size:11px;font-weight:800;color:#1d4ed8;background:#dbeafe;padding:2px 8px;border-radius:999px">🌐 Herkese açık</span>@endif</td>
                         <td>
                             @if($s->status === 'finished') Tamamlandi
                             @elseif($s->status === 'lobby') Lobide

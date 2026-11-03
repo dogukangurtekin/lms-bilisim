@@ -41,8 +41,16 @@
     </div>
     <h1>🎮 Oyunlar</h1>
     <p class="lead">Giriş yapmadan hemen oynayabileceğin kodlama, kelime ve mantık oyunları. Kaldığın yerden devam edebilmen için ilerlemen bu tarayıcıda saklanır.</p>
-    @if(count($games))
+    @if(count($games) || ($liveQuiz ?? false))
         <div class="grid">
+            @if($liveQuiz ?? false)
+                <a class="game" href="{{ route('public.live-quiz.join') }}">
+                    <img src="{{ asset('quiz.png') }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+                    <strong>Canlı Quiz</strong>
+                    <span>Quizi başlatan kişinin verdiği kodu ve adını yaz, giriş yapmadan canlı yarışmaya katıl.</span>
+                    <em>Katıl →</em>
+                </a>
+            @endif
             @foreach($games as $g)
                 <a class="game" href="{{ route('public.game', $g['slug']) }}">
                     <img src="{{ asset($g['image']) }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">

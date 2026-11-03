@@ -32,7 +32,7 @@ class StudentRequestGuard
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('student')) {
+        if (! $user || ! $user->hasRole('student', 'guest')) {
             return $next($request);
         }
 

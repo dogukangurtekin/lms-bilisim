@@ -311,7 +311,7 @@
                 <div class="hero-cta">
                     <a href="{{ $loginUrl }}" class="btn btn-primary">{{ $authUser ? 'Panele Git' : 'Hemen Başla' }}</a>
                     <button type="button" class="btn btn-ghost" @click="demoOpen = true">Demo Talep Et</button>
-                    @if(count(\App\Support\PublicGamesSetting::openGames()) > 0)
+                    @if(count(\App\Support\PublicGamesSetting::openGames()) > 0 || \App\Support\PublicGamesSetting::liveQuizEnabled())
                     <a href="{{ route('public.games') }}" class="btn btn-ghost">🎮 Oyunları Dene</a>
                     @endif
                 </div>

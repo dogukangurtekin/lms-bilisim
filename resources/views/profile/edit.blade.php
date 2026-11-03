@@ -192,6 +192,14 @@
                 <label style="display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:10px;cursor:pointer">
                     <input type="checkbox" name="enabled" value="1" style="width:auto;margin:0" @checked($pgOn)> Herkese açık oyunlar açık
                 </label>
+                @php($pgLq = \App\Support\PublicGamesSetting::liveQuizEnabled())
+                <label style="display:flex;align-items:flex-start;gap:8px;font-weight:800;margin-bottom:12px;cursor:pointer">
+                    <input type="checkbox" name="live_quiz" value="1" style="width:auto;margin:4px 0 0" @checked($pgLq)>
+                    <span>🏆 Canlı Quiz (kod + ad soyad ile giriş)
+                        <small style="display:block;font-weight:500;color:#475569">Şu an: <strong style="color:{{ $pgLq ? '#15803d' : '#64748b' }}">{{ $pgLq ? 'AÇIK' : 'KAPALI' }}</strong>.
+                            Açıkken, Canlı Quiz sayfasında quizi <b>Herkese açık</b> işaretiyle başlattığınızda, ziyaretçiler anasayfadaki Oyunlar menüsünden koda ve ad soyada girerek (hesapsız) katılır. Kapatınca katılım anında durur.</small>
+                    </span>
+                </label>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 16px;margin-bottom:12px">
                     @foreach(\App\Support\PublicGamesSetting::GAMES as $pgSlug => $pgDesc)
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">

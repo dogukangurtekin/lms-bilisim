@@ -267,7 +267,7 @@ class ActivityRunnerController extends Controller
             }
         }
 
-        return view('public-games', ['games' => $games, 'enabled' => \App\Support\PublicGamesSetting::enabled()]);
+        return view('public-games', ['games' => $games, 'enabled' => \App\Support\PublicGamesSetting::enabled(), 'liveQuiz' => \App\Support\PublicGamesSetting::liveQuizEnabled()]);
     }
 
     /** Herkese açık oyun: giriş/ödev/izin kontrolü yok, ilerleme ziyaretçinin tarayıcısında tutulur. */

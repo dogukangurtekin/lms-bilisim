@@ -32,17 +32,17 @@
     @vite('resources/css/app.css')
     @vite('resources/js/app.js')
     <link rel="stylesheet" href="{{ url('/public/css/admin.css') }}?v={{ @filemtime(public_path('css/admin.css')) ?: 1 }}">
-    @if(auth()->user()?->hasRole('student'))
+    @if(auth()->user()?->hasRole('student', 'guest'))
     <link rel="stylesheet" href="{{ url('/public/css/student.css') }}?v={{ @filemtime(public_path('css/student.css')) ?: 1 }}">
     @endif
 </head>
 <body
     data-theme="{{ $themeKey }}"
-    class="{{ auth()->user()?->role?->slug ? 'role-'.auth()->user()->role->slug : 'role-guest' }} @yield('body_class')"
+    class="{{ auth()->user()?->role?->slug ? 'role-'.(auth()->user()->role->slug === 'guest' ? 'student play-compact' : auth()->user()->role->slug) : 'role-guest' }} @yield('body_class')"
     style="--app-bg:{{ $theme['bg'] }};--app-text:{{ $theme['text'] }};--app-muted:{{ $theme['muted'] }};--app-panel:{{ $theme['panel'] }};--app-surface:{{ $theme['surface'] }};--app-border:{{ $theme['border'] }};--app-primary:{{ $theme['primary'] }};--app-secondary:{{ $theme['secondary'] }};--app-hero-start:{{ $theme['heroStart'] }};--app-hero-end:{{ $theme['heroEnd'] }};"
 >
 <script>try{if(localStorage.getItem('staff_sidebar_mini')==='1'&&window.innerWidth>960)document.body.classList.add('sidebar-mini')}catch(e){}</script>
-@if(auth()->user()?->hasRole('student'))
+@if(auth()->user()?->hasRole('student', 'guest'))
 <style>
 .play-compact .layout{
     display:block;

@@ -36,6 +36,13 @@
     <div class="cx-keys" aria-label="{{ $session->join_code }}">
         @foreach(str_split($session->join_code) as $ch)<span class="cx-key">{{ $ch }}</span>@endforeach
     </div>
+    @if($session->is_public)
+        @php($pubUrl = route('public.live-quiz.join', ['kod' => $session->join_code]))
+        <p style="max-width:640px;margin:0 auto 10px;font-weight:800">🌐 Herkese açık oturum: katılımcılar giriş yapmadan
+            <b style="color:#fff;word-break:break-all">{{ $pubUrl }}</b> adresinden koda ve ad soyada girerek katılır.
+            <button type="button" class="btn" style="margin-left:6px;padding:4px 10px" onclick="navigator.clipboard && navigator.clipboard.writeText(@js($pubUrl)); this.textContent='Kopyalandı'">Bağlantıyı kopyala</button>
+        </p>
+    @endif
     <p style="max-width:640px;margin:0 auto 10px">Öğrenciler <b style="color:#fff">Canlı Quiz</b> bölümünden bu kodu girip lobiye katılır. Herkes hazır olunca butona bas, soru süresi <b style="color:#fff">aynı anda</b> başlasın.</p>
     <div class="cx-count"><span id="lqLobbyJoined">{{ $session->participants()->count() }}</span></div>
     <p style="margin:2px 0 8px">lobide bekleyen öğrenci</p>

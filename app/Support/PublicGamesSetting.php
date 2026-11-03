@@ -49,10 +49,12 @@ class PublicGamesSetting
         $enabled = true;
         $games = [];
         $levelLimit = 0;
+        $liveQuiz = false;
         if (is_file(self::path())) {
             $decoded = json_decode((string) @file_get_contents(self::path()), true);
             if (is_array($decoded)) {
                 $enabled = (bool) ($decoded['enabled'] ?? true);
+                $liveQuiz = (bool) ($decoded['live_quiz'] ?? false);
                 $levelLimit = max(0, min(self::MAX_LIMIT, (int) ($decoded['level_limit'] ?? 0)));
                 foreach ((array) ($decoded['games'] ?? []) as $slug => $on) {
                     if (isset(self::GAMES[$slug])) {
@@ -62,7 +64,7 @@ class PublicGamesSetting
             }
         }
 
-        return self::$data = ['enabled' => $enabled, 'games' => $games, 'level_limit' => $levelLimit];
+        return self::$data = ['enabled' => $enabled, 'games' => $games, 'level_limit' => $levelLimit, 'live_quiz' => $liveQuiz];
     }
 
     /**
@@ -83,6 +85,12 @@ class PublicGamesSetting
     public static function enabled(): bool
     {
         return self::data()['enabled'];
+    }
+
+    /** Giriş yapmadan kod + ad soyad ile canlı quize katılım (varsayılan: kapalı). Diğer oyunlardan bağımsız açılıp kapanır. */
+    public static function liveQuizEnabled(): bool
+    {
+        return self::data()['live_quiz'];
     }
 
     /** 0 = tüm bölümler açık; N = her oyunda yalnızca ilk N bölüm oynanır. */
@@ -124,13 +132,13 @@ class PublicGamesSetting
         return $out;
     }
 
-    public static function save(bool $enabled, array $games, int $levelLimit = 0): void
+    public static function save(bool $enabled, array $games, int $levelLimit = 0, bool $liveQuiz = false): void
     {
         $clean = [];
         foreach (array_keys(self::GAMES) as $slug) {
             $clean[$slug] = ! empty($games[$slug]);
         }
-        $data = ['enabled' => $enabled, 'games' => $clean, 'level_limit' => max(0, min(self::MAX_LIMIT, $levelLimit))];
+        $data = ['enabled' => $enabled, 'games' => $clean, 'level_limit' => max(0, min(self::MAX_LIMIT, $levelLimit)), 'live_quiz' => $liveQuiz];
         file_put_contents(self::path(), json_encode($data), LOCK_EX);
         self::$data = $data;
     }

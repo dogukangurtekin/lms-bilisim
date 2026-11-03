@@ -159,11 +159,12 @@ class ProfileController extends Controller
         ]);
         $limit = ($data['level_mode'] ?? 'all') === 'limited' ? (int) ($data['level_limit'] ?? 2) : 0;
 
-        \App\Support\PublicGamesSetting::save($request->boolean('enabled'), (array) $request->input('games', []), $limit);
+        \App\Support\PublicGamesSetting::save($request->boolean('enabled'), (array) $request->input('games', []), $limit, $request->boolean('live_quiz'));
+        $lq = $request->boolean('live_quiz') ? ' Canlı Quiz herkese açık.' : ' Canlı Quiz herkese kapalı.';
 
         return back()->with('success', $request->boolean('enabled')
-            ? 'Herkese açık oyunlar kaydedildi. Seçili oyunlar anasayfadaki Oyunlar menüsünde görünür.'
-            : 'Herkese açık oyunlar kapatıldı. Anasayfadaki Oyunlar menüsü boş görünecek.');
+            ? 'Herkese açık oyunlar kaydedildi. Seçili oyunlar anasayfadaki Oyunlar menüsünde görünür.' . $lq
+            : 'Herkese açık oyunlar kapatıldı. Anasayfadaki Oyunlar menüsü boş görünecek.' . $lq);
     }
 
     public function updateTeacherXpGift(Request $request): RedirectResponse

@@ -1,6 +1,12 @@
 @extends('layout.app')
 @section('title','Canli Quiz Oyna')
 @section('content')
+@if(auth()->user()?->hasRole('guest'))
+<form method="POST" action="{{ route('public.live-quiz.leave') }}" style="position:fixed;left:8px;bottom:8px;z-index:60;margin:0">
+    @csrf
+    <button type="submit" style="padding:6px 12px;border:0;border-radius:999px;background:rgba(15,23,42,.65);color:#fff;font-size:12px;font-weight:700;cursor:pointer">Quizden ayrıl</button>
+</form>
+@endif
 @php
     $questions = $session->quiz?->questions ?? collect();
     $q = $questions->get($session->current_index);

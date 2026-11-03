@@ -59,6 +59,10 @@ Route::get('/', function () {
 });
 // Herkese açık (giriş gerektirmez) oyunlar: anasayfadaki "Oyunlar" menüsü. Admin profilinden açılıp kapatılır.
 Route::get('/oyun-listesi', [ActivityRunnerController::class, 'publicIndex'])->middleware('throttle:60,1')->name('public.games');
+// Giriş yapmadan kod + ad soyad ile canlı quize katılım (yönetici profilinden açılıp kapatılır; varsayılan kapalı).
+Route::get('/canli-quiz-katil', [\App\Http\Controllers\PublicLiveQuizController::class, 'form'])->middleware('throttle:60,1')->name('public.live-quiz.join');
+Route::post('/canli-quiz-katil', [\App\Http\Controllers\PublicLiveQuizController::class, 'join'])->middleware('throttle:60,1')->name('public.live-quiz.join.post');
+Route::post('/canli-quiz-katil/ayril', [\App\Http\Controllers\PublicLiveQuizController::class, 'leave'])->name('public.live-quiz.leave');
 Route::get('/oyun/flamestone-game/seviyeler', [LevelController::class, 'publicIndex'])->middleware('throttle:60,1')->name('public.flamestone.levels');
 Route::get('/oyun/connect-the-dots-runner/levels', [DotConnectLevelController::class, 'publicFeed'])->middleware('throttle:60,1')->name('public.dot-connect.levels');
 Route::get('/oyun/{slug}', [ActivityRunnerController::class, 'publicPlay'])->where('slug', '[a-z0-9\-]+')->middleware('throttle:60,1')->name('public.game');
@@ -439,6 +443,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/derslerim/{course}', [StudentPortalController::class, 'courseShow'])->name('student.portal.course-show');
     });
 
+    // Misafir (hesapsız) katılımcılar da aynı quiz ekranını kullanır; diğer rotalara RestrictGuestPlayer izin vermez.
+    Route::middleware('role:student,guest')->group(function () {
+        Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play')->where('session', '[0-9]+');
+        Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status')->where('session', '[0-9]+');
+        Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer')->where('session', '[0-9]+');
+        Route::post('/ogrenci/canli-quiz/{session}/mini-oyun', [LiveQuizController::class, 'studentGameLevel'])->middleware('throttle:240,1')->name('student.live-quiz.game-level')->where('session', '[0-9]+');
+    });
+
     Route::middleware('role:student')->group(function () {
         Route::get('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentIndex'])->name('student.messages.index');
         Route::post('/ogrenci/ogretmene-mesaj', [StudentMessageController::class, 'studentSend'])->middleware('throttle:10,1')->name('student.messages.send');
@@ -446,10 +458,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/ogrenci/canli-quiz', [\App\Http\Controllers\StudentLiveEntryController::class, 'join'])->name('student.live-quiz.join');
         Route::get('/ogrenci/canli-quiz/anlik-katil/{session}', [LiveQuizController::class, 'studentInstantJoin'])->name('student.live-quiz.instant-join');
         Route::get('/ogrenci/canli-quiz/aktif-oturum', [LiveQuizController::class, 'studentActiveSession'])->name('student.live-quiz.active');
-        Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play');
-        Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status');
-        Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
-        Route::post('/ogrenci/canli-quiz/{session}/mini-oyun', [LiveQuizController::class, 'studentGameLevel'])->middleware('throttle:240,1')->name('student.live-quiz.game-level');
 
         Route::get('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'form'])->name('student.competitions.join.form');
         Route::get('/ogrenci/canli-yarismalar-acik', [CompetitionController::class, 'studentOpenRoom'])->name('student.competitions.open');

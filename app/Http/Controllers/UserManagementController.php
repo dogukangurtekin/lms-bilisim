@@ -25,6 +25,7 @@ class UserManagementController extends Controller
         $classFilter = trim((string) $request->query('school_class_id', ''));
         $users = User::query()
             ->with(['role', 'teacher', 'student.schoolClass'])
+            ->whereHas('role', fn ($r) => $r->where('slug', '!=', 'guest'))
             ->when($roleFilter !== '', fn ($q) => $q->whereHas('role', fn ($r) => $r->where('slug', $roleFilter)))
             ->when($search !== '', fn ($q) => $q->where(function ($sub) use ($search) {
                 $sub->where('name', 'like', '%' . $search . '%')

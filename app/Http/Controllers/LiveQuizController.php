@@ -274,6 +274,9 @@ class LiveQuizController extends Controller
             }
         }
 
+        // Herkese açık oturum: yalnızca yönetici ve profilindeki "Canlı Quiz" anahtarı açıkken.
+        $isPublic = $request->boolean('is_public') && (bool) auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled();
+
         // Once soru sayaci baslatilmiyor: ogrenciler once bir "lobi" ekraninda
         // katilim koduyla toplanir, ogretmen "Herkese Baslat" dedigi an ayni
         // milisaniyede birinci sorunun suresi herkes icin birlikte baslar.
@@ -285,6 +288,7 @@ class LiveQuizController extends Controller
             'phase' => 'lobby',
             'between_mode' => $betweenMode,
             'between_game' => $betweenGame,
+            'is_public' => $isPublic,
             'current_index' => 0,
             'is_locked' => true,
             'started_at_ms' => null,
@@ -598,7 +602,7 @@ class LiveQuizController extends Controller
 
     public function studentInstantJoin(LiveQuizSession $session)
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        abort_unless($this->isPlayer(), 403);
         $session = $this->syncSessionByTimer($session);
         abort_unless(in_array($session->status, ['lobby', 'live'], true), 403);
         abort_unless(((string) ($session->quiz?->join_mode ?? 'code')) === 'instant', 403);
@@ -619,7 +623,7 @@ class LiveQuizController extends Controller
 
     public function studentPlay(LiveQuizSession $session)
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        abort_unless($this->isPlayer(), 403);
         $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless(in_array($session->status, ['lobby', 'live', 'finished'], true), 403);
@@ -631,7 +635,7 @@ class LiveQuizController extends Controller
             abort(403);
         }
         if ($session->status === 'finished') {
-            return redirect()->route('student.portal.dashboard')->with('ok', 'Quizi tamamladin. Anasayfaya yonlendiriliyorsun.');
+            return $this->finishedRedirect();
         }
         $session->loadMissing('quiz.questions');
         $alreadyAnsweredCurrent = LiveQuizAnswer::query()
@@ -671,7 +675,7 @@ class LiveQuizController extends Controller
      */
     public function studentSessionStatus(LiveQuizSession $session)
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        abort_unless($this->isPlayer(), 403);
         $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
@@ -692,13 +696,13 @@ class LiveQuizController extends Controller
 
     public function studentAnswer(Request $request, LiveQuizSession $session)
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        abort_unless($this->isPlayer(), 403);
         $this->touchStudentPresence($session, (int) auth()->id());
         $session = $this->syncSessionByTimer($session);
         abort_unless($this->studentCanJoinSession($session, auth()->id()), 403);
         if ($session->status !== 'live' || $session->phase !== 'question' || $session->is_locked) {
             if ($session->status === 'finished') {
-                return redirect()->route('student.portal.dashboard')->with('ok', 'Quizi tamamladin. Anasayfaya yonlendiriliyorsun.');
+                return $this->finishedRedirect();
             }
             return back()->withErrors(['answer' => 'Bu soru su an kilitli veya oturum bitmis.']);
         }
@@ -1196,8 +1200,9 @@ class LiveQuizController extends Controller
             foreach ($this->gameTotals($session) as $uid => $g) {
                 $totals[(int) $uid] = ($totals[(int) $uid] ?? 0) + max(0, (int) $g['xp']);
             }
+            $guests = $this->guestUserIds(array_keys($totals));
             foreach ($totals as $uid => $xp) {
-                if ($xp <= 0) continue;
+                if ($xp <= 0 || isset($guests[(int) $uid])) continue;
                 $profile = UserProfile::query()->firstOrCreate(
                     ['user_id' => (int) $uid],
                     ['role' => 'student', 'xp' => 0]
@@ -1218,8 +1223,12 @@ class LiveQuizController extends Controller
             ->get();
 
         $game = $this->gameTotals($session);
+        $guests = $this->guestUserIds($rows->pluck('student_user_id')->all());
         foreach ($rows as $r) {
             $uid = (int) $r->student_user_id;
+            if (isset($guests[$uid])) {
+                continue;
+            }
             $g = $game[$uid] ?? ['xp' => 0, 'levels' => 0];
             $report = StudentReport::query()->firstOrCreate(['user_id' => $uid], [
                 'total_xp' => 0,
@@ -1524,7 +1533,7 @@ class LiveQuizController extends Controller
      */
     public function studentGameLevel(Request $request, LiveQuizSession $session)
     {
-        abort_unless(auth()->user()?->hasRole('student'), 403);
+        abort_unless($this->isPlayer(), 403);
         $data = $request->validate([
             'level_key' => ['required', 'string', 'max:40'],
             'level_no' => ['nullable', 'integer', 'min:0', 'max:100000'],
@@ -1602,6 +1611,40 @@ class LiveQuizController extends Controller
             ->update(['updated_at' => $now]);
     }
 
+    private function isPlayer(): bool
+    {
+        return (bool) auth()->user()?->hasRole('student', 'guest');
+    }
+
+    /** Verilen kullanıcılardan misafir (hesapsız katılımcı) olanların kimlikleri: [id => true]. */
+    private function guestUserIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return \App\Models\User::query()
+            ->whereIn('id', $ids)
+            ->whereHas('role', fn ($q) => $q->where('slug', 'guest'))
+            ->pluck('id')
+            ->mapWithKeys(fn ($id) => [(int) $id => true])
+            ->all();
+    }
+
+    /** Quiz bitince: öğrenci panele, misafir (oturumu kapatılarak) katılım sayfasına döner. */
+    private function finishedRedirect()
+    {
+        if (auth()->user()?->hasRole('guest')) {
+            auth()->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return redirect()->route('public.live-quiz.join')->with('ok', 'Quiz tamamlandı. Katıldığın için teşekkürler!');
+        }
+
+        return redirect()->route('student.portal.dashboard')->with('ok', 'Quizi tamamladin. Anasayfaya yonlendiriliyorsun.');
+    }
+
     private function nowMs(): int
     {
         return (int) floor(microtime(true) * 1000);
@@ -1613,6 +1656,13 @@ class LiveQuizController extends Controller
         if (!$quiz) {
             return false;
         }
+        $actor = (int) auth()->id() === $studentUserId ? auth()->user() : \App\Models\User::query()->find($studentUserId);
+        if ($actor?->hasRole('guest')) {
+            return (bool) $session->is_public
+                && \App\Support\PublicGamesSetting::liveQuizEnabled()
+                && LiveQuizParticipant::query()->where('live_quiz_session_id', $session->id)->where('student_user_id', $studentUserId)->exists();
+        }
+
         $student = Student::query()->where('user_id', $studentUserId)->first(['id', 'school_class_id']);
         if (!$student) {
             return false;

@@ -20,6 +20,7 @@ class LiveQuizSession extends Model
         'between_mode',
         'between_game',
         'between_plan',
+        'is_public',
         'current_index',
         'is_locked',
         'started_at_ms',
@@ -31,6 +32,7 @@ class LiveQuizSession extends Model
     protected $casts = [
         'is_locked' => 'boolean',
         'between_plan' => 'array',
+        'is_public' => 'boolean',
     ];
 
     public function quiz(): BelongsTo
