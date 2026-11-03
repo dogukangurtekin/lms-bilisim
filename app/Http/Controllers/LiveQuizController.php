@@ -56,11 +56,30 @@ class LiveQuizController extends Controller
         return $this->renderIndex($quiz);
     }
 
+    /** Öğretmen hesabının Teacher kaydı; yoksa hiçbir sınıfla eşleşmeyen -1. */
+    private function teacherRecordId(): int
+    {
+        return (int) (auth()->user()?->teacher?->id ?? -1);
+    }
+
+    /** Admin tüm sınıfları, öğretmen yalnızca kendisine atanmış sınıfları seçebilir. */
+    private function classRule(): \Illuminate\Validation\Rules\Exists
+    {
+        $rule = \Illuminate\Validation\Rule::exists('school_classes', 'id');
+        if (! auth()->user()?->hasRole('admin')) {
+            $rule->where('teacher_id', $this->teacherRecordId());
+        }
+
+        return $rule;
+    }
+
     private function renderIndex(?LiveQuiz $editingQuiz = null)
     {
         $teacherId = auth()->id();
         $isAdmin = (bool) auth()->user()?->hasRole('admin');
-        $classes = SchoolClass::query()->orderBy('name')->orderBy('section')->get();
+        $classes = SchoolClass::query()
+            ->when(!$isAdmin, fn ($query) => $query->where('teacher_id', $this->teacherRecordId()))
+            ->orderBy('name')->orderBy('section')->get();
         $quizzes = LiveQuiz::query()
             ->withCount('questions')
             ->when(!$isAdmin, fn ($query) => $query->where('teacher_user_id', $teacherId))
@@ -106,7 +125,7 @@ class LiveQuizController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:190'],
-            'school_class_id' => ['nullable', 'exists:school_classes,id'],
+            'school_class_id' => ['nullable', $this->classRule()],
             'join_mode' => ['required', 'in:code,instant'],
             'questions_json' => ['required', 'string'],
         ]);
@@ -785,7 +804,7 @@ class LiveQuizController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:190'],
-            'school_class_id' => ['nullable', 'exists:school_classes,id'],
+            'school_class_id' => ['nullable', $this->classRule()],
             'join_mode' => ['required', 'in:code,instant'],
             'questions_json' => ['required', 'string'],
         ]);
