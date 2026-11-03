@@ -76,6 +76,13 @@
 body.role-student .lq-stage h1,body.role-student .lq-stage h2,body.role-student .lq-stage h3{color:#fff}
 body.role-student .lq-stage .lq-result-title.lq-result-good{color:#86efac}
 body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
+/* Öğrenci ekranının en üstünde kalan süre çubuğu */
+.lq-timebar{position:sticky;top:0;z-index:30;margin:-16px -16px 12px;padding:10px 16px 8px;background:rgba(46,16,101,.94);border-radius:18px 18px 0 0;box-shadow:0 6px 14px rgba(15,23,42,.25)}
+.lq-timebar-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:13px;margin-bottom:6px}
+.lq-timebar-sec{font-size:26px;line-height:1;font-weight:900}
+.lq-timetrack{height:12px;border-radius:999px;background:rgba(255,255,255,.22);overflow:hidden}
+.lq-timefill{height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#22c55e,#a3e635);transition:width .3s linear}
+.lq-timefill.warn{background:linear-gradient(90deg,#f59e0b,#ef4444)}
 /* Mini oyun aşaması (soru arası) */
 .lq-game-hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
 .lq-game-hud>div{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:8px 10px;text-align:center}
@@ -99,6 +106,26 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
 @endif
 
 <div class="lq-stage {{ $session->status === 'lobby' ? 'cx lq-stage-lobby' : '' }}">
+    @if($session->status === 'live' && $session->phase !== 'final' && $q)
+        @php
+            $timeLabel = match ($session->phase) {
+                'intro' => 'Soru açılıyor',
+                'results' => 'Sıradaki soruya',
+                'game' => 'Mini oyun süresi',
+                default => 'Kalan süre',
+            };
+            $timeTotalMs = match ($session->phase) {
+                'intro' => 3000,
+                'results' => 5000,
+                'game' => 30000,
+                default => max(5, (int) $q->duration_sec) * 1000,
+            };
+        @endphp
+        <div class="lq-timebar" id="lqTimeBar" data-total-ms="{{ $timeTotalMs }}" role="timer" aria-live="off">
+            <div class="lq-timebar-top"><span>{{ $timeLabel }}</span><span><span class="lq-timebar-sec" id="lqTimeSec">--</span> sn</span></div>
+            <div class="lq-timetrack"><div class="lq-timefill" id="lqTimeFill"></div></div>
+        </div>
+    @endif
     <div class="lq-header">
         <h1 class="lq-title">{{ $session->quiz?->title ?? 'Canli Quiz' }}</h1>
         <div class="lq-badges">
@@ -350,6 +377,9 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
     const answerCountdownEl = document.getElementById('lq-answer-countdown');
     const nextCountdownEl = document.getElementById('lq-next-countdown');
     const gameCountdownEl = document.getElementById('lq-game-countdown');
+    const timeBarEl = document.getElementById('lqTimeBar');
+    const timeFillEl = document.getElementById('lqTimeFill');
+    const timeSecEl = document.getElementById('lqTimeSec');
 
     // Ogrencinin cihaz saati sunucudan farkli olabilir; periyodik senkronizasyon
     // ile sayacin gercek kalan sureyi gostermesi saglanir (Kahoot'taki gibi
@@ -401,6 +431,12 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
         if (answerCountdownEl) answerCountdownEl.textContent = String(leftSec);
         if (nextCountdownEl) nextCountdownEl.textContent = String(leftSec);
         if (gameCountdownEl) gameCountdownEl.textContent = String(leftSec);
+        if (timeBarEl && timeFillEl) {
+            const total = Number(timeBarEl.dataset.totalMs) || 0;
+            if (total > 0) timeFillEl.style.width = Math.max(0, Math.min(100, (leftMs / total) * 100)) + '%';
+            timeFillEl.classList.toggle('warn', leftSec <= 5);
+        }
+        if (timeSecEl) timeSecEl.textContent = String(leftSec);
     };
     tick();
     setInterval(tick, 300);
