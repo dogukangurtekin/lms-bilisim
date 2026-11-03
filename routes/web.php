@@ -172,6 +172,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/profilim/slayt-suresi', [ProfileController::class, 'updateSlideTimer'])->name('profile.slide-timer.update');
     Route::post('/profilim/ogretmen-xp-hediyesi', [ProfileController::class, 'updateTeacherXpGift'])->name('profile.teacher-xp-gift.update');
     Route::post('/profilim/sinav-olustur', [ProfileController::class, 'updateExamBuilder'])->name('profile.exam-builder.update');
+    Route::get('/sifre-yenile', [\App\Http\Controllers\ForcePasswordController::class, 'show'])->name('password.force.show');
+    Route::post('/sifre-yenile', [\App\Http\Controllers\ForcePasswordController::class, 'update'])->middleware('throttle:10,1')->name('password.force.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

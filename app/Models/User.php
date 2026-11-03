@@ -26,6 +26,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'password_change_required' => 'boolean',
+            'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
             'dashboard_layout' => 'array',
             'force_logout_at' => 'datetime',
