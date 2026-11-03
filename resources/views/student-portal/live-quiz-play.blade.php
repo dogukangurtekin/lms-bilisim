@@ -398,7 +398,8 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
                 return;
             }
             if (Number(data.current_index) !== initialIndex || String(data.phase || '') !== initialPhase) {
-                window.location.reload();
+                // Tüm sınıf aynı anda yenilemesin: 0-500 ms rastgele gecikme sunucudaki ani yükü yayar.
+                if (!window.__lqReloading) { window.__lqReloading = true; setTimeout(() => window.location.reload(), Math.floor(Math.random() * 500)); }
             }
         } catch (e) { /* bir sonraki denemede tekrar denenecek */ }
     };
@@ -408,7 +409,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
     // hemen sonra tek seferde (aşama geçişi) sorgulanır. Her öğrenciye küçük rastgele gecikme
     // eklenerek aynı anda gelen istek yığılması da önlenir.
     // Cevabını verip bekleyen öğrenci, herkes bitince ara ekrana çabuk geçsin diye biraz daha sık sorgular.
-    const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 1500 : 4000;
+    const BASE_SYNC_MS = document.getElementById('lqWaitingStage') ? 2500 : 4000;
     const nextSyncDelay = () => {
         if (initialPhase === 'final') return 6000;         // final ekranı: sadece "yarışma bitti mi" kontrolü
         const leftMs = endsAtMs - (Date.now() + clockOffsetMs);

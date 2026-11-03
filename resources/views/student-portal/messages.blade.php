@@ -37,7 +37,7 @@
                 <div class="msg-choices">
                     <label class="msg-choice {{ $hasTeacher ? '' : 'disabled' }}">
                         <input type="radio" name="recipient_type" value="teacher" @checked(old('recipient_type', $hasTeacher ? 'teacher' : 'admin') === 'teacher') @disabled(! $hasTeacher)>
-                        <span>👩‍🏫 Öğretmenim<small>{{ $hasTeacher ? $teacherName : 'Sana atanmış öğretmen yok' }}</small></span>
+                        <span>👩‍🏫 Öğretmenim<small>{{ $hasTeacher ? $teacherName : (($teacherClosed ?? false) ? 'Şu an kapalı' : 'Sana atanmış öğretmen yok') }}</small></span>
                     </label>
                     <label class="msg-choice">
                         <input type="radio" name="recipient_type" value="admin" @checked(old('recipient_type', $hasTeacher ? 'teacher' : 'admin') === 'admin')>

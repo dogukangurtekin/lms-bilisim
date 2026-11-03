@@ -49,7 +49,8 @@ class StudentMessageController extends Controller
             'student' => $student,
             'messages' => $messages,
             'teacherName' => $teacher?->user?->name,
-            'hasTeacher' => (bool) $teacher?->user_id,
+            'hasTeacher' => (bool) $teacher?->user_id && \App\Support\StudentMessageSetting::teacherOpenFor($student),
+            'teacherClosed' => ! \App\Support\StudentMessageSetting::teacherOpenFor($student),
             'canSend' => ! StudentMessage::hasPendingFor($student->id),
         ]);
     }
@@ -68,6 +69,9 @@ class StudentMessageController extends Controller
 
         $recipientUserId = null;
         if ($data['recipient_type'] === 'teacher') {
+            if (! \App\Support\StudentMessageSetting::teacherOpenFor($student)) {
+                return back()->withInput()->with('error', 'Öğretmene mesaj gönderme şu an kapalı. Mesajı yöneticiye gönderebilirsin.');
+            }
             $recipientUserId = $student->schoolClass?->teacher?->user_id;
             if (! $recipientUserId) {
                 return back()->withInput()->with('error', 'Sana atanmış bir öğretmen bulunamadı. Mesajı yöneticiye gönderebilirsin.');

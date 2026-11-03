@@ -137,6 +137,18 @@ class ProfileController extends Controller
         return back()->with('success', 'Slayt geçiş ayarları sınıf gruplarına göre kaydedildi.');
     }
 
+    public function updateStudentMessages(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()?->hasRole('admin'), 403);
+
+        $open = $request->boolean('g34_teacher');
+        \App\Support\StudentMessageSetting::saveG34Teacher($open);
+
+        return back()->with('success', $open
+            ? '3. - 4. sınıf öğrencileri öğretmenlerine mesaj gönderebilir.'
+            : '3. - 4. sınıf öğrencilerinin öğretmene mesaj gönderimi kapatıldı.');
+    }
+
     public function updatePublicGames(Request $request): RedirectResponse
     {
         abort_unless($request->user()?->hasRole('admin'), 403);

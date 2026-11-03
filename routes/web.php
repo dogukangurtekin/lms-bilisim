@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/profilim/logo', [ProfileController::class, 'updateBranding'])->name('profile.branding.update');
     Route::post('/profilim/herkese-acik-oyunlar', [ProfileController::class, 'updatePublicGames'])->name('profile.public-games.update');
     Route::post('/profilim/slayt-suresi', [ProfileController::class, 'updateSlideTimer'])->name('profile.slide-timer.update');
+    Route::post('/profilim/ogrenci-mesaj-ayari', [ProfileController::class, 'updateStudentMessages'])->name('profile.student-messages.update');
     Route::post('/profilim/ogretmen-xp-hediyesi', [ProfileController::class, 'updateTeacherXpGift'])->name('profile.teacher-xp-gift.update');
     Route::post('/profilim/sinav-olustur', [ProfileController::class, 'updateExamBuilder'])->name('profile.exam-builder.update');
     Route::get('/sifre-yenile', [\App\Http\Controllers\ForcePasswordController::class, 'show'])->name('password.force.show');

@@ -162,6 +162,21 @@
     @endif
 
     @if($user->hasRole('admin'))
+        <div class="card" style="border:1.5px solid #dbe5f2;">
+            <h3 style="margin:0 0 4px;">💬 Öğrenci → Öğretmen Mesajı</h3>
+            <p style="margin:0 0 12px;color:#475569">3. - 4. sınıf öğrencilerinin öğretmenine mesaj göndermesini açın veya kapatın. Kapalıyken öğrenciler yalnızca yöneticiye yazabilir.</p>
+            <form method="POST" action="{{ route('profile.student-messages.update') }}">
+                @csrf
+                <label style="display:flex;align-items:center;gap:10px;font-weight:800">
+                    <input type="checkbox" name="g34_teacher" value="1" @checked(\App\Support\StudentMessageSetting::g34TeacherOpen()) style="width:auto;margin:0">
+                    3. - 4. sınıflar öğretmenine mesaj gönderebilsin
+                </label>
+                <button type="submit" class="btn" style="margin-top:12px">Kaydet</button>
+            </form>
+        </div>
+    @endif
+
+    @if($user->hasRole('admin'))
         @php($pgOn = \App\Support\PublicGamesSetting::enabled())
         @php($pgGames = \App\Support\PublicGamesSetting::perGame())
         @php($pgAll = \App\Http\Controllers\ActivityController::games())

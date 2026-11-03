@@ -21,6 +21,22 @@ use Illuminate\Support\Str;
 
 class LiveQuizController extends Controller
 {
+    /** Aynı istek içinde tekrar eden okuma sorgularının sonucunu saklar (yoklama istekleri çok sorgu yapıyordu). */
+    private array $memo = [];
+
+    private ?object $memoRequest = null;
+
+    private function memo(string $key, \Closure $fn)
+    {
+        // Denetleyici örneği istekler arasında yeniden kullanılırsa (ör. testler) eski sonuçlar sızmasın.
+        if ($this->memoRequest !== request()) {
+            $this->memo = [];
+            $this->memoRequest = request();
+        }
+
+        return $this->memo[$key] ??= $fn();
+    }
+
     private const DOUBLE_XP_INTRO_MS = 3000;
 
     // Son sorudan sonra sıralama ekranı, yönetici "Yarışmayı Bitir" diyene kadar açık kalır.
@@ -331,7 +347,7 @@ class LiveQuizController extends Controller
     {
         $this->authorizeSessionManagement($session);
         $session = $this->syncSessionByTimer($session);
-        $session->load('quiz.questions');
+        $session->loadMissing('quiz.questions');
         $questions = $session->quiz?->questions?->sortBy('sort_order')->values() ?? collect();
         $current = $questions->get((int) $session->current_index);
 
@@ -598,14 +614,14 @@ class LiveQuizController extends Controller
         if ($session->status === 'finished') {
             return redirect()->route('student.portal.dashboard')->with('ok', 'Quizi tamamladin. Anasayfaya yonlendiriliyorsun.');
         }
-        $session->load('quiz.questions');
+        $session->loadMissing('quiz.questions');
         $alreadyAnsweredCurrent = LiveQuizAnswer::query()
             ->where('live_quiz_session_id', $session->id)
             ->where('student_user_id', auth()->id())
             ->where('question_index', (int) $session->current_index)
             ->exists();
         $joinedCount = $session->status === 'lobby' ? $session->participants()->count() : 0;
-        $participantRows = $this->participantRows($session);
+        $participantRows = $session->status === 'lobby' ? $this->participantRows($session) : [];   // yalnızca lobi ekranı kullanır
         $currentAnswer = LiveQuizAnswer::query()
             ->where('live_quiz_session_id', $session->id)
             ->where('student_user_id', auth()->id())
@@ -648,8 +664,9 @@ class LiveQuizController extends Controller
             'is_locked' => (bool) $session->is_locked,
             'ends_at_ms' => (int) ($session->ends_at_ms ?? 0),
             'server_now_ms' => $this->nowMs(),
-            'joined_count' => $session->status === 'lobby' ? $session->participants()->count() : null,
-            'participants' => $this->participantRows($session),
+            'joined_count' => $session->status === 'lobby' ? count($this->participantRows($session)) : null,
+            // Katılımcı listesini yalnızca lobi ekranı kullanır; canlı aşamalarda her yoklamada taşımaya gerek yok.
+            'participants' => $session->status === 'lobby' ? $this->participantRows($session) : [],
             'top_five' => $this->questionTopFive($session),
         ]);
     }
@@ -963,6 +980,11 @@ class LiveQuizController extends Controller
 
     private function participantRows(LiveQuizSession $session): array
     {
+        return $this->memo('participants:' . $session->id, fn () => $this->loadParticipantRows($session));
+    }
+
+    private function loadParticipantRows(LiveQuizSession $session): array
+    {
         return $session->participants()
             ->with('studentUser:id,name')
             ->oldest('id')
@@ -1046,23 +1068,30 @@ class LiveQuizController extends Controller
         return $session->fresh(['quiz.questions']);
     }
 
+    /** Öğrenci başına cevap/doğru/XP toplamları (isteğe bağlı bir soruyu hariç tutarak); istek içinde bir kez hesaplanır. */
+    private function scoreStats(LiveQuizSession $session, ?int $excludeQuestionIndex = null)
+    {
+        return $this->memo('score:' . $session->id . ':' . ($excludeQuestionIndex ?? 'all'), function () use ($session, $excludeQuestionIndex) {
+            return LiveQuizAnswer::query()
+                ->selectRaw('student_user_id, COUNT(*) as answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct, SUM(xp_earned) as xp')
+                ->where('live_quiz_session_id', $session->id)
+                ->when($excludeQuestionIndex !== null, fn ($query) => $query->where('question_index', '!=', $excludeQuestionIndex))
+                ->groupBy('student_user_id')
+                ->get()
+                ->keyBy('student_user_id');
+        });
+    }
+
     private function leaderboardRows(LiveQuizSession $session): array
     {
-        $rows = LiveQuizAnswer::query()
-            ->selectRaw('student_user_id, COUNT(*) as answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct, SUM(xp_earned) as xp')
-            ->where('live_quiz_session_id', $session->id)
-            ->groupBy('student_user_id')
-            ->orderByDesc('xp')
-            ->orderByDesc('correct')
-            ->get();
-
+        $rows = $this->scoreStats($session)->values();
+        $names = \App\Models\User::query()->whereIn('id', $rows->pluck('student_user_id'))->pluck('name', 'id');
         $game = $this->gameTotals($session);
 
-        return $rows->map(function ($r) use ($game) {
-            $student = Student::query()->with('user')->where('user_id', $r->student_user_id)->first();
+        return $rows->map(function ($r) use ($game, $names) {
             $g = $game[(int) $r->student_user_id] ?? ['xp' => 0, 'levels' => 0];
             return [
-                'student_name' => $student?->user?->name ?? ('user_' . $r->student_user_id),
+                'student_name' => $names[(int) $r->student_user_id] ?? ('user_' . $r->student_user_id),
                 'answered' => (int) $r->answered,
                 'correct' => (int) $r->correct,
                 'wrong' => max(0, (int) $r->answered - (int) $r->correct),
@@ -1081,27 +1110,19 @@ class LiveQuizController extends Controller
      */
     private function liveBoardRows(LiveQuizSession $session, ?int $excludeQuestionIndex = null): array
     {
-        $stats = LiveQuizAnswer::query()
-            ->selectRaw('student_user_id, COUNT(*) as answered, SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct, SUM(xp_earned) as xp')
-            ->where('live_quiz_session_id', $session->id)
-            ->when($excludeQuestionIndex !== null, fn ($query) => $query->where('question_index', '!=', $excludeQuestionIndex))
-            ->groupBy('student_user_id')
-            ->get()
-            ->keyBy('student_user_id');
+        $stats = $this->scoreStats($session, $excludeQuestionIndex);
 
         $game = $this->gameTotals($session);
-        $rows = $session->participants()
-            ->with('studentUser:id,name')
-            ->get()
-            ->map(function (LiveQuizParticipant $participant) use ($stats, $game) {
-                $stat = $stats->get($participant->student_user_id);
-                $g = $game[(int) $participant->student_user_id] ?? ['xp' => 0, 'levels' => 0];
+        $rows = collect($this->participantRows($session))
+            ->map(function (array $participant) use ($stats, $game) {
+                $stat = $stats->get($participant['user_id']);
+                $g = $game[(int) $participant['user_id']] ?? ['xp' => 0, 'levels' => 0];
                 $answered = (int) ($stat->answered ?? 0);
                 $correct = (int) ($stat->correct ?? 0);
 
                 return [
-                    'user_id' => (int) $participant->student_user_id,
-                    'student_name' => (string) ($participant->studentUser?->name ?: 'Öğrenci'),
+                    'user_id' => (int) $participant['user_id'],
+                    'student_name' => (string) $participant['student_name'],
                     'answered' => $answered,
                     'correct' => $correct,
                     'wrong' => max(0, $answered - $correct),
@@ -1315,11 +1336,12 @@ class LiveQuizController extends Controller
         // sayfayı kapatmış / bağlantısı kopmuş öğrenci yüzünden tüm sınıf boşuna beklemesin.
         $allAnswered = $joinedCount > 0 && $answeredCount >= $joinedCount;
         if (!$allAnswered && $answeredCount > 0 && $session->phase === 'question') {
-            $pending = $session->participants()
+            // Cevap vermemiş öğrencilerden son 20 sn içinde ekranı açık görünen var mı? (tek sorgu)
+            $pendingSeen = $session->participants()
                 ->whereNotIn('student_user_id', $answeredIds)
-                ->pluck('student_user_id')
-                ->filter(fn ($id) => $this->studentRecentlySeen($session, (int) $id, $nowMs));
-            $allAnswered = $pending->isEmpty();
+                ->where('updated_at', '>=', now()->subSeconds(20))
+                ->exists();
+            $allAnswered = ! $pendingSeen;
         }
 
         if ($session->phase === 'question' && ($nowMs >= $endsAtMs || $allAnswered)) {
@@ -1547,16 +1569,18 @@ class LiveQuizController extends Controller
         ]);
     }
 
+    /**
+     * Öğrencinin ekranının açık olduğunu işaretler. Her yoklamada dosya önbelleğine yazmak yerine katılımcı satırının
+     * updated_at alanı en çok 8 saniyede bir güncellenir (çoğu yoklamada hiçbir şey yazılmaz).
+     */
     private function touchStudentPresence(LiveQuizSession $session, int $userId): void
     {
-        Cache::put("lq:seen:{$session->id}:{$userId}", $this->nowMs(), 120);
-    }
-
-    private function studentRecentlySeen(LiveQuizSession $session, int $userId, int $nowMs): bool
-    {
-        $seen = (int) Cache::get("lq:seen:{$session->id}:{$userId}", 0);
-
-        return $seen > 0 && ($nowMs - $seen) <= 20000;
+        $now = now();
+        DB::table('live_quiz_participants')
+            ->where('live_quiz_session_id', $session->id)
+            ->where('student_user_id', $userId)
+            ->where(fn ($q) => $q->whereNull('updated_at')->orWhere('updated_at', '<', $now->copy()->subSeconds(8)))
+            ->update(['updated_at' => $now]);
     }
 
     private function nowMs(): int
@@ -1566,11 +1590,11 @@ class LiveQuizController extends Controller
 
     private function studentCanJoinSession(LiveQuizSession $session, int $studentUserId): bool
     {
-        $quiz = $session->quiz()->first();
+        $quiz = $session->quiz;
         if (!$quiz) {
             return false;
         }
-        $student = Student::query()->where('user_id', $studentUserId)->first();
+        $student = Student::query()->where('user_id', $studentUserId)->first(['id', 'school_class_id']);
         if (!$student) {
             return false;
         }
