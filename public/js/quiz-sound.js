@@ -59,6 +59,16 @@
         osc.connect(g); g.connect(master);
         osc.start(t); osc.stop(t + dur + 0.05);
     }
+    function snare(t, gain) {
+        var c = ctx, len = Math.floor(c.sampleRate * 0.14), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+        var src = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter();
+        f.type = 'bandpass'; f.frequency.value = 1900; f.Q.value = 0.8;
+        g.gain.value = gain;
+        src.buffer = buf; src.connect(f); f.connect(g); g.connect(master);
+        src.start(t);
+        tone(190, t, 0.09, { type: 'triangle', to: 120, gain: gain * 0.8 });
+    }
     function hat(t, gain) {
         var c = ctx, len = Math.floor(c.sampleRate * 0.05), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
         for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
@@ -86,6 +96,41 @@
             lobby: { bpm: 84, chords: [[60, 64, 67], [57, 60, 64], [62, 65, 69], [55, 59, 62]], roots: [36, 33, 38, 31], arp: [0, 1, 2, 1, 2, 1, 0, 1], wave: 'sine', arpGain: 0.15, bass: 'sine', hat: 0.02 },
             question: { bpm: 104, chords: [[57, 60, 64], [62, 65, 69], [60, 64, 67], [55, 59, 62]], roots: [33, 38, 36, 31], arp: [0, 2, 1, 2, 0, 2, 1, 2], wave: 'triangle', arpGain: 0.1, bass: 'sine', hat: 0.03, kick: true }
         },
+        funk: {
+            label: 'Funk (ritimli)',
+            lobby: { bpm: 108, chords: [[64, 67, 71], [57, 61, 64], [62, 65, 69], [55, 59, 62]], roots: [40, 45, 38, 43], arp: [0, -1, 2, 1, -1, 2, 0, 1], wave: 'square', arpGain: 0.045, bass: 'square', hat: 0.035, hatPat: 'all', snare: 0.1, bassPat: 'offbeat', swing: 0.12 },
+            question: { bpm: 124, chords: [[64, 67, 71], [57, 61, 64], [62, 65, 69], [55, 59, 62]], roots: [40, 45, 38, 43], arp: [0, -1, 2, 1, -1, 2, 0, 1], wave: 'square', arpGain: 0.055, bass: 'sawtooth', hat: 0.045, hatPat: 'all', snare: 0.14, kick: true, bassPat: 'offbeat' }
+        },
+        disko: {
+            label: 'Disko',
+            lobby: { bpm: 116, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]], roots: [33, 29, 36, 31], arp: [0, 1, 2, 1, 0, 1, 2, 1], wave: 'sawtooth', arpGain: 0.035, bass: 'sawtooth', hat: 0.06, snare: 0.09, kick: true, kickPat: 'four', bassPat: 'oct' },
+            question: { bpm: 128, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]], roots: [33, 29, 36, 31], arp: [0, 2, 1, 2, 0, 2, 1, 2], wave: 'sawtooth', arpGain: 0.04, bass: 'sawtooth', hat: 0.07, snare: 0.12, kick: true, kickPat: 'four', bassPat: 'oct' }
+        },
+        gizem: {
+            label: 'Gizemli',
+            lobby: { bpm: 90, chords: [[62, 65, 69], [58, 62, 65], [55, 58, 62], [57, 61, 64]], roots: [38, 34, 31, 33], arp: [0, -1, 2, -1, 1, -1, 2, -1], wave: 'sine', arpGain: 0.14, bass: 'sine', hat: 0.015, pad: { wave: 'triangle', gain: 0.035 } },
+            question: { bpm: 132, chords: [[62, 65, 69], [58, 62, 65], [55, 58, 62], [57, 61, 64]], roots: [38, 34, 31, 33], arp: [0, 2, 1, 2, 0, 2, 1, -1], wave: 'triangle', arpGain: 0.08, bass: 'sawtooth', hat: 0.07, kick: true, pad: { wave: 'sawtooth', gain: 0.02 } }
+        },
+        tropik: {
+            label: 'Tropik (yaz)',
+            lobby: { bpm: 98, chords: [[60, 64, 67], [53, 57, 60], [55, 59, 62], [60, 64, 67]], roots: [36, 29, 31, 36], arp: [0, 2, 1, 2, 1, 2, 0, 1], wave: 'triangle', arpGain: 0.13, bass: 'sine', hat: 0.03, swing: 0.25, bassPat: 'offbeat' },
+            question: { bpm: 118, chords: [[60, 64, 67], [53, 57, 60], [55, 59, 62], [60, 64, 67]], roots: [36, 29, 31, 36], arp: [0, 2, 1, 2, 1, 2, 0, 1], wave: 'triangle', arpGain: 0.12, bass: 'triangle', hat: 0.05, snare: 0.07, kick: true, swing: 0.22, bassPat: 'offbeat' }
+        },
+        kahraman: {
+            label: 'Kahraman (destansı)',
+            lobby: { bpm: 96, chords: [[60, 63, 67], [56, 60, 63], [63, 67, 70], [58, 62, 65]], roots: [36, 32, 39, 34], arp: [0, 1, 2, 1, 0, 1, 2, 2], wave: 'sawtooth', arpGain: 0.04, bass: 'sawtooth', hat: 0.03, pad: { wave: 'sawtooth', gain: 0.025 } },
+            question: { bpm: 144, chords: [[60, 63, 67], [56, 60, 63], [63, 67, 70], [58, 62, 65]], roots: [36, 32, 39, 34], arp: [0, 2, 1, 2, 0, 2, 1, 2], wave: 'sawtooth', arpGain: 0.05, bass: 'sawtooth', hat: 0.08, snare: 0.15, kick: true, pad: { wave: 'sawtooth', gain: 0.03 } }
+        },
+        lofi: {
+            label: 'Lo-fi (sakin ders)',
+            lobby: { bpm: 76, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]], roots: [33, 29, 36, 31], arp: [0, -1, 1, -1, 2, -1, 1, -1], wave: 'sine', arpGain: 0.13, bass: 'sine', hat: 0.02, swing: 0.3, pad: { wave: 'triangle', gain: 0.03 } },
+            question: { bpm: 90, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]], roots: [33, 29, 36, 31], arp: [0, -1, 1, 2, -1, 1, 2, -1], wave: 'sine', arpGain: 0.12, bass: 'sine', hat: 0.03, snare: 0.05, kick: true, swing: 0.28, pad: { wave: 'triangle', gain: 0.03 } }
+        },
+        uzay: {
+            label: 'Uzay (elektronik)',
+            lobby: { bpm: 120, chords: [[57, 60, 64], [55, 59, 62], [53, 57, 60], [52, 56, 59]], roots: [33, 31, 29, 28], arp: [0, 1, 2, 2, 1, 0, 1, 2], wave: 'sine', arpGain: 0.09, bass: 'triangle', hat: 0.02, hatPat: 'all', octave: 24, pad: { wave: 'sine', gain: 0.04 } },
+            question: { bpm: 148, chords: [[57, 60, 64], [55, 59, 62], [53, 57, 60], [52, 56, 59]], roots: [33, 31, 29, 28], arp: [0, 1, 2, 2, 1, 0, 1, 2], wave: 'square', arpGain: 0.05, bass: 'sawtooth', hat: 0.04, hatPat: 'all', octave: 24, kick: true, kickPat: 'four', pad: { wave: 'sine', gain: 0.03 } }
+        },
         macera: {
             label: 'Macera (destansı)',
             lobby: { bpm: 110, chords: [[62, 65, 69], [58, 62, 65], [60, 64, 67], [57, 60, 64]], roots: [38, 34, 36, 33], arp: [0, 1, 2, 1, 0, 1, 2, 1], wave: 'sawtooth', arpGain: 0.045, bass: 'sawtooth', hat: 0.05 },
@@ -104,10 +149,23 @@
         while (loop.next < ctx.currentTime + 0.4) {
             var bar = Math.floor(loop.step / 8) % s.chords.length, i = loop.step % 8, t = loop.next;
             var ch = s.chords[bar];
-            tone(hz(ch[s.arp[i]] + oct), t, stepDur * 0.9, { type: s.wave, gain: s.arpGain });
-            if (i % 2 === 0) tone(hz(s.roots[bar]), t, stepDur * 1.6, { type: s.bass, gain: 0.09 });
-            if (i % 2 === 1) hat(t, s.hat);
-            if (s.kick && i % 4 === 0) tone(80, t, 0.12, { type: 'sine', to: 40, gain: 0.25 });
+            var ts = t + (i % 2 === 1 && s.swing ? s.swing * stepDur : 0);   // swing: tek vuruşları geciktirir
+            var deg = s.arp[i];
+            if (deg != null && deg >= 0) tone(hz(ch[deg] + oct), ts, stepDur * 0.9, { type: s.wave, gain: s.arpGain });
+            // bas deseni
+            var bassOn = s.bassPat === 'offbeat' ? i % 2 === 1 : i % 2 === 0;
+            if (bassOn) {
+                var rootNote = s.roots[bar] + (s.bassPat === 'oct' && i % 4 === 2 ? 12 : 0);
+                tone(hz(rootNote), ts, stepDur * 1.6, { type: s.bass, gain: 0.09 });
+            }
+            // pad: her ölçünün başında akor sürekli çalar
+            if (s.pad && i === 0) ch.forEach(function (n) { tone(hz(n), t, stepDur * 8, { type: s.pad.wave, gain: s.pad.gain }); });
+            if (s.hatPat === 'all' || i % 2 === 1) hat(ts, s.hat);
+            if (s.kick) {
+                var kickOn = s.kickPat === 'four' ? i % 2 === 0 : i % 4 === 0;
+                if (kickOn) tone(80, t, 0.12, { type: 'sine', to: 40, gain: 0.25 });
+            }
+            if (s.snare && (i === 2 || i === 6)) snare(t, s.snare);
             loop.step++; loop.next += stepDur;
         }
     }
