@@ -173,8 +173,16 @@
                         <td>{{ ($quiz->join_mode ?? 'code') === 'instant' ? 'Anlik Bildirim' : 'Kodla' }}</td>
                         <td>{{ $quiz->questions_count }}</td>
                         <td><div class="quiz-actions">
-                            <form method="POST" action="{{ route('live-quiz.start', $quiz) }}">
+                            <form method="POST" action="{{ route('live-quiz.start', $quiz) }}" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
                                 @csrf
+                                <select name="between_mode" aria-label="Soru arası" style="padding:8px;border:1px solid #cbd5e1;border-radius:8px"
+                                    onchange="this.form.querySelector('[name=between_game]').style.display = this.value === 'game' ? '' : 'none'">
+                                    <option value="wait">Soru arası: 5 sn bekle</option>
+                                    <option value="game">Soru arası: Mini oyun (30 sn)</option>
+                                </select>
+                                <select name="between_game" aria-label="Mini oyun" style="display:none;padding:8px;border:1px solid #cbd5e1;border-radius:8px" title="Oyun ve Etkinlikler'den; her soru arasında 11. bölümden sonraki 10 bölüm, herkese aynı">
+                                    @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
+                                </select>
                                 <button class="btn" type="submit">Canli Quizi Baslat</button>
                             </form>
                             <a class="btn" href="{{ route('live-quiz.edit', $quiz) }}">Düzenle</a>

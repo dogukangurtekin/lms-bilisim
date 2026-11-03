@@ -76,6 +76,13 @@
 body.role-student .lq-stage h1,body.role-student .lq-stage h2,body.role-student .lq-stage h3{color:#fff}
 body.role-student .lq-stage .lq-result-title.lq-result-good{color:#86efac}
 body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
+/* Mini oyun aşaması (soru arası) */
+.lq-game-hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.lq-game-hud>div{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:8px 10px;text-align:center}
+.lq-game-hud small{display:block;font-size:12px;opacity:.9}
+.lq-game-hud strong{display:block;font-size:20px;margin-top:2px}
+.lq-game-frame iframe{display:block;width:100%;height:68vh;min-height:420px;border:0;border-radius:14px;background:#fff}
+@media (max-width:640px){.lq-game-hud{grid-template-columns:1fr 1fr}.lq-game-hud strong{font-size:17px}.lq-game-frame iframe{height:62vh;min-height:360px}}
 @media (max-width:900px){
   .lq-question{font-size:24px}
   .lq-answer-grid{grid-template-columns:1fr}
@@ -137,6 +144,19 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
                 @endif
                 <p class="lq-auto-note">Son sıralama yukarıda. Öğretmen yarışmayı bitirdiğinde ana sayfaya yönlendirileceksin.</p>
             </div>
+        </div>
+    @elseif($session->phase === 'game' && !empty($miniGame))
+        <div class="lq-game-stage" id="lqGameStage">
+            <div class="lq-game-hud">
+                <div><small>Mini oyun</small><strong>{{ $miniGame['name'] }}</strong></div>
+                <div><small>Kalan süre</small><strong><span id="lq-game-countdown">--</span> sn</strong></div>
+                <div><small>Tamamlanan bölüm</small><strong><span id="lqGameLevels">{{ $miniGame['levels_done'] }}</span> / {{ $miniGame['block_size'] }}</strong></div>
+                <div><small>Kazandığın XP</small><strong>+<span id="lqGameXp">{{ $miniGame['xp'] }}</span></strong></div>
+            </div>
+            <div class="lq-game-frame">
+                <iframe id="lqGameFrame" src="{{ $miniGame['url'] }}" title="{{ $miniGame['name'] }}" allow="fullscreen; autoplay"></iframe>
+            </div>
+            <p class="lq-auto-note">30 saniye içinde olabildiğince çok bölümü çöz! Kazandığın XP quiz puanına eklenir. Süre bitince sıradaki soru herkes için aynı anda açılır.</p>
         </div>
     @elseif($session->phase === 'intro')
         <div class="lq-center-stage lq-double-stage">
@@ -253,6 +273,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
             if (sndPhase === 'intro') qSound.play('start');
             else if (sndPhase === 'results') qSound.play(document.querySelector('.lq-result-good') ? 'correct' : 'wrong');
             else if (sndPhase === 'final') qSound.play('final');
+            else if (sndPhase === 'game') qSound.play('start');
             else if (sndPhase === 'question' && document.getElementById('lqWaitingStage')) qSound.play('click');
         }
     }
@@ -328,6 +349,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
     const countdownEl = document.getElementById('lq-countdown');
     const answerCountdownEl = document.getElementById('lq-answer-countdown');
     const nextCountdownEl = document.getElementById('lq-next-countdown');
+    const gameCountdownEl = document.getElementById('lq-game-countdown');
 
     // Ogrencinin cihaz saati sunucudan farkli olabilir; periyodik senkronizasyon
     // ile sayacin gercek kalan sureyi gostermesi saglanir (Kahoot'taki gibi
@@ -378,10 +400,58 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
         if (countdownEl) countdownEl.textContent = String(leftSec);
         if (answerCountdownEl) answerCountdownEl.textContent = String(leftSec);
         if (nextCountdownEl) nextCountdownEl.textContent = String(leftSec);
+        if (gameCountdownEl) gameCountdownEl.textContent = String(leftSec);
     };
     tick();
     setInterval(tick, 300);
     @endif
 })();
 </script>
+@if($session->status === 'live' && $session->phase === 'game' && !empty($miniGame))
+<script>
+(() => {
+    // Mini oyun: oyun penceresi her bölüm tamamlandığında haber verir; sunucu doğrulayıp XP'yi kaydeder.
+    const frame = document.getElementById('lqGameFrame');
+    if (!frame) return;
+    const url = @json(route('student.live-quiz.game-level', $session));
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const levelsEl = document.getElementById('lqGameLevels');
+    const xpEl = document.getElementById('lqGameXp');
+    const sent = new Set();
+
+    const send = (payload, attempt) => {
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+            body: JSON.stringify(payload),
+        }).then((res) => res.json().catch(() => null)).then((j) => {
+            if (j && j.ok) {
+                if (levelsEl) levelsEl.textContent = String(j.levels_done);
+                if (xpEl) xpEl.textContent = String(j.xp);
+                if (window.QuizSound) window.QuizSound.play('correct');
+            } else if (j && j.reason === 'too_fast' && attempt < 2) {
+                setTimeout(() => send(payload, attempt + 1), 1300);   // çok hızlı gelen bildirimi kısa süre sonra yeniden dene
+            }
+        }).catch(() => {});
+    };
+
+    window.addEventListener('message', (ev) => {
+        if (ev.source !== frame.contentWindow) return;
+        const d = ev.data;
+        if (!d || typeof d !== 'object' || d.type !== 'LEVEL_COMPLETED') return;
+        const raw = d.levelId ?? d.levelNo ?? d.currentLevelIndex;
+        if (raw === undefined || raw === null || raw === '') return;
+        const key = String(raw).slice(0, 40);
+        if (sent.has(key)) return;
+        sent.add(key);
+        const no = Number(d.levelNo ?? d.levelId);
+        send({
+            level_key: key,
+            level_no: Number.isFinite(no) && no >= 0 ? Math.floor(no) : null,
+            xp: Math.max(0, Math.floor(Number(d.xp) || 0)),
+        }, 0);
+    });
+})();
+</script>
+@endif
 @endpush

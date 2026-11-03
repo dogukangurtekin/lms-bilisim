@@ -448,6 +448,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ogrenci/canli-quiz/{session}', [LiveQuizController::class, 'studentPlay'])->name('student.live-quiz.play');
         Route::get('/ogrenci/canli-quiz/{session}/durum', [LiveQuizController::class, 'studentSessionStatus'])->name('student.live-quiz.status');
         Route::post('/ogrenci/canli-quiz/{session}/cevap', [LiveQuizController::class, 'studentAnswer'])->name('student.live-quiz.answer');
+        Route::post('/ogrenci/canli-quiz/{session}/mini-oyun', [LiveQuizController::class, 'studentGameLevel'])->middleware('throttle:240,1')->name('student.live-quiz.game-level');
 
         Route::get('/ogrenci/canli-yarismalar', [\App\Http\Controllers\StudentLiveEntryController::class, 'form'])->name('student.competitions.join.form');
         Route::get('/ogrenci/canli-yarismalar-acik', [CompetitionController::class, 'studentOpenRoom'])->name('student.competitions.open');

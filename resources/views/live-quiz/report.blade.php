@@ -56,6 +56,10 @@
     <div class="rp-kpi"><small>Ortalama XP</small><strong>{{ $r['avg_xp'] }}</strong></div>
     <div class="rp-kpi"><small>En yüksek XP</small><strong>{{ $r['max_xp'] }}</strong></div>
     <div class="rp-kpi"><small>Toplam cevap</small><strong>{{ $r['total_answers'] }}</strong></div>
+    @if($r['mini_game'])
+    <div class="rp-kpi"><small>Mini oyun XP</small><strong>{{ $r['game_xp_total'] }}</strong></div>
+    <div class="rp-kpi"><small>Tamamlanan mini oyun bölümü</small><strong>{{ $r['game_levels_total'] }}</strong></div>
+    @endif
 </div>
 
 @if($r['hardest'] || $r['easiest'])
@@ -127,14 +131,30 @@
 <div class="cx-panel" style="overflow:auto">
     <h3>Öğrenci Sonuçları</h3>
     <table class="rp-table">
-        <thead><tr><th>#</th><th>Öğrenci</th><th>Cevaplanan</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Doğruluk</th><th>XP</th></tr></thead>
+        <thead><tr><th>#</th><th>Öğrenci</th><th>Cevaplanan</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Doğruluk</th>@if($r['mini_game'])<th>Mini Oyun XP</th><th>Mini Oyun Bölüm</th>@endif<th>Toplam XP</th></tr></thead>
         <tbody>
         @foreach($rows as $row)
-            <tr><td>{{ $loop->iteration }}</td><td>{{ $row['student_name'] }}</td><td>{{ $row['answered'] }}</td><td class="rp-ok">{{ $row['correct'] }}</td><td>{{ $row['wrong'] }}</td><td>{{ $row['blank'] }}</td><td>%{{ $row['accuracy'] }}</td><td><b>{{ $row['xp'] }}</b></td></tr>
+            <tr><td>{{ $loop->iteration }}</td><td>{{ $row['student_name'] }}</td><td>{{ $row['answered'] }}</td><td class="rp-ok">{{ $row['correct'] }}</td><td>{{ $row['wrong'] }}</td><td>{{ $row['blank'] }}</td><td>%{{ $row['accuracy'] }}</td>@if($r['mini_game'])<td>{{ $row['game_xp'] }}</td><td>{{ $row['game_levels'] }}</td>@endif<td><b>{{ $row['xp'] }}</b></td></tr>
         @endforeach
         </tbody>
     </table>
 </div>
+@if($r['mini_game'])
+<div class="cx-panel" style="overflow:auto">
+    <h3>Mini Oyun Özeti — {{ $r['mini_game']['name'] }}</h3>
+    <table class="rp-table">
+        <thead><tr><th>Soru arası</th><th>Bölümler</th><th>Oynayan öğrenci</th><th>Öğrenci başına ort. bölüm</th><th>Toplam XP</th></tr></thead>
+        <tbody>
+        @forelse($r['mini_game']['breaks'] as $b)
+            <tr><td>{{ $b['break'] }}. sorudan sonra</td><td>{{ $b['from'] }}–{{ $b['to'] }}</td><td>{{ $b['students'] }}</td><td>{{ $b['avg_levels'] }} / 10</td><td><b>{{ $b['xp'] }}</b></td></tr>
+        @empty
+            <tr><td colspan="5">Mini oyun kaydı yok.</td></tr>
+        @endforelse
+        </tbody>
+    </table>
+    <p style="margin:10px 0 0">Mini oyun XP'si öğrencinin quiz puanına ve toplam XP'sine eklenmiştir. Her soru arasında herkese aynı 10 bölüm verilir.</p>
+</div>
+@endif
 @endif
 </div>
 @endsection

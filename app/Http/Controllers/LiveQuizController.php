@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LiveQuiz;
 use App\Models\LiveQuizAnswer;
+use App\Models\LiveQuizGameResult;
 use App\Models\LiveQuizParticipant;
 use App\Models\LiveQuizQuestion;
 use App\Models\LiveQuizSession;
@@ -11,6 +12,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentReport;
 use App\Models\UserProfile;
+use App\Support\QuizMiniGame;
 use App\Support\Utf8Text;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -79,7 +81,9 @@ class LiveQuizController extends Controller
             })->all()
             : [];
 
-        return view('live-quiz.index', compact('classes', 'quizzes', 'sessions', 'editingQuiz', 'editingQuestions'));
+        $miniGames = QuizMiniGame::options();
+
+        return view('live-quiz.index', compact('classes', 'quizzes', 'sessions', 'editingQuiz', 'editingQuestions', 'miniGames'));
     }
 
     public function store(Request $request)
@@ -220,10 +224,20 @@ class LiveQuizController extends Controller
         return $code;
     }
 
-    public function start(LiveQuiz $quiz)
+    public function start(Request $request, LiveQuiz $quiz)
     {
         $this->authorizeQuizManagement($quiz);
         abort_unless($quiz->questions()->exists(), 422);
+
+        // Soru arası: 5 sn bekle (varsayılan) ya da Oyun ve Etkinlikler'den 30 sn'lik mini oyun.
+        $betweenMode = $request->input('between_mode') === 'game' ? 'game' : 'wait';
+        $betweenGame = null;
+        if ($betweenMode === 'game') {
+            $betweenGame = (string) $request->input('between_game');
+            if (! QuizMiniGame::supported($betweenGame)) {
+                return back()->with('err', 'Mini oyun için geçerli bir oyun seçin.');
+            }
+        }
 
         // Once soru sayaci baslatilmiyor: ogrenciler once bir "lobi" ekraninda
         // katilim koduyla toplanir, ogretmen "Herkese Baslat" dedigi an ayni
@@ -234,6 +248,8 @@ class LiveQuizController extends Controller
             'join_code' => $this->generateJoinCode(),
             'status' => 'lobby',
             'phase' => 'lobby',
+            'between_mode' => $betweenMode,
+            'between_game' => $betweenGame,
             'current_index' => 0,
             'is_locked' => true,
             'started_at_ms' => null,
@@ -265,6 +281,12 @@ class LiveQuizController extends Controller
             'started_at_ms' => $nowMs,
             'ends_at_ms' => $nowMs + $durationMs,
         ]);
+
+        // Mini oyun modunda her soru arasının bölüm bloğu şimdi seçilir ve saklanır: tüm öğrencilere aynı bölümler gelir.
+        if ($session->between_mode === 'game' && QuizMiniGame::supported((string) $session->between_game)) {
+            $breaks = max(0, (int) $session->quiz()->first()?->questions()->count() - 1);
+            $session->update(['between_plan' => QuizMiniGame::plan((string) $session->between_game, $breaks)]);
+        }
 
         return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');
     }
@@ -327,6 +349,7 @@ class LiveQuizController extends Controller
             'top_five' => $this->questionTopFive($session),
             'rows' => $this->leaderboardRows($session),
             'board' => $this->liveBoardRows($session),
+            'game' => $session->phase === 'game' ? $this->miniGameLive($session) : null,
             'report_url' => route('live-quiz.session.report', $session),
         ]);
     }
@@ -370,6 +393,7 @@ class LiveQuizController extends Controller
         })->values()->all();
 
         $byStudent = $answersAll->groupBy('student_user_id');
+        $gameTotals = $this->gameTotals($session);
         $rows = [];
         foreach ($session->participants as $p) {
             $g = $byStudent->get($p->student_user_id, collect());
@@ -382,7 +406,10 @@ class LiveQuizController extends Controller
                 'wrong' => max(0, $answered - $correct),
                 'blank' => max(0, $qTotal - $answered),
                 'accuracy' => $answered > 0 ? (int) round($correct / $answered * 100) : 0,
-                'xp' => (int) $g->sum('xp_earned'),
+                'quiz_xp' => (int) $g->sum('xp_earned'),
+                'game_xp' => (int) ($gameTotals[(int) $p->student_user_id]['xp'] ?? 0),
+                'game_levels' => (int) ($gameTotals[(int) $p->student_user_id]['levels'] ?? 0),
+                'xp' => (int) $g->sum('xp_earned') + (int) ($gameTotals[(int) $p->student_user_id]['xp'] ?? 0),
             ];
         }
         usort($rows, fn ($x, $y) => [$y['xp'], $y['correct']] <=> [$x['xp'], $x['correct']]);
@@ -416,6 +443,9 @@ class LiveQuizController extends Controller
             'total_xp' => $xpTotal,
             'max_xp' => $n ? max(array_column($rows, 'xp')) : 0,
             'buckets' => $buckets,
+            'game_xp_total' => array_sum(array_column($rows, 'game_xp')),
+            'game_levels_total' => array_sum(array_column($rows, 'game_levels')),
+            'mini_game' => $this->miniGameReport($session),
             'hardest' => $hardest,
             'easiest' => $easiest,
             'started_at' => $startMs > 0 ? \Carbon\Carbon::createFromTimestampMs($startMs)->timezone(config('app.timezone')) : null,
@@ -439,9 +469,9 @@ class LiveQuizController extends Controller
         return response()->streamDownload(function () use ($r): void {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['Sıra', 'Öğrenci', 'Cevaplanan', 'Doğru', 'Yanlış', 'Boş', 'Doğruluk %', 'XP'], ';');
+            fputcsv($out, ['Sıra', 'Öğrenci', 'Cevaplanan', 'Doğru', 'Yanlış', 'Boş', 'Doğruluk %', 'Mini Oyun XP', 'Mini Oyun Bölüm', 'Toplam XP'], ';');
             foreach ($r['rows'] as $i => $row) {
-                fputcsv($out, [$i + 1, $row['student_name'], $row['answered'], $row['correct'], $row['wrong'], $row['blank'], $row['accuracy'], $row['xp']], ';');
+                fputcsv($out, [$i + 1, $row['student_name'], $row['answered'], $row['correct'], $row['wrong'], $row['blank'], $row['accuracy'], $row['game_xp'] ?? 0, $row['game_levels'] ?? 0, $row['xp']], ';');
             }
             fputcsv($out, [], ';');
             fputcsv($out, ['Soru', 'Soru metni', 'Cevaplayan', 'Doğru', 'Yanlış', 'Boş', 'Doğru %', 'Ort. XP'], ';');
@@ -585,6 +615,7 @@ class LiveQuizController extends Controller
         $showBoard = $session->status === 'live' && in_array($session->phase, ['results', 'final'], true);
         $boardRows = $showBoard ? $this->liveBoardRows($session) : [];
         $boardPrevRows = ($showBoard && $session->phase === 'results') ? $this->liveBoardRows($session, (int) $session->current_index) : [];
+        $miniGame = ($session->status === 'live' && $session->phase === 'game') ? $this->miniGameInfo($session) : null;
 
         return view('student-portal.live-quiz-play', compact(
             'session',
@@ -594,7 +625,8 @@ class LiveQuizController extends Controller
             'currentAnswer',
             'topFive',
             'boardRows',
-            'boardPrevRows'
+            'boardPrevRows',
+            'miniGame'
         ));
     }
 
@@ -677,6 +709,7 @@ class LiveQuizController extends Controller
             ->where('live_quiz_session_id', $session->id)
             ->where('student_user_id', $studentUserId)
             ->sum('xp_earned');
+        $sessionXp += (int) ($this->gameTotals($session)[(int) $studentUserId]['xp'] ?? 0);
         $correctAnswerText = $this->resolveCorrectAnswerText($question);
         $studentAnswerText = $this->resolveSelectedAnswerText($question, (string) ($evaluation['selected_answer'] ?? ''));
 
@@ -1023,16 +1056,22 @@ class LiveQuizController extends Controller
             ->orderByDesc('correct')
             ->get();
 
-        return $rows->map(function ($r) {
+        $game = $this->gameTotals($session);
+
+        return $rows->map(function ($r) use ($game) {
             $student = Student::query()->with('user')->where('user_id', $r->student_user_id)->first();
+            $g = $game[(int) $r->student_user_id] ?? ['xp' => 0, 'levels' => 0];
             return [
                 'student_name' => $student?->user?->name ?? ('user_' . $r->student_user_id),
                 'answered' => (int) $r->answered,
                 'correct' => (int) $r->correct,
                 'wrong' => max(0, (int) $r->answered - (int) $r->correct),
-                'xp' => (int) $r->xp,
+                'quiz_xp' => (int) $r->xp,
+                'game_xp' => $g['xp'],
+                'game_levels' => $g['levels'],
+                'xp' => (int) $r->xp + $g['xp'],
             ];
-        })->values()->all();
+        })->sort(fn (array $a, array $b) => [$b['xp'], $b['correct']] <=> [$a['xp'], $a['correct']])->values()->all();
     }
 
     /**
@@ -1050,11 +1089,13 @@ class LiveQuizController extends Controller
             ->get()
             ->keyBy('student_user_id');
 
+        $game = $this->gameTotals($session);
         $rows = $session->participants()
             ->with('studentUser:id,name')
             ->get()
-            ->map(function (LiveQuizParticipant $participant) use ($stats) {
+            ->map(function (LiveQuizParticipant $participant) use ($stats, $game) {
                 $stat = $stats->get($participant->student_user_id);
+                $g = $game[(int) $participant->student_user_id] ?? ['xp' => 0, 'levels' => 0];
                 $answered = (int) ($stat->answered ?? 0);
                 $correct = (int) ($stat->correct ?? 0);
 
@@ -1064,7 +1105,8 @@ class LiveQuizController extends Controller
                     'answered' => $answered,
                     'correct' => $correct,
                     'wrong' => max(0, $answered - $correct),
-                    'xp' => (int) ($stat->xp ?? 0),
+                    'game_xp' => $g['xp'],
+                    'xp' => (int) ($stat->xp ?? 0) + $g['xp'],
                 ];
             })
             ->sort(fn (array $a, array $b) => [$b['xp'], $b['correct'], $a['student_name']] <=> [$a['xp'], $a['correct'], $b['student_name']])
@@ -1106,11 +1148,18 @@ class LiveQuizController extends Controller
                 ->groupBy('student_user_id')
                 ->get();
 
+            $totals = [];
             foreach ($xpByStudent as $row) {
-                $xp = max(0, (int) $row->xp);
+                $totals[(int) $row->student_user_id] = max(0, (int) $row->xp);
+            }
+            // Soru aralarındaki mini oyunlardan kazanılan XP de aynı anda, tek seferde işlenir.
+            foreach ($this->gameTotals($session) as $uid => $g) {
+                $totals[(int) $uid] = ($totals[(int) $uid] ?? 0) + max(0, (int) $g['xp']);
+            }
+            foreach ($totals as $uid => $xp) {
                 if ($xp <= 0) continue;
                 $profile = UserProfile::query()->firstOrCreate(
-                    ['user_id' => (int) $row->student_user_id],
+                    ['user_id' => (int) $uid],
                     ['role' => 'student', 'xp' => 0]
                 );
                 $profile->increment('xp', $xp);
@@ -1128,8 +1177,10 @@ class LiveQuizController extends Controller
             ->groupBy('student_user_id')
             ->get();
 
+        $game = $this->gameTotals($session);
         foreach ($rows as $r) {
             $uid = (int) $r->student_user_id;
+            $g = $game[$uid] ?? ['xp' => 0, 'levels' => 0];
             $report = StudentReport::query()->firstOrCreate(['user_id' => $uid], [
                 'total_xp' => 0,
                 'total_duration_ms' => 0,
@@ -1141,7 +1192,9 @@ class LiveQuizController extends Controller
             $meta['quizAnswered'] = (int) ($meta['quizAnswered'] ?? 0) + (int) $r->answered;
             $meta['quizCorrect'] = (int) ($meta['quizCorrect'] ?? 0) + (int) $r->correct;
             $meta['quizWrong'] = (int) ($meta['quizWrong'] ?? 0) + max(0, (int) $r->answered - (int) $r->correct);
-            $meta['quizTotalXP'] = (int) ($meta['quizTotalXP'] ?? 0) + (int) $r->xp;
+            $meta['quizTotalXP'] = (int) ($meta['quizTotalXP'] ?? 0) + (int) $r->xp + $g['xp'];
+            $meta['quizGameXP'] = (int) ($meta['quizGameXP'] ?? 0) + $g['xp'];
+            $meta['quizGameLevels'] = (int) ($meta['quizGameLevels'] ?? 0) + $g['levels'];
             $meta['lastQuizTitle'] = (string) $session->quiz->title;
             $meta['lastQuizAt'] = now()->toIso8601String();
 
@@ -1162,7 +1215,7 @@ class LiveQuizController extends Controller
             return $session;
         }
 
-        if (!in_array((string) $session->phase, ['intro', 'question', 'results', 'final'], true)) {
+        if (!in_array((string) $session->phase, ['intro', 'question', 'results', 'game', 'final'], true)) {
             $session->update(['phase' => $session->is_locked ? 'results' : 'question']);
             $session->refresh();
         }
@@ -1226,18 +1279,26 @@ class LiveQuizController extends Controller
                 return $session->fresh(['quiz.questions']);
             }
 
-            $isDoubleXp = (bool) ($questions[$nextIndex]->double_xp ?? false);
-            $durationMs = $isDoubleXp
-                ? self::DOUBLE_XP_INTRO_MS
-                : max(5, (int) ($questions[$nextIndex]->duration_sec ?? 30)) * 1000;
-            $session->update([
-                'current_index' => $nextIndex,
-                'phase' => $isDoubleXp ? 'intro' : 'question',
-                'is_locked' => $isDoubleXp,
-                'ends_at_ms' => $nowMs + $durationMs,
-            ]);
+            // Mini oyun modu: sonuç ekranından sonra, sıradaki sorudan önce 30 sn'lik mini oyun aşaması.
+            if ($this->miniBlock($session, $currentIndex) !== null) {
+                $session->update([
+                    'phase' => 'game',
+                    'is_locked' => true,
+                    'ends_at_ms' => $nowMs + QuizMiniGame::DURATION_MS,
+                ]);
 
-            return $session->fresh(['quiz.questions']);
+                return $session->fresh(['quiz.questions']);
+            }
+
+            return $this->startQuestion($session, $questions, $nextIndex, $nowMs);
+        }
+
+        if ($session->phase === 'game') {
+            if ($nowMs < $endsAtMs) {
+                return $session;
+            }
+
+            return $this->startQuestion($session, $questions, $currentIndex + 1, $nowMs);
         }
 
         $joinedCount = $session->participants()->count();
@@ -1266,6 +1327,224 @@ class LiveQuizController extends Controller
         }
 
         return $session->fresh(['quiz.questions']);
+    }
+
+    // ------------------------------------------------------------------
+    // Mini oyun (soru araları): Oyun ve Etkinlikler'den 30 sn, 10 bölüm
+    // ------------------------------------------------------------------
+
+    /** Bu soru arasında oynanacak bölüm bloğu [from, to] ya da (mini oyun kapalıysa) null. */
+    private function miniBlock(LiveQuizSession $session, int $breakIndex): ?array
+    {
+        if ($session->between_mode !== 'game' || ! QuizMiniGame::supported((string) $session->between_game)) {
+            return null;
+        }
+        $block = ((array) $session->between_plan)[$breakIndex] ?? null;
+
+        return (is_array($block) && isset($block['from'], $block['to'])) ? [(int) $block['from'], (int) $block['to']] : null;
+    }
+
+    private function startQuestion(LiveQuizSession $session, $questions, int $index, int $nowMs): LiveQuizSession
+    {
+        $isDoubleXp = (bool) ($questions[$index]->double_xp ?? false);
+        $durationMs = $isDoubleXp
+            ? self::DOUBLE_XP_INTRO_MS
+            : max(5, (int) ($questions[$index]->duration_sec ?? 30)) * 1000;
+        $session->update([
+            'current_index' => $index,
+            'phase' => $isDoubleXp ? 'intro' : 'question',
+            'is_locked' => $isDoubleXp,
+            'ends_at_ms' => $nowMs + $durationMs,
+        ]);
+
+        return $session->fresh(['quiz.questions']);
+    }
+
+    /** Öğrenci başına mini oyun toplamları: [user_id => ['xp' => .., 'levels' => ..]]. */
+    private function gameTotals(LiveQuizSession $session): array
+    {
+        if ($session->between_mode !== 'game') {
+            return [];
+        }
+
+        return LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->selectRaw('student_user_id, SUM(xp) as xp, COUNT(*) as levels')
+            ->groupBy('student_user_id')
+            ->get()
+            ->mapWithKeys(fn ($r) => [(int) $r->student_user_id => ['xp' => (int) $r->xp, 'levels' => (int) $r->levels]])
+            ->all();
+    }
+
+    /** Öğrenci ekranı için mini oyun bilgisi; öğrenciye bu bloğa özel oyun izni de verilir. */
+    private function miniGameInfo(LiveQuizSession $session): ?array
+    {
+        $block = $this->miniBlock($session, (int) $session->current_index);
+        if ($block === null) {
+            return null;
+        }
+        [$from, $to] = $block;
+        $slug = (string) $session->between_game;
+        $breakIndex = (int) $session->current_index;
+        $assignmentId = 'quizgame-' . $session->id . '-' . $breakIndex;
+
+        request()->session()->put('runner_grant', [
+            'slug' => $slug,
+            'from' => $from,
+            'to' => $to,
+            'homework_id' => $assignmentId,
+            'expires_at' => now()->addHours(3)->timestamp,
+        ]);
+
+        $mine = LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('student_user_id', auth()->id())
+            ->where('break_index', $breakIndex)
+            ->selectRaw('COUNT(*) as levels, COALESCE(SUM(xp), 0) as xp')
+            ->first();
+
+        return [
+            'slug' => $slug,
+            'name' => QuizMiniGame::name($slug),
+            'from' => $from,
+            'to' => $to,
+            'block_size' => QuizMiniGame::BLOCK_SIZE,
+            'break_index' => $breakIndex,
+            'levels_done' => (int) ($mine->levels ?? 0),
+            'xp' => (int) ($mine->xp ?? 0),
+            'url' => url('/' . $slug) . '?' . http_build_query([
+                'from' => $from, 'to' => $to, 'levelStart' => $from, 'levelEnd' => $to, 'assignmentId' => $assignmentId,
+            ]),
+        ];
+    }
+
+    /** Öğretmen ekranı: şu anki mini oyunda öğrencilerin ilerlemesi. */
+    private function miniGameLive(LiveQuizSession $session): ?array
+    {
+        $block = $this->miniBlock($session, (int) $session->current_index);
+        if ($block === null) {
+            return null;
+        }
+        $stats = LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('break_index', (int) $session->current_index)
+            ->selectRaw('student_user_id, COUNT(*) as levels, SUM(xp) as xp')
+            ->groupBy('student_user_id')
+            ->get()
+            ->keyBy('student_user_id');
+
+        $rows = $session->participants()->with('studentUser:id,name')->get()->map(function (LiveQuizParticipant $p) use ($stats) {
+            $s = $stats->get($p->student_user_id);
+
+            return ['name' => (string) ($p->studentUser?->name ?: 'Öğrenci'), 'levels' => (int) ($s->levels ?? 0), 'xp' => (int) ($s->xp ?? 0)];
+        })->sort(fn (array $a, array $b) => [$b['xp'], $b['levels']] <=> [$a['xp'], $a['levels']])->values()->all();
+
+        return [
+            'name' => QuizMiniGame::name((string) $session->between_game),
+            'from' => $block[0],
+            'to' => $block[1],
+            'rows' => $rows,
+        ];
+    }
+
+    /** Rapor için soru arası bazında mini oyun özeti. */
+    private function miniGameReport(LiveQuizSession $session): ?array
+    {
+        if ($session->between_mode !== 'game') {
+            return null;
+        }
+        $participants = max(1, $session->participants()->count());
+        $byBreak = LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->selectRaw('break_index, COUNT(*) as levels, SUM(xp) as xp, COUNT(DISTINCT student_user_id) as students')
+            ->groupBy('break_index')
+            ->get()
+            ->keyBy('break_index');
+        $plan = (array) $session->between_plan;
+        $breaks = [];
+        foreach ($plan as $i => $block) {
+            $b = $byBreak->get($i);
+            $breaks[] = [
+                'break' => $i + 1,
+                'from' => (int) ($block['from'] ?? 0),
+                'to' => (int) ($block['to'] ?? 0),
+                'students' => (int) ($b->students ?? 0),
+                'avg_levels' => round(((int) ($b->levels ?? 0)) / $participants, 1),
+                'xp' => (int) ($b->xp ?? 0),
+            ];
+        }
+
+        return ['name' => QuizMiniGame::name((string) $session->between_game), 'breaks' => $breaks];
+    }
+
+    /**
+     * Öğrenci mini oyunda bir bölümü tamamlayınca oyun penceresi bunu bildirir.
+     * Sunucu aşamayı, süreyi, bölüm sınırını ve XP üst sınırını doğrular; aynı bölüm ikinci kez sayılmaz.
+     */
+    public function studentGameLevel(Request $request, LiveQuizSession $session)
+    {
+        abort_unless(auth()->user()?->hasRole('student'), 403);
+        $data = $request->validate([
+            'level_key' => ['required', 'string', 'max:40'],
+            'level_no' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'xp' => ['nullable', 'integer', 'min:0', 'max:100000'],
+        ]);
+        $userId = (int) auth()->id();
+        $this->touchStudentPresence($session, $userId);
+        $session = $this->syncSessionByTimer($session);
+        abort_unless($this->studentCanJoinSession($session, $userId), 403);
+        abort_unless(LiveQuizParticipant::query()->where('live_quiz_session_id', $session->id)->where('student_user_id', $userId)->exists(), 403);
+
+        if ($session->status !== 'live' || $session->phase !== 'game' || $this->miniBlock($session, (int) $session->current_index) === null) {
+            return response()->json(['ok' => false, 'reason' => 'not_game_phase'], 409);
+        }
+
+        $nowMs = $this->nowMs();
+        $endsAtMs = (int) ($session->ends_at_ms ?? 0);
+        $startedMs = $endsAtMs - QuizMiniGame::DURATION_MS;
+        if ($nowMs > $endsAtMs + 2000) {
+            return response()->json(['ok' => false, 'reason' => 'late'], 422);
+        }
+
+        $breakIndex = (int) $session->current_index;
+        $mine = LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('student_user_id', $userId)
+            ->where('break_index', $breakIndex);
+        if ((clone $mine)->count() >= QuizMiniGame::BLOCK_SIZE) {
+            return response()->json(['ok' => false, 'reason' => 'limit'], 422);
+        }
+        $lastMs = (int) ((clone $mine)->max('completed_at_ms') ?? 0);
+        if ($nowMs - max($lastMs, $startedMs) < QuizMiniGame::MIN_LEVEL_GAP_MS) {
+            return response()->json(['ok' => false, 'reason' => 'too_fast'], 422);
+        }
+
+        $xp = min((int) ($data['xp'] ?? 0), QuizMiniGame::xpCap((string) $session->between_game));
+        LiveQuizGameResult::query()->insertOrIgnore([[
+            'live_quiz_session_id' => $session->id,
+            'student_user_id' => $userId,
+            'break_index' => $breakIndex,
+            'level_key' => mb_substr((string) $data['level_key'], 0, 40),
+            'level_no' => $data['level_no'] ?? null,
+            'xp' => $xp,
+            'completed_at_ms' => $nowMs,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]]);
+
+        $totals = LiveQuizGameResult::query()
+            ->where('live_quiz_session_id', $session->id)
+            ->where('student_user_id', $userId)
+            ->where('break_index', $breakIndex)
+            ->selectRaw('COUNT(*) as levels, COALESCE(SUM(xp), 0) as xp')
+            ->first();
+
+        return response()->json([
+            'ok' => true,
+            'levels_done' => (int) $totals->levels,
+            'xp' => (int) $totals->xp,
+            'session_game_xp' => (int) ($this->gameTotals($session)[$userId]['xp'] ?? 0),
+        ]);
     }
 
     private function touchStudentPresence(LiveQuizSession $session, int $userId): void
@@ -1310,8 +1589,13 @@ class LiveQuizController extends Controller
             ->groupBy('student_user_id')
             ->orderByDesc('xp')
             ->orderByDesc('correct')
-            ->get()
-            ->values();
+            ->get();
+        $game = $this->gameTotals($session);
+        $rows = $rows->map(fn ($r) => (object) [
+            'student_user_id' => (int) $r->student_user_id,
+            'xp' => (int) $r->xp + (int) ($game[(int) $r->student_user_id]['xp'] ?? 0),
+            'correct' => (int) $r->correct,
+        ])->sort(fn ($a, $b) => [$b->xp, $b->correct] <=> [$a->xp, $a->correct])->values();
 
         $rank = 0;
         foreach ($rows as $i => $row) {

@@ -63,7 +63,7 @@
 
     @if($session->status === 'live' && $session->phase !== 'final')
     <div>
-        <span class="lq-big-clock">{{ $session->phase === 'intro' ? 'Soru açılıyor' : ($session->phase === 'results' ? 'Sıradaki soruya' : 'Kalan süre') }}: <span id="lqCountdown">--</span> sn</span>
+        <span class="lq-big-clock">{{ $session->phase === 'intro' ? 'Soru açılıyor' : ($session->phase === 'results' ? 'Sıradaki soruya' : ($session->phase === 'game' ? 'Mini oyun' : 'Kalan süre')) }}: <span id="lqCountdown">--</span> sn</span>
         <div class="lq-timer-bar"><div class="lq-timer-fill" id="lqTimerFill"></div></div>
     </div>
     @endif
@@ -88,6 +88,17 @@
     <div class="lq-double-icon">⚡ 2X</div>
     <div class="lq-double-title">2 Kat Puanlı Soru!</div>
     <p>Bu soruda kazanılan XP iki kat olarak hesaplanacak.</p>
+</div>
+@endif
+
+@if($session->status === 'live' && $session->phase === 'game')
+<div class="card" id="lqGameCard" style="margin-bottom:12px;border-left:5px solid #7c3aed;">
+    <h3 style="margin-top:0">🎮 Mini Oyun: <span id="lqGameName">...</span></h3>
+    <p style="margin:4px 0 10px;color:#475569">Bölümler: <b id="lqGameRange">-</b> · Her öğrenci 30 saniyede 10 bölümü çözmeye çalışıyor (herkese aynı bölümler). Kazanılan XP quiz puanına eklenir.</p>
+    <table>
+        <thead><tr><th>#</th><th>Öğrenci</th><th>Bölüm</th><th>XP</th></tr></thead>
+        <tbody id="lqGameRows"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
+    </table>
 </div>
 @endif
 
@@ -155,6 +166,7 @@
         else if (initialPhase === 'intro') qSound.play(@json((bool) ($current?->double_xp ?? false)) ? 'double' : 'start');
         else if (initialPhase === 'question') qSound.music('question');
         else if (initialPhase === 'results') qSound.play('results');
+        else if (initialPhase === 'game') qSound.music('question');
         else if (initialPhase === 'final') qSound.play('final');
     }
 
@@ -234,6 +246,22 @@
     setInterval(tickClock, 250);
     tickClock();
 
+    function renderGame(g) {
+        const nameEl = document.getElementById('lqGameName'), rangeEl = document.getElementById('lqGameRange'), body = document.getElementById('lqGameRows');
+        if (!nameEl || !body || !g) return;
+        nameEl.textContent = g.name || '';
+        if (rangeEl) rangeEl.textContent = g.from + '–' + g.to + '. bölümler';
+        body.replaceChildren();
+        (g.rows || []).forEach((row, i) => {
+            const tr = body.insertRow();
+            tr.insertCell().textContent = String(i + 1);
+            tr.insertCell().textContent = row.name;
+            tr.insertCell().textContent = row.levels + ' / 10';
+            tr.insertCell().textContent = '+' + row.xp;
+        });
+        if (!g.rows || !g.rows.length) { const r = body.insertRow(); const c = r.insertCell(); c.colSpan = 4; c.textContent = 'Henüz katılımcı yok.'; }
+    }
+
     async function poll() {
         if (document.hidden) return;   // arka plandaki sekme sunucuyu yormasın
         try {
@@ -268,6 +296,7 @@
             if (statWrong) statWrong.textContent = String(data.stats?.wrong ?? 0);
 
             if (window.LqBoard && Array.isArray(data.board)) window.LqBoard.render(data.board);
+            if (data.game) renderGame(data.game);
         } catch (e) { /* bir sonraki polling denemesinde tekrar denenecek */ }
     }
     poll();
