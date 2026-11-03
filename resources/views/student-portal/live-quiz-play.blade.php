@@ -72,6 +72,10 @@
 @keyframes lqAnswersIn{from{opacity:0;transform:translateY(35px)}to{opacity:1;transform:translateY(0)}}
 @keyframes lqDoublePulse{from{transform:scale(.82) rotate(-6deg)}to{transform:scale(1.13) rotate(6deg)}}
 @keyframes lqWinnerIn{from{opacity:0;transform:translateY(45px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* Öğrenci temasındaki genel başlık rengi (koyu) quiz ekranındaki beyaz soru ve başlık metinlerini eziyordu */
+body.role-student .lq-stage h1,body.role-student .lq-stage h2,body.role-student .lq-stage h3{color:#fff}
+body.role-student .lq-stage .lq-result-title.lq-result-good{color:#86efac}
+body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
 @media (max-width:900px){
   .lq-question{font-size:24px}
   .lq-answer-grid{grid-template-columns:1fr}
