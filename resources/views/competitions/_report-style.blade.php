@@ -19,7 +19,7 @@
 .rp-donut{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:0 auto;background:conic-gradient(#1dd1a1 calc(var(--p,0) * 1%), rgba(148,163,184,.3) 0)}
 .rp-donut span{display:grid;place-items:center;width:104px;height:104px;border-radius:50%;background:#0f172a;color:#fff;font-size:26px;font-weight:800}
 .rp-leg{text-align:center;color:var(--cx-mute);font-size:13px;margin-top:8px}
-.rp-table{width:100%;border-collapse:collapse;font-size:14px}
+.rp-table{width:100%;border-collapse:collapse;font-size:14px;background:transparent}
 .rp-table th,.rp-table td{padding:8px 10px;border-bottom:1px solid var(--cx-line);text-align:left;color:#e2e8f0}
 .rp-table th{color:var(--cx-mute);font-size:12px}
 .rp-ok{color:#1dd1a1;font-weight:800}.rp-no{color:#feca57;font-weight:800}
