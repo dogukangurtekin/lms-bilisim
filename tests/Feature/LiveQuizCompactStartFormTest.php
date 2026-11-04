@@ -53,10 +53,10 @@ class LiveQuizCompactStartFormTest extends TestCase
         $this->assertSame('game', $s->between_mode);
         $this->assertNull($s->between_game);
 
-        $this->actingAs($this->teacher)->post(route('live-quiz.start', $this->quiz), ['between' => 'lightbot-runner'])->assertRedirect();
+        $this->actingAs($this->teacher)->post(route('live-quiz.start', $this->quiz), ['between' => 'block-grid-runner'])->assertRedirect();
         $s = LiveQuizSession::query()->latest('id')->firstOrFail();
         $this->assertSame('game', $s->between_mode);
-        $this->assertSame('lightbot-runner', $s->between_game);
+        $this->assertSame('block-grid-runner', $s->between_game);
 
         $before = LiveQuizSession::query()->count();
         $this->actingAs($this->teacher)->post(route('live-quiz.start', $this->quiz), ['between' => 'excel-runner'])->assertSessionHas('err');

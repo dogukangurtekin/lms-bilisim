@@ -9,7 +9,7 @@ use App\Http\Controllers\ActivityController;
  *
  * Mini oyun her soru arasında değil, 4 soruda bir (4., 8., 12. … sorudan sonra) gelir. Öğrenciler Oyun ve Etkinlikler'deki
  * kodlama oyunlarından birinin 10 ardışık bölümünü 30 saniyede çözmeye çalışır. Oyun (öğretmen belirli bir oyun seçmediyse)
- * ve bölümler her mini oyunda rastgele seçilir; bölümler 10-40 arasındadır ve oturumdaki HERKES için aynıdır.
+ * ve bölümler her mini oyunda rastgele seçilir; bölümler 5-30 arasındadır ve oturumdaki HERKES için aynıdır.
  */
 class QuizMiniGame
 {
@@ -18,9 +18,9 @@ class QuizMiniGame
     public const DURATION_MS = 30000;
     /** Mini oyun kaç soruda bir gelir. */
     public const EVERY_N_QUESTIONS = 4;
-    /** Rastgele bölümler bu aralıktan seçilir: 10. ile 40. bölümler arası. */
-    public const FIRST_LEVEL = 10;
-    public const LAST_LEVEL = 40;
+    /** Rastgele bölümler bu aralıktan seçilir: 5. ile 30. bölümler arası (öğrenciler 30 sn'de çözebilsin diye kolay tutulur). */
+    public const FIRST_LEVEL = 5;
+    public const LAST_LEVEL = 30;
     /** Art arda iki bölüm tamamlama bildirimi arasındaki en kısa süre (sunucu doğrulaması). */
     public const MIN_LEVEL_GAP_MS = 1200;
 
@@ -32,8 +32,6 @@ class QuizMiniGame
         'compute-it-runner' => ['levels' => 120, 'xp_cap' => 65],
         'block-grid-runner' => ['levels' => 200, 'xp_cap' => 30],
         'block-3d-runner' => ['levels' => 200, 'xp_cap' => 30],
-        'lightbot-runner' => ['levels' => 100, 'xp_cap' => 20],
-        'dot-cards-runner' => ['levels' => 100, 'xp_cap' => 25],
         'word-bee-runner' => ['levels' => 100, 'xp_cap' => 25],
         'number-bee-runner' => ['levels' => 100, 'xp_cap' => 25],
     ];
@@ -94,7 +92,7 @@ class QuizMiniGame
     /**
      * Oturumun mini oyun planını üretir: [soru arası => ['game' => slug, 'from' => 23, 'to' => 32], ...].
      * $fixedGame verilirse hep o oyun, yoksa her mini oyun için tüm kodlama oyunları arasından rastgele (art arda aynı oyun
-     * gelmez). Bölüm bloğu 10-40 arasından rastgele seçilir; aynı oyunda önceki bloklarla üst üste binmemeye çalışılır.
+     * gelmez). Bölüm bloğu 5-30 arasından rastgele seçilir; aynı oyunda önceki bloklarla üst üste binmemeye çalışılır.
      * Plan oturum başlarken bir kez üretilip saklanır; böylece tüm öğrenciler aynı oyunu ve bölümleri alır.
      */
     public static function plan(?string $fixedGame, int $questionCount): array

@@ -183,7 +183,7 @@
                         <td><div class="quiz-actions quiz-actions-row">
                             <form method="POST" action="{{ route('live-quiz.start', $quiz) }}" class="quiz-start-form">
                                 @csrf
-                                <select name="between" aria-label="Soru arası" class="quiz-between" title="Soru arası: 5 sn bekle ya da 4 soruda bir mini oyun (rastgele oyun, 10-40. bölümlerden rastgele 10 bölüm)">
+                                <select name="between" aria-label="Soru arası" class="quiz-between" title="Soru arası: 5 sn bekle ya da 4 soruda bir mini oyun (rastgele oyun, 5-30. bölümlerden rastgele 10 bölüm)">
                                     <option value="wait">⏱ 5 sn bekle</option>
                                     <option value="random">🎲 Rastgele oyun</option>
                                     <optgroup label="Tek oyun">

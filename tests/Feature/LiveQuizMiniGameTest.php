@@ -91,8 +91,8 @@ class LiveQuizMiniGameTest extends TestCase
             foreach ($plan as $b) {
                 $this->assertSame($slug, $b['game']);
                 $this->assertSame(10, $b['to'] - $b['from'] + 1, $slug);
-                $this->assertGreaterThanOrEqual(10, $b['from'], $slug);
-                $this->assertLessThanOrEqual(40, $b['to'], $slug);
+                $this->assertGreaterThanOrEqual(QuizMiniGame::FIRST_LEVEL, $b['from'], $slug);
+                $this->assertLessThanOrEqual(QuizMiniGame::LAST_LEVEL, $b['to'], $slug);
                 $this->assertNotSame($prev, $b['from'], $slug . ' art arda aynı blok');
                 $prev = $b['from'];
             }
@@ -110,8 +110,8 @@ class LiveQuizMiniGameTest extends TestCase
                 $this->assertTrue(QuizMiniGame::supported($b['game']));
                 $this->assertNotSame($prevGame, $b['game'], 'art arda aynı oyun gelmemeli');
                 $prevGame = $b['game'];
-                $this->assertGreaterThanOrEqual(10, $b['from']);
-                $this->assertLessThanOrEqual(40, $b['to']);
+                $this->assertGreaterThanOrEqual(QuizMiniGame::FIRST_LEVEL, $b['from']);
+                $this->assertLessThanOrEqual(QuizMiniGame::LAST_LEVEL, $b['to']);
                 $this->assertSame(10, $b['to'] - $b['from'] + 1);
                 $seen[$b['game']] = true;
                 $allBlocks[$b['game'] . ':' . $b['from']] = true;

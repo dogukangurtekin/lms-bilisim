@@ -14,10 +14,18 @@ class QuizMiniGameExclusionTest extends TestCase
 
         for ($i = 0; $i < 50; $i++) {
             foreach (QuizMiniGame::plan(null, 41) as $b) {
-                $this->assertNotSame('flowchart-runner', $b['game']);
+                $this->assertNotContains($b['game'], ['flowchart-runner', 'lightbot-runner', 'dot-cards-runner']);
+                $this->assertGreaterThanOrEqual(5, $b['from']);
+                $this->assertLessThanOrEqual(30, $b['to']);
             }
         }
-        // 7 kodlama oyunu kalır
-        $this->assertCount(7, QuizMiniGame::GAMES);
+        // Lightbot ve Küçük Nokta da canlı quiz mini oyunlarından çıkarıldı.
+        foreach (['lightbot-runner', 'dot-cards-runner'] as $slug) {
+            $this->assertFalse(QuizMiniGame::supported($slug), $slug);
+            $this->assertArrayNotHasKey($slug, QuizMiniGame::options());
+        }
+        $this->assertEqualsCanonicalizing(['compute-it-runner', 'block-grid-runner', 'block-3d-runner', 'word-bee-runner', 'number-bee-runner'], array_keys(QuizMiniGame::GAMES));
+        // Bölümler kolay aralıkta: 5-30
+        $this->assertSame([5, 30], [QuizMiniGame::FIRST_LEVEL, QuizMiniGame::LAST_LEVEL]);
     }
 }
