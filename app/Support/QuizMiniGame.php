@@ -36,7 +36,6 @@ class QuizMiniGame
         'dot-cards-runner' => ['levels' => 100, 'xp_cap' => 25],
         'word-bee-runner' => ['levels' => 100, 'xp_cap' => 25],
         'number-bee-runner' => ['levels' => 100, 'xp_cap' => 25],
-        'flowchart-runner' => ['levels' => 40, 'xp_cap' => 25],
     ];
 
     public static function supported(?string $slug): bool
