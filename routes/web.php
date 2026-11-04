@@ -339,6 +339,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/veli-bildirim/gelisim-raporu-sms-listesi', [ParentWhatsappController::class, 'exportProgressReportList'])->name('parent-whatsapp.report-list');
         Route::post('/veli-bildirim/gelisim-raporu-sms-gonder', [ParentWhatsappController::class, 'sendProgressReportSms'])->name('parent-whatsapp.report-send');
 
+        // Ders programına göre otomatik yoklama (yönetici + öğretmen; öğretmen yalnızca kendi sınıflarını görür).
+        Route::middleware('role:admin,teacher')->prefix('/yoklama')->name('attendance.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\AttendanceController::class, 'index'])->name('index');
+            Route::get('/ozet', [\App\Http\Controllers\AttendanceController::class, 'widget'])->middleware('throttle:60,1')->name('widget');
+            Route::get('/disa-aktar', [\App\Http\Controllers\AttendanceController::class, 'export'])->name('export');
+            Route::get('/ders/{lesson}', [\App\Http\Controllers\AttendanceController::class, 'lesson'])->whereNumber('lesson')->name('lesson');
+            Route::post('/ders/{lesson}/ogrenci/{student}', [\App\Http\Controllers\AttendanceController::class, 'setStatus'])->whereNumber(['lesson', 'student'])->name('lesson.status');
+            Route::get('/ders-programi', [\App\Http\Controllers\AttendanceController::class, 'schedule'])->name('schedule');
+            Route::get('/ders-programi/sablon', [\App\Http\Controllers\AttendanceController::class, 'template'])->name('schedule.template');
+            Route::post('/ders-programi', [\App\Http\Controllers\AttendanceController::class, 'storeSlot'])->name('schedule.store');
+            Route::post('/ders-programi/yukle', [\App\Http\Controllers\AttendanceController::class, 'import'])->middleware('throttle:10,1')->name('schedule.import');
+            Route::delete('/ders-programi/{slot}', [\App\Http\Controllers\AttendanceController::class, 'destroySlot'])->whereNumber('slot')->name('schedule.destroy');
+            Route::post('/tatil', [\App\Http\Controllers\AttendanceController::class, 'storeOffDay'])->middleware('role:admin')->name('offday.store');
+            Route::delete('/tatil/{offDay}', [\App\Http\Controllers\AttendanceController::class, 'destroyOffDay'])->middleware('role:admin')->whereNumber('offDay')->name('offday.destroy');
+        });
         Route::get('/canli-quiz', [LiveQuizController::class, 'index'])->name('live-quiz.index');
         Route::get('/kodlama-etkinlikleri/yonetim', [CodingActivityManagementController::class, 'index'])->name('coding.activities.manage');
         Route::get('/kodlama-etkinlikleri/indir/tumu', [CodingActivityManagementController::class, 'exportAll'])->name('coding.activities.export.all');

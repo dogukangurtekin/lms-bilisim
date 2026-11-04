@@ -661,6 +661,7 @@
         </div>
 
         <aside class="dashboard-right-column">
+            @include('partials.attendance-widget')
             <section class="class-picker-widget" aria-label="Sınıf seçimi">
                 <div class="gg-head"><strong>Sınıf Seçimi</strong><span>Listeden sınıf seçin</span></div>
         <select class="class-picker-select" id="classPickerSelect" aria-label="Sınıf seç" onchange="if(this.value)window.location.href=this.value">

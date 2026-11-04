@@ -104,6 +104,13 @@ class TrackStudentActiveTime
                 $stat->save();
                 Cache::put('ts_seen:'.$student->id, $now->timestamp, 120);
 
+                // Ders programına göre otomatik yoklama: ders saatindeki öğrenci "geldi" sayılır (öğrenci başına dakikada en çok bir kez çalışır).
+                try {
+                    \App\Services\LessonAttendanceService::noteStudentSeen((int) $student->id, $now);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('lesson_attendance_note_failed', ['message' => $e->getMessage()]);
+                }
+
                 // 2) Aktivite logu — sadece GET istekleri, ping ve ajax hariç
                 $routeName = $request->route()?->getName();
                 $shouldLog = $request->isMethod('GET')

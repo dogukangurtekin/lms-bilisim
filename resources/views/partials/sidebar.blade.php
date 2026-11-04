@@ -98,6 +98,9 @@
             <a class="{{ request()->routeIs('live-tracking.*') ? 'active' : '' }}" href="{{ route('live-tracking.index') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/><path d="M12 6v2m0 8v2M6 12H4m16 0h-2"/></svg></span>Canlı Takip
             </a>
+            <a class="{{ request()->routeIs('attendance.*') ? 'active' : '' }}" href="{{ route('attendance.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6a1 1 0 011 1v1h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2V3a1 1 0 011-1zm1 2v2h4V4h-4zm-.3 9.3l-1.4 1.4 2.7 2.7 5.3-5.3-1.4-1.4-3.9 3.9-1.3-1.3z"/></svg></span>Yoklama
+            </a>
             <a class="{{ request()->routeIs('support-requests.*') ? 'active' : '' }}" href="{{ route('support-requests.index') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-9 9c0 2.21.8 4.23 2.13 5.79L4 21l3.32-1.14A8.97 8.97 0 0 0 12 21a9 9 0 1 0 0-18zm1 13h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg></span>Taleplerim
             </a>

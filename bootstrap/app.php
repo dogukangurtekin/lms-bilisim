@@ -86,6 +86,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Komutlar süreç açmadan (aynı süreçte) çalışır: zamanlayıcı hem cron'dan hem de web adresinden (/api/cron/...) tetiklenebilir.
         $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('notifications:attendance-reminders'))
             ->name('attendance-reminders')->hourly()->withoutOverlapping(10);
+        // Biten derslerin yoklamasını kapatır: derse hiç girmeyen öğrenciler "gelmedi" yazılır.
+        $schedule->call(fn () => \App\Services\LessonAttendanceService::finalizeDue())
+            ->name('lesson-attendance-finalize')->everyFiveMinutes()->withoutOverlapping(5);
         $schedule->call(fn () => \Illuminate\Support\Facades\Artisan::call('activity-logs:purge'))
             ->name('activity-logs-purge')->dailyAt('00:30')->withoutOverlapping(30);
         // Dosya önbelleğindeki süresi dolmuş ölü dosyaları haftada bir temizler (disk I/O tasarrufu).
