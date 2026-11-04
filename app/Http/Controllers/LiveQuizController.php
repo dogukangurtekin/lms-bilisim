@@ -264,6 +264,12 @@ class LiveQuizController extends Controller
         $this->authorizeQuizManagement($quiz);
         abort_unless($quiz->questions()->exists(), 422);
 
+        // Tek seçimli kısa form: between = wait | random | <oyun slug'ı>; eski iki alanlı biçim (between_mode + between_game) de geçerlidir.
+        if ($request->filled('between')) {
+            $b = (string) $request->input('between');
+            $request->merge(['between_mode' => $b === 'wait' ? 'wait' : 'game', 'between_game' => $b === 'wait' ? null : $b]);
+        }
+
         // Soru arası: 5 sn bekle (varsayılan) ya da Oyun ve Etkinlikler'den 30 sn'lik mini oyun.
         $betweenMode = $request->input('between_mode') === 'game' ? 'game' : 'wait';
         $betweenGame = null;   // null = her mini oyunda tüm kodlama oyunları arasından rastgele

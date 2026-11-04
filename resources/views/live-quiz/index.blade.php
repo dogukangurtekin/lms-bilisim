@@ -35,6 +35,14 @@
 .quiz-save{display:flex;justify-content:flex-end}
 .quiz-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.quiz-actions form{margin:0}.quiz-actions .btn{white-space:nowrap}
 .quiz-danger{background:#dc2626!important;color:#fff!important;border-color:#dc2626!important}
+.quiz-actions-row{flex-wrap:nowrap;gap:6px}
+.quiz-start-form{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+.quiz-between{width:auto;max-width:170px;padding:6px 8px;font-size:13px;border:1px solid #cbd5e1;border-radius:8px;margin:0}
+.quiz-public{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:700;cursor:pointer;margin:0;white-space:nowrap}
+.quiz-public input{width:auto;margin:0}
+.quiz-start{padding:7px 12px;font-size:13px}
+.quiz-mini-btn{padding:7px 10px;font-size:14px;line-height:1}
+@media (max-width:760px){.quiz-actions-row,.quiz-start-form{flex-wrap:wrap}}
 .quiz-warning{background:#f59e0b!important;color:#fff!important;border-color:#f59e0b!important}
 .quiz-table-wrap{overflow:auto}
 @media (max-width:1200px){.quiz-shell{grid-template-columns:1fr}.quiz-left-list{max-height:220px}.quiz-answers{grid-template-columns:1fr}}
@@ -172,27 +180,25 @@
                         <td>{{ $quiz->schoolClass ? $quiz->schoolClass->name.'/'.$quiz->schoolClass->section : 'Tumu' }}</td>
                         <td>{{ ($quiz->join_mode ?? 'code') === 'instant' ? 'Anlik Bildirim' : 'Kodla' }}</td>
                         <td>{{ $quiz->questions_count }}</td>
-                        <td><div class="quiz-actions">
-                            <form method="POST" action="{{ route('live-quiz.start', $quiz) }}" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                        <td><div class="quiz-actions quiz-actions-row">
+                            <form method="POST" action="{{ route('live-quiz.start', $quiz) }}" class="quiz-start-form">
                                 @csrf
-                                <select name="between_mode" aria-label="Soru arası" style="padding:8px;border:1px solid #cbd5e1;border-radius:8px"
-                                    onchange="this.form.querySelector('[name=between_game]').style.display = this.value === 'game' ? '' : 'none'">
-                                    <option value="wait">Soru arası: 5 sn bekle</option>
-                                    <option value="game">Soru arası: Mini oyun (4 soruda bir, 30 sn)</option>
-                                </select>
-                                <select name="between_game" aria-label="Mini oyun" style="display:none;padding:8px;border:1px solid #cbd5e1;border-radius:8px" title="Rastgele: her mini oyunda tüm kodlama oyunlarından biri, 10-40. bölümler arasından rastgele 10 bölüm gelir">
-                                    <option value="random" selected>🎲 Rastgele (tüm kodlama oyunları)</option>
-                                    @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">Yalnızca: {{ $gameName }}</option>@endforeach
+                                <select name="between" aria-label="Soru arası" class="quiz-between" title="Soru arası: 5 sn bekle ya da 4 soruda bir mini oyun (rastgele oyun, 10-40. bölümlerden rastgele 10 bölüm)">
+                                    <option value="wait">⏱ 5 sn bekle</option>
+                                    <option value="random">🎲 Rastgele oyun</option>
+                                    <optgroup label="Tek oyun">
+                                        @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
+                                    </optgroup>
                                 </select>
                                 @if(auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled())
-                                    <label style="display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px" title="Giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1" style="width:auto;margin:0"> 🌐 Herkese açık</label>
+                                    <label class="quiz-public" title="Herkese açık: giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1"> 🌐</label>
                                 @endif
-                                <button class="btn" type="submit">Canli Quizi Baslat</button>
+                                <button class="btn quiz-start" type="submit" title="Canlı Quizi Başlat">▶ Başlat</button>
                             </form>
-                            <a class="btn" href="{{ route('live-quiz.edit', $quiz) }}">Düzenle</a>
+                            <a class="btn quiz-mini-btn" href="{{ route('live-quiz.edit', $quiz) }}" title="Düzenle">✏️</a>
                             <form method="POST" action="{{ route('live-quiz.destroy', $quiz) }}" data-confirm="Bu quiz, tüm oturumları ve raporları kalıcı olarak silinecek. Devam edilsin mi?">
                                 @csrf @method('DELETE')
-                                <button class="btn quiz-danger" type="submit">Sil</button>
+                                <button class="btn quiz-danger quiz-mini-btn" type="submit" title="Sil">🗑</button>
                             </form>
                         </div></td>
                     </tr>
