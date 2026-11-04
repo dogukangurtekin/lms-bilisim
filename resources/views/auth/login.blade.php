@@ -68,6 +68,15 @@
         .back-home:hover{border-color:var(--violet);color:var(--violet-ink)}
         .back-home:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
         @media (max-width:1100px){.form-side{padding-top:74px}}
+        .bh-home{display:none}
+        /* Telefon: buton başlıkların üstüne binmesin diye üst köşede küçük "← 🏠" simgesi olur (sayfa içeriğinden bağımsız, sayfayla kayar). */
+        @media (max-width:640px){
+            .login-shell{position:relative}
+            .form-side{position:static}
+            .back-home{top:12px;left:12px;z-index:5;padding:0;width:54px;height:40px;justify-content:center;gap:3px;font-size:18px;box-shadow:0 4px 12px rgba(22,24,43,.12)}
+            .bh-home{display:inline}
+            .bh-text{display:none}
+        }
         .login-form{width:min(420px,96%)}
         .login-form h2{margin:0 0 6px;font-family:'Space Grotesk',sans-serif;font-size:28px;line-height:1.2;font-weight:700;color:var(--ink);text-align:center}
         .login-form p{margin:0 0 26px;color:var(--ink-soft);font-size:14.5px;text-align:center}
@@ -278,7 +287,7 @@
     </section>
 
     <section class="form-side">
-        <a href="{{ url('/') }}" class="back-home"><span aria-hidden="true">←</span> Ana sayfaya dön</a>
+        <a href="{{ url('/') }}" class="back-home" aria-label="Ana sayfaya dön" title="Ana sayfaya dön"><span aria-hidden="true">←</span><span class="bh-home" aria-hidden="true">🏠</span><span class="bh-text"> Ana sayfaya dön</span></a>
         <div class="login-form">
             <h2>Tekrar hoş geldin</h2>
             <p>Hesabına giriş yapmak için bilgilerini gir.</p>
