@@ -1,48 +1,54 @@
 @php
     $t = $board['totals'];
     $rows = collect($board['rows']);
-    // Öncelik: devam eden, sıradaki, son biten dersler.
+    // Öncelik: devam eden, sıradaki, son biten dersler (en çok 5 satır).
     $ongoing = $rows->where('state', 'ongoing')->values();
-    $upcoming = $rows->where('state', 'upcoming')->take(2)->values();
+    $upcoming = $rows->where('state', 'upcoming')->take(1)->values();
     $recent = $rows->whereIn('state', ['closed', 'pending'])->sortByDesc(fn ($r) => $r['end']->timestamp)->take(3)->values();
-    $shown = $ongoing->concat($upcoming)->concat($recent)->take(7);
-    $stateLabel = ['upcoming' => 'Bekliyor', 'ongoing' => '● Devam', 'closed' => 'Bitti', 'pending' => 'Kapanıyor'];
+    $shown = $ongoing->concat($upcoming)->concat($recent)->take(5);
+    $short = fn ($label) => str_replace('/', '', (string) $label);
+    $stateTitle = ['upcoming' => 'Bekliyor', 'ongoing' => 'Devam ediyor', 'closed' => 'Yoklama alındı', 'pending' => 'Kapanıyor'];
 @endphp
 <div class="aw-head">
-    <div><strong>📋 Bugünkü Yoklama</strong><span>{{ $board['date']->translatedFormat('d F, l') }}</span></div>
+    <strong>📋 Bugünkü Yoklama</strong>
+    <span>{{ $board['date']->translatedFormat('d M, D') }}</span>
     <a href="{{ route('attendance.index') }}" class="aw-link" title="Yoklama sayfası">Aç →</a>
 </div>
 
 @if(! $board['has_schedule'])
-    <p class="aw-empty">Ders programı tanımlı değil. <a href="{{ route('attendance.schedule') }}">Programı tanımla</a> — yoklama otomatik alınsın.</p>
+    <p class="aw-empty">Ders programı tanımlı değil. <a href="{{ route('attendance.schedule') }}">Programı tanımla</a></p>
 @elseif($board['off'])
-    <p class="aw-empty">🏖 Bugün tatil / ders yapılmayan gün{{ $board['off_note'] ? ': ' . $board['off_note'] : '' }}.</p>
+    <p class="aw-empty">🏖 Bugün tatil / ders yok{{ $board['off_note'] ? ': ' . $board['off_note'] : '' }}.</p>
 @elseif($rows->isEmpty())
-    <p class="aw-empty">Bugün için tanımlı ders yok.</p>
+    <p class="aw-empty">Bugün için ders yok.</p>
 @else
     <div class="aw-chips">
-        <span><b>{{ $t['lessons'] }}</b>ders</span>
-        <span class="live"><b>{{ $t['ongoing'] }}</b>devam eden</span>
-        <span class="ok"><b>{{ $t['closed'] }}</b>alınan</span>
-        <span class="bad"><b>{{ $t['absent'] }}</b>gelmeyen</span>
+        <span title="Bugünkü ders"><b>{{ $t['lessons'] }}</b> ders</span>
+        <span class="live" title="Devam eden"><b>{{ $t['ongoing'] }}</b> devam</span>
+        <span class="ok" title="Yoklaması alınan"><b>{{ $t['closed'] }}</b> alınan</span>
+        <span class="bad" title="Toplam gelmeyen"><b>{{ $t['absent'] }}</b> yok</span>
     </div>
     <ul class="aw-list">
         @foreach($shown as $r)
             <li>
-                <a href="{{ $r['lesson_id'] ? route('attendance.lesson', $r['lesson_id']) : route('attendance.index') }}">
-                    <div class="aw-row"><b>{{ $r['class'] }}</b><small>{{ $r['time'] }}</small><em class="aw-st {{ $r['state'] }}">{{ $stateLabel[$r['state']] }}</em></div>
-                    @if($r['state'] !== 'upcoming')
-                        <div class="aw-bar"><i style="width:{{ $r['total'] > 0 ? round($r['present'] / $r['total'] * 100) : 0 }}%"></i></div>
-                        <div class="aw-meta"><span class="ok">{{ $r['present'] }} geldi</span>@if($r['absent'] !== null)<span class="bad">{{ $r['absent'] }} gelmedi</span>@endif<span>/ {{ $r['total'] }}</span></div>
+                <a class="aw-item {{ $r['state'] }}" href="{{ $r['lesson_id'] ? route('attendance.lesson', $r['lesson_id']) : route('attendance.index') }}" title="{{ $r['class'] }} · {{ $r['subject'] }} · {{ $r['time'] }} · {{ $stateTitle[$r['state']] }}">
+                    <b>{{ $short($r['class']) }}</b>
+                    <small>{{ substr($r['time'], 0, 5) }}</small>
+                    @if($r['state'] === 'upcoming')
+                        <span class="aw-bar"></span><em class="aw-n">bekliyor</em>
+                    @else
+                        <span class="aw-bar"><i style="width:{{ $r['total'] > 0 ? round($r['present'] / $r['total'] * 100) : 0 }}%"></i></span>
+                        @if($r['absent'] !== null)
+                            <em class="aw-n {{ $r['absent'] > 0 ? 'bad' : 'ok' }}">{{ $r['absent'] > 0 ? $r['absent'] . ' yok' : 'tam' }}</em>
+                        @else
+                            <em class="aw-n live">{{ $r['present'] }}/{{ $r['total'] }}</em>
+                        @endif
                     @endif
                 </a>
             </li>
         @endforeach
     </ul>
     @foreach(array_slice($board['absent_groups'], 0, 1) as $g)
-        <div class="aw-absent">
-            <b>{{ $g['class'] }} · gelmeyenler ({{ $g['count'] }})</b>
-            <div>{{ implode(', ', array_slice($g['names'], 0, 8)) }}@if(count($g['names']) > 8) <em>+{{ $g['count'] - 8 }}</em>@endif</div>
-        </div>
+        <div class="aw-absent"><b>{{ $short($g['class']) }} gelmeyen ({{ $g['count'] }}):</b> {{ implode(', ', array_slice($g['names'], 0, 6)) }}@if($g['count'] > 6) <em>+{{ $g['count'] - 6 }}</em>@endif</div>
     @endforeach
 @endif

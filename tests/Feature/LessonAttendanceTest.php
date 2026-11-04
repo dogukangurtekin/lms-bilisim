@@ -296,7 +296,7 @@ class LessonAttendanceTest extends TestCase
         $this->at('10:20:00');                                            // 6/B dersi sürüyor
 
         $this->actingAs($this->admin)->get(route('attendance.index'))->assertOk()->assertSee('Bugünün Dersleri')->assertSee('5/A')->assertSee('6/B')->assertSee('Ayşe Demir');
-        $this->actingAs($this->admin)->get(route('attendance.widget'))->assertOk()->assertSee('Bugünkü Yoklama')->assertSee('5/A')->assertSee('Ayşe Demir');
+        $this->actingAs($this->admin)->get(route('attendance.widget'))->assertOk()->assertSee('Bugünkü Yoklama')->assertSee('<b>5A</b>', false)->assertSee('Ayşe Demir');
         $this->actingAs($this->admin)->get(route('attendance.index', ['tab' => 'history', 'from' => '2026-11-01', 'to' => '2026-11-30', 'class_id' => $this->classA->id]))
             ->assertOk()->assertSee('<td>5/A</td>', false)->assertDontSee('<td>6/B</td>', false)->assertSee('En Çok Devamsızlık Yapanlar');
         $this->actingAs($this->admin)->get(route('attendance.schedule'))->assertOk()->assertSee('Şablonu İndir')->assertSee('Tatil');
