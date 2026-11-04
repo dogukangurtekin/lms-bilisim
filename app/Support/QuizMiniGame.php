@@ -36,6 +36,12 @@ class QuizMiniGame
         'number-bee-runner' => ['levels' => 100, 'xp_cap' => 25],
     ];
 
+    /** Herkese açık (hesapsız) oturumlarda kullanılabilecek mini oyunlar: yönetici profilinde "herkese açık" işaretli olanlar. */
+    public static function publicGames(): array
+    {
+        return array_values(array_filter(array_keys(self::GAMES), fn (string $g) => PublicGamesSetting::gameEnabled($g)));
+    }
+
     public static function supported(?string $slug): bool
     {
         return $slug !== null && isset(self::GAMES[$slug]);
@@ -95,9 +101,12 @@ class QuizMiniGame
      * gelmez). Bölüm bloğu 5-30 arasından rastgele seçilir; aynı oyunda önceki bloklarla üst üste binmemeye çalışılır.
      * Plan oturum başlarken bir kez üretilip saklanır; böylece tüm öğrenciler aynı oyunu ve bölümleri alır.
      */
-    public static function plan(?string $fixedGame, int $questionCount): array
+    public static function plan(?string $fixedGame, int $questionCount, ?array $allowed = null): array
     {
         $games = self::supported($fixedGame) ? [$fixedGame] : array_keys(self::GAMES);
+        if ($allowed !== null) {          // herkese açık oturum: yalnızca profilde "herkese açık" işaretli oyunlar
+            $games = array_values(array_intersect($games, $allowed));
+        }
         $games = array_values(array_filter($games, fn (string $g) => self::blockStarts($g) !== []));
         if ($games === []) {
             return [];

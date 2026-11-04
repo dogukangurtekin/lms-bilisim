@@ -17,10 +17,18 @@ class RestrictGuestPlayer
         'logout', 'logout.get', 'maintenance.status',
     ];
 
+    private const RUNNER_ACTIONS = ['computeIt', 'blockGrid', 'block3d', 'wordBee', 'numberBee', 'grant'];
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
         if (! $user || ! $user->hasRole('guest')) {
+            return $next($request);
+        }
+
+        // Mini oyun penceresi: oyun sayfası ve izin uç noktası. İzni ve "herkese açık" ayarını ActivityRunnerController doğrular.
+        $action = (string) ($request->route()?->getActionName() ?? '');
+        if (in_array($action, array_map(fn (string $m) => \App\Http\Controllers\ActivityRunnerController::class.'@'.$m, self::RUNNER_ACTIONS), true)) {
             return $next($request);
         }
 

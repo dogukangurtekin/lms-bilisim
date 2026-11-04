@@ -285,6 +285,19 @@ class LiveQuizController extends Controller
 
         // Herkese açık oturum: yalnızca yönetici ve profilindeki "Canlı Quiz" anahtarı açıkken.
         $isPublic = $request->boolean('is_public') && (bool) auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled();
+        $publicNote = '';
+        if ($isPublic && $betweenMode === 'game') {
+            // Herkese açık quizde yalnızca profilde "herkese açık" işaretli oyunlar kullanılır.
+            $open = QuizMiniGame::publicGames();
+            if ($betweenGame !== null && ! in_array($betweenGame, $open, true)) {
+                return back()->with('err', 'Seçtiğiniz oyun profilinizde "herkese açık" işaretli değil. Profilimden açın ya da başka bir oyun seçin.');
+            }
+            if ($open === []) {
+                $betweenMode = 'wait';
+                $betweenGame = null;
+                $publicNote = ' (Profilinizde herkese açık oyun işaretli olmadığı için mini oyun eklenmedi.)';
+            }
+        }
 
         // Once soru sayaci baslatilmiyor: ogrenciler once bir "lobi" ekraninda
         // katilim koduyla toplanir, ogretmen "Herkese Baslat" dedigi an ayni
@@ -304,7 +317,7 @@ class LiveQuizController extends Controller
             'ends_at_ms' => null,
         ]);
 
-        return redirect()->route('live-quiz.session.show', $session)->with('ok', 'Lobi olusturuldu. Ogrenciler koda katilinca "Herkese Baslat" butonuna basin.');
+        return redirect()->route('live-quiz.session.show', $session)->with('ok', 'Lobi olusturuldu. Ogrenciler koda katilinca "Herkese Baslat" butonuna basin.' . $publicNote);
     }
 
     public function launch(LiveQuizSession $session)
@@ -333,7 +346,7 @@ class LiveQuizController extends Controller
         // Mini oyun modunda 4 soruda bir gelecek mini oyunların oyunu ve bölüm bloğu şimdi seçilir ve saklanır: tüm öğrencilere aynı oyun ve bölümler gelir.
         if ($session->between_mode === 'game') {
             $questionCount = (int) $session->quiz()->first()?->questions()->count();
-            $session->update(['between_plan' => QuizMiniGame::plan($session->between_game, $questionCount)]);
+            $session->update(['between_plan' => QuizMiniGame::plan($session->between_game, $questionCount, $session->is_public ? QuizMiniGame::publicGames() : null)]);
         }
 
         return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');

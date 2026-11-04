@@ -154,6 +154,23 @@ class ActivityRunnerController extends Controller
             return response()->json(['ok' => false], 401);
         }
 
+        if ($user->hasRole('guest')) {
+            if (! $this->guestQuizGrantOk($slug)) {
+                return response()->json(['ok' => false, 'message' => 'Bu oyun herkese açık quiz için açık değil.'], 403);
+            }
+            $g = (array) session('runner_grant');
+
+            return response()->json([
+                'ok' => true,
+                'role' => 'student',
+                'slug' => $slug,
+                'from' => (int) ($g['from'] ?? 1),
+                'to' => (int) ($g['to'] ?? 1),
+                'homework_id' => (string) ($g['homework_id'] ?? ''),
+                'expires_at' => (int) ($g['expires_at'] ?? 0),
+            ]);
+        }
+
         if (! $user->student) {
             return response()->json([
                 'ok' => true,
@@ -287,6 +304,22 @@ class ActivityRunnerController extends Controller
         return $this->serveRunner($slug, true);
     }
 
+    /**
+     * Hesapsız (misafir) quiz katılımcısı yalnızca canlı quizin mini oyunu için, oturumdaki izin (runner_grant) geçerliyse ve
+     * oyun yönetici profilinde "herkese açık" işaretliyse oyun penceresini açabilir.
+     */
+    private function guestQuizGrantOk(string $slug): bool
+    {
+        $grant = session('runner_grant');
+
+        return is_array($grant)
+            && ($grant['slug'] ?? null) === $slug
+            && (($grant['expires_at'] ?? 0) >= time())
+            && str_starts_with((string) ($grant['homework_id'] ?? ''), 'quizgame-')
+            && \App\Support\QuizMiniGame::supported($slug)
+            && \App\Support\PublicGamesSetting::gameEnabled($slug);
+    }
+
     private function serveRunner(string $slug, bool $public = false)
     {
         $request = request();
@@ -304,7 +337,9 @@ class ActivityRunnerController extends Controller
         }
 
         $user = $public ? null : auth()->user();
-        if ($user && ! $user->student) {
+        if ($user && $user->hasRole('guest')) {
+            abort_unless($this->guestQuizGrantOk($slug), 403, 'Bu oyun herkese açık quiz için açık değil.');
+        } elseif ($user && ! $user->student) {
             $role = (string) $request->query('role', '');
             $targetRole = $user->hasRole('admin') ? 'admin' : 'teacher';
             $hasRangeParams = $request->query('from') !== null
