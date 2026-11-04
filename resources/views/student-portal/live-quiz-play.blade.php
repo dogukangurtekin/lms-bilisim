@@ -106,11 +106,6 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
 }
 </style>
 
-{{-- Canlı sıralama sadece sorular arasındaki 5 sn'lik ara ekranda gösterilir. --}}
-@if($session->status === 'live' && in_array($session->phase, ['results', 'final'], true))
-    @include('live-quiz.partials.live-board', ['boardRows' => $boardRows ?? [], 'boardPrevRows' => $boardPrevRows ?? [], 'boardMeId' => auth()->id(), 'boardKey' => $session->id])
-@endif
-
 <div class="lq-stage {{ $session->status === 'lobby' ? 'cx lq-stage-lobby' : '' }}">
     @if($session->status === 'live' && $session->phase !== 'final' && $q)
         @php
@@ -166,16 +161,13 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
     @elseif($session->status !== 'live')
         <div class="lq-state">Quiz tamamlandi.</div>
     @elseif($session->phase === 'final')
-        @php
-            $myBoard = collect($boardRows ?? [])->firstWhere('user_id', auth()->id());
-        @endphp
         <div class="lq-center-stage">
             <div class="lq-wait-box">
                 <h3 class="lq-wait-title">🏁 Yarışma Tamamlandı!</h3>
-                @if($myBoard)
-                    <p class="lq-result-sub">Sıralaman: <strong>#{{ $myBoard['rank'] }}</strong> · {{ $myBoard['xp'] }} XP</p>
+                @if(! empty($myScore))
+                    <p class="lq-result-sub">Toplam: <strong>{{ $myScore['xp'] }} XP</strong> · {{ $myScore['correct'] }} doğru cevap</p>
                 @endif
-                <p class="lq-auto-note">Son sıralama yukarıda. Öğretmen yarışmayı bitirdiğinde ana sayfaya yönlendirileceksin.</p>
+                <p class="lq-auto-note">Sıralama öğretmenin ekranında gösterilir. Öğretmen yarışmayı bitirdiğinde ana sayfaya yönlendirileceksin.</p>
             </div>
         </div>
     @elseif($session->phase === 'game' && !empty($miniGame))
@@ -219,7 +211,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
             <div class="lq-wait-box">
                 <h3 class="lq-wait-title">Cevabın Kaydedildi</h3>
                 <div class="lq-wait-count" id="lq-answer-countdown">--</div>
-                <p class="lq-auto-note">Süre bittiğinde doğru/yanlış sonucun ve ilk 5 öğrenci gösterilecek.</p>
+                <p class="lq-auto-note">Herkes cevapladığında ya da süre bittiğinde doğru/yanlış sonucun gösterilecek.</p>
             </div>
         </div>
     @else

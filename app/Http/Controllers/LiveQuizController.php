@@ -659,10 +659,8 @@ class LiveQuizController extends Controller
             ->where('student_user_id', auth()->id())
             ->where('question_index', (int) $session->current_index)
             ->first();
-        $topFive = $this->questionTopFive($session);
-        $showBoard = $session->status === 'live' && in_array($session->phase, ['results', 'final'], true);
-        $boardRows = $showBoard ? $this->liveBoardRows($session) : [];
-        $boardPrevRows = ($showBoard && $session->phase === 'results') ? $this->liveBoardRows($session, (int) $session->current_index) : [];
+        // Öğrenci ekranında sıralama / ilk 5 gösterilmez; sıralama yalnızca yönetici-öğretmen ekranındadır.
+        $myScore = ($session->status === 'live' && $session->phase === 'final') ? $this->studentScore($session, (int) auth()->id()) : null;
         $miniGame = ($session->status === 'live' && $session->phase === 'game') ? $this->miniGameInfo($session) : null;
 
         return view('student-portal.live-quiz-play', compact(
@@ -671,9 +669,7 @@ class LiveQuizController extends Controller
             'joinedCount',
             'participantRows',
             'currentAnswer',
-            'topFive',
-            'boardRows',
-            'boardPrevRows',
+            'myScore',
             'miniGame'
         ));
     }
@@ -699,7 +695,6 @@ class LiveQuizController extends Controller
             'joined_count' => $session->status === 'lobby' ? count($this->participantRows($session)) : null,
             // Katılımcı listesini yalnızca lobi ekranı kullanır; canlı aşamalarda her yoklamada taşımaya gerek yok.
             'participants' => $session->status === 'lobby' ? $this->participantRows($session) : [],
-            'top_five' => $this->questionTopFive($session),
         ]);
     }
 
@@ -753,25 +748,8 @@ class LiveQuizController extends Controller
         // Herkes cevapladıysa soru süresini bekleme: sonuç/ara aşamasına hemen geç.
         $this->syncSessionByTimer($session);
 
-        $rank = $this->studentRankInSession($session, $studentUserId);
-        $sessionXp = (int) LiveQuizAnswer::query()
-            ->where('live_quiz_session_id', $session->id)
-            ->where('student_user_id', $studentUserId)
-            ->sum('xp_earned');
-        $sessionXp += (int) ($this->gameTotals($session)[(int) $studentUserId]['xp'] ?? 0);
-        $correctAnswerText = $this->resolveCorrectAnswerText($question);
-        $studentAnswerText = $this->resolveSelectedAnswerText($question, (string) ($evaluation['selected_answer'] ?? ''));
-
-        return redirect()->route('student.live-quiz.play', $session)->with('answer_feedback', [
-            'is_correct' => $evaluation['is_correct'],
-            'xp' => $xp,
-            'session_total_xp' => $sessionXp,
-            'rank' => $rank['rank'],
-            'total' => $rank['total'],
-            'question_index' => $questionIndex,
-            'correct_answer_text' => $correctAnswerText,
-            'student_answer_text' => $studentAnswerText,
-        ]);
+        // Doğru/yanlış, XP ve sıralama bu aşamada öğrenciye gösterilmez; sonuç, soru bitince (sonuç aşamasında) açıklanır.
+        return redirect()->route('student.live-quiz.play', $session)->with('answer_feedback', ['question_index' => $questionIndex]);
     }
 
     public function studentActiveSession()
@@ -1001,12 +979,14 @@ class LiveQuizController extends Controller
 
         $answered = $answers->count();
         $correct = $answers->where('is_correct', true)->count();
+        // Soru açıkken doğru/yanlış sayıları gizlenir: ortak ekranda her cevaptan sonra değişen sayılar öğrencilere sonucu ele verir.
+        $open = $this->rankCutoff($session) !== null;
 
         return [
             'joined' => $session->participants()->count(),
             'answered' => $answered,
-            'correct' => $correct,
-            'wrong' => max(0, $answered - $correct),
+            'correct' => $open ? null : $correct,
+            'wrong' => $open ? null : max(0, $answered - $correct),
         ];
     }
 
@@ -1116,7 +1096,7 @@ class LiveQuizController extends Controller
 
     private function leaderboardRows(LiveQuizSession $session): array
     {
-        $rows = $this->scoreStats($session)->values();
+        $rows = $this->scoreStats($session, $this->rankCutoff($session))->values();
         $names = \App\Models\User::query()->whereIn('id', $rows->pluck('student_user_id'))->pluck('name', 'id');
         $game = $this->gameTotals($session);
 
@@ -1142,7 +1122,7 @@ class LiveQuizController extends Controller
      */
     private function liveBoardRows(LiveQuizSession $session, ?int $excludeQuestionIndex = null): array
     {
-        $stats = $this->scoreStats($session, $excludeQuestionIndex);
+        $stats = $this->scoreStats($session, $excludeQuestionIndex ?? $this->rankCutoff($session));
 
         $game = $this->gameTotals($session);
         $rows = collect($this->participantRows($session))
@@ -1671,6 +1651,27 @@ class LiveQuizController extends Controller
         }
 
         return redirect()->route('student.portal.dashboard')->with('ok', 'Quizi tamamladin. Anasayfaya yonlendiriliyorsun.');
+    }
+
+    /**
+     * Soru açıkken (ya da açılmak üzereyken) sıralamaya o sorunun cevapları katılmaz: sıralama herkes cevapladıktan
+     * (ya da süre bitince sonuç aşamasına geçilince) güncellenir. Dönen sayı, sıralamanın dışında tutulacak soru numarasıdır.
+     */
+    private function rankCutoff(LiveQuizSession $session): ?int
+    {
+        return ($session->status === 'live' && in_array($session->phase, ['intro', 'question'], true)) ? (int) $session->current_index : null;
+    }
+
+    /** Öğrencinin kendi toplamı (sıralama değil): final ekranında gösterilir. */
+    private function studentScore(LiveQuizSession $session, int $userId): array
+    {
+        $s = $this->scoreStats($session)->get($userId);
+
+        return [
+            'xp' => (int) ($s->xp ?? 0) + (int) ($this->gameTotals($session)[$userId]['xp'] ?? 0),
+            'correct' => (int) ($s->correct ?? 0),
+            'answered' => (int) ($s->answered ?? 0),
+        ];
     }
 
     private function nowMs(): int

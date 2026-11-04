@@ -114,8 +114,8 @@
     <div style="display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;">
         <div class="card" style="padding:10px;"><strong>Katilan:</strong> <span id="lqStatJoined">{{ $currentQuestionStats['joined'] }}</span></div>
         <div class="card" style="padding:10px;"><strong>Cevaplayan:</strong> <span id="lqStatAnswered">{{ $currentQuestionStats['answered'] }}</span></div>
-        <div class="card" style="padding:10px;"><strong>Dogru:</strong> <span id="lqStatCorrect">{{ $currentQuestionStats['correct'] }}</span></div>
-        <div class="card" style="padding:10px;"><strong>Yanlis:</strong> <span id="lqStatWrong">{{ $currentQuestionStats['wrong'] }}</span></div>
+        <div class="card" style="padding:10px;"><strong>Dogru:</strong> <span id="lqStatCorrect">{{ $currentQuestionStats['correct'] ?? '—' }}</span></div>
+        <div class="card" style="padding:10px;"><strong>Yanlis:</strong> <span id="lqStatWrong">{{ $currentQuestionStats['wrong'] ?? '—' }}</span></div>
     </div>
 
     @if($current && $session->phase !== 'intro')
@@ -299,8 +299,8 @@
             endsAtMs = data.ends_at_ms || endsAtMs;
             if (statJoined) statJoined.textContent = String(data.stats?.joined ?? 0);
             if (statAnswered) statAnswered.textContent = String(data.stats?.answered ?? 0);
-            if (statCorrect) statCorrect.textContent = String(data.stats?.correct ?? 0);
-            if (statWrong) statWrong.textContent = String(data.stats?.wrong ?? 0);
+            if (statCorrect) statCorrect.textContent = data.stats?.correct == null ? '—' : String(data.stats.correct);
+            if (statWrong) statWrong.textContent = data.stats?.wrong == null ? '—' : String(data.stats.wrong);
 
             if (window.LqBoard && Array.isArray(data.board)) window.LqBoard.render(data.board);
             if (data.game) renderGame(data.game);
