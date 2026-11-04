@@ -48,7 +48,7 @@ class LiveQuizMiniGameTest extends TestCase
         return $quiz;
     }
 
-    private function newSession(LiveQuiz $quiz, string $mode = 'game', string $game = 'compute-it-runner'): LiveQuizSession
+    private function newSession(LiveQuiz $quiz, string $mode = 'game', ?string $game = 'compute-it-runner'): LiveQuizSession
     {
         $session = LiveQuizSession::query()->create([
             'live_quiz_id' => $quiz->id, 'teacher_user_id' => $this->teacher->id, 'join_code' => strtoupper(substr(md5((string) microtime(true)), 0, 6)),
@@ -72,63 +72,129 @@ class LiveQuizMiniGameTest extends TestCase
         return $this->actingAs($this->teacher)->getJson(route('live-quiz.session.status', $session))->assertOk()->json();
     }
 
-    public function test_plan_gives_ten_consecutive_levels_after_the_tenth_and_never_repeats_back_to_back(): void
+    public function test_game_comes_every_fourth_question_and_never_after_the_last(): void
+    {
+        $this->assertSame([], QuizMiniGame::breakIndexes(1));
+        $this->assertSame([], QuizMiniGame::breakIndexes(4));
+        $this->assertSame([3], QuizMiniGame::breakIndexes(5));
+        $this->assertSame([3], QuizMiniGame::breakIndexes(8));
+        $this->assertSame([3, 7], QuizMiniGame::breakIndexes(9));
+        $this->assertSame([3, 7, 11], QuizMiniGame::breakIndexes(13));
+    }
+
+    public function test_fixed_game_plan_has_ten_levels_between_10_and_40_and_never_repeats_back_to_back(): void
     {
         foreach (array_keys(QuizMiniGame::GAMES) as $slug) {
-            $plan = QuizMiniGame::plan($slug, 19);
-            $this->assertCount(19, $plan, $slug);
-            $cap = min(QuizMiniGame::LAST_LEVEL, QuizMiniGame::GAMES[$slug]['levels']);
+            $plan = QuizMiniGame::plan($slug, 41);
+            $this->assertSame(QuizMiniGame::breakIndexes(41), array_keys($plan), $slug);
             $prev = null;
             foreach ($plan as $b) {
+                $this->assertSame($slug, $b['game']);
                 $this->assertSame(10, $b['to'] - $b['from'] + 1, $slug);
-                $this->assertGreaterThanOrEqual(11, $b['from'], $slug);
-                $this->assertLessThanOrEqual($cap, $b['to'], $slug);
-                $this->assertNotSame($prev, $b['from'], $slug.' art arda aynı blok');
+                $this->assertGreaterThanOrEqual(10, $b['from'], $slug);
+                $this->assertLessThanOrEqual(40, $b['to'], $slug);
+                $this->assertNotSame($prev, $b['from'], $slug . ' art arda aynı blok');
                 $prev = $b['from'];
             }
         }
-        $this->assertSame([], QuizMiniGame::plan('python-editor', 5));
+    }
+
+    public function test_random_plan_uses_different_games_and_levels_each_time_within_10_40(): void
+    {
+        $seen = [];
+        $allBlocks = [];
+        for ($k = 0; $k < 30; $k++) {
+            $plan = QuizMiniGame::plan(null, 41);
+            $prevGame = null;
+            foreach ($plan as $b) {
+                $this->assertTrue(QuizMiniGame::supported($b['game']));
+                $this->assertNotSame($prevGame, $b['game'], 'art arda aynı oyun gelmemeli');
+                $prevGame = $b['game'];
+                $this->assertGreaterThanOrEqual(10, $b['from']);
+                $this->assertLessThanOrEqual(40, $b['to']);
+                $this->assertSame(10, $b['to'] - $b['from'] + 1);
+                $seen[$b['game']] = true;
+                $allBlocks[$b['game'] . ':' . $b['from']] = true;
+            }
+        }
+        $this->assertCount(count(QuizMiniGame::GAMES), $seen, 'tüm kodlama oyunları zamanla gelmeli');
+        $this->assertGreaterThan(40, count($allBlocks), 'bölümler sabit kalmamalı, çok sayıda farklı oyun/bölüm kombinasyonu çıkmalı');
+
+        // iki ayrı yarışma (iki plan) birbirinin aynısı olmamalı
+        $a = QuizMiniGame::plan(null, 41);
+        $same = 0;
+        for ($i = 0; $i < 20; $i++) {
+            if (QuizMiniGame::plan(null, 41) === $a) {
+                $same++;
+            }
+        }
+        $this->assertSame(0, $same);
+        // belirli bir oyun geçersizse rastgeleye düşer
+        $this->assertNotEmpty(QuizMiniGame::plan('python-editor', 9));
     }
 
     public function test_start_validates_the_mini_game_choice_and_launch_stores_one_shared_plan(): void
     {
-        $quiz = $this->quiz(4);
+        $quiz = $this->quiz(9);
 
         $this->actingAs($this->teacher)->post(route('live-quiz.start', $quiz), ['between_mode' => 'game', 'between_game' => 'excel-runner'])->assertSessionHas('err');
         $this->assertSame(0, LiveQuizSession::query()->count());
 
+        // belirli oyun
         $this->actingAs($this->teacher)->post(route('live-quiz.start', $quiz), ['between_mode' => 'game', 'between_game' => 'compute-it-runner'])->assertRedirect();
         $s = LiveQuizSession::query()->firstOrFail();
         $this->assertSame('game', $s->between_mode);
         $this->assertSame('compute-it-runner', $s->between_game);
-
         $this->actingAs($this->teacher)->post(route('live-quiz.session.launch', $s))->assertRedirect();
-        $this->assertCount(3, $s->fresh()->between_plan, '4 soru = 3 soru arası');
+        $plan = $s->fresh()->between_plan;
+        $this->assertSame([3, 7], array_keys($plan), '9 soru: 4. ve 8. sorudan sonra');
+        $this->assertSame('compute-it-runner', $plan[3]['game']);
+
+        // rastgele (varsayılan)
+        $this->actingAs($this->teacher)->post(route('live-quiz.start', $quiz), ['between_mode' => 'game', 'between_game' => 'random'])->assertRedirect();
+        $r = LiveQuizSession::query()->latest('id')->firstOrFail();
+        $this->assertNull($r->between_game);
+        $this->actingAs($this->teacher)->post(route('live-quiz.session.launch', $r))->assertRedirect();
+        $rp = $r->fresh()->between_plan;
+        $this->assertCount(2, $rp);
+        foreach ($rp as $b) {
+            $this->assertTrue(QuizMiniGame::supported($b['game']));
+        }
+
+        // 4 soru ya da daha azında mini oyun gelmez
+        $short = $this->quiz(4);
+        $this->actingAs($this->teacher)->post(route('live-quiz.start', $short), ['between_mode' => 'game'])->assertRedirect();
+        $sh = LiveQuizSession::query()->latest('id')->firstOrFail();
+        $this->actingAs($this->teacher)->post(route('live-quiz.session.launch', $sh));
+        $this->assertSame([], $sh->fresh()->between_plan);
 
         $this->actingAs($this->teacher)->post(route('live-quiz.start', $quiz), [])->assertRedirect();
         $wait = LiveQuizSession::query()->latest('id')->firstOrFail();
         $this->assertSame('wait', $wait->between_mode);
     }
 
-    public function test_phase_machine_inserts_game_phase_between_questions_but_not_after_the_last(): void
+    public function test_phase_machine_inserts_game_phase_only_after_every_fourth_question(): void
     {
-        $quiz = $this->quiz(3);
+        $quiz = $this->quiz(9);
         $session = $this->newSession($quiz);
         $this->actingAs($this->teacher)->post(route('live-quiz.session.launch', $session));
         $this->assertSame('question', $session->fresh()->phase);
 
         $phases = [];
-        for ($i = 0; $i < 7; $i++) {
+        for ($i = 0; $i < 40; $i++) {
             $this->expire($session);
             $d = $this->sync($session);
-            $phases[] = $d['phase'].':'.$d['current_index'];
+            $phases[] = $d['phase'] . ':' . $d['current_index'];
             if ($d['phase'] === 'final') {
                 break;
             }
         }
-        $this->assertSame(['results:0', 'game:0', 'question:1', 'results:1', 'game:1', 'question:2', 'results:2'], array_slice($phases, 0, 7));
-        $this->expire($session);
-        $this->assertSame('final', $this->sync($session)['phase']);
+        $games = array_values(array_filter($phases, fn ($p) => str_starts_with($p, 'game:')));
+        $this->assertSame(['game:3', 'game:7'], $games, '4. ve 8. sorudan sonra, başka hiçbir arada değil');
+        $this->assertContains('question:4', $phases);
+        $this->assertSame('final:8', end($phases));
+        // mini oyundan sonra bir sonraki soru gelir
+        $this->assertSame($phases[array_search('game:3', $phases, true) + 1], 'question:4');
 
         // 5 sn bekleme modunda mini oyun aşaması yoktur
         $wait = $this->newSession($this->quiz(2), 'wait');
@@ -136,19 +202,23 @@ class LiveQuizMiniGameTest extends TestCase
         $this->expire($wait);
         $this->assertSame('results', $this->sync($wait)['phase']);
         $this->expire($wait);
-        $this->assertSame('question:1', $this->sync($wait)['phase'].':'.$this->sync($wait)['current_index']);
+        $this->assertSame('question:1', $this->sync($wait)['phase'] . ':' . $this->sync($wait)['current_index']);
     }
 
-    private function gamePhase(?LiveQuizSession &$session = null): LiveQuizSession
+    private function gamePhase(?LiveQuizSession &$session = null, ?string $game = 'compute-it-runner'): LiveQuizSession
     {
-        $session = $this->newSession($this->quiz(3));
+        $session = $this->newSession($this->quiz(5), 'game', $game);
         $this->actingAs($this->teacher)->post(route('live-quiz.session.launch', $session));
-        $this->expire($session);
-        $this->sync($session);          // question -> results
-        $this->expire($session);
-        $this->sync($session);          // results -> game
-        $session->refresh();
+        for ($i = 0; $i < 12; $i++) {
+            $this->expire($session);
+            $this->sync($session);
+            $session->refresh();
+            if ($session->phase === 'game') {
+                break;
+            }
+        }
         $this->assertSame('game', $session->phase);
+        $this->assertSame(3, (int) $session->current_index, 'mini oyun 4. sorudan sonra gelir');
         // 5 sn geçmiş say (ilk bölüm bildirimi çok hızlı sayılmasın)
         $session->update(['ends_at_ms' => (int) floor(microtime(true) * 1000) + QuizMiniGame::DURATION_MS - 5000]);
 
@@ -158,7 +228,7 @@ class LiveQuizMiniGameTest extends TestCase
     public function test_student_screen_gets_the_shared_block_and_a_matching_runner_grant(): void
     {
         $session = $this->gamePhase();
-        $block = $session->between_plan[0];
+        $block = $session->between_plan[3];
 
         foreach ([$this->student, $this->other] as $u) {
             $this->actingAs($u)->get(route('student.live-quiz.play', $session))
@@ -169,6 +239,20 @@ class LiveQuizMiniGameTest extends TestCase
             $this->assertSame($block['from'], $grant['from']);
             $this->assertSame($block['to'], $grant['to']);
         }
+    }
+
+    public function test_random_mode_gives_the_planned_game_and_its_own_xp_cap(): void
+    {
+        $session = $this->gamePhase($tmp, null);
+        $entry = $session->between_plan[3];
+        $slug = $entry['game'];
+
+        $this->actingAs($this->student)->get(route('student.live-quiz.play', $session))
+            ->assertOk()->assertSee('lqGameFrame', false)->assertSee('/' . $slug . '?', false);
+        $this->assertSame($slug, session('runner_grant')['slug']);
+
+        $ok = $this->actingAs($this->student)->postJson(route('student.live-quiz.game-level', $session), ['level_key' => '23', 'level_no' => 23, 'xp' => 9999])->assertOk();
+        $this->assertSame(QuizMiniGame::xpCap($slug), $ok->json('xp'), 'üst sınır, planlanan oyunun sınırı olmalı');
     }
 
     public function test_server_validates_levels_xp_time_and_duplicates(): void
@@ -194,7 +278,7 @@ class LiveQuizMiniGameTest extends TestCase
 
         // en fazla 10 bölüm
         for ($i = 0; $i < 8; $i++) {
-            LiveQuizGameResult::query()->create(['live_quiz_session_id' => $session->id, 'student_user_id' => $this->student->id, 'break_index' => 0, 'level_key' => 'x'.$i, 'xp' => 1, 'completed_at_ms' => 1]);
+            LiveQuizGameResult::query()->create(['live_quiz_session_id' => $session->id, 'student_user_id' => $this->student->id, 'break_index' => 3, 'level_key' => 'x'.$i, 'xp' => 1, 'completed_at_ms' => 1]);
         }
         $this->actingAs($this->student)->postJson($url, ['level_key' => '99', 'xp' => 10])->assertStatus(422)->assertJsonPath('reason', 'limit');
 

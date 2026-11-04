@@ -141,18 +141,18 @@
 </div>
 @if($r['mini_game'])
 <div class="cx-panel" style="overflow:auto">
-    <h3>Mini Oyun Özeti — {{ $r['mini_game']['name'] }}</h3>
+    <h3>Mini Oyun Özeti</h3>
     <table class="rp-table">
-        <thead><tr><th>Soru arası</th><th>Bölümler</th><th>Oynayan öğrenci</th><th>Öğrenci başına ort. bölüm</th><th>Toplam XP</th></tr></thead>
+        <thead><tr><th>Soru arası</th><th>Oyun</th><th>Bölümler</th><th>Oynayan öğrenci</th><th>Öğrenci başına ort. bölüm</th><th>Toplam XP</th></tr></thead>
         <tbody>
         @forelse($r['mini_game']['breaks'] as $b)
-            <tr><td>{{ $b['break'] }}. sorudan sonra</td><td>{{ $b['from'] }}–{{ $b['to'] }}</td><td>{{ $b['students'] }}</td><td>{{ $b['avg_levels'] }} / 10</td><td><b>{{ $b['xp'] }}</b></td></tr>
+            <tr><td>{{ $b['break'] }}. sorudan sonra</td><td>{{ $b['game'] }}</td><td>{{ $b['from'] }}–{{ $b['to'] }}</td><td>{{ $b['students'] }}</td><td>{{ $b['avg_levels'] }} / 10</td><td><b>{{ $b['xp'] }}</b></td></tr>
         @empty
-            <tr><td colspan="5">Mini oyun kaydı yok.</td></tr>
+            <tr><td colspan="6">Mini oyun kaydı yok.</td></tr>
         @endforelse
         </tbody>
     </table>
-    <p style="margin:10px 0 0">Mini oyun XP'si öğrencinin quiz puanına ve toplam XP'sine eklenmiştir. Her soru arasında herkese aynı 10 bölüm verilir.</p>
+    <p style="margin:10px 0 0">Mini oyun XP'si öğrencinin quiz puanına ve toplam XP'sine eklenmiştir. Mini oyun 4 soruda bir gelir; her seferinde herkese aynı oyun ve aynı 10 bölüm verilir.</p>
 </div>
 @endif
 @endif

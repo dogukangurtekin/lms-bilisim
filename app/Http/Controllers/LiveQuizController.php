@@ -266,11 +266,14 @@ class LiveQuizController extends Controller
 
         // Soru arası: 5 sn bekle (varsayılan) ya da Oyun ve Etkinlikler'den 30 sn'lik mini oyun.
         $betweenMode = $request->input('between_mode') === 'game' ? 'game' : 'wait';
-        $betweenGame = null;
+        $betweenGame = null;   // null = her mini oyunda tüm kodlama oyunları arasından rastgele
         if ($betweenMode === 'game') {
-            $betweenGame = (string) $request->input('between_game');
-            if (! QuizMiniGame::supported($betweenGame)) {
-                return back()->with('err', 'Mini oyun için geçerli bir oyun seçin.');
+            $choice = (string) $request->input('between_game', 'random');
+            if ($choice !== '' && $choice !== 'random') {
+                if (! QuizMiniGame::supported($choice)) {
+                    return back()->with('err', 'Mini oyun için geçerli bir oyun seçin.');
+                }
+                $betweenGame = $choice;
             }
         }
 
@@ -321,10 +324,10 @@ class LiveQuizController extends Controller
             'ends_at_ms' => $nowMs + $durationMs,
         ]);
 
-        // Mini oyun modunda her soru arasının bölüm bloğu şimdi seçilir ve saklanır: tüm öğrencilere aynı bölümler gelir.
-        if ($session->between_mode === 'game' && QuizMiniGame::supported((string) $session->between_game)) {
-            $breaks = max(0, (int) $session->quiz()->first()?->questions()->count() - 1);
-            $session->update(['between_plan' => QuizMiniGame::plan((string) $session->between_game, $breaks)]);
+        // Mini oyun modunda 4 soruda bir gelecek mini oyunların oyunu ve bölüm bloğu şimdi seçilir ve saklanır: tüm öğrencilere aynı oyun ve bölümler gelir.
+        if ($session->between_mode === 'game') {
+            $questionCount = (int) $session->quiz()->first()?->questions()->count();
+            $session->update(['between_plan' => QuizMiniGame::plan($session->between_game, $questionCount)]);
         }
 
         return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');
@@ -1383,15 +1386,33 @@ class LiveQuizController extends Controller
     // Mini oyun (soru araları): Oyun ve Etkinlikler'den 30 sn, 10 bölüm
     // ------------------------------------------------------------------
 
-    /** Bu soru arasında oynanacak bölüm bloğu [from, to] ya da (mini oyun kapalıysa) null. */
-    private function miniBlock(LiveQuizSession $session, int $breakIndex): ?array
+    /**
+     * Bu soru arasında oynanacak mini oyun: ['game' => slug, 'from' => n, 'to' => n]; bu arada mini oyun yoksa null
+     * (mini oyun 4 soruda bir gelir). Eski oturumlarda plan satırında oyun yoksa oturumun oyunu kullanılır.
+     */
+    private function miniEntry(LiveQuizSession $session, int $breakIndex): ?array
     {
-        if ($session->between_mode !== 'game' || ! QuizMiniGame::supported((string) $session->between_game)) {
+        if ($session->between_mode !== 'game') {
             return null;
         }
         $block = ((array) $session->between_plan)[$breakIndex] ?? null;
+        if (! is_array($block) || ! isset($block['from'], $block['to'])) {
+            return null;
+        }
+        $game = (string) ($block['game'] ?? $session->between_game);
+        if (! QuizMiniGame::supported($game)) {
+            return null;
+        }
 
-        return (is_array($block) && isset($block['from'], $block['to'])) ? [(int) $block['from'], (int) $block['to']] : null;
+        return ['game' => $game, 'from' => (int) $block['from'], 'to' => (int) $block['to']];
+    }
+
+    /** Bu soru arasında oynanacak bölüm bloğu [from, to] ya da (mini oyun yoksa) null. */
+    private function miniBlock(LiveQuizSession $session, int $breakIndex): ?array
+    {
+        $e = $this->miniEntry($session, $breakIndex);
+
+        return $e === null ? null : [$e['from'], $e['to']];
     }
 
     private function startQuestion(LiveQuizSession $session, $questions, int $index, int $nowMs): LiveQuizSession
@@ -1434,7 +1455,7 @@ class LiveQuizController extends Controller
             return null;
         }
         [$from, $to] = $block;
-        $slug = (string) $session->between_game;
+        $slug = $this->miniEntry($session, (int) $session->current_index)['game'];
         $breakIndex = (int) $session->current_index;
         $assignmentId = 'quizgame-' . $session->id . '-' . $breakIndex;
 
@@ -1490,7 +1511,7 @@ class LiveQuizController extends Controller
         })->sort(fn (array $a, array $b) => [$b['xp'], $b['levels']] <=> [$a['xp'], $a['levels']])->values()->all();
 
         return [
-            'name' => QuizMiniGame::name((string) $session->between_game),
+            'name' => QuizMiniGame::name($this->miniEntry($session, (int) $session->current_index)['game']),
             'from' => $block[0],
             'to' => $block[1],
             'rows' => $rows,
@@ -1516,6 +1537,7 @@ class LiveQuizController extends Controller
             $b = $byBreak->get($i);
             $breaks[] = [
                 'break' => $i + 1,
+                'game' => QuizMiniGame::name((string) ($block['game'] ?? $session->between_game)),
                 'from' => (int) ($block['from'] ?? 0),
                 'to' => (int) ($block['to'] ?? 0),
                 'students' => (int) ($b->students ?? 0),
@@ -1524,7 +1546,7 @@ class LiveQuizController extends Controller
             ];
         }
 
-        return ['name' => QuizMiniGame::name((string) $session->between_game), 'breaks' => $breaks];
+        return ['name' => 'Kodlama oyunları', 'breaks' => $breaks];
     }
 
     /**
@@ -1569,7 +1591,7 @@ class LiveQuizController extends Controller
             return response()->json(['ok' => false, 'reason' => 'too_fast'], 422);
         }
 
-        $xp = min((int) ($data['xp'] ?? 0), QuizMiniGame::xpCap((string) $session->between_game));
+        $xp = min((int) ($data['xp'] ?? 0), QuizMiniGame::xpCap($this->miniEntry($session, $breakIndex)['game']));
         LiveQuizGameResult::query()->insertOrIgnore([[
             'live_quiz_session_id' => $session->id,
             'student_user_id' => $userId,

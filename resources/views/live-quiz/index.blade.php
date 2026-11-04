@@ -178,10 +178,11 @@
                                 <select name="between_mode" aria-label="Soru arası" style="padding:8px;border:1px solid #cbd5e1;border-radius:8px"
                                     onchange="this.form.querySelector('[name=between_game]').style.display = this.value === 'game' ? '' : 'none'">
                                     <option value="wait">Soru arası: 5 sn bekle</option>
-                                    <option value="game">Soru arası: Mini oyun (30 sn)</option>
+                                    <option value="game">Soru arası: Mini oyun (4 soruda bir, 30 sn)</option>
                                 </select>
-                                <select name="between_game" aria-label="Mini oyun" style="display:none;padding:8px;border:1px solid #cbd5e1;border-radius:8px" title="Oyun ve Etkinlikler'den; her soru arasında 11. bölümden sonraki 10 bölüm, herkese aynı">
-                                    @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
+                                <select name="between_game" aria-label="Mini oyun" style="display:none;padding:8px;border:1px solid #cbd5e1;border-radius:8px" title="Rastgele: her mini oyunda tüm kodlama oyunlarından biri, 10-40. bölümler arasından rastgele 10 bölüm gelir">
+                                    <option value="random" selected>🎲 Rastgele (tüm kodlama oyunları)</option>
+                                    @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">Yalnızca: {{ $gameName }}</option>@endforeach
                                 </select>
                                 @if(auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled())
                                     <label style="display:flex;align-items:center;gap:5px;font-weight:700;font-size:13px" title="Giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1" style="width:auto;margin:0"> 🌐 Herkese açık</label>
