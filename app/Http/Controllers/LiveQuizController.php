@@ -285,6 +285,21 @@ class LiveQuizController extends Controller
 
         // Herkese açık oturum: yalnızca yönetici ve profilindeki "Canlı Quiz" anahtarı açıkken.
         $isPublic = $request->boolean('is_public') && (bool) auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled();
+        // Mini oyun bölüm aralığı (varsayılan 5-30): rastgele seçilen 10'luk bölüm bloğu bu aralıktan çıkar.
+        $levelFrom = null;
+        $levelTo = null;
+        if ($betweenMode === 'game') {
+            $levelFrom = max(1, (int) $request->input('level_from', QuizMiniGame::FIRST_LEVEL));
+            $levelTo = min(200, (int) $request->input('level_to', QuizMiniGame::LAST_LEVEL));
+            if ($levelTo - $levelFrom + 1 < QuizMiniGame::BLOCK_SIZE) {
+                return back()->with('err', 'Bölüm aralığı en az ' . QuizMiniGame::BLOCK_SIZE . ' bölüm olmalı (örn. 5-30).');
+            }
+            $pool = $betweenGame !== null ? [$betweenGame] : array_keys(QuizMiniGame::GAMES);
+            if (! array_filter($pool, fn (string $g) => QuizMiniGame::blockStarts($g, $levelFrom, $levelTo) !== [])) {
+                return back()->with('err', 'Bu bölüm aralığında oynanabilir bölüm yok; oyunlardaki bölüm sayısı sınırlıdır. Aralığı daraltın.');
+            }
+        }
+
         $publicNote = '';
         if ($isPublic && $betweenMode === 'game') {
             // Herkese açık quizde yalnızca profilde "herkese açık" işaretli oyunlar kullanılır.
@@ -310,6 +325,8 @@ class LiveQuizController extends Controller
             'phase' => 'lobby',
             'between_mode' => $betweenMode,
             'between_game' => $betweenGame,
+            'between_from' => $levelFrom,
+            'between_to' => $levelTo,
             'is_public' => $isPublic,
             'current_index' => 0,
             'is_locked' => true,
@@ -346,7 +363,7 @@ class LiveQuizController extends Controller
         // Mini oyun modunda 4 soruda bir gelecek mini oyunların oyunu ve bölüm bloğu şimdi seçilir ve saklanır: tüm öğrencilere aynı oyun ve bölümler gelir.
         if ($session->between_mode === 'game') {
             $questionCount = (int) $session->quiz()->first()?->questions()->count();
-            $session->update(['between_plan' => QuizMiniGame::plan($session->between_game, $questionCount, $session->is_public ? QuizMiniGame::publicGames() : null)]);
+            $session->update(['between_plan' => QuizMiniGame::plan($session->between_game, $questionCount, $session->is_public ? QuizMiniGame::publicGames() : null, $session->between_from, $session->between_to)]);
         }
 
         return back()->with('ok', 'Quiz herkes icin ayni anda baslatildi.');

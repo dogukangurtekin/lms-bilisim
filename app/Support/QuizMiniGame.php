@@ -70,15 +70,16 @@ class QuizMiniGame
     }
 
     /** Seçilebilecek 10'luk blokların başlangıç bölümleri (10 ... son-9). */
-    public static function blockStarts(string $slug): array
+    public static function blockStarts(string $slug, ?int $from = null, ?int $to = null): array
     {
-        $last = min(self::LAST_LEVEL, (int) (self::GAMES[$slug]['levels'] ?? 0));
+        $from = max(1, $from ?? self::FIRST_LEVEL);
+        $last = min($to ?? self::LAST_LEVEL, (int) (self::GAMES[$slug]['levels'] ?? 0));
         $maxStart = $last - self::BLOCK_SIZE + 1;
-        if ($maxStart < self::FIRST_LEVEL) {
+        if ($maxStart < $from) {
             return [];
         }
 
-        return range(self::FIRST_LEVEL, $maxStart);
+        return range($from, $maxStart);
     }
 
     /**
@@ -101,13 +102,13 @@ class QuizMiniGame
      * gelmez). Bölüm bloğu 5-30 arasından rastgele seçilir; aynı oyunda önceki bloklarla üst üste binmemeye çalışılır.
      * Plan oturum başlarken bir kez üretilip saklanır; böylece tüm öğrenciler aynı oyunu ve bölümleri alır.
      */
-    public static function plan(?string $fixedGame, int $questionCount, ?array $allowed = null): array
+    public static function plan(?string $fixedGame, int $questionCount, ?array $allowed = null, ?int $from = null, ?int $to = null): array
     {
         $games = self::supported($fixedGame) ? [$fixedGame] : array_keys(self::GAMES);
         if ($allowed !== null) {          // herkese açık oturum: yalnızca profilde "herkese açık" işaretli oyunlar
             $games = array_values(array_intersect($games, $allowed));
         }
-        $games = array_values(array_filter($games, fn (string $g) => self::blockStarts($g) !== []));
+        $games = array_values(array_filter($games, fn (string $g) => self::blockStarts($g, $from, $to) !== []));
         if ($games === []) {
             return [];
         }
@@ -120,7 +121,7 @@ class QuizMiniGame
             $candidates = $candidates === [] ? $games : $candidates;
             $game = $candidates[random_int(0, count($candidates) - 1)];
 
-            $starts = self::blockStarts($game);
+            $starts = self::blockStarts($game, $from, $to);
             $used = $usedByGame[$game] ?? [];
             $free = array_values(array_filter($starts, function (int $s) use ($used) {
                 foreach ($used as $u) {

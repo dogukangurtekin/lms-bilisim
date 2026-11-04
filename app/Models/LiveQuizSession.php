@@ -19,6 +19,8 @@ class LiveQuizSession extends Model
         'phase',
         'between_mode',
         'between_game',
+        'between_from',
+        'between_to',
         'between_plan',
         'is_public',
         'current_index',

@@ -36,6 +36,7 @@
 .quiz-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.quiz-actions form{margin:0}.quiz-actions .btn{white-space:nowrap}
 .quiz-danger{background:#dc2626!important;color:#fff!important;border-color:#dc2626!important}
 .quiz-actions-row{flex-wrap:nowrap;gap:6px}
+.quiz-levels{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#64748b;white-space:nowrap}.quiz-levels input{width:52px;padding:5px 4px;font-size:13px;border:1px solid #cbd5e1;border-radius:8px;margin:0;text-align:center}
 .quiz-start-form{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
 .quiz-between{width:auto;max-width:170px;padding:6px 8px;font-size:13px;border:1px solid #cbd5e1;border-radius:8px;margin:0}
 .quiz-public{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:700;cursor:pointer;margin:0;white-space:nowrap}
@@ -190,6 +191,7 @@
                                         @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
                                     </optgroup>
                                 </select>
+                                <span class="quiz-levels" title="Mini oyun bölüm aralığı: 10'luk blok bu aralıktan rastgele seçilir (en az 10 bölüm)"><input type="number" name="level_from" value="5" min="1" max="191" aria-label="İlk bölüm"> – <input type="number" name="level_to" value="30" min="10" max="200" aria-label="Son bölüm"></span>
                                 @if(auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled())
                                     <label class="quiz-public" title="Herkese açık: giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1"> 🌐</label>
                                 @endif
