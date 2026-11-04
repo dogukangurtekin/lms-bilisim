@@ -92,9 +92,7 @@
         .login-actions{display:flex;gap:10px;align-items:stretch}
         .login-actions .btn{margin-top:0;width:auto;min-height:46px;flex:1;background:var(--surface);color:var(--ink);border:1.5px solid var(--line);font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
         .login-actions .btn:hover{background:var(--paper);border-color:var(--ink-soft)}
-        .btn-game svg{width:19px;height:19px;fill:var(--signal)}
         .btn-qr svg{width:19px;height:19px;fill:var(--violet)}
-        .game-login-help{margin-top:12px;font-size:12px;color:var(--ink-soft);line-height:1.45;text-align:left}
         .error-box{background:var(--signal-tint);border:1px solid #ffd4bb;border-radius:10px;color:#b8481f;padding:10px 12px;margin-bottom:16px;font-size:13.5px}
         .mini-game-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,.55);z-index:1200}
         .mini-game-modal.open{display:flex}
@@ -103,30 +101,6 @@
         .mini-game-head h3{margin:0;font-size:20px}
         .mini-game-head p{margin:3px 0 0;color:#64748b;font-size:13px}
         .mini-game-close{background:#e2e8f0;color:#0f172a;border:0;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700}
-        #loginGameCanvas{width:100%;height:430px;background:linear-gradient(180deg,#e0f2fe,#dbeafe 48%,#bbf7d0);border-radius:12px;border:1px solid #bfdbfe;display:block;touch-action:none}
-        .mini-game-foot{margin-top:8px;color:#334155;font-size:13px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-        .mini-game-win{color:#065f46;font-weight:800}
-        .mini-game-stars{color:#f59e0b;font-weight:800}
-        .win-toast{
-            position:absolute;
-            left:50%;
-            top:50%;
-            transform:translate(-50%,-50%) scale(.9);
-            padding:14px 18px;
-            border-radius:14px;
-            background:linear-gradient(135deg,#22c55e,#16a34a);
-            color:#fff;
-            font-weight:800;
-            font-size:18px;
-            box-shadow:0 16px 40px rgba(22,163,74,.35);
-            opacity:0;
-            pointer-events:none;
-            transition:all .28s ease;
-            z-index:20;
-            text-align:center;
-            min-width:300px;
-        }
-        .win-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
         @keyframes twinkle{0%,100%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1.4)}}
         @keyframes streak{0%{transform:translateX(0) scaleX(.5)}100%{transform:translateX(30px) scaleX(1)}}
@@ -155,8 +129,8 @@
                 overflow-wrap:anywhere;
                 word-break:break-word;
             }
-            .btn-game,.btn-qr{gap:6px}
-            .btn-game svg,.btn-qr svg{width:22px;height:22px}
+            .btn-qr{gap:6px}
+            .btn-qr svg{width:22px;height:22px}
         }
 
         @media (max-width: 640px){
@@ -218,17 +192,8 @@
                 font-size:13px;
                 border-radius:10px;
             }
-            .btn-game,
             .btn-qr{
                 justify-content:center;
-            }
-            .game-login-help{
-                font-size:11px;
-                line-height:1.4;
-                margin-top:8px;
-            }
-            #loginGameCanvas{
-                height:300px;
             }
             .mini-game-card{
                 width:min(96vw, 760px);
@@ -238,8 +203,7 @@
             .mini-game-head h3{
                 font-size:17px;
             }
-            .mini-game-head p,
-            .mini-game-foot{
+            .mini-game-head p{
                 font-size:12px;
             }
         }
@@ -329,17 +293,10 @@
                 <div class="login-divider">veya</div>
 
                 <div class="login-actions">
-                    <button class="btn btn-game" type="button" id="openGameLoginBtn">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10a3 3 0 013 3v6a3 3 0 01-3 3h-1.5l-2.2 2.2a1 1 0 01-1.6-.3L10.4 18H7a3 3 0 01-3-3V9a3 3 0 013-3zm1 3v2h2v2h2v-2h2V9h-2V7h-2v2H8zm8 0h2v2h-2V9z"/></svg>
-                        Oyun ile Giriş
-                    </button>
                     <button class="btn btn-qr" type="button" id="openQrLoginBtn">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 0h2v6h-6v-2h4v-4zM8 8h8v8H8V8zm2 2v4h4v-4h-4z"/></svg>
                         QR ile Giriş
                     </button>
-                </div>
-                <div class="game-login-help">
-                    Oyun ile giriş için kullanıcı adı girmeniz yeterlidir. Oyunu geçince otomatik giriş yapılır.
                 </div>
             </form>
         </div>
@@ -373,23 +330,6 @@
     });
 })();
 </script>
-<div id="miniGameModal" class="mini-game-modal">
-    <div class="mini-game-card">
-        <div class="mini-game-head">
-            <div>
-                <h3>Kanatli Kahraman Oyunu</h3>
-                <p>Bilgi: Ok tuşları veya mobilde kaydırma ile oynanır. Zirveye çıkıp kazanınca giriş yapılır.</p>
-            </div>
-            <button type="button" class="mini-game-close" id="closeGameModalBtn">Kapat</button>
-        </div>
-        <canvas id="loginGameCanvas" width="700" height="430"></canvas>
-        <div id="miniGameWinToast" class="win-toast">🎉 Tebrikler, giriş yapıyorsunuz...</div>
-        <div class="mini-game-foot">
-            <span>Kontroller: Sol/Sağ ok = hareket, Yukarı ok = zıplama | Mobil: Sağa/sola/yukarı kaydır</span>
-            <span id="miniGameStatus">Hazır mısın?</span>
-        </div>
-    </div>
-</div>
 <div id="qrLoginModal" class="mini-game-modal">
     <div class="mini-game-card" style="max-width:420px">
         <div class="mini-game-head">
@@ -402,342 +342,6 @@
         </div>
     </div>
 </div>
-<script>
-(() => {
-    const openBtn = document.getElementById('openGameLoginBtn');
-    const closeBtn = document.getElementById('closeGameModalBtn');
-    const modal = document.getElementById('miniGameModal');
-    const canvas = document.getElementById('loginGameCanvas');
-    const winToast = document.getElementById('miniGameWinToast');
-    const statusEl = document.getElementById('miniGameStatus');
-    const usernameInput = document.getElementById('login-email');
-    if (!openBtn || !canvas || !modal) return;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchActive = false;
-    let gameLoginPending = false;
-
-    const ctx = canvas.getContext('2d');
-    const keys = { left: false, right: false };
-    const gravity = 0.5;
-    const jumpPower = -11.2;
-    let failCount = 0;
-    const state = {
-        running: false,
-        won: false,
-        player: { x: 28, y: 290, w: 28, h: 28, vx: 0, vy: 0, onGround: false, facing: 1, flap: 0 },
-        platforms: [
-            { x: 0, y: 405, w: 700, h: 25 },
-            { x: 46, y: 368, w: 130, h: 12 },
-            { x: 162, y: 334, w: 122, h: 12 },
-            { x: 274, y: 304, w: 126, h: 12 },
-            { x: 392, y: 276, w: 120, h: 12 },
-            { x: 506, y: 248, w: 118, h: 12 },
-            { x: 430, y: 218, w: 108, h: 12 },
-            { x: 320, y: 190, w: 104, h: 12 },
-            { x: 220, y: 162, w: 96, h: 12 },
-            { x: 140, y: 136, w: 90, h: 10 }
-        ],
-        monsters: [
-            { x: 72, y: 350, w: 20, h: 18, minX: 56, maxX: 160, dir: 1, speed: 1.05 },
-            { x: 196, y: 316, w: 20, h: 18, minX: 170, maxX: 276, dir: -1, speed: 1.15 },
-            { x: 316, y: 286, w: 20, h: 18, minX: 286, maxX: 396, dir: 1, speed: 1.2 },
-            { x: 438, y: 258, w: 20, h: 18, minX: 404, maxX: 504, dir: -1, speed: 1.25 },
-            { x: 548, y: 230, w: 20, h: 18, minX: 516, maxX: 616, dir: 1, speed: 1.3 },
-            { x: 352, y: 172, w: 20, h: 18, minX: 326, maxX: 414, dir: -1, speed: 1.35 }
-        ],
-        goal: { x: 154, y: 88, w: 44, h: 24 },
-        stars: [
-            { x: 165, y: 282, taken: false },
-            { x: 364, y: 222, taken: false },
-            { x: 553, y: 170, taken: false }
-        ],
-        easyMode: false
-    };
-
-    function setEasyModeIfNeeded() {
-        state.easyMode = failCount >= 3;
-        if (state.easyMode) {
-            state.monsters.forEach((m) => m.speed = Math.max(0.45, m.speed * 0.55));
-            if (!state.platforms.find((p) => p.x === 112 && p.y === 232)) {
-                state.platforms.push({ x: 112, y: 232, w: 110, h: 12 });
-                state.platforms.push({ x: 156, y: 178, w: 100, h: 12 });
-            }
-        }
-    }
-
-    function playJumpSound() {
-        try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(520, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(240, audioCtx.currentTime + 0.12);
-            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.14);
-        } catch (_) {}
-    }
-
-    function resetGame() {
-        state.won = false;
-        state.player.x = 28; state.player.y = 360; state.player.vx = 0; state.player.vy = 0; state.player.flap = 0;
-        if (winToast) winToast.classList.remove('show');
-        state.stars.forEach((s) => s.taken = false);
-        setEasyModeIfNeeded();
-        statusEl.innerHTML = 'Canavarlardan kaç ve zirveye çık! <span class="mini-game-stars">Deneme: ' + (failCount + 1) + (state.easyMode ? ' · Kolay Mod Aktif ⭐' : '') + '</span>';
-        state.running = true;
-    }
-
-    function intersects(a, b) {
-        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-    }
-
-    function update() {
-        const p = state.player;
-        p.vx = 0;
-        if (keys.left) { p.vx = -3.8; p.facing = -1; }
-        if (keys.right) { p.vx = 3.8; p.facing = 1; }
-        p.x += p.vx;
-        p.x = Math.max(0, Math.min(canvas.width - p.w, p.x));
-        p.vy += gravity;
-        p.y += p.vy;
-        p.onGround = false;
-        p.flap += 0.24;
-
-        for (const plat of state.platforms) {
-            if (p.vy >= 0 && p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h >= plat.y && p.y + p.h <= plat.y + 16) {
-                p.y = plat.y - p.h;
-                p.vy = 0;
-                p.onGround = true;
-            }
-        }
-
-        if (p.y > canvas.height + 40) {
-            failCount++;
-            resetGame();
-        }
-
-        for (const m of state.monsters) {
-            m.x += m.speed * m.dir;
-            if (m.x <= m.minX || m.x + m.w >= m.maxX) m.dir *= -1;
-            if (intersects(p, m)) {
-                failCount++;
-                statusEl.textContent = 'Canavara yakalandin. Tekrar dene!';
-                resetGame();
-                return;
-            }
-        }
-
-        for (const s of state.stars) {
-            if (s.taken) continue;
-            if (intersects(p, { x: s.x - 8, y: s.y - 8, w: 16, h: 16 })) {
-                s.taken = true;
-            }
-        }
-
-        if (intersects(p, state.goal)) {
-            if (gameLoginPending) return;
-            state.won = true;
-            state.running = false;
-            statusEl.innerHTML = '<span class=\"mini-game-win\">Tebrikler! Giriş hazırlanıyor...</span>';
-            if (winToast) winToast.classList.add('show');
-            doGameLogin();
-        }
-    }
-
-    function drawWingedPlayer(p) {
-        ctx.save();
-        ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-        if (p.facing < 0) ctx.scale(-1, 1);
-        const flap = Math.sin(p.flap) * 2.2;
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#f8fafc';
-        ctx.beginPath(); ctx.arc(3, -2, 2.1, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath(); ctx.moveTo(10, 1); ctx.lineTo(16, 4); ctx.lineTo(10, 6); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#a78bfa';
-        ctx.beginPath(); ctx.ellipse(-10, -2 + flap, 7, 4, -0.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(-10, 4 - flap, 8, 4, 0.3, 0, Math.PI * 2); ctx.fill();
-        ctx.restore();
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ffffffcc';
-        for (let i = 0; i < 6; i++) {
-            ctx.beginPath();
-            ctx.arc(70 + i * 118, 42 + (i % 2) * 8, 18, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        ctx.fillStyle = '#8b5cf6';
-        for (const plat of state.platforms) {
-            ctx.fillRect(plat.x, plat.y, plat.w, plat.h);
-            ctx.fillStyle = '#c4b5fd';
-            ctx.fillRect(plat.x, plat.y + plat.h - 3, plat.w, 3);
-            ctx.fillStyle = '#8b5cf6';
-        }
-        ctx.fillStyle = '#16a34a';
-        ctx.fillRect(state.goal.x, state.goal.y, state.goal.w, state.goal.h);
-        ctx.fillStyle = '#052e16';
-        ctx.fillText('HEDEF', state.goal.x + 4, state.goal.y + 17);
-
-        for (const m of state.monsters) {
-            ctx.fillStyle = '#ef4444';
-            ctx.fillRect(m.x, m.y, m.w, m.h);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(m.x + 4, m.y + 6, 4, 4);
-            ctx.fillRect(m.x + 14, m.y + 6, 4, 4);
-        }
-
-        for (const s of state.stars) {
-            if (s.taken) continue;
-            ctx.fillStyle = '#f59e0b';
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y - 8);
-            ctx.lineTo(s.x + 3, s.y - 2);
-            ctx.lineTo(s.x + 9, s.y - 2);
-            ctx.lineTo(s.x + 4, s.y + 2);
-            ctx.lineTo(s.x + 6, s.y + 8);
-            ctx.lineTo(s.x, s.y + 4);
-            ctx.lineTo(s.x - 6, s.y + 8);
-            ctx.lineTo(s.x - 4, s.y + 2);
-            ctx.lineTo(s.x - 9, s.y - 2);
-            ctx.lineTo(s.x - 3, s.y - 2);
-            ctx.closePath();
-            ctx.fill();
-        }
-        drawWingedPlayer(state.player);
-
-        const collected = state.stars.filter((s) => s.taken).length;
-        ctx.fillStyle = '#0f172a';
-        ctx.font = 'bold 13px Manrope, sans-serif';
-        ctx.fillText('Yildiz: ' + collected + '/' + state.stars.length, 12, 22);
-    }
-
-    function loop() {
-        if (state.running) update();
-        draw();
-        requestAnimationFrame(loop);
-    }
-
-    async function doGameLogin() {
-        if (gameLoginPending) return;
-        const emailVal = (usernameInput?.value || '').trim();
-        if (!emailVal) {
-            statusEl.textContent = 'Lutfen once kullanici adini gir.';
-            state.running = true;
-            state.won = false;
-            return;
-        }
-        gameLoginPending = true;
-        try {
-            const resp = await fetch('{{ route('login.game') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]')?.getAttribute('content') || '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ email: emailVal, game_won: true })
-            });
-            const data = await resp.json();
-            if (!resp.ok) throw new Error(data.message || 'Giriş başarısız');
-            setTimeout(() => window.location.href = data.redirect || '{{ route('dashboard') }}', 1700);
-        } catch (e) {
-            statusEl.textContent = e.message || 'Giriş sırasında hata oluştu.';
-            if (winToast) winToast.classList.remove('show');
-            state.running = false;
-            state.won = false;
-            state.player.vx = 0;
-            state.player.vy = 0;
-        } finally {
-            gameLoginPending = false;
-        }
-    }
-
-    window.addEventListener('keydown', (e) => {
-        if (!modal.classList.contains('open')) return;
-        if (e.key === 'ArrowLeft') keys.left = true;
-        if (e.key === 'ArrowRight') keys.right = true;
-        if (e.key === 'ArrowUp' && state.player.onGround && state.running) {
-            state.player.vy = jumpPower;
-            playJumpSound();
-        }
-    });
-    window.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowLeft') keys.left = false;
-        if (e.key === 'ArrowRight') keys.right = false;
-    });
-
-    openBtn.addEventListener('click', () => {
-        const emailVal = (usernameInput?.value || '').trim();
-        if (!emailVal) {
-            statusEl.textContent = 'Oyunla giriş için önce kullanıcı adını gir.';
-            return;
-        }
-        modal.classList.add('open');
-        gameLoginPending = false;
-        resetGame();
-    });
-    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.remove('open');
-    });
-    modal.addEventListener('transitionend', () => {
-        if (!modal.classList.contains('open') && winToast) winToast.classList.remove('show');
-    });
-    modal.addEventListener('touchmove', (e) => {
-        if (modal.classList.contains('open')) e.preventDefault();
-    }, { passive: false });
-
-    canvas.addEventListener('touchstart', (e) => {
-        if (!modal.classList.contains('open')) return;
-        const t = e.touches[0];
-        touchStartX = t.clientX;
-        touchStartY = t.clientY;
-        touchActive = true;
-        e.preventDefault();
-    }, { passive: false });
-
-    canvas.addEventListener('touchmove', (e) => {
-        if (!touchActive || !modal.classList.contains('open')) return;
-        const t = e.touches[0];
-        const dx = t.clientX - touchStartX;
-        const dy = t.clientY - touchStartY;
-        keys.left = false;
-        keys.right = false;
-        if (Math.abs(dx) > 22) {
-            if (dx > 0) keys.right = true;
-            if (dx < 0) keys.left = true;
-        }
-        if (dy < -24 && state.player.onGround && state.running) {
-            state.player.vy = jumpPower;
-            playJumpSound();
-            touchStartY = t.clientY;
-        }
-        e.preventDefault();
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', () => {
-        touchActive = false;
-        keys.left = false;
-        keys.right = false;
-    });
-
-    ctx.font = '13px Manrope, sans-serif';
-    resetGame();
-    state.running = false;
-    draw();
-    loop();
-})();
-</script>
 <script src="{{ asset('js/vendor/qrcode.js') }}"></script>
 <script>
 (() => {

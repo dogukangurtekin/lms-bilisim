@@ -152,7 +152,6 @@ Route::middleware('guest')->group(function () {
     // bazlı ayrı bir RateLimiter ile yapılıyor; bu route limiti sadece kaba
     // bir üst sınır olduğu için sınıf kullanımına uygun şekilde yükseltildi.
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:120,1')->name('login.attempt');
-    Route::post('/login/game', [AuthController::class, 'gameLogin'])->middleware('throttle:120,1')->name('login.game');
     Route::post('/qr/guest/generate', [QrLoginController::class, 'generateGuest'])->middleware('throttle:120,1')->name('qr.guest.generate');
     Route::get('/qr/guest/status/{token}', [QrLoginController::class, 'status'])->name('qr.guest.status');
 });

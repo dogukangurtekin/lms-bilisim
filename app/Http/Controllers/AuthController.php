@@ -134,49 +134,6 @@ class AuthController extends Controller
             ->first();
     }
 
-    public function gameLogin(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => ['required', 'string'],
-            'game_won' => ['required', 'boolean'],
-        ]);
-
-        if (! (bool) $validated['game_won']) {
-            return response()->json(['message' => 'Oyun kazanilmadan giris yapilamaz.'], 422);
-        }
-
-        $user = $this->resolveLoginUser((string) $validated['email']);
-        if (! $user || ! $user->hasRole('student')) {
-            return response()->json(['message' => 'Bu yontem yalnizca ogrenci hesaplari icin kullanilabilir.'], 422);
-        }
-
-        if (MaintenanceMode::active()) {
-            return CheckMaintenanceMode::respond($request);
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-        $request->session()->put('auth_at', now()->timestamp);
-
-        $student = Student::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            ['student_no' => $this->generateStudentNo()]
-        );
-
-        $stat = StudentTimeStat::firstOrCreate(
-            ['student_id' => $student->id],
-            ['total_seconds' => 0, 'last_seen_at' => now()]
-        );
-        $stat->last_seen_at = now();
-        $stat->save();
-
-        return response()->json([
-            'ok' => true,
-            'message' => 'Tebrikler, giris yapiliyor.',
-            'redirect' => route('dashboard'),
-        ]);
-    }
-
     private function loginThrottleKey(Request $request): string
     {
         return 'login|' . strtolower((string) $request->input('email', '')) . '|' . $request->ip();
