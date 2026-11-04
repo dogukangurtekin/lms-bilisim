@@ -2,7 +2,23 @@
 @section('title', 'Ders Programı')
 @section('content')
 @include('attendance._style')
-@php $days = \App\Models\LessonSlot::WEEKDAYS; @endphp
+@php $days = $weekdays = \App\Models\LessonSlot::WEEKDAYS; @endphp
+<style>
+    .att-grid{width:100%;border-collapse:collapse;min-width:640px;table-layout:fixed}
+    .att-grid th,.att-grid td{border:1px solid #cbd5e1;text-align:center;vertical-align:middle;padding:6px 4px}
+    .att-grid thead th{background:#f1f5f9;font-weight:600;font-size:12.5px;color:#334155}
+    .att-grid thead th b{display:block;font-size:17px;color:#0f172a}
+    .att-grid thead th small{display:block;font-size:11px;color:#64748b;white-space:nowrap}
+    .att-grid-day{width:88px;background:#f8fafc!important;font-size:24px!important;font-weight:700!important;color:#0f172a!important}
+    .att-grid-day small{display:block;font-size:10.5px;font-weight:600;color:#64748b}
+    .att-grid td{height:66px;background:#fff}
+    .att-cls{position:relative;display:inline-flex;flex-direction:column;align-items:center;min-width:54px;margin:2px;padding:4px 18px 4px 10px;border-radius:10px;background:#eef2ff;border:1px solid #c7d2fe}
+    .att-cls b{font-size:15px;color:#3730a3;line-height:1.2}
+    .att-cls small{font-size:9.5px;font-weight:700;color:#475569;text-transform:uppercase;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .att-cls form{margin:0;position:absolute;top:1px;right:1px}
+    .att-cls button{border:0;background:transparent;color:#94a3b8;font-size:11px;line-height:1;cursor:pointer;padding:3px}
+    .att-cls button:hover{color:#b91c1c}
+</style>
 <div class="att">
     <div class="top">
         <h1>🗓 Ders Programı</h1>
@@ -59,39 +75,45 @@
         </div>
     </div>
 
+    @php $short = [1 => 'Pa', 2 => 'Sa', 3 => 'Ça', 4 => 'Pe', 5 => 'Cu', 6 => 'Ct', 7 => 'Pz']; @endphp
     <div class="att-card">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;justify-content:space-between;margin-bottom:10px">
             <h3 style="margin:0">Haftalık Program</h3>
-            <form method="GET" class="att-filter" style="gap:8px">
-                <select name="class_id" onchange="this.form.submit()" aria-label="Sınıf">
-                    @foreach($classes as $c)<option value="{{ $c->id }}" @selected($selected === (int) $c->id)>{{ $c->name }}/{{ $c->section }} ({{ (int) ($counts[$c->id] ?? 0) }} ders)</option>@endforeach
-                </select>
-            </form>
+            <small class="muted">{{ $totalSlots }} ders · tüm sınıflar tek tabloda</small>
         </div>
         @if($classes->isEmpty())
             <div class="att-empty">Size atanmış sınıf bulunamadı.</div>
-        @elseif($slots->isEmpty())
-            <div class="att-empty">Bu sınıf için henüz ders tanımlanmamış. Şablonla yükleyebilir ya da yukarıdan tek ders ekleyebilirsiniz.</div>
+        @elseif($totalSlots === 0)
+            <div class="att-empty">Henüz ders tanımlanmamış. Şablonla yükleyebilir ya da yukarıdan tek ders ekleyebilirsiniz.</div>
         @else
-            <div class="att-wrap"><table class="att-table">
-                <thead><tr><th>Gün</th><th>Saat</th><th>Ders no</th><th>Ders</th><th>Öğretmen</th><th></th></tr></thead>
+            <div class="att-wrap"><table class="att-grid">
+                <thead>
+                    <tr>
+                        <th class="att-grid-day"></th>
+                        @foreach($columns as $c)
+                            <th><b>{{ $c['no'] ?: '' }}</b><small>{{ $c['start'] }} - {{ $c['end'] }}</small></th>
+                        @endforeach
+                    </tr>
+                </thead>
                 <tbody>
-                @foreach($slots as $weekday => $list)
-                    @foreach($list as $s)
-                        <tr>
-                            <td>@if($loop->first)<b>{{ $days[$weekday] ?? $weekday }}</b>@endif</td>
-                            <td>{{ $s->timeLabel() }}</td>
-                            <td>{{ $s->lesson_no ?: '—' }}</td>
-                            <td>{{ $s->subject }}</td>
-                            <td>{{ $s->teacher?->name ?? '—' }}</td>
+                @foreach($dayNums as $d)
+                    <tr>
+                        <th class="att-grid-day" title="{{ $weekdays[$d] ?? $d }}">{{ $short[$d] ?? $d }}<small>{{ $weekdays[$d] ?? '' }}</small></th>
+                        @foreach($columns as $c)
                             <td>
-                                <form method="POST" action="{{ route('attendance.schedule.destroy', $s) }}" data-confirm="Bu ders programdan silinsin mi? (Geçmiş yoklama kayıtları korunur.)" style="margin:0">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-danger btn-sm" type="submit" title="Sil">🗑</button>
-                                </form>
+                                @foreach(($grid[$d][$c['key']] ?? []) as $s)
+                                    <div class="att-cls" title="{{ $s->schoolClass?->name }}/{{ $s->schoolClass?->section }} · {{ $s->subject }}">
+                                        <b>{{ $s->schoolClass?->name }}{{ $s->schoolClass?->section }}</b>
+                                        <small>{{ $s->subject }}</small>
+                                        <form method="POST" action="{{ route('attendance.schedule.destroy', $s) }}" data-confirm="{{ $s->schoolClass?->name }}{{ $s->schoolClass?->section }} - {{ $weekdays[$d] ?? '' }} {{ $c['start'] }} dersi programdan silinsin mi? (Geçmiş yoklama kayıtları korunur.)">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" title="Dersi sil" aria-label="Dersi sil">✕</button>
+                                        </form>
+                                    </div>
+                                @endforeach
                             </td>
-                        </tr>
-                    @endforeach
+                        @endforeach
+                    </tr>
                 @endforeach
                 </tbody>
             </table></div>

@@ -139,13 +139,25 @@ class AttendanceController extends Controller
             $this->authorizeClass($selected);
         }
 
-        $slots = $selected > 0 ? LessonSlot::query()->with('teacher')->where('school_class_id', $selected)->orderBy('weekday')->orderBy('start_time')->get()->groupBy('weekday') : collect();
-        $counts = LessonSlot::query()->when($this->scope() !== null, fn ($q) => $q->whereIn('school_class_id', $this->scope()))
-            ->selectRaw('school_class_id, COUNT(*) as c')->groupBy('school_class_id')->pluck('c', 'school_class_id');
+        // Tüm sınıfların haftalık programı tek tabloda: satırlar gün, sütunlar ders saatleri (öğretmen programı gibi).
+        $scope = $this->scope();
+        $all = LessonSlot::query()->with('schoolClass')->when($scope !== null, fn ($q) => $q->whereIn('school_class_id', $scope))->orderBy('start_time')->get();
+        $key = fn (LessonSlot $s) => substr((string) $s->start_time, 0, 5) . '|' . substr((string) $s->end_time, 0, 5);
+        $columns = $all->groupBy($key)->map(function ($list, $k) {
+            [$start, $end] = explode('|', $k);
+            $no = $list->pluck('lesson_no')->filter()->countBy()->sortDesc()->keys()->first();
+
+            return ['key' => $k, 'start' => $start, 'end' => $end, 'no' => $no];
+        })->sortBy('start')->values();
+        $grid = [];
+        foreach ($all->sortBy(fn ($s) => sprintf('%02d-%s-%s', (int) ($s->schoolClass?->grade_level ?? 0), $s->schoolClass?->name, $s->schoolClass?->section)) as $s) {
+            $grid[(int) $s->weekday][$key($s)][] = $s;
+        }
+        $days = collect([1, 2, 3, 4, 5])->merge($all->pluck('weekday')->map(fn ($d) => (int) $d))->unique()->sort()->values();
         $teachers = User::query()->whereHas('role', fn ($q) => $q->whereIn('slug', ['teacher', 'admin']))->orderBy('name')->get(['id', 'name']);
 
         return view('attendance.schedule', [
-            'classes' => $classes, 'selected' => $selected, 'slots' => $slots, 'counts' => $counts, 'teachers' => $teachers,
+            'classes' => $classes, 'selected' => $selected, 'columns' => $columns, 'grid' => $grid, 'dayNums' => $days, 'teachers' => $teachers, 'totalSlots' => $all->count(),
             'isAdmin' => auth()->user()->hasRole('admin'),
             'offDays' => AttendanceOffDay::query()->where('date', '>=', now()->subDays(14)->toDateString())->orderBy('date')->limit(40)->get(),
         ]);

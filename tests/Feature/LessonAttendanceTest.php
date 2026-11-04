@@ -325,4 +325,24 @@ class LessonAttendanceTest extends TestCase
         $this->actingAs($this->admin)->post(route('attendance.offday.store'), ['date' => '2026-11-10', 'note' => 'Tatil'])->assertRedirect();
         $this->assertSame(1, AttendanceOffDay::query()->count());
     }
+
+    public function test_weekly_program_shows_all_classes_in_one_grid(): void
+    {
+        $this->slot($this->classA, '09:00:00', '09:40:00', 1);
+        $this->slot($this->classB, '09:00:00', '09:40:00', 1);
+        $this->slot($this->classB, '10:00:00', '10:40:00', 3);
+
+        $html = $this->actingAs($this->admin)->get(route('attendance.schedule'))->assertOk()->getContent();
+        $this->assertStringContainsString('att-grid', $html);
+        foreach (['<b>5A</b>', '<b>6B</b>', '09:00 - 09:40', '10:00 - 10:40', 'Pazartesi', 'Çarşamba'] as $needle) {
+            $this->assertStringContainsString($needle, $html, $needle);
+        }
+        // sınıf seçimiyle tek tek gösterme kalktı
+        $this->assertStringNotContainsString('onchange="this.form.submit()"', $html);
+
+        // öğretmen yalnızca kendi sınıfını görür
+        $t = $this->actingAs($this->teacher)->get(route('attendance.schedule'))->assertOk()->getContent();
+        $this->assertStringContainsString('<b>5A</b>', $t);
+        $this->assertStringNotContainsString('<b>6B</b>', $t);
+    }
 }
