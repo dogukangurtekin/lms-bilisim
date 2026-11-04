@@ -191,7 +191,7 @@
                                         @foreach($miniGames as $slug => $gameName)<option value="{{ $slug }}">{{ $gameName }}</option>@endforeach
                                     </optgroup>
                                 </select>
-                                <span class="quiz-levels" title="Mini oyun bölüm aralığı: 10'luk blok bu aralıktan rastgele seçilir (en az 10 bölüm)"><input type="number" name="level_from" value="5" min="1" max="191" aria-label="İlk bölüm"> – <input type="number" name="level_to" value="30" min="10" max="200" aria-label="Son bölüm"></span>
+                                <span class="quiz-levels" title="Mini oyun bölüm aralığı: 10'luk blok bu aralıktan rastgele seçilir (en az 10 bölüm)"><input type="number" name="level_from" value="5" min="1" max="191" aria-label="İlk bölüm"> – <input type="number" name="level_to" value="30" min="10" max="200" aria-label="Son bölüm"> · <input type="number" name="game_seconds" value="30" min="10" max="300" aria-label="Mini oyun süresi (sn)" title="Mini oyun süresi (saniye)"> sn</span>
                                 @if(auth()->user()?->hasRole('admin') && \App\Support\PublicGamesSetting::liveQuizEnabled())
                                     <label class="quiz-public" title="Herkese açık: giriş yapmadan kod + ad soyad ile herkes katılabilir"><input type="checkbox" name="is_public" value="1"> 🌐</label>
                                 @endif

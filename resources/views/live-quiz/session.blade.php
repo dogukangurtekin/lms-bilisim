@@ -101,7 +101,7 @@
 @if($session->status === 'live' && $session->phase === 'game')
 <div class="card" id="lqGameCard" style="margin-bottom:12px;border-left:5px solid #7c3aed;">
     <h3 style="margin-top:0">🎮 Mini Oyun: <span id="lqGameName">...</span></h3>
-    <p style="margin:4px 0 10px;color:#475569">Bölümler: <b id="lqGameRange">-</b> · Her öğrenci 30 saniyede 10 bölümü çözmeye çalışıyor (herkese aynı bölümler). Kazanılan XP quiz puanına eklenir.</p>
+    <p style="margin:4px 0 10px;color:#475569">Bölümler: <b id="lqGameRange">-</b> · Her öğrenci {{ (int) (\App\Support\QuizMiniGame::durationMs($session->between_seconds) / 1000) }} saniyede 10 bölümü çözmeye çalışıyor (herkese aynı bölümler). Kazanılan XP quiz puanına eklenir.</p>
     <table>
         <thead><tr><th>#</th><th>Öğrenci</th><th>Bölüm</th><th>XP</th></tr></thead>
         <tbody id="lqGameRows"><tr><td colspan="4">Yükleniyor...</td></tr></tbody>
@@ -193,7 +193,7 @@
     const statWrong = document.getElementById('lqStatWrong');
 
     let endsAtMs = {{ (int) ($session->ends_at_ms ?? 0) }};
-    let durationMs = {{ $session->phase === 'intro' ? 3000 : ($session->phase === 'results' ? 5000 : (int) (($current?->duration_sec ?? 30) * 1000)) }};
+    let durationMs = {{ $session->phase === 'intro' ? 3000 : ($session->phase === 'results' ? 5000 : ($session->phase === 'game' ? \App\Support\QuizMiniGame::durationMs($session->between_seconds) : (int) (($current?->duration_sec ?? 30) * 1000))) }};
 
     function renderParticipants(participants) {
         if (!Array.isArray(participants)) return;

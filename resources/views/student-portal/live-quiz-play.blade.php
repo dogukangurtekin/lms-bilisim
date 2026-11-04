@@ -118,7 +118,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
             $timeTotalMs = match ($session->phase) {
                 'intro' => 3000,
                 'results' => 5000,
-                'game' => 30000,
+                'game' => \App\Support\QuizMiniGame::durationMs($session->between_seconds),
                 default => max(5, (int) $q->duration_sec) * 1000,
             };
         @endphp
@@ -181,7 +181,7 @@ body.role-student .lq-stage .lq-result-title.lq-result-bad{color:#fca5a5}
             <div class="lq-game-frame">
                 <iframe id="lqGameFrame" src="{{ $miniGame['url'] }}" title="{{ $miniGame['name'] }}" allow="fullscreen; autoplay"></iframe>
             </div>
-            <p class="lq-auto-note">30 saniye içinde olabildiğince çok bölümü çöz! Kazandığın XP quiz puanına eklenir. Süre bitince sıradaki soru herkes için aynı anda açılır.</p>
+            <p class="lq-auto-note">{{ (int) (\App\Support\QuizMiniGame::durationMs($session->between_seconds) / 1000) }} saniye içinde olabildiğince çok bölümü çöz! Kazandığın XP quiz puanına eklenir. Süre bitince sıradaki soru herkes için aynı anda açılır.</p>
         </div>
     @elseif($session->phase === 'intro')
         <div class="lq-center-stage lq-double-stage">

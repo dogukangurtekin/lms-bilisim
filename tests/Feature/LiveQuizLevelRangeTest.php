@@ -60,4 +60,29 @@ class LiveQuizLevelRangeTest extends TestCase
         $this->actingAs($teacher)->post(route('live-quiz.start', $quiz), ['between' => 'wait', 'level_from' => 40, 'level_to' => 60])->assertSessionHas('ok');
         $this->assertNull(LiveQuizSession::query()->latest('id')->first()->between_from);
     }
+
+    public function test_game_duration_is_chosen_per_session_and_clamped(): void
+    {
+        $this->assertSame(30000, QuizMiniGame::durationMs(null));
+        $this->assertSame(45000, QuizMiniGame::durationMs(45));
+        $this->assertSame(10000, QuizMiniGame::durationMs(3));
+        $this->assertSame(300000, QuizMiniGame::durationMs(9999));
+
+        $role = Role::query()->create(['name' => 'Teacher', 'slug' => 'teacher']);
+        $teacher = User::query()->create(['role_id' => $role->id, 'name' => 'Hoca', 'email' => 'h@t.l', 'password' => 'secret123', 'is_active' => true]);
+        $quiz = LiveQuiz::query()->create(['teacher_user_id' => $teacher->id, 'title' => 'Süre', 'join_mode' => 'code', 'status' => 'active']);
+        LiveQuizQuestion::query()->create(['live_quiz_id' => $quiz->id, 'sort_order' => 0, 'type' => 'multiple', 'question_text' => 'S', 'options' => ['A', 'B'], 'correct_answer' => 'A', 'duration_sec' => 30, 'xp' => 10, 'double_xp' => false]);
+
+        $this->actingAs($teacher)->post(route('live-quiz.start', $quiz), ['between' => 'random', 'game_seconds' => 60])->assertSessionHas('ok');
+        $this->assertSame(60, (int) LiveQuizSession::query()->latest('id')->first()->between_seconds);
+
+        $this->actingAs($teacher)->post(route('live-quiz.start', $quiz), ['between' => 'random', 'game_seconds' => 2])->assertSessionHas('ok');
+        $this->assertSame(10, (int) LiveQuizSession::query()->latest('id')->first()->between_seconds);
+
+        $this->actingAs($teacher)->post(route('live-quiz.start', $quiz), ['between' => 'random'])->assertSessionHas('ok');
+        $this->assertSame(30, (int) LiveQuizSession::query()->latest('id')->first()->between_seconds);
+
+        $this->actingAs($teacher)->post(route('live-quiz.start', $quiz), ['between' => 'wait', 'game_seconds' => 60])->assertSessionHas('ok');
+        $this->assertNull(LiveQuizSession::query()->latest('id')->first()->between_seconds);
+    }
 }

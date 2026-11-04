@@ -288,7 +288,9 @@ class LiveQuizController extends Controller
         // Mini oyun bölüm aralığı (varsayılan 5-30): rastgele seçilen 10'luk bölüm bloğu bu aralıktan çıkar.
         $levelFrom = null;
         $levelTo = null;
+        $gameSeconds = null;
         if ($betweenMode === 'game') {
+            $gameSeconds = (int) max(QuizMiniGame::MIN_SECONDS, min(QuizMiniGame::MAX_SECONDS, (int) $request->input('game_seconds', QuizMiniGame::DURATION_MS / 1000)));
             $levelFrom = max(1, (int) $request->input('level_from', QuizMiniGame::FIRST_LEVEL));
             $levelTo = min(200, (int) $request->input('level_to', QuizMiniGame::LAST_LEVEL));
             if ($levelTo - $levelFrom + 1 < QuizMiniGame::BLOCK_SIZE) {
@@ -327,6 +329,7 @@ class LiveQuizController extends Controller
             'between_game' => $betweenGame,
             'between_from' => $levelFrom,
             'between_to' => $levelTo,
+            'between_seconds' => $gameSeconds,
             'is_public' => $isPublic,
             'current_index' => 0,
             'is_locked' => true,
@@ -1352,7 +1355,7 @@ class LiveQuizController extends Controller
                 $session->update([
                     'phase' => 'game',
                     'is_locked' => true,
-                    'ends_at_ms' => $nowMs + QuizMiniGame::DURATION_MS,
+                    'ends_at_ms' => $nowMs + QuizMiniGame::durationMs($session->between_seconds),
                 ]);
 
                 return $session->fresh(['quiz.questions']);
@@ -1589,7 +1592,7 @@ class LiveQuizController extends Controller
 
         $nowMs = $this->nowMs();
         $endsAtMs = (int) ($session->ends_at_ms ?? 0);
-        $startedMs = $endsAtMs - QuizMiniGame::DURATION_MS;
+        $startedMs = $endsAtMs - QuizMiniGame::durationMs($session->between_seconds);
         if ($nowMs > $endsAtMs + 2000) {
             return response()->json(['ok' => false, 'reason' => 'late'], 422);
         }

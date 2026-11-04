@@ -16,6 +16,9 @@ class QuizMiniGame
     /** Bir mini oyundaki bölüm sayısı ve süre. */
     public const BLOCK_SIZE = 10;
     public const DURATION_MS = 30000;
+    /** Öğretmenin seçebileceği mini oyun süresi (sn). */
+    public const MIN_SECONDS = 10;
+    public const MAX_SECONDS = 300;
     /** Mini oyun kaç soruda bir gelir. */
     public const EVERY_N_QUESTIONS = 4;
     /** Rastgele bölümler bu aralıktan seçilir: 5. ile 30. bölümler arası (öğrenciler 30 sn'de çözebilsin diye kolay tutulur). */
@@ -40,6 +43,14 @@ class QuizMiniGame
     public static function publicGames(): array
     {
         return array_values(array_filter(array_keys(self::GAMES), fn (string $g) => PublicGamesSetting::gameEnabled($g)));
+    }
+
+    /** Oturumun mini oyun süresi (ms): öğretmen seçmediyse 30 sn. */
+    public static function durationMs(?int $seconds): int
+    {
+        return $seconds === null || $seconds <= 0
+            ? self::DURATION_MS
+            : max(self::MIN_SECONDS, min(self::MAX_SECONDS, $seconds)) * 1000;
     }
 
     public static function supported(?string $slug): bool

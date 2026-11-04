@@ -21,6 +21,7 @@ class LiveQuizSession extends Model
         'between_game',
         'between_from',
         'between_to',
+        'between_seconds',
         'between_plan',
         'is_public',
         'current_index',
