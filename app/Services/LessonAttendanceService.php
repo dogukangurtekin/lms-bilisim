@@ -216,6 +216,11 @@ class LessonAttendanceService
         $presentCounts = $lessons->isEmpty() ? collect() : DB::table('lesson_attendance_records')->whereIn('lesson_attendance_id', $lessons->pluck('id'))->where('status', 'present')
             ->selectRaw('lesson_attendance_id, COUNT(*) as c')->groupBy('lesson_attendance_id')->pluck('c', 'lesson_attendance_id');
 
+        // O sınıfta o saatte derste olmayan (henüz girmeyen / gelmeyen) öğrencilerin adları için sınıf mevcutları ve derse "geldi/izinli" yazılanlar.
+        $studentsByClass = $classIds === [] ? collect() : Student::query()->with('user:id,name')->whereIn('school_class_id', $classIds)->get(['id', 'user_id', 'school_class_id'])->groupBy('school_class_id');
+        $okByLesson = $lessons->isEmpty() ? collect() : DB::table('lesson_attendance_records')->whereIn('lesson_attendance_id', $lessons->pluck('id'))->whereIn('status', ['present', 'excused'])
+            ->get(['lesson_attendance_id', 'student_id'])->groupBy('lesson_attendance_id')->map(fn ($g) => $g->pluck('student_id')->map(fn ($v) => (int) $v)->all());
+
         $rows = [];
         foreach ($slots as $slot) {
             $start = $slot->startOn($date);
@@ -225,12 +230,19 @@ class LessonAttendanceService
             $state = $now->lt($start) ? 'upcoming' : ($now->lt($end) ? 'ongoing' : ($closed ? 'closed' : 'pending'));
             $total = $closed ? (int) $lesson->total_students : (int) ($studentCounts[$slot->school_class_id] ?? 0);
             $present = $lesson ? (int) ($presentCounts[$lesson->id] ?? 0) : 0;
+            $missing = [];
+            if ($state !== 'upcoming') {
+                $ok = $lesson ? ($okByLesson[$lesson->id] ?? []) : [];
+                $missing = ($studentsByClass[$slot->school_class_id] ?? collect())
+                    ->reject(fn ($st) => in_array((int) $st->id, $ok, true))
+                    ->map(fn ($st) => (string) ($st->user?->name ?? 'Öğrenci'))->sort(SORT_NATURAL | SORT_FLAG_CASE)->values()->all();
+            }
             $rows[] = [
                 'slot_id' => $slot->id, 'lesson_id' => $lesson?->id, 'class_id' => (int) $slot->school_class_id,
                 'class' => $slot->schoolClass ? trim($slot->schoolClass->name . '/' . $slot->schoolClass->section) : '-',
                 'subject' => $slot->subject, 'time' => $slot->timeLabel(), 'lesson_no' => $slot->lesson_no,
                 'state' => $state, 'total' => $total, 'present' => $closed ? (int) $lesson->present_count : $present,
-                'absent' => $closed ? (int) $lesson->absent_count : null, 'start' => $start, 'end' => $end,
+                'absent' => $closed ? (int) $lesson->absent_count : null, 'missing' => $missing, 'start' => $start, 'end' => $end,
             ];
         }
 

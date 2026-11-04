@@ -23,6 +23,9 @@
     .aw-bar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#16a34a)}
     .aw-n{font-style:normal;font-size:10.5px;font-weight:800;color:#64748b;white-space:nowrap}
     .aw-n.ok{color:#15803d}.aw-n.bad{color:#b91c1c}.aw-n.live{color:#1d4ed8}
+    .aw-miss{margin:2px 0 3px 4px;padding:3px 7px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;font-size:10.8px;line-height:1.4;color:#7f1d1d}
+    .aw-miss.wait{background:#fffbeb;border-color:#fde68a;color:#92400e}
+    .aw-miss b{font-weight:800}.aw-miss em{font-style:normal;font-weight:800}
     .aw-absent{margin-top:6px;padding:5px 7px;border-radius:9px;background:#fef2f2;border:1px solid #fecaca;font-size:11px;line-height:1.4;color:#7f1d1d}
     .aw-absent b{font-weight:800}.aw-absent em{font-style:normal;font-weight:800}
 </style>

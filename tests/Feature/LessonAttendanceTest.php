@@ -345,4 +345,29 @@ class LessonAttendanceTest extends TestCase
         $this->assertStringContainsString('<b>5A</b>', $t);
         $this->assertStringNotContainsString('<b>6B</b>', $t);
     }
+
+    public function test_names_of_students_not_in_the_lesson_show_in_widget_today_list_and_history(): void
+    {
+        $this->slot($this->classA);
+        $this->at('09:10:00');
+        Att::noteStudentSeen($this->students['Ali Yıldız']->id);
+
+        // ders sürerken: henüz girmeyenlerin adları
+        $this->at('09:20:00');
+        $board = Att::todayBoard($this->admin);
+        $this->assertSame(['Ayşe Demir', 'Can Kaya'], $board['rows'][0]['missing']);
+        $this->actingAs($this->admin)->get(route('attendance.widget'))->assertOk()->assertSee('Henüz girmedi:')->assertSee('Ayşe Demir')->assertSee('Can Kaya')->assertDontSee('Ali Yıldız');
+        $this->actingAs($this->admin)->get(route('attendance.index'))->assertOk()->assertSee('Derste olmayanlar')->assertSee('Ayşe Demir')->assertSee('Can Kaya')->assertDontSee('Ali Yıldız');
+
+        // ders bitince: gelmeyenlerin adları (elle "izinli" yapılan listeden düşer)
+        $this->at('09:45:00');
+        Att::finalizeDue();
+        $lesson = LessonAttendance::query()->firstOrFail();
+        $this->actingAs($this->admin)->post(route('attendance.lesson.status', [$lesson, $this->students['Can Kaya']]), ['status' => 'excused']);
+
+        $this->assertSame(['Ayşe Demir'], Att::todayBoard($this->admin)['rows'][0]['missing']);
+        $this->actingAs($this->admin)->get(route('attendance.widget'))->assertSee('Gelmedi:')->assertSee('Ayşe Demir')->assertDontSee('Can Kaya');
+        $this->actingAs($this->admin)->get(route('attendance.index', ['tab' => 'history', 'from' => '2026-11-01', 'to' => '2026-11-30']))
+            ->assertOk()->assertSee('Derste olmayanlar')->assertSee('Ayşe Demir')->assertDontSee('Can Kaya');
+    }
 }

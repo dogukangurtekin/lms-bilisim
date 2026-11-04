@@ -64,6 +64,12 @@ class AttendanceController extends Controller
             ->when($classId > 0, fn ($q) => $q->where('school_class_id', $classId))
             ->orderByDesc('start_at')->paginate(30, ['*'], 'page')->withQueryString();
 
+        // Geçmiş listesinde her dersin gelmeyenlerinin adları (yalnızca sayfadaki dersler için tek sorgu).
+        $absentNames = $lessons->isEmpty() ? collect() : DB::table('lesson_attendance_records as r')
+            ->join('students as s', 's.id', '=', 'r.student_id')->join('users as u', 'u.id', '=', 's.user_id')
+            ->whereIn('r.lesson_attendance_id', $lessons->pluck('id'))->where('r.status', 'absent')->orderBy('u.name')
+            ->get(['r.lesson_attendance_id as lid', 'u.name'])->groupBy('lid')->map(fn ($g) => $g->pluck('name')->all());
+
         $topAbsent = DB::table('lesson_attendance_records as r')
             ->join('lesson_attendances as l', 'l.id', '=', 'r.lesson_attendance_id')
             ->join('students as s', 's.id', '=', 'r.student_id')->join('users as u', 'u.id', '=', 's.user_id')
@@ -76,7 +82,7 @@ class AttendanceController extends Controller
             ->groupBy('s.id', 'u.name', 'c.name', 'c.section')->orderByDesc('absences')->orderBy('u.name')->limit(10)->get();
 
         return view('attendance.index', [
-            'tab' => $tab, 'board' => Att::todayBoard($user), 'lessons' => $lessons, 'topAbsent' => $topAbsent,
+            'tab' => $tab, 'board' => Att::todayBoard($user), 'lessons' => $lessons, 'topAbsent' => $topAbsent, 'absentNames' => $absentNames,
             'classes' => $this->classes(), 'from' => $from, 'to' => $to, 'classId' => $classId, 'isAdmin' => $user->hasRole('admin'),
         ]);
     }

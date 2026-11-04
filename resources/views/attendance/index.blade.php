@@ -50,7 +50,7 @@
                     <div class="att-empty">Bugün için tanımlı ders yok.</div>
                 @else
                     <div class="att-wrap"><table class="att-table">
-                        <thead><tr><th>Saat</th><th>Sınıf</th><th>Ders</th><th>Durum</th><th>Gelen</th><th>Gelmeyen</th><th></th></tr></thead>
+                        <thead><tr><th>Saat</th><th>Sınıf</th><th>Ders</th><th>Durum</th><th>Gelen</th><th>Gelmeyen</th><th>Derste olmayanlar</th><th></th></tr></thead>
                         <tbody>
                         @foreach($board['rows'] as $r)
                             <tr>
@@ -66,6 +66,16 @@
                                     @endif
                                 </td>
                                 <td>@if($r['absent'] !== null)<span class="{{ $r['absent'] > 0 ? 'att-bad' : 'att-ok' }}">{{ $r['absent'] }}</span>@else<span class="muted">—</span>@endif</td>
+                                <td style="min-width:170px">
+                                    @if($r['state'] === 'upcoming')<span class="muted">—</span>
+                                    @elseif(empty($r['missing']))<span class="att-ok">Herkes derste</span>
+                                    @else
+                                        <ul class="att-names {{ $r['state'] === 'ongoing' ? 'wait' : '' }}" title="{{ $r['state'] === 'ongoing' ? 'Henüz sisteme girmeyenler' : 'Derse girmeyenler' }}">
+                                            @foreach(array_slice($r['missing'], 0, 12) as $n)<li>{{ $n }}</li>@endforeach
+                                            @if(count($r['missing']) > 12)<li>+{{ count($r['missing']) - 12 }}</li>@endif
+                                        </ul>
+                                    @endif
+                                </td>
                                 <td>@if($r['lesson_id'])<a class="btn btn-sm" href="{{ route('attendance.lesson', $r['lesson_id']) }}">Detay</a>@endif</td>
                             </tr>
                         @endforeach
@@ -111,7 +121,7 @@
                     <div class="att-empty">Bu aralıkta yoklaması alınmış ders yok.</div>
                 @else
                     <div class="att-wrap"><table class="att-table">
-                        <thead><tr><th>Tarih</th><th>Saat</th><th>Sınıf</th><th>Ders</th><th>Gelen</th><th>Gelmeyen</th><th></th></tr></thead>
+                        <thead><tr><th>Tarih</th><th>Saat</th><th>Sınıf</th><th>Ders</th><th>Gelen</th><th>Gelmeyen</th><th>Derste olmayanlar</th><th></th></tr></thead>
                         <tbody>
                         @foreach($lessons as $l)
                             <tr>
@@ -121,6 +131,13 @@
                                 <td>{{ $l->subject }}</td>
                                 <td><span class="att-ok">{{ $l->present_count }}</span> / {{ $l->total_students }}</td>
                                 <td><span class="{{ $l->absent_count > 0 ? 'att-bad' : 'att-ok' }}">{{ $l->absent_count }}</span></td>
+                                <td style="min-width:170px">
+                                    @php $names = $absentNames[$l->id] ?? []; @endphp
+                                    @if($names === [])<span class="muted">—</span>
+                                    @else
+                                        <ul class="att-names">@foreach(array_slice($names, 0, 8) as $n)<li>{{ $n }}</li>@endforeach @if(count($names) > 8)<li>+{{ count($names) - 8 }}</li>@endif</ul>
+                                    @endif
+                                </td>
                                 <td><a class="btn btn-sm" href="{{ route('attendance.lesson', $l) }}">Detay</a></td>
                             </tr>
                         @endforeach

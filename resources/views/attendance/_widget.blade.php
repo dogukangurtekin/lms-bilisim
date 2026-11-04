@@ -45,10 +45,14 @@
                         @endif
                     @endif
                 </a>
+                {{-- O sınıfta o saatte derste olmayan (hesabı açık olmayan) öğrencilerin adları --}}
+                @if($r['state'] !== 'upcoming' && ! empty($r['missing']))
+                    <div class="aw-miss {{ $r['state'] === 'ongoing' ? 'wait' : '' }}">
+                        <b>{{ $r['state'] === 'ongoing' ? 'Henüz girmedi:' : 'Gelmedi:' }}</b>
+                        {{ implode(', ', array_slice($r['missing'], 0, 6)) }}@if(count($r['missing']) > 6) <em>+{{ count($r['missing']) - 6 }}</em>@endif
+                    </div>
+                @endif
             </li>
         @endforeach
     </ul>
-    @foreach(array_slice($board['absent_groups'], 0, 1) as $g)
-        <div class="aw-absent"><b>{{ $short($g['class']) }} gelmeyen ({{ $g['count'] }}):</b> {{ implode(', ', array_slice($g['names'], 0, 6)) }}@if($g['count'] > 6) <em>+{{ $g['count'] - 6 }}</em>@endif</div>
-    @endforeach
 @endif

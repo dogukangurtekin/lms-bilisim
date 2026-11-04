@@ -40,6 +40,7 @@
     .att-grid2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;align-items:start}
     .att-names{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
     .att-names li{background:#fee2e2;color:#991b1b;border-radius:999px;padding:3px 10px;font-size:12.5px;font-weight:700}
+    .att-names.wait li{background:#fef3c7;color:#92400e}
     .att-day{margin:0 0 6px;font-size:14px;font-weight:900;color:#334155}
     .att-select{padding:6px 8px;border-radius:8px;border:1px solid #cbd5e1;font:inherit;font-size:13px}
     @media (max-width:900px){.att-grid2{grid-template-columns:1fr}}
