@@ -10,6 +10,9 @@
 @endphp
 
 <style>
+.act-notice{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;border-left:5px solid #f97316;color:#9a3412;font-size:14px;line-height:1.5}
+.act-notice p{margin:0}
+.act-notice-icon{font-size:18px;line-height:1.3}
     .activities-page{
         display:grid;
         gap:1rem;
@@ -178,6 +181,10 @@
 </style>
 
 <div class="activities-page">
+    <div class="act-notice" role="note">
+        <span class="act-notice-icon" aria-hidden="true">⚠️</span>
+        <p>Oyun ve Etkinlikler sayfa ismi yanlış anlaşılmalara sebebiyet verdiğinden ötürü Kodlama Uygulamaları olarak güncellenmiştir. İçeriklerimizin hepsi Kodlama Etkinlikleridir <strong>OYUN DEĞİLDİR</strong>. Bilgilerinize.<br><strong>Bilişim Kod Yapay Zeka ve Kodlama Sistemleri</strong></p>
+    </div>
     <div class="activities-top top">
         <h1>Kodlama Uygulamaları</h1>
         @if($isAdmin)
