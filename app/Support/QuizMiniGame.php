@@ -7,7 +7,7 @@ use App\Http\Controllers\ActivityController;
 /**
  * Canlı Quiz soru araları için "mini oyun" ayarları.
  *
- * Mini oyun her soru arasında değil, 4 soruda bir (4., 8., 12. … sorudan sonra) gelir. Öğrenciler Oyun ve Etkinlikler'deki
+ * Mini oyun her soru arasında değil, 4 soruda bir (4., 8., 12. … sorudan sonra) gelir. Öğrenciler Kodlama Uygulamaları'ndaki
  * kodlama oyunlarından birinin 10 ardışık bölümünü 30 saniyede çözmeye çalışır. Oyun (öğretmen belirli bir oyun seçmediyse)
  * ve bölümler her mini oyunda rastgele seçilir; bölümler 5-30 arasındadır ve oturumdaki HERKES için aynıdır.
  */

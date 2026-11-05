@@ -42,7 +42,7 @@
 <div class="activity-play-bar">
     <a class="activity-play-back" href="{{ route('activities.index') }}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Oyun ve Etkinliklere Geri Dön
+        Kodlama Uygulamalarına Geri Dön
     </a>
     <span class="activity-play-title">{{ $title }}</span>
 </div>

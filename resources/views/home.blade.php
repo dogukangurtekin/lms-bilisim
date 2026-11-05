@@ -355,7 +355,7 @@
                     <span class="module-num">01</span>
                     <h3>Kodlama Oyunları</h3>
                     <p>Noktaları Birleştir, Compute It, Blok Kodlama ve Lightbot gibi oyunlarla öğrenciler kuralları ezberlemeden, deneyerek öğrenir.</p>
-                    <span class="module-tag">Oyun ve Etkinlikler</span>
+                    <span class="module-tag">Kodlama Uygulamaları</span>
                 </article>
                 <article class="module">
                     <span class="module-num">02</span>

@@ -1,6 +1,6 @@
 @extends('layout.app')
 
-@section('title', 'Oyun ve Etkinlikler')
+@section('title', 'Kodlama Uygulamaları')
 
 @section('content')
 @php
@@ -179,7 +179,7 @@
 
 <div class="activities-page">
     <div class="activities-top top">
-        <h1>Oyun ve Etkinlikler</h1>
+        <h1>Kodlama Uygulamaları</h1>
         @if($isAdmin)
             <span class="muted">Tüm oyunlar ve etkinlikler burada listelenir.</span>
         @elseif($isTeacher)
@@ -214,7 +214,7 @@
                             </select>
                         </div>
                         <div>
-                            <label style="display:block;font-weight:700;margin-bottom:8px;">Oyun ve Etkinlikler</label>
+                            <label style="display:block;font-weight:700;margin-bottom:8px;">Kodlama Uygulamaları</label>
                             <details class="act-dd" id="act-dd">
                                 <summary><span id="act-dd-label">Oyun ve etkinlik seçin</span><span class="act-dd-count" id="act-dd-count">0</span></summary>
                                 <div class="act-dd-menu">

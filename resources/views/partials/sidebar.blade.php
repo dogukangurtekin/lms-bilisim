@@ -23,7 +23,7 @@
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v15H4V6h3V3zm2 0v3h6V3H9zm-2 9h10v2H7v-2zm0 4h10v2H7v-2z"/></svg></span>Ödevlerim
             </a>
             <a class="{{ request()->routeIs('activities.*') || request()->routeIs('keyboard-race.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
-                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Kodlama Uygulamaları
             </a>
             <a class="{{ request()->routeIs('student.portal.friends') ? 'active' : '' }}" href="{{ route('student.portal.friends') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 100-8 4 4 0 000 8zM8 12a4 4 0 100-8 4 4 0 000 8zm8 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5zM8 14c-3.314 0-6 2.239-6 5v1h6v-1c0-1.908.81-3.648 2.121-5A7.8 7.8 0 008 14z"/></svg></span>Arkadaşlarım
@@ -81,7 +81,7 @@
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12a2 2 0 012 2v16l-4-2-4 2-4-2-4 2V4a2 2 0 012-2zm2 5v2h8V7H8zm0 4v2h8v-2H8z"/></svg></span>Ödevler
             </a>
             <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
-                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Oyun ve Etkinlikler
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Kodlama Uygulamaları
             </a>
             @if(\App\Support\ExamBuilderSetting::allowedFor(auth()->user()))
             <a class="{{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}">
