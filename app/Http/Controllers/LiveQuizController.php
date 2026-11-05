@@ -1602,7 +1602,8 @@ class LiveQuizController extends Controller
             ->where('live_quiz_session_id', $session->id)
             ->where('student_user_id', $userId)
             ->where('break_index', $breakIndex);
-        if ((clone $mine)->count() >= QuizMiniGame::BLOCK_SIZE) {
+        $blk = $this->miniBlock($session, $breakIndex);
+        if ($blk !== null && (clone $mine)->count() >= ($blk[1] - $blk[0] + 1)) {
             return response()->json(['ok' => false, 'reason' => 'limit'], 422);
         }
         $lastMs = (int) ((clone $mine)->max('completed_at_ms') ?? 0);

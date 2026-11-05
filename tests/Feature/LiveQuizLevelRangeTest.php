@@ -21,7 +21,7 @@ class LiveQuizLevelRangeTest extends TestCase
             foreach (QuizMiniGame::plan(null, 25, null, 40, 60) as $b) {
                 $this->assertGreaterThanOrEqual(40, $b['from']);
                 $this->assertLessThanOrEqual(60, $b['to']);
-                $this->assertSame(9, $b['to'] - $b['from']);
+                $this->assertSame(40, $b['from']);   // aralığın tamamı açık, 10'luk blok yok
             }
         }
         // varsayılan aralık 5-30

@@ -62,15 +62,16 @@
             @method('PUT')
             <div style="grid-column:1 / -1">
                 <h3 style="margin:0 0 4px">Kullanıcı Bilgileri</h3>
-                <p style="margin:0;color:#64748b">Ad, kullanıcı adı ve şifre bilgilerini buradan güncelleyin.</p>
+                <p style="margin:0;color:#64748b">{{ $user->hasRole('student') ? 'Şifrenizi buradan değiştirebilirsiniz.' : 'Ad, kullanıcı adı ve şifre bilgilerini buradan güncelleyin.' }}</p>
             </div>
             <div>
                 <label>Ad</label>
-                <input name="first_name" value="{{ old('first_name', $firstName) }}" required>
+                <input name="first_name" value="{{ $user->hasRole('student') ? $firstName : old('first_name', $firstName) }}" required {{ $user->hasRole('student') ? 'readonly' : '' }} @if($user->hasRole('student')) style="background:#f1f5f9;cursor:not-allowed" @endif>
             </div>
             <div>
                 <label>Soyad</label>
-                <input name="last_name" value="{{ old('last_name', $lastName) }}" required>
+                <input name="last_name" value="{{ $user->hasRole('student') ? $lastName : old('last_name', $lastName) }}" required {{ $user->hasRole('student') ? 'readonly' : '' }} @if($user->hasRole('student')) style="background:#f1f5f9;cursor:not-allowed" @endif>
+                @if($user->hasRole('student'))<small style="color:#64748b">Ad ve soyadı yalnızca öğretmeniniz veya yönetici değiştirebilir.</small>@endif
             </div>
             <div style="grid-column:1 / -1">
                 <label>Kullanıcı Adı</label>

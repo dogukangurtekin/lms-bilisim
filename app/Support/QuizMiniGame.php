@@ -125,33 +125,17 @@ class QuizMiniGame
         }
 
         $plan = [];
-        $usedByGame = [];
         $prevGame = null;
         foreach (self::breakIndexes($questionCount) as $breakIndex) {
             $candidates = array_values(array_filter($games, fn (string $g) => $g !== $prevGame));
             $candidates = $candidates === [] ? $games : $candidates;
             $game = $candidates[random_int(0, count($candidates) - 1)];
 
-            $starts = self::blockStarts($game, $from, $to);
-            $used = $usedByGame[$game] ?? [];
-            $free = array_values(array_filter($starts, function (int $s) use ($used) {
-                foreach ($used as $u) {
-                    if (abs($s - $u) < self::BLOCK_SIZE) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }));
-            if ($free === []) {            // bu oyunda boş blok kalmadı: yalnızca en son bloktan farklı seç
-                $last = $used === [] ? null : end($used);
-                $free = array_values(array_filter($starts, fn (int $s) => $last === null || $s !== $last));
-                $free = $free === [] ? $starts : $free;
-            }
-            $start = $free[random_int(0, count($free) - 1)];
-            $usedByGame[$game][] = $start;
+            $lo = max(1, $from ?? self::FIRST_LEVEL);
+            $hi = min($to ?? self::LAST_LEVEL, (int) (self::GAMES[$game]['levels'] ?? 0));
             $prevGame = $game;
-            $plan[$breakIndex] = ['game' => $game, 'from' => $start, 'to' => $start + self::BLOCK_SIZE - 1];
+            // Bölüm sınırı yok: öğrenci süre dolana kadar adminin belirlediği aralıkta ilerleyebildiği kadar ilerler.
+            $plan[$breakIndex] = ['game' => $game, 'from' => $lo, 'to' => $hi];
         }
 
         return $plan;

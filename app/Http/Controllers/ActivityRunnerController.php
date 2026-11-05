@@ -380,6 +380,8 @@ class ActivityRunnerController extends Controller
 
             $isCompetitionGrant = $competitionGrant !== null || (is_array($grant)
                 && str_starts_with((string) ($grant['homework_id'] ?? ''), 'competition-'));
+            // Canlı quiz mini oyunu: oyun kendi içinde bölüm değiştirince (from/to değişse de) izin, verilen aralık içinde kaldıkça geçerli.
+            $isQuizGrant = is_array($grant) && str_starts_with((string) ($grant['homework_id'] ?? ''), 'quizgame-');
             $valid = $competitionGrant !== null || (is_array($grant)
                 && ($grant['slug'] ?? null) === $slug
                 && (($grant['expires_at'] ?? 0) >= time())
@@ -389,7 +391,9 @@ class ActivityRunnerController extends Controller
                 // (sinifa atanmamis) erisim kontrolune dusup "atanmadi" hatasi
                 // aliyordu. Normal odev/atama tabanli izinlerde ise from/to
                 // hala birebir eslesmek zorunda.
-                && ($isCompetitionGrant || (($grant['from'] ?? null) === $from && ($grant['to'] ?? null) === $to)));
+                && ($isCompetitionGrant || $isQuizGrant
+                    ? ($isCompetitionGrant || ($from >= (int) ($grant['from'] ?? 0) && $to <= (int) ($grant['to'] ?? 0) && $from > 0))
+                    : (($grant['from'] ?? null) === $from && ($grant['to'] ?? null) === $to)));
 
             if (! $valid) {
                 $student = $user->student;

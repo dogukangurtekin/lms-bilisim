@@ -54,8 +54,8 @@ class ProfileController extends Controller
             $request->merge(['username' => strtolower((string) strtok((string) $user->email, '@')) ?: 'ogrenci']);
         }
         $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:60'],
-            'last_name' => ['required', 'string', 'max:60'],
+            'first_name' => [$lockUsername ? 'nullable' : 'required', 'string', 'max:60'],
+            'last_name' => [$lockUsername ? 'nullable' : 'required', 'string', 'max:60'],
             'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/i'],
             'password' => ['nullable', 'string', 'min:6', 'max:72', 'confirmed'],
             'pwa_enabled' => ['nullable', 'boolean'],
@@ -68,9 +68,10 @@ class ProfileController extends Controller
             'username.regex' => 'Kullanici adi sadece harf, rakam, nokta, alt cizgi ve kisa cizgi icerebilir.',
         ]);
 
-        $first = trim($validated['first_name']);
-        $last = trim($validated['last_name']);
-        $fullName = trim($first . ' ' . $last);
+        $first = trim((string) ($validated['first_name'] ?? ''));
+        $last = trim((string) ($validated['last_name'] ?? ''));
+        // Öğrenciler ad soyadını değiştiremez; gelen değer yok sayılır, yalnızca yönetici/öğretmen değiştirebilir.
+        $fullName = $lockUsername ? (string) $user->name : trim($first . ' ' . $last);
 
         $currentEmail = (string) ($user->email ?? '');
         $domain = str_contains($currentEmail, '@') ? (string) substr($currentEmail, strpos($currentEmail, '@') + 1) : 'school.local';

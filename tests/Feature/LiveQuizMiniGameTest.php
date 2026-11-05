@@ -90,11 +90,9 @@ class LiveQuizMiniGameTest extends TestCase
             $prev = null;
             foreach ($plan as $b) {
                 $this->assertSame($slug, $b['game']);
-                $this->assertSame(10, $b['to'] - $b['from'] + 1, $slug);
+                $this->assertSame(QuizMiniGame::FIRST_LEVEL, $b['from'], $slug);   // bölüm sınırı yok: aralığın tamamı
                 $this->assertGreaterThanOrEqual(QuizMiniGame::FIRST_LEVEL, $b['from'], $slug);
                 $this->assertLessThanOrEqual(QuizMiniGame::LAST_LEVEL, $b['to'], $slug);
-                $this->assertNotSame($prev, $b['from'], $slug . ' art arda aynı blok');
-                $prev = $b['from'];
             }
         }
     }
@@ -112,13 +110,13 @@ class LiveQuizMiniGameTest extends TestCase
                 $prevGame = $b['game'];
                 $this->assertGreaterThanOrEqual(QuizMiniGame::FIRST_LEVEL, $b['from']);
                 $this->assertLessThanOrEqual(QuizMiniGame::LAST_LEVEL, $b['to']);
-                $this->assertSame(10, $b['to'] - $b['from'] + 1);
+                $this->assertSame(QuizMiniGame::FIRST_LEVEL, $b['from']);
                 $seen[$b['game']] = true;
                 $allBlocks[$b['game'] . ':' . $b['from']] = true;
             }
         }
         $this->assertCount(count(QuizMiniGame::GAMES), $seen, 'tüm kodlama oyunları zamanla gelmeli');
-        $this->assertGreaterThan(40, count($allBlocks), 'bölümler sabit kalmamalı, çok sayıda farklı oyun/bölüm kombinasyonu çıkmalı');
+        $this->assertGreaterThanOrEqual(count(QuizMiniGame::GAMES), count($allBlocks), 'bölümler sabit kalmamalı, çok sayıda farklı oyun/bölüm kombinasyonu çıkmalı');
 
         // iki ayrı yarışma (iki plan) birbirinin aynısı olmamalı
         $a = QuizMiniGame::plan(null, 41);
@@ -277,7 +275,7 @@ class LiveQuizMiniGameTest extends TestCase
         $this->actingAs($this->student)->postJson($url, ['level_key' => '25', 'xp' => 10])->assertStatus(422)->assertJsonPath('reason', 'too_fast');
 
         // en fazla 10 bölüm
-        for ($i = 0; $i < 8; $i++) {
+        for ($i = 0; $i < 40; $i++) {
             LiveQuizGameResult::query()->create(['live_quiz_session_id' => $session->id, 'student_user_id' => $this->student->id, 'break_index' => 3, 'level_key' => 'x'.$i, 'xp' => 1, 'completed_at_ms' => 1]);
         }
         $this->actingAs($this->student)->postJson($url, ['level_key' => '99', 'xp' => 10])->assertStatus(422)->assertJsonPath('reason', 'limit');
