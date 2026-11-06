@@ -141,6 +141,33 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.lesson', $id);
     }
 
+    /** Ders sayfasındaki formu tek seferde kaydeder: öğrenci başına Geldi/Gelmedi/İzinli (yalnızca değişenler yazılır). */
+    public function bulkStatus(Request $request, LessonAttendance $lesson): RedirectResponse
+    {
+        $this->authorizeClass((int) $lesson->school_class_id);
+        $data = $request->validate(['status' => ['required', 'array'], 'status.*' => ['in:present,absent,excused']]);
+        $classIds = Student::query()->where('school_class_id', $lesson->school_class_id)->pluck('id')->map(fn ($v) => (int) $v)->all();
+        $existing = LessonAttendanceRecord::query()->where('lesson_attendance_id', $lesson->id)->get()->keyBy('student_id');
+        $changed = 0;
+        DB::transaction(function () use ($data, $lesson, $classIds, $existing, &$changed): void {
+            foreach ($data['status'] as $sid => $status) {
+                $sid = (int) $sid;
+                if (! in_array($sid, $classIds, true) && ! $existing->has($sid)) {
+                    continue;
+                }
+                $record = $existing->get($sid) ?? new LessonAttendanceRecord(['lesson_attendance_id' => $lesson->id, 'student_id' => $sid]);
+                if ($record->exists && $record->status === $status) {
+                    continue;
+                }
+                $record->fill(['status' => $status, 'source' => 'manual'])->save();
+                $changed++;
+            }
+            Att::recount($lesson->id);
+        });
+
+        return redirect()->route('attendance.lesson', $lesson)->with('ok', 'Yoklama kaydedildi (' . $changed . ' öğrencinin durumu güncellendi).');
+    }
+
     /** "Sınıf tam": sınıfın TÜM öğrencilerini elle "Geldi" yapar (gelmedi/izinli/kaydı olmayan dahil). */
     public function allPresent(LessonAttendance $lesson): RedirectResponse
     {
