@@ -16,7 +16,7 @@
     .att-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
     .st-upcoming{background:#f1f5f9;color:#475569}.st-ongoing{background:#dbeafe;color:#1d4ed8}
     .st-closed{background:#dcfce7;color:#166534}.st-pending{background:#fef3c7;color:#92400e}
-    .st-present{background:#dcfce7;color:#166534}.st-absent{background:#fee2e2;color:#b91c1c}.st-excused{background:#fef3c7;color:#92400e}
+    .st-present{background:#dcfce7;color:#166534}.st-absent{background:#fee2e2;color:#b91c1c}.st-excused{background:#fef3c7;color:#92400e}.st-none{background:#e2e8f0;color:#475569}
     .att-late{margin-left:6px;font-size:11px;font-weight:800;color:#b45309}
     .att-ok{color:#15803d;font-weight:800}.att-bad{color:#b91c1c;font-weight:800}
     .att-bar{height:8px;border-radius:99px;background:#e2e8f0;overflow:hidden;min-width:70px}

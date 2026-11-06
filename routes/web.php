@@ -346,6 +346,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/disa-aktar', [\App\Http\Controllers\AttendanceController::class, 'export'])->name('export');
             Route::get('/ders/{lesson}', [\App\Http\Controllers\AttendanceController::class, 'lesson'])->whereNumber('lesson')->name('lesson');
             Route::post('/ders/{lesson}/ogrenci/{student}', [\App\Http\Controllers\AttendanceController::class, 'setStatus'])->whereNumber(['lesson', 'student'])->name('lesson.status');
+            Route::post('/program/{slot}/yoklama-al', [\App\Http\Controllers\AttendanceController::class, 'openSlot'])->whereNumber('slot')->name('slot.open');
             Route::post('/ders/{lesson}/sinif-tam', [\App\Http\Controllers\AttendanceController::class, 'allPresent'])->whereNumber('lesson')->name('lesson.all-present');
             Route::get('/ders-programi', [\App\Http\Controllers\AttendanceController::class, 'schedule'])->name('schedule');
             Route::get('/ders-programi/sablon', [\App\Http\Controllers\AttendanceController::class, 'template'])->name('schedule.template');

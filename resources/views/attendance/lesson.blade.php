@@ -13,12 +13,12 @@
     <div class="att-card">
         <div class="att-chips">
             <div class="att-chip"><strong>{{ $lesson->date->format('d.m.Y') }}</strong><small>{{ $lesson->start_at->format('H:i') }} - {{ $lesson->end_at->format('H:i') }}</small></div>
-            <div class="att-chip"><strong>{{ $lesson->total_students }}</strong><small>Sınıf mevcudu</small></div>
+            <div class="att-chip"><strong>{{ $lesson->finalized_at ? $lesson->total_students : $classTotal }}</strong><small>Sınıf mevcudu</small></div>
             <div class="att-chip ok"><strong>{{ $lesson->present_count }}</strong><small>Geldi</small></div>
             <div class="att-chip bad"><strong>{{ $lesson->absent_count }}</strong><small>Gelmedi</small></div>
         </div>
         @unless($lesson->finalized_at)
-            <p class="muted" style="margin:10px 0 0">Bu ders henüz kapatılmadı; ders bitince gelmeyenler otomatik "Gelmedi" yazılır.</p>
+            <p class="muted" style="margin:10px 0 0">Bu ders henüz kapatılmadı; ders bitince gelmeyenler otomatik "Gelmedi" yazılır. Derse giren öğrenci otomatik "Geldi" olur; elle işaretlediğiniz durumlar ders bitince değişmez.</p>
         @endunless
     </div>
 
@@ -39,9 +39,9 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td><b>{{ $r->student?->user?->name ?? '—' }}</b></td>
-                    <td><span class="att-badge st-{{ $r->status }}">{{ $labels[$r->status] ?? $r->status }}</span>@if($late)<span class="att-late">geç girdi</span>@endif</td>
+                    <td><span class="att-badge st-{{ $r->status }}">{{ $r->status === 'none' ? 'Henüz girmedi' : ($labels[$r->status] ?? $r->status) }}</span>@if($late)<span class="att-late">geç girdi</span>@endif</td>
                     <td>{{ $r->first_seen_at ? $r->first_seen_at->format('H:i') : '—' }}</td>
-                    <td>{{ $r->source === 'manual' ? 'Elle' : 'Otomatik' }}</td>
+                    <td>{{ $r->source === 'manual' ? 'Elle' : ($r->source === 'none' ? '—' : 'Otomatik') }}</td>
                     <td>
                         <form method="POST" action="{{ route('attendance.lesson.status', [$lesson, $r->student_id]) }}" style="margin:0">
                             @csrf

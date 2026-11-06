@@ -111,13 +111,36 @@ class AttendanceController extends Controller
         $this->authorizeClass((int) $lesson->school_class_id);
         $lesson->load('schoolClass');
 
-        $records = LessonAttendanceRecord::query()->with('student.user')->where('lesson_attendance_id', $lesson->id)->get()
-            ->sortBy(fn ($r) => [$r->status === 'absent' ? 0 : ($r->status === 'excused' ? 1 : 2), mb_strtolower((string) $r->student?->user?->name)])->values();
+        $records = LessonAttendanceRecord::query()->with('student.user')->where('lesson_attendance_id', $lesson->id)->get();
+        $classStudents = Student::query()->with('user')->where('school_class_id', $lesson->school_class_id)->get();
+        // Ders sürerken henüz sisteme girmeyen öğrenciler de listelensin; elle işaretlenebilsin.
+        $have = $records->pluck('student_id')->all();
+        foreach ($classStudents as $st) {
+            if (! in_array($st->id, $have, true)) {
+                $virtual = new LessonAttendanceRecord(['lesson_attendance_id' => $lesson->id, 'student_id' => $st->id, 'status' => 'none', 'source' => 'none']);
+                $virtual->setRelation('student', $st);
+                $records->push($virtual);
+            }
+        }
+        $records = $records
+            ->sortBy(fn ($r) => [in_array($r->status, ['absent', 'none'], true) ? 0 : ($r->status === 'excused' ? 1 : 2), mb_strtolower((string) $r->student?->user?->name)])->values();
 
-        return view('attendance.lesson', ['lesson' => $lesson, 'records' => $records, 'lateAfter' => Att::LATE_AFTER_MIN]);
+        return view('attendance.lesson', ['lesson' => $lesson, 'records' => $records, 'lateAfter' => Att::LATE_AFTER_MIN, 'classTotal' => $classStudents->count()]);
     }
 
     /** Elle düzeltme: öğrenci derste olduğu halde sisteme girememişse "Geldi" ya da "İzinli" yapılabilir. */
+    /** Devam eden (ya da biten) dersin yoklama sayfasını açar; kimse girmemiş olsa bile kayıt oluşturur. */
+    public function openSlot(LessonSlot $slot): RedirectResponse
+    {
+        $this->authorizeClass((int) $slot->school_class_id);
+        $id = Att::openLesson($slot);
+        if ($id === null) {
+            return back()->with('err', 'Bu ders henüz başlamadı ya da bugün için geçerli değil.');
+        }
+
+        return redirect()->route('attendance.lesson', $id);
+    }
+
     /** "Sınıf tam": sınıfın tüm öğrencilerini elle "Geldi" yapar (izinliler olduğu gibi kalır; kaydı olmayanlar eklenir). */
     public function allPresent(LessonAttendance $lesson): RedirectResponse
     {

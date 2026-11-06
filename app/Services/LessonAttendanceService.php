@@ -109,6 +109,23 @@ class LessonAttendanceService
         return (int) DB::table('lesson_attendances')->where('school_class_id', $classId)->where('start_at', $start->toDateTimeString())->value('id');
     }
 
+    /** Programdaki bugünkü dersin yoklama kaydını açar (henüz kimse girmemiş olsa da elle yoklama alınabilsin). Ders başlamadıysa null. */
+    public static function openLesson(LessonSlot $slot, ?Carbon $now = null): ?int
+    {
+        $now ??= now();
+        $date = $now->copy()->startOfDay();
+        if (self::isOffDay($date) || (int) $slot->weekday !== (int) $date->isoWeekday()) {
+            return null;
+        }
+        $start = $slot->startOn($date);
+        $end = $slot->endOn($date);
+        if ($now->lt($start->copy()->subMinutes(self::EARLY_GRACE_MIN))) {
+            return null;
+        }
+
+        return self::ensureLesson((int) $slot->school_class_id, (int) $slot->id, (string) $slot->subject, $start, $end);
+    }
+
     /** Bitmiş ve henüz kapatılmamış dersleri kapatır: derse girmeyenler "Gelmedi" olur. Kapatılan ders sayısını döndürür. */
     public static function finalizeDue(?Carbon $now = null): int
     {

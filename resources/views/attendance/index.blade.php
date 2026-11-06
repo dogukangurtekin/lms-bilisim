@@ -76,7 +76,8 @@
                                         </ul>
                                     @endif
                                 </td>
-                                <td>@if($r['lesson_id'])<a class="btn btn-sm" href="{{ route('attendance.lesson', $r['lesson_id']) }}">Detay</a>
+                                <td>@if(! $r['lesson_id'] && $r['state'] !== 'upcoming')<form method="POST" action="{{ route('attendance.slot.open', $r['slot_id']) }}" style="display:inline;margin:0">@csrf<button class="btn btn-sm" type="submit" title="Derse giren olmasa da elle yoklama al">📝 Yoklama Al</button></form>@endif
+                                    @if($r['lesson_id'])<a class="btn btn-sm" href="{{ route('attendance.lesson', $r['lesson_id']) }}">{{ $r['state'] === 'closed' ? 'Detay' : '📝 Yoklama Al' }}</a>
                                     <form method="POST" action="{{ route('attendance.lesson.all-present', $r['lesson_id']) }}" style="display:inline;margin:0" onsubmit="return confirm('Sınıftaki tüm öğrenciler Geldi olarak işaretlensin mi? (İzinliler değişmez)')">@csrf<button class="btn btn-sm" type="submit" title="Sınıf tam: herkesi Geldi yap">✅ Sınıf tam</button></form>@endif</td>
                             </tr>
                         @endforeach
