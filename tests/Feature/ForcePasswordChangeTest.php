@@ -41,8 +41,6 @@ class ForcePasswordChangeTest extends TestCase
         $post(['password' => 'abc', 'password_confirmation' => 'abc'])->assertSessionHasErrors('password');
         $post(['password' => 'Yeni4567', 'password_confirmation' => 'baska'])->assertSessionHasErrors('password');
         $post(['password' => 'Eski123', 'password_confirmation' => 'Eski123'])->assertSessionHasErrors('password');
-        $post(['password' => '123456', 'password_confirmation' => '123456'])->assertSessionHasErrors('password');
-        $post(['password' => 'ali.veli', 'password_confirmation' => 'ali.veli'])->assertSessionHasErrors('password');
         $this->assertTrue($student->fresh()->password_change_required);
 
         // Geçerli şifre: bayrak kalkar, şifre ve giriş kartı kaydı güncellenir
@@ -59,6 +57,15 @@ class ForcePasswordChangeTest extends TestCase
         // Bir daha ekran gelmez
         $this->actingAs($fresh)->get(route('password.force.show'))->assertRedirect(route('dashboard'));
         $this->actingAs($fresh)->get(route('profile.edit'))->assertOk();
+    }
+
+    public function test_easy_password_is_allowed_server_side_only_a_warning_is_shown(): void
+    {
+        $student = $this->mk('student', 'Ali Veli', 'ali.veli@school.local', true);
+        $this->actingAs($student)->get(route('password.force.show'))->assertOk()->assertSee('weak-password.js', false)->assertSee('data-weak-warn', false);
+        $this->actingAs($student)->from(route('password.force.show'))->post(route('password.force.update'), ['password' => '123456', 'password_confirmation' => '123456'])->assertSessionHasNoErrors();
+        $this->assertFalse($student->fresh()->password_change_required);
+        $this->assertTrue(Hash::check('123456', $student->fresh()->password));
     }
 
     public function test_logout_stays_available_and_staff_is_never_forced(): void

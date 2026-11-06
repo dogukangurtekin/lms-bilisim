@@ -84,7 +84,7 @@
             </div>
             <div>
                 <label>Yeni Şifre</label>
-                <input type="password" name="password" minlength="6" maxlength="72" placeholder="Değiştirmek istemiyorsanız boş bırakın">
+                <input type="password" name="password" minlength="6" maxlength="72" placeholder="Değiştirmek istemiyorsanız boş bırakın" data-weak-warn data-username="{{ $username }}">
             </div>
             <div>
                 <label>Yeni Şifre (Tekrar)</label>
@@ -347,4 +347,5 @@
         </script>
     @endif
 </div>
+<script src="{{ asset('weak-password.js') }}"></script>
 @endsection

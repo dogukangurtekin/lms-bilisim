@@ -14,8 +14,6 @@ use Illuminate\Support\Str;
 /** Öğrencinin ilk girişte zorunlu, tek seferlik şifre yenileme ekranı. */
 class ForcePasswordController extends Controller
 {
-    private const TOO_SIMPLE = ['123456', '1234567', '12345678', '123456789', '111111', '000000', '123123', 'password', 'qwerty', 'sifre', 'şifre'];
-
     public function show(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
@@ -57,11 +55,8 @@ class ForcePasswordController extends Controller
         $error = null;
         if (Hash::check($new, (string) $user->password)) {
             $error = 'Yeni şifren eski şifrenle aynı olamaz.';
-        } elseif (Str::lower($new) === $username) {
-            $error = 'Şifren kullanıcı adınla aynı olamaz.';
-        } elseif (in_array(Str::lower($new), self::TOO_SIMPLE, true)) {
-            $error = 'Bu şifre çok kolay tahmin edilir. Daha zor bir şifre seç.';
         }
+        // Kolay şifre (123456, kullanıcı adı vb.) engellenmez; ekranda uyarı gösterilir (public/weak-password.js).
         if ($error !== null) {
             return back()->withErrors(['password' => $error]);
         }

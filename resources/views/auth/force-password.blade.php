@@ -37,7 +37,7 @@
         @csrf
         <label for="pw1">Yeni şifre</label>
         <div class="field">
-            <input id="pw1" type="password" name="password" minlength="6" maxlength="72" required autofocus autocomplete="new-password">
+            <input id="pw1" type="password" name="password" minlength="6" maxlength="72" required autofocus autocomplete="new-password" data-weak-warn data-username="{{ \Illuminate\Support\Str::lower(\Illuminate\Support\Str::before((string) $user->email, '@')) }}">
             <button type="button" class="eye" data-eye="pw1" aria-label="Şifreyi göster">👁</button>
         </div>
         <label for="pw2">Yeni şifre (tekrar)</label>
@@ -50,14 +50,15 @@
         @endif
         <ul class="rules">
             <li>• En az 6 karakter olsun.</li>
-            <li>• Eski şifren ve kullanıcı adın olmasın.</li>
-            <li>• 123456 gibi kolay tahmin edilen şifreler kabul edilmez.</li>
+            <li>• Eski şifrenle aynı olmasın.</li>
+            <li>• Büyük harf, rakam ya da özel karakter zorunlu değil; ama kolay tahmin edilen şifrelerde (123456 gibi) seni uyarırız.</li>
             <li>• Kullanıcı adın değiştirilemez, yalnızca şifren değişir.</li>
         </ul>
         <button class="go" type="submit">Şifremi Güncelle</button>
     </form>
     <a class="out" href="{{ route('logout.get') }}">Şimdi değil, çıkış yap</a>
 </main>
+<script src="{{ asset('weak-password.js') }}"></script>
 <script>
 document.querySelectorAll('[data-eye]').forEach(function (b) {
     b.addEventListener('click', function () {
