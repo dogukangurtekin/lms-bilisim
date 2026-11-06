@@ -56,7 +56,8 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'first_name' => [$lockUsername ? 'nullable' : 'required', 'string', 'max:60'],
             'last_name' => [$lockUsername ? 'nullable' : 'required', 'string', 'max:60'],
-            'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/i'],
+            // Öğrencide kullanıcı adı zaten kilitli (e-postadan gelir, Türkçe harf içerebilir); yalnızca diğer roller için doğrulanır.
+            'username' => $lockUsername ? ['nullable', 'string'] : ['required', 'string', 'min:3', 'max:50', 'regex:/^[\p{L}\p{N}._-]+$/u'],
             'password' => ['nullable', 'string', 'min:6', 'max:72', 'confirmed'],
             'pwa_enabled' => ['nullable', 'boolean'],
             'pwa_title' => ['nullable', 'string', 'max:60'],
