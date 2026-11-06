@@ -215,7 +215,8 @@
 
             <div style="margin-top:8px">
                 <label>Kullanici Adi</label>
-                <input id="student-login-username" readonly>
+                <input id="student-login-username" name="username" required minlength="3" maxlength="50" autocomplete="off">
+                <small style="color:#64748b">Değiştirirseniz öğrenci yeni kullanıcı adıyla giriş yapar.</small>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">

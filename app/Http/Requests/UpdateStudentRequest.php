@@ -16,7 +16,7 @@ class UpdateStudentRequest extends FormRequest
         return [
             'first_name' => ['required','string','max:120'],
             'last_name' => ['required','string','max:120'],
-            'username' => ['nullable','string','min:3','max:50','regex:/^[a-z0-9._-]+$/i'],
+            'username' => ['nullable','string','min:3','max:50','regex:/^[\p{L}\p{N}._-]+$/u'],
             'password' => ['nullable','string','min:6','max:72','confirmed'],
             'student_no' => ['required','string','max:50','unique:students,student_no,'.$this->route('student')->id],
             'school_class_id' => ['required','integer','exists:school_classes,id'],
