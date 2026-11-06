@@ -25,7 +25,7 @@
     <div class="att-card">
         <h3>Öğrenciler</h3>
         <p class="muted" style="margin:0 0 10px;font-size:13px">Öğrenci derste olduğu halde sisteme girememişse durumu elle düzeltebilirsiniz: Geldi, Gelmedi ya da İzinli düğmesine basın.</p>
-        <form method="POST" action="{{ route('attendance.lesson.all-present', $lesson) }}" style="margin:0 0 12px" onsubmit="return confirm('Sınıftaki tüm öğrenciler Geldi olarak işaretlensin mi? (İzinliler değişmez)')">
+        <form method="POST" action="{{ route('attendance.lesson.all-present', $lesson) }}" style="margin:0 0 12px" onsubmit="return confirm('Sınıftaki tüm öğrenciler (Gelmedi ve İzinli olanlar dahil) Geldi olarak işaretlensin mi?')">
             @csrf
             <button class="btn" type="submit">✅ Sınıf Tam (herkes geldi)</button>
         </form>

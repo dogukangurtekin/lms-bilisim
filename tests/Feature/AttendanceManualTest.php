@@ -44,16 +44,17 @@ class AttendanceManualTest extends TestCase
         $this->assertSame('present', LessonAttendanceRecord::query()->where('student_id', $students[0]->id)->value('status'));
         $this->actingAs($admin)->post(route('attendance.lesson.status', [$lesson, $students[0]->id]), ['status' => 'absent'])->assertSessionHasNoErrors();
 
-        // sınıf tam: gelmedi olan + kaydı olmayanlar Geldi olur, izinli kalır
+        // sınıf tam: gelmedi, izinli ve kaydı olmayan herkes Geldi olur
         $this->actingAs($admin)->post(route('attendance.lesson.all-present', $lesson))->assertSessionHas('ok');
         $st = fn ($i) => LessonAttendanceRecord::query()->where('lesson_attendance_id', $lesson->id)->where('student_id', $students[$i]->id)->value('status');
         $this->assertSame('present', $st(0));
-        $this->assertSame('excused', $st(1));
+        $this->assertSame('present', $st(1));
         $this->assertSame('present', $st(2));
         $this->assertSame('present', $st(3));
         $fresh = $lesson->fresh();
         $this->assertSame(4, (int) $fresh->total_students);
-        $this->assertSame(3, (int) $fresh->present_count);
+        $this->assertSame(4, (int) $fresh->present_count);
+        $this->assertSame(0, (int) $fresh->absent_count);
 
         // sayfalar açılır, düğmeler görünür
         $this->actingAs($admin)->get(route('attendance.lesson', $lesson))->assertOk()->assertSee('Sınıf Tam')->assertSee('Gelmedi');
