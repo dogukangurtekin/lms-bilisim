@@ -24,7 +24,11 @@
 
     <div class="att-card">
         <h3>Öğrenciler</h3>
-        <p class="muted" style="margin:0 0 10px;font-size:13px">Öğrenci derste olduğu halde sisteme girememişse durumu elle düzeltebilirsiniz (ör. "Geldi" ya da "İzinli").</p>
+        <p class="muted" style="margin:0 0 10px;font-size:13px">Öğrenci derste olduğu halde sisteme girememişse durumu elle düzeltebilirsiniz: Geldi, Gelmedi ya da İzinli düğmesine basın.</p>
+        <form method="POST" action="{{ route('attendance.lesson.all-present', $lesson) }}" style="margin:0 0 12px" onsubmit="return confirm('Sınıftaki tüm öğrenciler Geldi olarak işaretlensin mi? (İzinliler değişmez)')">
+            @csrf
+            <button class="btn" type="submit">✅ Sınıf Tam (herkes geldi)</button>
+        </form>
         <div class="att-wrap"><table class="att-table">
             <thead><tr><th>#</th><th>Öğrenci</th><th>Durum</th><th>İlk giriş</th><th>Kaynak</th><th>Düzelt</th></tr></thead>
             <tbody>
@@ -41,9 +45,11 @@
                     <td>
                         <form method="POST" action="{{ route('attendance.lesson.status', [$lesson, $r->student_id]) }}" style="margin:0">
                             @csrf
-                            <select class="att-select" name="status" onchange="this.form.submit()" aria-label="Durum">
-                                @foreach($labels as $k => $v)<option value="{{ $k }}" @selected($r->status === $k)>{{ $v }}</option>@endforeach
-                            </select>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                @foreach($labels as $k => $v)
+                                    <button type="submit" name="status" value="{{ $k }}" class="btn btn-sm st-{{ $k }}" style="{{ $r->status === $k ? 'outline:2px solid #0f172a;font-weight:800' : 'opacity:.6' }}" aria-pressed="{{ $r->status === $k ? 'true' : 'false' }}">{{ $v }}</button>
+                                @endforeach
+                            </div>
                         </form>
                     </td>
                 </tr>

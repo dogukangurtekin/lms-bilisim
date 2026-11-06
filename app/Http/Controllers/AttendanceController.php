@@ -118,6 +118,27 @@ class AttendanceController extends Controller
     }
 
     /** Elle düzeltme: öğrenci derste olduğu halde sisteme girememişse "Geldi" ya da "İzinli" yapılabilir. */
+    /** "Sınıf tam": sınıfın tüm öğrencilerini elle "Geldi" yapar (izinliler olduğu gibi kalır; kaydı olmayanlar eklenir). */
+    public function allPresent(LessonAttendance $lesson): RedirectResponse
+    {
+        $this->authorizeClass((int) $lesson->school_class_id);
+        $studentIds = Student::query()->where('school_class_id', $lesson->school_class_id)->pluck('id');
+        $changed = 0;
+        DB::transaction(function () use ($lesson, $studentIds, &$changed): void {
+            foreach ($studentIds as $sid) {
+                $record = LessonAttendanceRecord::query()->firstOrNew(['lesson_attendance_id' => $lesson->id, 'student_id' => $sid]);
+                if ($record->exists && in_array($record->status, ['present', 'excused'], true)) {
+                    continue;
+                }
+                $record->fill(['status' => 'present', 'source' => 'manual'])->save();
+                $changed++;
+            }
+            Att::recount($lesson->id);
+        });
+
+        return back()->with('ok', 'Sınıf tam: ' . $changed . ' öğrenci "Geldi" olarak işaretlendi.');
+    }
+
     public function setStatus(Request $request, LessonAttendance $lesson, Student $student): RedirectResponse
     {
         $this->authorizeClass((int) $lesson->school_class_id);
