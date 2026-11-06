@@ -25,6 +25,7 @@ class TrackStudentActiveTime
         'student.portal.badges'           => 'Rozetler sayfasını açtı',
         'student.portal.time.ping'        => null, // ping — kaydetme
         'activities.index'                => 'Kodlama Uygulamaları listesine girdi',
+        'labs.index'                      => 'Laboratuvar sayfasına girdi',
         'activities.show'                 => 'Bir etkinliği açtı',
         'keyboard-race.show'              => 'Klavye yarışı oynadı',
         'student.live-quiz.join.form'     => 'Canlı quiz katılım formunu açtı',

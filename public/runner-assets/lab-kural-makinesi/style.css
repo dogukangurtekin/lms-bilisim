@@ -1,0 +1,73 @@
+/* Kural Makinesi - görev ekranı stilleri */
+.km-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px;align-items:start}
+.km-left,.km-right{display:flex;flex-direction:column;gap:12px;min-width:0}
+.km-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.km-card h3{margin:0 0 8px;font-size:16px}
+.km-sim{padding:10px}
+.km-scene{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.km-svg{display:block;width:100%;height:auto}
+.km-health{margin-top:10px;padding:10px 12px;border-radius:12px;font-weight:800;font-size:14px}
+.km-health.ok{background:var(--ok-bg);color:var(--ok)}
+.km-health.bad{background:var(--bad-bg);color:var(--bad)}
+.km-devs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.km-dev{padding:5px 11px;border-radius:999px;border:1.5px solid var(--line);font-size:13px;font-weight:700;color:var(--soft)}
+.km-dev.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.km-env .km-slider{display:grid;grid-template-columns:110px 1fr 56px;gap:10px;align-items:center;margin:8px 0;font-size:14px;font-weight:700}
+.km-env input[type=range]{width:100%;accent-color:var(--brand)}
+.km-env output{text-align:right;font-weight:800}
+/* sahne */
+.km-leafless{display:none}
+.km-svg .leaf{fill:#22c55e;transition:fill .3s}
+.km-svg .bloom{fill:#f472b6;transition:fill .3s}
+[data-health=thirsty] .km-svg .leaf{fill:#b5a468}
+[data-health=thirsty] .km-svg .bloom{fill:#a8a29e}
+[data-health=burn] .km-svg .leaf{fill:#d4b34a}
+[data-health=burn] .km-svg .bloom{fill:#f59e0b}
+[data-health=hot] .km-svg .leaf{fill:#e8a05a}
+[data-health=fungus] .km-svg .leaf{fill:#6b8e5a}
+[data-health=fungus] .km-svg .bloom{fill:#a78bfa}
+.km-shade{transform:translateY(-90px);opacity:0;transition:transform .5s ease,opacity .5s ease}
+.km-shade.on{transform:none;opacity:1}
+.km-spr .km-drops{opacity:0;transition:opacity .2s}
+.km-spr.on .km-drops{opacity:1}
+.km-spr.on .km-drops path{animation:kmdrip .7s linear infinite}
+.km-spr.on .km-drops .d2{animation-delay:.2s}
+.km-spr.on .km-drops .d3{animation-delay:.4s}
+@keyframes kmdrip{0%{transform:translateY(-6px);opacity:0}30%{opacity:1}100%{transform:translateY(18px);opacity:0}}
+.km-blades{transform-box:fill-box;transform-origin:center}
+#kmFan.on .km-blades{animation:kmspin .6s linear infinite}
+@keyframes kmspin{to{transform:rotate(360deg)}}
+/* kurallar */
+.km-rules-head{display:flex;align-items:center;justify-content:space-between}
+.km-rules{display:flex;flex-direction:column;gap:10px}
+.km-empty{margin:0;padding:16px;border:2px dashed var(--line);border-radius:12px;color:var(--soft);font-size:14px;text-align:center}
+.km-rule{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:14px;padding:10px;transition:border-color .2s,background .2s}
+.km-rule.live{border-color:var(--ok);background:var(--ok-bg)}
+.km-num{min-width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:4px}
+:root[data-theme=dark] .km-num{color:#04201d}
+.km-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.km-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.km-cond{display:inline-flex;gap:6px;flex-wrap:wrap}
+.km-tag{display:inline-block;min-width:64px;text-align:center;padding:5px 8px;border-radius:8px;font-size:12px;font-weight:800;letter-spacing:.4px}
+.km-tag.if{background:#dbeafe;color:#1d4ed8}
+.km-tag.join{background:var(--warn-bg);color:var(--warn)}
+.km-tag.do{background:#ffedd5;color:#c2410c}
+:root[data-theme=dark] .km-tag.if{background:#1e3a5f;color:#93c5fd}
+:root[data-theme=dark] .km-tag.do{background:#4a2a12;color:#fdba74}
+.km-sel{min-height:38px;padding:5px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:14px;max-width:100%}
+.km-sel:disabled{opacity:.7;background:var(--brand-soft)}
+.km-tools{display:flex;flex-direction:column;gap:4px}
+.km-tools .lab-btn{min-height:34px;min-width:34px;padding:4px}
+.km-lock{font-size:18px;text-align:center}
+.km-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.km-q label{display:block;font-weight:800;font-size:14px;margin-bottom:6px}
+.km-q textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:10px;background:var(--card);resize:vertical}
+.km-note{margin:10px 0 6px;font-weight:700;font-size:14px}
+.km-list{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.km-list li{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:10px;font-size:13px}
+.km-list li.ok{background:var(--ok-bg);color:var(--ok)}
+.km-list li.bad{background:var(--bad-bg);color:var(--bad)}
+.km-hint{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--warn-bg);color:var(--warn);font-size:14px}
+.km-hint p{margin:4px 0 0}
+.km-hint-title{font-weight:800}
+@media (max-width:900px){.km-layout{grid-template-columns:1fr}.km-env .km-slider{grid-template-columns:96px 1fr 52px}}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Kural Makinesi">
+<rect width="128" height="128" rx="28" fill="#0f766e"/>
+<path d="M30 92V60l34-22 34 22v32z" fill="#d9f3ef" stroke="#ffffff" stroke-width="4" stroke-linejoin="round"/>
+<path d="M64 92V70M52 92V74M76 92V74" stroke="#15803d" stroke-width="4" stroke-linecap="round"/>
+<circle cx="64" cy="66" r="6" fill="#f472b6"/>
+<g fill="#fbbf24"><circle cx="96" cy="34" r="12"/></g>
+<g stroke="#fbbf24" stroke-width="3" stroke-linecap="round"><path d="M96 14v5M96 49v5M76 34h5M111 34h5"/></g>
+</svg>

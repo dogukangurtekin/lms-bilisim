@@ -43,6 +43,7 @@ class ActivityController extends Controller
             'word-runner' => ['name' => 'Word Belge Editörü', 'image' => 'word-icon.svg', 'url' => '/word-runner'],
             'excel-runner' => ['name' => 'Excel Hesap Tablosu', 'image' => 'excel-icon.svg', 'url' => '/excel-runner'],
             'scratch-runner' => ['name' => 'Blok Kodlama Stüdyosu (Scratch benzeri)', 'image' => 'scratch-icon.svg?v=2', 'url' => '/scratch-runner'],
+            'lab-kural-makinesi' => ['name' => 'Kural Makinesi (Laboratuvar)', 'image' => 'lab-kural-makinesi.svg', 'url' => '/lab-kural-makinesi'],
         ];
     }
 
@@ -60,6 +61,9 @@ class ActivityController extends Controller
             $visibleGames = array_intersect_key(self::games(), array_flip($allowedSlugs));
             // Klavye yarışmasına öğrenciler yalnızca "Canlı Yarışmalar" giriş sayfasından kodla katılır.
             unset($visibleGames['keyboard-race']);
+        }
+        foreach (\App\Support\LabCatalog::slugs() as $labSlug) {
+            unset($visibleGames[$labSlug]);   // laboratuvarlar /laboratuvar sayfasında
         }
         if ($isTeacher && $user?->teacher) {
             $assignedGameActivities = TeacherGameAssignment::query()

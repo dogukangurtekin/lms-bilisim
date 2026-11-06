@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/canli-takip/ogrenci/{student}', [LiveTrackingController::class, 'show'])->name('live-tracking.show');
     });
       Route::get('/etkinlikler', [ActivityController::class, 'index'])->name('activities.index');
+      Route::get('/laboratuvar', [\App\Http\Controllers\LabController::class, 'index'])->name('labs.index');
       Route::prefix('/scratch-api/projeler')->middleware('throttle:120,1')->group(function () {
           Route::get('/', [\App\Http\Controllers\ScratchProjectController::class, 'index']);
           Route::post('/', [\App\Http\Controllers\ScratchProjectController::class, 'store']);
@@ -235,6 +236,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/python-editor', [ActivityRunnerController::class, 'pythonEditor']);
     Route::get('/bee-garden-runner', [ActivityRunnerController::class, 'beeGarden']);
     Route::get('/flex-goleti-runner', [ActivityRunnerController::class, 'flexGoleti']);
+    Route::get('/lab-kural-makinesi', [ActivityRunnerController::class, 'kuralMakinesi']);
     Route::get('/flamestone-game', [GameController::class, 'game'])->name('flamestone.game');
     Route::get('/oyunlar', [GameController::class, 'game'])->name('flamestone.game.alias');
     Route::get('/editor', [GameController::class, 'editor'])->name('flamestone.editor');

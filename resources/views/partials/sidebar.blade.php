@@ -25,6 +25,9 @@
             <a class="{{ request()->routeIs('activities.*') || request()->routeIs('keyboard-race.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Kodlama Uygulamaları
             </a>
+            <a class="{{ request()->routeIs('labs.*') ? 'active' : '' }}" href="{{ route('labs.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v2h-1v5.5l5.2 8.7A2 2 0 0117.5 21h-11a2 2 0 01-1.7-2.8L10 9.5V4H9V2zm2 2v6.2l-3.2 5.3h8.4L13 10.2V4h-2z"/></svg></span>Laboratuvar
+            </a>
             <a class="{{ request()->routeIs('student.portal.friends') ? 'active' : '' }}" href="{{ route('student.portal.friends') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 100-8 4 4 0 000 8zM8 12a4 4 0 100-8 4 4 0 000 8zm8 2c-3.314 0-6 2.239-6 5v1h12v-1c0-2.761-2.686-5-6-5zM8 14c-3.314 0-6 2.239-6 5v1h6v-1c0-1.908.81-3.648 2.121-5A7.8 7.8 0 008 14z"/></svg></span>Arkadaşlarım
             </a>
@@ -82,6 +85,9 @@
             </a>
             <a class="{{ request()->routeIs('activities.*') ? 'active' : '' }}" href="{{ route('activities.index') }}">
                 <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h3v3H7V8zm7 0h3v3h-3V8zM5 5h14a2 2 0 012 2v10a2 2 0 01-2 2h-4l-2-2h-2l-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>Kodlama Uygulamaları
+            </a>
+            <a class="{{ request()->routeIs('labs.*') ? 'active' : '' }}" href="{{ route('labs.index') }}">
+                <span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 2h6v2h-1v5.5l5.2 8.7A2 2 0 0117.5 21h-11a2 2 0 01-1.7-2.8L10 9.5V4H9V2zm2 2v6.2l-3.2 5.3h8.4L13 10.2V4h-2z"/></svg></span>Laboratuvar
             </a>
             @if(\App\Support\ExamBuilderSetting::allowedFor(auth()->user()))
             <a class="{{ request()->routeIs('exams.*') ? 'active' : '' }}" href="{{ route('exams.index') }}">
